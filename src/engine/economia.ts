@@ -102,13 +102,4 @@ export function puedeComprarAccesorio(s: Saldos, precio: number, nivelMinimo: nu
   if (s.disponible < precio) return { ok: false, motivo: "saldo" };
   return { ok: true };
 }
-
-/** Accesorios de la tienda (Entregable 5). Las piezas base del personaje son gratis. */
-export const TIENDA = [
-  { id: "mano", nombre: "Accesorio en la mano", precio: 80, nivel: 1, zona: "mano" },
-  { id: "corona-carton", nombre: "Corona de cartón", precio: 160, nivel: 1, zona: "cabeza" },
-  { id: "medallas", nombre: "Medallas de adorno", precio: 200, nivel: 3, zona: "pecho" },
-  { id: "collar", nombre: "Collar", precio: 280, nivel: 5, zona: "cuello" },
-  { id: "capa", nombre: "Capa", precio: 400, nivel: 10, zona: "espalda" },
-  { id: "corona-neon", nombre: "Corona neón", precio: 480, nivel: 15, zona: "cabeza" },
-] as const;
+// Los precios de la tienda viven en src/content/personaje.ts (y en la tabla articulos_tienda del servidor).
