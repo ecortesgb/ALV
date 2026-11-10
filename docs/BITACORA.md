@@ -14,3 +14,13 @@
 - La app muestra el configurador con los juegos compatibles y corre partidas locales con el motor real.
 
 Siguiente: F2, cuentas y base de datos en Supabase con RLS.
+
+## 2026-11-10 · F2 parte 1: base de datos en "ALV Games"
+
+- Migraciones `001_base.sql` y `002_ayudantes_privados.sql` aplicadas: 10 tablas (perfiles, personajes, tienda, eventos, miembros, partidas, movimientos de XP, inventario, datos privados y acciones), todas con RLS.
+- Todo lo que mueve XP o crea eventos pasa por funciones que validan adentro: `crear_evento`, `unirse_evento` (máximo 8), `cerrar_evento`, `comprar_accesorio`, `comprar_carta` y `mis_saldos`.
+- Los ayudantes de permisos viven en el esquema `privado`, fuera de la API.
+- Asesor de seguridad: quedan 6 avisos, todos de las funciones que la app sí debe llamar (cada una revisa sesión y permisos).
+- Prueba con usuarios sin acceso (dentro de una transacción que se deshizo): alguien fuera del evento no ve eventos, partidas, perfiles, datos privados ni XP; un jugador no ve el dato privado de otro, no edita la partida, no se regala XP ni cierra el evento; las cartas cuestan 40 y 60 y la tercera se rechaza sin saldo; al cerrar el evento la XP del evento queda en 0 y ya no compra cartas; sin sesión no se puede leer nada.
+
+Pendiente de F2: dar la XP de cada partida desde el servidor y la pantalla de entrada con correo.
