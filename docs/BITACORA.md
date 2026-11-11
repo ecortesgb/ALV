@@ -153,3 +153,19 @@ Falta de esta tanda: en ¿Cuánto conoces a tu pareja? la respuesta se ve mientr
 - Base: función nueva `salir_evento` (migración 007).
 - Límite: la partida todavía se juega en la pantalla del anfitrión, y lo secreto se ve pasando el celular. La XP de los jugadores que vinieron de otro celular aún no llega a su cuenta. Las dos cosas son el punto 4 (herramientas en cada celular).
 - Pruebas: 35 del motor; punta a punta con dos navegadores (laptop y celular) contra el servidor real: abrir sala, entrar con el código, aparecer en la laptop, salir y desaparecer. Las cuentas de prueba se borraron.
+## 2026-11-11 · Paso 3: mecánicas visuales
+
+> Recuperado el 13 de noviembre: este paso se había quedado fuera de `main` al rehacer la rama. Se integró sobre la pantalla Neo-Arcade del otro hilo.
+
+- Los 14 juegos del catálogo ya se pueden jugar:
+  - **El reloj**: los jugadores alrededor de un reloj; la manecilla corta elige quién pregunta y la larga quién responde.
+  - **Ruleta de castigos**: una rebanada por jugador; gira y elige a quién y qué castigo.
+  - **Dados HOT**: tres dados (acción, zona y segundos) entre parejas, solo con contenido adulto.
+  - **Contra reloj** (Bienvenida, Lista relámpago, Mímica, Palabra prohibida): barra de tiempo y contador; en Mímica y Prohibida solo quien describe ve las palabras.
+  - **Yo nunca**: cada quien confiesa; confesar suma 1.
+  - **¿Quién es más probable?**: todos señalan en secreto pasando el celular.
+  - **Reto del lugar**: competencia real; el anfitrión marca al ganador (+3).
+- Las cartas de poder también se usan en el reloj, la ruleta y los dados.
+- Dados HOT ahora se permiten en fogata, bosque, campo, terraza e interior (antes solo interior, y ningún escenario activo era interior).
+- Se corrigió que las cartas de fondo taparan los botones.
+- Pruebas: 30 del motor pasan; prueba en navegador de reloj, ruleta, lista, palabra prohibida, yo nunca, más probable, reto del lugar y dados sin errores.

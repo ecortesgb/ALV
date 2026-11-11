@@ -3,8 +3,8 @@
 import { crearAzar } from "./azar";
 import { cartasPermitidas } from "./filtros";
 import { xpDePartida } from "./economia";
-import { CARTAS_PODER } from "../content/catalogo";
-import type { Carta, Configuracion, DefinicionJuego, Jugador, TemaImpostor } from "./types";
+import { CARTAS_PODER, DADOS } from "../content/catalogo";
+import type { Carta, Configuracion, DefinicionJuego, Jugador, Motor, TemaImpostor } from "./types";
 
 export type Fase = "contestando" | "revelada" | "terminada";
 
@@ -13,7 +13,10 @@ export interface EventoMotor { n: number; tipo: string; jugador?: string; datos?
 export interface EstadoPartida {
   version: number;
   juegoId: string;
-  motor: NonNullable<DefinicionJuego["motor"]>;
+  motor: Motor;
+  /** Mazo del juego (lista, palabra, castigo…) y segundos del temporizador. */
+  mazo?: string;
+  segundos?: number;
   semilla: number;
   cfg: Configuracion;
   totalRondas: number;
@@ -23,6 +26,8 @@ export interface EstadoPartida {
   turnoDe?: string;
   /** Lo que ve todo el mundo de la ronda: la carta, el tema o la pregunta. */
   carta?: { id: string; texto: string; opcionB?: string; tipo?: string };
+  /** Lo que el azar eligió en la ronda y todos pueden ver: manecillas del reloj, ruleta, dados. */
+  seleccion?: Record<string, unknown>;
   /** Datos privados por jugador: palabra del impostor, de quién es la pregunta… Nunca salen en la vista pública. */
   privado: Record<string, unknown>;
   /** Respuestas secretas. Solo se publican al revelar. */
@@ -61,7 +66,7 @@ export interface Contenido { cartas: Carta[]; temas: TemaImpostor[] }
 
 // ---------- Mecánicas ----------
 
-interface Preparacion { carta?: EstadoPartida["carta"]; privado: Record<string, unknown>; turnoDe?: string }
+interface Preparacion { carta?: EstadoPartida["carta"]; privado: Record<string, unknown>; turnoDe?: string; seleccion?: Record<string, unknown> }
 interface Puntuacion { puntos: Record<string, number>; retos?: Record<string, number>; revelado: unknown }
 
 interface Mecanica {
@@ -221,15 +226,154 @@ const pareja: Mecanica = {
   },
 };
 
-const MECANICAS: Record<EstadoPartida["motor"], Mecanica> = {
+/** El reloj: la manecilla corta elige quién pregunta y la larga quién responde. */
+const botella: Mecanica = {
+  preparar(e, c) {
+    const azar = azarDeRonda(e);
+    const [pregunta, responde] = azar.mezclar(e.cfg.jugadores) as [Jugador, Jugador];
+    const carta = sacarCarta(e, c, ["verdad"]);
+    return {
+      turnoDe: responde.id, privado: {},
+      seleccion: { pregunta: pregunta.id, responde: responde.id },
+      carta: carta && { id: carta.id, texto: personalizar(carta.texto, e, responde, pregunta), tipo: "verdad" },
+    };
+  },
+  quienes: e => (e.turnoDe ? [e.turnoDe] : []),
+  valida: (_e, _j, v) => v === "cumplio" || v === "paso",
+  puntuar(e) {
+    const j = e.turnoDe!, cumplio = e.respuestas[j] === "cumplio";
+    return { puntos: { [j]: cumplio ? 1 : 0 }, revelado: { jugador: j, cumplio } };
+  },
+};
+
+/** Ruleta de castigos: gira y elige a quién y qué castigo. Cumplirlo suma 1. */
+const ruleta: Mecanica = {
+  preparar(e, c) {
+    const azar = azarDeRonda(e);
+    const i = azar.entero(e.cfg.jugadores.length);
+    const j = e.cfg.jugadores[i]!;
+    const otros = e.cfg.jugadores.filter(x => x.id !== j.id);
+    const carta = sacarCarta(e, c, ["castigo", "castigo-iva"]);
+    return {
+      turnoDe: j.id, privado: {}, seleccion: { indice: i, giro: azar.siguiente() },
+      carta: carta && { id: carta.id, texto: personalizar(carta.texto, e, j, otros.length ? azar.elegir(otros) : undefined), tipo: "castigo" },
+    };
+  },
+  quienes: e => (e.turnoDe ? [e.turnoDe] : []),
+  valida: (_e, _j, v) => v === "cumplio" || v === "paso",
+  puntuar(e) {
+    const j = e.turnoDe!, cumplio = e.respuestas[j] === "cumplio";
+    return { puntos: { [j]: cumplio ? 1 : 0 }, revelado: { jugador: j, cumplio } };
+  },
+};
+
+/** Dados HOT: por turnos, cada quien con su pareja. Solo con contenido adulto (lo filtra el catálogo). */
+const dados: Mecanica = {
+  preparar(e) {
+    const azar = azarDeRonda(e);
+    const conPareja = e.cfg.jugadores.filter(j => j.parejaDe && e.cfg.jugadores.some(o => o.id === j.parejaDe));
+    const de = conPareja[(e.ronda - 1) % Math.max(conPareja.length, 1)];
+    const accion = azar.elegir(DADOS.accion), zona = azar.elegir(DADOS.zona), segundos = azar.elegir(DADOS.segundos);
+    return {
+      turnoDe: de?.id, privado: {},
+      seleccion: { de: de?.id, a: de?.parejaDe, accion, zona, segundos },
+      carta: { id: `dados-${e.ronda}-${e.cambios}`, texto: `${accion} ${zona} de ${nombre(e, de?.parejaDe)} durante ${segundos} segundos`, tipo: "dados" },
+    };
+  },
+  quienes: e => (e.turnoDe ? [e.turnoDe] : []),
+  valida: (_e, _j, v) => v === "cumplio" || v === "paso",
+  puntuar(e) {
+    const j = e.turnoDe!, cumplio = e.respuestas[j] === "cumplio";
+    return { puntos: { [j]: cumplio ? 1 : 0 }, revelado: { jugador: j, cumplio } };
+  },
+};
+
+/** Contra reloj: lista relámpago, bienvenida, mímica y palabra prohibida. Se cuenta cuántas logró. */
+const MAX_CONTEO = 40, PALABRAS_POR_TURNO = 8;
+const conteo: Mecanica = {
+  preparar(e, c) {
+    const turno = e.cfg.jugadores[(e.ronda - 1) % e.cfg.jugadores.length]!;
+    if (e.mazo === "palabra") {
+      // Mímica y palabra prohibida: solo quien describe ve las palabras.
+      const pool = cartasPermitidas({ ...e.cfg, escenario: e.cfg.escenario }, c.cartas, ["palabra"]);
+      const palabras = azarDeRonda(e).mezclar(pool).slice(0, PALABRAS_POR_TURNO).map(x => ({ palabra: x.texto, prohibidas: e.juegoId === "prohibida" ? x.prohibidas ?? [] : [] }));
+      return { turnoDe: turno.id, privado: { [turno.id]: { palabras } }, carta: { id: `palabras-${e.ronda}-${e.cambios}`, texto: `${turno.nombre} describe; los demás adivinan`, tipo: "palabra" } };
+    }
+    const carta = sacarCarta(e, c, [e.mazo ?? "lista"]);
+    return { turnoDe: turno.id, privado: {}, carta: carta && { id: carta.id, texto: carta.texto, tipo: "lista" } };
+  },
+  quienes: e => (e.turnoDe ? [e.turnoDe] : []),
+  valida(e, j, v) {
+    if (typeof v !== "number" || !Number.isInteger(v) || v < 0) return false;
+    const tope = e.mazo === "palabra" ? ((e.privado[j] as { palabras?: unknown[] })?.palabras?.length ?? 0) : MAX_CONTEO;
+    return v <= tope;
+  },
+  puntuar(e) {
+    const j = e.turnoDe!, n = e.respuestas[j] as number;
+    return { puntos: { [j]: n }, revelado: { jugador: j, logro: n } };
+  },
+};
+
+/** Yo nunca: cada quien dice si sí lo ha hecho. Confesar suma 1. */
+const confesion: Mecanica = {
+  preparar(e, c) {
+    const carta = sacarCarta(e, c, [e.mazo ?? "yo-nunca"]);
+    return { privado: {}, carta: carta && { id: carta.id, texto: carta.texto, tipo: "yo-nunca" } };
+  },
+  quienes: ids,
+  valida: (_e, _j, v) => v === "si" || v === "no",
+  puntuar(e) {
+    const puntos: Record<string, number> = {};
+    const confesaron = ids(e).filter(j => e.respuestas[j] === "si");
+    for (const j of ids(e)) puntos[j] = e.respuestas[j] === "si" ? 1 : 0;
+    return { puntos, revelado: { confesaron } };
+  },
+};
+
+/** ¿Quién es más probable?: todos señalan en secreto. Quien coincide con la mayoría suma 1. */
+const senalar: Mecanica = {
+  preparar(e, c) {
+    const carta = sacarCarta(e, c, [e.mazo ?? "mas-probable"]);
+    return { privado: {}, carta: carta && { id: carta.id, texto: carta.texto, tipo: "mas-probable" } };
+  },
+  quienes: ids,
+  valida: (e, _j, v) => typeof v === "string" && ids(e).includes(v),
+  puntuar(e) {
+    const votos: Record<string, number> = {};
+    for (const j of ids(e)) { const v = e.respuestas[j] as string; votos[v] = (votos[v] ?? 0) + 1; }
+    const max = Math.max(...Object.values(votos));
+    const ganadores = Object.keys(votos).filter(k => votos[k] === max);
+    const puntos: Record<string, number> = {};
+    for (const j of ids(e)) puntos[j] = ganadores.includes(e.respuestas[j] as string) ? 1 : 0;
+    return { puntos, revelado: { votos, elegidos: ganadores } };
+  },
+};
+
+/** Reto del lugar: una competencia real; el anfitrión marca quién ganó (+3). */
+const competencia: Mecanica = {
+  preparar(e, c) {
+    const carta = sacarCarta(e, c, ["competencia"]);
+    return { privado: {}, turnoDe: e.cfg.jugadores[0]?.id, carta: carta && { id: carta.id, texto: carta.texto, tipo: carta.descripcion ?? "" } };
+  },
+  // Lo captura el dispositivo del anfitrión (el primer jugador del grupo).
+  quienes: e => (e.cfg.jugadores[0] ? [e.cfg.jugadores[0].id] : []),
+  valida: (e, _j, v) => typeof v === "string" && ids(e).includes(v),
+  puntuar(e) {
+    const ganador = e.respuestas[e.cfg.jugadores[0]!.id] as string;
+    return { puntos: { [ganador]: 3 }, revelado: { ganador } };
+  },
+};
+
+const MECANICAS: Record<Motor, Mecanica> = {
   "turnos-cartas": turnosCartas, votacion, "rol-secreto": rolSecreto, pareja,
+  botella, ruleta, dados, conteo, confesion, senalar, competencia,
 };
 
 // ---------- Máquina de estados ----------
 
 function prepararRonda(e: EstadoPartida, c: Contenido): EstadoPartida {
   const p = MECANICAS[e.motor].preparar(e, c);
-  return { ...e, fase: "contestando", carta: p.carta, privado: p.privado, turnoDe: p.turnoDe, respuestas: {}, revelado: undefined };
+  return { ...e, fase: "contestando", carta: p.carta, privado: p.privado, turnoDe: p.turnoDe, seleccion: p.seleccion, respuestas: {}, revelado: undefined };
 }
 
 /** Da una carta de poder si hay lugar en la mano. */
@@ -247,7 +391,7 @@ export function crearPartida(juego: DefinicionJuego, cfg: Configuracion, semilla
   if (!juego.motor) throw new Error(`El juego ${juego.id} todavía no corre en el motor`);
   const cero = Object.fromEntries(cfg.jugadores.map(j => [j.id, 0]));
   const base: EstadoPartida = {
-    version: 1, juegoId: juego.id, motor: juego.motor, semilla, cfg, totalRondas, ronda: 1, fase: "contestando",
+    version: 1, juegoId: juego.id, motor: juego.motor, mazo: juego.mazo, segundos: juego.segundos, semilla, cfg, totalRondas, ronda: 1, fase: "contestando",
     privado: {}, respuestas: {}, puntos: { ...cero }, retos: { ...cero },
     manos: Object.fromEntries(cfg.jugadores.map(j => [j.id, [] as string[]])), cambios: 0, accionesVistas: [],
     bitacora: [{ n: 1, tipo: "partida-creada", datos: { juego: juego.id, semilla } }],
@@ -299,7 +443,7 @@ export function aplicar(e: EstadoPartida, a: Accion, contenido: Contenido): Esta
       const mano = e.manos[a.jugador] ?? [];
       const i = mano.indexOf(a.carta);
       if (i < 0 || e.fase !== "contestando") return e;
-      const esTurno = e.motor === "turnos-cartas" && a.jugador === e.turnoDe && !(a.jugador in e.respuestas);
+      const esTurno = ["turnos-cartas", "botella", "ruleta", "dados"].includes(e.motor) && a.jugador === e.turnoDe && !(a.jugador in e.respuestas);
       // Escudo, Pasa turno y Cambio solo los usa quien está en turno; las demás son sociales y el anfitrión las hace cumplir.
       if (["escudo", "turno", "cambio"].includes(a.carta) && !esTurno) return e;
       const manos = { ...e.manos, [a.jugador]: mano.filter((_, k) => k !== i) };

@@ -66,6 +66,10 @@ export interface Escenario {
   adulto?: boolean;
 }
 
+export type Motor =
+  | "turnos-cartas" | "votacion" | "rol-secreto" | "pareja"
+  | "botella" | "ruleta" | "dados" | "conteo" | "confesion" | "senalar" | "competencia";
+
 export interface DefinicionJuego {
   id: string;
   seccion: SeccionId;
@@ -74,7 +78,9 @@ export interface DefinicionJuego {
   descripcion: string;
   mecanicas: MecanicaId[];
   /** Mecánica del motor que lo corre. Si falta, todavía no se puede jugar en la plataforma. */
-  motor?: "turnos-cartas" | "votacion" | "rol-secreto" | "pareja";
+  motor?: Motor;
+  /** Segundos del temporizador, cuando el juego usa uno. */
+  segundos?: number;
   minJugadores: number;
   maxJugadores: number;
   soloParejas?: boolean;

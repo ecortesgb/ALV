@@ -82,37 +82,44 @@ export const MECANICAS: Record<MecanicaId, { nombre: string; min: number }> = {
 
 export const JUEGOS: DefinicionJuego[] = [
   { id: "bienvenida", seccion: "mix", nombre: "Ronda de bienvenida", descripcion: "30 segundos para decir todo lo que puedas de una lista.",
-    mecanicas: ["temporizador", "turnos"], minJugadores: 2, maxJugadores: 8, lugares: [], intensidadMin: 1, intensidadMax: 3, mazo: "lista" },
+    mecanicas: ["temporizador", "turnos"], motor: "conteo", segundos: 30, minJugadores: 2, maxJugadores: 8, lugares: [], intensidadMin: 1, intensidadMax: 3, mazo: "lista" },
   { id: "verdad-reto", seccion: "hdspm", nombre: "Verdad o reto", sigla: "HDSPM", descripcion: "Verdad +1, reto +2. Pasar no tiene castigo.",
     mecanicas: ["cartas", "turnos"], motor: "turnos-cartas", minJugadores: 2, maxJugadores: 8, lugares: [], intensidadMin: 1, intensidadMax: 4, mazo: "verdad+reto" },
   { id: "conoces", seccion: "parejas", nombre: "¿Cuánto conoces a tu pareja?", sigla: "TQM", descripcion: "Los dos escriben su respuesta en secreto. Si coinciden, suman.",
     mecanicas: ["cartas", "votacion"], motor: "pareja", minJugadores: 2, maxJugadores: 8, soloParejas: true, lugares: [], intensidadMin: 1, intensidadMax: 4, mazo: "conoces" },
   { id: "mimica", seccion: "qpm", nombre: "Mímica", descripcion: "60 segundos sin hablar. Cada palabra suma.",
-    mecanicas: ["temporizador", "duelo"], minJugadores: 2, maxJugadores: 8, lugares: ["interior", "terraza", "fogata", "campo"], intensidadMin: 1, intensidadMax: 2, mazo: "palabra",
+    mecanicas: ["temporizador", "duelo"], motor: "conteo", segundos: 60, minJugadores: 2, maxJugadores: 8, lugares: ["interior", "terraza", "fogata", "campo"], intensidadMin: 1, intensidadMax: 2, mazo: "palabra",
     modoCorto: "Con 2 o 3 es cooperativo: suman juntos contra el reloj." },
   { id: "prohibida", seccion: "qpm", nombre: "Palabra prohibida", descripcion: "Descríbela sin decir las 3 palabras tachadas.",
-    mecanicas: ["temporizador", "cartas"], minJugadores: 2, maxJugadores: 8, lugares: [], intensidadMin: 1, intensidadMax: 2, mazo: "palabra",
+    mecanicas: ["temporizador", "cartas"], motor: "conteo", segundos: 60, minJugadores: 2, maxJugadores: 8, lugares: [], intensidadMin: 1, intensidadMax: 2, mazo: "palabra",
     modoCorto: "Con 2 o 3 es cooperativo." },
   { id: "impostor", seccion: "ntp", nombre: "El impostor", sigla: "FBI", descripcion: "Todos saben la palabra menos uno. Voten quién es.",
     mecanicas: ["rol-secreto", "votacion"], motor: "rol-secreto", minJugadores: 3, maxJugadores: 8, lugares: [], intensidadMin: 1, intensidadMax: 3 },
   { id: "reto-lugar", seccion: "gdlv", nombre: "Reto del lugar", sigla: "PVP", descripcion: "Una competencia real según dónde estén.",
-    mecanicas: ["duelo", "tablero"], minJugadores: 2, maxJugadores: 8, lugares: [], intensidadMin: 1, intensidadMax: 2, mazo: "competencia" },
+    mecanicas: ["duelo", "tablero"], motor: "competencia", minJugadores: 2, maxJugadores: 8, lugares: [], intensidadMin: 1, intensidadMax: 2, mazo: "competencia" },
   { id: "lista", seccion: "pvt", nombre: "Lista relámpago", sigla: "LOL", descripcion: "30 segundos por persona. Gana quien diga más.",
-    mecanicas: ["temporizador", "turnos"], minJugadores: 2, maxJugadores: 8, lugares: [], intensidadMin: 1, intensidadMax: 3, mazo: "lista" },
+    mecanicas: ["temporizador", "turnos"], motor: "conteo", segundos: 30, minJugadores: 2, maxJugadores: 8, lugares: [], intensidadMin: 1, intensidadMax: 3, mazo: "lista" },
   { id: "reloj", seccion: "pvt", nombre: "El reloj", descripcion: "Manecilla corta pregunta, manecilla larga responde.",
-    mecanicas: ["botella"], minJugadores: 3, maxJugadores: 8, lugares: [], intensidadMin: 1, intensidadMax: 4, mazo: "verdad" },
+    mecanicas: ["botella"], motor: "botella", minJugadores: 3, maxJugadores: 8, lugares: [], intensidadMin: 1, intensidadMax: 4, mazo: "verdad" },
   { id: "yo-nunca", seccion: "ptm", nombre: "Yo nunca", sigla: "NMMS", descripcion: "Quien sí lo haya hecho, confiesa.",
-    mecanicas: ["cartas", "votacion"], minJugadores: 3, maxJugadores: 8, lugares: [], intensidadMin: 1, intensidadMax: 4, mazo: "yo-nunca" },
+    mecanicas: ["cartas", "votacion"], motor: "confesion", minJugadores: 3, maxJugadores: 8, lugares: [], intensidadMin: 1, intensidadMax: 4, mazo: "yo-nunca" },
   { id: "mas-probable", seccion: "ptm", nombre: "¿Quién es más probable?", sigla: "POV", descripcion: "Todos votan en secreto a la vez.",
-    mecanicas: ["votacion"], minJugadores: 3, maxJugadores: 8, lugares: [], intensidadMin: 1, intensidadMax: 4, mazo: "mas-probable" },
+    mecanicas: ["votacion"], motor: "senalar", minJugadores: 3, maxJugadores: 8, lugares: [], intensidadMin: 1, intensidadMax: 4, mazo: "mas-probable" },
   { id: "que-prefieres", seccion: "ptm", nombre: "¿Qué prefieres?", sigla: "POV", descripcion: "Elige en secreto. La minoría cumple castigo leve.",
     mecanicas: ["votacion"], motor: "votacion", minJugadores: 2, maxJugadores: 8, lugares: [], intensidadMin: 1, intensidadMax: 4, mazo: "que-prefieres",
     modoCorto: "Con 2 es predicción: cada uno adivina qué eligió el otro." },
   { id: "ruleta", seccion: "pvt", nombre: "Ruleta de castigos", descripcion: "Para cobrar deudas y desempatar.",
-    mecanicas: ["ruleta"], minJugadores: 2, maxJugadores: 8, lugares: [], intensidadMin: 1, intensidadMax: 4, mazo: "castigo" },
+    mecanicas: ["ruleta"], motor: "ruleta", minJugadores: 2, maxJugadores: 8, lugares: [], intensidadMin: 1, intensidadMax: 4, mazo: "castigo" },
   { id: "dados-hot", seccion: "parejas", nombre: "Dados HOT", sigla: "FAP", descripcion: "Acción, zona y tiempo al azar. Solo con tu pareja.",
-    mecanicas: ["dados"], minJugadores: 2, maxJugadores: 8, soloParejas: true, adulto: true, lugares: ["interior"], intensidadMin: 4, intensidadMax: 4 },
+    mecanicas: ["dados"], motor: "dados", minJugadores: 2, maxJugadores: 8, soloParejas: true, adulto: true, lugares: ["interior", "fogata", "bosque", "campo", "terraza"], intensidadMin: 4, intensidadMax: 4 },
 ];
+
+/** Dados HOT: acción, zona y tiempo (solo parejas y con contenido adulto). */
+export const DADOS = {
+  accion: ["Besa", "Muerde suave", "Acaricia", "Sopla", "Masajea", "Recorre con los labios", "Roza con la nariz", "Besa lento"],
+  zona: ["el cuello", "la oreja", "los labios", "la espalda", "el abdomen", "los muslos", "los hombros", "la nuca"],
+  segundos: [10, 15, 20, 30],
+};
 
 /** Siglas de ALV: significado base y dónde se usa. El significado puede cambiar según la sección. */
 export const SIGLAS: { sigla: string; significado: string; uso: string }[] = [

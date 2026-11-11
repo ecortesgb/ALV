@@ -108,7 +108,9 @@ h2 { margin: 0; font-size: 18px; font-weight: 800; }
 .turno .marco { width: 64px; height: 64px; border-radius: 18px; background: var(--bg2); border: 2px solid var(--sc); display: flex; align-items: flex-end; justify-content: center; overflow: hidden; flex-shrink: 0; }
 .turno .quien { font-family: var(--display); font-size: 24px; line-height: 1; }
 .mesa { position: relative; display: flex; align-items: center; justify-content: center; min-height: 420px; perspective: 1200px; }
-.mesa .detras { position: absolute; width: 290px; height: 390px; border-radius: 28px; border: 2px solid var(--line); }
+.mesa .detras { position: absolute; width: 290px; height: 390px; border-radius: 28px; border: 2px solid var(--line); pointer-events: none; }
+.mesa.compacta { min-height: 300px; }
+.mesa.compacta .detras { height: 280px; }
 .mesa .detras.a { background: var(--card); transform: rotate(-6deg) translateX(-14px); }
 .mesa .detras.b { background: var(--btn); transform: rotate(4deg) translateX(12px); }
 .carta { position: relative; width: min(310px, 100%); height: 410px; border-radius: 28px; padding: 3px;
@@ -430,3 +432,29 @@ button.juego[aria-pressed="true"] { border-color: var(--sc); box-shadow: 0 0 0 1
 .qr { border-radius: 12px; background: #fff; padding: 4px; flex-shrink: 0; }
 .codigo-sala { font-family: var(--display); font-size: 34px; letter-spacing: 4px; color: var(--lime); }
 .input.codigo { font-family: var(--display); font-size: 26px; letter-spacing: 6px; text-align: center; text-transform: uppercase; }
+
+/* Paso 3: reloj, ruleta, dados y temporizador */
+.circulo { position: relative; width: min(320px, 86vw); aspect-ratio: 1; margin: 0 auto; border-radius: 50%;
+  background: radial-gradient(circle, #2a1650 0%, var(--card2) 70%); border: 3px solid var(--line); box-shadow: 0 0 40px -12px var(--sc); }
+.circulo .asiento { position: absolute; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 4px; border-radius: 14px; background: var(--bg2); border: 2px solid var(--line); transition: border-color .3s, box-shadow .3s; }
+.circulo .asiento small { font-size: 10px; font-weight: 800; max-width: 60px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.circulo .asiento.pregunta { border-color: var(--pink); box-shadow: 0 0 18px var(--pink); transition-delay: 2.4s; }
+.circulo .asiento.responde { border-color: var(--cyan); box-shadow: 0 0 18px var(--cyan); transition-delay: 2.4s; }
+.manecilla { position: absolute; left: 50%; top: 50%; transform-origin: 50% 100%; border-radius: 6px; transition: transform 2.4s cubic-bezier(.17,.67,.2,1); }
+.manecilla.corta { width: 10px; height: 24%; background: var(--pink); box-shadow: 0 0 12px var(--pink); }
+.manecilla.larga { width: 6px; height: 36%; background: var(--cyan); box-shadow: 0 0 12px var(--cyan); }
+.circulo .centro { position: absolute; left: 50%; top: 50%; width: 22px; height: 22px; transform: translate(-50%, -50%); border-radius: 50%; background: var(--ink); }
+.ruletaGrande { position: relative; width: min(300px, 82vw); aspect-ratio: 1; margin: 0 auto; }
+.ruletaGrande .rueda { position: absolute; inset: 0; border-radius: 50%; border: 6px solid var(--ink); box-shadow: 0 0 40px -10px var(--pink); transition: transform 2.5s cubic-bezier(.17,.67,.2,1); overflow: hidden; }
+.ruletaGrande .rueda span { position: absolute; left: 50%; top: 0; width: 0; height: 50%; transform-origin: 50% 100%; }
+.ruletaGrande .rueda i { position: absolute; top: 14%; left: 0; transform: translateX(-50%) rotate(90deg); transform-origin: 50% 50%; font-style: normal; font-weight: 800; font-size: 13px; color: var(--bg); white-space: nowrap; max-width: 90px; overflow: hidden; text-overflow: ellipsis; }
+.ruletaGrande .flecha { position: absolute; left: 50%; top: -6px; z-index: 2; transform: translateX(-50%); width: 0; height: 0; border-left: 14px solid transparent; border-right: 14px solid transparent; border-top: 26px solid var(--ink); filter: drop-shadow(0 2px 6px rgba(0,0,0,.6)); }
+.tiradados { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.dado { aspect-ratio: 1; border-radius: 18px; background: linear-gradient(140deg, var(--pink), var(--violet)); color: var(--ink); display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; font-weight: 800; font-size: 15px; padding: 6px; box-shadow: 0 10px 24px -10px var(--pink); animation: tirar 1.6s cubic-bezier(.3,1.4,.5,1) both; }
+.dado small { font-size: 10px; letter-spacing: 1px; opacity: .8; text-transform: uppercase; }
+@keyframes tirar { 0% { transform: translateY(-60px) rotate(-200deg) scale(.6); opacity: 0; } 60% { transform: translateY(6px) rotate(12deg); opacity: 1; } 100% { transform: none; } }
+.temporizador { position: relative; height: 44px; border-radius: 14px; background: var(--card2); border: 2px solid var(--line); overflow: hidden; display: grid; place-items: center; }
+.temporizador span { position: absolute; left: 0; top: 0; bottom: 0; background: linear-gradient(90deg, var(--lime), var(--cyan)); transition: width 1s linear; }
+.temporizador span.fin { background: var(--red); }
+.temporizador b { position: relative; font-family: var(--display); font-size: 22px; color: var(--bg); mix-blend-mode: normal; text-shadow: 0 0 6px rgba(255,255,255,.6); }
+.btn.contador { font-family: var(--display); font-size: 28px; padding: 36px 16px; border-radius: 28px; }
