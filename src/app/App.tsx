@@ -1,186 +1,270 @@
-// Una sola app con tres interfaces: #/anfitrion, #/jugador y #/pantalla.
-// Por ahora el Anfitrión corre una partida local con el motor real; Jugador y Pantalla se conectan en la fase F3.
-import { useEffect, useMemo, useState } from "react";
+// ALV: una sola app. Pestañas de abajo: Inicio, Juegos, Grupo, Historial y Perfil.
+// #/jugador y #/pantalla quedan reservadas para los celulares y la TV conectados (paso 5).
+import { useEffect, useState } from "react";
 import { CONTENIDO } from "../content";
 import { ESCENARIOS, JUEGOS, LUGARES, SECCIONES } from "../content/catalogo";
-import { juegosCompatibles } from "../engine/filtros";
-import { aplicar, crearPartida, resultados, type AccionSinId, type EstadoPartida } from "../engine/partida";
-import { vistaPublica } from "../engine/vistas";
-import type { Configuracion, EscenarioId, Intensidad, Jugador } from "../engine/types";
+import { crearAzar } from "../engine/azar";
+import { nivelPorXp, xpParaNivel } from "../engine/economia";
+import { juegosCompatibles, sorprendeme } from "../engine/filtros";
+import { crearPartida, type EstadoPartida } from "../engine/partida";
+import type { DefinicionJuego, Intensidad, SeccionId } from "../engine/types";
+import { Avatar } from "./Avatar";
+import { Avisos, COLOR_SECCION, configuracion, Icono, INTENSIDADES, aviso } from "./comun";
+import { acciones, parejaDe, saldosDe, useEstado } from "./estado";
+import { Partida } from "./Partida";
+import { EditorPersonaje, NivelYSaldos } from "./Personaje";
 
-type Ruta = "anfitrion" | "jugador" | "pantalla";
-const rutaActual = (): Ruta => {
-  const h = location.hash.replace("#/", "");
-  return h === "jugador" || h === "pantalla" ? h : "anfitrion";
+type Ruta = "inicio" | "juegos" | "grupo" | "historial" | "perfil";
+const RUTAS: Ruta[] = ["inicio", "juegos", "grupo", "historial", "perfil"];
+const leerRuta = (): { ruta: Ruta; arg?: string } => {
+  const [r, arg] = location.hash.replace(/^#\/?/, "").split("/");
+  return { ruta: (RUTAS as string[]).includes(r ?? "") ? (r as Ruta) : "inicio", arg };
 };
+export const ir = (r: Ruta, arg?: string) => { location.hash = `/${r}${arg ? `/${arg}` : ""}`; };
 
 export function App() {
-  const [ruta, setRuta] = useState<Ruta>(rutaActual());
+  const [{ ruta, arg }, setR] = useState(leerRuta());
+  const [partida, setPartida] = useState<EstadoPartida | null>(null);
   useEffect(() => {
-    const f = () => setRuta(rutaActual());
+    const f = () => setR(leerRuta());
     addEventListener("hashchange", f);
     return () => removeEventListener("hashchange", f);
   }, []);
+  useEffect(() => { scrollTo(0, 0); }, [ruta, partida === null]);
+
+  const jugar = (p: EstadoPartida) => setPartida(p);
+
   return (
-    <div className="app">
-      <h1 className="logo">A<b>L</b>V</h1>
-      <p className="sub">Amigos, Locuras y Verdades</p>
-      <nav className="tabs">
-        <a href="#/anfitrion" className={ruta === "anfitrion" ? "on" : ""}>Anfitrión</a>
-        <a href="#/jugador" className={ruta === "jugador" ? "on" : ""}>Jugador</a>
-        <a href="#/pantalla" className={ruta === "pantalla" ? "on" : ""}>Pantalla</a>
-      </nav>
-      {ruta === "anfitrion" && <Anfitrion />}
-      {ruta !== "anfitrion" && (
-        <div className="card">
-          <h2>{ruta === "jugador" ? "Tu celular" : "Pantalla (TV)"}</h2>
-          <p className="muted">Se conecta a la sala en la fase F3: cuentas, QR y tiempo real.</p>
-        </div>
+    <>
+      <main className="app">
+        {partida ? <Partida inicial={partida} salir={() => setPartida(null)} />
+          : ruta === "inicio" ? <Inicio jugar={jugar} />
+          : ruta === "juegos" ? <Juegos jugar={jugar} seccion={arg as SeccionId | undefined} />
+          : ruta === "grupo" ? <Grupo editar={arg} />
+          : ruta === "historial" ? <Historial />
+          : <Perfil />}
+      </main>
+      {!partida && (
+        <nav className="abajo" aria-label="Secciones">
+          {([["inicio", "Inicio"], ["juegos", "Juegos"], ["grupo", "Grupo"], ["historial", "Historial"], ["perfil", "Perfil"]] as [Ruta, string][]).map(([r, n]) => (
+            <a key={r} href={`#/${r}`} aria-current={ruta === r ? "page" : undefined}>{Icono[r]}{n}</a>
+          ))}
+        </nav>
       )}
+      <Avisos />
+    </>
+  );
+}
+
+function Encabezado() {
+  const s = useEstado();
+  const yo = s.jugadores[0]!;
+  const xp = saldosDe(yo).acumulada, nivel = nivelPorXp(xp);
+  const avance = ((xp - xpParaNivel(nivel)) / (xpParaNivel(nivel + 1) - xpParaNivel(nivel))) * 100;
+  return (
+    <div className="entre">
+      <div>
+        <h1 className="logo"><b>A</b>LV</h1>
+        <div className="tag">AMIGOS, LOCURAS Y VERDADES</div>
+      </div>
+      <a className="yo" href="#/perfil" style={{ textDecoration: "none" }}>
+        <span className="marco"><Avatar p={yo.personaje} size={38} nombre={yo.nombre} /></span>
+        <span className="pila" style={{ gap: 4 }}>
+          <span style={{ fontSize: 12, fontWeight: 800 }}>{yo.nombre} · Nv {nivel}</span>
+          <span className="barra"><span style={{ width: `${avance}%` }} /></span>
+        </span>
+      </a>
     </div>
   );
 }
 
-const NOMBRES = ["Jugador 1", "Jugador 2", "Jugador 3", "Jugador 4", "Jugador 5", "Jugador 6", "Jugador 7", "Jugador 8"];
-const INTENSIDADES = ["", "Tranquilo", "Picante", "Sin filtro", "Salvaje"];
+const DESC_SECCION: Record<SeccionId, string> = {
+  mix: "Ruleta de juegos", ptm: "Trampas y mentiras", hdspm: "Hazlo o pásalo", qpm: "Mímica y prohibida",
+  gdlv: "Competencias y duelos", parejas: "Amores, líos y verdades", ntp: "El impostor", pvt: "Ruleta, reloj y fiesta",
+};
 
-function armarJugadores(n: number, enParejas: boolean): Jugador[] {
-  return NOMBRES.slice(0, n).map((nombre, i) => {
-    const otro = i % 2 === 0 ? i + 1 : i - 1;
-    return { id: `j${i}`, nombre, parejaDe: enParejas && otro < n ? `j${otro}` : undefined };
-  });
-}
+function Inicio({ jugar }: { jugar: (p: EstadoPartida) => void }) {
+  const s = useEstado();
+  const cfg = configuracion(s);
+  const esc = ESCENARIOS.find(e => e.id === cfg.escenario)!;
+  const [giro, setGiro] = useState(0);
+  const [girando, setGirando] = useState(false);
+  const yo = s.jugadores[0]!;
+  const sal = saldosDe(yo);
 
-function Anfitrion() {
-  const [n, setN] = useState(4);
-  const [parejas, setParejas] = useState(true);
-  const [escenario, setEscenario] = useState<EscenarioId>("alverca");
-  const [intensidad, setIntensidad] = useState<Intensidad>(2);
-  const [adulto, setAdulto] = useState(false);
-  const [drunk, setDrunk] = useState(false);
-  const [partida, setPartida] = useState<EstadoPartida | null>(null);
-  const [cuenta, setCuenta] = useState(0);
-
-  const esc = ESCENARIOS.find(e => e.id === escenario)!;
-  const cfg: Configuracion = useMemo(() => ({
-    jugadores: armarJugadores(n, parejas), lugar: esc.lugar, escenario, intensidad, dificultad: 1, adulto, drunk,
-  }), [n, parejas, esc.lugar, escenario, intensidad, adulto, drunk]);
-  const compatibles = juegosCompatibles(cfg);
-  const lugar = LUGARES.find(l => l.id === esc.lugar)!;
-
-  const accion = (a: AccionSinId) => {
-    setCuenta(c => c + 1);
-    setPartida(p => (p ? aplicar(p, { ...a, id: `local-${cuenta}-${Date.now()}` } as Parameters<typeof aplicar>[1], CONTENIDO) : p));
+  const girar = () => {
+    if (girando) return;
+    const azar = crearAzar(Date.now() % 1e6);
+    const r = sorprendeme(cfg, azar);
+    if (!r) { aviso("No hay juegos para esta configuración."); return; }
+    setGirando(true);
+    setGiro(g => g + 1440 + azar.entero(360));
+    setTimeout(() => { setGirando(false); jugar(crearPartida(r.juego, r.cfg, Date.now() % 100000, CONTENIDO)); }, matchMedia("(prefers-reduced-motion: reduce)").matches ? 50 : 3300);
   };
-
-  if (partida) return <PartidaLocal e={partida} accion={accion} salir={() => setPartida(null)} />;
 
   return (
     <>
-      <div className="card">
-        <h2>Escenario</h2>
-        <div className="chips">
-          {ESCENARIOS.filter(e => e.activo).map(e => (
-            <button key={e.id} className={"chip" + (e.id === escenario ? " on" : "")} style={{ ["--esc" as string]: e.color }} onClick={() => setEscenario(e.id)}>
-              {e.emoji} {e.nombre}<small>{e.ambientacion}</small>
-            </button>
-          ))}
-        </div>
-        <p className="muted" style={{ marginTop: 12 }}>Reglas de {lugar.nombre}: nunca {lugar.nuncaSePermite.join(", ").toLowerCase()}.</p>
-      </div>
-
-      <div className="card">
-        <h2>Configurador</h2>
-        <div className="grid">
-          <label className="f">Jugadores
-            <select value={n} onChange={e => setN(Number(e.target.value))}>
-              {[2, 3, 4, 5, 6, 7, 8].map(x => <option key={x} value={x}>{x}</option>)}
-            </select>
-          </label>
-          <label className="f">Intensidad
-            <select value={intensidad} onChange={e => setIntensidad(Number(e.target.value) as Intensidad)}>
-              {[1, 2, 3, 4].map(x => <option key={x} value={x}>{INTENSIDADES[x]}</option>)}
-            </select>
-          </label>
-          <label className="toggle"><input type="checkbox" checked={parejas} onChange={e => setParejas(e.target.checked)} /> En parejas</label>
-          <label className="toggle"><input type="checkbox" checked={adulto} onChange={e => setAdulto(e.target.checked)} /> Contenido adulto</label>
-          <label className="toggle"><input type="checkbox" checked={drunk} onChange={e => setDrunk(e.target.checked)} /> Modo Drunk (HBD)</label>
-        </div>
-        {drunk && <p className="aviso">Drunk: siempre hay opción sin alcohol, pasar no tiene castigo y máximo 3 por persona por hora.</p>}
-      </div>
-
-      <div className="card">
-        <h2>Juegos para esta configuración ({compatibles.length} de {JUEGOS.length})</h2>
-        {compatibles.map(j => (
-          <div className="juego" key={j.id}>
-            <div>
-              <span className="sigla">{SECCIONES[j.seccion].sigla}{j.sigla ? ` · ${j.sigla}` : ""}</span>
-              <div><b>{j.nombre}</b></div>
-              <div className="muted">{j.descripcion}{n <= 3 && j.modoCorto ? ` ${j.modoCorto}` : ""}</div>
-            </div>
-            {j.motor
-              ? <button className="btn" onClick={() => setPartida(crearPartida(j, cfg, Date.now() % 100000, CONTENIDO))}>Jugar</button>
-              : <span className="muted">Pronto</span>}
-          </div>
+      <Encabezado />
+      <h1 className="titulo">¿Qué tan buena idea es jugar esto hoy?</h1>
+      <button className="heroe" onClick={girar} aria-label="¡Sorpréndeme! Elige un juego al azar">
+        <span className="pila" style={{ gap: 6, flex: 1 }}>
+          <span className="tag" style={{ color: "#FFE3F0" }}>ALV MIX</span>
+          <span className="sigla">{girando ? "GIRANDO…" : "¡SORPRÉNDEME!"}</span>
+          <span style={{ fontSize: 13, fontWeight: 600, color: "#FFE3F0" }}>{s.jugadores.length} jugadores · {INTENSIDADES[cfg.intensidad]} · {esc.emoji} {esc.nombre}</span>
+        </span>
+        <span className="ruleta" style={{ transform: `rotate(${giro}deg)` }} aria-hidden="true" />
+      </button>
+      <a href="#/perfil" className="card" style={{ flexDirection: "row", alignItems: "center", textDecoration: "none", color: "inherit", padding: "12px 14px" }}>
+        {Icono.estrella}
+        <span className="pila" style={{ gap: 4, flex: 1 }}>
+          <b style={{ fontSize: 13 }}>XP de este evento para cartas de poder</b>
+          <span className="hint">{sal.delEvento} XP del evento · {sal.disponible} XP disponible para accesorios</span>
+        </span>
+        <span className="chip lime">Tienda</span>
+      </a>
+      <div className="secciones">
+        {(Object.keys(SECCIONES) as SeccionId[]).filter(k => k !== "mix").map(k => (
+          <a key={k} className="seccion" href={`#/juegos/${k}`} style={{ ["--sc" as string]: COLOR_SECCION[k], textDecoration: "none" }}>
+            <span className="sigla">{SECCIONES[k].sigla}</span>
+            <b>{SECCIONES[k].trata}</b>
+            <small>{DESC_SECCION[k]}</small>
+          </a>
         ))}
       </div>
     </>
   );
 }
 
-/** Partida en un solo dispositivo: sirve para probar el motor antes de conectar los celulares. */
-function PartidaLocal({ e, accion, salir }: { e: EstadoPartida; accion: (a: AccionSinId) => void; salir: () => void }) {
-  const v = vistaPublica(e);
-  const nombre = (id?: string) => v.jugadores.find(j => j.id === id)?.nombre ?? "";
-  const pendientes = e.cfg.jugadores.filter(j => !(j.id in e.respuestas) && (e.motor !== "turnos-cartas" || j.id === e.turnoDe));
+function Juegos({ jugar, seccion }: { jugar: (p: EstadoPartida) => void; seccion?: SeccionId }) {
+  const s = useEstado();
+  const cfg = configuracion(s);
+  const esc = ESCENARIOS.find(e => e.id === cfg.escenario)!;
+  const lugar = LUGARES.find(l => l.id === esc.lugar)!;
+  const lista = juegosCompatibles(cfg).filter(j => !seccion || j.seccion === seccion);
+  const fuera = JUEGOS.filter(j => !lista.includes(j) && (!seccion || j.seccion === seccion));
+  const empezar = (j: DefinicionJuego) => jugar(crearPartida(j, cfg, Date.now() % 100000, CONTENIDO));
+  const n = s.jugadores.length;
 
   return (
-    <div className="card">
-      <h2>Ronda {v.ronda} de {v.totalRondas} · {JUEGOS.find(j => j.id === v.juegoId)?.nombre}</h2>
-      {v.fase === "terminada" ? (
-        <>
-          <p><b>Resultados</b></p>
-          {resultados(e).map(r => <div key={r.jugador}>{r.lugar}. {r.nombre} — {r.puntos} pts · +{r.xp} XP</div>)}
-          <p style={{ marginTop: 16 }}><button className="btn" onClick={salir}>Volver</button></p>
-        </>
-      ) : (
-        <>
-          <div className="carta">
-            {v.turnoDe && <div className="muted" style={{ fontSize: 14 }}>Turno de {nombre(v.turnoDe)}</div>}
-            {v.carta?.texto ?? "Sin cartas para esta configuración"}
-            {v.carta?.opcionB && <div style={{ marginTop: 8 }}>o… {v.carta.opcionB}</div>}
-          </div>
-          <p className="muted">{v.contestaron.length} ya contestaron. En la versión con celulares, cada quien contesta en el suyo.</p>
-          {v.fase === "contestando" && pendientes.map(j => (
-            <div key={j.id} style={{ display: "flex", gap: 8, alignItems: "center", margin: "8px 0", flexWrap: "wrap" }}>
-              <b style={{ minWidth: 90 }}>{j.nombre}</b>
-              <Respuesta e={e} jugador={j.id} enviar={valor => accion({ tipo: "contestar", jugador: j.id, valor })} />
-            </div>
+    <>
+      <div className="entre">
+        <h1 className="titulo">{seccion ? `${SECCIONES[seccion].sigla} · ${SECCIONES[seccion].trata}` : "Arma la partida"}</h1>
+        {seccion && <a className="btn sm" href="#/juegos" style={{ textDecoration: "none" }}>Todas</a>}
+      </div>
+
+      <div className="pila">
+        <span className="label">Escenario</span>
+        <div className="escenarios">
+          {ESCENARIOS.filter(e => e.activo).map(e => (
+            <button key={e.id} className="escenario" aria-pressed={e.id === cfg.escenario} style={{ ["--sc" as string]: e.color }} onClick={() => acciones.ajustes({ escenario: e.id })}>
+              <span className="emoji" aria-hidden="true">{e.emoji}</span>
+              <span><b>{e.nombre}</b><small>{e.ambientacion}</small></span>
+            </button>
           ))}
-          <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
-            {v.fase === "contestando" && <button className="btn" disabled={pendientes.length > 0} onClick={() => accion({ tipo: "revelar" })}>Revelar</button>}
-            {v.fase === "revelada" && <button className="btn" onClick={() => accion({ tipo: "siguiente" })}>Siguiente</button>}
-            <button className="btn sec" onClick={() => accion({ tipo: "terminar" })}>Terminar</button>
+        </div>
+        <p className="hint">Reglas de {lugar.nombre.toLowerCase()}: nunca {lugar.nuncaSePermite.join(", ").toLowerCase()}. Próximamente: {ESCENARIOS.filter(e => !e.activo).map(e => e.sigla).join(", ")}.</p>
+      </div>
+
+      <div className="card">
+        <span className="label">Intensidad</span>
+        <div className="opciones">
+          {([1, 2, 3, 4] as Intensidad[]).map(x => (
+            <button key={x} className="opcion" aria-pressed={cfg.intensidad === x} onClick={() => acciones.ajustes({ intensidad: x })}>{INTENSIDADES[x]}</button>
+          ))}
+        </div>
+        <label className="interruptor">Contenido adulto (FAP)<input type="checkbox" checked={s.ajustes.adulto} onChange={x => {
+          if (x.target.checked && !confirm("Contenido adulto: solo si todos son mayores de 18 y están de acuerdo. ¿Encender?")) return;
+          acciones.ajustes({ adulto: x.target.checked });
+        }} /></label>
+        <label className="interruptor">Modo Drunk (HBD)<input type="checkbox" checked={s.ajustes.drunk} onChange={x => acciones.ajustes({ drunk: x.target.checked })} /></label>
+        {s.ajustes.drunk && <p className="aviso">Siempre hay opción sin alcohol, pasar no tiene castigo, máximo 3 por persona por hora y tomar nunca da XP.</p>}
+        <a className="hint" href="#/grupo">{n} jugadores{s.enParejas ? " en parejas" : ""} · cambiar en Grupo →</a>
+      </div>
+
+      <span className="label">{lista.length} juegos para tu grupo</span>
+      <div className="pila">
+        {lista.map(j => (
+          <div key={j.id} className="juego" style={{ ["--sc" as string]: COLOR_SECCION[j.seccion] }}>
+            <span className="icono">{j.sigla ?? SECCIONES[j.seccion].sigla}</span>
+            <span className="texto"><b>{j.nombre}</b><small>{j.descripcion}{n <= 3 && j.modoCorto ? ` ${j.modoCorto}` : ""}</small></span>
+            {j.motor ? <button className="btn sm lime" onClick={() => empezar(j)}>Jugar</button> : <span className="chip cyan">Pronto</span>}
           </div>
-          {v.fase === "revelada" && <pre className="muted" style={{ whiteSpace: "pre-wrap" }}>{JSON.stringify(v.revelado, null, 1)}</pre>}
-        </>
-      )}
-      <div className="puntos" style={{ marginTop: 16 }}>{v.jugadores.map(j => <span key={j.id}>{j.nombre}: {v.puntos[j.id]}</span>)}</div>
-    </div>
+        ))}
+      </div>
+      {fuera.length > 0 && <p className="hint">No salen con esta configuración: {fuera.map(j => j.nombre).join(", ")}.</p>}
+    </>
   );
 }
 
-function Respuesta({ e, jugador, enviar }: { e: EstadoPartida; jugador: string; enviar: (v: unknown) => void }) {
-  const [texto, setTexto] = useState("");
-  if (e.motor === "turnos-cartas") return <><button className="btn" onClick={() => enviar("cumplio")}>Cumplió</button><button className="btn sec" onClick={() => enviar("paso")}>Pasa</button></>;
-  if (e.motor === "votacion") {
-    if (e.cfg.jugadores.length === 2) return <><button className="btn sec" onClick={() => enviar({ eleccion: "a", prediccion: "a" })}>A (y cree A)</button><button className="btn sec" onClick={() => enviar({ eleccion: "b", prediccion: "a" })}>B (y cree A)</button></>;
-    return <><button className="btn sec" onClick={() => enviar("a")}>A</button><button className="btn sec" onClick={() => enviar("b")}>B</button></>;
+function Grupo({ editar }: { editar?: string }) {
+  const s = useEstado();
+  const j = s.jugadores.find(x => x.id === editar);
+  if (j) {
+    return (
+      <>
+        <a className="btn sm" href="#/grupo" style={{ alignSelf: "flex-start", textDecoration: "none" }}>← Grupo</a>
+        <NivelYSaldos j={j} />
+        <EditorPersonaje j={j} />
+      </>
+    );
   }
-  if (e.motor === "rol-secreto") {
-    return <select defaultValue="" onChange={ev => ev.target.value && enviar(ev.target.value)}><option value="">Votar por…</option>
-      {e.cfg.jugadores.filter(j => j.id !== jugador).map(j => <option key={j.id} value={j.id}>{j.nombre}</option>)}</select>;
-  }
-  return <><input value={texto} maxLength={120} onChange={ev => setTexto(ev.target.value)} placeholder="Respuesta secreta" style={{ background: "var(--btn)", border: "1px solid var(--line)", borderRadius: 10, padding: 10 }} />
-    <button className="btn" disabled={!texto.trim()} onClick={() => enviar(texto)}>Enviar</button></>;
+  return (
+    <>
+      <h1 className="titulo">Tu grupo</h1>
+      <p className="hint">Por ahora todos juegan en este dispositivo y cada quien tiene su personaje, su XP y su tienda. Con las cuentas (siguiente paso), cada quien entra desde su celular.</p>
+      <label className="interruptor card" style={{ flexDirection: "row" }}>Juegan en parejas (1.º con 2.º, 3.º con 4.º…)
+        <input type="checkbox" checked={s.enParejas} onChange={x => acciones.enParejas(x.target.checked)} />
+      </label>
+      <div className="pila">
+        {s.jugadores.map((x, i) => {
+          const pareja = s.jugadores.find(o => o.id === parejaDe(i, s));
+          return (
+            <div key={x.id} className="jugador">
+              <a className="marco" href={`#/grupo/${x.id}`} aria-label={`Editar personaje de ${x.nombre}`}><Avatar p={x.personaje} size={48} nombre={x.nombre} /></a>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <input value={x.nombre} maxLength={30} aria-label="Nombre" onChange={ev => acciones.renombrar(x.id, ev.target.value)} />
+                <small className="muted" style={{ paddingLeft: 8 }}>Nv {nivelPorXp(saldosDe(x).acumulada)}{pareja ? ` · pareja de ${pareja.nombre}` : ""}</small>
+              </div>
+              <a className="btn sm" href={`#/grupo/${x.id}`} style={{ textDecoration: "none" }}>Personaje</a>
+              {s.jugadores.length > 2 && <button className="btn sm" aria-label={`Quitar a ${x.nombre}`} onClick={() => acciones.quitar(x.id)}>✕</button>}
+            </div>
+          );
+        })}
+      </div>
+      {s.jugadores.length < 8 && <button className="btn" onClick={acciones.agregar}>+ Agregar jugador ({s.jugadores.length} de 8)</button>}
+      <div className="card">
+        <b>Evento</b>
+        <p className="hint">La XP que ganan en este evento sirve para comprar cartas de poder. Al cerrarlo, la que sobre queda solo para accesorios.</p>
+        <button className="btn sm" onClick={() => { if (confirm("¿Cerrar el evento? La XP del evento ya no comprará cartas.")) { acciones.cerrarEvento(); aviso("Evento cerrado. Empieza uno nuevo."); } }}>Cerrar evento y empezar otro</button>
+      </div>
+    </>
+  );
+}
+
+function Historial() {
+  const s = useEstado();
+  return (
+    <>
+      <h1 className="titulo">Historial</h1>
+      {s.historial.length === 0 && <p className="hint">Aquí aparecen las partidas que terminen.</p>}
+      {s.historial.map((p, i) => (
+        <div key={i} className="card">
+          <div className="entre"><b>{p.juego}</b><small className="muted">{new Date(p.fecha).toLocaleString("es-MX", { dateStyle: "short", timeStyle: "short" })}</small></div>
+          {p.resultados.map((r, k) => <div key={k} className="entre"><span>{k + 1}. {r.nombre} · {r.puntos} pts</span><span className="chip lime">+{r.xp} XP</span></div>)}
+        </div>
+      ))}
+    </>
+  );
+}
+
+function Perfil() {
+  const s = useEstado();
+  const yo = s.jugadores[0]!;
+  return (
+    <>
+      <h1 className="titulo">Tu personaje</h1>
+      <NivelYSaldos j={yo} />
+      <EditorPersonaje j={yo} />
+    </>
+  );
 }

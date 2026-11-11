@@ -15,6 +15,9 @@ export interface VistaPublica {
   contestaron: string[];
   revelado?: unknown;
   puntos: Record<string, number>;
+  /** Cuántas cartas de poder tiene cada quien (no cuáles). */
+  cartasEnMano: Record<string, number>;
+  cartaUsada?: EstadoPartida["cartaUsada"];
   jugadores: { id: string; nombre: string }[];
 }
 
@@ -30,6 +33,8 @@ export function vistaPublica(e: EstadoPartida): VistaPublica {
     contestaron: Object.keys(e.respuestas),
     revelado: e.fase === "contestando" ? undefined : e.revelado,
     puntos: { ...e.puntos },
+    cartasEnMano: Object.fromEntries(Object.entries(e.manos).map(([j, m]) => [j, m.length])),
+    cartaUsada: e.cartaUsada,
     jugadores: e.cfg.jugadores.map(j => ({ id: j.id, nombre: j.nombre })),
   };
 }
@@ -38,8 +43,9 @@ export interface VistaJugador extends VistaPublica {
   yo: string;
   mio?: unknown;
   miRespuesta?: unknown;
+  miMano: string[];
 }
 
 export function vistaJugador(e: EstadoPartida, jugadorId: string): VistaJugador {
-  return { ...vistaPublica(e), yo: jugadorId, mio: e.privado[jugadorId], miRespuesta: e.respuestas[jugadorId] };
+  return { ...vistaPublica(e), yo: jugadorId, mio: e.privado[jugadorId], miRespuesta: e.respuestas[jugadorId], miMano: [...(e.manos[jugadorId] ?? [])] };
 }

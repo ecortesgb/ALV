@@ -192,3 +192,49 @@ describe("Seguridad y configurador", () => {
     expect(pool.some(x => x.texto.includes("bombón"))).toBe(true);
   });
 });
+
+describe("Cartas de poder dentro de la partida", () => {
+  const turno = (e: EstadoPartida) => e.turnoDe!;
+  it("cada 3 retos cumplidos se gana una carta (máximo 3 en la mano)", () => {
+    let e = crearPartida(juego("verdad-reto"), cfg(2), 4, CONTENIDO, 40);
+    while (e.fase !== "terminada") {
+      e = juega(e, { tipo: "contestar", jugador: turno(e), valor: "cumplio" });
+      e = juega(e, { tipo: "revelar" });
+      e = juega(e, { tipo: "siguiente" });
+    }
+    for (const j of ["j0", "j1"]) {
+      const esperadas = Math.min(3, Math.floor(e.retos[j]! / 3));
+      expect(e.manos[j]).toHaveLength(esperadas);
+    }
+  });
+  it("una carta comprada llega con dar-carta y Escudo salta el reto sin castigo", () => {
+    let e = crearPartida(juego("verdad-reto"), cfg(3), 8, CONTENIDO, 2);
+    const j = turno(e);
+    e = juega(e, { tipo: "dar-carta", jugador: j, carta: "escudo" });
+    expect(vistaJugador(e, j).miMano).toEqual(["escudo"]);
+    expect(vistaPublica(e).cartasEnMano[j]).toBe(1);
+    expect(JSON.stringify(vistaPublica(e))).not.toContain("escudo");
+    e = juega(e, { tipo: "usar-carta", jugador: j, carta: "escudo" });
+    expect(e.respuestas[j]).toBe("paso");
+    expect(e.manos[j]).toEqual([]);
+    expect(vistaPublica(e).cartaUsada).toEqual({ jugador: j, carta: "escudo", ronda: 1 });
+  });
+  it("Cambio de pregunta saca otra carta; nadie usa Escudo fuera de su turno", () => {
+    let e = crearPartida(juego("verdad-reto"), cfg(3), 8, CONTENIDO, 2);
+    const j = turno(e), otro = e.cfg.jugadores.find(x => x.id !== j)!.id;
+    e = juega(e, { tipo: "dar-carta", jugador: j, carta: "cambio" });
+    e = juega(e, { tipo: "dar-carta", jugador: otro, carta: "escudo" });
+    const antes = e.carta?.id;
+    e = juega(e, { tipo: "usar-carta", jugador: j, carta: "cambio" });
+    expect(e.carta?.id).not.toBe(antes);
+    const sinCambio = juega(e, { tipo: "usar-carta", jugador: otro, carta: "escudo" });
+    expect(sinCambio.manos[otro]).toEqual(["escudo"]);
+  });
+  it("no se puede dar una carta inventada ni pasar de 3", () => {
+    let e = crearPartida(juego("verdad-reto"), cfg(2), 1, CONTENIDO, 2);
+    e = juega(e, { tipo: "dar-carta", jugador: "j0", carta: "robo-de-puntos" });
+    expect(e.manos.j0).toEqual([]);
+    for (let i = 0; i < 5; i++) e = juega(e, { tipo: "dar-carta", jugador: "j0", carta: "escudo" });
+    expect(e.manos.j0).toHaveLength(3);
+  });
+});

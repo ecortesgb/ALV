@@ -24,3 +24,16 @@ Siguiente: F2, cuentas y base de datos en Supabase con RLS.
 - Prueba con usuarios sin acceso (dentro de una transacción que se deshizo): alguien fuera del evento no ve eventos, partidas, perfiles, datos privados ni XP; un jugador no ve el dato privado de otro, no edita la partida, no se regala XP ni cierra el evento; las cartas cuestan 40 y 60 y la tercera se rechaza sin saldo; al cerrar el evento la XP del evento queda en 0 y ya no compra cartas; sin sesión no se puede leer nada.
 
 Pendiente de F2: dar la XP de cada partida desde el servidor y la pantalla de entrada con correo.
+
+## 2026-11-10 · Pasos 1 y 2: diseño visual, personaje y tienda
+
+- Sistema visual del diseño: fondo espacial, un neón por sección, Bungee para siglas, cartas con borde degradado y animación al repartir, botones de tres gestos (Paso, Carta, Cumplió), podio animado. Respeta «reducir movimiento».
+- Navegación de 5 pestañas: Inicio, Juegos, Grupo, Historial y Perfil.
+- Inicio con ¡Sorpréndeme! (ruleta que gira y elige un juego compatible) y las 8 secciones.
+- Personaje de bloques del Centro de Mando: editor de 6 pasos más Tienda, botón Al azar. Cada jugador del grupo tiene el suyo.
+- Tienda con precios en XP disponible y nivel mínimo; accesorios en la mano, coronas, collar, medallas y capa se ven en el personaje.
+- Cartas de poder en el motor: se gana 1 cada 3 retos, se compran con XP del evento (40, 60, 80), máximo 3 en la mano. Escudo y Pasa turno saltan el reto sin castigo; Cambio saca otra carta.
+- Juegos con secretos (Impostor, ¿Cuánto conoces?, ¿Qué prefieres?) se juegan pasando el celular: cada quien ve solo lo suyo.
+- Al terminar, la XP se suma a cada jugador y queda en el historial.
+- Por ahora todo se guarda en el dispositivo; con las cuentas (paso 4) pasa al servidor.
+- Pruebas: 23 del motor pasan; prueba en navegador de inicio, perfil, tienda, juegos, verdad o reto completo, impostor completo y podio sin errores.

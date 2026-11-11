@@ -3,6 +3,7 @@
 import { crearAzar } from "./azar";
 import { cartasPermitidas } from "./filtros";
 import { xpDePartida } from "./economia";
+import { CARTAS_PODER } from "../content/catalogo";
 import type { Carta, Configuracion, DefinicionJuego, Jugador, TemaImpostor } from "./types";
 
 export type Fase = "contestando" | "revelada" | "terminada";
@@ -30,6 +31,12 @@ export interface EstadoPartida {
   revelado?: unknown;
   puntos: Record<string, number>;
   retos: Record<string, number>;
+  /** Cartas de poder en la mano de cada jugador (máximo 3). Privadas: la vista pública solo dice cuántas. */
+  manos: Record<string, string[]>;
+  /** Cuántas veces se cambió la carta en esta ronda (para sacar otra con la misma semilla). */
+  cambios: number;
+  /** Última carta de poder usada, pública: «Ana usó Escudo». */
+  cartaUsada?: { jugador: string; carta: string; ronda: number };
   accionesVistas: string[];
   bitacora: EventoMotor[];
 }
@@ -38,7 +45,14 @@ export type Accion =
   | { id: string; tipo: "contestar"; jugador: string; valor: unknown }
   | { id: string; tipo: "revelar" }
   | { id: string; tipo: "siguiente" }
-  | { id: string; tipo: "terminar" };
+  | { id: string; tipo: "terminar" }
+  /** El anfitrión entrega una carta ya pagada (la compra la valida el servidor). */
+  | { id: string; tipo: "dar-carta"; jugador: string; carta: string }
+  | { id: string; tipo: "usar-carta"; jugador: string; carta: string };
+
+export const MAX_EN_MANO = 3;
+export const RETOS_POR_CARTA = 3;
+const IDS_PODER = CARTAS_PODER.map(c => c.id) as string[];
 
 /** Una acción antes de ponerle su id único. */
 export type AccionSinId = Accion extends infer A ? (A extends Accion ? Omit<A, "id"> : never) : never;
@@ -60,7 +74,7 @@ interface Mecanica {
 
 const ids = (e: EstadoPartida) => e.cfg.jugadores.map(j => j.id);
 const nombre = (e: EstadoPartida, id?: string) => e.cfg.jugadores.find(j => j.id === id)?.nombre ?? "";
-const azarDeRonda = (e: EstadoPartida) => crearAzar(e.semilla * 1000 + e.ronda);
+const azarDeRonda = (e: EstadoPartida) => crearAzar(e.semilla * 1000 + e.ronda + e.cambios * 7919);
 
 function personalizar(texto: string, e: EstadoPartida, para: Jugador | undefined, otro: Jugador | undefined) {
   return texto
@@ -218,6 +232,13 @@ function prepararRonda(e: EstadoPartida, c: Contenido): EstadoPartida {
   return { ...e, fase: "contestando", carta: p.carta, privado: p.privado, turnoDe: p.turnoDe, respuestas: {}, revelado: undefined };
 }
 
+/** Da una carta de poder si hay lugar en la mano. */
+function conCarta(manos: Record<string, string[]>, jugador: string, carta: string): Record<string, string[]> {
+  const mano = manos[jugador] ?? [];
+  if (mano.length >= MAX_EN_MANO) return manos;
+  return { ...manos, [jugador]: [...mano, carta] };
+}
+
 function registrar(e: EstadoPartida, tipo: string, jugador?: string, datos?: unknown): EventoMotor[] {
   return [...e.bitacora, { n: e.bitacora.length + 1, tipo, jugador, datos }];
 }
@@ -227,7 +248,8 @@ export function crearPartida(juego: DefinicionJuego, cfg: Configuracion, semilla
   const cero = Object.fromEntries(cfg.jugadores.map(j => [j.id, 0]));
   const base: EstadoPartida = {
     version: 1, juegoId: juego.id, motor: juego.motor, semilla, cfg, totalRondas, ronda: 1, fase: "contestando",
-    privado: {}, respuestas: {}, puntos: { ...cero }, retos: { ...cero }, accionesVistas: [],
+    privado: {}, respuestas: {}, puntos: { ...cero }, retos: { ...cero },
+    manos: Object.fromEntries(cfg.jugadores.map(j => [j.id, [] as string[]])), cambios: 0, accionesVistas: [],
     bitacora: [{ n: 1, tipo: "partida-creada", datos: { juego: juego.id, semilla } }],
   };
   return prepararRonda(base, contenido);
@@ -251,17 +273,41 @@ export function aplicar(e: EstadoPartida, a: Accion, contenido: Contenido): Esta
       const p = m.puntuar(e);
       const puntos = { ...e.puntos }, retos = { ...e.retos };
       for (const [j, v] of Object.entries(p.puntos)) puntos[j] = (puntos[j] ?? 0) + v;
-      for (const [j, v] of Object.entries(p.retos ?? {})) retos[j] = (retos[j] ?? 0) + v;
-      return sube({ ...e, fase: "revelada", puntos, retos, revelado: p.revelado, bitacora: registrar(e, "revelada", undefined, p.revelado) });
+      let manos = e.manos;
+      const azar = azarDeRonda(e);
+      for (const [j, v] of Object.entries(p.retos ?? {})) {
+        const antes = retos[j] ?? 0;
+        retos[j] = antes + v;
+        // Cada 3 retos cumplidos se gana una carta de poder.
+        if (v > 0 && Math.floor(retos[j]! / RETOS_POR_CARTA) > Math.floor(antes / RETOS_POR_CARTA)) manos = conCarta(manos, j, azar.elegir(IDS_PODER));
+      }
+      return sube({ ...e, fase: "revelada", puntos, retos, manos, revelado: p.revelado, bitacora: registrar(e, "revelada", undefined, p.revelado) });
     }
     case "siguiente": {
       if (e.fase !== "revelada") return e;
       if (e.ronda >= e.totalRondas) return sube({ ...e, fase: "terminada", bitacora: registrar(e, "terminada") });
-      const n = prepararRonda({ ...e, ronda: e.ronda + 1 }, contenido);
+      const n = prepararRonda({ ...e, ronda: e.ronda + 1, cambios: 0 }, contenido);
       return sube({ ...n, bitacora: registrar(e, "ronda", undefined, { ronda: e.ronda + 1 }) });
     }
     case "terminar":
       return sube({ ...e, fase: "terminada", bitacora: registrar(e, "terminada") });
+    case "dar-carta": {
+      if (!IDS_PODER.includes(a.carta) || !(a.jugador in e.manos) || (e.manos[a.jugador]?.length ?? 0) >= MAX_EN_MANO) return e;
+      return sube({ ...e, manos: conCarta(e.manos, a.jugador, a.carta), bitacora: registrar(e, "carta-recibida", a.jugador, { carta: a.carta }) });
+    }
+    case "usar-carta": {
+      const mano = e.manos[a.jugador] ?? [];
+      const i = mano.indexOf(a.carta);
+      if (i < 0 || e.fase !== "contestando") return e;
+      const esTurno = e.motor === "turnos-cartas" && a.jugador === e.turnoDe && !(a.jugador in e.respuestas);
+      // Escudo, Pasa turno y Cambio solo los usa quien está en turno; las demás son sociales y el anfitrión las hace cumplir.
+      if (["escudo", "turno", "cambio"].includes(a.carta) && !esTurno) return e;
+      const manos = { ...e.manos, [a.jugador]: mano.filter((_, k) => k !== i) };
+      let n: EstadoPartida = { ...e, manos, cartaUsada: { jugador: a.jugador, carta: a.carta, ronda: e.ronda }, bitacora: registrar(e, "carta-usada", a.jugador, { carta: a.carta }) };
+      if (a.carta === "escudo" || a.carta === "turno") n = { ...n, respuestas: { ...n.respuestas, [a.jugador]: "paso" } };
+      if (a.carta === "cambio") n = prepararRonda({ ...n, cambios: e.cambios + 1 }, contenido);
+      return sube(n);
+    }
   }
 }
 

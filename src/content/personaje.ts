@@ -1,0 +1,78 @@
+// Personaje de bloques: las capas del armador del Centro de Mando (sin piezas GB ni Movistar).
+// Capas de 400×520 que se apilan: piernas, piel, torso, rostro (o facial), cabello y lo que lleva en la mano.
+import piezas from "./piezas.json";
+import type { Azar } from "../engine/azar";
+
+export type Paso = "piel" | "rostro" | "facial" | "cabello" | "torso" | "piernas";
+export type Zona = "mano" | "cabeza" | "cuello" | "pecho" | "espalda";
+
+export interface Pieza { id: string; nombre: string }
+export const PIEZAS = piezas as unknown as Record<Paso | "accesorio", Pieza[]>;
+
+export const PASOS: { k: Paso; nombre: string; titulo: string; opcional?: boolean; nota?: string }[] = [
+  { k: "piel", nombre: "Piel", titulo: "Tono de piel" },
+  { k: "rostro", nombre: "Rostro", titulo: "Expresiones" },
+  { k: "facial", nombre: "Facial", titulo: "Lentes, barbas y bigotes", opcional: true, nota: "Cada uno trae su propia expresión: reemplaza la del paso anterior." },
+  { k: "cabello", nombre: "Cabello", titulo: "Peinados y sombreros", opcional: true },
+  { k: "torso", nombre: "Torso", titulo: "Playeras, chamarras y jerseys" },
+  { k: "piernas", nombre: "Piernas", titulo: "Color de piernas" },
+];
+
+export interface Personaje {
+  piel: string; rostro: string; facial: string | null; cabello: string | null; torso: string; piernas: string;
+  /** Lo que lleva puesto de la tienda, por zona. */
+  puesto: Partial<Record<Zona, string | null>>;
+}
+
+/** Artículos de la tienda. Todo es para lucir: nada da ventaja. Precio en XP disponible. */
+export interface Articulo { id: string; nombre: string; zona: Zona; precio: number; nivel: number; pieza?: boolean }
+const PRECIO_MANO: Record<string, number> = { "acc-tablet": 120, "acc-smartphone": 120, "acc-90370": 120, "acc-estrella": 120, "acc-medalla": 160, "acc-trofeo": 160 };
+export const TIENDA: Articulo[] = [
+  ...PIEZAS.accesorio.map(a => ({ id: a.id, nombre: a.nombre === "Medalla" ? "Medalla en mano" : a.nombre, zona: "mano" as Zona, precio: PRECIO_MANO[a.id] ?? 80, nivel: 1, pieza: true })),
+  { id: "corona-carton", nombre: "Corona de cartón", zona: "cabeza", precio: 160, nivel: 1 },
+  { id: "medallas", nombre: "Medallas de adorno", zona: "pecho", precio: 200, nivel: 3 },
+  { id: "collar", nombre: "Collar de oro", zona: "cuello", precio: 280, nivel: 5 },
+  { id: "capa", nombre: "Capa de campeón", zona: "espalda", precio: 400, nivel: 10 },
+  { id: "corona-neon", nombre: "Corona neón", zona: "cabeza", precio: 480, nivel: 15 },
+];
+export const ZONAS: [Zona, string][] = [["mano", "En la mano"], ["cabeza", "Cabeza"], ["cuello", "Cuello"], ["pecho", "Pecho"], ["espalda", "Espalda"]];
+
+const ids = (k: Paso) => PIEZAS[k].map(p => p.id);
+const en = <T,>(lista: T[], i: number) => lista[((i % lista.length) + lista.length) % lista.length] as T;
+
+/** Un personaje distinto para cada lugar del grupo, para que nadie empiece igual. */
+export function personajeInicial(i: number): Personaje {
+  return {
+    piel: en(ids("piel"), [2, 1, 4, 3, 7, 1, 5, 3][i % 8]!),
+    rostro: en(ids("rostro"), i),
+    facial: null,
+    cabello: en(ids("cabello"), [0, 35, 25, 65, 5, 45, 15, 55][i % 8]!),
+    torso: en(ids("torso"), i + 3),
+    piernas: en(ids("piernas"), i + 1),
+    puesto: {},
+  };
+}
+
+export function personajeAlAzar(p: Personaje, azar: Azar): Personaje {
+  const r = (k: Paso) => azar.elegir(ids(k));
+  return { ...p, piel: r("piel"), rostro: r("rostro"), facial: azar.siguiente() < 0.25 ? r("facial") : null,
+    cabello: azar.siguiente() < 0.92 ? r("cabello") : null, torso: r("torso"), piernas: r("piernas") };
+}
+
+/** Revisa un cambio que llega de un celular: solo piezas que existen y adornos que el jugador ya tiene. */
+export function cambioValido(cambio: Partial<Personaje>, tiene: string[]): boolean {
+  for (const paso of PASOS) {
+    if (!(paso.k in cambio)) continue;
+    const v = cambio[paso.k];
+    if (v === null && paso.opcional) continue;
+    if (typeof v !== "string" || !ids(paso.k).includes(v)) return false;
+  }
+  for (const [zona, v] of Object.entries(cambio.puesto ?? {})) {
+    if (v == null) continue;
+    const art = TIENDA.find(a => a.id === v);
+    if (!art || art.zona !== zona || !tiene.includes(v)) return false;
+  }
+  return true;
+}
+
+export const rutaPieza = (id: string, mini = false) => `${import.meta.env.BASE_URL}lego/${id}${mini ? "_m" : ""}.webp`;
