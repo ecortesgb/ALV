@@ -54,3 +54,11 @@ Falta de esta tanda: en ¿Cuánto conoces a tu pareja? la respuesta se ve mientr
 - Los personajes y accesorios ya guardados en un dispositivo se pasan solos a los nombres nuevos al abrir la app.
 - Se quitó `manifest.json` de la carpeta pública: era una copia sin uso de `src/content/piezas.json`.
 - Documento Maestro v1.4: catálogo clásico de 14 juegos y catálogo abierto a más juegos.
+
+## 2026-11-12 · XP extra del administrador
+
+- En Grupo, cada jugador tiene un botón «+XP»: el administrador elige 10, 25, 50 o 100 y escribe el motivo (obligatorio, hasta 60 letras).
+- Cuenta como XP ganada en el evento: sube la acumulada, la disponible y la del evento. Queda en el Historial con su motivo.
+- Límite por entrega: de 1 a 200. Todavía no hay tope por sesión; está pendiente en el Documento Maestro (12.3.1).
+- Por ahora vive en el dispositivo, como el resto. Con las cuentas pasa a una función del servidor que revise que quien la da es el administrador.
+- Pruebas: 25 del motor pasan; prueba en navegador de dar XP y verla en el historial.
