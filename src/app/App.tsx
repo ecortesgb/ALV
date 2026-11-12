@@ -9,7 +9,7 @@ import { logrosDe } from "../engine/logros";
 import type { EstadoPartida } from "../engine/partida";
 import type { SeccionId } from "../engine/types";
 import { Avatar } from "./Avatar";
-import { Cuenta } from "./Cuenta";
+import { Cuenta, SincroCuenta } from "./Cuenta";
 import { sesionActual } from "./nube";
 import { Avisos, BotonSonido, COLOR_SECCION, Confirmaciones, configuracion, Icono, INTENSIDADES, aviso } from "./comun";
 import { Fondo } from "./efectos";
@@ -65,6 +65,7 @@ export function App() {
         </nav>
       )}
       <Avisos />
+      <SincroCuenta />
       <Confirmaciones />
     </>
   );

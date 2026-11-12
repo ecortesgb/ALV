@@ -7,7 +7,7 @@ import { RAREZAS, SOBRES, type CartaSobre, type TipoSobre } from "../engine/sobr
 import { sonar } from "./sonido";
 import { CARTAS_PODER } from "../content/catalogo";
 import { Avatar, IconoAdorno } from "./Avatar";
-import { acciones, saldosDe, type JugadorLocal } from "./estado";
+import { acciones, comprarAccesorio, comprarSobre, saldosDe, type JugadorLocal } from "./estado";
 import { aviso } from "./comun";
 
 
@@ -77,8 +77,12 @@ function Piezas({ j, paso }: { j: JugadorLocal; paso: Paso }) {
 function Sobres({ j }: { j: JugadorLocal }) {
   const [abierto, setAbierto] = useState<{ tipo: TipoSobre; cartas: CartaSobre[]; paso: number } | null>(null);
   const s = saldosDe(j), nivel = nivelPorXp(s.acumulada);
-  const abrir = (tipo: TipoSobre) => {
-    const r = acciones.comprarSobre(j.id, tipo, crearAzar((Math.random() * 0xffffffff) >>> 0));
+  const [ocupado, setOcupado] = useState(false);
+  const abrir = async (tipo: TipoSobre) => {
+    if (ocupado) return;
+    setOcupado(true);
+    const r = await comprarSobre(j.id, tipo, crearAzar((Math.random() * 0xffffffff) >>> 0));
+    setOcupado(false);
     if (!r.ok) { aviso(r.motivo); return; }
     sonar("poder");
     setAbierto({ tipo, cartas: r.cartas, paso: 0 });
@@ -99,7 +103,7 @@ function Sobres({ j }: { j: JugadorLocal }) {
               <b>{d.nombre}</b>
               <small className="muted">{d.cartas} cartas</small>
               {bloqueado ? <span className="chip pink">Nivel {d.nivel}</span> : (
-                <button className={"btn sm" + (alcanza ? " lime" : "")} disabled={!alcanza} onClick={() => abrir(d.id)}>
+                <button className={"btn sm" + (alcanza ? " lime" : "")} disabled={!alcanza || ocupado} onClick={() => void abrir(d.id)}>
                   {alcanza ? `Abrir · ${d.precio} XP` : `Faltan ${d.precio - s.disponible}`}
                 </button>
               )}
@@ -161,7 +165,7 @@ export function Tienda({ j }: { j: JugadorLocal }) {
                     <span className="chip pink">Nivel {a.nivel}</span>
                   ) : (
                     <button className={"btn sm" + (alcanza ? " lime" : "")} disabled={!alcanza}
-                      onClick={() => { const m = acciones.comprarAccesorio(j.id, a.id); aviso(m ?? `¡${a.nombre} es tuyo!`); }}>
+                      onClick={async () => { const m = await comprarAccesorio(j.id, a.id); aviso(m ?? `¡${a.nombre} es tuyo!`); }}>
                       {alcanza ? `Comprar · ${a.precio} XP` : `Faltan ${a.precio - s.disponible}`}
                     </button>
                   )}

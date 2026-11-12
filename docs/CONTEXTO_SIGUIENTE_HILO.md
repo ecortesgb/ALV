@@ -22,7 +22,7 @@ Fecha de corte: 12 de noviembre de 2026, 3:46 PM (hora de México).
 
 ## Supabase (proyecto «ALV Games», ref okybpifysusmnctmcaru)
 - Esquema existente con RLS: perfiles, personajes, eventos, miembros_evento, partidas, movimientos_xp, inventario, datos_privados, acciones, articulos_tienda.
-- Funciones: crear_evento, unirse_evento, cerrar_evento, comprar_accesorio, comprar_carta, mis_saldos y registrar_xp_partida. Todas validan la sesión dentro.
+- Funciones: crear_evento, unirse_evento, cerrar_evento, comprar_accesorio, comprar_sobre, comprar_carta, mis_saldos y registrar_xp_partida. Todas validan la sesión dentro.
 - Registro de usuarios: activado. Confirmar correo: desactivado. Usuarios nuevos: se crea su perfil y su personaje solos (disparador `crear_perfil`).
 - Nickname único: se guarda como correo interno `nickname@jugadores.alv.invalid`.
 - Cuenta de prueba creada: `prueba_claude_1@jugadores.alv.invalid`. DEBE BORRARLA ELÍAS: Authentication → Users → Delete user.
@@ -34,7 +34,7 @@ Fecha de corte: 12 de noviembre de 2026, 3:46 PM (hora de México).
 4. Aprobar precios, pesos de rareza y rareza por precio de los sobres (PENDIENTE en Maestro 13.2).
 
 ## Pendiente de la app, en orden propuesto
-1. Compras e inventario en la cuenta (hoy la compra de accesorios sigue local; la función `comprar_accesorio` existe en la base).
+1. ~~Compras e inventario en la cuenta~~ Hecho el 13 de noviembre (migraciones 004 y 005).
 2. Validar en el servidor los resultados de partida. Hoy el celular envía la XP; el servidor solo limita rango y tope diario.
 3. Unirse al lobby desde el celular con enlace o QR, usando el código de evento de `unirse_evento`.
 4. Herramientas por mecánica en cada celular (votar, escribir, dibujar, elegir, dado, carta). La pantalla principal muestra escenario, turno y personajes.
