@@ -1,6 +1,6 @@
-# ALV — Aventuras con Amigos
+# ALV — Amigos, Locuras y Verdades
 ## Documento Maestro del Producto
-**Versión:** 1.2  
+**Versión:** 1.3  
 **Última actualización:** 12 de noviembre de 2026  
 **Estado:** Documento vivo de producto; decisiones y propuestas identificadas por separado.
 
@@ -35,11 +35,13 @@ No convertir una propuesta en decisión por el hecho de aparecer en este documen
 
 ## 1.1 Qué es ALV
 
-**ALV: Aventuras con Amigos** es una plataforma web de minijuegos de fiesta multijugador para parejas y grupos de amigos. Busca convertir una reunión presencial en una experiencia social, competitiva, humorística y memorable, apoyada por teléfonos personales y una pantalla compartida.
+**ALV** es una plataforma web de minijuegos de fiesta multijugador para parejas y grupos de amigos. Busca convertir una reunión presencial en una experiencia social, competitiva, humorística y memorable, apoyada por teléfonos personales y una pantalla compartida.
 
 Referencias de experiencia: Mario Party, Jackbox Games, Heads Up y Fall Guys. Son referencias funcionales y de calidad de experiencia; no se deben copiar sus personajes, arte, marcas, interfaces ni propiedad intelectual.
 
 ALV debe permitir que un grupo se reúna, cree una sala, elija cómo competir, configure minijuegos y juegue rondas. Cada persona conserva una cuenta, personaje, nivel, inventario, logros y estadísticas entre reuniones.
+
+**DECISIÓN (v1.3) — nombre:** la marca es **ALV** y no cambia. Su significado sí puede cambiar: cualquier frase que encaje con las letras A, L y V. El significado principal es «Amigos, Locuras y Verdades»; «Amigos Legendarios Verdaderos» es una alternativa aceptada. Cada pantalla puede usar una variante distinta, como un eslogan que se adapta. «Aventuras con Amigos» deja de ser el nombre principal.
 
 ## 1.2 Qué NO es ALV
 
@@ -57,6 +59,19 @@ ALV debe permitir que un grupo se reúna, cree una sala, elija cómo competir, c
 ALV debe sentirse como un videojuego al que apetece entrar: divertido, social, irreverente, competitivo y con humor mexicano, pero con ejecución visual profesional y cuidada.
 
 El tono admite picardía y humor absurdo, sin convertir la experiencia en una plataforma de humillación, presión social, consumo excesivo de alcohol o retos peligrosos.
+
+## 1.4 Lenguaje de siglas
+
+**DECISIÓN (v1.3):** el lenguaje de toda la app juega con siglas y abreviaturas (ALV, GOAT, FBI, GPS, MVP…). Los textos de resultados, premios, avisos y transiciones deben usarlas con ingenio y sin sonar forzadas. El significado de una sigla puede cambiar según el contexto.
+
+Ejemplos de referencia, no textos finales:
+- «El GOAT de la competencia».
+- «GPS: Ganando Por Siempre».
+- «Llamen al FBI porque necesitamos buscar la XP del jugador del último lugar».
+
+Las frases sobre el último lugar deben respetar el tono de 1.3: humor sin humillar.
+
+**PENDIENTE:** redactar el banco de frases por momento (victoria, derrota, empate, último lugar, espera, carga) y revisarlo con el usuario.
 
 ---
 
@@ -217,6 +232,7 @@ Nombres propuestos:
 - Campamento.
 
 **DECISIÓN:** conservar el nombre ALVerca.  
+**DECISIÓN (v1.3):** ALVerca, FBI: Fogata Bajo Investigación y GPS: Gran Parque Salvaje son los escenarios activos y así se quedan.  
 **PROPUESTA:** los demás nombres y escenarios siguen sujetos a aprobación.
 
 ---
@@ -326,6 +342,37 @@ Preguntas sin explicar previamente el concepto; 30 segundos por concepto:
 
 Probar en teléfono real. No pedir al diseñador o modelo que se autoevalúe. Si la diferencia entre conceptos es menor a cinco puntos, desempatar por reconocibilidad, coherencia, diferenciación y resultado del test.
 
+## 8.6 Mejoras «Neo-Arcade / Party Game» sobre el diseño actual — PROPUESTA (v1.3)
+
+Lista aportada por el usuario para considerar. Parte del diseño que ya existe en la app (fondo espacial, un neón por sección). No está aprobada para implementarse.
+
+**PENDIENTE:** decidir si esta línea se toma como la dirección visual y sustituye la comparación A/B/C de 8.3, o si se compara primero.
+
+Diseño visual:
+- Fondo vivo: gradientes de malla animados, auras de neón que pulsan según la sección activa y estrellas con parpadeo suave.
+- Tarjetas con profundidad: fondo semitransparente con desenfoque, borde con brillo de neón y sombra de color al tocar.
+- Pantallas grandes (escritorio, tablet, TV): marco tipo consola o arcade, o vista adaptativa con vista previa lateral, en lugar de la columna fija de 520 px.
+
+Movimiento y microinteracciones:
+- Ruleta de ¡Sorpréndeme! con frenado por fricción, clic sonoro que se va haciendo lento, y destello con confeti en la categoría ganadora.
+- Carta de Verdad o reto con inclinación 3D al tacto y gestos: deslizar a la derecha = Cumplió, a la izquierda = Paso, hacia arriba = usar carta de poder.
+- Números flotantes de recompensa (`+2 pts`, `+3 XP`) que viajan a la barra del jugador.
+- Temporizador en anillo con cuenta fluida y cambio de color (cian, ámbar, rojo parpadeante en los últimos 10 segundos) con sonido de tensión.
+- Podio: confeti ligero y entrada escalonada con rebote (3.º, 2.º y al final el 1.º con corona luminosa).
+
+Estructura y navegación:
+- Sustituir los cuadros de confirmación nativos del navegador por modales propios con el diseño de la app.
+- Pantalla de Juegos: encabezado colapsable o chips rápidos («Todos», «Retos», «En pareja», «Rápidos») para reducir el scroll.
+- Fila de avatares con el turno activo resaltado.
+
+Mecánicas y fricción al pasar el celular:
+- «Mantén presionado para ver tu secreto»: en partidas con un solo dispositivo, el dato privado solo se ve mientras el dedo está en pantalla; al soltar se oculta.
+- Botella interactiva que se gira con el dedo y apunta a un avatar del círculo, para los juegos con mecánica de botella.
+- Activación de cartas de poder con destello a pantalla completa.
+- Efectos de sonido generados por código (sin archivos ni dependencias) con botón para silenciar.
+
+Condiciones que ya fija este documento y aplican a toda la lista: respetar movimiento reducido, poder silenciar, no depender solo de color o de sonido, y cuidar el rendimiento en móviles (capítulo 20). Los gestos deben conservar botones equivalentes.
+
 ---
 
 # 9. Personajes y personalización
@@ -419,7 +466,7 @@ Los efectos de sonido y VFX deben poder silenciarse o reducirse, no bloquear el 
 
 # 12. Progresión y economía de XP
 
-## 12.1 Tres registros de XP — DECISIÓN
+## 12.1 Tres registros de XP — DECISIÓN (ajustada en v1.3)
 
 El sistema debe distinguir tres conceptos que cumplen funciones diferentes:
 
@@ -434,29 +481,33 @@ El sistema debe distinguir tres conceptos que cumplen funciones diferentes:
 - Es el saldo que el jugador puede gastar en la tienda.
 - Aumenta al ganar recompensas.
 - Disminuye al comprar artículos.
-- Puede ser negativo, si las reglas de juego aplican penalizaciones que lo lleven por debajo de cero.
-- Si queda negativo, el jugador deberá volver a ganar XP para recuperar saldo positivo antes de disponer de capacidad de gasto, según las reglas de compra que se definan.
+- Nunca es negativo. La XP no se descuenta como castigo; solo baja por compras (v1.3).
+- La XP ganada en sesiones anteriores solo sirve para comprar sobres de accesorios y accesorios especiales. No compra cartas para la partida.
 
 ### C. XP de sesión
-- Es la XP neta obtenida durante una sesión concreta.
-- Se calcula por las ganancias y pérdidas de las partidas/rondas que integran esa sesión.
-- Determina el orden del podio o TOP de esa sesión.
+- Es la XP obtenida durante una sesión concreta.
+- Determina el lugar, el podio o TOP de esa sesión.
+- Es la única XP que compra cartas que sirven dentro de esa misma sesión (v1.3).
 - No se utiliza la XP acumulada histórica para ordenar el podio de una sesión.
 - Al terminar la sesión, el resultado se consolida conforme a las reglas de persistencia que se definan.
 
 **Ejemplo conceptual:**
-Un jugador tiene 1,000 XP acumulada y 100 XP disponible. En una sesión gana 30 y pierde 10:
-- XP acumulada: aumenta por las recompensas positivas conforme al modelo de progresión; nunca se resta por penalizaciones.
-- XP disponible: saldo anterior más ganancias y pérdidas aplicables.
-- XP de sesión: +20 netos.
-El jugador se posiciona en el podio de esa sesión según esos +20, no por sus 1,000 XP históricas.
+Un jugador tiene 1,000 XP acumulada y 100 XP disponible. En una sesión gana 30 y gasta 0:
+- XP acumulada: 1,030.
+- XP disponible: 130. De esos, 30 son de la sesión y pueden comprar cartas mientras dure; los otros 100 solo compran sobres y accesorios.
+- XP de sesión: 30.
+El jugador se posiciona en el podio de esa sesión según esos 30, no por sus 1,000 XP históricas.
 
-**PENDIENTE:** formalizar cómo se refleja cada recompensa en XP acumulada y XP disponible para que no exista doble contabilización accidental. La regla invariable es que XP acumulada no disminuye y el podio usa XP neta de la sesión.
+**PENDIENTE:** formalizar cómo se refleja cada recompensa en XP acumulada y XP disponible para que no exista doble contabilización accidental. Las reglas invariables son: XP acumulada no disminuye, XP disponible no queda negativa y el podio usa la XP de la sesión.
+
+**PENDIENTE:** confirmar si el alcance de esta regla es la sesión o el evento completo. La app actual lo maneja por evento («XP del evento»), y un evento puede tener varias sesiones (capítulo 4).
+
+**PENDIENTE:** definir si gastar XP de sesión en cartas baja el lugar en el podio o si el podio cuenta lo ganado sin restar lo gastado.
 
 ## 12.2 Nivel
 
 - El nivel se calcula a partir de XP acumulada.
-- Una pérdida de XP disponible no hace bajar el nivel.
+- Gastar XP disponible no hace bajar el nivel.
 - Los niveles desbloquean cosméticos y contenido, no ventajas competitivas.
 
 ## 12.3 Fuentes de XP propuestas
@@ -473,9 +524,9 @@ Las fórmulas, límites, recompensas y penalizaciones están pendientes.
 
 ## 12.4 Penalizaciones
 
-**DECISIÓN:** los juegos pueden otorgar o quitar puntos/XP cuando la mecánica lo requiera. El saldo disponible puede llegar a ser negativo.
+**DECISIÓN (v1.3, sustituye a la de v1.2):** la XP no se descuenta y el saldo disponible nunca queda negativo. Los castigos no restan XP. Un castigo puede ser quedarse sin jugar o sin participar un turno o una ronda, o no ganar XP en el siguiente juego aunque se gane.
 
-**PENDIENTE:** definir límites de pérdidas por ronda/sesión, mecanismos antiabuso, protección frente a desconexiones y cómo evitar que una mala sesión perjudique de manera desproporcionada la experiencia.
+**PENDIENTE:** elegir la forma exacta del castigo (el usuario la dejó abierta), su duración máxima y cómo se trata una desconexión. Un castigo que deja a alguien sin jugar debe ser corto, para no chocar con el principio de participación equilibrada (capítulo 2).
 
 ---
 
@@ -486,6 +537,10 @@ Las fórmulas, límites, recompensas y penalizaciones están pendientes.
 La tienda permite adquirir elementos con XP disponible, conforme a precios y reglas aún pendientes. El inventario conserva los artículos obtenidos y permite equiparlos.
 
 ## 13.2 Sobres
+
+**PROPUESTA del usuario (v1.3):** sobres por nivel, **oro, plata y bronce**, con la lógica de los sobres de los videojuegos de futbol. Pueden traer accesorios especiales o comodines extra, mixtos o por separado. Además, compra directa de accesorios concretos, como playeras especiales. Se toma solo la mecánica de niveles; no se copian nombres, arte ni interfaz de ningún juego.
+
+**PENDIENTE:** si un sobre comprado con XP de sesiones anteriores trae comodines, hay que definir en qué sesión se pueden usar. Tal como está, abriría una vía para comprar ventaja con XP antigua, que la regla de 12.1 no permite.
 
 Propuesta de sobres de 1 a 5 cartas, con categorías:
 - Vestuario.
@@ -766,7 +821,9 @@ Cada minijuego deberá describir, cuando aplique:
 
 # 18. Sistema de puntuación de minijuegos
 
-**DECISIÓN:** todos los minijuegos deben poder producir ganancias de puntos y, cuando su diseño lo requiera, pérdidas de puntos/XP. No todos tienen que usar la misma fórmula.
+**DECISIÓN (ajustada en v1.3):** todos los minijuegos deben poder producir ganancias de puntos. Ninguno descuenta XP (ver 12.4). No todos tienen que usar la misma fórmula.
+
+**PENDIENTE:** confirmar si dentro de una partida se pueden perder puntos de ronda, que no son XP, o si tampoco.
 
 Principios:
 - La puntuación debe estar ligada a acciones verificables por las reglas del minijuego.
@@ -774,7 +831,7 @@ Principios:
 - Las reglas deben explicarse antes de iniciar la ronda.
 - Evitar penalizaciones sorpresa.
 - Definir límites y tratamiento de empates.
-- La puntuación del podio se basa en el total neto de XP obtenido en la sesión.
+- La puntuación del podio se basa en la XP obtenida en la sesión.
 - La XP acumulada histórica no se usa para determinar el podio de esa sesión.
 
 **PENDIENTE:** establecer una plantilla de puntuación para cada minijuego: acción, condición de éxito, puntos ganados, penalización, desempate, límite y tratamiento de abandono/desconexión.
@@ -951,7 +1008,7 @@ Requisitos:
 4. Completar matriz de compatibilidad entre modalidad y minijuegos.
 5. Definir reglas, duración, turnos, rondas, empates y puntuación de cada minijuego.
 6. Formalizar el modelo contable de XP acumulada, XP disponible y XP de sesión.
-7. Definir límites de penalizaciones y reglas para saldo negativo.
+7. Definir la forma exacta de los castigos sin descuento de XP (sin jugar, sin participar o sin ganar XP en el siguiente juego) y su duración.
 8. Definir economía de tienda, precios, sobres, duplicados y rarezas.
 9. Definir roles, permisos, reconexión y privacidad.
 10. Definir licencias y fuente de audio para Karaoke relámpago.
@@ -959,6 +1016,10 @@ Requisitos:
 12. Definir captura y compartición de fotos de podio.
 13. Seleccionar técnica de representación y animación de personajes.
 14. Seleccionar arquitectura backend y estrategia de despliegue.
+15. Decidir si la línea Neo-Arcade (8.6) es la dirección visual o si se compara primero con A, B y C.
+16. Confirmar si la XP que compra cartas se cuenta por sesión o por evento.
+17. Definir si los comodines de los sobres se pueden usar en cualquier sesión.
+18. Redactar el banco de frases con siglas.
 
 ---
 
@@ -971,9 +1032,13 @@ Requisitos:
 - El producto contempla HOST, PLAYER y SCREEN.
 - La progresión y el inventario persisten entre sesiones.
 - XP acumulada determina nivel y nunca disminuye.
-- XP disponible es gastable y puede quedar negativa.
-- XP de sesión determina el podio de esa sesión; no se usa XP histórica para ordenar el podio.
-- Las partidas pueden dar y quitar puntos/XP según reglas transparentes.
+- XP disponible es gastable y nunca queda negativa. La XP no se descuenta como castigo.
+- XP de sesión determina el podio de esa sesión y es la única que compra cartas para esa sesión; no se usa XP histórica para ordenar el podio.
+- La XP de sesiones anteriores solo compra sobres de accesorios y accesorios especiales.
+- Los castigos son sin jugar, sin participar o sin ganar XP en el siguiente juego; nunca restan XP.
+- La marca es ALV; su significado puede variar por pantalla. Principal: «Amigos, Locuras y Verdades».
+- El lenguaje de la app usa siglas con ingenio.
+- ALVerca, FBI y GPS son los escenarios activos.
 - Los cosméticos no otorgan ventajas competitivas.
 - Los minijuegos seleccionados son los enumerados en el capítulo 16, además de los clásicos preexistentes.
 - La clasificación por forma de participación es transversal y un juego puede combinar varias formas.
@@ -1007,7 +1072,19 @@ Se añadieron y consolidaron:
 - Podio de sesión calculado con XP neta de la sesión, no XP histórica.
 - Registro de pendientes para música/licencias, puntuación, saldo negativo y catálogo clásico.
 
+## v1.3
+Decisiones del usuario del 12 de noviembre de 2026:
+- Nombre: la marca ALV se respeta y su significado puede variar por pantalla. Principal «Amigos, Locuras y Verdades»; alternativa «Amigos Legendarios Verdaderos». Sustituye a «Aventuras con Amigos».
+- XP: la disponible nunca queda negativa y la XP no se descuenta. Sustituye la decisión de v1.2 que permitía saldo negativo y quitar XP. Los castigos pasan a ser sin jugar, sin participar o sin ganar XP en el siguiente juego.
+- XP de sesión: además del podio, es la única que compra cartas para esa sesión. La XP de otras sesiones solo compra sobres de accesorios y accesorios especiales.
+- Escenarios: FBI y GPS quedan activos junto con ALVerca.
+- Lenguaje de siglas en toda la app (1.4).
+
+Propuestas añadidas, sin aprobar:
+- Sobres oro, plata y bronce y compra directa de accesorios especiales (13.2).
+- Mejoras Neo-Arcade de diseño, movimiento, navegación y mecánicas (8.6).
+
 ---
 
-**Fin del Documento Maestro ALV v1.2**  
+**Fin del Documento Maestro ALV v1.3**  
 Este documento debe actualizarse de forma incremental y conservar la distinción entre decisiones aprobadas, propuestas, pendientes y descartadas.
