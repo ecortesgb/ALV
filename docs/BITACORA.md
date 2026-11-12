@@ -105,3 +105,11 @@ Falta de esta tanda: en ¿Cuánto conoces a tu pareja? la respuesta se ve mientr
 - Carta de Verdad o reto: deslizar a la derecha = Cumplió, a la izquierda = Paso, hacia arriba = mano de cartas. Los botones siguen igual. Con movimiento reducido no hay arrastre visual.
 - Pendientes de la tanda: botella interactiva, destello de cartas de poder, inclinación 3D de la carta, confeti al caer la ruleta.
 - Pruebas: 34 pasan; prueba en navegador de la ruleta (gira y abre el lobby) y del deslizar (revela «cumplió»), sin errores.
+
+## 2026-11-12 · Cuenta con nickname y contraseña (primer paso)
+
+- Perfil tiene «Tu cuenta»: crear cuenta o entrar con nickname y contraseña. Sin correo. El nickname se guarda como correo interno para que Supabase lo haga único.
+- Al entrar se trae el personaje guardado; cada cambio se guarda con un pequeño retraso.
+- Solo aparece si hay servidor configurado (variables VITE_SUPABASE_URL y VITE_SUPABASE_PUBLISHABLE_KEY). Sin ellas, la app sigue igual.
+- Falta: guardar y recuperar XP, compras e inventario; unirse al lobby desde el celular.
+- Pruebas: 34 pasan; prueba en navegador de la sección sin errores. Falta probar el registro real: crea una cuenta en la base de producción, así que espera el visto bueno de Elías.
