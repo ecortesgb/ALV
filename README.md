@@ -31,4 +31,4 @@ Copia `.env.example` como `.env.local` con la URL de Supabase y la llave **publi
 
 ## Avance
 
-Ver `docs/BITACORA.md`.
+Ver `docs/BITACORA.md`. La definición del producto está en `docs/DOCUMENTO_MAESTRO.md`.
