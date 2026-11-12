@@ -121,3 +121,15 @@ Falta de esta tanda: en ¿Cuánto conoces a tu pareja? la respuesta se ve mientr
 - La app suma la XP de cada partida a la cuenta del primer jugador del celular cuando hay sesión. Nota: la XP sigue confiando en lo que envía el celular; validar resultados en el servidor queda pendiente.
 - Asesor de seguridad: avisa de las funciones con permiso para usuarios con sesión (esperado, cada una valida adentro) y de contraseñas filtradas sin protección (ver pendientes).
 - Pruebas de la app: 34 pasan; inicio de sesión en navegador sin errores.
+
+## 2026-11-13 · Compras e inventario en la cuenta
+
+- Con la cuenta abierta, la XP, el inventario y las compras vienen del servidor. Sin cuenta, todo sigue en el celular como antes.
+- Tienda de accesorios: compra con `comprar_accesorio`; el artículo se pone solo y queda guardado.
+- Sobres: se abren en el servidor (`comprar_sobre`). El celular ya no elige sus cartas. Precios y pesos siguen PROVISIONALES (Maestro 13.2).
+- Regla nueva en la base: nadie puede ponerse en su personaje algo que no compró, ni ponerlo en otra zona.
+- El catálogo de la base (`articulos_tienda`) ya es igual al de la app: los 15 accesorios de mano con sus nombres actuales.
+- El guardado del personaje en la cuenta ahora funciona desde cualquier pantalla, no solo Perfil.
+- Correcciones: sin evento abierto, la «XP del evento» de la cuenta marcaba toda la XP; ahora es 0. Los sobres fallaban desde la app porque la API exige condición en cada borrado.
+- Migraciones guardadas en el repo: 003 (registrar_xp_partida, que existía solo en la base), 004 (tienda en la cuenta) y 005 (correcciones).
+- Pruebas: 13 de acceso en SQL (otro usuario no ve ni toca el inventario ajeno; sin sesión no se compra nada); punta a punta con una cuenta real: sobre de 2 cartas, corona y medallas, y en «otro celular» llegan la misma XP, el inventario y lo puesto. La cuenta de prueba se borró.

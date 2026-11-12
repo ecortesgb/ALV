@@ -3,9 +3,9 @@
 // y estas mismas reglas (src/engine/economia.ts) las aplica la base de datos.
 import { useSyncExternalStore } from "react";
 import { nivelPorXp, saldos, puedeComprarAccesorio, puedeComprarCarta, XP_EXTRA, xpExtraValida, type Movimiento } from "../engine/economia";
-import { abrirSobre, SOBRES, type CartaSobre, type TipoSobre } from "../engine/sobres";
+import { abrirSobre, SOBRES, type CartaSobre, type Rareza, type TipoSobre } from "../engine/sobres";
 import type { Azar } from "../engine/azar";
-import { cuentaActiva, sumarXpCuenta } from "./nube";
+import { comprarAccesorioNube, comprarSobreNube, cuentaActiva, leerCuenta, sumarXpCuenta, type DatosCuenta } from "./nube";
 import { idActual, migrarPersonaje, personajeInicial, TIENDA, cambioValido, type Personaje, type Zona } from "../content/personaje";
 import type { EscenarioId, Intensidad } from "../engine/types";
 
@@ -27,6 +27,8 @@ export interface EstadoLocal {
   eventoId: string;
   ajustes: { escenario: EscenarioId; intensidad: Intensidad; adulto: boolean; drunk: boolean };
   historial: Partida[];
+  /** Jugador de este celular con cuenta abierta: su saldo y su inventario vienen del servidor. */
+  cuenta?: { jugador: string; acumulada: number; disponible: number; delEvento: number };
 }
 
 const CLAVE = "alv-local-v2";
@@ -49,7 +51,8 @@ function leer(): EstadoLocal {
   try {
     const s = JSON.parse(localStorage.getItem(CLAVE) ?? "null") as EstadoLocal | null;
     if (s && s.version === 2 && Array.isArray(s.jugadores) && s.jugadores.length >= 2) {
-      return { ...s, jugadores: s.jugadores.map(j => ({ ...j, personaje: migrarPersonaje(j.personaje), tiene: (j.tiene ?? []).map(idActual) })) };
+      // La cuenta se vuelve a leer del servidor en cada visita: no se confía en la copia guardada.
+      return { ...s, cuenta: undefined, jugadores: s.jugadores.map(j => ({ ...j, personaje: migrarPersonaje(j.personaje), tiene: (j.tiene ?? []).map(idActual) })) };
     }
   } catch { /* sin almacenamiento: se usa el inicial */ }
   return inicial();
@@ -70,7 +73,21 @@ export function useEstado(): EstadoLocal {
 const cambiaJugador = (id: string, f: (j: JugadorLocal) => JugadorLocal) =>
   guardar({ ...estado, jugadores: estado.jugadores.map(j => (j.id === id ? f(j) : j)) });
 
-export const saldosDe = (j: JugadorLocal) => saldos(j.movimientos, estado.eventoId);
+export const saldosDe = (j: JugadorLocal) => {
+  const c = estado.cuenta;
+  if (c && c.jugador === j.id) return { acumulada: c.acumulada, disponible: c.disponible, delEvento: c.delEvento };
+  return saldos(j.movimientos, estado.eventoId);
+};
+/** El jugador tiene la cuenta abierta en este celular: compras y XP van al servidor. */
+export const esCuenta = (id: string) => !!cuentaActiva() && estado.cuenta?.jugador === id;
+
+/** Vuelve a leer saldo e inventario del servidor y los deja en el jugador de la cuenta. */
+export async function refrescarCuenta(): Promise<void> {
+  const id = estado.cuenta?.jugador;
+  if (!id) return;
+  const d = await leerCuenta();
+  if (d) acciones.sincronizarCuenta(id, d);
+}
 
 /** Pareja según el orden: 1.º con 2.º, 3.º con 4.º… */
 export function parejaDe(i: number, s: EstadoLocal = estado): string | undefined {
@@ -80,6 +97,21 @@ export function parejaDe(i: number, s: EstadoLocal = estado): string | undefined
 }
 
 export const acciones = {
+  /** Deja el saldo y el inventario de la cuenta en este jugador. Quita lo puesto que la cuenta no tiene. */
+  sincronizarCuenta(id: string, d: DatosCuenta) {
+    if (!estado.jugadores.some(x => x.id === id)) return;
+    const tiene = d.tiene.map(idActual);
+    guardar({
+      ...estado,
+      cuenta: { jugador: id, acumulada: d.acumulada, disponible: d.disponible, delEvento: d.delEvento },
+      jugadores: estado.jugadores.map(x => x.id !== id ? x : {
+        ...x, tiene,
+        personaje: { ...x.personaje, puesto: Object.fromEntries(Object.entries(x.personaje.puesto ?? {}).map(([z, v]) => [z, v && tiene.includes(v) ? v : null])) },
+      }),
+    });
+  },
+  /** Al salir de la cuenta, el jugador vuelve a usar su saldo de este celular. */
+  olvidarCuenta() { if (estado.cuenta) guardar({ ...estado, cuenta: undefined }); },
   renombrar(id: string, nombre: string) {
     const limpio = nombre.replace(/\s+/g, " ").slice(0, 30);
     cambiaJugador(id, j => ({ ...j, nombre: limpio }));
@@ -171,7 +203,7 @@ export const acciones = {
     // La cuenta se abre en el primer jugador de este celular: su XP también va al servidor.
     const yo = estado.jugadores[0];
     const mia = yo ? porId.get(yo.id) ?? 0 : 0;
-    if (cuentaActiva() && mia > 0) void sumarXpCuenta(juego, mia);
+    if (yo && esCuenta(yo.id) && mia > 0) void sumarXpCuenta(juego, mia).then(refrescarCuenta);
   },
   /** XP extra del administrador por algo fuera del juego. Queda en el historial con su motivo. Devuelve el motivo si no se pudo. */
   darXpExtra(id: string, xp: number, motivo: string): string | null {
@@ -184,8 +216,30 @@ export const acciones = {
       jugadores: estado.jugadores.map(x => (x.id === id ? { ...x, movimientos: [...x.movimientos, { tipo: "ganada", xp, eventoId: estado.eventoId }] } : x)),
       historial: [{ fecha: new Date().toISOString(), juego: "XP extra", extra: limpio, resultados: [{ nombre: j.nombre, puntos: 0, xp }] }, ...estado.historial].slice(0, 50),
     });
+    if (esCuenta(id)) void sumarXpCuenta("XP extra", xp).then(refrescarCuenta);
     return null;
   },
   /** Cierra el evento: la XP que sobró ya no compra cartas, solo accesorios. */
   cerrarEvento() { guardar({ ...estado, eventoId: nuevoEvento() }); },
 };
+
+/** Compra un accesorio: en la cuenta si está abierta, si no en este celular. Devuelve el motivo si no se pudo. */
+export async function comprarAccesorio(id: string, articulo: string): Promise<string | null> {
+  if (!esCuenta(id)) return acciones.comprarAccesorio(id, articulo);
+  const art = TIENDA.find(a => a.id === articulo);
+  if (!art) return "Ese artículo no existe.";
+  const m = await comprarAccesorioNube(articulo);
+  if (m) return m;
+  await refrescarCuenta();
+  acciones.ponerse(id, articulo);
+  return null;
+}
+
+/** Abre un sobre: en la cuenta el servidor elige las cartas; si no, se sortean aquí. */
+export async function comprarSobre(id: string, tipo: TipoSobre, azar: Azar): Promise<{ ok: true; cartas: CartaSobre[] } | { ok: false; motivo: string }> {
+  if (!esCuenta(id)) return acciones.comprarSobre(id, tipo, azar);
+  const r = await comprarSobreNube(tipo);
+  if (!r.ok) return r;
+  await refrescarCuenta();
+  return { ok: true, cartas: r.cartas.map(c => ({ id: idActual(c.id), rareza: c.rareza as Rareza })) };
+}
