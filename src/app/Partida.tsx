@@ -7,7 +7,7 @@ import { aplicar, resultados, type AccionSinId, type EstadoPartida } from "../en
 import { vistaJugador, vistaPublica } from "../engine/vistas";
 import { Avatar } from "./Avatar";
 import { acciones, useEstado } from "./estado";
-import { aviso, BotonSonido, COLOR_SECCION, confirmar, NOMBRE_CARTA_PODER } from "./comun";
+import { aviso, BotonPantallaCompleta, BotonSonido, COLOR_SECCION, confirmar, NOMBRE_CARTA_PODER } from "./comun";
 import { sonar } from "./sonido";
 import { Anillo, Confeti, Flotantes, useAura, useFlotantes } from "./efectos";
 
@@ -32,7 +32,7 @@ export function Partida({ inicial, salir }: { inicial: EstadoPartida; salir: () 
       <div className="entre">
         <button className="btn sm" onClick={async () => { if (await confirmar({ titulo: "¿Salir de la partida?", texto: "No se guarda la XP de una partida sin terminar.", si: "Sí, salir", no: "Continuar jugando", peligro: true })) salir(); }}>Salir</button>
         <span className="sigla" style={{ color }}>{juego.sigla ?? SECCIONES[juego.seccion].sigla}</span>
-        <span className="fila" style={{ gap: 8 }}><span className="label">Ronda {v.ronda} de {v.totalRondas}</span><BotonSonido /></span>
+        <span className="fila" style={{ gap: 8 }}><span className="label">Ronda {v.ronda} de {v.totalRondas}</span><BotonPantallaCompleta /><BotonSonido /></span>
       </div>
 
       <ol className="turnos" aria-label="Jugadores y turno">

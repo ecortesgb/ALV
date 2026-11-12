@@ -1,6 +1,6 @@
 # ALV — Amigos, Locuras y Verdades
 ## Documento Maestro del Producto
-**Versión:** 1.4  
+**Versión:** 1.5  
 **Última actualización:** 12 de noviembre de 2026  
 **Estado:** Documento vivo de producto; decisiones y propuestas identificadas por separado.
 
@@ -643,6 +643,8 @@ Propuestas:
 
 XP acumulada y victorias deben ser rankings separados. No confundir clasificación histórica con podio de sesión.
 
+**DECISIÓN (v1.5):** existe la pestaña Ranking con Sesión (ordena podio y TOP), Histórico (XP acumulada), Parejas e Historial de partidas. Equipos se agrega cuando exista el modo por equipos; Logros, semanal y mensual siguen como propuesta.
+
 ---
 
 # 15. Celebraciones y podio — propuestas
@@ -957,6 +959,24 @@ Elementos propuestos:
 
 Navegación explorada: Inicio, Juegos, Lobby, Tienda y Perfil.
 
+**DECISIÓN (v1.5):** la navegación queda Inicio, Lobby, Tienda, Ranking y Perfil. «Juegos» y «Grupo» viven dentro del Lobby y el historial dentro de Ranking.
+
+## 21.2 Flujo de juego tipo «Clubes Pro / The Grounds» — DECISIÓN (v1.5)
+
+Inspirado en el flujo de los juegos deportivos en línea (crear lobby, se unen compañeros, se configura, se inicia):
+1. Jugar abre el Lobby. Ahí están los personajes de todos los conectados, juntos en un escenario.
+2. Mientras se elige el juego, el escenario y las condiciones, o mientras carga, los personajes se pueden animar: saludar, bailar, chocar la mano, empujar a un compañero y marcarse como listos.
+3. El administrador configura tipo de juego, escenario y condiciones (intensidad, parejas, adulto, Drunk) y da Iniciar.
+4. Pantalla de carga con la sigla del juego, el escenario, los personajes listos y un consejo.
+5. Durante la partida, cada celular muestra la herramienta que toca (votar, escribir, dibujar, elegir, girar dado, tomar carta) y la pantalla principal muestra el escenario, de quién es el turno y los personajes.
+6. Uso previsto: la partida se abre en una laptop que se proyecta (vista ancha y pantalla completa) y cada jugador entra desde su celular con su usuario para personalizar, comprar, ver el ranking e interactuar con la dinámica.
+
+Estado: los pasos 1 a 4 y la vista ancha ya funcionan en un solo dispositivo. El paso 5 y la entrada con usuario desde el celular dependen del modo multi-dispositivo con cuentas (pendiente de construir).
+
+**DECISIÓN (v1.5):** la Tienda de sobres es una pestaña propia, separada de la personalización del personaje.
+
+**DECISIÓN (v1.5):** cada personaje muestra arriba su lugar en la sesión (#1, #2…) en el Lobby, cuando ya alguien suma XP de sesión.
+
 ---
 
 # 22. Arquitectura técnica — hipótesis
@@ -1135,7 +1155,15 @@ Decisiones del usuario del 12 de noviembre de 2026:
 - El catálogo queda abierto a agregar más juegos cuando el usuario lo pida.
 - Piezas del personaje con nombres genéricos (19.1). Queda pendiente redibujarlas.
 
+## v1.5
+Decisiones del usuario del 12 de noviembre de 2026:
+- Flujo de juego tipo «Clubes Pro / The Grounds» con lobby social y personajes animables (21.2).
+- Navegación Inicio, Lobby, Tienda, Ranking y Perfil (21.1).
+- Tienda de sobres en pestaña propia, separada de la personalización (21.2).
+- Pestaña Ranking (14.3) e indicador de lugar sobre cada personaje (21.2).
+- Uso con laptop proyectada y celulares con usuario: vista ancha lista; multi-dispositivo pendiente.
+
 ---
 
-**Fin del Documento Maestro ALV v1.4**  
+**Fin del Documento Maestro ALV v1.5**  
 Este documento debe actualizarse de forma incremental y conservar la distinción entre decisiones aprobadas, propuestas, pendientes y descartadas.
