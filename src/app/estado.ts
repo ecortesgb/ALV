@@ -3,7 +3,7 @@
 // y estas mismas reglas (src/engine/economia.ts) las aplica la base de datos.
 import { useSyncExternalStore } from "react";
 import { saldos, puedeComprarAccesorio, puedeComprarCarta, type Movimiento } from "../engine/economia";
-import { personajeInicial, TIENDA, cambioValido, type Personaje, type Zona } from "../content/personaje";
+import { idActual, migrarPersonaje, personajeInicial, TIENDA, cambioValido, type Personaje, type Zona } from "../content/personaje";
 import type { EscenarioId, Intensidad } from "../engine/types";
 
 export interface JugadorLocal {
@@ -44,7 +44,9 @@ function inicial(): EstadoLocal {
 function leer(): EstadoLocal {
   try {
     const s = JSON.parse(localStorage.getItem(CLAVE) ?? "null") as EstadoLocal | null;
-    if (s && s.version === 2 && Array.isArray(s.jugadores) && s.jugadores.length >= 2) return s;
+    if (s && s.version === 2 && Array.isArray(s.jugadores) && s.jugadores.length >= 2) {
+      return { ...s, jugadores: s.jugadores.map(j => ({ ...j, personaje: migrarPersonaje(j.personaje), tiene: (j.tiene ?? []).map(idActual) })) };
+    }
   } catch { /* sin almacenamiento: se usa el inicial */ }
   return inicial();
 }

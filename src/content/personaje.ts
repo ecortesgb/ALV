@@ -1,6 +1,7 @@
 // Personaje de bloques: las capas del armador del Centro de Mando (sin piezas GB ni Movistar).
 // Capas de 400×520 que se apilan: piernas, piel, torso, rostro (o facial), cabello y lo que lleva en la mano.
 import piezas from "./piezas.json";
+import migracion from "./piezas-migracion.json";
 import type { Azar } from "../engine/azar";
 
 export type Paso = "piel" | "rostro" | "facial" | "cabello" | "torso" | "piernas";
@@ -26,7 +27,7 @@ export interface Personaje {
 
 /** Artículos de la tienda. Todo es para lucir: nada da ventaja. Precio en XP disponible. */
 export interface Articulo { id: string; nombre: string; zona: Zona; precio: number; nivel: number; pieza?: boolean }
-const PRECIO_MANO: Record<string, number> = { "acc-tablet": 120, "acc-smartphone": 120, "acc-90370": 120, "acc-estrella": 120, "acc-medalla": 160, "acc-trofeo": 160 };
+const PRECIO_MANO: Record<string, number> = { "acc-tablet": 120, "acc-smartphone": 120, "acc-microfono": 120, "acc-estrella": 120, "acc-medalla": 160, "acc-trofeo": 160 };
 export const TIENDA: Articulo[] = [
   ...PIEZAS.accesorio.map(a => ({ id: a.id, nombre: a.nombre === "Medalla" ? "Medalla en mano" : a.nombre, zona: "mano" as Zona, precio: PRECIO_MANO[a.id] ?? 80, nivel: 1, pieza: true })),
   { id: "corona-carton", nombre: "Corona de cartón", zona: "cabeza", precio: 160, nivel: 1 },
@@ -75,4 +76,25 @@ export function cambioValido(cambio: Partial<Personaje>, tiene: string[]): boole
   return true;
 }
 
-export const rutaPieza = (id: string, mini = false) => `${import.meta.env.BASE_URL}lego/${id}${mini ? "_m" : ""}.webp`;
+/**
+ * Las piezas se renombraron (2026-11-12). Esta tabla lleva los personajes y accesorios ya guardados
+ * a los nombres nuevos: la llave es una huella del nombre viejo, no el nombre.
+ */
+const MIGRACION = migracion as Record<string, string>;
+function huella(s: string): string {
+  let h = 0x811c9dc5;
+  for (const c of new TextEncoder().encode(s)) h = Math.imul(h ^ c, 0x01000193) >>> 0;
+  return h.toString(16);
+}
+export const idActual = (id: string): string => MIGRACION[huella(id)] ?? id;
+export const idActualONulo = (id: string | null | undefined): string | null => (id ? idActual(id) : null);
+
+/** Personaje guardado con nombres viejos de piezas, pasado a los actuales. */
+export function migrarPersonaje(p: Personaje): Personaje {
+  const puesto: Personaje["puesto"] = {};
+  for (const [zona, v] of Object.entries(p.puesto ?? {})) puesto[zona as Zona] = idActualONulo(v);
+  return { ...p, piel: idActual(p.piel), rostro: idActual(p.rostro), facial: idActualONulo(p.facial), cabello: idActualONulo(p.cabello),
+    torso: idActual(p.torso), piernas: idActual(p.piernas), puesto };
+}
+
+export const rutaPieza = (id: string, mini = false) => `${import.meta.env.BASE_URL}piezas/${id}${mini ? "_m" : ""}.webp`;

@@ -47,3 +47,10 @@ Pendiente de F2: dar la XP de cada partida desde el servidor y la pantalla de en
 - Pruebas: 23 del motor pasan; prueba en navegador de los tres modales, la cortina con dedo y teclado, verdad o reto completo y podio, sin errores ni cuadros nativos.
 
 Falta de esta tanda: en ¿Cuánto conoces a tu pareja? la respuesta se ve mientras se escribe.
+
+## 2026-11-12 · Piezas del personaje con nombres genéricos
+
+- La carpeta `public/lego` ahora es `public/piezas` y los 310 archivos tienen nombres genéricos (`piel-01`, `cabello-01`, `acc-taza`…). Las imágenes son las mismas.
+- Los personajes y accesorios ya guardados en un dispositivo se pasan solos a los nombres nuevos al abrir la app.
+- Se quitó `manifest.json` de la carpeta pública: era una copia sin uso de `src/content/piezas.json`.
+- Documento Maestro v1.4: catálogo clásico de 14 juegos y catálogo abierto a más juegos.
