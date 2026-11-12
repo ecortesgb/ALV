@@ -1,6 +1,6 @@
 // ALV: una sola app. Pestañas de abajo: Inicio, Lobby, Tienda, Ranking y Perfil.
 // El flujo es como en los juegos de futbol en línea: Jugar → lobby con los personajes → condiciones → Iniciar → carga → partida.
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ESCENARIOS, SECCIONES } from "../content/catalogo";
 import { crearAzar } from "../engine/azar";
 import { nivelPorXp, xpParaNivel } from "../engine/economia";
@@ -16,7 +16,7 @@ import { Lobby } from "./Lobby";
 import { Partida } from "./Partida";
 import { EditorPersonaje, NivelYSaldos, Tienda } from "./Personaje";
 import { Ranking } from "./Ranking";
-import { instalarClics } from "./sonido";
+import { instalarClics, sonar } from "./sonido";
 
 type Ruta = "inicio" | "lobby" | "tienda" | "ranking" | "perfil";
 const RUTAS: Ruta[] = ["inicio", "lobby", "tienda", "ranking", "perfil"];
@@ -106,14 +106,30 @@ function Inicio() {
   const yo = s.jugadores[0]!;
   const sal = saldosDe(yo);
 
+  const cuadro = useRef(0);
+  useEffect(() => () => cancelAnimationFrame(cuadro.current), []);
+
+  /** Ruleta con fricción: gira rápido y frena con curva. Un clic por cada segmento que pasa. */
   const girar = () => {
     if (girando) return;
     const azar = crearAzar(Date.now() % 1e6);
     const r = sorprendeme(cfg, azar);
     if (!r) { aviso("No hay juegos para esta configuración."); return; }
+    const reducir = matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const desde = giro, hasta = giro + 1440 + azar.entero(360), dur = reducir ? 50 : 3200;
+    const t0 = performance.now();
+    let segAnt = Math.floor(desde / 45);
     setGirando(true);
-    setGiro(g => g + 1440 + azar.entero(360));
-    setTimeout(() => { setGirando(false); ir("lobby", `j-${r.juego.id}`); }, matchMedia("(prefers-reduced-motion: reduce)").matches ? 50 : 3300);
+    const paso = (ahora: number) => {
+      const k = Math.min(1, (ahora - t0) / dur);
+      const ang = desde + (hasta - desde) * (1 - Math.pow(1 - k, 3));
+      setGiro(ang);
+      const seg = Math.floor(ang / 45);
+      if (seg !== segAnt) { segAnt = seg; if (!reducir) sonar("tic"); }
+      if (k < 1) cuadro.current = requestAnimationFrame(paso);
+      else { setGirando(false); sonar("exito"); ir("lobby", `j-${r.juego.id}`); }
+    };
+    cuadro.current = requestAnimationFrame(paso);
   };
 
   return (
@@ -126,7 +142,7 @@ function Inicio() {
           <span className="sigla">{girando ? "GIRANDO…" : "¡SORPRÉNDEME!"}</span>
           <span style={{ fontSize: 13, fontWeight: 600, color: "#FFE3F0" }}>{s.jugadores.length} jugadores · {INTENSIDADES[cfg.intensidad]} · {esc.emoji} {esc.nombre}</span>
         </span>
-        <span className="ruleta" style={{ transform: `rotate(${giro}deg)` }} aria-hidden="true" />
+        <span className="ruleta" style={{ transform: `rotate(${giro}deg)`, transition: "none" }} aria-hidden="true" />
       </button>
       <a href="#/lobby" className="btn principal jugar">JUGAR · ABRIR LOBBY</a>
       <a href="#/tienda" className="card" style={{ flexDirection: "row", alignItems: "center", textDecoration: "none", color: "inherit", padding: "12px 14px" }}>

@@ -1,6 +1,6 @@
 // Partida en un solo dispositivo. Lo secreto (palabra del impostor, respuestas de pareja, votos)
 // se contesta pasando el celular: cada quien ve solo lo suyo y la pantalla se tapa entre jugadores.
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type PointerEvent as PE } from "react";
 import { CONTENIDO } from "../content";
 import { ESCENARIOS, JUEGOS, SECCIONES } from "../content/catalogo";
 import { aplicar, resultados, type AccionSinId, type EstadoPartida } from "../engine/partida";
@@ -83,6 +83,13 @@ function TurnoCartas({ e, accion }: { e: EstadoPartida; accion: (a: AccionSinId)
   const mano = turno ? vistaJugador(e, turno.id).miMano : [];
   const contesto = !!turno && v.contestaron.includes(turno.id);
   const flot = useFlotantes();
+  const puedeGesto = v.fase === "contestando" && !contesto && !!turno;
+  const arrastre = useArrastre({
+    activo: puedeGesto,
+    derecha: () => responder("cumplio"),
+    izquierda: () => responder("paso"),
+    arriba: () => { if (mano.length > 0) setVerMano(true); },
+  });
 
   const responder = (valor: "cumplio" | "paso") => { if (!turno) return; sonar(valor === "cumplio" ? "exito" : "paso");
     if (valor === "cumplio") flot.lanzar(esReto ? [["+2 pts", "lime"], ["+3 XP", "cyan"]] : [["+1 pt", "lime"]]); accion({ tipo: "contestar", jugador: turno.id, valor }); accion({ tipo: "revelar" }); };
@@ -118,7 +125,7 @@ function TurnoCartas({ e, accion }: { e: EstadoPartida; accion: (a: AccionSinId)
       <div className="mesa">
         <Flotantes lista={flot.lista} />
         <div className="detras a" /><div className="detras b" />
-        <div key={v.carta?.id} className={"carta " + (esReto ? "reto" : "verdad")}>
+        <div key={v.carta?.id} className={"carta " + (esReto ? "reto" : "verdad")} {...arrastre.props} style={arrastre.estilo}>
           <div className="cara">
             <div className="entre">
               <span className="tipo">{esReto ? "Reto" : "Verdad"} · {ESCENARIOS.find(x => x.id === e.cfg.escenario)?.sigla}</span>
@@ -427,4 +434,31 @@ function Podio({ e, salir }: { e: EstadoPartida; salir: () => void }) {
       <button className="btn principal" onClick={salir}>Volver</button>
     </div>
   );
+}
+
+/** Gesto en la carta: deslizar a la derecha = Cumplió, a la izquierda = Paso, hacia arriba = mano de cartas. Los botones siguen igual. */
+function useArrastre({ activo, derecha, izquierda, arriba }: { activo: boolean; derecha: () => void; izquierda: () => void; arriba: () => void }) {
+  const [d, setD] = useState({ x: 0, y: 0 });
+  const inicio = useRef<{ x: number; y: number; id: number } | null>(null);
+  const UMBRAL = 90;
+  const fin = () => {
+    const { x, y } = d;
+    inicio.current = null;
+    setD({ x: 0, y: 0 });
+    if (x > UMBRAL) derecha();
+    else if (x < -UMBRAL) izquierda();
+    else if (y < -UMBRAL) arriba();
+  };
+  const reducir = typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches;
+  return {
+    props: {
+      onPointerDown: (e: PE<HTMLDivElement>) => { if (!activo) return; inicio.current = { x: e.clientX, y: e.clientY, id: e.pointerId }; e.currentTarget.setPointerCapture?.(e.pointerId); },
+      onPointerMove: (e: PE<HTMLDivElement>) => { const i = inicio.current; if (!i || i.id !== e.pointerId) return; setD({ x: e.clientX - i.x, y: e.clientY - i.y }); },
+      onPointerUp: () => { if (inicio.current) fin(); },
+      onPointerCancel: () => { inicio.current = null; setD({ x: 0, y: 0 }); },
+    },
+    estilo: activo && !reducir && (d.x !== 0 || d.y !== 0)
+      ? { transform: `translate(${d.x * 0.6}px, ${d.y * 0.4}px) rotate(${d.x / 14}deg)`, transition: "none", touchAction: "none" }
+      : { touchAction: activo ? "pan-y" : undefined },
+  } as const;
 }
