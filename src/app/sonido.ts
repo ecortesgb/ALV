@@ -41,6 +41,7 @@ function tocar(notas: Nota[]) {
 }
 
 const SONIDOS = {
+  tic: [{ f: 1200, t: 0, d: 0.03, tipo: "triangle", v: 0.05 }],
   clic: [{ f: 520, a: 380, t: 0, d: 0.05, v: 0.04 }],
   exito: [{ f: 523, t: 0, d: 0.09 }, { f: 659, t: 0.08, d: 0.09 }, { f: 784, t: 0.16, d: 0.16 }],
   paso: [{ f: 330, a: 220, t: 0, d: 0.16, tipo: "triangle", v: 0.07 }],

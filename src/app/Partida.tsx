@@ -7,8 +7,9 @@ import { aplicar, resultados, type AccionSinId, type EstadoPartida } from "../en
 import { vistaJugador, vistaPublica } from "../engine/vistas";
 import { Avatar } from "./Avatar";
 import { acciones, useEstado } from "./estado";
-import { aviso, COLOR_SECCION, confirmar, NOMBRE_CARTA_PODER } from "./comun";
+import { aviso, BotonSonido, COLOR_SECCION, confirmar, NOMBRE_CARTA_PODER } from "./comun";
 import { sonar } from "./sonido";
+import { Anillo, Confeti, Flotantes, useAura, useFlotantes } from "./efectos";
 
 let contador = 0;
 const nuevoId = () => `l${Date.now().toString(36)}${(contador++).toString(36)}`;
@@ -22,6 +23,7 @@ export function Partida({ inicial, salir }: { inicial: EstadoPartida; salir: () 
   const jl = (id?: string) => s.jugadores.find(j => j.id === id);
   const accion = (a: AccionSinId) => setE(x => aplicar(x, { ...a, id: nuevoId() } as Parameters<typeof aplicar>[1], CONTENIDO));
   const color = COLOR_SECCION[juego.seccion];
+  useAura(esc?.color ?? color);
 
   if (e.fase === "terminada") return <Podio e={e} salir={salir} />;
 
@@ -30,7 +32,7 @@ export function Partida({ inicial, salir }: { inicial: EstadoPartida; salir: () 
       <div className="entre">
         <button className="btn sm" onClick={async () => { if (await confirmar({ titulo: "¿Salir de la partida?", texto: "No se guarda la XP de una partida sin terminar.", si: "Sí, salir", no: "Continuar jugando", peligro: true })) salir(); }}>Salir</button>
         <span className="sigla" style={{ color }}>{juego.sigla ?? SECCIONES[juego.seccion].sigla}</span>
-        <span className="label">Ronda {v.ronda} de {v.totalRondas}</span>
+        <span className="fila" style={{ gap: 8 }}><span className="label">Ronda {v.ronda} de {v.totalRondas}</span><BotonSonido /></span>
       </div>
 
       <ol className="turnos" aria-label="Jugadores y turno">
@@ -71,20 +73,6 @@ export function Partida({ inicial, salir }: { inicial: EstadoPartida; salir: () 
   );
 }
 
-/** Reloj de arena de 60 s por ronda. */
-function Reloj({ clave, segundos = 60 }: { clave: string; segundos?: number }) {
-  const [t, setT] = useState(segundos);
-  useEffect(() => { setT(segundos); const i = setInterval(() => setT(x => Math.max(0, x - 1)), 1000); return () => clearInterval(i); }, [clave, segundos]);
-  const sonado = useRef("");
-  useEffect(() => { if (t === 0 && sonado.current !== clave) { sonado.current = clave; sonar("tiempo"); } }, [t, clave]);
-  return (
-    <div className={"reloj" + (t <= 10 ? " fin" : "")} role="timer" aria-label={`${t} segundos`}>
-      <svg width="34" height="44" viewBox="0 0 40 52" aria-hidden="true"><path d="M6 3h28M6 49h28" stroke="#F7F2FF" strokeWidth="3" strokeLinecap="round" /><path d="M9 4c0 13 22 13 22 22S9 39 9 48h22c0-9-22-13-22-22S31 17 31 4z" fill="none" stroke="#F7F2FF" strokeWidth="2.4" /><path d={`M14 12h12c-1 5-6 8-6 12-0-4-5-7-6-12z`} fill="#FFC23D" opacity={t / segundos} /><path d="M12 46h16c0-5-8-7-8-12 0 5-8 7-8 12z" fill="#FFC23D" opacity={1 - t / segundos} /></svg>
-      {t > 0 ? `0:${String(t).padStart(2, "0")}` : "¡TIEMPO!"}
-    </div>
-  );
-}
-
 function TurnoCartas({ e, accion }: { e: EstadoPartida; accion: (a: AccionSinId) => void }) {
   const s = useEstado();
   const v = vistaPublica(e);
@@ -94,8 +82,10 @@ function TurnoCartas({ e, accion }: { e: EstadoPartida; accion: (a: AccionSinId)
   const esReto = v.carta?.tipo === "reto";
   const mano = turno ? vistaJugador(e, turno.id).miMano : [];
   const contesto = !!turno && v.contestaron.includes(turno.id);
+  const flot = useFlotantes();
 
-  const responder = (valor: "cumplio" | "paso") => { if (!turno) return; sonar(valor === "cumplio" ? "exito" : "paso"); accion({ tipo: "contestar", jugador: turno.id, valor }); accion({ tipo: "revelar" }); };
+  const responder = (valor: "cumplio" | "paso") => { if (!turno) return; sonar(valor === "cumplio" ? "exito" : "paso");
+    if (valor === "cumplio") flot.lanzar(esReto ? [["+2 pts", "lime"], ["+3 XP", "cyan"]] : [["+1 pt", "lime"]]); accion({ tipo: "contestar", jugador: turno.id, valor }); accion({ tipo: "revelar" }); };
   const usar = (carta: string) => {
     if (!turno) return;
     sonar("poder");
@@ -122,10 +112,11 @@ function TurnoCartas({ e, accion }: { e: EstadoPartida; accion: (a: AccionSinId)
           <span className="label">Le toca a</span>
           <div className="quien">{turno?.nombre.toUpperCase()}</div>
         </div>
-        {v.fase === "contestando" && <Reloj clave={`${v.ronda}-${v.carta?.id}`} />}
+        {v.fase === "contestando" && <Anillo clave={`${v.ronda}-${v.carta?.id}`} />}
       </div>
 
       <div className="mesa">
+        <Flotantes lista={flot.lista} />
         <div className="detras a" /><div className="detras b" />
         <div key={v.carta?.id} className={"carta " + (esReto ? "reto" : "verdad")}>
           <div className="cara">
@@ -255,9 +246,13 @@ function Cortina({ children, alVer }: { children: React.ReactNode; alVer?: () =>
   );
 }
 
+/** Navegadores que pueden tapar un campo de texto con puntos; si no, se usa un campo de contraseña. */
+const TAPA_CSS = typeof CSS !== "undefined" && CSS.supports?.("-webkit-text-security", "disc");
+
 function Contestar({ e, jugador, enviar }: { e: EstadoPartida; jugador: string; enviar: (v: unknown) => void }) {
   const mio = vistaJugador(e, jugador).mio as { pregunta?: string; papel?: string } | undefined;
   const [texto, setTexto] = useState("");
+  const [verTexto, setVerTexto] = useState(false);
   const [eleccion, setEleccion] = useState<"a" | "b" | null>(null);
   const v = vistaPublica(e);
   const otro = e.cfg.jugadores.find(j => j.id !== jugador)?.nombre;
@@ -267,7 +262,14 @@ function Contestar({ e, jugador, enviar }: { e: EstadoPartida; jugador: string; 
       <div className="card">
         <span className="label">{mio?.papel === "contesta" ? "Contesta sobre ti" : "Adivina qué contestó tu pareja"}</span>
         <h2>{mio?.pregunta}</h2>
-        <input className="input" value={texto} maxLength={120} onChange={x => setTexto(x.target.value)} placeholder="Tu respuesta secreta" autoFocus />
+        <div className="escribir">
+          <input className={"input" + (verTexto ? "" : " tapado")} type={verTexto || TAPA_CSS ? "text" : "password"} value={texto} maxLength={120} onChange={x => setTexto(x.target.value)} placeholder="Tu respuesta secreta"
+            autoFocus autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} data-lpignore="true" data-1p-ignore aria-describedby="nota-secreta" />
+          <button type="button" className="btn sm ver" data-sin-clic aria-label="Mantén presionado para ver lo que escribiste" aria-pressed={verTexto}
+            onPointerDown={() => setVerTexto(true)} onPointerUp={() => setVerTexto(false)} onPointerLeave={() => setVerTexto(false)} onPointerCancel={() => setVerTexto(false)}
+            onKeyDown={x => { if (x.key === " " || x.key === "Enter") { x.preventDefault(); setVerTexto(true); } }} onKeyUp={() => setVerTexto(false)} onBlur={() => setVerTexto(false)}>👁</button>
+        </div>
+        <p id="nota-secreta" className="hint">Lo que escribes queda tapado. Mantén el ojo para revisarlo.</p>
         <button className="btn principal" disabled={!texto.trim()} onClick={() => enviar(texto)}>Enviar en secreto</button>
       </div>
     );
@@ -400,14 +402,17 @@ function Podio({ e, salir }: { e: EstadoPartida; salir: () => void }) {
   }, [e.juegoId, res]);
   const jl = (id: string) => s.jugadores.find(j => j.id === id);
   const top = [res[1], res[0], res[2]];
+  useAura("#FFCF4A");
   const cuenta = res.some(r => r.xp > 0);
   return (
     <div className="pila">
-      <div style={{ textAlign: "center" }}><span className="sigla" style={{ fontSize: 40, color: "var(--gold)" }}>GG</span><p className="hint">Fin de partida</p></div>
+      {cuenta && <Confeti />}
+      <div style={{ alignSelf: "flex-end" }}><BotonSonido /></div>
+      <div style={{ textAlign: "center", marginTop: -36 }}><span className="sigla" style={{ fontSize: 40, color: "var(--gold)" }}>GG</span><p className="hint">Fin de partida</p></div>
       <div className="podio">
         {top.map((r, i) => r ? (
           <div key={r.jugador} className={"puesto p" + [2, 1, 3][i]}>
-            {jl(r.jugador) && <Avatar p={jl(r.jugador)!.personaje} size={i === 1 ? 84 : 64} nombre={r.nombre} lider={i === 1} />}
+            <span className="sube">{jl(r.jugador) && <Avatar p={jl(r.jugador)!.personaje} size={i === 1 ? 84 : 64} nombre={r.nombre} lider={i === 1} />}</span>
             <b>{r.nombre}</b>
             <div className="escalon">{[2, 1, 3][i]}</div>
           </div>
