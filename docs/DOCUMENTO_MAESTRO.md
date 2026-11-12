@@ -1,6 +1,6 @@
 # ALV — Amigos, Locuras y Verdades
 ## Documento Maestro del Producto
-**Versión:** 1.7  
+**Versión:** 1.8  
 **Última actualización:** 12 de noviembre de 2026  
 **Estado:** Documento vivo de producto; decisiones y propuestas identificadas por separado.
 
@@ -362,8 +362,8 @@ Diseño visual:
 - Pantallas grandes (escritorio, tablet, TV): marco tipo consola o arcade, o vista adaptativa con vista previa lateral, en lugar de la columna fija de 520 px.
 
 Movimiento y microinteracciones:
-- Ruleta de ¡Sorpréndeme! con frenado por fricción, clic sonoro que se va haciendo lento, y destello con confeti en la categoría ganadora.
-- Carta de Verdad o reto con inclinación 3D al tacto y gestos: deslizar a la derecha = Cumplió, a la izquierda = Paso, hacia arriba = usar carta de poder.
+- Ruleta de ¡Sorpréndeme! con frenado por fricción, clic sonoro que se va haciendo lento, y destello con confeti en la categoría ganadora. *(v1.8: frenado y clic por segmento hechos; el destello con confeti queda pendiente.)*
+- Carta de Verdad o reto con inclinación 3D al tacto y gestos: deslizar a la derecha = Cumplió, a la izquierda = Paso, hacia arriba = usar carta de poder. *(v1.8: deslizar a la derecha, a la izquierda y arriba hechos; la inclinación 3D queda pendiente. Los botones siguen igual.)*
 - Números flotantes de recompensa (`+2 pts`, `+3 XP`) que viajan a la barra del jugador.
 - Temporizador en anillo con cuenta fluida y cambio de color (cian, ámbar, rojo parpadeante en los últimos 10 segundos) con sonido de tensión.
 - Podio: confeti ligero y entrada escalonada con rebote (3.º, 2.º y al final el 1.º con corona luminosa).
@@ -1173,7 +1173,10 @@ Decisiones del usuario del 12 de noviembre de 2026:
 ## v1.7
 - Tienda de sobres en pestaña propia (13.2). Valores de prueba pendientes de aprobación: precios, pesos de rareza, cantidad de cartas.
 
+## v1.8
+- Neo-Arcade tanda 3 en parte: ruleta con fricción y gestos de deslizar en la carta (8.6). Pendientes: botella interactiva, destello de cartas de poder, inclinación 3D.
+
 ---
 
-**Fin del Documento Maestro ALV v1.7**  
+**Fin del Documento Maestro ALV v1.8**  
 Este documento debe actualizarse de forma incremental y conservar la distinción entre decisiones aprobadas, propuestas, pendientes y descartadas.

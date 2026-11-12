@@ -98,3 +98,10 @@ Falta de esta tanda: en ¿Cuánto conoces a tu pareja? la respuesta se ve mientr
 - La lógica está en `src/engine/sobres.ts` (pura, con pruebas). La compra en `comprarSobre` de `estado.ts`.
 - Precios, pesos de rareza y rareza por precio son provisionales y quedan pendientes en el Documento Maestro (v1.7, 13.2).
 - Pruebas: 34 pasan; prueba en navegador: compra de sobre bronce, dos cartas reveladas, saldo descontado (500 → 440), sin errores.
+
+## 2026-11-12 · Neo-Arcade tanda 3 (parte)
+
+- ¡Sorpréndeme!: la ruleta frena con curva y hace un clic por cada segmento que pasa; al caer suena el éxito.
+- Carta de Verdad o reto: deslizar a la derecha = Cumplió, a la izquierda = Paso, hacia arriba = mano de cartas. Los botones siguen igual. Con movimiento reducido no hay arrastre visual.
+- Pendientes de la tanda: botella interactiva, destello de cartas de poder, inclinación 3D de la carta, confeti al caer la ruleta.
+- Pruebas: 34 pasan; prueba en navegador de la ruleta (gira y abre el lobby) y del deslizar (revela «cumplió»), sin errores.
