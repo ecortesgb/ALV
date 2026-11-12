@@ -5,7 +5,7 @@ import { useSyncExternalStore } from "react";
 import { nivelPorXp, saldos, puedeComprarAccesorio, puedeComprarCarta, XP_EXTRA, xpExtraValida, type Movimiento } from "../engine/economia";
 import { abrirSobre, SOBRES, type CartaSobre, type Rareza, type TipoSobre } from "../engine/sobres";
 import type { Azar } from "../engine/azar";
-import { comprarAccesorioNube, comprarSobreNube, cuentaActiva, leerCuenta, sumarXpCuenta, type DatosCuenta } from "./nube";
+import { comprarAccesorioNube, comprarSobreNube, cuentaActiva, leerCuenta, registrarPartidaNube, registrarXpExtraNube, type DatosCuenta } from "./nube";
 import { idActual, migrarPersonaje, personajeInicial, TIENDA, cambioValido, type Personaje, type Zona } from "../content/personaje";
 import type { EscenarioId, Intensidad } from "../engine/types";
 
@@ -190,7 +190,8 @@ export const acciones = {
     return r;
   },
   /** Suma la XP de una partida terminada y la guarda en el historial. */
-  acreditar(juego: string, resultados: { jugador: string; nombre: string; puntos: number; xp: number }[]) {
+  acreditar(juego: string, resultados: { jugador: string; nombre: string; puntos: number; xp: number; lugar?: number; rondas?: number; retos?: number }[],
+    hechos?: { juegoId: string; jugadores: number }) {
     const porId = new Map(resultados.map(r => [r.jugador, r.xp]));
     guardar({
       ...estado,
@@ -200,10 +201,13 @@ export const acciones = {
       }),
       historial: [{ fecha: new Date().toISOString(), juego, resultados: resultados.map(({ jugador, nombre, puntos, xp }) => ({ id: jugador, nombre, puntos, xp })) }, ...estado.historial].slice(0, 50),
     });
-    // La cuenta se abre en el primer jugador de este celular: su XP también va al servidor.
-    const yo = estado.jugadores[0];
-    const mia = yo ? porId.get(yo.id) ?? 0 : 0;
-    if (yo && esCuenta(yo.id) && mia > 0) void sumarXpCuenta(juego, mia).then(refrescarCuenta);
+    // Si alguien del grupo tiene la cuenta abierta en este celular, el servidor recalcula y guarda su XP.
+    const idCuenta = estado.cuenta?.jugador;
+    const mio = resultados.find(r => r.jugador === idCuenta);
+    if (idCuenta && esCuenta(idCuenta) && mio && hechos && mio.lugar && mio.rondas !== undefined) {
+      void registrarPartidaNube({ juego: hechos.juegoId, rondas: mio.rondas, retos: mio.retos ?? 0, lugar: mio.lugar, jugadores: hechos.jugadores })
+        .then(refrescarCuenta);
+    }
   },
   /** XP extra del administrador por algo fuera del juego. Queda en el historial con su motivo. Devuelve el motivo si no se pudo. */
   darXpExtra(id: string, xp: number, motivo: string): string | null {
@@ -216,7 +220,7 @@ export const acciones = {
       jugadores: estado.jugadores.map(x => (x.id === id ? { ...x, movimientos: [...x.movimientos, { tipo: "ganada", xp, eventoId: estado.eventoId }] } : x)),
       historial: [{ fecha: new Date().toISOString(), juego: "XP extra", extra: limpio, resultados: [{ nombre: j.nombre, puntos: 0, xp }] }, ...estado.historial].slice(0, 50),
     });
-    if (esCuenta(id)) void sumarXpCuenta("XP extra", xp).then(refrescarCuenta);
+    if (esCuenta(id)) void registrarXpExtraNube(xp, limpio).then(refrescarCuenta);
     return null;
   },
   /** Cierra el evento: la XP que sobró ya no compra cartas, solo accesorios. */
