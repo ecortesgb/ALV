@@ -409,3 +409,9 @@ button.juego[aria-pressed="true"] { border-color: var(--sc); box-shadow: 0 0 0 1
   *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; animation-delay: 0s !important; transition-duration: .01ms !important; }
   .fondo .mancha, .fondo .aura, .fondo .estrellas, .actor .cuerpo { animation: none !important; }
 }
+
+/* Logros */
+.logros { list-style: none; margin: 10px 0 0; padding: 0; display: grid; gap: 8px; }
+.logro { display: grid; gap: 2px; padding: 10px 12px; border-radius: 14px; background: var(--card2); border: 1px dashed var(--borde-vidrio, #3a3f5c); opacity: .55; }
+.logro.ganado { opacity: 1; border: 2px solid var(--lime, #C6FF3D); }
+.logro .chip { justify-self: start; margin-top: 4px; }

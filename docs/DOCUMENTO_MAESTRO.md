@@ -1,6 +1,6 @@
 # ALV — Amigos, Locuras y Verdades
 ## Documento Maestro del Producto
-**Versión:** 1.5  
+**Versión:** 1.6  
 **Última actualización:** 12 de noviembre de 2026  
 **Estado:** Documento vivo de producto; decisiones y propuestas identificadas por separado.
 
@@ -630,6 +630,8 @@ El podio de una sesión se ordena por XP neta obtenida en esa sesión, no por XP
 
 Los logros deben dividirse entre logros del evento/sesión y logros históricos. Evitar premiar shots o consumo excesivo.
 
+**DECISIÓN (v1.6):** primera versión de logros en Perfil. De sesión: GOAT de la competencia y La dupla perfecta. Históricos: MVP (mejor puntaje en una partida) y El sobreviviente (10 partidas). Los demás (más fachero, castigado, sospechoso, afortunado, alma de la fiesta) necesitan datos que todavía no se guardan (votos, rol del impostor, castigos) y quedan pendientes.
+
 ## 14.3 Rankings
 
 Propuestas:
@@ -1163,7 +1165,10 @@ Decisiones del usuario del 12 de noviembre de 2026:
 - Pestaña Ranking (14.3) e indicador de lugar sobre cada personaje (21.2).
 - Uso con laptop proyectada y celulares con usuario: vista ancha lista; multi-dispositivo pendiente.
 
+## v1.6
+- Primeros logros (14.2), con ámbito de sesión o histórico (ver DECISIÓN v1.6 en 14.2).
+
 ---
 
-**Fin del Documento Maestro ALV v1.5**  
+**Fin del Documento Maestro ALV v1.6**  
 Este documento debe actualizarse de forma incremental y conservar la distinción entre decisiones aprobadas, propuestas, pendientes y descartadas.

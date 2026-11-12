@@ -5,12 +5,13 @@ import { ESCENARIOS, SECCIONES } from "../content/catalogo";
 import { crearAzar } from "../engine/azar";
 import { nivelPorXp, xpParaNivel } from "../engine/economia";
 import { sorprendeme } from "../engine/filtros";
+import { logrosDe } from "../engine/logros";
 import type { EstadoPartida } from "../engine/partida";
 import type { SeccionId } from "../engine/types";
 import { Avatar } from "./Avatar";
 import { Avisos, BotonSonido, COLOR_SECCION, Confirmaciones, configuracion, Icono, INTENSIDADES, aviso } from "./comun";
 import { Fondo } from "./efectos";
-import { saldosDe, useEstado } from "./estado";
+import { type JugadorLocal, parejaDe, saldosDe, useEstado } from "./estado";
 import { Lobby } from "./Lobby";
 import { Partida } from "./Partida";
 import { EditorPersonaje, NivelYSaldos, Tienda } from "./Personaje";
@@ -176,6 +177,27 @@ function PaginaTienda({ id }: { id?: string }) {
   );
 }
 
+function LogrosDe({ j }: { j: JugadorLocal }) {
+  const s = useEstado();
+  const datos = s.jugadores.map((x, i) => ({ id: x.id, nombre: x.nombre, delEvento: saldosDe(x).delEvento, pareja: parejaDe(i, s) }));
+  const lista = logrosDe(j.id, datos, s.historial);
+  const ganados = lista.filter(l => l.ganado).length;
+  return (
+    <section className="card" aria-labelledby="t-logros">
+      <div className="entre"><h2 id="t-logros">Logros</h2><small className="muted">{ganados} de {lista.length}</small></div>
+      <ul className="logros">
+        {lista.map(l => (
+          <li key={l.clave} className={"logro" + (l.ganado ? " ganado" : "")}>
+            <b>{l.nombre}</b>
+            <small className="muted">{l.ambito === "sesion" ? "Sesión" : "Histórico"} · {l.descripcion}</small>
+            {l.ganado && <span className="chip lime">Ganado</span>}
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
 function Perfil({ id }: { id?: string }) {
   const s = useEstado();
   const j = s.jugadores.find(x => x.id === id) ?? s.jugadores[0]!;
@@ -184,6 +206,7 @@ function Perfil({ id }: { id?: string }) {
       <h1 className="titulo">Tu personaje</h1>
       <QuienSoy id={j.id} base="perfil" />
       <NivelYSaldos j={j} />
+      <LogrosDe j={j} />
       <EditorPersonaje j={j} />
     </>
   );
