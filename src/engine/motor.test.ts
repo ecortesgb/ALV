@@ -5,7 +5,7 @@ import { crearAzar } from "./azar";
 import { cartasPermitidas, juegosCompatibles, sorprendeme } from "./filtros";
 import { aplicar, crearPartida, resultados, type Accion, type AccionSinId, type EstadoPartida } from "./partida";
 import { vistaJugador, vistaPublica } from "./vistas";
-import { nivelPorXp, puedeComprarCarta, saldos, xpDePartida, xpParaNivel, type Movimiento } from "./economia";
+import { nivelPorXp, puedeComprarCarta, saldos, xpDePartida, xpExtraValida, xpParaNivel, type Movimiento } from "./economia";
 import type { Configuracion, Jugador } from "./types";
 
 const NOMBRES = ["Elías", "Ana", "Luis", "Caro", "Memo", "Sofi", "Rafa", "Lupe"];
@@ -236,5 +236,16 @@ describe("Cartas de poder dentro de la partida", () => {
     expect(e.manos.j0).toEqual([]);
     for (let i = 0; i < 5; i++) e = juega(e, { tipo: "dar-carta", jugador: "j0", carta: "escudo" });
     expect(e.manos.j0).toHaveLength(3);
+  });
+});
+
+describe("XP extra del administrador", () => {
+  it("solo acepta enteros de 1 a 200", () => {
+    for (const bien of [1, 25, 200]) expect(xpExtraValida(bien)).toBe(true);
+    for (const mal of [0, -5, 201, 2.5, NaN, Infinity, "50", null, undefined]) expect(xpExtraValida(mal)).toBe(false);
+  });
+  it("cuenta como XP ganada en el evento: sube la acumulada, la disponible y la del evento", () => {
+    const movs: Movimiento[] = [{ tipo: "ganada", xp: 100, eventoId: "viejo" }, { tipo: "ganada", xp: 50, eventoId: "hoy" }];
+    expect(saldos(movs, "hoy")).toEqual({ acumulada: 150, disponible: 150, delEvento: 50 });
   });
 });

@@ -1,17 +1,18 @@
 // ALV: una sola app. Pestañas de abajo: Inicio, Juegos, Grupo, Historial y Perfil.
 // #/jugador y #/pantalla quedan reservadas para los celulares y la TV conectados (paso 5).
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { CONTENIDO } from "../content";
 import { ESCENARIOS, JUEGOS, LUGARES, SECCIONES } from "../content/catalogo";
 import { crearAzar } from "../engine/azar";
-import { nivelPorXp, xpParaNivel } from "../engine/economia";
+import { nivelPorXp, XP_EXTRA, xpParaNivel } from "../engine/economia";
 import { juegosCompatibles, sorprendeme } from "../engine/filtros";
 import { crearPartida, type EstadoPartida } from "../engine/partida";
 import type { DefinicionJuego, Intensidad, SeccionId } from "../engine/types";
 import { Avatar } from "./Avatar";
 import { Avisos, BotonSonido, COLOR_SECCION, Confirmaciones, configuracion, confirmar, Icono, INTENSIDADES, aviso } from "./comun";
 import { instalarClics } from "./sonido";
-import { acciones, parejaDe, saldosDe, useEstado } from "./estado";
+import { acciones, parejaDe, saldosDe, useEstado, type JugadorLocal } from "./estado";
+import { sonar } from "./sonido";
 import { Partida } from "./Partida";
 import { EditorPersonaje, NivelYSaldos } from "./Personaje";
 
@@ -203,6 +204,7 @@ function Juegos({ jugar, seccion }: { jugar: (p: EstadoPartida) => void; seccion
 
 function Grupo({ editar }: { editar?: string }) {
   const s = useEstado();
+  const [premiado, setPremiado] = useState<string | null>(null);
   const j = s.jugadores.find(x => x.id === editar);
   if (j) {
     return (
@@ -230,6 +232,7 @@ function Grupo({ editar }: { editar?: string }) {
                 <input value={x.nombre} maxLength={30} aria-label="Nombre" onChange={ev => acciones.renombrar(x.id, ev.target.value)} />
                 <small className="muted" style={{ paddingLeft: 8 }}>Nv {nivelPorXp(saldosDe(x).acumulada)}{pareja ? ` · pareja de ${pareja.nombre}` : ""}</small>
               </div>
+              <button className="btn sm cyan" aria-label={`Dar XP extra a ${x.nombre}`} onClick={() => setPremiado(x.id)}>+XP</button>
               <a className="btn sm" href={`#/grupo/${x.id}`} style={{ textDecoration: "none" }}>Personaje</a>
               {s.jugadores.length > 2 && <button className="btn sm" aria-label={`Quitar a ${x.nombre}`} onClick={() => acciones.quitar(x.id)}>✕</button>}
             </div>
@@ -237,12 +240,44 @@ function Grupo({ editar }: { editar?: string }) {
         })}
       </div>
       {s.jugadores.length < 8 && <button className="btn" onClick={acciones.agregar}>+ Agregar jugador ({s.jugadores.length} de 8)</button>}
+      {s.jugadores.find(x => x.id === premiado) && <XpExtra j={s.jugadores.find(x => x.id === premiado)!} cerrar={() => setPremiado(null)} />}
       <div className="card">
         <b>Evento</b>
         <p className="hint">La XP que ganan en este evento sirve para comprar cartas de poder. Al cerrarlo, la que sobre queda solo para accesorios.</p>
         <button className="btn sm" onClick={async () => { if (await confirmar({ titulo: "¿Cerrar el evento?", texto: "La XP del evento ya no comprará cartas.", si: "Sí, cerrar", no: "Seguir en el evento", peligro: true })) { acciones.cerrarEvento(); aviso("Evento cerrado. Empieza uno nuevo."); } }}>Cerrar evento y empezar otro</button>
       </div>
     </>
+  );
+}
+
+/** El administrador da XP extra a un jugador por algo fuera del juego. Queda en el historial con su motivo. */
+function XpExtra({ j, cerrar }: { j: JugadorLocal; cerrar: () => void }) {
+  const dlg = useRef<HTMLDialogElement>(null);
+  const [xp, setXp] = useState<number>(XP_EXTRA.opciones[1]);
+  const [motivo, setMotivo] = useState("");
+  useEffect(() => { if (dlg.current && !dlg.current.open) dlg.current.showModal(); }, []);
+  const dar = () => {
+    const error = acciones.darXpExtra(j.id, xp, motivo);
+    if (error) { sonar("error"); aviso(error); return; }
+    sonar("exito");
+    aviso(`+${xp} XP extra para ${j.nombre}`);
+    cerrar();
+  };
+  return (
+    <dialog ref={dlg} className="modal" aria-labelledby="xp-extra-titulo" onCancel={e => { e.preventDefault(); cerrar(); }} onClick={e => { if (e.target === dlg.current) cerrar(); }}>
+      <form className="modal-caja" onSubmit={e => { e.preventDefault(); dar(); }}>
+        <h2 id="xp-extra-titulo">XP extra para {j.nombre}</h2>
+        <p className="hint">Un plus por algo fuera del juego. Cuenta para su nivel y su saldo, y queda en el historial.</p>
+        <div className="opciones" role="group" aria-label="Cuánta XP">
+          {XP_EXTRA.opciones.map(n => <button type="button" key={n} className="opcion" aria-pressed={xp === n} onClick={() => setXp(n)}>+{n}</button>)}
+        </div>
+        <input className="input" value={motivo} maxLength={XP_EXTRA.motivoMax} onChange={e => setMotivo(e.target.value)} placeholder="Motivo (ej. ganó el concurso de clavados de panza)" aria-label="Motivo" />
+        <div className="modal-botones">
+          <button type="submit" className="btn lime" data-sin-clic disabled={!motivo.trim()}>Dar +{xp} XP</button>
+          <button type="button" className="btn" onClick={cerrar}>Cancelar</button>
+        </div>
+      </form>
+    </dialog>
   );
 }
 
@@ -254,8 +289,8 @@ function Historial() {
       {s.historial.length === 0 && <p className="hint">Aquí aparecen las partidas que terminen.</p>}
       {s.historial.map((p, i) => (
         <div key={i} className="card">
-          <div className="entre"><b>{p.juego}</b><small className="muted">{new Date(p.fecha).toLocaleString("es-MX", { dateStyle: "short", timeStyle: "short" })}</small></div>
-          {p.resultados.map((r, k) => <div key={k} className="entre"><span>{k + 1}. {r.nombre} · {r.puntos} pts</span><span className="chip lime">+{r.xp} XP</span></div>)}
+          <div className="entre"><b>{p.extra ? `XP extra · ${p.extra}` : p.juego}</b><small className="muted">{new Date(p.fecha).toLocaleString("es-MX", { dateStyle: "short", timeStyle: "short" })}</small></div>
+          {p.resultados.map((r, k) => <div key={k} className="entre"><span>{p.extra ? `${r.nombre} · la dio el administrador` : `${k + 1}. ${r.nombre} · ${r.puntos} pts`}</span><span className="chip lime">+{r.xp} XP</span></div>)}
         </div>
       ))}
     </>

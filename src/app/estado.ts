@@ -2,7 +2,7 @@
 // Hasta que lleguen las cuentas (paso 4) todo vive aquí; después el servidor es la fuente de verdad
 // y estas mismas reglas (src/engine/economia.ts) las aplica la base de datos.
 import { useSyncExternalStore } from "react";
-import { saldos, puedeComprarAccesorio, puedeComprarCarta, type Movimiento } from "../engine/economia";
+import { saldos, puedeComprarAccesorio, puedeComprarCarta, XP_EXTRA, xpExtraValida, type Movimiento } from "../engine/economia";
 import { idActual, migrarPersonaje, personajeInicial, TIENDA, cambioValido, type Personaje, type Zona } from "../content/personaje";
 import type { EscenarioId, Intensidad } from "../engine/types";
 
@@ -14,7 +14,8 @@ export interface JugadorLocal {
   tiene: string[];
 }
 
-export interface Partida { fecha: string; juego: string; resultados: { nombre: string; puntos: number; xp: number }[] }
+/** `extra` marca la XP que dio el administrador fuera de un juego; lleva el motivo. */
+export interface Partida { fecha: string; juego: string; resultados: { nombre: string; puntos: number; xp: number }[]; extra?: string }
 
 export interface EstadoLocal {
   version: 2;
@@ -141,6 +142,19 @@ export const acciones = {
       }),
       historial: [{ fecha: new Date().toISOString(), juego, resultados: resultados.map(({ nombre, puntos, xp }) => ({ nombre, puntos, xp })) }, ...estado.historial].slice(0, 50),
     });
+  },
+  /** XP extra del administrador por algo fuera del juego. Queda en el historial con su motivo. Devuelve el motivo si no se pudo. */
+  darXpExtra(id: string, xp: number, motivo: string): string | null {
+    const j = estado.jugadores.find(x => x.id === id);
+    if (!j) return "Jugador no encontrado.";
+    if (!xpExtraValida(xp)) return `La XP extra va de ${XP_EXTRA.min} a ${XP_EXTRA.max}.`;
+    const limpio = motivo.replace(/\s+/g, " ").trim().slice(0, XP_EXTRA.motivoMax) || "Sin motivo";
+    guardar({
+      ...estado,
+      jugadores: estado.jugadores.map(x => (x.id === id ? { ...x, movimientos: [...x.movimientos, { tipo: "ganada", xp, eventoId: estado.eventoId }] } : x)),
+      historial: [{ fecha: new Date().toISOString(), juego: "XP extra", extra: limpio, resultados: [{ nombre: j.nombre, puntos: 0, xp }] }, ...estado.historial].slice(0, 50),
+    });
+    return null;
   },
   /** Cierra el evento: la XP que sobró ya no compra cartas, solo accesorios. */
   cerrarEvento() { guardar({ ...estado, eventoId: nuevoEvento() }); },

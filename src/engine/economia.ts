@@ -16,6 +16,10 @@ export const XP = {
   minRondasParaContar: 5,
 } as const;
 
+/** XP extra que el administrador da a un participante por algo fuera del juego. Por entrega. */
+export const XP_EXTRA = { min: 1, max: 200, opciones: [10, 25, 50, 100], motivoMax: 60 } as const;
+export const xpExtraValida = (xp: unknown): xp is number => typeof xp === "number" && Number.isInteger(xp) && xp >= XP_EXTRA.min && xp <= XP_EXTRA.max;
+
 export const PRECIO_CARTAS = [40, 60, 80] as const; // 1.ª, 2.ª y 3.ª carta comprada en una partida
 export const MAX_CARTAS_COMPRADAS = 3;
 export const MAX_CARTAS_EN_MANO = 3;
