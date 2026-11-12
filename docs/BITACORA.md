@@ -113,3 +113,11 @@ Falta de esta tanda: en ¿Cuánto conoces a tu pareja? la respuesta se ve mientr
 - Solo aparece si hay servidor configurado (variables VITE_SUPABASE_URL y VITE_SUPABASE_PUBLISHABLE_KEY). Sin ellas, la app sigue igual.
 - Falta: guardar y recuperar XP, compras e inventario; unirse al lobby desde el celular.
 - Pruebas: 34 pasan; prueba en navegador de la sección sin errores. Falta probar el registro real: crea una cuenta en la base de producción, así que espera el visto bueno de Elías.
+
+## 2026-11-12 · Cuenta: XP de partidas al servidor
+
+- Función `registrar_xp_partida` en Supabase (ALV Games): solo con sesión, valida rango 0–200, tope diario 600, y que el evento (si hay) sea del jugador y esté abierto. Permiso solo para usuarios con sesión.
+- Pruebas en la base con la cuenta de prueba: sin sesión, rechazada; evento ajeno, rechazado; XP válida, aceptada; XP fuera de rango, rechazada.
+- La app suma la XP de cada partida a la cuenta del primer jugador del celular cuando hay sesión. Nota: la XP sigue confiando en lo que envía el celular; validar resultados en el servidor queda pendiente.
+- Asesor de seguridad: avisa de las funciones con permiso para usuarios con sesión (esperado, cada una valida adentro) y de contraseñas filtradas sin protección (ver pendientes).
+- Pruebas de la app: 34 pasan; inicio de sesión en navegador sin errores.

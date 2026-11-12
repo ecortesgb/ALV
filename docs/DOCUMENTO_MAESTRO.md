@@ -1,6 +1,6 @@
 # ALV — Amigos, Locuras y Verdades
 ## Documento Maestro del Producto
-**Versión:** 1.9  
+**Versión:** 1.10  
 **Última actualización:** 12 de noviembre de 2026  
 **Estado:** Documento vivo de producto; decisiones y propuestas identificadas por separado.
 
@@ -1173,6 +1173,10 @@ Decisiones del usuario del 12 de noviembre de 2026:
 ## v1.7
 - Tienda de sobres en pestaña propia (13.2). Valores de prueba pendientes de aprobación: precios, pesos de rareza, cantidad de cartas.
 
+## v1.10
+- Cuentas nuevas empiezan en cero XP; la XP del celular no se importa (decisión de Elías, 12 de noviembre).
+- La XP de partidas de una cuenta llega al servidor con una función que valida el rango (0 a 200) y un tope diario (600). Pendiente: validar los resultados de la partida en el servidor, porque hoy el resultado lo envía el celular.
+
 ## v1.9
 - Cuenta con nickname y contraseña, sin correo (21.2). Registro la primera vez desde el celular; al entrar se recupera personaje, XP, compras e inventario. Implementado el registro, el inicio de sesión y el personaje; XP y compras pendientes. Sin recuperación por correo: se avisa al registrarse.
 
@@ -1181,5 +1185,5 @@ Decisiones del usuario del 12 de noviembre de 2026:
 
 ---
 
-**Fin del Documento Maestro ALV v1.9**  
+**Fin del Documento Maestro ALV v1.10**  
 Este documento debe actualizarse de forma incremental y conservar la distinción entre decisiones aprobadas, propuestas, pendientes y descartadas.

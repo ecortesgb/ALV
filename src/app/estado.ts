@@ -5,6 +5,7 @@ import { useSyncExternalStore } from "react";
 import { nivelPorXp, saldos, puedeComprarAccesorio, puedeComprarCarta, XP_EXTRA, xpExtraValida, type Movimiento } from "../engine/economia";
 import { abrirSobre, SOBRES, type CartaSobre, type TipoSobre } from "../engine/sobres";
 import type { Azar } from "../engine/azar";
+import { cuentaActiva, sumarXpCuenta } from "./nube";
 import { idActual, migrarPersonaje, personajeInicial, TIENDA, cambioValido, type Personaje, type Zona } from "../content/personaje";
 import type { EscenarioId, Intensidad } from "../engine/types";
 
@@ -167,6 +168,10 @@ export const acciones = {
       }),
       historial: [{ fecha: new Date().toISOString(), juego, resultados: resultados.map(({ jugador, nombre, puntos, xp }) => ({ id: jugador, nombre, puntos, xp })) }, ...estado.historial].slice(0, 50),
     });
+    // La cuenta se abre en el primer jugador de este celular: su XP también va al servidor.
+    const yo = estado.jugadores[0];
+    const mia = yo ? porId.get(yo.id) ?? 0 : 0;
+    if (cuentaActiva() && mia > 0) void sumarXpCuenta(juego, mia);
   },
   /** XP extra del administrador por algo fuera del juego. Queda en el historial con su motivo. Devuelve el motivo si no se pudo. */
   darXpExtra(id: string, xp: number, motivo: string): string | null {

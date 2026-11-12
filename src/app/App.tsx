@@ -10,6 +10,7 @@ import type { EstadoPartida } from "../engine/partida";
 import type { SeccionId } from "../engine/types";
 import { Avatar } from "./Avatar";
 import { Cuenta } from "./Cuenta";
+import { sesionActual } from "./nube";
 import { Avisos, BotonSonido, COLOR_SECCION, Confirmaciones, configuracion, Icono, INTENSIDADES, aviso } from "./comun";
 import { Fondo } from "./efectos";
 import { type JugadorLocal, parejaDe, saldosDe, useEstado } from "./estado";
@@ -35,6 +36,7 @@ export const ir = (r: Ruta, arg?: string) => { location.hash = `/${r}${arg ? `/$
 export function App() {
   const [{ ruta, arg }, setR] = useState(leerRuta());
   const [partida, setPartida] = useState<EstadoPartida | null>(null);
+  useEffect(() => { void sesionActual(); }, []);
   useEffect(() => {
     const f = () => setR(leerRuta());
     addEventListener("hashchange", f);

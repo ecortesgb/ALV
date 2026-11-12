@@ -21,9 +21,17 @@ const correoInterno = (nick: string) => `${nick.trim().toLowerCase()}@jugadores.
 
 const GENERICO = "No se pudo. Revisa tu nickname y contraseña.";
 
+/** Nickname de la cuenta abierta en este celular, o null. */
+let usuario: string | null = null;
+export const cuentaActiva = () => usuario;
+
 export async function sesionActual(): Promise<Session | null> {
   if (!cliente) return null;
-  try { const { data } = await cliente.auth.getSession(); return data.session; } catch { return null; }
+  try {
+    const { data } = await cliente.auth.getSession();
+    usuario = data.session?.user.email?.split("@")[0] ?? null;
+    return data.session;
+  } catch { return null; }
 }
 
 /** Crea la cuenta y deja su nombre visible como lo escribió. Devuelve null si salió bien, o un mensaje. */
@@ -34,6 +42,7 @@ export async function registrar(nick: string, pass: string): Promise<string | nu
     const { data, error } = await cliente.auth.signUp({ email: correoInterno(nick), password: pass });
     if (error || !data.user) return GENERICO;
     if (data.session) await cliente.from("perfiles").update({ nombre: nick.trim() }).eq("id", data.user.id);
+    usuario = nick.trim().toLowerCase();
     return null;
   } catch (e) { console.error("registrar", e); return GENERICO; }
 }
@@ -42,12 +51,24 @@ export async function entrar(nick: string, pass: string): Promise<string | null>
   if (!cliente) return GENERICO;
   try {
     const { error } = await cliente.auth.signInWithPassword({ email: correoInterno(nick), password: pass });
-    return error ? GENERICO : null;
+    if (error) return GENERICO;
+    usuario = nick.trim().toLowerCase();
+    return null;
   } catch (e) { console.error("entrar", e); return GENERICO; }
 }
 
 export async function salir(): Promise<void> {
   try { await cliente?.auth.signOut(); } catch (e) { console.error("salir", e); }
+  usuario = null;
+}
+
+/** Suma la XP de una partida a la cuenta. La base valida el tope y no deja pasar valores fuera de rango. */
+export async function sumarXpCuenta(juego: string, xp: number): Promise<void> {
+  if (!cliente || !usuario || xp <= 0) return;
+  try {
+    const { error } = await cliente.rpc("registrar_xp_partida", { p_evento: null, p_juego: juego, p_xp: xp, p_motivo: juego });
+    if (error) console.error("sumarXpCuenta", error.message);
+  } catch (e) { console.error("sumarXpCuenta", e); }
 }
 
 /** Lee el personaje guardado en la cuenta. Devuelve null si no hay nada o falla. */
