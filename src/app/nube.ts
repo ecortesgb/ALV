@@ -65,13 +65,29 @@ export async function salir(): Promise<void> {
   tieneCuenta = [];
 }
 
-/** Suma la XP de una partida a la cuenta. La base valida el tope y no deja pasar valores fuera de rango. */
-export async function sumarXpCuenta(juego: string, xp: number): Promise<void> {
-  if (!cliente || !usuario || xp <= 0) return;
+/** Hechos de una partida para la cuenta. La XP la calcula el servidor con la misma fórmula del motor. */
+export interface HechosPartida { juego: string; rondas: number; retos: number; lugar: number; jugadores: number }
+
+/** Manda los hechos de la partida; devuelve la XP que el servidor acreditó, o null si no se pudo. */
+export async function registrarPartidaNube(h: HechosPartida): Promise<number | null> {
+  if (!cliente || !usuario) return null;
   try {
-    const { error } = await cliente.rpc("registrar_xp_partida", { p_evento: null, p_juego: juego, p_xp: xp, p_motivo: juego });
-    if (error) console.error("sumarXpCuenta", error.message);
-  } catch (e) { console.error("sumarXpCuenta", e); }
+    const { data, error } = await cliente.rpc("registrar_partida", {
+      p_juego: h.juego, p_rondas: h.rondas, p_retos: h.retos, p_lugar: h.lugar, p_jugadores: h.jugadores,
+    });
+    if (error) { console.error("registrarPartidaNube", error.message); return null; }
+    return typeof data === "number" ? data : 0;
+  } catch (e) { console.error("registrarPartidaNube", e); return null; }
+}
+
+/** XP extra del anfitrión a la cuenta. El servidor limita 200 por entrega y 200 al día. */
+export async function registrarXpExtraNube(xp: number, motivo: string): Promise<boolean> {
+  if (!cliente || !usuario) return false;
+  try {
+    const { error } = await cliente.rpc("registrar_xp_extra", { p_xp: xp, p_motivo: motivo });
+    if (error) { console.error("registrarXpExtraNube", error.message); return false; }
+    return true;
+  } catch (e) { console.error("registrarXpExtraNube", e); return false; }
 }
 
 /** Lee el personaje guardado en la cuenta. Devuelve null si no hay nada o falla. */

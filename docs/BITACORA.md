@@ -133,3 +133,12 @@ Falta de esta tanda: en ¿Cuánto conoces a tu pareja? la respuesta se ve mientr
 - Correcciones: sin evento abierto, la «XP del evento» de la cuenta marcaba toda la XP; ahora es 0. Los sobres fallaban desde la app porque la API exige condición en cada borrado.
 - Migraciones guardadas en el repo: 003 (registrar_xp_partida, que existía solo en la base), 004 (tienda en la cuenta) y 005 (correcciones).
 - Pruebas: 13 de acceso en SQL (otro usuario no ve ni toca el inventario ajeno; sin sesión no se compra nada); punta a punta con una cuenta real: sobre de 2 cartas, corona y medallas, y en «otro celular» llegan la misma XP, el inventario y lo puesto. La cuenta de prueba se borró.
+
+## 2026-11-13 · La XP de cada partida la calcula el servidor
+
+- Antes el celular mandaba la XP ya calculada (0 a 200). Ahora manda los hechos: juego, rondas, retos cumplidos, lugar y número de jugadores. La base (`registrar_partida`) revisa que tengan sentido y calcula con la misma fórmula del motor.
+- Revisiones: juego del catálogo, 2 a 8 jugadores, 0 a 40 rondas, lugar dentro del grupo, retos que no pasen de los turnos propios, una partida por minuto como máximo y el tope diario de 600.
+- XP extra del anfitrión: función aparte (`registrar_xp_extra`), de 1 a 200 por entrega y máximo 200 al día.
+- La función vieja `registrar_xp_partida` ya no se puede llamar.
+- Lo que falta: los hechos todavía los reporta el celular. Se cierra del todo cuando la partida corra en la sala compartida, donde el servidor ve cada acción.
+- Pruebas: 35 del motor (una nueva compara la fórmula de la app con la de la base); 11 en SQL (trampas rechazadas y cálculo de 52 XP como el ejemplo del Maestro); punta a punta con cuenta real: Verdad o reto de 8 rondas, la app calculó 57 y el servidor acreditó 57. La cuenta de prueba se borró.

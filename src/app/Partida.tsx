@@ -404,7 +404,7 @@ function Podio({ e, salir }: { e: EstadoPartida; salir: () => void }) {
   useEffect(() => {
     if (acreditado.current) return;
     acreditado.current = true;
-    acciones.acreditar(JUEGOS.find(j => j.id === e.juegoId)?.nombre ?? e.juegoId, res);
+    acciones.acreditar(JUEGOS.find(j => j.id === e.juegoId)?.nombre ?? e.juegoId, res, { juegoId: e.juegoId, jugadores: e.cfg.jugadores.length });
     sonar("fanfarria");
   }, [e.juegoId, res]);
   const jl = (id: string) => s.jugadores.find(j => j.id === id);

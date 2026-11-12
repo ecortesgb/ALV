@@ -320,6 +320,7 @@ export function resultados(e: EstadoPartida) {
     const p = e.puntos[j.id] ?? 0;
     if (p !== previo) { lugar = i + 1; previo = p; }
     const xp = xpDePartida({ rondas: rondasJugadas, retosCumplidos: e.retos[j.id] ?? 0, lugar }, e.cfg.jugadores.length);
-    return { jugador: j.id, nombre: j.nombre, puntos: p, lugar, xp };
+    // rondas y retos van al servidor, que vuelve a calcular la XP con la misma fórmula.
+    return { jugador: j.id, nombre: j.nombre, puntos: p, lugar, xp, rondas: rondasJugadas, retos: e.retos[j.id] ?? 0 };
   });
 }

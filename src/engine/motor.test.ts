@@ -249,3 +249,17 @@ describe("XP extra del administrador", () => {
     expect(saldos(movs, "hoy")).toEqual({ acumulada: 150, disponible: 150, delEvento: 50 });
   });
 });
+
+describe("XP calculada en el servidor", () => {
+  it("resultados trae rondas y retos para que el servidor recalcule la misma XP", () => {
+    let e = crearPartida(juego("verdad-reto"), cfg(4), 21, CONTENIDO, 8);
+    e = jugarCompleta(e, () => "cumplio");
+    for (const r of resultados(e)) {
+      expect(r.rondas).toBe(8);
+      expect(r.retos).toBeLessThanOrEqual(Math.ceil(r.rondas / 4)); // el mismo límite que pone la base
+      // Fórmula de la base (006_xp_calculada_en_servidor.sql): 20 + 2·min(rondas,10) + 3·retos + premio por lugar.
+      const premio = r.lugar <= 2 ? [15, 10][r.lugar - 1]! : 0;
+      expect(r.xp).toBe(20 + 2 * Math.min(r.rondas, 10) + 3 * r.retos + premio);
+    }
+  });
+});
