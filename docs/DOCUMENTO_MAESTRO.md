@@ -508,6 +508,8 @@ El jugador se posiciona en el podio de esa sesión según esos 30, no por sus 1,
 
 **PENDIENTE:** formalizar cómo se refleja cada recompensa en XP acumulada y XP disponible para que no exista doble contabilización accidental. Las reglas invariables son: XP acumulada no disminuye, XP disponible no queda negativa y el podio usa la XP de la sesión.
 
+**DECISIÓN (v1.3) — primera prueba:** la primera prueba será una sola sesión completa y en ella toda la XP sirve para todo. La separación entre XP de sesión y XP de sesiones anteriores no se aplica en esa prueba; el usuario decidirá después cómo funciona en sesiones posteriores.
+
 **PENDIENTE:** confirmar si el alcance de esta regla es la sesión o el evento completo. La app actual lo maneja por evento («XP del evento»), y un evento puede tener varias sesiones (capítulo 4).
 
 **PENDIENTE:** definir si gastar XP de sesión en cartas baja el lugar en el podio o si el podio cuenta lo ganado sin restar lo gastado.
@@ -530,11 +532,17 @@ El jugador se posiciona en el podio de esa sesión según esos 30, no por sus 1,
 
 Las fórmulas, límites, recompensas y penalizaciones están pendientes.
 
+## 12.3.1 XP extra otorgada por el administrador — DECISIÓN (v1.3)
+
+El administrador del lobby o de la sesión puede dar XP directamente a un participante, como plus por una actividad adicional fuera del juego.
+
+**PENDIENTE:** definir si ese plus cuenta para el podio de la sesión, si lleva motivo visible para todos, y su tope por persona y por sesión. Debe quedar registrado quién lo dio y cuánto (capítulo 22: auditoría), y solo el servidor puede acreditarlo.
+
 ## 12.4 Penalizaciones
 
-**DECISIÓN (v1.3, sustituye a la de v1.2):** la XP no se descuenta y el saldo disponible nunca queda negativo. Los castigos no restan XP. Un castigo puede ser quedarse sin jugar o sin participar un turno o una ronda, o no ganar XP en el siguiente juego aunque se gane.
+**DECISIÓN (v1.3, sustituye a la de v1.2):** la XP no se descuenta y el saldo disponible nunca queda negativo. Los castigos no restan XP. El castigo preferido es ganar la mitad de la XP en el siguiente juego. Se descarta dejar a alguien sin jugar o sin ganar nada, para que nadie pierda las ganas de seguir.
 
-**PENDIENTE:** elegir la forma exacta del castigo (el usuario la dejó abierta), su duración máxima y cómo se trata una desconexión. Un castigo que deja a alguien sin jugar debe ser corto, para no chocar con el principio de participación equilibrada (capítulo 2).
+**PENDIENTE:** afinar el detalle (qué lo provoca, si dura un juego o más, si se acumula) y cómo se trata una desconexión.
 
 ---
 
@@ -548,7 +556,7 @@ La tienda permite adquirir elementos con XP disponible, conforme a precios y reg
 
 **PROPUESTA del usuario (v1.3):** sobres por nivel, **oro, plata y bronce**, con la lógica de los sobres de los videojuegos de futbol. Pueden traer accesorios especiales o comodines extra, mixtos o por separado. Además, compra directa de accesorios concretos, como playeras especiales. Se toma solo la mecánica de niveles; no se copian nombres, arte ni interfaz de ningún juego.
 
-**PENDIENTE:** si un sobre comprado con XP de sesiones anteriores trae comodines, hay que definir en qué sesión se pueden usar. Tal como está, abriría una vía para comprar ventaja con XP antigua, que la regla de 12.1 no permite.
+**DECISIÓN (v1.3):** los sobres mixtos (los que traen comodines) no se compran con XP de sesiones anteriores. En la primera prueba esto no aplica, porque toda la XP sirve para todo (12.1).
 
 Propuesta de sobres de 1 a 5 cartas, con categorías:
 - Vestuario.
@@ -1016,7 +1024,7 @@ Requisitos:
 4. Completar matriz de compatibilidad entre modalidad y minijuegos.
 5. Definir reglas, duración, turnos, rondas, empates y puntuación de cada minijuego.
 6. Formalizar el modelo contable de XP acumulada, XP disponible y XP de sesión.
-7. Definir la forma exacta de los castigos sin descuento de XP (sin jugar, sin participar o sin ganar XP en el siguiente juego) y su duración.
+7. Afinar el castigo de mitad de XP en el siguiente juego: qué lo provoca, cuánto dura y si se acumula.
 8. Definir economía de tienda, precios, sobres, duplicados y rarezas.
 9. Definir roles, permisos, reconexión y privacidad.
 10. Definir licencias y fuente de audio para Karaoke relámpago.
@@ -1025,8 +1033,9 @@ Requisitos:
 13. Seleccionar técnica de representación y animación de personajes.
 14. Seleccionar arquitectura backend y estrategia de despliegue.
 15. Confirmar si la XP que compra cartas se cuenta por sesión o por evento.
-16. Definir si los comodines de los sobres se pueden usar en cualquier sesión.
+16. Definir las reglas de XP para sesiones posteriores a la primera prueba.
 17. Redactar el banco de frases con siglas.
+18. Definir topes, motivo y efecto en el podio de la XP extra que da el administrador.
 
 ---
 
@@ -1042,7 +1051,9 @@ Requisitos:
 - XP disponible es gastable y nunca queda negativa. La XP no se descuenta como castigo.
 - XP de sesión determina el podio de esa sesión y es la única que compra cartas para esa sesión; no se usa XP histórica para ordenar el podio.
 - La XP de sesiones anteriores solo compra sobres de accesorios y accesorios especiales.
-- Los castigos son sin jugar, sin participar o sin ganar XP en el siguiente juego; nunca restan XP.
+- El castigo es ganar la mitad de la XP en el siguiente juego; nunca resta XP ni deja a nadie sin jugar.
+- El administrador puede dar XP extra a un participante por actividades fuera del juego.
+- Primera prueba: una sola sesión y toda la XP sirve para todo.
 - La marca es ALV; su significado puede variar por pantalla. Principal: «Amigos, Locuras y Verdades».
 - El lenguaje de la app usa siglas con ingenio.
 - ALVerca, FBI y GPS son los escenarios activos.
@@ -1081,11 +1092,13 @@ Se añadieron y consolidaron:
 ## v1.3
 Decisiones del usuario del 12 de noviembre de 2026:
 - Nombre: la marca ALV se respeta y su significado puede variar por pantalla. Principal «Amigos, Locuras y Verdades»; alternativa «Amigos Legendarios Verdaderos». Sustituye a «Aventuras con Amigos».
-- XP: la disponible nunca queda negativa y la XP no se descuenta. Sustituye la decisión de v1.2 que permitía saldo negativo y quitar XP. Los castigos pasan a ser sin jugar, sin participar o sin ganar XP en el siguiente juego.
+- XP: la disponible nunca queda negativa y la XP no se descuenta. Sustituye la decisión de v1.2 que permitía saldo negativo y quitar XP. El castigo pasa a ser ganar la mitad de la XP en el siguiente juego.
 - XP de sesión: además del podio, es la única que compra cartas para esa sesión. La XP de otras sesiones solo compra sobres de accesorios y accesorios especiales.
 - Escenarios: FBI y GPS quedan activos junto con ALVerca.
 - Lenguaje de siglas en toda la app (1.4).
 
+- El administrador puede dar XP extra a un participante (12.3.1).
+- Primera prueba: una sola sesión completa en la que toda la XP sirve para todo. Los sobres mixtos no se compran con XP de sesiones anteriores.
 - Dirección visual: Neo-Arcade (8.6), con la lista de mejoras del usuario implementada por tandas. Se descarta la comparación de los conceptos A, B y C.
 
 Propuestas añadidas, sin aprobar:
