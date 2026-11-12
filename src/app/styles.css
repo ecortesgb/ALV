@@ -415,3 +415,12 @@ button.juego[aria-pressed="true"] { border-color: var(--sc); box-shadow: 0 0 0 1
 .logro { display: grid; gap: 2px; padding: 10px 12px; border-radius: 14px; background: var(--card2); border: 1px dashed var(--borde-vidrio, #3a3f5c); opacity: .55; }
 .logro.ganado { opacity: 1; border: 2px solid var(--lime, #C6FF3D); }
 .logro .chip { justify-self: start; margin-top: 4px; }
+
+/* Sobres */
+.sobre .sobre-arte { font-size: 40px; }
+.sobre.bronce { border-color: #C98A4B; } .sobre.plata { border-color: #C9D2DE; } .sobre.oro { border-color: #FFCF4A; }
+.sobre-revelado { display: grid; justify-items: center; gap: 12px; text-align: center; }
+.arte-grande { display: grid; place-items: center; width: 180px; height: 180px; border-radius: 24px; background: var(--card2); }
+.arte-grande img { width: 150px; height: 150px; object-fit: contain; }
+.chip.rareza.comun { background: #5b6170; } .chip.rareza.rara { background: #22E1FF; color: #05121a; }
+.chip.rareza.epica { background: #A77BFF; } .chip.rareza.legendaria { background: #FFCF4A; color: #2a1b00; }

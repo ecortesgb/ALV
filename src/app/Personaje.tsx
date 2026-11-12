@@ -3,6 +3,8 @@ import { useState } from "react";
 import { crearAzar } from "../engine/azar";
 import { nivelPorXp, tituloPorNivel, xpParaNivel, PRECIO_CARTAS } from "../engine/economia";
 import { PASOS, PIEZAS, TIENDA, ZONAS, personajeAlAzar, rutaPieza, type Paso } from "../content/personaje";
+import { RAREZAS, SOBRES, type CartaSobre, type TipoSobre } from "../engine/sobres";
+import { sonar } from "./sonido";
 import { CARTAS_PODER } from "../content/catalogo";
 import { Avatar, IconoAdorno } from "./Avatar";
 import { acciones, saldosDe, type JugadorLocal } from "./estado";
@@ -71,11 +73,76 @@ function Piezas({ j, paso }: { j: JugadorLocal; paso: Paso }) {
   );
 }
 
+/** Sobres: se compran con XP disponible y se abren una carta a la vez. */
+function Sobres({ j }: { j: JugadorLocal }) {
+  const [abierto, setAbierto] = useState<{ tipo: TipoSobre; cartas: CartaSobre[]; paso: number } | null>(null);
+  const s = saldosDe(j), nivel = nivelPorXp(s.acumulada);
+  const abrir = (tipo: TipoSobre) => {
+    const r = acciones.comprarSobre(j.id, tipo, crearAzar((Math.random() * 0xffffffff) >>> 0));
+    if (!r.ok) { aviso(r.motivo); return; }
+    sonar("poder");
+    setAbierto({ tipo, cartas: r.cartas, paso: 0 });
+  };
+  const nombreDe = (id: string) => TIENDA.find(a => a.id === id)?.nombre ?? id;
+  const arteDe = (id: string) => (TIENDA.find(a => a.id === id)?.pieza ? <img src={rutaPieza(id, true)} alt="" /> : <IconoAdorno id={id} />);
+  const def = abierto ? SOBRES.find(x => x.id === abierto.tipo) : null;
+  return (
+    <div className="pila">
+      <span className="label">Sobres</span>
+      <p className="hint">Cada sobre trae cartas de accesorios que todavía no tienes. Pagas con tu <b style={{ color: "var(--lime)" }}>XP disponible ({s.disponible})</b>.</p>
+      <div className="tienda">
+        {SOBRES.map(d => {
+          const bloqueado = nivel < d.nivel, alcanza = s.disponible >= d.precio;
+          return (
+            <div key={d.id} className={"articulo sobre " + d.id}>
+              <span className="arte sobre-arte" aria-hidden="true">✉</span>
+              <b>{d.nombre}</b>
+              <small className="muted">{d.cartas} cartas</small>
+              {bloqueado ? <span className="chip pink">Nivel {d.nivel}</span> : (
+                <button className={"btn sm" + (alcanza ? " lime" : "")} disabled={!alcanza} onClick={() => abrir(d.id)}>
+                  {alcanza ? `Abrir · ${d.precio} XP` : `Faltan ${d.precio - s.disponible}`}
+                </button>
+              )}
+            </div>
+          );
+        })}
+      </div>
+      {abierto && def && (
+        <div className="card sobre-revelado" role="dialog" aria-label={`Abriendo ${def.nombre}`}>
+          {abierto.paso < abierto.cartas.length ? (() => {
+            const c = abierto.cartas[abierto.paso]!;
+            return (
+              <>
+                <span className={`chip rareza ${c.rareza}`}>{RAREZAS[c.rareza]}</span>
+                <span className="arte-grande" aria-hidden="true">{arteDe(c.id)}</span>
+                <b>{nombreDe(c.id)}</b>
+                <small className="muted">Carta {abierto.paso + 1} de {abierto.cartas.length}</small>
+                <button className="btn lime" onClick={() => { sonar("revelar"); setAbierto({ ...abierto, paso: abierto.paso + 1 }); }}>
+                  {abierto.paso + 1 < abierto.cartas.length ? "Revelar siguiente" : "Ver resumen"}
+                </button>
+              </>
+            );
+          })() : (
+            <>
+              <b>Resumen de {def.nombre}</b>
+              <ul className="logros">
+                {abierto.cartas.map(c => <li key={c.id} className="logro ganado"><b>{nombreDe(c.id)}</b><small className="muted">{RAREZAS[c.rareza]} · nueva en tu colección</small></li>)}
+              </ul>
+              <button className="btn" onClick={() => setAbierto(null)}>Cerrar</button>
+            </>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function Tienda({ j }: { j: JugadorLocal }) {
   const s = saldosDe(j);
   const nivel = nivelPorXp(s.acumulada);
   return (
     <div className="pila">
+      <Sobres j={j} />
       <p className="hint">Todo es para lucir: nada da ventaja. Pagas con tu <b style={{ color: "var(--lime)" }}>XP disponible ({s.disponible})</b>. La corona del ALV vigente, las medallas de victoria y el delantal del mesero no se venden: se ganan.</p>
       {ZONAS.map(([zona, nombreZona]) => (
         <div className="pila" key={zona}>

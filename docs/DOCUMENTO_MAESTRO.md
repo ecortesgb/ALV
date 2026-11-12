@@ -1,6 +1,6 @@
 # ALV — Amigos, Locuras y Verdades
 ## Documento Maestro del Producto
-**Versión:** 1.6  
+**Versión:** 1.7  
 **Última actualización:** 12 de noviembre de 2026  
 **Estado:** Documento vivo de producto; decisiones y propuestas identificadas por separado.
 
@@ -575,6 +575,8 @@ Experiencia de apertura explorada:
 5. Revelación de cartas una por una.
 6. Presentación de rareza.
 7. Opción de equipar o guardar.
+
+**IMPLEMENTADO (v1.7), PROVISIONAL:** tienda de sobres en la pestaña Tienda, separada de la personalización. Tres sobres (bronce 60 XP desde nivel 1, plata 120 desde nivel 3, oro 240 desde nivel 6) que dan 2, 3 y 4 cartas de accesorios que todavía no se tienen. Se abren una carta a la vez. Pagan con XP disponible. Los precios, los pesos de rareza y la rareza por precio son valores de prueba y quedan **PENDIENTE** de aprobación de Elías. Un sobre sin cartas nuevas no cobra.
 
 ## 13.3 Rarezas
 
@@ -1168,7 +1170,10 @@ Decisiones del usuario del 12 de noviembre de 2026:
 ## v1.6
 - Primeros logros (14.2), con ámbito de sesión o histórico (ver DECISIÓN v1.6 en 14.2).
 
+## v1.7
+- Tienda de sobres en pestaña propia (13.2). Valores de prueba pendientes de aprobación: precios, pesos de rareza, cantidad de cartas.
+
 ---
 
-**Fin del Documento Maestro ALV v1.6**  
+**Fin del Documento Maestro ALV v1.7**  
 Este documento debe actualizarse de forma incremental y conservar la distinción entre decisiones aprobadas, propuestas, pendientes y descartadas.
