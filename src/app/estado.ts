@@ -93,6 +93,11 @@ export const acciones = {
   },
   enParejas(v: boolean) { guardar({ ...estado, enParejas: v }); },
   ajustes(a: Partial<EstadoLocal["ajustes"]>) { guardar({ ...estado, ajustes: { ...estado.ajustes, ...a } }); },
+  /** Reemplaza el personaje con el que está guardado en la cuenta. */
+  personajeDeNube(id: string, p: Personaje) {
+    if (!estado.jugadores.some(x => x.id === id)) return;
+    cambiaJugador(id, x => ({ ...x, personaje: migrarPersonaje(p) }));
+  },
   personaje(id: string, cambio: Partial<Personaje>) {
     const j = estado.jugadores.find(x => x.id === id);
     if (!j || !cambioValido(cambio, j.tiene)) return;

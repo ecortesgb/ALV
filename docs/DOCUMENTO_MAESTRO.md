@@ -1,6 +1,6 @@
 # ALV — Amigos, Locuras y Verdades
 ## Documento Maestro del Producto
-**Versión:** 1.8  
+**Versión:** 1.9  
 **Última actualización:** 12 de noviembre de 2026  
 **Estado:** Documento vivo de producto; decisiones y propuestas identificadas por separado.
 
@@ -1173,10 +1173,13 @@ Decisiones del usuario del 12 de noviembre de 2026:
 ## v1.7
 - Tienda de sobres en pestaña propia (13.2). Valores de prueba pendientes de aprobación: precios, pesos de rareza, cantidad de cartas.
 
+## v1.9
+- Cuenta con nickname y contraseña, sin correo (21.2). Registro la primera vez desde el celular; al entrar se recupera personaje, XP, compras e inventario. Implementado el registro, el inicio de sesión y el personaje; XP y compras pendientes. Sin recuperación por correo: se avisa al registrarse.
+
 ## v1.8
 - Neo-Arcade tanda 3 en parte: ruleta con fricción y gestos de deslizar en la carta (8.6). Pendientes: botella interactiva, destello de cartas de poder, inclinación 3D.
 
 ---
 
-**Fin del Documento Maestro ALV v1.8**  
+**Fin del Documento Maestro ALV v1.9**  
 Este documento debe actualizarse de forma incremental y conservar la distinción entre decisiones aprobadas, propuestas, pendientes y descartadas.

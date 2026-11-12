@@ -9,6 +9,7 @@ import { logrosDe } from "../engine/logros";
 import type { EstadoPartida } from "../engine/partida";
 import type { SeccionId } from "../engine/types";
 import { Avatar } from "./Avatar";
+import { Cuenta } from "./Cuenta";
 import { Avisos, BotonSonido, COLOR_SECCION, Confirmaciones, configuracion, Icono, INTENSIDADES, aviso } from "./comun";
 import { Fondo } from "./efectos";
 import { type JugadorLocal, parejaDe, saldosDe, useEstado } from "./estado";
@@ -222,6 +223,7 @@ function Perfil({ id }: { id?: string }) {
       <h1 className="titulo">Tu personaje</h1>
       <QuienSoy id={j.id} base="perfil" />
       <NivelYSaldos j={j} />
+      <Cuenta j={j} />
       <LogrosDe j={j} />
       <EditorPersonaje j={j} />
     </>
