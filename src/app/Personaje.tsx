@@ -1,4 +1,4 @@
-// Editor del personaje (6 pasos del armador del Centro de Mando) más la Tienda.
+// Editor del personaje (6 pasos del armador) y la Tienda de accesorios, que vive en su propia pestaña.
 import { useState } from "react";
 import { crearAzar } from "../engine/azar";
 import { nivelPorXp, tituloPorNivel, xpParaNivel, PRECIO_CARTAS } from "../engine/economia";
@@ -8,7 +8,6 @@ import { Avatar, IconoAdorno } from "./Avatar";
 import { acciones, saldosDe, type JugadorLocal } from "./estado";
 import { aviso } from "./comun";
 
-type Pestana = Paso | "tienda";
 
 export function NivelYSaldos({ j }: { j: JugadorLocal }) {
   const s = saldosDe(j);
@@ -32,7 +31,7 @@ export function NivelYSaldos({ j }: { j: JugadorLocal }) {
 }
 
 export function EditorPersonaje({ j }: { j: JugadorLocal }) {
-  const [tab, setTab] = useState<Pestana>("piel");
+  const [tab, setTab] = useState<Paso>("piel");
   const p = j.personaje;
   return (
     <div className="pila">
@@ -43,9 +42,8 @@ export function EditorPersonaje({ j }: { j: JugadorLocal }) {
       </div>
       <div className="pestanas" role="tablist">
         {PASOS.map(s => <button key={s.k} role="tab" aria-current={tab === s.k} onClick={() => setTab(s.k)}>{s.nombre}</button>)}
-        <button role="tab" aria-current={tab === "tienda"} onClick={() => setTab("tienda")}>Tienda</button>
       </div>
-      {tab === "tienda" ? <Tienda j={j} /> : <Piezas j={j} paso={tab} />}
+      <Piezas j={j} paso={tab} />
     </div>
   );
 }
@@ -73,7 +71,7 @@ function Piezas({ j, paso }: { j: JugadorLocal; paso: Paso }) {
   );
 }
 
-function Tienda({ j }: { j: JugadorLocal }) {
+export function Tienda({ j }: { j: JugadorLocal }) {
   const s = saldosDe(j);
   const nivel = nivelPorXp(s.acumulada);
   return (

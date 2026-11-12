@@ -74,3 +74,13 @@ Falta de esta tanda: en ¿Cuánto conoces a tu pareja? la respuesta se ve mientr
 - El botón de sonido pasó del borde flotante (tapaba botones) al encabezado de Inicio, de la partida y del podio.
 - Con «reducir movimiento» no hay fondo animado ni confeti.
 - Pruebas: 25 del motor pasan; prueba en navegador del anillo, números flotantes, confeti, aura, respuesta tapada y modo sin movimiento, sin errores.
+
+## 2026-11-12 · Lobby social, Ranking y vista para proyector
+
+- Nueva navegación: Inicio, Lobby, Tienda, Ranking y Perfil. Los enlaces viejos (#/juegos, #/grupo, #/historial) llevan a su lugar nuevo.
+- Lobby: los personajes del grupo aparecen juntos en el escenario. Al tocar uno se puede saludar, bailar, chocar la mano o empujar a otro (el otro cae y se levanta) y marcarse listo. Arriba de cada uno sale su lugar en la sesión cuando ya hay XP.
+- En el mismo Lobby se elige el juego (filtro por sección), el escenario, las condiciones y los jugadores (nombre, +XP, quitar, agregar). Iniciar abre una pantalla de carga con la sigla, el escenario, los personajes listos y un consejo.
+- Ranking: Sesión, Histórico, Parejas e Historial. Empates comparten lugar.
+- Tienda en su propia pestaña, con selector de jugador; el editor del personaje quedó solo para personalizar.
+- Vista ancha (laptop o proyector): Lobby en dos columnas, partida con el marcador a la derecha y la carta ajustada a la altura de la pantalla. Botón de pantalla completa en Lobby y partida.
+- Pruebas: 25 del motor pasan; prueba en navegador en celular (390 px) y laptop (1366×768): gestos, carga, partida, ranking, tienda y perfil, sin errores.
