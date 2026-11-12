@@ -25,5 +25,5 @@
 - Contenido separado de la lógica (`src/content`). Toda carta lleva etiquetas de escenario, intensidad, esfuerzo, adulto y Drunk.
 - Seguridad física: los filtros por lugar no se saltan. Tomar nunca da XP. Pasar no tiene castigo.
 - Fuente de verdad del producto: `docs/DOCUMENTO_MAESTRO.md` (Documento Maestro v1.2). Respetar su clasificación DECISIÓN / PROPUESTA / PENDIENTE / DESCARTADO: una propuesta no se implementa como si estuviera aprobada, lo descartado no se recupera y no se salta ni se inicia una fase sin aprobación de Elías.
-- El documento "ALV — Definición integral de la plataforma" queda como antecedente. Donde contradiga al Documento Maestro, manda el Maestro; si hay duda, preguntar.
+- El documento "ALV — Definición integral de la plataforma" sigue vigente. Ninguno de los dos manda en general: cada choque entre ambos, o con lo ya construido, lo decide Elías punto por punto. Mientras no esté decidido, no cambiar lo que ya funciona; preguntar.
 - Cambios al Documento Maestro: incrementales, con entrada en su historial de versiones.
