@@ -11,6 +11,7 @@ import type { DefinicionJuego, Intensidad, SeccionId } from "../engine/types";
 import { Avatar } from "./Avatar";
 import { Avisos, BotonSonido, COLOR_SECCION, Confirmaciones, configuracion, confirmar, Icono, INTENSIDADES, aviso } from "./comun";
 import { instalarClics } from "./sonido";
+import { Fondo } from "./efectos";
 import { acciones, parejaDe, saldosDe, useEstado, type JugadorLocal } from "./estado";
 import { sonar } from "./sonido";
 import { Partida } from "./Partida";
@@ -39,6 +40,7 @@ export function App() {
 
   return (
     <>
+      <Fondo />
       <main className="app">
         {partida ? <Partida inicial={partida} salir={() => setPartida(null)} />
           : ruta === "inicio" ? <Inicio jugar={jugar} />
@@ -54,7 +56,6 @@ export function App() {
           ))}
         </nav>
       )}
-      <BotonSonido />
       <Avisos />
       <Confirmaciones />
     </>
@@ -72,6 +73,8 @@ function Encabezado() {
         <h1 className="logo"><b>A</b>LV</h1>
         <div className="tag">AMIGOS, LOCURAS Y VERDADES</div>
       </div>
+      <div className="fila" style={{ gap: 8 }}>
+      <BotonSonido />
       <a className="yo" href="#/perfil" style={{ textDecoration: "none" }}>
         <span className="marco"><Avatar p={yo.personaje} size={38} nombre={yo.nombre} /></span>
         <span className="pila" style={{ gap: 4 }}>
@@ -79,6 +82,7 @@ function Encabezado() {
           <span className="barra"><span style={{ width: `${avance}%` }} /></span>
         </span>
       </a>
+      </div>
     </div>
   );
 }

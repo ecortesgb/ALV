@@ -62,3 +62,15 @@ Falta de esta tanda: en ¿Cuánto conoces a tu pareja? la respuesta se ve mientr
 - Límite por entrega: de 1 a 200. Todavía no hay tope por sesión; está pendiente en el Documento Maestro (12.3.1).
 - Por ahora vive en el dispositivo, como el resto. Con las cuentas pasa a una función del servidor que revise que quien la da es el administrador.
 - Pruebas: 25 del motor pasan; prueba en navegador de dar XP y verla en el historial.
+
+## 2026-11-12 · Neo-Arcade, tanda 2: atmósfera y recompensa
+
+- Fondo vivo: manchas de color que se mueven despacio, estrellas que parpadean y un aura que toma el color del escenario durante la partida (dorado en el podio).
+- Tarjetas, secciones, juegos y modales con efecto vidrio (semitransparentes con desenfoque) y brillo de neón al tocar o pasar el cursor.
+- Temporizador en anillo: avanza de forma continua, pasa de cian a ámbar a la mitad y a rojo parpadeante en los últimos 10 segundos, con tic-tac.
+- Al cumplir un reto salen «+2 PTS» y «+3 XP» de la carta hacia el marcador.
+- Podio: lluvia de confeti y entrada escalonada (3.º, 2.º y al final el 1.º con corona y brillo).
+- ¿Cuánto conoces a tu pareja?: la respuesta queda tapada con puntos mientras se escribe; se revisa manteniendo el ojo.
+- El botón de sonido pasó del borde flotante (tapaba botones) al encabezado de Inicio, de la partida y del podio.
+- Con «reducir movimiento» no hay fondo animado ni confeti.
+- Pruebas: 25 del motor pasan; prueba en navegador del anillo, números flotantes, confeti, aura, respuesta tapada y modo sin movimiento, sin errores.
