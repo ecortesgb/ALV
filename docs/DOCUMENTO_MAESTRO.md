@@ -1,6 +1,6 @@
 # ALV — Amigos, Locuras y Verdades
 ## Documento Maestro del Producto
-**Versión:** 1.3  
+**Versión:** 1.4  
 **Última actualización:** 12 de noviembre de 2026  
 **Estado:** Documento vivo de producto; decisiones y propuestas identificadas por separado.
 
@@ -661,6 +661,8 @@ XP acumulada y victorias deben ser rankings separados. No confundir clasificaci�
 
 **DECISIÓN:** conservar únicamente los minijuegos de esta sección, además de los juegos clásicos que ALV ya tenía definidos. Las propuestas adicionales de lluvias de ideas anteriores quedan descartadas y no deben reincorporarse sin petición expresa.
 
+**DECISIÓN (v1.4):** por ahora el catálogo es este, pero queda abierto: se pueden agregar más juegos cuando el usuario lo pida. El motor y el contenido deben permitir sumar un juego sin rehacer lo existente.
+
 ## 16.1 😂 Humor
 
 ### No te rías
@@ -682,6 +684,8 @@ Contenido posible:
 Todos reciben una palabra o concepto, excepto uno. El impostor desconoce la palabra y debe disimular. El grupo conversa o responde por turnos para descubrirlo.
 
 ### Quién lo haría
+**DECISIÓN (v1.4):** es el mismo juego que el clásico «¿Quién es más probable?» (16.8). Queda como un solo juego.
+
 Se presenta una situación y todos votan qué participante sería más probable que la hiciera. Se revela el resultado y se asignan puntos conforme a las reglas.
 
 ### Dos verdades y una mentira
@@ -778,7 +782,24 @@ La votación debe revelarse simultáneamente para evitar que los últimos partic
 
 Conservar los juegos clásicos que ya estaban definidos en ALV. Su listado y reglas deben mantenerse desde las decisiones previas del proyecto; no sustituirlos por propuestas nuevas ni asumir que los minijuegos de esta sección los reemplazan.
 
-**PENDIENTE documental:** verificar y enumerar el catálogo clásico exacto desde la versión fuente anterior cuando se realice la siguiente conciliación del documento. No inventar nombres.
+**DECISIÓN (v1.4) — catálogo clásico**, tomado del catálogo de la app (`src/content/catalogo.ts`) y confirmado por el usuario:
+
+1. Ronda de bienvenida
+2. Verdad o reto
+3. ¿Cuánto conoces a tu pareja?
+4. Mímica
+5. Palabra prohibida
+6. El impostor (el mismo de 16.2)
+7. Reto del lugar
+8. Lista relámpago
+9. El reloj
+10. Yo nunca
+11. ¿Quién es más probable? (el mismo que «Quién lo haría», 16.2)
+12. ¿Qué prefieres? (el mismo de 16.7)
+13. Ruleta de castigos
+14. Dados HOT (solo parejas, contenido adulto)
+
+Con los de esta sección, el catálogo completo tiene 21 juegos: los 14 clásicos y 7 nuevos (No te rías, Dos verdades y una mentira, Respuesta infiltrada, Dibujar, Memoria fotográfica, Emoji secreto y Karaoke relámpago).
 
 ---
 
@@ -883,6 +904,10 @@ El texto «Cargando texturas... 40%» solo debe mostrar un porcentaje real si co
 Los personajes, piezas y elementos visuales deben ser originales. No utilizar nombres, logotipos ni diseños de terceros como si fueran propios. La mención de una marca registrada y la redacción de un aviso legal requieren revisión jurídica; un descargo de responsabilidad no sustituye la autorización ni elimina por sí solo el riesgo de infracción.
 
 La frase de referencia que se había propuesto sobre LEGO y The LEGO Group no debe tratarse como texto legal aprobado ni como garantía de protección. Evitar usar «estilo LEGO» en marca, título o comunicación comercial. Utilizar descripciones genéricas como «figuras armables originales» o «juguetes de construcción modulares».
+
+**DECISIÓN (v1.4):** la carpeta y los archivos de las piezas del personaje llevan nombres genéricos (`public/piezas/`, `cabello-01`…), sin números ni nombres de marca.
+
+**PENDIENTE:** las imágenes de las piezas siguen siendo las del armador anterior. Antes de cobrar por la app o difundirla fuera del grupo hay que redibujarlas como piezas originales (fase 2, Personajes).
 
 ---
 
@@ -1020,7 +1045,7 @@ Requisitos:
 
 1. Resuelto en v1.3: la dirección visual es Neo-Arcade (8.6).
 2. Fijar paleta y tipografía oficiales en la fase de Design System.
-3. Conciliar el listado exacto de juegos clásicos ya definidos en ALV y agregarlos sin inventar nombres.
+3. Resuelto en v1.4: catálogo clásico enumerado en 16.8.
 4. Completar matriz de compatibilidad entre modalidad y minijuegos.
 5. Definir reglas, duración, turnos, rondas, empates y puntuación de cada minijuego.
 6. Formalizar el modelo contable de XP acumulada, XP disponible y XP de sesión.
@@ -1058,7 +1083,7 @@ Requisitos:
 - El lenguaje de la app usa siglas con ingenio.
 - ALVerca, FBI y GPS son los escenarios activos.
 - Los cosméticos no otorgan ventajas competitivas.
-- Los minijuegos seleccionados son los enumerados en el capítulo 16, además de los clásicos preexistentes.
+- El catálogo son los 14 clásicos de 16.8 y los 7 nuevos del capítulo 16. Se pueden agregar más juegos cuando el usuario lo pida.
 - La clasificación por forma de participación es transversal y un juego puede combinar varias formas.
 - No recuperar las propuestas descartadas de lluvias de ideas.
 - Las tecnologías candidatas son hipótesis, no decisiones.
@@ -1104,7 +1129,13 @@ Decisiones del usuario del 12 de noviembre de 2026:
 Propuestas añadidas, sin aprobar:
 - Sobres oro, plata y bronce y compra directa de accesorios especiales (13.2).
 
+## v1.4
+Decisiones del usuario del 12 de noviembre de 2026:
+- Catálogo clásico enumerado (16.8): 14 juegos. «Quién lo haría» y «¿Quién es más probable?» son el mismo juego.
+- El catálogo queda abierto a agregar más juegos cuando el usuario lo pida.
+- Piezas del personaje con nombres genéricos (19.1). Queda pendiente redibujarlas.
+
 ---
 
-**Fin del Documento Maestro ALV v1.3**  
+**Fin del Documento Maestro ALV v1.4**  
 Este documento debe actualizarse de forma incremental y conservar la distinción entre decisiones aprobadas, propuestas, pendientes y descartadas.

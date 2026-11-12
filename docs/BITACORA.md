@@ -37,3 +37,20 @@ Pendiente de F2: dar la XP de cada partida desde el servidor y la pantalla de en
 - Al terminar, la XP se suma a cada jugador y queda en el historial.
 - Por ahora todo se guarda en el dispositivo; con las cuentas (paso 4) pasa al servidor.
 - Pruebas: 23 del motor pasan; prueba en navegador de inicio, perfil, tienda, juegos, verdad o reto completo, impostor completo y podio sin errores.
+
+## 2026-11-12 · Neo-Arcade, tanda 1: uso
+
+- Las confirmaciones (salir de la partida, contenido adulto, cerrar evento) ya no usan el cuadro del navegador: son modales con el diseño de la app. Escape o tocar fuera cancela.
+- El impostor: la palabra solo se ve mientras se mantiene presionado. Al soltar se tapa, y tapada no está en la página. También funciona con Espacio o Enter. No se puede pasar al siguiente sin haberla visto.
+- Fila de avatares arriba de la partida: el del turno brilla y, en rondas secretas, se marca quién ya contestó.
+- Sonidos hechos por código (clic, cumplió, paso, carta, poder, error, tiempo, revelar y fanfarria del podio) con botón flotante para silenciar. El silencio se recuerda en el dispositivo.
+- Pruebas: 23 del motor pasan; prueba en navegador de los tres modales, la cortina con dedo y teclado, verdad o reto completo y podio, sin errores ni cuadros nativos.
+
+Falta de esta tanda: en ¿Cuánto conoces a tu pareja? la respuesta se ve mientras se escribe.
+
+## 2026-11-12 · Piezas del personaje con nombres genéricos
+
+- La carpeta `public/lego` ahora es `public/piezas` y los 310 archivos tienen nombres genéricos (`piel-01`, `cabello-01`, `acc-taza`…). Las imágenes son las mismas.
+- Los personajes y accesorios ya guardados en un dispositivo se pasan solos a los nombres nuevos al abrir la app.
+- Se quitó `manifest.json` de la carpeta pública: era una copia sin uso de `src/content/piezas.json`.
+- Documento Maestro v1.4: catálogo clásico de 14 juegos y catálogo abierto a más juegos.

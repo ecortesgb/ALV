@@ -9,7 +9,8 @@ import { juegosCompatibles, sorprendeme } from "../engine/filtros";
 import { crearPartida, type EstadoPartida } from "../engine/partida";
 import type { DefinicionJuego, Intensidad, SeccionId } from "../engine/types";
 import { Avatar } from "./Avatar";
-import { Avisos, COLOR_SECCION, configuracion, Icono, INTENSIDADES, aviso } from "./comun";
+import { Avisos, BotonSonido, COLOR_SECCION, Confirmaciones, configuracion, confirmar, Icono, INTENSIDADES, aviso } from "./comun";
+import { instalarClics } from "./sonido";
 import { acciones, parejaDe, saldosDe, useEstado } from "./estado";
 import { Partida } from "./Partida";
 import { EditorPersonaje, NivelYSaldos } from "./Personaje";
@@ -31,6 +32,7 @@ export function App() {
     return () => removeEventListener("hashchange", f);
   }, []);
   useEffect(() => { scrollTo(0, 0); }, [ruta, partida === null]);
+  useEffect(instalarClics, []);
 
   const jugar = (p: EstadoPartida) => setPartida(p);
 
@@ -51,7 +53,9 @@ export function App() {
           ))}
         </nav>
       )}
+      <BotonSonido />
       <Avisos />
+      <Confirmaciones />
     </>
   );
 }
@@ -172,9 +176,10 @@ function Juegos({ jugar, seccion }: { jugar: (p: EstadoPartida) => void; seccion
             <button key={x} className="opcion" aria-pressed={cfg.intensidad === x} onClick={() => acciones.ajustes({ intensidad: x })}>{INTENSIDADES[x]}</button>
           ))}
         </div>
-        <label className="interruptor">Contenido adulto (FAP)<input type="checkbox" checked={s.ajustes.adulto} onChange={x => {
-          if (x.target.checked && !confirm("Contenido adulto: solo si todos son mayores de 18 y están de acuerdo. ¿Encender?")) return;
-          acciones.ajustes({ adulto: x.target.checked });
+        <label className="interruptor">Contenido adulto (FAP)<input type="checkbox" checked={s.ajustes.adulto} onChange={async x => {
+          const encender = x.target.checked;
+          if (encender && !(await confirmar({ titulo: "¿Encender contenido adulto?", texto: "Solo si todos son mayores de 18 y están de acuerdo.", si: "Sí, encender", no: "Mejor no" }))) return;
+          acciones.ajustes({ adulto: encender });
         }} /></label>
         <label className="interruptor">Modo Drunk (HBD)<input type="checkbox" checked={s.ajustes.drunk} onChange={x => acciones.ajustes({ drunk: x.target.checked })} /></label>
         {s.ajustes.drunk && <p className="aviso">Siempre hay opción sin alcohol, pasar no tiene castigo, máximo 3 por persona por hora y tomar nunca da XP.</p>}
@@ -235,7 +240,7 @@ function Grupo({ editar }: { editar?: string }) {
       <div className="card">
         <b>Evento</b>
         <p className="hint">La XP que ganan en este evento sirve para comprar cartas de poder. Al cerrarlo, la que sobre queda solo para accesorios.</p>
-        <button className="btn sm" onClick={() => { if (confirm("¿Cerrar el evento? La XP del evento ya no comprará cartas.")) { acciones.cerrarEvento(); aviso("Evento cerrado. Empieza uno nuevo."); } }}>Cerrar evento y empezar otro</button>
+        <button className="btn sm" onClick={async () => { if (await confirmar({ titulo: "¿Cerrar el evento?", texto: "La XP del evento ya no comprará cartas.", si: "Sí, cerrar", no: "Seguir en el evento", peligro: true })) { acciones.cerrarEvento(); aviso("Evento cerrado. Empieza uno nuevo."); } }}>Cerrar evento y empezar otro</button>
       </div>
     </>
   );

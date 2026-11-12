@@ -7,7 +7,8 @@ import { aplicar, resultados, type AccionSinId, type EstadoPartida } from "../en
 import { vistaJugador, vistaPublica } from "../engine/vistas";
 import { Avatar } from "./Avatar";
 import { acciones, useEstado } from "./estado";
-import { aviso, COLOR_SECCION, NOMBRE_CARTA_PODER } from "./comun";
+import { aviso, COLOR_SECCION, confirmar, NOMBRE_CARTA_PODER } from "./comun";
+import { sonar } from "./sonido";
 
 let contador = 0;
 const nuevoId = () => `l${Date.now().toString(36)}${(contador++).toString(36)}`;
@@ -27,10 +28,22 @@ export function Partida({ inicial, salir }: { inicial: EstadoPartida; salir: () 
   return (
     <div className="pila partida" style={{ ["--sc" as string]: esc?.color ?? color }}>
       <div className="entre">
-        <button className="btn sm" onClick={() => { if (confirm("¿Salir de la partida? No se guarda la XP de una partida sin terminar.")) salir(); }}>Salir</button>
+        <button className="btn sm" onClick={async () => { if (await confirmar({ titulo: "¿Salir de la partida?", texto: "No se guarda la XP de una partida sin terminar.", si: "Sí, salir", no: "Continuar jugando", peligro: true })) salir(); }}>Salir</button>
         <span className="sigla" style={{ color }}>{juego.sigla ?? SECCIONES[juego.seccion].sigla}</span>
         <span className="label">Ronda {v.ronda} de {v.totalRondas}</span>
       </div>
+
+      <ol className="turnos" aria-label="Jugadores y turno">
+        {v.jugadores.map(j => {
+          const loc = jl(j.id), enTurno = j.id === v.turnoDe, listo = v.fase === "contestando" && !v.turnoDe && v.contestaron.includes(j.id);
+          return (
+            <li key={j.id} className={(enTurno ? "activo" : "") + (listo ? " listo" : "")} aria-current={enTurno ? "true" : undefined}>
+              <span className="burbuja">{loc && <Avatar p={loc.personaje} size={40} nombre={j.nombre} />}</span>
+              <small>{enTurno ? "Su turno" : listo ? "✓ Listo" : j.nombre}</small>
+            </li>
+          );
+        })}
+      </ol>
 
       {e.motor === "turnos-cartas" && <TurnoCartas e={e} accion={accion} />}
       {e.motor === "votacion" && <Secreto e={e} accion={accion} />}
@@ -62,6 +75,8 @@ export function Partida({ inicial, salir }: { inicial: EstadoPartida; salir: () 
 function Reloj({ clave, segundos = 60 }: { clave: string; segundos?: number }) {
   const [t, setT] = useState(segundos);
   useEffect(() => { setT(segundos); const i = setInterval(() => setT(x => Math.max(0, x - 1)), 1000); return () => clearInterval(i); }, [clave, segundos]);
+  const sonado = useRef("");
+  useEffect(() => { if (t === 0 && sonado.current !== clave) { sonado.current = clave; sonar("tiempo"); } }, [t, clave]);
   return (
     <div className={"reloj" + (t <= 10 ? " fin" : "")} role="timer" aria-label={`${t} segundos`}>
       <svg width="34" height="44" viewBox="0 0 40 52" aria-hidden="true"><path d="M6 3h28M6 49h28" stroke="#F7F2FF" strokeWidth="3" strokeLinecap="round" /><path d="M9 4c0 13 22 13 22 22S9 39 9 48h22c0-9-22-13-22-22S31 17 31 4z" fill="none" stroke="#F7F2FF" strokeWidth="2.4" /><path d={`M14 12h12c-1 5-6 8-6 12-0-4-5-7-6-12z`} fill="#FFC23D" opacity={t / segundos} /><path d="M12 46h16c0-5-8-7-8-12 0 5-8 7-8 12z" fill="#FFC23D" opacity={1 - t / segundos} /></svg>
@@ -80,9 +95,10 @@ function TurnoCartas({ e, accion }: { e: EstadoPartida; accion: (a: AccionSinId)
   const mano = turno ? vistaJugador(e, turno.id).miMano : [];
   const contesto = !!turno && v.contestaron.includes(turno.id);
 
-  const responder = (valor: "cumplio" | "paso") => { if (!turno) return; accion({ tipo: "contestar", jugador: turno.id, valor }); accion({ tipo: "revelar" }); };
+  const responder = (valor: "cumplio" | "paso") => { if (!turno) return; sonar(valor === "cumplio" ? "exito" : "paso"); accion({ tipo: "contestar", jugador: turno.id, valor }); accion({ tipo: "revelar" }); };
   const usar = (carta: string) => {
     if (!turno) return;
+    sonar("poder");
     accion({ tipo: "usar-carta", jugador: turno.id, carta });
     if (carta === "escudo" || carta === "turno") accion({ tipo: "revelar" });
     setVerMano(false);
@@ -91,7 +107,7 @@ function TurnoCartas({ e, accion }: { e: EstadoPartida; accion: (a: AccionSinId)
     if (!turno) return;
     const n = compradas.current[turno.id] ?? 0;
     const r = acciones.comprarCarta(turno.id, n, mano.length);
-    if (!r.ok) { aviso(r.motivo); return; }
+    if (!r.ok) { sonar("error"); aviso(r.motivo); return; }
     compradas.current[turno.id] = n + 1;
     const id = ["escudo", "cambio", "turno", "salvavidas", "relevo", "doble-castigo", "mesero"][Math.floor(Math.random() * 7)]!;
     accion({ tipo: "dar-carta", jugador: turno.id, carta: id });
@@ -149,7 +165,7 @@ function TurnoCartas({ e, accion }: { e: EstadoPartida; accion: (a: AccionSinId)
       {v.fase === "revelada" && (
         <div className="revelado pila">
           <b>{(v.revelado as { cumplio?: boolean })?.cumplio ? `¡${turno?.nombre} cumplió! +${esReto ? 2 : 1}` : `${turno?.nombre} pasó. Sin castigo.`}</b>
-          <button className="btn principal" onClick={() => accion({ tipo: "siguiente" })}>{v.ronda >= v.totalRondas ? "Ver resultados" : "Siguiente"}</button>
+          <button className="btn principal" data-sin-clic onClick={() => { sonar("carta"); accion({ tipo: "siguiente" }); }}>{v.ronda >= v.totalRondas ? "Ver resultados" : "Siguiente"}</button>
         </div>
       )}
     </>
@@ -186,7 +202,7 @@ function Secreto({ e, accion }: { e: EstadoPartida; accion: (a: AccionSinId) => 
       ) : (
         <div className="pila">
           <p className="hint" style={{ textAlign: "center" }}>Todos contestaron. Pongan el celular donde todos lo vean.</p>
-          <button className="btn principal" onClick={() => accion({ tipo: "revelar" })}>Revelar</button>
+          <button className="btn principal" data-sin-clic onClick={() => { sonar("revelar"); accion({ tipo: "revelar" }); }}>Revelar</button>
         </div>
       )}
       <p className="hint" style={{ textAlign: "center" }}>{v.contestaron.length} de {debenContestar.length} ya contestaron{pendiente ? ` · falta ${nombre(pendiente)}` : ""}</p>
@@ -201,6 +217,40 @@ function PasarCelular({ j, onListo, texto }: { j?: { nombre: string; personaje: 
       <h1 className="titulo">Pásale el celular a {j?.nombre}</h1>
       <p className="hint">{texto ?? "Nadie más debe ver la pantalla."}</p>
       <button className="btn principal" onClick={onListo}>Soy {j?.nombre}</button>
+    </div>
+  );
+}
+
+/**
+ * Cortina de «mantén presionado para ver»: lo secreto solo se ve mientras el dedo (o la tecla Espacio o Enter)
+ * está abajo. Al soltar se vuelve a tapar, para que nadie lo vea al pasar el celular.
+ * El contenido tapado no se dibuja: no basta con desenfocarlo.
+ */
+function Cortina({ children, alVer }: { children: React.ReactNode; alVer?: () => void }) {
+  const [viendo, setViendo] = useState(false);
+  const ver = () => { setViendo(true); alVer?.(); };
+  const tapar = () => setViendo(false);
+  useEffect(() => {
+    if (!viendo) return;
+    addEventListener("blur", tapar);
+    document.addEventListener("visibilitychange", tapar);
+    return () => { removeEventListener("blur", tapar); document.removeEventListener("visibilitychange", tapar); };
+  }, [viendo]);
+  const tecla = (x: React.KeyboardEvent) => x.key === " " || x.key === "Enter";
+  return (
+    <div className={"cortina" + (viendo ? " viendo" : "")} role="button" tabIndex={0} data-sin-clic
+      aria-label="Mantén presionado para ver tu secreto" aria-pressed={viendo}
+      onPointerDown={x => { x.currentTarget.setPointerCapture?.(x.pointerId); ver(); }}
+      onPointerUp={tapar} onPointerCancel={tapar} onLostPointerCapture={tapar}
+      onKeyDown={x => { if (tecla(x)) { x.preventDefault(); if (!x.repeat) ver(); } }} onKeyUp={x => { if (tecla(x)) tapar(); }} onBlur={tapar}
+      onContextMenu={x => x.preventDefault()}>
+      {viendo
+        ? <div className="cortina-secreto" aria-live="polite">{children}</div>
+        : <div className="cortina-tapa">
+            <svg viewBox="0 0 48 48" width="56" height="56" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" aria-hidden="true"><path d="M14 30c-2-8 2-18 10-18s12 8 10 18M19 34c-1-7 0-14 5-14s6 7 5 16M24 26v12M9 24c1-9 7-16 15-16s14 7 15 16" /></svg>
+            <b>Mantén presionado para ver tu secreto</b>
+            <small>Al soltar se vuelve a tapar</small>
+          </div>}
     </div>
   );
 }
@@ -252,10 +302,11 @@ function Impostor({ e, accion }: { e: EstadoPartida; accion: (a: AccionSinId) =>
   const [vistos, setVistos] = useState<string[]>([]);
   const [mostrando, setMostrando] = useState(false);
   const [etapa, setEtapa] = useState<"ver" | "hablar" | "votar">("ver");
+  const [yaVio, setYaVio] = useState(false);
   useEffect(() => { setVistos([]); setEtapa("ver"); setMostrando(false); }, [v.ronda]);
   const porVer = ids.find(id => !vistos.includes(id));
   const porVotar = ids.find(id => !v.contestaron.includes(id));
-  useEffect(() => setMostrando(false), [porVer, porVotar]);
+  useEffect(() => { setMostrando(false); setYaVio(false); }, [porVer, porVotar]);
   const jl = (id?: string) => s.jugadores.find(j => j.id === id);
   useEffect(() => { if (etapa === "ver" && !porVer) setEtapa("hablar"); }, [etapa, porVer]);
 
@@ -268,10 +319,12 @@ function Impostor({ e, accion }: { e: EstadoPartida; accion: (a: AccionSinId) =>
     return (
       <div className="pasar">
         <span className="label">Tema: {mio.tema}</span>
-        {mio.rol === "impostor"
-          ? <><div className="secreto" style={{ color: "var(--red)" }}>¡ERES EL IMPOSTOR!</div><p className="hint">No sabes la palabra. Escucha y disimula.</p></>
-          : <><span className="label">Tu palabra</span><div className="secreto">{mio.palabra}</div></>}
-        <button className="btn principal" onClick={() => setVistos(x => [...x, porVer])}>Listo, ya la vi</button>
+        <Cortina key={porVer} alVer={() => setYaVio(true)}>
+          {mio.rol === "impostor"
+            ? <><div className="secreto" style={{ color: "var(--red)" }}>¡ERES EL IMPOSTOR!</div><p className="hint">No sabes la palabra. Escucha y disimula.</p></>
+            : <><span className="label">Tu palabra</span><div className="secreto">{mio.palabra}</div></>}
+        </Cortina>
+        <button className="btn principal" disabled={!yaVio} onClick={() => setVistos(x => [...x, porVer])}>{yaVio ? "Listo, ya la vi" : "Primero mira tu secreto"}</button>
       </div>
     );
   }
@@ -303,7 +356,7 @@ function Impostor({ e, accion }: { e: EstadoPartida; accion: (a: AccionSinId) =>
   return (
     <div className="pila">
       <p className="hint" style={{ textAlign: "center" }}>Todos votaron.</p>
-      <button className="btn principal" onClick={() => accion({ tipo: "revelar" })}>Revelar al impostor</button>
+      <button className="btn principal" data-sin-clic onClick={() => { sonar("revelar"); accion({ tipo: "revelar" }); }}>Revelar al impostor</button>
     </div>
   );
 }
@@ -343,6 +396,7 @@ function Podio({ e, salir }: { e: EstadoPartida; salir: () => void }) {
     if (acreditado.current) return;
     acreditado.current = true;
     acciones.acreditar(JUEGOS.find(j => j.id === e.juegoId)?.nombre ?? e.juegoId, res);
+    sonar("fanfarria");
   }, [e.juegoId, res]);
   const jl = (id: string) => s.jugadores.find(j => j.id === id);
   const top = [res[1], res[0], res[2]];

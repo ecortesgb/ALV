@@ -1,8 +1,10 @@
-// Piezas compartidas entre pantallas: colores por sección, configuración del grupo y aviso flotante.
-import { useEffect, useState } from "react";
+// Piezas compartidas entre pantallas: colores por sección, configuración del grupo, aviso flotante,
+// confirmaciones con el diseño de la app y botón de sonido.
+import { useEffect, useRef, useState } from "react";
 import { ESCENARIOS } from "../content/catalogo";
 import type { Configuracion, SeccionId } from "../engine/types";
 import { parejaDe, type EstadoLocal } from "./estado";
+import { alternarSonido, useSonidoActivo } from "./sonido";
 
 export const COLOR_SECCION: Record<SeccionId, string> = {
   mix: "#2EE6B5", ptm: "#FF2E88", hdspm: "#FF7A2E", qpm: "#22E1FF", gdlv: "#FFC23D", parejas: "#A77BFF", ntp: "#FF4D5E", pvt: "#C6FF3D",
@@ -32,6 +34,49 @@ export function Avisos() {
     return () => clearTimeout(tm);
   }, []);
   return t ? <div className="toast" role="status">{t}</div> : null;
+}
+
+/** Pregunta de sí o no con el diseño de la app. Sustituye al `confirm()` del navegador. */
+export interface Pregunta { titulo: string; texto?: string; si: string; no: string; peligro?: boolean }
+let preguntar: (p: Pregunta) => Promise<boolean> = () => Promise.resolve(false);
+export const confirmar = (p: Pregunta) => preguntar(p);
+export function Confirmaciones() {
+  const [p, setP] = useState<Pregunta | null>(null);
+  const resolver = useRef<(v: boolean) => void>(() => {});
+  const dlg = useRef<HTMLDialogElement>(null);
+  useEffect(() => {
+    preguntar = x => new Promise<boolean>(r => { resolver.current(false); resolver.current = r; setP(x); });
+    return () => { preguntar = () => Promise.resolve(false); };
+  }, []);
+  useEffect(() => { if (p && dlg.current && !dlg.current.open) dlg.current.showModal(); }, [p]);
+  const cerrar = (v: boolean) => { resolver.current(v); resolver.current = () => {}; setP(null); };
+  if (!p) return null;
+  return (
+    <dialog ref={dlg} className="modal" aria-labelledby="modal-titulo" onCancel={e => { e.preventDefault(); cerrar(false); }}
+      onClick={e => { if (e.target === dlg.current) cerrar(false); }}>
+      <div className="modal-caja">
+        <h2 id="modal-titulo">{p.titulo}</h2>
+        {p.texto && <p className="hint">{p.texto}</p>}
+        <div className="modal-botones">
+          <button className="btn" autoFocus onClick={() => cerrar(false)}>{p.no}</button>
+          <button className={"btn " + (p.peligro ? "peligro" : "lime")} onClick={() => cerrar(true)}>{p.si}</button>
+        </div>
+      </div>
+    </dialog>
+  );
+}
+
+/** Botón flotante para silenciar o activar los efectos de sonido. */
+export function BotonSonido() {
+  const activo = useSonidoActivo();
+  return (
+    <button className="sonido" data-sin-clic aria-pressed={activo} aria-label={activo ? "Silenciar sonido" : "Activar sonido"} title={activo ? "Sonido activado" : "Sonido silenciado"} onClick={alternarSonido}>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <path d="M4 9v6h4l5 4V5L8 9z" />
+        {activo ? <path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12" /> : <path d="M17 9l5 6M22 9l-5 6" />}
+      </svg>
+    </button>
+  );
 }
 
 export const Icono = {
