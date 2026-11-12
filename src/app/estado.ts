@@ -15,7 +15,7 @@ export interface JugadorLocal {
 }
 
 /** `extra` marca la XP que dio el administrador fuera de un juego; lleva el motivo. */
-export interface Partida { fecha: string; juego: string; resultados: { nombre: string; puntos: number; xp: number }[]; extra?: string }
+export interface Partida { fecha: string; juego: string; resultados: { id?: string; nombre: string; puntos: number; xp: number }[]; extra?: string }
 
 export interface EstadoLocal {
   version: 2;
@@ -140,7 +140,7 @@ export const acciones = {
         const xp = porId.get(j.id) ?? 0;
         return xp > 0 ? { ...j, movimientos: [...j.movimientos, { tipo: "ganada", xp, eventoId: estado.eventoId }] } : j;
       }),
-      historial: [{ fecha: new Date().toISOString(), juego, resultados: resultados.map(({ nombre, puntos, xp }) => ({ nombre, puntos, xp })) }, ...estado.historial].slice(0, 50),
+      historial: [{ fecha: new Date().toISOString(), juego, resultados: resultados.map(({ jugador, nombre, puntos, xp }) => ({ id: jugador, nombre, puntos, xp })) }, ...estado.historial].slice(0, 50),
     });
   },
   /** XP extra del administrador por algo fuera del juego. Queda en el historial con su motivo. Devuelve el motivo si no se pudo. */

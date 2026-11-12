@@ -84,3 +84,10 @@ Falta de esta tanda: en ¿Cuánto conoces a tu pareja? la respuesta se ve mientr
 - Tienda en su propia pestaña, con selector de jugador; el editor del personaje quedó solo para personalizar.
 - Vista ancha (laptop o proyector): Lobby en dos columnas, partida con el marcador a la derecha y la carta ajustada a la altura de la pantalla. Botón de pantalla completa en Lobby y partida.
 - Pruebas: 25 del motor pasan; prueba en navegador en celular (390 px) y laptop (1366×768): gestos, carga, partida, ranking, tienda y perfil, sin errores.
+
+## 2026-11-12 · Logros (primera versión)
+
+- Perfil muestra la lista de logros del personaje: 2 de sesión (GOAT de la competencia, La dupla perfecta) y 2 históricos (MVP, El sobreviviente). Los ganados se marcan.
+- La lógica vive en `src/engine/logros.ts`, pura y con pruebas. El historial guarda ahora el id del jugador en cada resultado; las partidas anteriores solo tienen nombre y se comparan por nombre.
+- Quedan pendientes los logros que necesitan datos no guardados (votos, impostor, castigos).
+- Pruebas: 30 pasan (25 del motor y 5 nuevas); prueba en navegador de la sección sin errores.
