@@ -264,9 +264,11 @@ La plataforma tendrá dos ambientes que comparten una misma identidad:
 
 El lobby es la transición entre plataforma y gameplay. La transición debe sentirse como abrir una puerta a la fiesta.
 
-## 8.3 Tres direcciones visuales a explorar
+## 8.3 Tres direcciones visuales a explorar — DESCARTADO (v1.3)
 
-Ninguna está aprobada:
+**DESCARTADO (v1.3):** la comparación A/B/C ya no se hace. El usuario eligió la línea Neo-Arcade (8.6) como dirección visual. Lo que sigue en 8.3, 8.4, 8.5 y 23.2 se conserva como historial y no debe retomarse sin petición expresa.
+
+Direcciones que se habían planteado:
 
 **A. Premium Gaming**
 - Oscura y sofisticada.
@@ -342,11 +344,17 @@ Preguntas sin explicar previamente el concepto; 30 segundos por concepto:
 
 Probar en teléfono real. No pedir al diseñador o modelo que se autoevalúe. Si la diferencia entre conceptos es menor a cinco puntos, desempatar por reconocibilidad, coherencia, diferenciación y resultado del test.
 
-## 8.6 Mejoras «Neo-Arcade / Party Game» sobre el diseño actual — PROPUESTA (v1.3)
+## 8.6 Dirección visual «Neo-Arcade / Party Game» — DECISIÓN (v1.3)
 
-Lista aportada por el usuario para considerar. Parte del diseño que ya existe en la app (fondo espacial, un neón por sección). No está aprobada para implementarse.
+**DECISIÓN (v1.3):** Neo-Arcade es la dirección visual de ALV. Parte del diseño que ya existe en la app (fondo espacial, un neón por sección) y lo mejora con la lista de abajo, aportada por el usuario. Sustituye la comparación A/B/C de 8.3.
 
-**PENDIENTE:** decidir si esta línea se toma como la dirección visual y sustituye la comparación A/B/C de 8.3, o si se compara primero.
+La lista se implementa por tandas, cada una en su propio cambio para que el usuario la pruebe antes de seguir:
+1. Uso: modales propios, mantener presionado para ver el secreto, turno visible y sonido con botón de silencio.
+2. Atmósfera y recompensa: fondo vivo, tarjetas con profundidad, temporizador en anillo, números flotantes y podio con confeti.
+3. Mecánicas táctiles: ruleta con fricción, gestos e inclinación en cartas, botella interactiva y destello de cartas de poder.
+4. Estructura: pantallas grandes y chips en la pantalla de Juegos.
+
+La paleta y la tipografía que ya usa la app quedan como base de trabajo. Su versión oficial se fija en la fase de Design System.
 
 Diseño visual:
 - Fondo vivo: gradientes de malla animados, auras de neón que pulsan según la sección activa y estrellas con parpadeo suave.
@@ -950,8 +958,8 @@ No saltar fases. Cada fase requiere alcance, entregables, criterios de aceptaci�
 
 | Fase | Alcance | Estado |
 |---|---|---|
-| Previa | Explorar y seleccionar dirección visual | Pendiente |
-| 1 | Design System | Bloqueada hasta elegir dirección visual |
+| Previa | Explorar y seleccionar dirección visual | Resuelta en v1.3: Neo-Arcade (8.6) |
+| 1 | Design System | Pendiente; ya no está bloqueada |
 | 2 | Personajes y personalización | Pendiente |
 | 3 | Onboarding, HUB y perfil | Pendiente |
 | 4 | Navegación, tienda e inventario | Pendiente |
@@ -1002,8 +1010,8 @@ Requisitos:
 
 # 24. Pendientes principales
 
-1. Elegir dirección visual entre A, B y C o solicitar nuevas direcciones.
-2. Definir paleta y tipografía oficiales después de evaluar pantallas.
+1. Resuelto en v1.3: la dirección visual es Neo-Arcade (8.6).
+2. Fijar paleta y tipografía oficiales en la fase de Design System.
 3. Conciliar el listado exacto de juegos clásicos ya definidos en ALV y agregarlos sin inventar nombres.
 4. Completar matriz de compatibilidad entre modalidad y minijuegos.
 5. Definir reglas, duración, turnos, rondas, empates y puntuación de cada minijuego.
@@ -1016,10 +1024,9 @@ Requisitos:
 12. Definir captura y compartición de fotos de podio.
 13. Seleccionar técnica de representación y animación de personajes.
 14. Seleccionar arquitectura backend y estrategia de despliegue.
-15. Decidir si la línea Neo-Arcade (8.6) es la dirección visual o si se compara primero con A, B y C.
-16. Confirmar si la XP que compra cartas se cuenta por sesión o por evento.
-17. Definir si los comodines de los sobres se pueden usar en cualquier sesión.
-18. Redactar el banco de frases con siglas.
+15. Confirmar si la XP que compra cartas se cuenta por sesión o por evento.
+16. Definir si los comodines de los sobres se pueden usar en cualquier sesión.
+17. Redactar el banco de frases con siglas.
 
 ---
 
@@ -1027,7 +1034,7 @@ Requisitos:
 
 - ALV es un party game multijugador, no un RPG.
 - La plataforma debe tener dos personalidades visuales: HUB premium y gameplay energético.
-- No hay paleta oficial elegida.
+- La dirección visual es Neo-Arcade (8.6). La paleta y la tipografía oficiales se fijan en el Design System.
 - HOST crea y controla el lobby; los demás se unen.
 - El producto contempla HOST, PLAYER y SCREEN.
 - La progresión y el inventario persisten entre sesiones.
@@ -1043,7 +1050,6 @@ Requisitos:
 - Los minijuegos seleccionados son los enumerados en el capítulo 16, además de los clásicos preexistentes.
 - La clasificación por forma de participación es transversal y un juego puede combinar varias formas.
 - No recuperar las propuestas descartadas de lluvias de ideas.
-- No avanzar a Design System antes de seleccionar la dirección visual.
 - Las tecnologías candidatas son hipótesis, no decisiones.
 
 ---
@@ -1080,9 +1086,10 @@ Decisiones del usuario del 12 de noviembre de 2026:
 - Escenarios: FBI y GPS quedan activos junto con ALVerca.
 - Lenguaje de siglas en toda la app (1.4).
 
+- Dirección visual: Neo-Arcade (8.6), con la lista de mejoras del usuario implementada por tandas. Se descarta la comparación de los conceptos A, B y C.
+
 Propuestas añadidas, sin aprobar:
 - Sobres oro, plata y bronce y compra directa de accesorios especiales (13.2).
-- Mejoras Neo-Arcade de diseño, movimiento, navegación y mecánicas (8.6).
 
 ---
 
