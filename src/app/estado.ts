@@ -2,7 +2,9 @@
 // Hasta que lleguen las cuentas (paso 4) todo vive aquí; después el servidor es la fuente de verdad
 // y estas mismas reglas (src/engine/economia.ts) las aplica la base de datos.
 import { useSyncExternalStore } from "react";
-import { saldos, puedeComprarAccesorio, puedeComprarCarta, XP_EXTRA, xpExtraValida, type Movimiento } from "../engine/economia";
+import { nivelPorXp, saldos, puedeComprarAccesorio, puedeComprarCarta, XP_EXTRA, xpExtraValida, type Movimiento } from "../engine/economia";
+import { abrirSobre, SOBRES, type CartaSobre, type TipoSobre } from "../engine/sobres";
+import type { Azar } from "../engine/azar";
 import { idActual, migrarPersonaje, personajeInicial, TIENDA, cambioValido, type Personaje, type Zona } from "../content/personaje";
 import type { EscenarioId, Intensidad } from "../engine/types";
 
@@ -110,6 +112,24 @@ export const acciones = {
       personaje: { ...x.personaje, puesto: { ...x.personaje.puesto, [art.zona]: art.id } },
     }));
     return null;
+  },
+  /** Abre un sobre: cobra la XP disponible y guarda las cartas. Devuelve las cartas o el motivo. */
+  comprarSobre(id: string, tipo: TipoSobre, azar: Azar): { ok: true; cartas: CartaSobre[] } | { ok: false; motivo: string } {
+    const j = estado.jugadores.find(x => x.id === id);
+    const def = SOBRES.find(x => x.id === tipo);
+    if (!j || !def) return { ok: false, motivo: "Ese sobre no existe." };
+    const s = saldosDe(j), nivel = nivelPorXp(s.acumulada);
+    const r = puedeComprarAccesorio(s, def.precio, def.nivel);
+    if (!r.ok) return { ok: false, motivo: r.motivo === "nivel" ? `Se desbloquea en el nivel ${def.nivel}.` : "No te alcanza la XP disponible." };
+    const disponibles = TIENDA.filter(a => !j.tiene.includes(a.id) && a.nivel <= nivel).map(a => ({ id: a.id, precio: a.precio }));
+    if (disponibles.length === 0) return { ok: false, motivo: "Ya tienes todo lo que puede dar este sobre." };
+    const cartas = abrirSobre(def, azar, disponibles);
+    cambiaJugador(id, x => ({
+      ...x,
+      tiene: [...x.tiene, ...cartas.map(c => c.id)],
+      movimientos: [...x.movimientos, { tipo: "accesorio", xp: def.precio }],
+    }));
+    return { ok: true, cartas };
   },
   ponerse(id: string, articulo: string) {
     const j = estado.jugadores.find(x => x.id === id);

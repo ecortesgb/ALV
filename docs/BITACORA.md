@@ -91,3 +91,10 @@ Falta de esta tanda: en ¿Cuánto conoces a tu pareja? la respuesta se ve mientr
 - La lógica vive en `src/engine/logros.ts`, pura y con pruebas. El historial guarda ahora el id del jugador en cada resultado; las partidas anteriores solo tienen nombre y se comparan por nombre.
 - Quedan pendientes los logros que necesitan datos no guardados (votos, impostor, castigos).
 - Pruebas: 30 pasan (25 del motor y 5 nuevas); prueba en navegador de la sección sin errores.
+
+## 2026-11-12 · Tienda de sobres (primera versión, valores de prueba)
+
+- En la pestaña Tienda hay tres sobres (bronce, plata, oro) que se pagan con XP disponible. Dan 2, 3 y 4 cartas de accesorios que el jugador todavía no tiene. Se abren una carta a la vez con sonido y resumen final.
+- La lógica está en `src/engine/sobres.ts` (pura, con pruebas). La compra en `comprarSobre` de `estado.ts`.
+- Precios, pesos de rareza y rareza por precio son provisionales y quedan pendientes en el Documento Maestro (v1.7, 13.2).
+- Pruebas: 34 pasan; prueba en navegador: compra de sobre bronce, dos cartas reveladas, saldo descontado (500 → 440), sin errores.
