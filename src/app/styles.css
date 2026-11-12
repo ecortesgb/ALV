@@ -129,7 +129,7 @@ h2 { margin: 0; font-size: 18px; font-weight: 800; }
 @keyframes repartir { from { transform: translateY(40px) rotate(-14deg) rotateY(90deg); opacity: 0; } to { transform: none; opacity: 1; } }
 .opcionAB { display: grid; gap: 10px; }
 .opcionAB .btn { text-align: left; padding: 16px; font-size: 17px; }
-.marcador { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; }
+.marcador { display: flex; gap: 8px; overflow-x: auto; padding: 0 56px 4px 0; }
 .marcador .lugar { flex-shrink: 0; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 8px; border-radius: 14px; background: var(--card); border: 2px solid var(--line); min-width: 64px; }
 .marcador .lugar.activo { border-color: var(--sc); }
 .marcador .lugar b { font-size: 12px; max-width: 64px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -195,6 +195,40 @@ nav.abajo { position: fixed; left: 0; right: 0; bottom: 0; z-index: 10; display:
 nav.abajo a { display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 6px 0; border-radius: 12px; font-size: 11px; font-weight: 800; color: var(--muted); text-decoration: none; }
 nav.abajo a[aria-current="page"] { color: var(--pink); background: rgba(255,46,136,.14); }
 nav.abajo svg { width: 22px; height: 22px; }
+
+/* Confirmaciones con el diseño de la app (sustituyen al confirm del navegador) */
+dialog.modal { border: 0; padding: 16px; background: transparent; color: var(--ink); width: min(420px, 100%); max-width: 100%; }
+dialog.modal::backdrop { background: rgba(8,5,20,.78); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+.modal-caja { background: var(--card); border: 2px solid var(--sc); border-radius: 24px; padding: 20px; display: flex; flex-direction: column; gap: 12px; text-align: center; box-shadow: 0 0 40px -8px var(--sc); animation: rebote .35s both; }
+.modal-caja h2 { font-size: 20px; text-wrap: balance; }
+.modal-botones { display: flex; flex-direction: column; gap: 8px; margin-top: 4px; }
+.btn.peligro { border: 0; background: var(--red); color: var(--bg); }
+
+/* Botón flotante de sonido */
+.sonido { position: fixed; right: max(12px, calc(50% - 248px)); bottom: calc(92px + env(safe-area-inset-bottom)); z-index: 15; width: 44px; height: 44px; border-radius: 50%; border: 2px solid var(--line); background: rgba(27,18,48,.92); color: var(--cyan); display: grid; place-items: center; padding: 0; }
+.sonido[aria-pressed="false"] { color: var(--muted); }
+.sonido svg { width: 22px; height: 22px; }
+
+/* Fila de turnos: quién juega y quién ya contestó */
+.turnos { list-style: none; margin: 0; padding: 6px 2px; display: flex; gap: 10px; overflow-x: auto; }
+.turnos li { flex-shrink: 0; display: flex; flex-direction: column; align-items: center; gap: 4px; width: 56px; opacity: .6; transition: opacity .2s, transform .2s; }
+.turnos .burbuja { width: 48px; height: 48px; border-radius: 50%; background: var(--bg2); border: 2px solid var(--line); display: flex; align-items: flex-end; justify-content: center; overflow: hidden; }
+.turnos small { font-size: 10px; font-weight: 800; color: var(--muted); max-width: 56px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.turnos li.activo { opacity: 1; transform: translateY(-2px); }
+.turnos li.activo .burbuja { border-color: var(--sc); box-shadow: 0 0 0 3px rgba(255,255,255,.08), 0 0 18px var(--sc); animation: pulso-turno 1.6s ease-in-out infinite; }
+.turnos li.activo small { color: var(--ink); }
+.turnos li.listo { opacity: 1; }
+.turnos li.listo .burbuja { border-color: var(--lime); }
+.turnos li.listo small { color: var(--lime); }
+@keyframes pulso-turno { 50% { box-shadow: 0 0 0 3px rgba(255,255,255,.08), 0 0 30px var(--sc); } }
+
+/* Mantén presionado para ver tu secreto */
+.cortina { width: 100%; min-height: 190px; border-radius: 24px; border: 2px dashed var(--sc); background: var(--card2); display: grid; place-items: center; padding: 18px; cursor: pointer; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; touch-action: none; }
+.cortina.viendo { border-style: solid; background: var(--card); box-shadow: 0 0 30px -6px var(--sc); }
+.cortina-tapa { display: flex; flex-direction: column; align-items: center; gap: 8px; color: var(--soft); }
+.cortina-tapa svg { color: var(--sc); }
+.cortina-tapa small { color: var(--muted); font-weight: 600; }
+.cortina-secreto { display: flex; flex-direction: column; align-items: center; gap: 8px; }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
