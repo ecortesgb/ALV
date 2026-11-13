@@ -10,7 +10,7 @@ import type { EstadoPartida } from "../engine/partida";
 import type { SeccionId } from "../engine/types";
 import { Avatar } from "./Avatar";
 import { Cuenta, SincroCuenta } from "./Cuenta";
-import { sesionActual } from "./nube";
+import { hayNube, sesionActual } from "./nube";
 import { Avisos, BotonSonido, COLOR_SECCION, Confirmaciones, configuracion, Icono, INTENSIDADES, aviso } from "./comun";
 import { Fondo } from "./efectos";
 import { type JugadorLocal, parejaDe, saldosDe, useEstado } from "./estado";
@@ -18,13 +18,14 @@ import { Lobby } from "./Lobby";
 import { Partida } from "./Partida";
 import { EditorPersonaje, NivelYSaldos, Tienda } from "./Personaje";
 import { Ranking } from "./Ranking";
+import { SincroSala, Unirse } from "./Sala";
 import { instalarClics, sonar } from "./sonido";
 
-type Ruta = "inicio" | "lobby" | "tienda" | "ranking" | "perfil";
-const RUTAS: Ruta[] = ["inicio", "lobby", "tienda", "ranking", "perfil"];
+type Ruta = "inicio" | "lobby" | "tienda" | "ranking" | "perfil" | "unirse";
+const RUTAS: Ruta[] = ["inicio", "lobby", "tienda", "ranking", "perfil", "unirse"];
 /** Rutas viejas que siguen funcionando si alguien las tenía guardadas. */
 const ANTES: Record<string, Ruta> = { juegos: "lobby", grupo: "lobby", historial: "ranking" };
-const NOMBRES: [Ruta, string][] = [["inicio", "Inicio"], ["lobby", "Lobby"], ["tienda", "Tienda"], ["ranking", "Ranking"], ["perfil", "Perfil"]];
+const NOMBRES: [Exclude<Ruta, "unirse">, string][] = [["inicio", "Inicio"], ["lobby", "Lobby"], ["tienda", "Tienda"], ["ranking", "Ranking"], ["perfil", "Perfil"]];
 
 const leerRuta = (): { ruta: Ruta; arg?: string } => {
   const [r = "", arg] = location.hash.replace(/^#\/?/, "").split("/");
@@ -55,6 +56,7 @@ export function App() {
           : ruta === "lobby" ? <Lobby jugar={setPartida} arg={arg} />
           : ruta === "tienda" ? <PaginaTienda id={arg} />
           : ruta === "ranking" ? <Ranking />
+          : ruta === "unirse" ? <PaginaUnirse codigo={arg} />
           : <Perfil id={arg} />}
       </main>
       {!partida && (
@@ -66,6 +68,7 @@ export function App() {
       )}
       <Avisos />
       <SincroCuenta />
+      <SincroSala />
       <Confirmaciones />
     </>
   );
@@ -149,6 +152,9 @@ function Inicio() {
         <span className="ruleta" style={{ transform: `rotate(${giro}deg)`, transition: "none" }} aria-hidden="true" />
       </button>
       <a href="#/lobby" className="btn principal jugar">JUGAR · ABRIR LOBBY</a>
+      {hayNube && (s.sala
+        ? <a href="#/lobby" className="btn cyan" style={{ textAlign: "center", textDecoration: "none" }}>{s.sala.anfitrion ? "Tu sala" : "Estás en la sala"} {s.sala.codigo} · {s.miembros?.length ?? 1} conectados</a>
+        : <a href="#/unirse" className="btn" style={{ textAlign: "center", textDecoration: "none" }}>📱 Entrar a una sala con código</a>)}
       <a href="#/tienda" className="card" style={{ flexDirection: "row", alignItems: "center", textDecoration: "none", color: "inherit", padding: "12px 14px" }}>
         {Icono.estrella}
         <span className="pila" style={{ gap: 4, flex: 1 }}>
@@ -182,6 +188,18 @@ function QuienSoy({ id, base }: { id?: string; base: "tienda" | "perfil" }) {
         </a>
       ))}
     </div>
+  );
+}
+
+function PaginaUnirse({ codigo }: { codigo?: string }) {
+  const s = useEstado();
+  const conCuenta = !!s.cuenta;
+  return (
+    <>
+      <h1 className="titulo">Sala</h1>
+      {!conCuenta && <Cuenta j={s.jugadores[0]!} />}
+      <Unirse codigo={codigo} />
+    </>
   );
 }
 
