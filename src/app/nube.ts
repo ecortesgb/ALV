@@ -195,7 +195,14 @@ export async function comprarSobreNube(sobre: string): Promise<{ ok: true; carta
 // ---------- Sala en línea (evento) ----------
 
 export interface Sala { id: string; codigo: string; nombre: string; anfitrion: boolean }
-export interface MiembroSala { id: string; nombre: string; personaje: Personaje | null; anfitrion: boolean }
+export type GestoSala = "saludar" | "bailar" | "chocar" | "empujar";
+export interface MiembroSala {
+  id: string; nombre: string; personaje: Personaje | null; anfitrion: boolean;
+  /** Dio «listo» en el lobby. */
+  listo: boolean;
+  /** Último gesto, a quién (chocar o empujar) y contador: sube con cada gesto nuevo. */
+  gesto: GestoSala | null; gestoA: string | null; gestoN: number;
+}
 
 const uidActual = async () => (await cliente?.auth.getUser())?.data.user?.id ?? null;
 
@@ -249,7 +256,7 @@ export async function miembrosSala(sala: Sala): Promise<MiembroSala[] | null> {
   try {
     const ev = await cliente.from("eventos").select("anfitrion, cerrado").eq("id", sala.id).maybeSingle();
     if (ev.error || !ev.data || ev.data.cerrado) return null;
-    const m = await cliente.from("miembros_evento").select("jugador, unido").eq("evento", sala.id).order("unido");
+    const m = await cliente.from("miembros_evento").select("jugador, unido, listo, gesto, gesto_a, gesto_n").eq("evento", sala.id).order("unido");
     if (m.error) return null;
     const ids = (m.data ?? []).map(x => x.jugador as string);
     if (ids.length === 0) return [];
@@ -260,8 +267,25 @@ export async function miembrosSala(sala: Sala): Promise<MiembroSala[] | null> {
     const nombre = new Map((perf.data ?? []).map(x => [x.id as string, x.nombre as string]));
     // Una cuenta recién creada guarda su personaje un segundo después: mientras, va el de inicio.
     const piezas = new Map((pers.data ?? []).filter(x => (x.piezas as Partial<Personaje>)?.piel).map(x => [x.jugador as string, x.piezas as Personaje]));
-    return ids.map(id => ({ id, nombre: nombre.get(id) ?? "Jugador", personaje: piezas.get(id) ?? null, anfitrion: id === ev.data!.anfitrion }));
+    const fila = new Map((m.data ?? []).map(x => [x.jugador as string, x]));
+    return ids.map(id => {
+      const f = fila.get(id)!;
+      return {
+        id, nombre: nombre.get(id) ?? "Jugador", personaje: piezas.get(id) ?? null, anfitrion: id === ev.data!.anfitrion,
+        listo: !!f.listo, gesto: (f.gesto as GestoSala | null) ?? null, gestoA: (f.gesto_a as string | null) ?? null, gestoN: Number(f.gesto_n ?? 0),
+      };
+    });
   } catch (e) { console.error("miembrosSala", e); return null; }
+}
+
+/** Cambia mi estado en la sala: listo y/o un gesto (chocar y empujar llevan a otro miembro). */
+export async function marcarEnSala(sala: Sala, cambio: { listo?: boolean; gesto?: GestoSala; a?: string }): Promise<boolean> {
+  if (!cliente || !usuario) return false;
+  try {
+    const { error } = await cliente.rpc("marcar_en_sala", { p_evento: sala.id, p_listo: cambio.listo ?? null, p_gesto: cambio.gesto ?? null, p_a: cambio.a ?? null });
+    if (error) { console.error("marcarEnSala", error.message); return false; }
+    return true;
+  } catch (e) { console.error("marcarEnSala", e); return false; }
 }
 
 export async function cerrarSala(sala: Sala): Promise<void> {

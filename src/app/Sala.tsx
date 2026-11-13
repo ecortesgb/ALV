@@ -31,7 +31,7 @@ export function SincroSala() {
       acciones.miembrosSala(m);
     };
     void leer();
-    const t = window.setInterval(() => { if (document.visibilityState === "visible") void leer(); }, 3000);
+    const t = window.setInterval(() => { if (document.visibilityState === "visible") void leer(); }, 2000);
     return () => { vivo = false; window.clearInterval(t); };
   }, [sala?.id, conCuenta]);
   return null;

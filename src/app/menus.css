@@ -272,3 +272,10 @@
 .tj-equipo { position: absolute; top: 10px; left: 10px; z-index: 2; display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; font-size: 17px;
   background: var(--eq1); box-shadow: 0 0 0 2px var(--eq2), 0 6px 14px -6px rgba(0,0,0,.8); }
 .retrato.con-equipo::after { box-shadow: inset 0 -10px 16px -10px rgba(14,10,31,.55), inset 0 -4px 0 var(--eq1); }
+
+/* ───────── Lobby en línea ───────── */
+.todos-listos { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 14px; border-radius: 18px;
+  background: linear-gradient(90deg, rgba(198,255,61,.18), rgba(34,225,255,.12)); border: 2px solid var(--lime); box-shadow: 0 0 26px -10px var(--lime); animation: rebote .4s both; }
+.todos-listos b { font-family: var(--display); font-weight: 400; font-size: 20px; color: var(--lime); }
+.actor.soy-yo .nombre { background: var(--cyan); color: var(--bg); }
+.actor.soy-yo .sombra { background: radial-gradient(ellipse, rgba(34,225,255,.7), transparent 70%); height: 12px; }

@@ -16,6 +16,10 @@ import { lugaresDeSesion } from "./puntos-sesion";
 import { sonar } from "./sonido";
 import { XpExtra } from "./XpExtra";
 import { PanelSala, SalaInvitado } from "./Sala";
+import { marcarEnSala, miUid, type GestoSala } from "./nube";
+import { traducirSala } from "./salaVista";
+import { sorprendeme } from "../engine/filtros";
+import { crearAzar } from "../engine/azar";
 import { PartidaCelular, useAPartidaDeSala } from "./PartidaCelular";
 import { personajeInicial } from "../content/personaje";
 
@@ -71,16 +75,29 @@ export function Lobby({ jugar, arg }: { jugar: (p: EstadoPartida) => void; arg?:
   };
 
   const enJuego = useAPartidaDeSala();
+  const invitado = !!s.sala && !s.sala.anfitrion;
+  const enSala = useMemo<JugadorLocal[]>(() => (s.miembros ?? []).map((m, i) => ({ id: m.id, nombre: m.nombre, personaje: m.personaje ?? personajeInicial(i), movimientos: [], tiene: [] })), [s.miembros]);
+  const sincro = useSincroSala(invitado ? "invitado" : "anfitrion", invitado ? enSala : s.jugadores);
+  // Todos los de la sala (mínimo 2) dieron «listo».
+  const todosListos = !!s.sala && (s.miembros?.length ?? 0) >= 2 && (s.miembros ?? []).every(m => m.listo);
+
+  const sorpresa = () => {
+    const r = sorprendeme(cfg, crearAzar(Date.now() % 1e6));
+    const def = r && compatibles.find(j => j.id === r.juego.id);
+    if (!def) { aviso("No hay juegos para esta configuración."); return; }
+    setJuegoId(def.id); sonar("revelar"); setCargando(def);
+  };
+
   // Celular que entró a la sala de otro: ve a todos en el escenario; el anfitrión inicia la partida.
-  if (s.sala && !s.sala.anfitrion && enJuego) return <PartidaCelular p={enJuego} />;
-  if (s.sala && !s.sala.anfitrion) {
-    const enSala: JugadorLocal[] = (s.miembros ?? []).map((m, i) => ({ id: m.id, nombre: m.nombre, personaje: m.personaje ?? personajeInicial(i), movimientos: [], tiene: [] }));
+  if (invitado && enJuego) return <PartidaCelular p={enJuego} />;
+  if (s.sala && invitado) {
     return (
       <div className="lobby">
         <div className="lobby-escena">
           <span className="label">Sala {s.sala.codigo} · {enSala.length} de 8</span>
           <h1 className="titulo">{esc.emoji} {esc.nombre}</h1>
-          {enSala.length > 0 && <Escenario jugadores={enSala} color={esc.color} />}
+          {todosListos && <div className="todos-listos"><b>¡Todos listos!</b><span className="hint">El anfitrión elige: Sorpréndeme o continuar.</span></div>}
+          {enSala.length > 0 && <Escenario jugadores={enSala} color={esc.color} sincro={sincro} />}
         </div>
         <SalaInvitado />
       </div>
@@ -99,7 +116,16 @@ export function Lobby({ jugar, arg }: { jugar: (p: EstadoPartida) => void; arg?:
           </div>
           <div className="fila" style={{ gap: 8 }}><BotonPantallaCompleta /><BotonSonido /></div>
         </div>
-        <Escenario jugadores={s.jugadores} color={esc.color} lugares={hayXpSesion ? lugares : undefined} />
+        {todosListos && (
+          <div className="todos-listos">
+            <b>¡Todos listos!</b>
+            <div className="fila" style={{ gap: 8 }}>
+              <button className="btn principal" onClick={sorpresa}>🎲 Sorpréndeme</button>
+              <button className="btn" onClick={() => document.getElementById("t-juego")?.scrollIntoView({ behavior: "smooth", block: "start" })}>Continuar</button>
+            </div>
+          </div>
+        )}
+        <Escenario jugadores={s.jugadores} color={esc.color} lugares={hayXpSesion ? lugares : undefined} sincro={s.sala ? sincro : undefined} />
         <div className="lobby-iniciar">
           <div className="pila" style={{ gap: 2, flex: 1, minWidth: 0 }}>
             <span className="label">Siguiente juego</span>
@@ -201,11 +227,26 @@ export function Lobby({ jugar, arg }: { jugar: (p: EstadoPartida) => void; arg?:
   );
 }
 
-/** Escenario con los personajes en semicírculo. Tocar uno abre sus gestos. */
-export function Escenario({ jugadores, color, lugares, interactivo = true, todosListos = false }:
-  { jugadores: JugadorLocal[]; color: string; lugares?: Record<string, number>; interactivo?: boolean; todosListos?: boolean }) {
+/** Escenario conectado a una sala en línea: ids ya traducidos a los de esta vista. */
+export interface SincroEscenario {
+  /** Mi personaje en esta vista: es el único que puedo mover. */
+  yo: string | null;
+  listos: Set<string>;
+  gestos: Record<string, { gesto: GestoSala; a?: string; n: number }>;
+  enviar: (cambio: { listo?: boolean; gesto?: GestoSala; a?: string }) => void;
+}
+
+/**
+ * Escenario con los personajes en semicírculo. Tocar uno abre sus gestos.
+ * Con `sincro` (sala en línea) cada quien mueve solo a su personaje, sus gestos y su «listo» van al servidor
+ * y los gestos de los demás celulares se animan aquí cuando llegan.
+ */
+export function Escenario({ jugadores, color, lugares, interactivo = true, todosListos = false, sincro }:
+  { jugadores: JugadorLocal[]; color: string; lugares?: Record<string, number>; interactivo?: boolean; todosListos?: boolean; sincro?: SincroEscenario }) {
   const [anims, setAnims] = useState<Record<string, Anim>>({});
-  const [listos, setListos] = useState<Set<string>>(new Set());
+  const [listosLocal, setListos] = useState<Set<string>>(new Set());
+  // Mi «listo» se ve al instante aunque el servidor tarde un par de segundos en confirmarlo.
+  const [miListo, setMiListo] = useState<{ v: boolean; hasta: number } | null>(null);
   const [elegido, setElegido] = useState<string | null>(null);
   const [pendiente, setPendiente] = useState<Gesto | null>(null);
   const reloj = useRef(0);
@@ -213,18 +254,22 @@ export function Escenario({ jugadores, color, lugares, interactivo = true, todos
   const idx = (id: string) => jugadores.findIndex(j => j.id === id);
   const nombre = (id: string) => jugadores.find(j => j.id === id)?.nombre ?? "";
 
+  const listos = useMemo(() => {
+    if (!sincro) return listosLocal;
+    const y = new Set(sincro.listos);
+    if (sincro.yo && miListo && Date.now() < miListo.hasta) { if (miListo.v) y.add(sincro.yo); else y.delete(sincro.yo); }
+    return y;
+  }, [sincro, listosLocal, miListo]);
+
   const animar = (id: string, a: Omit<Anim, "clave">, ms = 900) => {
     const clave = ++reloj.current;
     setAnims(x => ({ ...x, [id]: { ...a, clave } }));
     setTimeout(() => setAnims(x => (x[id]?.clave === clave ? Object.fromEntries(Object.entries(x).filter(([k]) => k !== id)) : x)), ms);
   };
 
-  const hacer = (gesto: Gesto, de: string, a?: string) => {
-    if (gesto === "listo") {
-      setListos(x => { const y = new Set(x); if (y.has(de)) y.delete(de); else { y.add(de); sonar("exito"); animar(de, { gesto: "listo" }, 700); } return y; });
-      return;
-    }
-    if ((gesto === "empujar" || gesto === "chocar") && a) {
+  /** Solo la animación y el sonido: sirve para mis gestos y para los que llegan de otros celulares. */
+  const reproducir = (gesto: GestoSala, de: string, a?: string) => {
+    if ((gesto === "empujar" || gesto === "chocar") && a && idx(a) >= 0) {
       const hacia = idx(a) > idx(de) ? "der" : "izq";
       animar(de, { gesto, hacia });
       if (gesto === "empujar") setTimeout(() => { sonar("paso"); animar(a, { gesto: "caer", hacia }, 1300); }, 260);
@@ -234,12 +279,41 @@ export function Escenario({ jugadores, color, lugares, interactivo = true, todos
       sonar("clic");
       animar(de, { gesto }, gesto === "bailar" ? 1600 : 1000);
     }
+  };
+
+  const hacer = (gesto: Gesto, de: string, a?: string) => {
+    if (gesto === "listo") {
+      const ahora = !listos.has(de);
+      if (ahora) { sonar("exito"); animar(de, { gesto: "listo" }, 700); }
+      if (sincro && de === sincro.yo) { setMiListo({ v: ahora, hasta: Date.now() + 5000 }); sincro.enviar({ listo: ahora }); }
+      else setListos(x => { const y = new Set(x); if (ahora) y.add(de); else y.delete(de); return y; });
+      return;
+    }
+    if (gesto === "caer") return;
+    reproducir(gesto, de, a);
+    if (sincro && de === sincro.yo) sincro.enviar({ gesto, a });
     setPendiente(null);
   };
+
+  // Gestos que llegan de los demás celulares: se anima cada uno cuya cuenta subió desde la última lectura.
+  const vistos = useRef<Record<string, number> | null>(null);
+  const claveGestos = sincro ? Object.entries(sincro.gestos).map(([k, v]) => `${k}:${v.n}`).join("|") : "";
+  useEffect(() => {
+    if (!sincro) return;
+    const antes = vistos.current;
+    vistos.current = Object.fromEntries(Object.entries(sincro.gestos).map(([k, v]) => [k, v.n]));
+    if (!antes) return; // la primera lectura no repite gestos viejos
+    for (const [id, g] of Object.entries(sincro.gestos)) {
+      if (id === sincro.yo || (antes[id] ?? 0) >= g.n) continue;
+      reproducir(g.gesto, id, g.a);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [claveGestos]);
 
   const tocar = (id: string) => {
     if (!interactivo) return;
     if (pendiente && elegido && id !== elegido) { hacer(pendiente, elegido, id); return; }
+    if (sincro && id !== sincro.yo) { aviso("Solo puedes mover a tu personaje."); return; }
     setPendiente(null);
     setElegido(e => (e === id ? null : id));
   };
@@ -252,15 +326,16 @@ export function Escenario({ jugadores, color, lugares, interactivo = true, todos
           const centro = (n - 1) / 2, d = n > 1 ? Math.abs(i - centro) / centro : 0;
           const anim = anims[j.id];
           const listo = todosListos || listos.has(j.id);
-          const cls = ["actor", anim ? `g-${anim.gesto}` : "", anim?.hacia ? `h-${anim.hacia}` : "", listo ? "listo" : "", elegido === j.id ? "elegido" : ""].join(" ");
+          const soyYo = !!sincro && sincro.yo === j.id;
+          const cls = ["actor", anim ? `g-${anim.gesto}` : "", anim?.hacia ? `h-${anim.hacia}` : "", listo ? "listo" : "", elegido === j.id ? "elegido" : "", soyYo ? "soy-yo" : ""].join(" ");
           return (
             <li key={j.id} className={cls} style={{ ["--d" as string]: d.toFixed(2), ["--i" as string]: i, zIndex: 10 - Math.round(d * 5) }}>
               <button className="actor-boton" data-sin-clic disabled={!interactivo} aria-pressed={elegido === j.id}
-                aria-label={`${j.nombre}${lugares?.[j.id] ? `, lugar ${lugares[j.id]}` : ""}${listo ? ", listo" : ""}`} onClick={() => tocar(j.id)}>
+                aria-label={`${j.nombre}${soyYo ? " (tú)" : ""}${lugares?.[j.id] ? `, lugar ${lugares[j.id]}` : ""}${listo ? ", listo" : ""}`} onClick={() => tocar(j.id)}>
                 {lugares?.[j.id] && <span className={"lugar-chip l" + Math.min(4, lugares[j.id]!)}>#{lugares[j.id]}</span>}
                 <span key={anim?.clave ?? 0} className="cuerpo"><Avatar p={j.personaje} size={n > 6 ? 62 : 74} nombre={j.nombre} /></span>
                 <span className="sombra" aria-hidden="true" />
-                <small className="nombre">{listo ? "✓ " : ""}{j.nombre}</small>
+                <small className="nombre">{listo ? "✓ " : ""}{soyYo ? "Tú" : j.nombre}</small>
               </button>
             </li>
           );
@@ -288,7 +363,7 @@ export function Escenario({ jugadores, color, lugares, interactivo = true, todos
           )}
         </div>
       )}
-      {interactivo && !elegido && <p className="hint escenario-ayuda">Toca a un personaje para saludar, bailar, chocar o empujar.</p>}
+      {interactivo && !elegido && <p className="hint escenario-ayuda">{sincro ? "Toca a tu personaje para saludar, bailar, chocar, empujar o darte por listo." : "Toca a un personaje para saludar, bailar, chocar o empujar."}</p>}
     </div>
   );
 }
@@ -327,4 +402,30 @@ function Carga({ juego, alTerminar }: { juego: DefinicionJuego; alTerminar: () =
       <p className="consejo">{consejo}</p>
     </div>
   );
+}
+
+/**
+ * Traduce la sala del servidor a la vista del escenario.
+ * Anfitrión: su cuenta es el primer jugador local y los demás son `c-<id>`. Invitado: los ids son los de la cuenta.
+ */
+function useSincroSala(vista: "anfitrion" | "invitado", jugadores: JugadorLocal[]): SincroEscenario | undefined {
+  const s = useEstado();
+  const [uid, setUid] = useState<string | null>(null);
+  useEffect(() => { if (s.sala) void miUid().then(setUid); }, [s.sala?.id]);
+  return useMemo(() => {
+    const sala = s.sala;
+    if (!sala || !s.miembros) return undefined;
+    const primero = jugadores[0]?.id;
+    const { listos, gestos, aServidor } = traducirSala(vista, s.miembros, primero);
+    return {
+      yo: vista === "invitado" ? uid : primero ?? null,
+      listos, gestos,
+      enviar: c => {
+        const a = c.a ? aServidor(c.a) : undefined;
+        // Chocar o empujar a alguien que juega en este celular sin cuenta: solo se ve aquí.
+        if (c.gesto && (c.gesto === "chocar" || c.gesto === "empujar") && !a) return;
+        void marcarEnSala(sala, { listo: c.listo, gesto: c.gesto as GestoSala | undefined, a }).then(ok => { if (!ok) aviso("No se pudo enviar. Revisa tu señal."); });
+      },
+    };
+  }, [s.sala, s.miembros, uid, jugadores, vista]);
 }
