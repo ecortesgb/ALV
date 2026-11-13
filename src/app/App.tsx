@@ -16,7 +16,8 @@ import { Confeti, Fondo } from "./efectos";
 import { acciones, type JugadorLocal, parejaDe, saldosDe, useEstado } from "./estado";
 import { Lobby } from "./Lobby";
 import { Partida } from "./Partida";
-import { EditorPersonaje, NivelYSaldos, Tienda } from "./Personaje";
+import { EditorPersonaje, Tienda } from "./Personaje";
+import { TarjetaJugador } from "./Tarjetas";
 import { Ranking } from "./Ranking";
 import { SincroSala, Unirse } from "./Sala";
 import { useAPartidaDeSala } from "./PartidaCelular";
@@ -292,7 +293,7 @@ function Perfil({ id }: { id?: string }) {
     <>
       <h1 className="titulo">Tu personaje</h1>
       <QuienSoy id={j.id} base="perfil" />
-      <NivelYSaldos j={j} />
+      <TarjetaJugador j={j} />
       <Cuenta j={j} />
       <Paleta />
       <LogrosDe j={j} />

@@ -108,19 +108,23 @@ export function Lobby({ jugar, arg }: { jugar: (p: EstadoPartida) => void; arg?:
 
       <div className="lobby-config">
         <section className="pila" aria-labelledby="t-juego">
-          <span id="t-juego" className="label">Tipo de juego</span>
-          <div className="chips" role="group" aria-label="Filtrar por sección">
+          <span id="t-juego" className="label paso-armado"><i>1</i> Modo de juego</span>
+          <div className="pestanas-menu" role="group" aria-label="Filtrar por sección">
             <button className="opcion" aria-pressed={seccion === "todas"} onClick={() => setSeccion("todas")}>Todos</button>
             {(Object.keys(SECCIONES) as SeccionId[]).filter(k => k !== "mix" && compatibles.some(j => j.seccion === k)).map(k => (
               <button key={k} className="opcion" style={{ ["--sc" as string]: COLOR_SECCION[k] }} aria-pressed={seccion === k} onClick={() => setSeccion(k)}>{SECCIONES[k].sigla}</button>
             ))}
           </div>
-          <div className="pila">
+          <div className="modos">
             {lista.map(j => (
-              <button key={j.id} className="juego" aria-pressed={juegoId === j.id} style={{ ["--sc" as string]: COLOR_SECCION[j.seccion] }} onClick={() => setJuegoId(j.id)}>
+              <button key={j.id} className="juego modo" aria-pressed={juegoId === j.id} style={{ ["--sc" as string]: COLOR_SECCION[j.seccion] }} onClick={() => setJuegoId(j.id)}>
+                <span className="modo-cinta">{juegoId === j.id ? "✓ Elegido" : SECCIONES[j.seccion].sigla}</span>
                 <span className="icono">{j.sigla ?? SECCIONES[j.seccion].sigla}</span>
-                <span className="texto"><b>{j.nombre}</b><small>{j.descripcion}{s.jugadores.length <= 3 && j.modoCorto ? ` ${j.modoCorto}` : ""}</small></span>
-                {juegoId === j.id && <span className="chip lime">Elegido</span>}
+                <span className="texto">
+                  <b>{j.nombre}</b>
+                  <span className="modo-meta">{SECCIONES[j.seccion].trata}</span>
+                  <small>{j.descripcion}{s.jugadores.length <= 3 && j.modoCorto ? ` ${j.modoCorto}` : ""}</small>
+                </span>
               </button>
             ))}
             {lista.length === 0 && <p className="hint">No hay juegos de esta sección con la configuración actual.</p>}
@@ -129,7 +133,7 @@ export function Lobby({ jugar, arg }: { jugar: (p: EstadoPartida) => void; arg?:
         </section>
 
         <section className="pila" aria-labelledby="t-esc">
-          <span id="t-esc" className="label">Escenario</span>
+          <span id="t-esc" className="label paso-armado"><i>2</i> Escenario</span>
           <div className="escenarios">
             {ESCENARIOS.filter(e => e.activo).map(e => (
               <button key={e.id} className="escenario" aria-pressed={e.id === cfg.escenario} style={{ ["--sc" as string]: e.color }} onClick={() => acciones.ajustes({ escenario: e.id })}>
@@ -142,7 +146,7 @@ export function Lobby({ jugar, arg }: { jugar: (p: EstadoPartida) => void; arg?:
         </section>
 
         <section className="card" aria-labelledby="t-cond">
-          <span id="t-cond" className="label">Condiciones</span>
+          <span id="t-cond" className="label paso-armado"><i>3</i> Condiciones</span>
           <div className="opciones">
             {([1, 2, 3, 4] as Intensidad[]).map(x => (
               <button key={x} className="opcion" aria-pressed={cfg.intensidad === x} onClick={() => acciones.ajustes({ intensidad: x })}>{INTENSIDADES[x]}</button>

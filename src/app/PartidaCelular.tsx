@@ -9,6 +9,7 @@ import { useEstado } from "./estado";
 import { enviarAccion, miSecreto, miUid, partidaDeSala, type PartidaPublicada } from "./nube";
 import { personajeInicial } from "../content/personaje";
 import { sonar } from "./sonido";
+import { BotonVoto, ChipHerramienta, PanelHerramienta, Rondas } from "./Hud";
 
 interface Secreto { mio?: Record<string, unknown> | null; miRespuesta?: unknown; miMano?: string[] }
 
@@ -65,13 +66,18 @@ export function PartidaCelular({ p }: { p: PartidaPublicada }) {
 
   return (
     <section className="card celular-partida" aria-labelledby="t-cel">
-      <div className="entre">
-        <span className="sigla" id="t-cel">{juego?.sigla ?? (juego ? SECCIONES[juego.seccion].sigla : "ALV")}</span>
-        <span className="label">Ronda {v.ronda} de {v.totalRondas}</span>
-      </div>
-      <b>{juego?.nombre}</b>
+      <header className="hud-partida hud-celular">
+        <span className="hud-juego">
+          <span className="sigla" id="t-cel">{juego?.sigla ?? (juego ? SECCIONES[juego.seccion].sigla : "ALV")}</span>
+          <span className="pila" style={{ gap: 4, minWidth: 0 }}>
+            <b className="hud-nombre">{juego?.nombre}</b>
+            <ChipHerramienta motor={v.motor} />
+          </span>
+        </span>
+        <Rondas ronda={v.ronda} total={v.totalRondas} />
+      </header>
       {v.carta?.texto && v.motor !== "conteo" && <div className="carta" style={{ height: "auto", minHeight: 120 }}><div className="cara"><p style={{ fontSize: 22 }}>{v.carta.texto}</p>{v.carta.opcionB && <p style={{ margin: 0, fontSize: 18, color: "var(--cyan)" }}>o… {v.carta.opcionB}</p>}</div></div>}
-      {herramienta}
+      <PanelHerramienta motor={v.motor}>{herramienta}</PanelHerramienta>
       <div className="marcador" aria-label="Puntos">
         {[...v.jugadores].sort((a, b) => (v.puntos[b.id] ?? 0) - (v.puntos[a.id] ?? 0)).map((j, i) => (
           <div key={j.id} className={"lugar" + (j.id === yo ? " activo" : "")}>
@@ -97,10 +103,10 @@ function Herramienta({ v, yo, sec, mandar, nombre }: {
       const mano = sec.miMano ?? [];
       return (
         <div className="pila">
-          <b style={{ textAlign: "center" }}>¡Es tu turno!</b>
-          <div className="tres" style={{ gridTemplateColumns: "1fr 1fr" }}>
-            <button className="btn" onClick={() => void mandar("contestar", { valor: "paso" })}>← Paso</button>
-            <button className="btn lime" onClick={() => void mandar("contestar", { valor: "cumplio" })}>Cumplí →</button>
+          <b className="tu-turno">¡Es tu turno!</b>
+          <div className="controles">
+            <button className="control paso" onClick={() => void mandar("contestar", { valor: "paso" })}><span aria-hidden="true">←</span>Paso</button>
+            <button className="control cumpli" onClick={() => void mandar("contestar", { valor: "cumplio" })}><span aria-hidden="true">✓</span>Cumplí</button>
           </div>
           {mano.length > 0 && (
             <div className="mano">
@@ -117,16 +123,16 @@ function Herramienta({ v, yo, sec, mandar, nombre }: {
     case "conteo": return <Conteo v={v} sec={sec} mandar={mandar} />;
     case "confesion":
       return (
-        <div className="tres" style={{ gridTemplateColumns: "1fr 1fr" }}>
-          <button className="btn lime" onClick={() => void mandar("contestar", { valor: "si" })}>Yo sí</button>
-          <button className="btn" onClick={() => void mandar("contestar", { valor: "no" })}>Yo no</button>
+        <div className="controles">
+          <button className="control cumpli" onClick={() => void mandar("contestar", { valor: "si" })}><span aria-hidden="true">🙋</span>Yo sí</button>
+          <button className="control paso" onClick={() => void mandar("contestar", { valor: "no" })}><span aria-hidden="true">🙅</span>Yo no</button>
         </div>
       );
     case "senalar":
       return (
         <div className="pila">
           <span className="label">Señala en secreto</span>
-          {v.jugadores.map(j => <button key={j.id} className="btn" onClick={() => void mandar("contestar", { valor: j.id })}>{j.id === yo ? "Yo" : j.nombre}</button>)}
+          {v.jugadores.map((j, i) => <BotonVoto key={j.id} letra={String(i + 1)} onClick={() => void mandar("contestar", { valor: j.id })}>{j.id === yo ? "Yo" : j.nombre}</BotonVoto>)}
         </div>
       );
     case "competencia":
@@ -141,8 +147,8 @@ function Votar({ v, mandar }: { v: VistaPublica; mandar: (t: "contestar", d: Rec
     return (
       <div className="pila">
         <span className="label">Ahora adivina qué eligió tu rival</span>
-        <button className="btn" onClick={() => void mandar("contestar", { valor: { eleccion, prediccion: "a" } })}>A · {v.carta?.texto}</button>
-        <button className="btn" onClick={() => void mandar("contestar", { valor: { eleccion, prediccion: "b" } })}>B · {v.carta?.opcionB}</button>
+        <BotonVoto letra="A" onClick={() => void mandar("contestar", { valor: { eleccion, prediccion: "a" } })}>{v.carta?.texto}</BotonVoto>
+        <BotonVoto letra="B" onClick={() => void mandar("contestar", { valor: { eleccion, prediccion: "b" } })}>{v.carta?.opcionB}</BotonVoto>
       </div>
     );
   }
@@ -150,8 +156,8 @@ function Votar({ v, mandar }: { v: VistaPublica; mandar: (t: "contestar", d: Rec
   return (
     <div className="pila">
       <span className="label">Elige en secreto</span>
-      <button className="btn" onClick={() => elegir("a")}>A · {v.carta?.texto}</button>
-      <button className="btn" onClick={() => elegir("b")}>B · {v.carta?.opcionB}</button>
+      <BotonVoto letra="A" onClick={() => elegir("a")}>{v.carta?.texto}</BotonVoto>
+      <BotonVoto letra="B" onClick={() => elegir("b")}>{v.carta?.opcionB}</BotonVoto>
     </div>
   );
 }

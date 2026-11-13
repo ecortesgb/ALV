@@ -11,6 +11,7 @@ import { crearPartidaSala, leerAcciones, publicarPartida, terminarPartidaSala } 
 import { aviso, BotonPantallaCompleta, BotonSonido, COLOR_SECCION, confirmar, NOMBRE_CARTA_PODER } from "./comun";
 import { sonar } from "./sonido";
 import { Anillo, Confeti, Flotantes, useAura, useFlotantes } from "./efectos";
+import { BotonVoto, ChipHerramienta, PanelHerramienta, Rondas } from "./Hud";
 
 let contador = 0;
 const nuevoId = () => `l${Date.now().toString(36)}${(contador++).toString(36)}`;
@@ -105,11 +106,17 @@ export function Partida({ inicial, salir }: { inicial: EstadoPartida; salir: () 
 
   return (
     <div className="pila partida" style={{ ["--sc" as string]: esc?.color ?? color }}>
-      <div className="entre">
+      <header className="hud-partida">
         <button className="btn sm" onClick={async () => { if (await confirmar({ titulo: "¿Salir de la partida?", texto: "No se guarda la XP de una partida sin terminar.", si: "Sí, salir", no: "Continuar jugando", peligro: true })) { enSala.cerrar(false); salir(); } }}>Salir</button>
-        <span className="sigla" style={{ color }}>{juego.sigla ?? SECCIONES[juego.seccion].sigla}</span>
-        <span className="fila" style={{ gap: 8 }}><span className="label">Ronda {v.ronda} de {v.totalRondas}</span><BotonPantallaCompleta /><BotonSonido /></span>
-      </div>
+        <span className="hud-juego">
+          <span className="sigla" style={{ color }}>{juego.sigla ?? SECCIONES[juego.seccion].sigla}</span>
+          <span className="pila" style={{ gap: 4, minWidth: 0 }}>
+            <b className="hud-nombre">{juego.nombre}</b>
+            <ChipHerramienta motor={e.motor} />
+          </span>
+        </span>
+        <span className="fila hud-derecha" style={{ gap: 8 }}><Rondas ronda={v.ronda} total={v.totalRondas} /><BotonPantallaCompleta /><BotonSonido /></span>
+      </header>
 
       <ol className="turnos" aria-label="Jugadores y turno">
         {v.jugadores.map(j => {
@@ -123,14 +130,16 @@ export function Partida({ inicial, salir }: { inicial: EstadoPartida; salir: () 
         })}
       </ol>
 
-      {["turnos-cartas", "botella", "ruleta", "dados"].includes(e.motor) && <TurnoCartas key={e.motor} e={e} accion={accion} />}
-      {e.motor === "conteo" && <Conteo e={e} accion={accion} />}
-      {e.motor === "confesion" && <Confesion e={e} accion={accion} />}
-      {e.motor === "senalar" && <Senalar e={e} accion={accion} />}
-      {e.motor === "competencia" && <Competencia e={e} accion={accion} />}
-      {e.motor === "votacion" && <Secreto e={e} accion={accion} />}
-      {e.motor === "rol-secreto" && <Impostor e={e} accion={accion} />}
-      {e.motor === "pareja" && <Secreto e={e} accion={accion} />}
+      <PanelHerramienta motor={e.motor}>
+        {["turnos-cartas", "botella", "ruleta", "dados"].includes(e.motor) && <TurnoCartas key={e.motor} e={e} accion={accion} />}
+        {e.motor === "conteo" && <Conteo e={e} accion={accion} />}
+        {e.motor === "confesion" && <Confesion e={e} accion={accion} />}
+        {e.motor === "senalar" && <Senalar e={e} accion={accion} />}
+        {e.motor === "competencia" && <Competencia e={e} accion={accion} />}
+        {e.motor === "votacion" && <Secreto e={e} accion={accion} />}
+        {e.motor === "rol-secreto" && <Impostor e={e} accion={accion} />}
+        {e.motor === "pareja" && <Secreto e={e} accion={accion} />}
+      </PanelHerramienta>
 
       {v.cartaUsada && v.cartaUsada.ronda === v.ronda && (
         <p className="hint" style={{ textAlign: "center" }}>⚡ {jl(v.cartaUsada.jugador)?.nombre} usó <b style={{ color: "var(--cyan)" }}>{NOMBRE_CARTA_PODER[v.cartaUsada.carta]}</b></p>
@@ -630,8 +639,8 @@ function Contestar({ e, jugador, enviar }: { e: EstadoPartida; jugador: string; 
       <div className="card">
         <span className="label">Ahora adivina: ¿qué eligió {otro}?</span>
         <div className="opcionAB">
-          <button className="btn" onClick={() => enviar({ eleccion, prediccion: "a" })}>A · {v.carta?.texto}</button>
-          <button className="btn" onClick={() => enviar({ eleccion, prediccion: "b" })}>B · {v.carta?.opcionB}</button>
+          <BotonVoto letra="A" onClick={() => enviar({ eleccion, prediccion: "a" })}>{v.carta?.texto}</BotonVoto>
+          <BotonVoto letra="B" onClick={() => enviar({ eleccion, prediccion: "b" })}>{v.carta?.opcionB}</BotonVoto>
         </div>
       </div>
     );
@@ -641,8 +650,8 @@ function Contestar({ e, jugador, enviar }: { e: EstadoPartida; jugador: string; 
     <div className="card">
       <span className="label">Elige en secreto</span>
       <div className="opcionAB">
-        <button className="btn" onClick={() => elegir("a")}>A · {v.carta?.texto}</button>
-        <button className="btn" onClick={() => elegir("b")}>B · {v.carta?.opcionB}</button>
+        <BotonVoto letra="A" onClick={() => elegir("a")}>{v.carta?.texto}</BotonVoto>
+        <BotonVoto letra="B" onClick={() => elegir("b")}>{v.carta?.opcionB}</BotonVoto>
       </div>
     </div>
   );
