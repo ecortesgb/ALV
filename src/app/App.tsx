@@ -11,23 +11,24 @@ import type { SeccionId } from "../engine/types";
 import { Retrato } from "./Avatar";
 import { Cuenta, SincroCuenta } from "./Cuenta";
 import { hayNube, sesionActual } from "./nube";
-import { Avisos, BotonSonido, COLOR_SECCION, Confirmaciones, configuracion, Icono, INTENSIDADES, aviso } from "./comun";
+import { Avisos, COLOR_SECCION, Confirmaciones, configuracion, Icono, INTENSIDADES, aviso } from "./comun";
 import { Confeti, Fondo } from "./efectos";
-import { acciones, type JugadorLocal, parejaDe, saldosDe, useEstado } from "./estado";
+import { type JugadorLocal, parejaDe, saldosDe, useEstado } from "./estado";
 import { Lobby } from "./Lobby";
 import { Partida } from "./Partida";
 import { EditorPersonaje, Tienda } from "./Personaje";
-import { TarjetaJugador } from "./Tarjetas";
+import { SelectorEquipo, TarjetaJugador } from "./Tarjetas";
 import { Ranking } from "./Ranking";
 import { SincroSala, Unirse } from "./Sala";
 import { useAPartidaDeSala } from "./PartidaCelular";
 import { instalarClics, sonar } from "./sonido";
+import { ElegirModo, Notificaciones, PaginaAjustes, PaginaFisico, PantallaCarga, PantallaCuenta } from "./Bienvenida";
 
-type Ruta = "inicio" | "lobby" | "tienda" | "ranking" | "perfil" | "unirse";
-const RUTAS: Ruta[] = ["inicio", "lobby", "tienda", "ranking", "perfil", "unirse"];
+type Ruta = "inicio" | "lobby" | "tienda" | "ranking" | "perfil" | "unirse" | "fisico" | "ajustes";
+const RUTAS: Ruta[] = ["inicio", "lobby", "tienda", "ranking", "perfil", "unirse", "fisico", "ajustes"];
 /** Rutas viejas que siguen funcionando si alguien las tenía guardadas. */
 const ANTES: Record<string, Ruta> = { juegos: "lobby", grupo: "lobby", historial: "ranking" };
-const NOMBRES: [Exclude<Ruta, "unirse">, string][] = [["inicio", "Inicio"], ["lobby", "Lobby"], ["tienda", "Tienda"], ["ranking", "Ranking"], ["perfil", "Perfil"]];
+const NOMBRES: [Exclude<Ruta, "unirse" | "fisico" | "ajustes">, string][] = [["inicio", "Inicio"], ["lobby", "Lobby"], ["tienda", "Tienda"], ["ranking", "Ranking"], ["perfil", "Perfil"]];
 
 const leerRuta = (): { ruta: Ruta; arg?: string } => {
   const [r = "", arg] = location.hash.replace(/^#\/?/, "").split("/");
@@ -50,7 +51,18 @@ export function App() {
   useEffect(() => { scrollTo(0, 0); }, [ruta, partida === null]);
   useEffect(instalarClics, []);
 
-  const ancho = !!partida || ruta === "lobby" || ruta === "ranking";
+  // Entrada: pantalla de carga (una vez por visita) → cuenta (si hay servidor y no hay sesión) → novedades → menú.
+  const [entrada, setEntrada] = useState<"carga" | "cuenta" | "avisos" | "lista">(() => {
+    try { return sessionStorage.getItem("alv.iniciado") ? "lista" : "carga"; } catch { return "carga"; }
+  });
+  const iniciar = async () => {
+    try { sessionStorage.setItem("alv.iniciado", "1"); } catch { /* sin almacenamiento */ }
+    setEntrada(hayNube && !(await sesionActual()) ? "cuenta" : "avisos");
+  };
+  // La primera vez que alguien crea su cuenta entra directo a armar su personaje.
+  const trasCuenta = (creada: boolean) => { if (creada) { ir("perfil"); setEntrada("lista"); } else setEntrada("avisos"); };
+
+  const ancho = !!partida || ruta === "lobby" || ruta === "ranking" || ruta === "fisico";
   return (
     <>
       <Fondo />
@@ -61,6 +73,8 @@ export function App() {
           : ruta === "tienda" ? <PaginaTienda id={arg} />
           : ruta === "ranking" ? <Ranking />
           : ruta === "unirse" ? <PaginaUnirse codigo={arg} />
+          : ruta === "fisico" ? <PaginaFisico />
+          : ruta === "ajustes" ? <PaginaAjustes />
           : <Perfil id={arg} />}
       </main>
       {!partida && (
@@ -75,6 +89,9 @@ export function App() {
       <SincroCuenta />
       <SincroSala />
       <Confirmaciones />
+      {entrada === "carga" && <PantallaCarga iniciar={() => void iniciar()} />}
+      {entrada === "cuenta" && <PantallaCuenta seguir={trasCuenta} />}
+      {entrada === "avisos" && !partida && <Notificaciones cerrar={() => setEntrada("lista")} />}
     </>
   );
 }
@@ -91,7 +108,7 @@ function Encabezado() {
         <div className="tag">AMIGOS, LOCURAS Y VERDADES</div>
       </div>
       <div className="fila" style={{ gap: 8 }}>
-      <BotonSonido />
+      <a className="sonido" href="#/ajustes" aria-label="Ajustes" title="Ajustes">{Icono.ajustes}</a>
       <a className="yo" href="#/perfil" style={{ textDecoration: "none" }}>
         <span className="marco"><Retrato j={yo} size={40} /></span>
         <span className="pila" style={{ gap: 4 }}>
@@ -164,10 +181,7 @@ function Inicio() {
         </span>
         <span className="ruleta" style={{ transform: `rotate(${giro}deg)`, transition: "none" }} aria-hidden="true" />
       </button>
-      <a href="#/lobby" className="btn principal jugar">JUGAR · ABRIR LOBBY</a>
-      {hayNube && (s.sala
-        ? <a href="#/lobby" className="btn cyan" style={{ textAlign: "center", textDecoration: "none" }}>{s.sala.anfitrion ? "Tu sala" : "Estás en la sala"} {s.sala.codigo} · {s.miembros?.length ?? 1} conectados</a>
-        : <a href="#/unirse" className="btn" style={{ textAlign: "center", textDecoration: "none" }}>📱 Entrar a una sala con código</a>)}
+      <ElegirModo />
       <a href="#/tienda" className="card" style={{ flexDirection: "row", alignItems: "center", textDecoration: "none", color: "inherit", padding: "12px 14px" }}>
         {Icono.estrella}
         <span className="pila" style={{ gap: 4, flex: 1 }}>
@@ -227,6 +241,11 @@ function PaginaUnirse({ codigo }: { codigo?: string }) {
       <h1 className="titulo">Sala</h1>
       {!conCuenta && <Cuenta j={s.jugadores[0]!} />}
       <Unirse codigo={codigo} />
+      <section className="card">
+        <h2>¿Tú armas la sala?</h2>
+        <p className="hint">Crea la sala desde el lobby y comparte el código o el QR. Pueden entrar hasta 8.</p>
+        <a className="btn principal jugar" href="#/lobby">Crear mi sala</a>
+      </section>
     </>
   );
 }
@@ -264,28 +283,6 @@ function LogrosDe({ j }: { j: JugadorLocal }) {
   );
 }
 
-/** Compara la paleta de neón (por defecto) con Midnight Lounge. Solo cambia colores, no el juego. */
-function Paleta() {
-  const actual = useEstado().ajustes.paleta === "lounge" ? "lounge" : "neon";
-  const opciones: { k: "neon" | "lounge"; nombre: string; colores: string[] }[] = [
-    { k: "neon", nombre: "Neón sofisticado", colores: ["#0E0A1F", "#1B1230", "#FF2E88", "#22E1FF"] },
-    { k: "lounge", nombre: "Midnight Lounge", colores: ["#0B0E14", "#161B26", "#E8417F", "#7FDDF2"] },
-  ];
-  return (
-    <section className="card" aria-labelledby="t-paleta">
-      <div className="entre"><h2 id="t-paleta">Paleta</h2><small className="muted">Solo cambia los colores</small></div>
-      <div className="paleta-opciones" role="group" aria-label="Paleta de colores">
-        {opciones.map(o => (
-          <button key={o.k} className="opcion" aria-pressed={actual === o.k} onClick={() => acciones.ajustes({ paleta: o.k })} style={{ padding: 10, textAlign: "left" }}>
-            {o.nombre}
-            <span className="paleta-muestra" aria-hidden="true">{o.colores.map(c => <span key={c} style={{ background: c }} />)}</span>
-          </button>
-        ))}
-      </div>
-    </section>
-  );
-}
-
 function Perfil({ id }: { id?: string }) {
   const s = useEstado();
   const j = s.jugadores.find(x => x.id === id) ?? s.jugadores[0]!;
@@ -294,8 +291,8 @@ function Perfil({ id }: { id?: string }) {
       <h1 className="titulo">Tu personaje</h1>
       <QuienSoy id={j.id} base="perfil" />
       <TarjetaJugador j={j} />
+      <SelectorEquipo j={j} />
       <Cuenta j={j} />
-      <Paleta />
       <LogrosDe j={j} />
       <EditorPersonaje j={j} />
     </>

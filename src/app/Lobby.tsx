@@ -84,7 +84,7 @@ export function Lobby({ jugar, arg }: { jugar: (p: EstadoPartida) => void; arg?:
     );
   }
 
-  if (cargando) return <Carga juego={cargando} alTerminar={() => jugar(crearPartida(cargando, cfg, Date.now() % 100000, CONTENIDO))} />;
+  if (cargando) return <Carga juego={cargando} alTerminar={() => jugar(crearPartida(cargando, cfg, Date.now() % 100000, CONTENIDO, s.ajustes.rondas ?? 8))} />;
 
   return (
     <div className="lobby">

@@ -233,7 +233,7 @@ function TurnoCartas({ e, accion }: { e: EstadoPartida; accion: (a: AccionSinId)
           <span className="label">{etiqueta}</span>
           <div className="quien">{turno?.nombre.toUpperCase()}</div>
         </div>
-        {v.fase === "contestando" && <Anillo clave={`${v.ronda}-${v.carta?.id}`} {...(e.motor === "dados" ? { segundos: Number(sel?.segundos ?? 30) } : {})} />}
+        {v.fase === "contestando" && <Anillo clave={`${v.ronda}-${v.carta?.id}`} segundos={e.motor === "dados" ? Number(sel?.segundos ?? 30) : (s.ajustes.segundos ?? 60)} />}
       </div>
 
       <div className={"mesa" + (e.motor === "turnos-cartas" ? "" : " compacta")}>

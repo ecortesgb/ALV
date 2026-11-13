@@ -7,7 +7,8 @@ import { nivelPorXp, tituloPorNivel, xpParaNivel } from "../engine/economia";
 import { RAREZAS, type CartaSobre, type DefinicionSobre, type Rareza, type TipoSobre } from "../engine/sobres";
 import { Avatar, tipoCartaPorNivel } from "./Avatar";
 import { Confeti } from "./efectos";
-import { saldosDe, type JugadorLocal } from "./estado";
+import { acciones, saldosDe, type JugadorLocal } from "./estado";
+import { EQUIPOS, GRUPOS_EQUIPO, equipoDe } from "../content/equipos";
 import { sonar } from "./sonido";
 
 
@@ -16,9 +17,12 @@ export function TarjetaJugador({ j }: { j: JugadorLocal }) {
   const nivel = nivelPorXp(s.acumulada);
   const desde = xpParaNivel(nivel), hasta = xpParaNivel(nivel + 1);
   const avance = Math.round(((s.acumulada - desde) / (hasta - desde)) * 100);
+  const eq = equipoDe(j.equipo);
   return (
     <div className="ficha-jugador">
-      <div className={"tarjeta-jugador " + tipoCartaPorNivel(nivel)} aria-label={`Tarjeta de ${j.nombre}, nivel ${nivel}`}>
+      <div className={"tarjeta-jugador " + tipoCartaPorNivel(nivel) + (eq ? " con-equipo" : "")} aria-label={`Tarjeta de ${j.nombre}, nivel ${nivel}`}
+        style={eq ? { ["--eq1" as string]: eq.c1, ["--eq2" as string]: eq.c2 } : undefined}>
+        {eq && <span className="tj-equipo" title={eq.nombre}>{eq.icono}</span>}
         <span className="tj-nivel"><small>NIVEL</small><b>{nivel}</b></span>
         <span className="tj-arte"><Avatar p={j.personaje} size={150} nombre={j.nombre} /></span>
         <span className="tj-pie"><b>{j.nombre}</b><small>{tituloPorNivel(nivel)}</small></span>
@@ -26,7 +30,7 @@ export function TarjetaJugador({ j }: { j: JugadorLocal }) {
       <div className="tj-datos">
         <span className="label">Tu tarjeta</span>
         <h2 className="tj-nombre">{j.nombre}</h2>
-        <span className="tj-titulo">{tituloPorNivel(nivel)}</span>
+        <span className="tj-titulo">{tituloPorNivel(nivel)}{eq ? ` · ${eq.icono} ${eq.nombre}` : ""}</span>
         <div className="tj-escalones" aria-label={`Nivel ${nivel}, ${avance}% hacia el nivel ${nivel + 1}`}>
           <span className="escalon-n">{nivel}</span>
           <span className="barra"><span style={{ width: `${avance}%` }} /></span>
@@ -159,5 +163,28 @@ export function AperturaSobre({ def, cartas, nombreDe, arteDe, cerrar }:
       )}
     </div>,
     document.body,
+  );
+}
+
+/** Equipo o casa del jugador: le da color a su carta y frases propias cuando gana XP. Se cambia cuando quiera. */
+export function SelectorEquipo({ j }: { j: JugadorLocal }) {
+  const [grupo, setGrupo] = useState<string>(equipoDe(j.equipo)?.grupo ?? GRUPOS_EQUIPO[0]);
+  return (
+    <section className="card" aria-labelledby="t-equipo">
+      <div className="entre"><h2 id="t-equipo">Tu equipo o casa</h2>{j.equipo && <button className="btn sm" onClick={() => acciones.equipo(j.id, undefined)}>Quitar</button>}</div>
+      <p className="hint">Le da identidad a tu carta. Lo puedes cambiar cuando quieras.</p>
+      <div className="pestanas-menu" role="tablist" aria-label="Grupos">
+        {GRUPOS_EQUIPO.map(g => <button key={g} role="tab" aria-selected={grupo === g} onClick={() => setGrupo(g)}>{g}</button>)}
+      </div>
+      <div className="equipos">
+        {EQUIPOS.filter(e => e.grupo === grupo).map(e => (
+          <button key={e.id} className="equipo" aria-pressed={j.equipo === e.id} onClick={() => { acciones.equipo(j.id, e.id); sonar("exito"); }}
+            style={{ ["--eq1" as string]: e.c1, ["--eq2" as string]: e.c2 }}>
+            <span className="equipo-icono" aria-hidden="true">{e.icono}</span>
+            <b>{e.nombre}</b>
+          </button>
+        ))}
+      </div>
+    </section>
   );
 }

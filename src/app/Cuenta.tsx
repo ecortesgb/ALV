@@ -41,7 +41,8 @@ export function SincroCuenta() {
   return null;
 }
 
-export function Cuenta({ j }: { j: JugadorLocal }) {
+/** `alTerminar` se llama al entrar o crear la cuenta (true si se creó una nueva). */
+export function Cuenta({ j, alTerminar }: { j: JugadorLocal; alTerminar?: (creada: boolean) => void }) {
   const s = useEstado();
   const [modo, setModo] = useState<"entrar" | "crear">("entrar");
   const [nick, setNick] = useState("");
@@ -66,6 +67,7 @@ export function Cuenta({ j }: { j: JugadorLocal }) {
     if (datos) acciones.sincronizarCuenta(j.id, datos);
     setOcupado(false);
     aviso(modo === "crear" ? "Cuenta creada. Tu personaje, tu XP y tus compras se guardan solos." : "Bienvenido de nuevo.");
+    alTerminar?.(modo === "crear");
   };
 
   if (sesion && s.cuenta) {

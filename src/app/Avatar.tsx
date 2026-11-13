@@ -1,6 +1,7 @@
 // El personaje de bloques: capas de imagen apiladas y, encima, los adornos de la tienda dibujados en SVG.
 import { rutaPieza, TIENDA, type Personaje } from "../content/personaje";
 import { nivelPorXp } from "../engine/economia";
+import { equipoDe } from "../content/equipos";
 import { saldosDe, type JugadorLocal } from "./estado";
 
 interface Props {
@@ -53,11 +54,12 @@ export function Retrato({ j, p, nombre, size, nivel }:
   if (!personaje) return null;
   const n = nivel ?? (j ? nivelPorXp(saldosDe(j).acumulada) : 1);
   const quien = nombre ?? j?.nombre;
+  const eq = equipoDe(j?.equipo);
   const s = size / 1.0345; // ancho del Avatar para que 300 unidades del lienzo llenen el retrato
   // Desfase de la animación por nombre, para que no respiren todos al mismo tiempo.
   const desfase = ((quien ?? "").split("").reduce((a, c) => a + c.charCodeAt(0), 0) % 9) * -0.4;
   return (
-    <span className={"retrato t-" + tipoCartaPorNivel(n)} style={{ width: size, height: size }} role="img" aria-label={`Personaje de ${quien ?? "jugador"}`}>
+    <span className={"retrato t-" + tipoCartaPorNivel(n) + (eq ? " con-equipo" : "")} style={{ width: size, height: size, ...(eq ? { ["--eq1" as string]: eq.c1 } : {}) }} role="img" aria-label={`Personaje de ${quien ?? "jugador"}`}>
       <span className="retrato-cuerpo" aria-hidden="true" style={{ left: 0.0173 * s, top: 0.1208 * s, animationDelay: `${desfase}s` }}>
         <Avatar p={personaje} size={s} lider={false} />
       </span>

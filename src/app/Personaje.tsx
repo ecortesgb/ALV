@@ -35,10 +35,21 @@ export function NivelYSaldos({ j }: { j: JugadorLocal }) {
 
 export function EditorPersonaje({ j }: { j: JugadorLocal }) {
   const [tab, setTab] = useState<Paso>("piel");
+  const [emote, setEmote] = useState<{ k: string; clave: number } | null>(null);
   const p = j.personaje;
+  const animar = (k: string) => { sonar(k === "festejar" ? "exito" : "clic"); setEmote({ k, clave: Date.now() }); };
   return (
     <div className="pila">
-      <div className="vitrina"><Avatar p={p} size={150} nombre={j.nombre} /></div>
+      <div className="vitrina">
+        <span key={emote?.clave ?? 0} className={"emote" + (emote ? " e-" + emote.k : "")} onAnimationEnd={() => setEmote(null)}>
+          <Avatar p={p} size={150} nombre={j.nombre} />
+        </span>
+      </div>
+      <div className="chips" role="group" aria-label="Animaciones del personaje" style={{ justifyContent: "center" }}>
+        <button className="opcion" onClick={() => animar("saludar")}>👋 Saludo</button>
+        <button className="opcion" onClick={() => animar("festejar")}>🏆 Festejo de victoria</button>
+        <button className="opcion" onClick={() => animar("bailar")}>🕺 Baile</button>
+      </div>
       <div className="entre">
         <b>{j.nombre}</b>
         <button className="btn sm" onClick={() => acciones.personaje(j.id, personajeAlAzar(p, crearAzar(Date.now() % 1e6)))}>🎲 Al azar</button>

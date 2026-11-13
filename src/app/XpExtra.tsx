@@ -4,6 +4,7 @@ import { XP_EXTRA } from "../engine/economia";
 import { aviso } from "./comun";
 import { acciones, type JugadorLocal } from "./estado";
 import { sonar } from "./sonido";
+import { fraseEquipo } from "../content/equipos";
 
 /** El administrador da XP extra a un jugador por algo fuera del juego. Queda en el historial con su motivo. */
 export function XpExtra({ j, cerrar }: { j: JugadorLocal; cerrar: () => void }) {
@@ -15,7 +16,7 @@ export function XpExtra({ j, cerrar }: { j: JugadorLocal; cerrar: () => void }) 
     const error = acciones.darXpExtra(j.id, xp, motivo);
     if (error) { sonar("error"); aviso(error); return; }
     sonar("exito");
-    aviso(`+${xp} XP extra para ${j.nombre}`);
+    aviso(fraseEquipo(j.equipo, xp) ?? `+${xp} XP extra para ${j.nombre}`);
     cerrar();
   };
   return (

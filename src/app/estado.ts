@@ -8,9 +8,12 @@ import type { Azar } from "../engine/azar";
 import { type MiembroSala, type Sala, comprarAccesorioNube, comprarSobreNube, cuentaActiva, leerCuenta, registrarPartidaNube, registrarXpExtraNube, type DatosCuenta } from "./nube";
 import { idActual, migrarPersonaje, personajeInicial, TIENDA, cambioValido, type Personaje, type Zona } from "../content/personaje";
 import type { EscenarioId, Intensidad } from "../engine/types";
+import { EQUIPOS } from "../content/equipos";
 
 export interface JugadorLocal {
   id: string;
+  /** Equipo o casa elegido (content/equipos.ts): color de su carta y frases. Se puede cambiar cuando quiera. */
+  equipo?: string;
   /** Jugador que entró desde su propio celular con su cuenta. Su nombre y personaje vienen del servidor. */
   remoto?: boolean;
   nombre: string;
@@ -30,7 +33,9 @@ export interface EstadoLocal {
   jugadores: JugadorLocal[];
   enParejas: boolean;
   eventoId: string;
-  ajustes: { escenario: EscenarioId; intensidad: Intensidad; adulto: boolean; drunk: boolean; paleta?: Paleta };
+  ajustes: { escenario: EscenarioId; intensidad: Intensidad; adulto: boolean; drunk: boolean; paleta?: Paleta;
+    /** Rondas por partida y segundos para responder (Ajustes). */
+    rondas?: number; segundos?: number };
   historial: Partida[];
   /** Jugador de este celular con cuenta abierta: su saldo y su inventario vienen del servidor. */
   cuenta?: { jugador: string; acumulada: number; disponible: number; delEvento: number };
@@ -140,6 +145,10 @@ export const acciones = {
       }).slice(0, Math.max(0, 8 - locales.length));
     }
     guardar({ ...estado, miembros, jugadores: [...locales, ...remotos] });
+  },
+  equipo(id: string, equipo: string | undefined) {
+    if (equipo !== undefined && !EQUIPOS.some(e => e.id === equipo)) return;
+    cambiaJugador(id, j => ({ ...j, equipo }));
   },
   renombrar(id: string, nombre: string) {
     const limpio = nombre.replace(/\s+/g, " ").slice(0, 30);
