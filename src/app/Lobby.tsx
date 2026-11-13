@@ -11,7 +11,7 @@ import type { DefinicionJuego, Intensidad, SeccionId } from "../engine/types";
 import { Avatar, Retrato } from "./Avatar";
 import { aviso, BotonPantallaCompleta, BotonSonido, COLOR_SECCION, confirmar, configuracion, INTENSIDADES } from "./comun";
 import { useAura } from "./efectos";
-import { acciones, parejaDe, saldosDe, useEstado, type JugadorLocal } from "./estado";
+import { acciones, esMenorConCuenta, parejaDe, saldosDe, useEstado, type JugadorLocal } from "./estado";
 import { lugaresDeSesion } from "./puntos-sesion";
 import { sonar } from "./sonido";
 import { XpExtra } from "./XpExtra";
@@ -54,6 +54,9 @@ export function Lobby({ jugar, arg }: { jugar: (p: EstadoPartida) => void; arg?:
   const [cargando, setCargando] = useState<DefinicionJuego | null>(null);
   const [premiado, setPremiado] = useState<string | null>(null);
   const lugares = lugaresDeSesion(s);
+  // Cuenta de un menor de 18: sin contenido adulto ni Drunk, aunque estuvieran encendidos de antes.
+  const menor = esMenorConCuenta(s);
+  useEffect(() => { if (menor && (s.ajustes.adulto || s.ajustes.drunk)) acciones.ajustes({ adulto: false, drunk: false }); }, [menor, s.ajustes.adulto, s.ajustes.drunk]);
   const hayXpSesion = s.jugadores.some(j => saldosDe(j).delEvento > 0);
 
   useEffect(() => {
@@ -153,12 +156,13 @@ export function Lobby({ jugar, arg }: { jugar: (p: EstadoPartida) => void; arg?:
             ))}
           </div>
           <label className="interruptor">Juegan en parejas (1.º con 2.º, 3.º con 4.º…)<input type="checkbox" checked={s.enParejas} onChange={x => acciones.enParejas(x.target.checked)} /></label>
-          <label className="interruptor">Contenido adulto (FAP)<input type="checkbox" checked={s.ajustes.adulto} onChange={async x => {
+          <label className="interruptor">Contenido adulto (FAP)<input type="checkbox" disabled={menor} checked={s.ajustes.adulto} onChange={async x => {
             const encender = x.target.checked;
             if (encender && !(await confirmar({ titulo: "¿Encender contenido adulto?", texto: "Solo si todos son mayores de 18 y están de acuerdo.", si: "Sí, encender", no: "Mejor no" }))) return;
             acciones.ajustes({ adulto: encender });
           }} /></label>
-          <label className="interruptor">Modo Drunk (HBD)<input type="checkbox" checked={s.ajustes.drunk} onChange={x => acciones.ajustes({ drunk: x.target.checked })} /></label>
+          <label className="interruptor">Modo Drunk (HBD)<input type="checkbox" disabled={menor} checked={s.ajustes.drunk} onChange={x => acciones.ajustes({ drunk: x.target.checked })} /></label>
+          {menor && <p className="aviso">Tu cuenta es de menor de 18: el contenido adulto y el modo Drunk no están disponibles.</p>}
           {s.ajustes.drunk && <p className="aviso">Siempre hay opción sin alcohol, pasar no tiene castigo, máximo 3 por persona por hora y tomar nunca da XP.</p>}
         </section>
 

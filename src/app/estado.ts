@@ -5,7 +5,7 @@ import { useSyncExternalStore } from "react";
 import { nivelPorXp, saldos, puedeComprarAccesorio, puedeComprarCarta, XP_EXTRA, xpExtraValida, type Movimiento } from "../engine/economia";
 import { abrirSobre, SOBRES, type CartaSobre, type Rareza, type TipoSobre } from "../engine/sobres";
 import type { Azar } from "../engine/azar";
-import { type MiembroSala, type Sala, comprarAccesorioNube, comprarSobreNube, cuentaActiva, leerCuenta, registrarPartidaNube, registrarXpExtraNube, type DatosCuenta } from "./nube";
+import { type MiembroSala, type Registro, type Sala, comprarAccesorioNube, comprarSobreNube, cuentaActiva, leerCuenta, registrarPartidaNube, registrarXpExtraNube, type DatosCuenta } from "./nube";
 import { idActual, migrarPersonaje, personajeInicial, TIENDA, cambioValido, type Personaje, type Zona } from "../content/personaje";
 import type { EscenarioId, Intensidad } from "../engine/types";
 import { EQUIPOS } from "../content/equipos";
@@ -39,6 +39,8 @@ export interface EstadoLocal {
   historial: Partida[];
   /** Jugador de este celular con cuenta abierta: su saldo y su inventario vienen del servidor. */
   cuenta?: { jugador: string; acumulada: number; disponible: number; delEvento: number };
+  /** Fecha de nacimiento y género de la cuenta abierta (se vuelven a leer del servidor en cada visita). */
+  registro?: Registro;
   /** Sala en línea abierta en este celular (como anfitrión o como invitado). */
   sala?: Sala;
   /** Quién está en la sala, según el servidor. */
@@ -66,7 +68,7 @@ function leer(): EstadoLocal {
     const s = JSON.parse(localStorage.getItem(CLAVE) ?? "null") as EstadoLocal | null;
     if (s && s.version === 2 && Array.isArray(s.jugadores) && s.jugadores.length >= 2) {
       // La cuenta se vuelve a leer del servidor en cada visita: no se confía en la copia guardada.
-      return { ...s, cuenta: undefined, sala: undefined, miembros: undefined, jugadores: s.jugadores.map(j => ({ ...j, personaje: migrarPersonaje(j.personaje), tiene: (j.tiene ?? []).map(idActual) })) };
+      return { ...s, cuenta: undefined, registro: undefined, sala: undefined, miembros: undefined, jugadores: s.jugadores.map(j => ({ ...j, personaje: migrarPersonaje(j.personaje), tiene: (j.tiene ?? []).map(idActual) })) };
     }
   } catch { /* sin almacenamiento: se usa el inicial */ }
   return inicial();
@@ -125,7 +127,8 @@ export const acciones = {
     });
   },
   /** Al salir de la cuenta, el jugador vuelve a usar su saldo de este celular. */
-  olvidarCuenta() { if (estado.cuenta || estado.sala) guardar({ ...estado, cuenta: undefined, sala: undefined, miembros: undefined, jugadores: estado.jugadores.filter(j => !j.remoto) }); },
+  registro(r: Registro | undefined) { guardar({ ...estado, registro: r }); },
+  olvidarCuenta() { if (estado.cuenta || estado.sala || estado.registro) guardar({ ...estado, cuenta: undefined, registro: undefined, sala: undefined, miembros: undefined, jugadores: estado.jugadores.filter(j => !j.remoto) }); },
   /** Entra o sale de una sala. Al salir se quitan del grupo los jugadores que venían de otros celulares. */
   sala(sala: Sala | undefined) {
     guardar({ ...estado, sala, miembros: sala ? estado.miembros : undefined, jugadores: sala ? estado.jugadores : estado.jugadores.filter(j => !j.remoto) });
@@ -285,3 +288,13 @@ export async function comprarSobre(id: string, tipo: TipoSobre, azar: Azar): Pro
   await refrescarCuenta();
   return { ok: true, cartas: r.cartas.map(c => ({ id: idActual(c.id), rareza: c.rareza as Rareza })) };
 }
+
+/** Años cumplidos a hoy con una fecha AAAA-MM-DD. */
+export function edadDe(nacimiento: string, hoy = new Date()): number {
+  const [a, m, d] = nacimiento.split("-").map(Number) as [number, number, number];
+  let edad = hoy.getFullYear() - a;
+  if (hoy.getMonth() + 1 < m || (hoy.getMonth() + 1 === m && hoy.getDate() < d)) edad--;
+  return edad;
+}
+/** La cuenta abierta es de un menor de 18. Sin cuenta o sin fecha no se sabe: devuelve false. */
+export const esMenorConCuenta = (s: EstadoLocal) => !!s.registro && edadDe(s.registro.nacimiento) < 18;

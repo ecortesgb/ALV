@@ -154,7 +154,7 @@
 /* ───────── Entrada: pantalla de carga, cuenta y novedades ───────── */
 .pantalla-carga { position: fixed; inset: 0; z-index: 60; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px 16px; overflow: hidden auto;
   background: radial-gradient(ellipse at 50% 30%, #2B1F48, #0B0816 70%); }
-.pc-luces { position: absolute; inset: -20%; pointer-events: none; opacity: .5;
+.pc-luces { position: fixed; inset: 0; transform-origin: center; scale: 1.4; pointer-events: none; opacity: .5;
   background: linear-gradient(115deg, transparent 38%, rgba(34,225,255,.18) 45%, transparent 52%), linear-gradient(65deg, transparent 55%, rgba(255,46,136,.2) 62%, transparent 70%), linear-gradient(140deg, transparent 20%, rgba(167,123,255,.16) 28%, transparent 36%);
   animation: luces-carga 9s ease-in-out infinite alternate; }
 @keyframes luces-carga { to { transform: translateX(6%) rotate(2deg); } }

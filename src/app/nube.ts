@@ -49,6 +49,32 @@ export async function registrar(nick: string, pass: string): Promise<string | nu
   } catch (e) { console.error("registrar", e); return GENERICO; }
 }
 
+export type Genero = "hombre" | "mujer" | "otro";
+export interface Registro { nacimiento: string; genero: Genero }
+
+/**
+ * Guarda fecha de nacimiento (AAAA-MM-DD) y género de la cuenta abierta. La fecha se fija una sola vez;
+ * el servidor valida todo y calcula si es mayor de 18. Devuelve ese dato, o null si no se pudo.
+ */
+export async function guardarRegistro(nacimiento: string, genero: Genero): Promise<boolean | null> {
+  if (!cliente) return null;
+  try {
+    const { data, error } = await cliente.rpc("guardar_registro", { p_nacimiento: nacimiento, p_genero: genero });
+    if (error) { console.error("guardarRegistro", error); return null; }
+    return data === true;
+  } catch (e) { console.error("guardarRegistro", e); return null; }
+}
+
+/** Fecha y género de la cuenta abierta (solo los suyos: RLS). null si no los ha llenado o no hay sesión. */
+export async function miRegistro(): Promise<Registro | null> {
+  if (!cliente) return null;
+  try {
+    const { data, error } = await cliente.from("datos_cuenta").select("nacimiento, genero").maybeSingle();
+    if (error || !data) return null;
+    return { nacimiento: String(data.nacimiento), genero: data.genero as Genero };
+  } catch { return null; }
+}
+
 export async function entrar(nick: string, pass: string): Promise<string | null> {
   if (!cliente) return GENERICO;
   try {
