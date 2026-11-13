@@ -19,7 +19,8 @@ const FRASES = ["¿Listos para la fiesta?", "¡Hoy se arma!", "Pasar no tiene ca
 
 /** Tamaño del personaje según la pantalla. */
 function useTamano() {
-  const calc = () => Math.round(Math.min(330, Math.max(170, Math.min(innerWidth * 0.5, innerHeight * 0.32))));
+  // En horizontal el alto manda: el personaje ocupa casi la mitad de la pantalla.
+  const calc = () => Math.round(Math.min(330, Math.max(120, Math.min(innerWidth * 0.5, innerHeight * (innerWidth > innerHeight ? 0.42 : 0.32)))));
   const [t, setT] = useState(calc);
   useEffect(() => { const f = () => setT(calc()); addEventListener("resize", f); return () => removeEventListener("resize", f); }, []);
   return t;

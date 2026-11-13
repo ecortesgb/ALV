@@ -99,11 +99,14 @@ export function AperturaSobre({ def, cartas, nombreDe, arteDe, cerrar }:
   // La carta sale boca abajo y se voltea sola un instante después.
   useEffect(() => {
     if (fase !== "carta") return;
+    // Como en los sobres de los juegos de futbol: primero la luz delata la rareza y luego se voltea.
+    const r = cartas[paso]?.rareza ?? "comun";
+    const espera = { comun: 450, rara: 800, epica: 1300, legendaria: 2000 }[r];
+    if (r === "epica" || r === "legendaria") sonar("tic");
     const t = setTimeout(() => {
       setVolteada(true);
-      const r = cartas[paso]?.rareza;
       sonar(r === "legendaria" || r === "epica" ? "exito" : "revelar");
-    }, 450);
+    }, espera);
     return () => clearTimeout(t);
   }, [fase, paso, cartas]);
   useEffect(() => {
@@ -121,7 +124,7 @@ export function AperturaSobre({ def, cartas, nombreDe, arteDe, cerrar }:
 
   // Portal a <body>: .app crea su propio apilamiento y la barra de navegación quedaría encima.
   return createPortal(
-    <div className={"apertura destino-" + mejor} role="dialog" aria-modal="true" aria-label={`Abriendo ${def.nombre}`}>
+    <div className={"apertura destino-" + mejor + (fase === "carta" && c && !volteada && c.rareza === "legendaria" ? " temblor" : "")} role="dialog" aria-modal="true" aria-label={`Abriendo ${def.nombre}`}>
       <div className="apertura-rayos" aria-hidden="true" />
       {fase === "sobre" && (
         <div className="apertura-centro">
@@ -138,7 +141,8 @@ export function AperturaSobre({ def, cartas, nombreDe, arteDe, cerrar }:
       {fase === "carta" && c && (
         <div className="apertura-centro">
           <span className="label">Carta {paso + 1} de {cartas.length}</span>
-          <div key={paso} className={"carta-sobre" + (volteada ? " volteada" : "") + " r-" + c.rareza}>
+          {!volteada && (c.rareza === "epica" || c.rareza === "legendaria") && <span className={"pista-texto r-" + c.rareza}>{c.rareza === "legendaria" ? "¡¿Será…?!" : "Algo bueno viene…"}</span>}
+          <div key={paso} className={"carta-sobre" + (volteada ? " volteada" : " en-pista") + " r-" + c.rareza}>
             <span className="cs-reverso"><PaqueteSobre tipo={def.id} /></span>
             <span className="cs-frente">
               <TarjetaArticulo rareza={c.rareza} arte={arteDe(c.id)} nombre={nombreDe(c.id)} detalle="Nueva en tu colección" />
@@ -146,7 +150,7 @@ export function AperturaSobre({ def, cartas, nombreDe, arteDe, cerrar }:
           </div>
           {volteada && c.rareza === "legendaria" && <Confeti duracion={2200} />}
           <div className="fila" style={{ justifyContent: "center" }}>
-            <button className="btn" onClick={() => setFase("resumen")}>Saltar</button>
+            <button className="btn" onClick={() => setFase("resumen")}>Abrir todas</button>
             <button className="btn principal" onClick={siguiente} disabled={!volteada}>{paso + 1 < cartas.length ? "Siguiente" : "Ver todo"}</button>
           </div>
         </div>

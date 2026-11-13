@@ -133,7 +133,7 @@
 .apertura-resumen { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; width: 100%; }
 .apertura-resumen > span { animation: subir-carta .45s cubic-bezier(.2,.9,.3,1.2) calc(var(--i) * 120ms) both; }
 
-@media (min-width: 900px) {
+@media (min-width: 900px), (orientation: landscape) and (max-height: 520px) and (min-width: 560px) {
   .modos { grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
   .lobby .modos { grid-template-columns: 1fr; }
 }
@@ -188,7 +188,7 @@
 .modo-juego small { color: var(--soft); font-weight: 600; font-size: 12px; }
 .mj-icono { position: absolute; top: 12px; right: 14px; font-size: 34px; filter: drop-shadow(0 0 12px var(--sc)); }
 @media (hover: hover) { .modo-juego:hover { box-shadow: 0 0 28px -8px var(--sc); border-color: var(--sc); } }
-@media (min-width: 900px) { .modos-juego { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); } }
+@media (min-width: 900px), (orientation: landscape) and (max-height: 520px) and (min-width: 560px) { .modos-juego { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); } }
 
 /* Animaciones del personaje en el editor */
 .vitrina .emote { display: block; transform-origin: bottom center; }
@@ -253,7 +253,7 @@
 .dado { border: 2px solid rgba(255,255,255,.35); box-shadow: inset 0 -6px 0 rgba(0,0,0,.25), 0 10px 24px -10px var(--pink); }
 .temporizador { border-radius: 999px; }
 
-@media (min-width: 900px) {
+@media (min-width: 900px), (orientation: landscape) and (max-height: 520px) and (min-width: 560px) {
   .partida > .hud-partida, .partida > .herramienta { grid-column: 1; }
   .partida > .marcador::before { content: "Marcador"; display: block; margin-bottom: 4px; font-size: 12px; font-weight: 800; letter-spacing: 1.5px; color: var(--muted); text-transform: uppercase; }
 }
@@ -442,7 +442,7 @@
 .hub-jugar:active { transform: translateY(4px); box-shadow: 0 4px 0 #B8860B; }
 @keyframes pulso-jugar { 50% { box-shadow: 0 8px 0 #B8860B, 0 18px 50px -6px rgba(255,194,61,1); } }
 
-@media (min-width: 900px) {
+@media (min-width: 900px), (orientation: landscape) and (max-height: 520px) and (min-width: 560px) {
   .hub { grid-template-columns: 120px minmax(0, 1fr) 320px; grid-template-rows: auto minmax(0, 1fr); grid-template-areas: "arriba arriba arriba" "menu escena lado"; padding: 18px 28px; gap: 18px; }
   .hub-ficha { width: 96px; padding: 14px 6px; font-size: 12px; } .hub-ficha svg { width: 32px; height: 32px; }
   .hub-lado { grid-template-columns: 1fr; align-self: end; }
@@ -450,7 +450,7 @@
   .hub-nivel .barra { width: 180px; }
 }
 /* La barra lateral de navegación no se usa en la pantalla principal ni en la de modos */
-@media (min-width: 900px) { .app.inmersiva { margin-left: 0; max-width: none; } }
+@media (min-width: 900px), (orientation: landscape) and (max-height: 520px) and (min-width: 560px) { .app.inmersiva { margin-left: 0; max-width: none; } }
 
 /* ───────── Pantalla de modos ───────── */
 .modos-pantalla { min-height: 100dvh; display: flex; flex-direction: column; gap: 12px; padding: max(12px, env(safe-area-inset-top)) 0 max(14px, env(safe-area-inset-bottom));
@@ -496,7 +496,7 @@
 .em-reloj { position: absolute; left: 10%; top: 22%; font-size: 40px; animation: latido .5s ease-in-out infinite alternate; }
 @keyframes ondear { to { transform: rotate(8deg); } }
 
-@media (min-width: 900px) {
+@media (min-width: 900px), (orientation: landscape) and (max-height: 520px) and (min-width: 560px) {
   .mp-pista { padding: 10px 24px 18px; justify-content: center; }
   .mp-carta { flex-basis: 300px; max-height: none; }
   .mp-carta.activa { transform: scale(1.04); }
@@ -523,7 +523,7 @@
 .carrusel-juegos .juego.modo .icono { width: 100%; height: 86px; border-radius: 16px; font-size: 26px; background: radial-gradient(circle at 30% 30%, color-mix(in srgb, var(--sc) 55%, transparent), color-mix(in srgb, var(--sc) 15%, var(--card2))); }
 .carrusel-juegos .juego.modo b { padding-right: 0; }
 .carrusel-juegos .juego.modo[aria-pressed="true"] { transform: translateY(-6px) scale(1.03); }
-@media (min-width: 900px) { .lobby .carrusel-juegos, .armado .carrusel-juegos { display: flex; } }
+@media (min-width: 900px), (orientation: landscape) and (max-height: 520px) and (min-width: 560px) { .lobby .carrusel-juegos, .armado .carrusel-juegos { display: flex; } }
 
 /* ───────── Encabezado de pantallas del menú ───────── */
 .cabecera-juego { display: flex; align-items: center; gap: 12px; }
@@ -558,7 +558,7 @@
 .tarjeta-articulo.tocable { cursor: pointer; transition: transform .15s, box-shadow .15s; }
 .tarjeta-articulo.tocable:hover { transform: translateY(-3px); }
 .tarjeta-articulo.activa { transform: translateY(-4px) scale(1.03); box-shadow: 0 0 0 3px var(--gold), 0 14px 30px -12px var(--gold); }
-@media (min-width: 900px) {
+@media (min-width: 900px), (orientation: landscape) and (max-height: 520px) and (min-width: 560px) {
   .tienda-juego { display: grid; grid-template-columns: minmax(0, 1fr) 280px; align-items: start; }
   .tienda-juego > .probador { order: 2; flex-direction: column; align-items: center; min-height: 420px; padding: 20px; top: 16px; }
   .probador-cuerpo .av { width: 180px !important; height: 270px !important; }
@@ -650,3 +650,57 @@ input.cj-nombre:focus { border-color: var(--line); background: var(--btn); }
 .fin-revancha { min-height: 64px; font-size: 28px; border: 3px solid #FFF6C7; cursor: pointer; }
 .lobby-iniciar .btn { white-space: nowrap; }
 .lobby-iniciar .btn.principal { font-size: 16px; padding: 14px 12px; }
+
+/* ───────── Tipos de carta por rareza ───────── */
+/* Rara: un brillo que cruza. Épica: holograma. Legendaria: holograma y borde dorado que gira. */
+.tarjeta-articulo::after { content: ""; position: absolute; inset: 0; pointer-events: none; border-radius: inherit; }
+.tarjeta-articulo.r-rara::after { background: linear-gradient(115deg, transparent 40%, rgba(255,255,255,.35) 50%, transparent 60%) -150% 0 / 250% 100% no-repeat; animation: cruzar-brillo 3.2s ease-in-out infinite; }
+.tarjeta-articulo.r-epica::after, .tarjeta-articulo.r-legendaria::after {
+  background: linear-gradient(125deg, rgba(255,46,136,.22), rgba(34,225,255,.22), rgba(198,255,61,.22), rgba(167,123,255,.22), rgba(255,46,136,.22)) 0 0 / 300% 300%;
+  mix-blend-mode: color-dodge; animation: holograma 5s linear infinite; }
+.tarjeta-articulo.r-legendaria { border-color: transparent; background-clip: padding-box; }
+.tarjeta-articulo.r-legendaria::before { content: ""; position: absolute; inset: -2px; z-index: -1; border-radius: 18px;
+  background: conic-gradient(from var(--giro, 0deg), #FFE38A, #B8860B, #FFF6C7, #B8860B, #FFE38A); animation: marco-gira 3s linear infinite; }
+.tarjeta-articulo.r-legendaria { isolation: isolate; }
+.tarjeta-articulo.r-legendaria .ta-arte { filter: drop-shadow(0 0 12px rgba(255,207,74,.7)); }
+@keyframes cruzar-brillo { 0%, 55% { background-position: -150% 0; } 100% { background-position: 150% 0; } }
+@keyframes holograma { to { background-position: 300% 300%; } }
+
+/* ───────── Apertura: entrada del sobre, pista de rareza y temblor ───────── */
+.apertura .paquete-boton { animation: entra-sobre .8s cubic-bezier(.2,.9,.3,1.3) both, temblar 1.6s ease-in-out .8s infinite; }
+@keyframes entra-sobre { from { transform: translateY(-120vh) rotate(-540deg) scale(.4); } }
+.carta-sobre.en-pista .cs-reverso { animation: pista-luz .5s ease-in-out infinite alternate; }
+.carta-sobre.en-pista.r-rara .cs-reverso { --pl: rgba(34,225,255,.9); }
+.carta-sobre.en-pista.r-epica .cs-reverso { --pl: rgba(167,123,255,1); animation-duration: .35s; }
+.carta-sobre.en-pista.r-legendaria .cs-reverso { --pl: rgba(255,207,74,1); animation-duration: .25s; }
+.carta-sobre.en-pista.r-comun .cs-reverso { animation: none; }
+@keyframes pista-luz { from { filter: drop-shadow(0 0 4px var(--pl, transparent)); } to { filter: drop-shadow(0 0 30px var(--pl, transparent)) brightness(1.3); } }
+.pista-texto { font-family: var(--display); font-size: 22px; animation: latido .4s ease-in-out infinite alternate; }
+.pista-texto.r-epica { color: var(--violet); text-shadow: 0 0 18px var(--violet); }
+.pista-texto.r-legendaria { color: var(--gold); text-shadow: 0 0 22px var(--gold); }
+.apertura.temblor .apertura-centro { animation: temblor .12s linear infinite; }
+.apertura.temblor .apertura-rayos { opacity: .9; animation-duration: 6s; background: repeating-conic-gradient(from 0deg, rgba(255,207,74,.35) 0 6deg, transparent 6deg 18deg); }
+@keyframes temblor { 25% { transform: translate(2px, -2px); } 50% { transform: translate(-2px, 1px); } 75% { transform: translate(1px, 2px); } }
+.carta-sobre.volteada.r-legendaria .cs-frente { animation: aterriza .6s cubic-bezier(.3,1.6,.5,1) both; }
+@keyframes aterriza { 0% { transform: scale(1.4); } 100% { transform: none; } }
+
+/* ───────── Tienda de sobres en carrusel ───────── */
+.lista-sobres { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; gap: 14px; padding: 8px 2px 14px; scrollbar-width: none; }
+.lista-sobres::-webkit-scrollbar { display: none; }
+.ficha-sobre { flex: 0 0 min(70vw, 250px); scroll-snap-align: center; flex-direction: column; align-items: stretch; text-align: center; gap: 12px; padding: 18px 14px 14px; position: relative; overflow: hidden; }
+.ficha-sobre::before { content: ""; position: absolute; inset: 0 0 auto 0; height: 60%; background: radial-gradient(ellipse at 50% 70%, color-mix(in srgb, var(--sobre, #E3A36B) 45%, transparent), transparent 70%); pointer-events: none; }
+.ficha-sobre.bronce { --sobre: #E3A36B; } .ficha-sobre.plata { --sobre: #C9D3E0; } .ficha-sobre.oro { --sobre: #FFD24A; }
+.ficha-sobre > .paquete { align-self: center; width: 116px; height: 162px; animation: flotar 3s ease-in-out infinite; position: relative; }
+.ficha-sobre > .paquete .paquete-sigla { font-size: 36px; }
+.ficha-sobre .fs-cuerpo { align-items: stretch; }
+.ficha-sobre .fs-cuerpo h3 { font-family: var(--display); font-weight: 400; font-size: 20px; }
+.ficha-sobre .precio { width: 100%; }
+@media (min-width: 900px), (orientation: landscape) and (max-height: 520px) and (min-width: 560px) {
+  .ficha-sobre { flex-basis: 220px; }
+}
+@media (orientation: landscape) and (max-height: 520px) and (min-width: 560px) {
+  .ficha-sobre > .paquete { width: 84px; height: 118px; }
+  .ficha-sobre { padding: 12px 10px 10px; gap: 8px; }
+  .carta-sobre { width: 150px; height: 210px; }
+  .apertura .paquete.grande { width: 120px; height: 168px; }
+}

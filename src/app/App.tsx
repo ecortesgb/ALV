@@ -62,7 +62,7 @@ export function App() {
   return (
     <>
       <Fondo />
-      <main className={"app" + (ancho ? " ancho" : "") + (!partida && (ruta === "inicio" || ruta === "jugar") ? " inmersiva" : "")}>
+      <main className={"app" + (ancho ? " ancho" : "") + (!partida && (ruta === "inicio" || ruta === "jugar") ? " inmersiva" : "") + " pagina-" + (partida ? "partida" : ruta)}>
         {partida ? <Partida inicial={partida} salir={() => setPartida(null)} />
           : ruta === "inicio" ? <Hub abrirNovedades={() => setEntrada("avisos")} />
           : ruta === "jugar" ? <PantallaModos />
@@ -176,16 +176,22 @@ function Perfil({ id }: { id?: string }) {
   return (
     <>
       <CabeceraJuego titulo="Casillero" color="#FF2E88" />
-      <QuienSoy id={j.id} base="perfil" />
-      <TarjetaJugador j={j} />
-      <div className="pestanas-menu casillero-tabs" role="tablist" aria-label="Casillero">
-        {PESTANAS_CASILLERO.map(([k, ic, n]) => <button key={k} role="tab" aria-selected={tab === k} onClick={() => setTab(k)}><span aria-hidden="true">{ic}</span> {n}</button>)}
-      </div>
-      <div key={tab} className="casillero-panel">
-        {tab === "armar" && <EditorPersonaje j={j} />}
-        {tab === "equipo" && <SelectorEquipo j={j} />}
-        {tab === "logros" && <LogrosDe j={j} />}
-        {tab === "cuenta" && (hayNube ? <Cuenta j={j} /> : <p className="hint">Las cuentas necesitan conexión con el servidor.</p>)}
+      <div className="pagina-dividida">
+        <div className="pd-izq">
+          <QuienSoy id={j.id} base="perfil" />
+          <TarjetaJugador j={j} />
+        </div>
+        <div className="pd-der">
+          <div className="pestanas-menu casillero-tabs" role="tablist" aria-label="Casillero">
+            {PESTANAS_CASILLERO.map(([k, ic, n]) => <button key={k} role="tab" aria-selected={tab === k} onClick={() => setTab(k)}><span aria-hidden="true">{ic}</span> {n}</button>)}
+          </div>
+          <div key={tab} className="casillero-panel pd-desliza">
+            {tab === "armar" && <EditorPersonaje j={j} />}
+            {tab === "equipo" && <SelectorEquipo j={j} />}
+            {tab === "logros" && <LogrosDe j={j} />}
+            {tab === "cuenta" && (hayNube ? <Cuenta j={j} /> : <p className="hint">Las cuentas necesitan conexión con el servidor.</p>)}
+          </div>
+        </div>
       </div>
     </>
   );

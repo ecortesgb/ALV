@@ -392,7 +392,7 @@ button.juego[aria-pressed="true"] { border-color: var(--sc); box-shadow: 0 0 0 1
 
 /* Laptop, tablet o proyector: se usa toda la pantalla */
 .app.ancho { max-width: 1440px; }
-@media (min-width: 900px) {
+@media (min-width: 900px), (orientation: landscape) and (max-height: 520px) and (min-width: 560px) {
   .app { padding-top: 24px; }
   .lobby { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(340px, 1fr); align-items: start; gap: 24px; }
   .lobby-escena { position: sticky; top: 16px; }
@@ -479,7 +479,7 @@ button.juego[aria-pressed="true"] { border-color: var(--sc); box-shadow: 0 0 0 1
 
 /* Tanda 1 (estilo consola): en pantallas grandes la navegación es una columna fija a la izquierda
    con icono y nombre, como en las pantallas de referencia. En celular sigue siendo la barra de abajo. */
-@media (min-width: 900px) {
+@media (min-width: 900px), (orientation: landscape) and (max-height: 520px) and (min-width: 560px) {
   nav.abajo { top: 0; right: auto; width: 112px; grid-template-columns: none; grid-auto-rows: auto; align-content: start; gap: 4px;
     padding: 18px 10px; border-top: 0; border-right: 2px solid var(--line); }
   nav.abajo a { padding: 12px 6px; border-radius: 14px; font-size: 12px; }

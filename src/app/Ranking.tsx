@@ -22,16 +22,19 @@ export function Ranking() {
   return (
     <>
       <CabeceraJuego titulo="Ranking" color="#FFC23D" />
-      <div className="pestanas-menu" role="tablist" aria-label="Tipo de ranking">
-        {TABS.map(([k, n]) => <button key={k} role="tab" aria-selected={tab === k} onClick={() => setTab(k)}>{n}</button>)}
+      <div className="pagina-dividida">
+      <div className="pd-izq">
+        <div className="pestanas-menu" role="tablist" aria-label="Tipo de ranking">
+          {TABS.map(([k, n]) => <button key={k} role="tab" aria-selected={tab === k} onClick={() => setTab(k)}>{n}</button>)}
+        </div>
+        <p className="hint">{info[2]}</p>
+        {tab !== "historial" && !todosEnCero && filas.length > 0 && <PodioRanking key={tab} filas={filas.slice(0, 3)} />}
       </div>
-      <p className="hint">{info[2]}</p>
-
+      <div className="pd-der pd-desliza">
       {tab === "historial" ? <Historial /> : (
         <>
           {tab === "parejas" && filas.length === 0 && <p className="hint">Elige la modalidad «Parejas» al armar la partida para ver este ranking.</p>}
           {todosEnCero && <p className="hint">{tab === "sesion" ? "Todavía nadie suma XP en esta sesión" : "Todavía nadie suma XP"}. Jueguen una partida.</p>}
-          {!todosEnCero && filas.length > 0 && <PodioRanking key={tab} filas={filas.slice(0, 3)} />}
           <ol className="tabla-ranking">
             {filas.filter(f => todosEnCero || f.lugar > 3).map(f => (
               <li key={f.id} className={"fila-ranking" + (f.lugar <= 3 && !todosEnCero ? ` top${f.lugar}` : "")}>
@@ -44,6 +47,8 @@ export function Ranking() {
           </ol>
         </>
       )}
+      </div>
+      </div>
     </>
   );
 }

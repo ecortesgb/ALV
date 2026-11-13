@@ -234,6 +234,7 @@ export function PaginaAjustes() {
   return (
     <>
       <CabeceraJuego titulo="Ajustes" color="#A77BFF" />
+      <div className="ajustes-rejilla pd-desliza">
       <section className="card ajuste-seccion" aria-labelledby="t-dur">
         <h2 id="t-dur"><span aria-hidden="true">⏱️</span> Partidas</h2>
         <span className="label">Rondas por partida</span>
@@ -271,6 +272,7 @@ export function PaginaAjustes() {
       {hayNube && <Cuenta j={s.jugadores[0]!} />}
       {hayNube && s.registro && <CambiarGenero />}
       {hayNube && s.cuenta && <Administracion />}
+      </div>
     </>
   );
 }

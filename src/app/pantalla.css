@@ -1,0 +1,100 @@
+/* Pantalla completa en web y en celular horizontal: la página no se desliza, cada pantalla cabe en el alto
+   disponible y solo se desliza por dentro la caja que lo necesite (listas largas).
+   En celular vertical todo sigue como antes (se desliza hacia abajo). */
+
+@media (min-width: 900px), (orientation: landscape) and (max-height: 520px) and (min-width: 560px) {
+  html, body { height: 100%; overflow: hidden; }
+  .app { height: 100dvh; overflow-y: auto; padding-bottom: 16px; display: flex; flex-direction: column; }
+  .app > * { flex-shrink: 0; }
+  /* Pantallas acomodadas en columnas: no se desliza la página, solo sus cajas */
+  .app.pagina-perfil, .app.pagina-ranking, .app.pagina-ajustes, .app.pagina-tienda, .app.pagina-lobby, .app.pagina-fisico { overflow: hidden; }
+
+  .pagina-dividida { flex: 1 1 0; min-height: 0; display: grid; grid-template-columns: minmax(280px, 380px) minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); gap: 20px; }
+  .pd-izq, .pd-der { min-height: 0; display: flex; flex-direction: column; gap: 12px; }
+  .pd-izq { overflow-y: auto; }
+  .pd-desliza { flex: 1 1 0; min-height: 0; overflow-y: auto; padding-right: 6px; overscroll-behavior: contain; }
+  .pagina-perfil .ficha-jugador { grid-template-columns: 1fr; justify-items: center; }
+  .pagina-ranking .podio-ranking { margin-top: auto; }
+
+  .ajustes-rejilla { flex: 1 1 0; min-height: 0; columns: 2 340px; column-gap: 16px; }
+  .ajustes-rejilla > * { break-inside: avoid; width: 100%; margin-bottom: 14px; }
+
+  /* Tienda: contenido a la izquierda (se desliza), probador fijo a la derecha */
+  .app.pagina-tienda > .tienda-juego { flex: 1 1 0; min-height: 0; grid-template-rows: minmax(0, 1fr); }
+  .lobby { grid-template-rows: minmax(0, 1fr); }
+
+  .tienda-contenido { height: 100%; min-height: 0; overflow-y: auto; padding-right: 6px; }
+  .tienda-juego > .probador { position: static; height: 100%; min-height: 0; justify-content: center; }
+
+  /* Lobby y juego físico: escenario a la izquierda a todo lo alto, opciones a la derecha */
+  .app.pagina-lobby > .lobby, .app.pagina-fisico > .lobby { flex: 1 1 0; min-height: 0; height: 100%; }
+  .lobby-escena { position: static; height: 100%; min-height: 0; display: flex; flex-direction: column; }
+  .lobby-escena .escenario-vivo { flex: 1 1 0; min-height: 0; }
+  .lobby-config { height: 100%; max-height: none; overflow-y: auto; }
+  .lobby-iniciar { position: static; }
+
+  /* Armado de partida: cabe en la pantalla, el paso actual se desliza por dentro */
+  .app.pagina-lobby > .armado { flex: 1 1 0; min-height: 0; }
+  .armado { height: 100%; min-height: 0; max-width: none; }
+  .armado > section { flex: 1 1 0; min-height: 0; overflow-y: auto; padding-right: 6px; }
+
+  /* Partida: la carta se ajusta al alto disponible */
+  .partida .carta { height: clamp(200px, calc(100dvh - 300px), 500px); }
+  .partida .mesa { min-height: 0; }
+
+  /* Fin de partida: GG y podio a la izquierda, resultados a la derecha */
+  .fin-partida { max-width: 1100px; display: grid; grid-template-columns: 1fr 1fr; column-gap: 28px; align-content: start; }
+  .fin-partida > * { grid-column: 2; }
+  .fin-partida > .gg, .fin-partida > .podio { grid-column: 1; }
+  .fin-partida > .gg { grid-row: 1 / span 2; margin-top: 0; align-self: end; }
+  .fin-partida > .podio { grid-row: 3 / span 4; align-self: start; }
+  .fin-partida > :first-child { grid-column: 1 / -1; }
+}
+
+/* Celular girado (poco alto): todo más compacto para que quepa sin deslizar */
+@media (orientation: landscape) and (max-height: 520px) and (min-width: 560px) {
+  nav.abajo { width: 78px; padding: 8px 6px; gap: 2px; }
+  nav.abajo a { padding: 6px 2px; font-size: 10px; }
+  nav.abajo svg { width: 20px; height: 20px; }
+  .app { margin-left: 78px; max-width: calc(100% - 78px); padding-top: 10px; gap: 10px; }
+  .app.ancho { max-width: calc(100% - 78px); }
+  .app.inmersiva { margin-left: 0; max-width: none; }
+  .cabecera-juego h1 { font-size: 26px; }
+  .hub-icono { width: 40px; height: 40px; border-radius: 12px; }
+
+  .hub { grid-template-columns: 84px minmax(0, 1fr) 250px; gap: 10px; padding: 10px 16px; }
+  .hub-ficha { width: 74px; padding: 6px 4px; font-size: 10px; } .hub-ficha svg { width: 22px; height: 22px; }
+  .hub-menu { gap: 6px; }
+  .hub-nivel { padding: 4px 12px 4px 4px; } .hub-insignia { width: 38px; height: 42px; } .hub-insignia b { font-size: 17px; }
+  .hub-escena { min-height: 0; }
+  .hub-lado { gap: 6px; }
+  .hub-tarjeta { padding: 7px 10px; }
+  .hub-jugar { min-height: 56px; font-size: 28px; }
+
+  .mp-titulo h1 { font-size: 30px; } .mp-titulo p { display: none; }
+  .mp-carta { max-height: calc(100dvh - 200px); aspect-ratio: auto; height: calc(100dvh - 200px); flex-basis: 240px; }
+  .modos-pantalla { gap: 6px; }
+
+  .lobby { gap: 14px; }
+  .actor .av { transform: none; margin-top: 0; }
+  .elenco { min-height: 0; }
+  .escenario-vivo { padding-top: 14px; }
+  .titulo { font-size: 20px; }
+
+  .partida .carta { height: clamp(180px, calc(100dvh - 190px), 360px); }
+  .partida .carta .cara p { font-size: 20px; }
+  .hud-partida { padding: 6px 10px; }
+  .turnos .burbuja { width: 40px; height: 40px; }
+
+  .gg-letras { font-size: 64px; }
+  .probador-cuerpo .av { width: 120px !important; height: 180px !important; }
+  .tienda-juego { grid-template-columns: minmax(0, 1fr) 210px; }
+  .tarjeta-jugador { height: 200px; width: 150px; }
+}
+
+/* Modos en pantalla ancha: las tarjetas toman el alto que queda */
+@media (min-width: 900px), (orientation: landscape) and (max-height: 520px) and (min-width: 560px) {
+  .modos-pantalla { height: 100dvh; min-height: 0; }
+  .mp-pista { flex: 1 1 0; min-height: 0; padding-top: 4px; padding-bottom: 8px; align-items: stretch; }
+  .mp-carta { height: auto; max-height: none; aspect-ratio: auto; }
+}
