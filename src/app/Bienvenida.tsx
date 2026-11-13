@@ -6,12 +6,12 @@ import { ESCENARIOS, JUEGOS } from "../content/catalogo";
 import { rutaPieza, TIENDA } from "../content/personaje";
 import { nivelPorXp } from "../engine/economia";
 import { Retrato } from "./Avatar";
-import { BotonSonido, configuracion } from "./comun";
+import { aviso, BotonSonido, confirmar, configuracion } from "./comun";
 import { Cuenta } from "./Cuenta";
 import { useAura } from "./efectos";
 import { acciones, saldosDe, useEstado, type JugadorLocal } from "./estado";
 import { Escenario } from "./Lobby";
-import { hayNube } from "./nube";
+import { adminAjustarXp, adminJugadores, guardarRegistro, hayNube, restablecerClave, soyAdmin, type CuentaAdmin, type Genero } from "./nube";
 import { lugaresDeSesion } from "./puntos-sesion";
 import { sonar } from "./sonido";
 import { XpExtra } from "./XpExtra";
@@ -266,7 +266,126 @@ export function PaginaAjustes() {
         </div>
         <p className="hint">Para dar XP extra a alguien, usa «+XP» en el lobby o en el juego físico.</p>
       </section>
+      <XpEsteCelular />
       {hayNube && <Cuenta j={s.jugadores[0]!} />}
+      {hayNube && s.registro && <CambiarGenero />}
+      {hayNube && s.cuenta && <Administracion />}
     </>
+  );
+}
+
+const AJUSTES_XP = [-50, -10, 10, 50, 100];
+
+/** Ajuste manual de XP para quien juega en este celular sin cuenta (la XP vive aquí). */
+function XpEsteCelular() {
+  const s = useEstado();
+  const locales = s.jugadores.filter(j => !j.remoto && s.cuenta?.jugador !== j.id);
+  const [motivo, setMotivo] = useState("");
+  if (!locales.length) return null;
+  const ajustar = (id: string, delta: number) => {
+    const err = acciones.ajustarXpLocal(id, delta, motivo);
+    if (err) { aviso(err); return; }
+    sonar(delta > 0 ? "exito" : "clic");
+    aviso(`${delta > 0 ? "+" : ""}${delta} XP a ${s.jugadores.find(j => j.id === id)?.nombre}`);
+  };
+  return (
+    <section className="card" aria-labelledby="t-xp-local">
+      <h2 id="t-xp-local">XP y posiciones (este celular)</h2>
+      <p className="hint">Para quien juega aquí sin cuenta. Las posiciones del ranking salen de la XP, así que se mueven con este ajuste.</p>
+      <input className="input" value={motivo} maxLength={50} placeholder="Motivo (opcional)" aria-label="Motivo del ajuste" onChange={e => setMotivo(e.target.value)} />
+      {locales.map(j => (
+        <div key={j.id} className="ajuste-xp">
+          <Retrato j={j} size={40} />
+          <span className="pila" style={{ gap: 0, flex: 1, minWidth: 0 }}><b>{j.nombre}</b><small className="muted">{saldosDe(j).acumulada} XP · nivel {nivelPorXp(saldosDe(j).acumulada)}</small></span>
+          <span className="ajuste-botones">{AJUSTES_XP.map(d => <button key={d} className={"btn sm" + (d > 0 ? " lime" : "")} onClick={() => ajustar(j.id, d)}>{d > 0 ? "+" : ""}{d}</button>)}</span>
+        </div>
+      ))}
+    </section>
+  );
+}
+
+/** El género se puede cambiar; la fecha de nacimiento no. */
+function CambiarGenero() {
+  const s = useEstado();
+  const r = s.registro!;
+  const cambiar = async (g: Genero) => {
+    if (g === r.genero) return;
+    if (await guardarRegistro(r.nacimiento, g) === null) { aviso("No se pudo cambiar."); return; }
+    acciones.registro({ ...r, genero: g });
+    aviso("Listo.");
+  };
+  return (
+    <section className="card" aria-labelledby="t-genero-aj">
+      <h2 id="t-genero-aj">Género</h2>
+      <div className="chips">
+        {(["hombre", "mujer", "otro"] as Genero[]).map(g => <button key={g} className="opcion" aria-pressed={r.genero === g} onClick={() => void cambiar(g)}>{NOMBRE_GENERO_AJ[g]}</button>)}
+      </div>
+      <p className="hint">Se usa en «guerra de sexos». Tu fecha de nacimiento no se puede cambiar.</p>
+    </section>
+  );
+}
+const NOMBRE_GENERO_AJ: Record<Genero, string> = { hombre: "Hombre", mujer: "Mujer", otro: "Otro" };
+
+/**
+ * Panel de administración: solo aparece si el servidor dice que esta cuenta es administradora.
+ * Ajustar XP de cualquier cuenta y restablecer contraseñas. El servidor vuelve a validar todo.
+ */
+function Administracion() {
+  const [es, setEs] = useState(false);
+  const [cuentas, setCuentas] = useState<CuentaAdmin[] | null>(null);
+  const [motivo, setMotivo] = useState("");
+  const [clave, setClave] = useState<{ id: string; valor: string } | null>(null);
+  const [ocupado, setOcupado] = useState(false);
+  const leerCuentas = async () => setCuentas(await adminJugadores());
+  useEffect(() => { void soyAdmin().then(si => { setEs(si); if (si) void leerCuentas(); }); }, []);
+  if (!es) return null;
+
+  const ajustar = async (c: CuentaAdmin, delta: number) => {
+    setOcupado(true);
+    const err = await adminAjustarXp(c.id, delta, motivo || "ajuste del administrador");
+    setOcupado(false);
+    if (err) { aviso(err); return; }
+    sonar(delta > 0 ? "exito" : "clic");
+    aviso(`${delta > 0 ? "+" : ""}${delta} XP a ${c.nombre}`);
+    void leerCuentas();
+  };
+  const cambiarClave = async () => {
+    if (!clave) return;
+    const c = cuentas?.find(x => x.id === clave.id);
+    if (!c || !(await confirmar({ titulo: `¿Cambiar la contraseña de ${c.nombre}?`, texto: "Su contraseña anterior deja de servir. Dásela en persona.", si: "Sí, cambiar", no: "Cancelar", peligro: true }))) return;
+    setOcupado(true);
+    const err = await restablecerClave(clave.id, clave.valor);
+    setOcupado(false);
+    if (err) { aviso(err); return; }
+    setClave(null);
+    aviso(`Contraseña de ${c.nombre} cambiada.`);
+  };
+
+  return (
+    <section className="card admin" aria-labelledby="t-admin">
+      <div className="entre"><h2 id="t-admin">Administración</h2><span className="chip gold">Administrador</span></div>
+      <p className="hint">Ajustes a cualquier cuenta. Quedan registrados con su motivo. Las posiciones salen de la XP.</p>
+      <input className="input" value={motivo} maxLength={50} placeholder="Motivo del ajuste" aria-label="Motivo del ajuste" onChange={e => setMotivo(e.target.value)} />
+      {cuentas === null && <p className="hint">Cargando cuentas…</p>}
+      {cuentas?.map((c, i) => (
+        <div key={c.id} className="pila admin-cuenta">
+          <div className="ajuste-xp">
+            <span className="puesto-n">#{i + 1}</span>
+            <span className="pila" style={{ gap: 0, flex: 1, minWidth: 0 }}><b>{c.nombre}</b><small className="muted">{c.acumulada} XP total · {c.disponible} disponible · {c.delEvento} del evento</small></span>
+          </div>
+          <div className="entre" style={{ flexWrap: "wrap" }}>
+            <span className="ajuste-botones">{AJUSTES_XP.map(d => <button key={d} className={"btn sm" + (d > 0 ? " lime" : "")} disabled={ocupado} onClick={() => void ajustar(c, d)}>{d > 0 ? "+" : ""}{d}</button>)}</span>
+            <button className="btn sm" onClick={() => setClave(clave?.id === c.id ? null : { id: c.id, valor: "" })}>🔑 Contraseña</button>
+          </div>
+          {clave?.id === c.id && (
+            <div className="escribir">
+              <input className="input" type="password" autoComplete="new-password" value={clave.valor} maxLength={72} placeholder="Contraseña nueva (8 o más)" aria-label={`Contraseña nueva para ${c.nombre}`}
+                onChange={e => setClave({ id: c.id, valor: e.target.value })} />
+              <button className="btn peligro" disabled={ocupado || clave.valor.length < 8} onClick={() => void cambiarClave()}>Cambiar</button>
+            </div>
+          )}
+        </div>
+      ))}
+    </section>
   );
 }

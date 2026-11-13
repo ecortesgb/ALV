@@ -62,7 +62,9 @@ export function xpDePartida(r: ResultadoJugador, jugadores: number): number {
 export type Movimiento =
   | { tipo: "ganada"; xp: number; eventoId: string }
   | { tipo: "accesorio"; xp: number }
-  | { tipo: "carta"; xp: number; eventoId: string };
+  | { tipo: "carta"; xp: number; eventoId: string }
+  /** Ajuste a la baja hecho por el anfitrión: resta de la XP total y de lo disponible (primero del evento). */
+  | { tipo: "quitada"; xp: number; eventoId: string };
 
 export interface Saldos { acumulada: number; disponible: number; delEvento: number }
 
@@ -76,6 +78,11 @@ export function saldos(movs: Movimiento[], eventoAbierto: string | null): Saldos
     if (m.tipo === "ganada") {
       acumulada += m.xp;
       if (m.eventoId === eventoAbierto) evento += m.xp; else otros += m.xp;
+    } else if (m.tipo === "quitada") {
+      acumulada = Math.max(0, acumulada - m.xp);
+      const delEvento = m.eventoId === eventoAbierto ? Math.min(Math.max(evento, 0), m.xp) : 0;
+      evento -= delEvento;
+      otros = Math.max(0, otros - (m.xp - delEvento));
     } else if (m.tipo === "accesorio") {
       const deOtros = Math.min(otros, m.xp);
       otros -= deOtros;

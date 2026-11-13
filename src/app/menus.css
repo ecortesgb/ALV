@@ -368,3 +368,11 @@
 @keyframes marco-late { 50% { box-shadow: 0 0 0 2px var(--eq2), 0 0 0 4px var(--eq1), 0 0 22px var(--eq2); } }
 .marco-muestra { display: block; width: 52px; height: 70px; border-radius: 10px; border: 5px solid var(--eq1); box-shadow: 0 0 0 3px var(--eq2), 0 0 18px var(--eq1); animation: marco-late 2.4s ease-in-out infinite; }
 .recompensas { margin-top: 6px; }
+
+/* ───────── Ajustes: XP manual y administración ───────── */
+.ajuste-xp { display: flex; align-items: center; gap: 10px; }
+.ajuste-botones { display: flex; flex-wrap: wrap; gap: 4px; }
+.ajuste-botones .btn.sm { padding: 6px 9px; min-width: 42px; }
+.admin { border-color: rgba(255,207,74,.4); }
+.admin-cuenta { padding: 10px; border-radius: 14px; background: var(--card2); border: 1px solid var(--borde-vidrio); }
+.admin-cuenta .puesto-n { font-family: var(--display); color: var(--gold); min-width: 30px; }

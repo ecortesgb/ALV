@@ -310,6 +310,25 @@ export const acciones = {
     if (esCuenta(id)) void registrarXpExtraNube(xp, limpio).then(refrescarCuenta);
     return null;
   },
+  /**
+   * Ajuste manual del anfitrión a un jugador de este celular (sin cuenta): suma o resta XP.
+   * Las cuentas se ajustan en el servidor, desde Ajustes → Administración.
+   */
+  ajustarXpLocal(id: string, delta: number, motivo: string): string | null {
+    const j = estado.jugadores.find(x => x.id === id);
+    if (!j || esCuenta(id) || j.remoto) return "Este jugador se ajusta desde su cuenta.";
+    if (!Number.isInteger(delta) || delta === 0 || Math.abs(delta) > 1000) return "El ajuste va de -1000 a 1000 XP.";
+    const limpio = motivo.replace(/\s+/g, " ").trim().slice(0, 50) || "Ajuste del anfitrión";
+    const mov = delta > 0
+      ? { tipo: "ganada" as const, xp: delta, eventoId: estado.eventoId }
+      : { tipo: "quitada" as const, xp: -delta, eventoId: estado.eventoId };
+    guardar({
+      ...estado,
+      jugadores: estado.jugadores.map(x => (x.id === id ? { ...x, movimientos: [...x.movimientos, mov] } : x)),
+      historial: [{ fecha: new Date().toISOString(), juego: "Ajuste de XP", extra: limpio, resultados: [{ nombre: j.nombre, puntos: 0, xp: delta }] }, ...estado.historial].slice(0, 50),
+    });
+    return null;
+  },
   /** Cierra el evento: la XP que sobró ya no compra cartas, solo accesorios. */
   cerrarEvento() { guardar({ ...estado, eventoId: nuevoEvento() }); },
 };
