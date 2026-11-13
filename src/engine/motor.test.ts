@@ -263,3 +263,65 @@ describe("XP calculada en el servidor", () => {
     }
   });
 });
+
+describe("Mecánicas del paso 3", () => {
+  it("los 14 juegos del catálogo ya corren en el motor", () => {
+    expect(JUEGOS.filter(j => !j.motor).map(j => j.id)).toEqual([]);
+  });
+  it("reloj: pregunta y responde son personas distintas y solo responde quien le toca", () => {
+    let e = crearPartida(juego("reloj"), cfg(5), 3, CONTENIDO, 1);
+    const sel = vistaPublica(e).seleccion as { pregunta: string; responde: string };
+    expect(sel.pregunta).not.toBe(sel.responde);
+    e = juega(e, { tipo: "contestar", jugador: sel.pregunta, valor: "cumplio" });
+    expect(vistaPublica(e).contestaron).toEqual([]);
+    e = juega(e, { tipo: "contestar", jugador: sel.responde, valor: "cumplio" });
+    e = juega(e, { tipo: "revelar" });
+    expect(e.puntos[sel.responde]).toBe(1);
+  });
+  it("ruleta: el índice que gira coincide con el jugador del castigo", () => {
+    const e = crearPartida(juego("ruleta"), cfg(6), 9, CONTENIDO, 1);
+    const { indice } = vistaPublica(e).seleccion as { indice: number };
+    expect(e.cfg.jugadores[indice]!.id).toBe(e.turnoDe);
+    expect(e.carta?.tipo).toBe("castigo");
+  });
+  it("dados HOT: solo con adulto y entre parejas", () => {
+    expect(juegosCompatibles(cfg(4)).map(j => j.id)).not.toContain("dados-hot");
+    const c = cfg(4, { adulto: true, intensidad: 4 });
+    expect(juegosCompatibles(c).map(j => j.id)).toContain("dados-hot");
+    const e = crearPartida(juego("dados-hot"), c, 2, CONTENIDO, 1);
+    const s = vistaPublica(e).seleccion as { de: string; a: string };
+    expect(e.cfg.jugadores.find(j => j.id === s.de)!.parejaDe).toBe(s.a);
+  });
+  it("mímica: solo quien describe ve las palabras y no puede contar de más", () => {
+    let e = crearPartida(juego("mimica"), cfg(4), 6, CONTENIDO, 1);
+    const yo = e.turnoDe!;
+    const mias = (vistaJugador(e, yo).mio as { palabras: unknown[] }).palabras;
+    expect(mias.length).toBeGreaterThan(0);
+    const otro = e.cfg.jugadores.find(j => j.id !== yo)!.id;
+    expect(vistaJugador(e, otro).mio).toBeUndefined();
+    expect(JSON.stringify(vistaPublica(e))).not.toContain(JSON.stringify(mias[0]));
+    e = juega(e, { tipo: "contestar", jugador: yo, valor: mias.length + 5 });
+    expect(vistaPublica(e).contestaron).toEqual([]);
+    e = juega(e, { tipo: "contestar", jugador: yo, valor: 3 });
+    e = juega(e, { tipo: "revelar" });
+    expect(e.puntos[yo]).toBe(3);
+  });
+  it("yo nunca y ¿quién es más probable? cuentan bien", () => {
+    let y = crearPartida(juego("yo-nunca"), cfg(3), 1, CONTENIDO, 1);
+    for (const [j, v] of [["j0", "si"], ["j1", "no"], ["j2", "si"]]) y = juega(y, { tipo: "contestar", jugador: j!, valor: v });
+    y = juega(y, { tipo: "revelar" });
+    expect(y.puntos).toEqual({ j0: 1, j1: 0, j2: 1 });
+    let m = crearPartida(juego("mas-probable"), cfg(4), 1, CONTENIDO, 1);
+    for (const [j, v] of [["j0", "j2"], ["j1", "j2"], ["j2", "j3"], ["j3", "j2"]]) m = juega(m, { tipo: "contestar", jugador: j!, valor: v });
+    m = juega(m, { tipo: "revelar" });
+    expect((m.revelado as { elegidos: string[] }).elegidos).toEqual(["j2"]);
+    expect(m.puntos).toEqual({ j0: 1, j1: 1, j2: 0, j3: 1 });
+  });
+  it("reto del lugar: el anfitrión marca al ganador (+3)", () => {
+    let e = crearPartida(juego("reto-lugar"), cfg(4, { lugar: "alberca", escenario: "alverca" }), 1, CONTENIDO, 1);
+    e = juega(e, { tipo: "contestar", jugador: "j0", valor: "j3" });
+    e = juega(e, { tipo: "revelar" });
+    expect(e.puntos.j3).toBe(3);
+  });
+});
+

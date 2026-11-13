@@ -47,7 +47,11 @@ export function Partida({ inicial, salir }: { inicial: EstadoPartida; salir: () 
         })}
       </ol>
 
-      {e.motor === "turnos-cartas" && <TurnoCartas e={e} accion={accion} />}
+      {["turnos-cartas", "botella", "ruleta", "dados"].includes(e.motor) && <TurnoCartas key={e.motor} e={e} accion={accion} />}
+      {e.motor === "conteo" && <Conteo e={e} accion={accion} />}
+      {e.motor === "confesion" && <Confesion e={e} accion={accion} />}
+      {e.motor === "senalar" && <Senalar e={e} accion={accion} />}
+      {e.motor === "competencia" && <Competencia e={e} accion={accion} />}
       {e.motor === "votacion" && <Secreto e={e} accion={accion} />}
       {e.motor === "rol-secreto" && <Impostor e={e} accion={accion} />}
       {e.motor === "pareja" && <Secreto e={e} accion={accion} />}
@@ -79,11 +83,24 @@ function TurnoCartas({ e, accion }: { e: EstadoPartida; accion: (a: AccionSinId)
   const turno = s.jugadores.find(j => j.id === v.turnoDe);
   const [verMano, setVerMano] = useState(false);
   const compradas = useRef<Record<string, number>>({});
-  const esReto = v.carta?.tipo === "reto";
+  const tipo = v.carta?.tipo ?? "";
+  const esReto = tipo === "reto";
+  // Verdad o reto: verdad +1, reto +2. Reloj, ruleta y dados: cumplir +1.
+  const valor = e.motor === "turnos-cartas" ? (esReto ? 2 : 1) : 1;
   const mano = turno ? vistaJugador(e, turno.id).miMano : [];
   const contesto = !!turno && v.contestaron.includes(turno.id);
   const flot = useFlotantes();
-  const puedeGesto = v.fase === "contestando" && !contesto && !!turno;
+  const sel = v.seleccion as Record<string, string | number> | undefined;
+  const jl = (id?: unknown) => s.jugadores.find(j => j.id === id);
+  // Reloj, ruleta y dados giran primero; la carta sale cuando se detienen.
+  const [animando, setAnimando] = useState(e.motor !== "turnos-cartas");
+  useEffect(() => {
+    if (e.motor === "turnos-cartas") return;
+    setAnimando(true);
+    const t = setTimeout(() => setAnimando(false), matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : 2600);
+    return () => clearTimeout(t);
+  }, [v.ronda, e.motor]);
+  const puedeGesto = v.fase === "contestando" && !contesto && !!turno && !animando;
   const arrastre = useArrastre({
     activo: puedeGesto,
     derecha: () => responder("cumplio"),
@@ -93,6 +110,9 @@ function TurnoCartas({ e, accion }: { e: EstadoPartida; accion: (a: AccionSinId)
 
   const responder = (valor: "cumplio" | "paso") => { if (!turno) return; sonar(valor === "cumplio" ? "exito" : "paso");
     if (valor === "cumplio") flot.lanzar(esReto ? [["+2 pts", "lime"], ["+3 XP", "cyan"]] : [["+1 pt", "lime"]]); accion({ tipo: "contestar", jugador: turno.id, valor }); accion({ tipo: "revelar" }); };
+  const etiqueta = e.motor === "botella" ? `${jl(sel?.pregunta)?.nombre ?? ""} le pregunta a`
+    : e.motor === "ruleta" ? "La ruleta eligió a" : e.motor === "dados" ? "Tira los dados" : "Le toca a";
+  const nombreTipo = ({ reto: "Reto", verdad: "Verdad", castigo: "Castigo", dados: "Dados HOT" } as Record<string, string>)[tipo] ?? "Carta";
   const usar = (carta: string) => {
     if (!turno) return;
     sonar("poder");
@@ -113,26 +133,30 @@ function TurnoCartas({ e, accion }: { e: EstadoPartida; accion: (a: AccionSinId)
 
   return (
     <>
+      {e.motor === "botella" && <RelojBotella e={e} />}
+      {e.motor === "ruleta" && <RuletaJugadores e={e} />}
+      {e.motor === "dados" && <Dados e={e} />}
+      {!animando && <>
       <div className="turno">
         <div className="marco">{turno && <Avatar p={turno.personaje} size={60} nombre={turno.nombre} />}</div>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <span className="label">Le toca a</span>
+          <span className="label">{etiqueta}</span>
           <div className="quien">{turno?.nombre.toUpperCase()}</div>
         </div>
-        {v.fase === "contestando" && <Anillo clave={`${v.ronda}-${v.carta?.id}`} />}
+        {v.fase === "contestando" && <Anillo clave={`${v.ronda}-${v.carta?.id}`} {...(e.motor === "dados" ? { segundos: Number(sel?.segundos ?? 30) } : {})} />}
       </div>
 
-      <div className="mesa">
+      <div className={"mesa" + (e.motor === "turnos-cartas" ? "" : " compacta")}>
         <Flotantes lista={flot.lista} />
         <div className="detras a" /><div className="detras b" />
-        <div key={v.carta?.id} className={"carta " + (esReto ? "reto" : "verdad")} {...arrastre.props} style={arrastre.estilo}>
+        <div key={v.carta?.id} className={"carta " + tipo} {...arrastre.props} style={e.motor === "turnos-cartas" ? arrastre.estilo : { ...arrastre.estilo, height: 300 }}>
           <div className="cara">
             <div className="entre">
-              <span className="tipo">{esReto ? "Reto" : "Verdad"} · {ESCENARIOS.find(x => x.id === e.cfg.escenario)?.sigla}</span>
+              <span className="tipo">{nombreTipo} · {ESCENARIOS.find(x => x.id === e.cfg.escenario)?.sigla}</span>
             </div>
             <p>{v.carta?.texto ?? "No hay cartas para esta configuración. Sube la intensidad o cambia de escenario."}</p>
             <div className="fila" style={{ flexWrap: "wrap" }}>
-              <span className="chip lime">+{esReto ? 2 : 1} {esReto ? "puntos" : "punto"}</span>
+              <span className="chip lime">+{valor} {valor === 1 ? "punto" : "puntos"}</span>
               {esReto && <span className="chip cyan">+3 XP</span>}
               <span className="chip gold">Pasar no tiene castigo</span>
             </div>
@@ -162,10 +186,246 @@ function TurnoCartas({ e, accion }: { e: EstadoPartida; accion: (a: AccionSinId)
 
       {v.fase === "revelada" && (
         <div className="revelado pila">
-          <b>{(v.revelado as { cumplio?: boolean })?.cumplio ? `¡${turno?.nombre} cumplió! +${esReto ? 2 : 1}` : `${turno?.nombre} pasó. Sin castigo.`}</b>
+          <b>{(v.revelado as { cumplio?: boolean })?.cumplio ? `¡${turno?.nombre} cumplió! +${valor}` : `${turno?.nombre} pasó. Sin castigo.`}</b>
           <button className="btn principal" data-sin-clic onClick={() => { sonar("carta"); accion({ tipo: "siguiente" }); }}>{v.ronda >= v.totalRondas ? "Ver resultados" : "Siguiente"}</button>
         </div>
       )}
+      </>}
+    </>
+  );
+}
+
+/** Lugares alrededor de un círculo (el primero arriba, en sentido de las manecillas). */
+const anguloDe = (i: number, n: number) => (360 / n) * i;
+
+/** El reloj: los jugadores alrededor; la manecilla corta (pregunta) y la larga (responde) giran y se detienen. */
+function RelojBotella({ e }: { e: EstadoPartida }) {
+  const s = useEstado();
+  const v = vistaPublica(e);
+  const sel = v.seleccion as { pregunta: string; responde: string };
+  const n = e.cfg.jugadores.length;
+  const idx = (id: string) => e.cfg.jugadores.findIndex(j => j.id === id);
+  const vueltas = useRef(0);
+  const [giro, setGiro] = useState({ corta: 0, larga: 0 });
+  useEffect(() => {
+    vueltas.current += 1;
+    const base = vueltas.current * 1080;
+    const t = setTimeout(() => setGiro({ corta: base + anguloDe(idx(sel.pregunta), n), larga: base + 720 + anguloDe(idx(sel.responde), n) }), 30);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [v.ronda]);
+  return (
+    <div className="circulo" role="img" aria-label="Reloj que elige quién pregunta y quién responde">
+      {e.cfg.jugadores.map((j, i) => {
+        const a = (anguloDe(i, n) - 90) * (Math.PI / 180), loc = s.jugadores.find(x => x.id === j.id);
+        const activo = j.id === sel.pregunta ? " pregunta" : j.id === sel.responde ? " responde" : "";
+        return (
+          <div key={j.id} className={"asiento" + activo} style={{ left: `${50 + 41 * Math.cos(a)}%`, top: `${50 + 41 * Math.sin(a)}%` }}>
+            {loc && <Avatar p={loc.personaje} size={34} nombre={j.nombre} />}
+            <small>{j.nombre}</small>
+          </div>
+        );
+      })}
+      <div className="manecilla corta" style={{ transform: `translate(-50%, -100%) rotate(${giro.corta}deg)` }} />
+      <div className="manecilla larga" style={{ transform: `translate(-50%, -100%) rotate(${giro.larga}deg)` }} />
+      <div className="centro" />
+    </div>
+  );
+}
+
+/** Ruleta de castigos: una rebanada por jugador; gira y se detiene en el elegido. */
+function RuletaJugadores({ e }: { e: EstadoPartida }) {
+  const v = vistaPublica(e);
+  const { indice } = v.seleccion as { indice: number };
+  const n = e.cfg.jugadores.length, paso = 360 / n;
+  const COLORES = ["#FF2E88", "#22E1FF", "#C6FF3D", "#FFC23D", "#A77BFF", "#FF7A2E", "#2EE6B5", "#FF4D5E"];
+  const fondo = `conic-gradient(${e.cfg.jugadores.map((_, i) => `${COLORES[i % 8]} ${i * paso}deg ${(i + 1) * paso}deg`).join(", ")})`;
+  const vueltas = useRef(0);
+  const [giro, setGiro] = useState(0);
+  useEffect(() => {
+    vueltas.current += 1;
+    // La flecha está arriba: se gira para que el centro de la rebanada elegida quede bajo ella.
+    const t = setTimeout(() => setGiro(vueltas.current * 1440 - (indice * paso + paso / 2)), 30);
+    return () => clearTimeout(t);
+  }, [v.ronda, indice, paso]);
+  return (
+    <div className="ruletaGrande">
+      <div className="flecha" aria-hidden="true" />
+      <div className="rueda" style={{ background: fondo, transform: `rotate(${giro}deg)` }}>
+        {e.cfg.jugadores.map((j, i) => (
+          <span key={j.id} style={{ transform: `rotate(${i * paso + paso / 2}deg)` }}><i>{j.nombre}</i></span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/** Dados HOT: tres dados que se agitan y muestran acción, zona y segundos. */
+function Dados({ e }: { e: EstadoPartida }) {
+  const v = vistaPublica(e);
+  const sel = v.seleccion as { accion: string; zona: string; segundos: number };
+  return (
+    <div className="tiradados" key={v.ronda}>
+      <div className="dado" style={{ animationDelay: "0s" }}><small>Acción</small>{sel.accion}</div>
+      <div className="dado" style={{ animationDelay: ".15s" }}><small>Zona</small>{sel.zona}</div>
+      <div className="dado" style={{ animationDelay: ".3s" }}><small>Tiempo</small>{sel.segundos} s</div>
+    </div>
+  );
+}
+
+/** Contra reloj: el que describe (o enumera) suma una por cada acierto antes de que se acabe el tiempo. */
+function Conteo({ e, accion }: { e: EstadoPartida; accion: (a: AccionSinId) => void }) {
+  const s = useEstado();
+  const v = vistaPublica(e);
+  const turno = s.jugadores.find(j => j.id === v.turnoDe);
+  const palabras = e.mazo === "palabra" && turno ? ((vistaJugador(e, turno.id).mio as { palabras: { palabra: string; prohibidas: string[] }[] })?.palabras ?? []) : [];
+  const total = v.segundos ?? 30;
+  const [etapa, setEtapa] = useState<"pasar" | "listo" | "jugando" | "fin">(e.mazo === "palabra" ? "pasar" : "listo");
+  const [t, setT] = useState(total);
+  const [cuenta, setCuenta] = useState(0);
+  const [i, setI] = useState(0);
+  useEffect(() => { setEtapa(e.mazo === "palabra" ? "pasar" : "listo"); setT(total); setCuenta(0); setI(0); }, [v.ronda, e.mazo, total]);
+  useEffect(() => {
+    if (etapa !== "jugando") return;
+    const iv = setInterval(() => setT(x => { if (x <= 1) { setEtapa("fin"); return 0; } return x - 1; }), 1000);
+    return () => clearInterval(iv);
+  }, [etapa]);
+  const enviar = () => { if (!turno) return; accion({ tipo: "contestar", jugador: turno.id, valor: cuenta }); accion({ tipo: "revelar" }); };
+  const actual = palabras[i];
+  const siguiente = (acierto: boolean) => {
+    if (acierto) setCuenta(c => c + 1);
+    if (i + 1 >= palabras.length) setEtapa("fin"); else setI(i + 1);
+  };
+
+  if (v.fase === "revelada") return <Revelado e={e} accion={accion} />;
+  if (etapa === "pasar") return <PasarCelular j={turno} onListo={() => setEtapa("listo")} texto="Solo tú vas a ver las palabras. Los demás adivinan." />;
+
+  return (
+    <>
+      <div className="turno">
+        <div className="marco">{turno && <Avatar p={turno.personaje} size={60} nombre={turno.nombre} />}</div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <span className="label">{e.mazo === "palabra" ? (e.juegoId === "mimica" ? "Haz mímica, sin hablar" : "Describe sin decir las tachadas") : "Di todo lo que puedas"}</span>
+          <div className="quien">{turno?.nombre.toUpperCase()}</div>
+        </div>
+      </div>
+      <div className="temporizador" aria-label={`${t} segundos`}>
+        <span style={{ width: `${(t / total) * 100}%` }} className={t <= 5 ? "fin" : ""} />
+        <b>{t}</b>
+      </div>
+      {e.mazo !== "palabra" && <div className="carta" style={{ height: "auto", minHeight: 150 }}><div className="cara"><span className="tipo">Lista relámpago</span><p>{v.carta?.texto}</p></div></div>}
+      {etapa === "listo" && <button className="btn principal" onClick={() => setEtapa("jugando")}>¡Arranca! · {total} s</button>}
+      {etapa === "jugando" && e.mazo === "palabra" && actual && (
+        <div className="pila">
+          <div className="carta" style={{ height: "auto", minHeight: 170 }}><div className="cara" style={{ textAlign: "center" }}>
+            <span className="tipo">Palabra {i + 1} de {palabras.length}</span>
+            <p style={{ fontSize: 34 }}>{actual.palabra}</p>
+            {actual.prohibidas.length > 0 && <div className="fila" style={{ justifyContent: "center", flexWrap: "wrap" }}>{actual.prohibidas.map(x => <span key={x} className="chip pink" style={{ textDecoration: "line-through" }}>{x}</span>)}</div>}
+          </div></div>
+          <div className="tres" style={{ gridTemplateColumns: "1fr 1fr" }}>
+            <button className="btn" onClick={() => siguiente(false)}>Pasar palabra</button>
+            <button className="btn lime" onClick={() => siguiente(true)}>¡Adivinaron! +1</button>
+          </div>
+        </div>
+      )}
+      {etapa === "jugando" && e.mazo !== "palabra" && (
+        <button className="btn lime contador" onClick={() => setCuenta(c => Math.min(40, c + 1))}>+1 · llevan {cuenta}</button>
+      )}
+      {etapa === "fin" && (
+        <div className="revelado pila">
+          <b>¡Tiempo! {turno?.nombre} logró {cuenta}.</b>
+          {e.mazo !== "palabra" && <div className="tres"><button className="btn" onClick={() => setCuenta(c => Math.max(0, c - 1))}>−1</button><span className="sigla" style={{ textAlign: "center", fontSize: 28, alignSelf: "center" }}>{cuenta}</span><button className="btn" onClick={() => setCuenta(c => Math.min(40, c + 1))}>+1</button></div>}
+          <button className="btn principal" onClick={enviar}>Guardar {cuenta} puntos</button>
+        </div>
+      )}
+    </>
+  );
+}
+
+/** Yo nunca: cada quien toca si sí lo ha hecho. Es público: se trata de confesar. */
+function Confesion({ e, accion }: { e: EstadoPartida; accion: (a: AccionSinId) => void }) {
+  const s = useEstado();
+  const v = vistaPublica(e);
+  if (v.fase === "revelada") return <Revelado e={e} accion={accion} />;
+  const faltan = e.cfg.jugadores.filter(j => !v.contestaron.includes(j.id));
+  return (
+    <>
+      <div className="carta" style={{ height: "auto", minHeight: 200, alignSelf: "center" }}><div className="cara"><span className="tipo">Yo nunca · NMMS</span><p>{v.carta?.texto}</p><span className="chip lime">Confesar suma +1</span></div></div>
+      <div className="pila">
+        {e.cfg.jugadores.map(j => {
+          const loc = s.jugadores.find(x => x.id === j.id), ya = v.contestaron.includes(j.id);
+          return (
+            <div key={j.id} className="jugador">
+              <span className="marco">{loc && <Avatar p={loc.personaje} size={48} nombre={j.nombre} />}</span>
+              <b style={{ flex: 1 }}>{j.nombre}</b>
+              {ya ? <span className="chip lime">Listo</span> : <>
+                <button className="btn sm lime" onClick={() => accion({ tipo: "contestar", jugador: j.id, valor: "si" })}>Yo sí</button>
+                <button className="btn sm" onClick={() => accion({ tipo: "contestar", jugador: j.id, valor: "no" })}>Yo no</button>
+              </>}
+            </div>
+          );
+        })}
+      </div>
+      <button className="btn principal" disabled={faltan.length > 0} onClick={() => accion({ tipo: "revelar" })}>Revelar</button>
+    </>
+  );
+}
+
+/** ¿Quién es más probable?: cada quien señala en secreto, pasando el celular. */
+function Senalar({ e, accion }: { e: EstadoPartida; accion: (a: AccionSinId) => void }) {
+  const s = useEstado();
+  const v = vistaPublica(e);
+  const pendiente = e.cfg.jugadores.find(j => !v.contestaron.includes(j.id));
+  const [mostrando, setMostrando] = useState(false);
+  useEffect(() => setMostrando(false), [pendiente?.id]);
+  if (v.fase === "revelada") return <Revelado e={e} accion={accion} />;
+  const jl = (id?: string) => s.jugadores.find(j => j.id === id);
+  return (
+    <>
+      <div className="carta" style={{ height: "auto", minHeight: 180, alignSelf: "center" }}><div className="cara"><span className="tipo">¿Quién es más probable que…? · POV</span><p>{v.carta?.texto}</p></div></div>
+      {pendiente ? (mostrando ? (
+        <div className="card">
+          <span className="label">{pendiente.nombre}, señala en secreto</span>
+          <div className="pila">
+            {e.cfg.jugadores.map(j => (
+              <button key={j.id} className="btn" style={{ display: "flex", alignItems: "center", gap: 10 }} onClick={() => accion({ tipo: "contestar", jugador: pendiente.id, valor: j.id })}>
+                {jl(j.id) && <Avatar p={jl(j.id)!.personaje} size={28} nombre={j.nombre} />} {j.nombre}
+              </button>
+            ))}
+          </div>
+        </div>
+      ) : <PasarCelular j={jl(pendiente.id)} onListo={() => setMostrando(true)} texto="Vas a señalar en secreto." />)
+        : <button className="btn principal" onClick={() => accion({ tipo: "revelar" })}>Revelar</button>}
+    </>
+  );
+}
+
+/** Reto del lugar: una competencia real; el anfitrión marca quién ganó. */
+function Competencia({ e, accion }: { e: EstadoPartida; accion: (a: AccionSinId) => void }) {
+  const s = useEstado();
+  const v = vistaPublica(e);
+  if (v.fase === "revelada") return <Revelado e={e} accion={accion} />;
+  const anfitrion = e.cfg.jugadores[0]!.id;
+  return (
+    <>
+      <div className="carta" style={{ height: "auto", minHeight: 220, alignSelf: "center" }}><div className="cara">
+        <span className="tipo">Reto del lugar · PVP</span>
+        <p>{v.carta?.texto ?? "No hay competencias para este escenario."}</p>
+        {v.carta?.tipo && <p className="hint" style={{ fontSize: 15 }}>{v.carta.tipo}</p>}
+        <span className="chip lime">El ganador suma +3</span>
+      </div></div>
+      <span className="label">¿Quién ganó?</span>
+      <div className="secciones">
+        {e.cfg.jugadores.map(j => {
+          const loc = s.jugadores.find(x => x.id === j.id);
+          return (
+            <button key={j.id} className="jugador" style={{ color: "inherit" }} onClick={() => { accion({ tipo: "contestar", jugador: anfitrion, valor: j.id }); accion({ tipo: "revelar" }); }}>
+              <span className="marco">{loc && <Avatar p={loc.personaje} size={48} nombre={j.nombre} />}</span>
+              <b>{j.nombre}</b>
+            </button>
+          );
+        })}
+      </div>
     </>
   );
 }
@@ -383,6 +643,18 @@ function Revelado({ e, accion }: { e: EstadoPartida; accion: (a: AccionSinId) =>
     contenido = x.resultados.map(({ pareja: [a, b], coinciden }) => (
       <div key={a}><b>{nombre(a)} y {nombre(b)}</b>: «{x.respuestas[a]}» y «{x.respuestas[b]}» {coinciden ? <span className="chip lime">+2 c/u</span> : <span className="chip pink">No coinciden</span>}</div>
     ));
+  } else if (e.motor === "conteo") {
+    const x = r as { jugador: string; logro: number };
+    contenido = <h2>{nombre(x.jugador)} logró {x.logro} {x.logro === 1 ? "punto" : "puntos"}</h2>;
+  } else if (e.motor === "confesion") {
+    const x = r as { confesaron: string[] };
+    contenido = <><h2>{x.confesaron.length === 0 ? "Nadie lo ha hecho… dicen." : "Confesaron:"}</h2><p className="hint">{x.confesaron.map(nombre).join(", ")}</p></>;
+  } else if (e.motor === "senalar") {
+    const x = r as { votos: Record<string, number>; elegidos: string[] };
+    contenido = <><h2>{x.elegidos.map(nombre).join(" y ")}</h2><p className="hint">{Object.entries(x.votos).map(([id, n]) => `${nombre(id)}: ${n}`).join(" · ")}. Quien coincidió con la mayoría suma +1.</p></>;
+  } else if (e.motor === "competencia") {
+    const x = r as { ganador: string };
+    contenido = <h2>¡Ganó {nombre(x.ganador)}! +3</h2>;
   } else {
     const x = r as { cuenta?: { a: number; b: number }; mayoria?: string | null; respuestas: Record<string, unknown> };
     contenido = x.cuenta

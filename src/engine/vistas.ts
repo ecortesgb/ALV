@@ -11,6 +11,8 @@ export interface VistaPublica {
   fase: EstadoPartida["fase"];
   turnoDe?: string;
   carta?: EstadoPartida["carta"];
+  seleccion?: EstadoPartida["seleccion"];
+  segundos?: number;
   /** Quién ya contestó (sin decir qué). */
   contestaron: string[];
   revelado?: unknown;
@@ -30,6 +32,8 @@ export function vistaPublica(e: EstadoPartida): VistaPublica {
     fase: e.fase,
     turnoDe: e.turnoDe,
     carta: e.carta,
+    seleccion: e.seleccion,
+    segundos: e.segundos,
     contestaron: Object.keys(e.respuestas),
     revelado: e.fase === "contestando" ? undefined : e.revelado,
     puntos: { ...e.puntos },
