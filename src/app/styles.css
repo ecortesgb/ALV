@@ -1,6 +1,7 @@
 /* ALV · Sistema visual (diseño «ALV · Diseño de pantallas»): fondo espacial, un neón por sección,
    Bungee para siglas y Outfit para textos. Todo respeta «reducir movimiento». */
 :root {
+  --m1: #FF2E88; --m2: #A77BFF; --m3: #22E1FF;
   --bg: #0E0A1F; --bg2: #2B1F48; --card: #1B1230; --card2: #140C24; --btn: #22183A; --line: #3A2C58;
   --ink: #F7F2FF; --muted: #AA9CC8; --soft: #CFC4E8;
   --pink: #FF2E88; --orange: #FF7A2E; --cyan: #22E1FF; --amber: #FFC23D; --gold: #FFCF4A;
@@ -10,6 +11,14 @@
   --vidrio: rgba(27,18,48,.62); --vidrio2: rgba(20,12,36,.7); --borde-vidrio: rgba(247,242,255,.1);
   --display: Bungee, Impact, sans-serif;
   color-scheme: dark;
+}
+/* Paleta alternativa «Midnight Lounge» (referencia del usuario). Se activa en Perfil > Paleta. */
+:root[data-paleta="lounge"] {
+  --bg: #0B0E14; --bg2: #161B26; --card: #161B26; --card2: #0F131C; --btn: #1C2332; --line: #2A3345;
+  --ink: #F8FAFC; --muted: #8F9AAE; --soft: #C9D1DE;
+  --pink: #E8417F; --cyan: #7FDDF2; --vidrio: rgba(22,27,38,.7); --vidrio2: rgba(15,19,28,.78);
+  --borde-vidrio: rgba(248,250,252,.1);
+  --m1: #3B4D6B; --m2: #2A3A55; --m3: #1F5C6E;
 }
 * { box-sizing: border-box; }
 html, body { margin: 0; min-height: 100%; }
@@ -227,9 +236,9 @@ dialog.modal::backdrop { background: rgba(8,5,20,.78); backdrop-filter: blur(6px
 /* Fondo vivo (Neo-Arcade): manchas de color en movimiento lento, aura de la sección y estrellas */
 .fondo { position: fixed; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; background: var(--bg); }
 .fondo .mancha { position: absolute; width: 70vmax; height: 70vmax; border-radius: 50%; filter: blur(60px); opacity: .32; will-change: transform; }
-.fondo .m1 { background: radial-gradient(circle, #FF2E88, transparent 62%); left: -30vmax; top: -30vmax; animation: deriva1 26s ease-in-out infinite alternate; }
-.fondo .m2 { background: radial-gradient(circle, #A77BFF, transparent 62%); right: -34vmax; top: 10vh; animation: deriva2 32s ease-in-out infinite alternate; }
-.fondo .m3 { background: radial-gradient(circle, #22E1FF, transparent 62%); left: -10vmax; bottom: -46vmax; opacity: .18; animation: deriva3 38s ease-in-out infinite alternate; }
+.fondo .m1 { background: radial-gradient(circle, var(--m1), transparent 62%); left: -30vmax; top: -30vmax; animation: deriva1 26s ease-in-out infinite alternate; }
+.fondo .m2 { background: radial-gradient(circle, var(--m2), transparent 62%); right: -34vmax; top: 10vh; animation: deriva2 32s ease-in-out infinite alternate; }
+.fondo .m3 { background: radial-gradient(circle, var(--m3), transparent 62%); left: -10vmax; bottom: -46vmax; opacity: .18; animation: deriva3 38s ease-in-out infinite alternate; }
 .fondo .aura { position: absolute; left: 50%; top: 38%; width: 90vmin; height: 90vmin; translate: -50% -50%; border-radius: 50%;
   background: radial-gradient(circle, color-mix(in srgb, var(--aura) 32%, transparent), transparent 65%); animation: pulso-aura 5s ease-in-out infinite; transition: background .8s; }
 .fondo .estrellas { position: absolute; inset: 0; background-repeat: repeat; }
@@ -258,6 +267,9 @@ dialog.modal::backdrop { background: rgba(8,5,20,.78); backdrop-filter: blur(6px
 .juego:focus-within { border-color: var(--sc); box-shadow: 0 0 24px -8px var(--sc); }
 .marcador .lugar.activo { border-color: var(--sc); box-shadow: 0 0 18px -6px var(--sc); }
 .carta .cara { -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); }
+/* Tanda 2 (tarjetas tipo EA FC): franja de acento arriba de cada panel */
+.card { position: relative; overflow: hidden; }
+.card::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 3px; background: linear-gradient(90deg, var(--cyan), var(--pink)); opacity: .85; }
 
 /* Temporizador en anillo */
 .anillo { position: relative; width: 64px; height: 64px; flex-shrink: 0; display: grid; place-items: center; --c: var(--cyan); }
@@ -464,3 +476,24 @@ button.juego[aria-pressed="true"] { border-color: var(--sc); box-shadow: 0 0 0 1
 .cortina-celular { min-height: 110px; font-size: 16px; touch-action: none; user-select: none; }
 .cortina-celular .secreto { font-size: 30px; }
 .aviso-partida { position: fixed; left: 16px; right: 16px; bottom: 88px; z-index: 30; text-align: center; text-decoration: none; }
+
+/* Tanda 1 (estilo consola): en pantallas grandes la navegación es una columna fija a la izquierda
+   con icono y nombre, como en las pantallas de referencia. En celular sigue siendo la barra de abajo. */
+@media (min-width: 900px) {
+  nav.abajo { top: 0; right: auto; width: 112px; grid-template-columns: none; grid-auto-rows: auto; align-content: start; gap: 4px;
+    padding: 18px 10px; border-top: 0; border-right: 2px solid var(--line); }
+  nav.abajo a { padding: 12px 6px; border-radius: 14px; font-size: 12px; }
+  nav.abajo a:hover { color: var(--ink); background: rgba(247,242,255,.06); }
+  nav.abajo svg { width: 24px; height: 24px; }
+  .app { margin-left: 112px; margin-right: auto; max-width: min(1080px, calc(100% - 112px)); }
+  .app.ancho { max-width: calc(100% - 112px); }
+}
+/* Tanda 3: destello de carta de poder a pantalla completa (se apaga con reducir movimiento) */
+.destello { position: fixed; inset: 0; z-index: 40; pointer-events: none; display: grid; place-items: center;
+  font-family: var(--display); font-size: clamp(34px, 9vw, 72px); color: var(--lime); text-shadow: 0 0 30px var(--lime);
+  background: radial-gradient(circle, rgba(198,255,61,.28), rgba(14,10,31,.55) 70%); animation: destello 1.3s ease-out both; }
+@keyframes destello { 0% { opacity: 0; transform: scale(1.3); } 18% { opacity: 1; transform: scale(1); } 80% { opacity: 1; } 100% { opacity: 0; } }
+/* Perfil: selector de paleta */
+.paleta-opciones { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.paleta-muestra { display: flex; gap: 4px; margin-top: 6px; }
+.paleta-muestra span { width: 18px; height: 18px; border-radius: 6px; border: 1px solid var(--line); }

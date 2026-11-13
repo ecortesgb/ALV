@@ -158,6 +158,7 @@ function TurnoCartas({ e, accion }: { e: EstadoPartida; accion: (a: AccionSinId)
   const v = vistaPublica(e);
   const turno = s.jugadores.find(j => j.id === v.turnoDe);
   const [verMano, setVerMano] = useState(false);
+  const [destello, setDestello] = useState<{ carta: string; clave: number } | null>(null);
   const compradas = useRef<Record<string, number>>({});
   const tipo = v.carta?.tipo ?? "";
   const esReto = tipo === "reto";
@@ -192,6 +193,9 @@ function TurnoCartas({ e, accion }: { e: EstadoPartida; accion: (a: AccionSinId)
   const usar = (carta: string) => {
     if (!turno) return;
     sonar("poder");
+    // Tanda 3: destello a pantalla completa con el nombre de la carta de poder.
+    setDestello({ carta, clave: Date.now() });
+    setTimeout(() => setDestello(null), 1300);
     accion({ tipo: "usar-carta", jugador: turno.id, carta });
     if (carta === "escudo" || carta === "turno") accion({ tipo: "revelar" });
     setVerMano(false);
@@ -209,6 +213,7 @@ function TurnoCartas({ e, accion }: { e: EstadoPartida; accion: (a: AccionSinId)
 
   return (
     <>
+      {destello && <div className="destello" key={destello.clave} role="status" aria-live="polite">{NOMBRE_CARTA_PODER[destello.carta] ?? "Carta de poder"}</div>}
       {e.motor === "botella" && <RelojBotella e={e} />}
       {e.motor === "ruleta" && <RuletaJugadores e={e} />}
       {e.motor === "dados" && <Dados e={e} />}
@@ -811,7 +816,8 @@ function useArrastre({ activo, derecha, izquierda, arriba }: { activo: boolean; 
       onPointerCancel: () => { inicio.current = null; setD({ x: 0, y: 0 }); },
     },
     estilo: activo && !reducir && (d.x !== 0 || d.y !== 0)
-      ? { transform: `translate(${d.x * 0.6}px, ${d.y * 0.4}px) rotate(${d.x / 14}deg)`, transition: "none", touchAction: "none" }
+      // Tanda 3: al arrastrar, la carta se inclina en 3D (gira en X y Y) además de girar en el plano.
+      ? { transform: `translate(${d.x * 0.6}px, ${d.y * 0.4}px) perspective(900px) rotateY(${d.x / 18}deg) rotateX(${-d.y / 24}deg) rotate(${d.x / 14}deg)`, transition: "none", touchAction: "none" }
       : { touchAction: activo ? "pan-y" : undefined },
   } as const;
 }

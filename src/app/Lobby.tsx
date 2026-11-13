@@ -12,7 +12,7 @@ import { Avatar } from "./Avatar";
 import { aviso, BotonPantallaCompleta, BotonSonido, COLOR_SECCION, confirmar, configuracion, INTENSIDADES } from "./comun";
 import { useAura } from "./efectos";
 import { acciones, parejaDe, saldosDe, useEstado, type JugadorLocal } from "./estado";
-import { lugaresDeSesion } from "./ranking";
+import { lugaresDeSesion } from "./puntos-sesion";
 import { sonar } from "./sonido";
 import { XpExtra } from "./XpExtra";
 import { PanelSala, SalaInvitado } from "./Sala";

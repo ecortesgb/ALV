@@ -22,12 +22,15 @@ export interface JugadorLocal {
 /** `extra` marca la XP que dio el administrador fuera de un juego; lleva el motivo. */
 export interface Partida { fecha: string; juego: string; resultados: { id?: string; nombre: string; puntos: number; xp: number }[]; extra?: string }
 
+/** Neón sofisticado (por defecto) o Midnight Lounge, como alternativa para comparar en pantalla. */
+export type Paleta = "neon" | "lounge";
+
 export interface EstadoLocal {
   version: 2;
   jugadores: JugadorLocal[];
   enParejas: boolean;
   eventoId: string;
-  ajustes: { escenario: EscenarioId; intensidad: Intensidad; adulto: boolean; drunk: boolean };
+  ajustes: { escenario: EscenarioId; intensidad: Intensidad; adulto: boolean; drunk: boolean; paleta?: Paleta };
   historial: Partida[];
   /** Jugador de este celular con cuenta abierta: su saldo y su inventario vienen del servidor. */
   cuenta?: { jugador: string; acumulada: number; disponible: number; delEvento: number };

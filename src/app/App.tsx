@@ -1,7 +1,7 @@
 // ALV: una sola app. Pestañas de abajo: Inicio, Lobby, Tienda, Ranking y Perfil.
 // El flujo es como en los juegos de futbol en línea: Jugar → lobby con los personajes → condiciones → Iniciar → carga → partida.
 import { useEffect, useRef, useState } from "react";
-import { ESCENARIOS, SECCIONES } from "../content/catalogo";
+import { ESCENARIOS, JUEGOS, SECCIONES } from "../content/catalogo";
 import { crearAzar } from "../engine/azar";
 import { nivelPorXp, xpParaNivel } from "../engine/economia";
 import { sorprendeme } from "../engine/filtros";
@@ -12,8 +12,8 @@ import { Avatar } from "./Avatar";
 import { Cuenta, SincroCuenta } from "./Cuenta";
 import { hayNube, sesionActual } from "./nube";
 import { Avisos, BotonSonido, COLOR_SECCION, Confirmaciones, configuracion, Icono, INTENSIDADES, aviso } from "./comun";
-import { Fondo } from "./efectos";
-import { type JugadorLocal, parejaDe, saldosDe, useEstado } from "./estado";
+import { Confeti, Fondo } from "./efectos";
+import { acciones, type JugadorLocal, parejaDe, saldosDe, useEstado } from "./estado";
 import { Lobby } from "./Lobby";
 import { Partida } from "./Partida";
 import { EditorPersonaje, NivelYSaldos, Tienda } from "./Personaje";
@@ -38,6 +38,8 @@ export const ir = (r: Ruta, arg?: string) => { location.hash = `/${r}${arg ? `/$
 export function App() {
   const [{ ruta, arg }, setR] = useState(leerRuta());
   const [partida, setPartida] = useState<EstadoPartida | null>(null);
+  const paleta = useEstado().ajustes.paleta;
+  useEffect(() => { document.documentElement.dataset.paleta = paleta === "lounge" ? "lounge" : "neon"; }, [paleta]);
   useEffect(() => { void sesionActual(); }, []);
   useEffect(() => {
     const f = () => setR(leerRuta());
@@ -114,9 +116,11 @@ function Inicio() {
   const [girando, setGirando] = useState(false);
   const yo = s.jugadores[0]!;
   const sal = saldosDe(yo);
+  const probados = new Set(s.historial.map(h => h.juego));
 
+  const [celebra, setCelebra] = useState(false);
   const cuadro = useRef(0);
-  useEffect(() => () => cancelAnimationFrame(cuadro.current), []);
+  useEffect(() => () => { cancelAnimationFrame(cuadro.current); clearTimeout(cuadro.current); }, []);
 
   /** Ruleta con fricción: gira rápido y frena con curva. Un clic por cada segmento que pasa. */
   const girar = () => {
@@ -136,7 +140,12 @@ function Inicio() {
       const seg = Math.floor(ang / 45);
       if (seg !== segAnt) { segAnt = seg; if (!reducir) sonar("tic"); }
       if (k < 1) cuadro.current = requestAnimationFrame(paso);
-      else { setGirando(false); sonar("exito"); ir("lobby", `j-${r.juego.id}`); }
+      else {
+        setGirando(false); sonar("exito");
+        // Destello con confeti en la categoría ganadora (tanda 3); luego se abre el juego.
+        setCelebra(true);
+        cuadro.current = window.setTimeout(() => ir("lobby", `j-${r.juego.id}`), reducir ? 0 : 1100) as unknown as number;
+      }
     };
     cuadro.current = requestAnimationFrame(paso);
   };
@@ -144,6 +153,7 @@ function Inicio() {
   return (
     <>
       <Encabezado />
+      {celebra && <Confeti duracion={1100} />}
       <h1 className="titulo">¿Qué tan buena idea es jugar esto hoy?</h1>
       <button className="heroe" onClick={girar} aria-label="¡Sorpréndeme! Elige un juego al azar">
         <span className="pila" style={{ gap: 6, flex: 1 }}>
@@ -166,13 +176,21 @@ function Inicio() {
         <span className="chip lime">Tienda</span>
       </a>
       <div className="secciones">
-        {(Object.keys(SECCIONES) as SeccionId[]).filter(k => k !== "mix").map(k => (
-          <a key={k} className="seccion" href={`#/lobby/s-${k}`} style={{ ["--sc" as string]: COLOR_SECCION[k], textDecoration: "none" }}>
-            <span className="sigla">{SECCIONES[k].sigla}</span>
-            <b>{SECCIONES[k].trata}</b>
-            <small>{DESC_SECCION[k]}</small>
-          </a>
-        ))}
+        {(Object.keys(SECCIONES) as SeccionId[]).filter(k => k !== "mix").map(k => {
+          // Progreso: juegos de la sección que ya se jugaron en este dispositivo (el historial guarda el nombre).
+          const del = JUEGOS.filter(j => j.seccion === k && j.motor);
+          const hechos = del.filter(j => probados.has(j.nombre)).length;
+          const pct = del.length ? (hechos / del.length) * 100 : 0;
+          return (
+            <a key={k} className="seccion" href={`#/lobby/s-${k}`} style={{ ["--sc" as string]: COLOR_SECCION[k], textDecoration: "none" }}>
+              <span className="sigla">{SECCIONES[k].sigla}</span>
+              <b>{SECCIONES[k].trata}</b>
+              <small>{DESC_SECCION[k]}</small>
+              <span className="barra" style={{ marginTop: 6 }} role="img" aria-label={`${hechos} de ${del.length} juegos jugados`}><span style={{ width: `${pct}%`, background: "var(--sc)" }} /></span>
+              <small>{hechos} de {del.length} jugados</small>
+            </a>
+          );
+        })}
       </div>
     </>
   );
@@ -245,6 +263,28 @@ function LogrosDe({ j }: { j: JugadorLocal }) {
   );
 }
 
+/** Compara la paleta de neón (por defecto) con Midnight Lounge. Solo cambia colores, no el juego. */
+function Paleta() {
+  const actual = useEstado().ajustes.paleta === "lounge" ? "lounge" : "neon";
+  const opciones: { k: "neon" | "lounge"; nombre: string; colores: string[] }[] = [
+    { k: "neon", nombre: "Neón sofisticado", colores: ["#0E0A1F", "#1B1230", "#FF2E88", "#22E1FF"] },
+    { k: "lounge", nombre: "Midnight Lounge", colores: ["#0B0E14", "#161B26", "#E8417F", "#7FDDF2"] },
+  ];
+  return (
+    <section className="card" aria-labelledby="t-paleta">
+      <div className="entre"><h2 id="t-paleta">Paleta</h2><small className="muted">Solo cambia los colores</small></div>
+      <div className="paleta-opciones" role="group" aria-label="Paleta de colores">
+        {opciones.map(o => (
+          <button key={o.k} className="opcion" aria-pressed={actual === o.k} onClick={() => acciones.ajustes({ paleta: o.k })} style={{ padding: 10, textAlign: "left" }}>
+            {o.nombre}
+            <span className="paleta-muestra" aria-hidden="true">{o.colores.map(c => <span key={c} style={{ background: c }} />)}</span>
+          </button>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 function Perfil({ id }: { id?: string }) {
   const s = useEstado();
   const j = s.jugadores.find(x => x.id === id) ?? s.jugadores[0]!;
@@ -254,6 +294,7 @@ function Perfil({ id }: { id?: string }) {
       <QuienSoy id={j.id} base="perfil" />
       <NivelYSaldos j={j} />
       <Cuenta j={j} />
+      <Paleta />
       <LogrosDe j={j} />
       <EditorPersonaje j={j} />
     </>

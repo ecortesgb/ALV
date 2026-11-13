@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { Avatar } from "./Avatar";
 import { useEstado } from "./estado";
-import { tabla, type Tabla } from "./ranking";
+import { tabla, type Tabla } from "./puntos-sesion";
 
 const TABS: [Tabla | "historial", string, string][] = [
   ["sesion", "Sesión", "XP ganada en esta sesión. Es la que ordena el podio y el TOP."],
