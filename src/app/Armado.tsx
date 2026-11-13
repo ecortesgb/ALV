@@ -1,8 +1,10 @@
 // Armado de la partida al estilo de los menús de consola: 1 Escenario → 2 Modalidad → 3 Juego (y su herramienta).
 // Al terminar se abre la pantalla de carga. Todo lo que se elige queda en los ajustes del grupo.
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ESCENARIOS, SECCIONES } from "../content/catalogo";
+import { xpDePartida } from "../engine/economia";
 import { juegosCompatibles } from "../engine/filtros";
+import { HERRAMIENTAS } from "./Hud";
 import type { DefinicionJuego, SeccionId } from "../engine/types";
 import { Retrato } from "./Avatar";
 import { aviso, COLOR_SECCION, configuracion } from "./comun";
@@ -85,15 +87,17 @@ export function ArmadoPartida({ iniciar, cerrar, juegoInicial, seccionInicial }:
               <button key={k} style={{ ["--sc" as string]: COLOR_SECCION[k] }} aria-pressed={seccion === k} onClick={() => setSeccion(k)}>{SECCIONES[k].sigla}</button>
             ))}
           </div>
-          <div className="modos">
+          <div className="modos carrusel-juegos">
             {compatibles.filter(j => seccion === "todas" || j.seccion === seccion).map(j => (
-              <button key={j.id} className="juego modo" aria-pressed={juegoId === j.id} style={{ ["--sc" as string]: COLOR_SECCION[j.seccion] }} onClick={() => setJuegoId(j.id)}>
+              <button key={j.id} className="juego modo" aria-pressed={juegoId === j.id} style={{ ["--sc" as string]: COLOR_SECCION[j.seccion] }}
+                onClick={e => { setJuegoId(j.id); sonar("clic"); e.currentTarget.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" }); }}>
                 <span className="modo-cinta">{juegoId === j.id ? "✓ Elegido" : SECCIONES[j.seccion].sigla}</span>
                 <span className="icono">{j.sigla ?? SECCIONES[j.seccion].sigla}</span>
                 <span className="texto"><b>{j.nombre}</b><span className="modo-meta">{SECCIONES[j.seccion].trata}</span><small>{j.descripcion}</small></span>
               </button>
             ))}
           </div>
+          {juego && <FichaJuego juego={juego} />}
           {juego?.motor === "turnos-cartas" && (
             <div className="card">
               <span className="label">Herramienta · ¿cómo se elige el turno?</span>
@@ -209,6 +213,41 @@ function PasoModalidad({ seguir }: { seguir: () => void }) {
       )}
 
       <button className="btn principal" disabled={!listo} onClick={seguir}>{listo ? "Siguiente · Juego" : modalidad === "equipos" ? "Pon a cada quien en un equipo (mínimo 2 equipos)" : "Falta el género de alguien"}</button>
+    </section>
+  );
+}
+
+/** Ficha del juego elegido: etiquetas, cómo se juega y la XP que da cada lugar con la configuración de hoy. */
+function FichaJuego({ juego }: { juego: DefinicionJuego }) {
+  const s = useEstado();
+  const caja = useRef<HTMLElement>(null);
+  useEffect(() => { caja.current?.scrollIntoView({ behavior: "smooth", block: "nearest" }); }, [juego.id]);
+  const n = s.jugadores.length, rondas = s.ajustes.rondas ?? 8;
+  const xp = (lugar: number) => xpDePartida({ rondas, retosCumplidos: 0, lugar }, n);
+  const h = juego.motor ? HERRAMIENTAS[juego.motor] : null;
+  return (
+    <section ref={caja} className="ficha-juego" key={juego.id} style={{ ["--sc" as string]: COLOR_SECCION[juego.seccion] }} aria-labelledby="t-ficha">
+      <h2 id="t-ficha">{juego.nombre}</h2>
+      <div className="fj-tags">
+        <span className="fj-tag">👥 {juego.minJugadores}–{juego.maxJugadores}</span>
+        <span className="fj-tag">{SECCIONES[juego.seccion].sigla}</span>
+        {h && <span className="fj-tag">{h.icono} {h.nombre}</span>}
+        <span className="fj-tag">🔁 {rondas} rondas</span>
+        {juego.adulto && <span className="fj-tag">🔞 Adulto</span>}
+      </div>
+      <div className="pila" style={{ gap: 4 }}>
+        <span className="label">Cómo se juega</span>
+        <p className="hint" style={{ color: "var(--soft)" }}>{juego.descripcion}{n <= 3 && juego.modoCorto ? ` ${juego.modoCorto}` : ""}{h ? ` ${h.como}` : ""}</p>
+      </div>
+      <div className="pila" style={{ gap: 6 }}>
+        <span className="label">Recompensas</span>
+        <div className="fj-medallas">
+          {([["oro", "1.º", 1, "🥇"], ["plata", "2.º", 2, "🥈"], ["bronce", "3.º", 3, "🥉"]] as const).map(([c, t, l, e]) => (
+            <span key={c} className={"fj-medalla " + c}><span className="cab">{t} lugar</span><span className="hex" aria-hidden="true">{e}</span><b>+{xp(l)} XP</b></span>
+          ))}
+        </div>
+        <small className="muted">Más XP por cada reto cumplido. Pasar no tiene castigo.</small>
+      </div>
     </section>
   );
 }

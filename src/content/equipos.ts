@@ -58,3 +58,14 @@ export function puedePonerse(adorno: AdornoEquipo, nivel: number, equipo: string
   const r = RECOMPENSAS_EQUIPO.find(x => x.id === adorno);
   return !!r && !!equipoDe(equipo) && nivel >= r.nivel;
 }
+
+/** Lo que grita tu personaje en la pantalla principal, según su equipo. */
+export function porraEquipo(id: string | undefined): string | null {
+  const e = equipoDe(id);
+  if (!e) return null;
+  if (e.grupo === "Casas de Hogwarts") return `¡Puntos para ${e.nombre}!`;
+  if (e.grupo === "Futbol") return `¡Vamos ${e.nombre}!`;
+  if (e.id === "jedi") return "Que la fuerza nos acompañe";
+  if (e.id === "sith") return "Únete al lado oscuro";
+  return `¡${e.icono} ${e.nombre} al ataque!`;
+}

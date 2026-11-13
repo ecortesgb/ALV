@@ -1,18 +1,13 @@
 // ALV: una sola app. Pestañas de abajo: Inicio, Lobby, Tienda, Ranking y Perfil.
 // El flujo es como en los juegos de futbol en línea: Jugar → lobby con los personajes → condiciones → Iniciar → carga → partida.
-import { useEffect, useRef, useState } from "react";
-import { ESCENARIOS, JUEGOS, SECCIONES } from "../content/catalogo";
-import { crearAzar } from "../engine/azar";
-import { nivelPorXp, xpParaNivel } from "../engine/economia";
-import { sorprendeme } from "../engine/filtros";
+import { useEffect, useState } from "react";
 import { logrosDe } from "../engine/logros";
 import type { EstadoPartida } from "../engine/partida";
-import type { SeccionId } from "../engine/types";
 import { Retrato } from "./Avatar";
 import { Cuenta, SincroCuenta } from "./Cuenta";
 import { hayNube, sesionActual } from "./nube";
-import { Avisos, COLOR_SECCION, Confirmaciones, configuracion, Icono, INTENSIDADES, aviso } from "./comun";
-import { Confeti, Fondo } from "./efectos";
+import { Avisos, Confirmaciones, Icono } from "./comun";
+import { Fondo } from "./efectos";
 import { type JugadorLocal, parejaDe, saldosDe, useEstado } from "./estado";
 import { Lobby } from "./Lobby";
 import { Partida } from "./Partida";
@@ -21,14 +16,15 @@ import { SelectorEquipo, TarjetaJugador } from "./Tarjetas";
 import { Ranking } from "./Ranking";
 import { SincroSala, Unirse } from "./Sala";
 import { useAPartidaDeSala } from "./PartidaCelular";
-import { instalarClics, sonar } from "./sonido";
-import { ElegirModo, Notificaciones, PaginaAjustes, PaginaFisico, PantallaCarga, PantallaCuenta } from "./Bienvenida";
+import { instalarClics } from "./sonido";
+import { Hub, PantallaModos } from "./Hub";
+import { Notificaciones, PaginaAjustes, PaginaFisico, PantallaCarga, PantallaCuenta } from "./Bienvenida";
 
-type Ruta = "inicio" | "lobby" | "tienda" | "ranking" | "perfil" | "unirse" | "fisico" | "ajustes";
-const RUTAS: Ruta[] = ["inicio", "lobby", "tienda", "ranking", "perfil", "unirse", "fisico", "ajustes"];
+type Ruta = "inicio" | "lobby" | "tienda" | "ranking" | "perfil" | "unirse" | "fisico" | "ajustes" | "jugar";
+const RUTAS: Ruta[] = ["inicio", "lobby", "tienda", "ranking", "perfil", "unirse", "fisico", "ajustes", "jugar"];
 /** Rutas viejas que siguen funcionando si alguien las tenía guardadas. */
 const ANTES: Record<string, Ruta> = { juegos: "lobby", grupo: "lobby", historial: "ranking" };
-const NOMBRES: [Exclude<Ruta, "unirse" | "fisico" | "ajustes">, string][] = [["inicio", "Inicio"], ["lobby", "Lobby"], ["tienda", "Tienda"], ["ranking", "Ranking"], ["perfil", "Perfil"]];
+const NOMBRES: [Exclude<Ruta, "unirse" | "fisico" | "ajustes" | "jugar">, string][] = [["inicio", "Inicio"], ["lobby", "Lobby"], ["tienda", "Tienda"], ["ranking", "Ranking"], ["perfil", "Perfil"]];
 
 const leerRuta = (): { ruta: Ruta; arg?: string } => {
   const [r = "", arg] = location.hash.replace(/^#\/?/, "").split("/");
@@ -66,9 +62,10 @@ export function App() {
   return (
     <>
       <Fondo />
-      <main className={"app" + (ancho ? " ancho" : "")}>
+      <main className={"app" + (ancho ? " ancho" : "") + (!partida && (ruta === "inicio" || ruta === "jugar") ? " inmersiva" : "")}>
         {partida ? <Partida inicial={partida} salir={() => setPartida(null)} />
-          : ruta === "inicio" ? <Inicio />
+          : ruta === "inicio" ? <Hub abrirNovedades={() => setEntrada("avisos")} />
+          : ruta === "jugar" ? <PantallaModos />
           : ruta === "lobby" ? <Lobby jugar={setPartida} arg={arg} />
           : ruta === "tienda" ? <PaginaTienda id={arg} />
           : ruta === "ranking" ? <Ranking />
@@ -77,7 +74,7 @@ export function App() {
           : ruta === "ajustes" ? <PaginaAjustes />
           : <Perfil id={arg} />}
       </main>
-      {!partida && (
+      {!partida && ruta !== "inicio" && ruta !== "jugar" && (
         <nav className="abajo" aria-label="Secciones">
           {NOMBRES.map(([r, n]) => (
             <a key={r} href={`#/${r}`} aria-current={ruta === r ? "page" : undefined}>{Icono[r]}{n}</a>
@@ -92,121 +89,6 @@ export function App() {
       {entrada === "carga" && <PantallaCarga iniciar={() => void iniciar()} />}
       {entrada === "cuenta" && <PantallaCuenta seguir={trasCuenta} />}
       {entrada === "avisos" && !partida && <Notificaciones cerrar={() => setEntrada("lista")} />}
-    </>
-  );
-}
-
-function Encabezado() {
-  const s = useEstado();
-  const yo = s.jugadores[0]!;
-  const xp = saldosDe(yo).acumulada, nivel = nivelPorXp(xp);
-  const avance = ((xp - xpParaNivel(nivel)) / (xpParaNivel(nivel + 1) - xpParaNivel(nivel))) * 100;
-  return (
-    <div className="entre">
-      <div>
-        <h1 className="logo"><b>A</b>LV</h1>
-        <div className="tag">AMIGOS, LOCURAS Y VERDADES</div>
-      </div>
-      <div className="fila" style={{ gap: 8 }}>
-      <a className="sonido" href="#/ajustes" aria-label="Ajustes" title="Ajustes">{Icono.ajustes}</a>
-      <a className="yo" href="#/perfil" style={{ textDecoration: "none" }}>
-        <span className="marco"><Retrato j={yo} size={40} /></span>
-        <span className="pila" style={{ gap: 4 }}>
-          <span style={{ fontSize: 12, fontWeight: 800 }}>{yo.nombre} · Nv {nivel}</span>
-          <span className="barra"><span style={{ width: `${avance}%` }} /></span>
-        </span>
-      </a>
-      </div>
-    </div>
-  );
-}
-
-const DESC_SECCION: Record<SeccionId, string> = {
-  mix: "Ruleta de juegos", ptm: "Trampas y mentiras", hdspm: "Hazlo o pásalo", qpm: "Mímica y prohibida",
-  gdlv: "Competencias y duelos", parejas: "Amores, líos y verdades", ntp: "El impostor", pvt: "Ruleta, reloj y fiesta",
-};
-
-function Inicio() {
-  const s = useEstado();
-  const cfg = configuracion(s);
-  const esc = ESCENARIOS.find(e => e.id === cfg.escenario)!;
-  const [giro, setGiro] = useState(0);
-  const [girando, setGirando] = useState(false);
-  const yo = s.jugadores[0]!;
-  const sal = saldosDe(yo);
-  const probados = new Set(s.historial.map(h => h.juego));
-
-  const [celebra, setCelebra] = useState(false);
-  const cuadro = useRef(0);
-  useEffect(() => () => { cancelAnimationFrame(cuadro.current); clearTimeout(cuadro.current); }, []);
-
-  /** Ruleta con fricción: gira rápido y frena con curva. Un clic por cada segmento que pasa. */
-  const girar = () => {
-    if (girando) return;
-    const azar = crearAzar(Date.now() % 1e6);
-    const r = sorprendeme(cfg, azar);
-    if (!r) { aviso("No hay juegos para esta configuración."); return; }
-    const reducir = matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const desde = giro, hasta = giro + 1440 + azar.entero(360), dur = reducir ? 50 : 3200;
-    const t0 = performance.now();
-    let segAnt = Math.floor(desde / 45);
-    setGirando(true);
-    const paso = (ahora: number) => {
-      const k = Math.min(1, (ahora - t0) / dur);
-      const ang = desde + (hasta - desde) * (1 - Math.pow(1 - k, 3));
-      setGiro(ang);
-      const seg = Math.floor(ang / 45);
-      if (seg !== segAnt) { segAnt = seg; if (!reducir) sonar("tic"); }
-      if (k < 1) cuadro.current = requestAnimationFrame(paso);
-      else {
-        setGirando(false); sonar("exito");
-        // Destello con confeti en la categoría ganadora (tanda 3); luego se abre el juego.
-        setCelebra(true);
-        cuadro.current = window.setTimeout(() => ir("lobby", `j-${r.juego.id}`), reducir ? 0 : 1100) as unknown as number;
-      }
-    };
-    cuadro.current = requestAnimationFrame(paso);
-  };
-
-  return (
-    <>
-      <Encabezado />
-      {celebra && <Confeti duracion={1100} />}
-      <h1 className="titulo">¿Qué tan buena idea es jugar esto hoy?</h1>
-      <button className="heroe" onClick={girar} aria-label="¡Sorpréndeme! Elige un juego al azar">
-        <span className="pila" style={{ gap: 6, flex: 1 }}>
-          <span className="tag" style={{ color: "#FFE3F0" }}>ALV MIX</span>
-          <span className="sigla">{girando ? "GIRANDO…" : "¡SORPRÉNDEME!"}</span>
-          <span style={{ fontSize: 13, fontWeight: 600, color: "#FFE3F0" }}>{s.jugadores.length} jugadores · {INTENSIDADES[cfg.intensidad]} · {esc.emoji} {esc.nombre}</span>
-        </span>
-        <span className="ruleta" style={{ transform: `rotate(${giro}deg)`, transition: "none" }} aria-hidden="true" />
-      </button>
-      <ElegirModo />
-      <a href="#/tienda" className="card" style={{ flexDirection: "row", alignItems: "center", textDecoration: "none", color: "inherit", padding: "12px 14px" }}>
-        {Icono.estrella}
-        <span className="pila" style={{ gap: 4, flex: 1 }}>
-          <b style={{ fontSize: 13 }}>XP de este evento para cartas de poder</b>
-          <span className="hint">{sal.delEvento} XP del evento · {sal.disponible} XP disponible para accesorios</span>
-        </span>
-        <span className="chip lime">Tienda</span>
-      </a>
-      <div className="secciones">
-        {(Object.keys(SECCIONES) as SeccionId[]).filter(k => k !== "mix").map(k => {
-          // Progreso: juegos de la sección que ya se jugaron en este dispositivo (el historial guarda el nombre).
-          const del = JUEGOS.filter(j => j.seccion === k && j.motor);
-          const hechos = del.filter(j => probados.has(j.nombre)).length;
-          const pct = del.length ? (hechos / del.length) * 100 : 0;
-          return (
-            <a key={k} className="seccion" href={`#/lobby/s-${k}`} style={{ ["--sc" as string]: COLOR_SECCION[k], textDecoration: "none" }}>
-              <span className="sigla">{SECCIONES[k].sigla}</span>
-              <b>{SECCIONES[k].trata}</b>
-              <small>{DESC_SECCION[k]}</small>
-              <span className="barra" style={{ marginTop: 6 }} role="img" aria-label={`${hechos} de ${del.length} juegos jugados`}><span style={{ width: `${pct}%`, background: "var(--sc)" }} /></span>
-              <small>{hechos} de {del.length} jugados</small>
-            </a>
-          );
-        })}
-      </div>
     </>
   );
 }
