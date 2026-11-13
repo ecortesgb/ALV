@@ -1,6 +1,6 @@
 // Ranking: lugares de la sesión (los que ordenan el podio), histórico, parejas e historial de partidas.
 import { useState } from "react";
-import { Avatar } from "./Avatar";
+import { Retrato } from "./Avatar";
 import { useEstado } from "./estado";
 import { tabla, type Tabla } from "./puntos-sesion";
 
@@ -34,7 +34,7 @@ export function Ranking() {
             {filas.map(f => (
               <li key={f.id} className={"fila-ranking" + (f.lugar <= 3 && !todosEnCero ? ` top${f.lugar}` : "")}>
                 <span className="puesto-n">{todosEnCero ? "–" : f.lugar}</span>
-                <span className="caras">{f.jugadores.map(j => <span key={j.id} className="cara"><Avatar p={j.personaje} size={34} nombre={j.nombre} /></span>)}</span>
+                <span className="caras">{f.jugadores.map(j => <span key={j.id} className="cara"><Retrato p={j.personaje} nombre={j.nombre} size={36} /></span>)}</span>
                 <b className="nombre-r">{f.nombre}</b>
                 <span className="valor-r">{f.valor} XP</span>
               </li>

@@ -3,7 +3,7 @@
 // y los secretos se ven pasando el celular, igual que antes.
 import { useEffect, useState } from "react";
 import qrcode from "qrcode-generator";
-import { Avatar } from "./Avatar";
+import { Retrato } from "./Avatar";
 import { aviso, confirmar } from "./comun";
 import { acciones, useEstado } from "./estado";
 import { abrirSala, cerrarSala, cuentaActiva, enlaceSala, hayNube, miembrosSala, miSalaAbierta, salirDeSala, unirseSala } from "./nube";
@@ -98,7 +98,7 @@ export function PanelSala() {
       {conectados.length > 0 && (
         <div className="fila" style={{ flexWrap: "wrap" }}>
           {conectados.map(m => (
-            <span key={m.id} className="chip cyan"><Avatar p={m.personaje ?? personajeInicial(0)} size={18} nombre={m.nombre} /> {m.nombre}</span>
+            <span key={m.id} className="chip cyan"><Retrato p={m.personaje ?? personajeInicial(0)} nombre={m.nombre} size={18} /> {m.nombre}</span>
           ))}
         </div>
       )}
@@ -123,7 +123,7 @@ export function SalaInvitado() {
       <p className="hint">El anfitrión arma y empieza la partida desde su pantalla. Mientras, personaliza tu personaje, compra en la Tienda o revisa el Ranking: todo se guarda en tu cuenta.</p>
       <div className="fila" style={{ flexWrap: "wrap" }}>
         {miembros.map(m => (
-          <span key={m.id} className={"chip " + (m.anfitrion ? "gold" : "cyan")}><Avatar p={m.personaje ?? personajeInicial(0)} size={18} nombre={m.nombre} /> {m.nombre}{m.anfitrion ? " · anfitrión" : ""}</span>
+          <span key={m.id} className={"chip " + (m.anfitrion ? "gold" : "cyan")}><Retrato p={m.personaje ?? personajeInicial(0)} nombre={m.nombre} size={18} /> {m.nombre}{m.anfitrion ? " · anfitrión" : ""}</span>
         ))}
       </div>
       <button className="btn sm" onClick={async () => { await salirDeSala(sala); acciones.sala(undefined); aviso("Saliste de la sala."); }}>Salir de la sala</button>

@@ -1,5 +1,7 @@
 // El personaje de bloques: capas de imagen apiladas y, encima, los adornos de la tienda dibujados en SVG.
 import { rutaPieza, TIENDA, type Personaje } from "../content/personaje";
+import { nivelPorXp } from "../engine/economia";
+import { saldosDe, type JugadorLocal } from "./estado";
 
 interface Props {
   p: Personaje;
@@ -32,6 +34,33 @@ export function Avatar({ p, size, nombre, lider, mesero }: Props) {
           : puesto.cabeza === "corona-carton" ? <path d="M150 102 L158 52 L182 80 L200 44 L218 80 L242 52 L250 102Z" fill="#C9A26B" stroke="#8A6A3B" strokeWidth="4" strokeLinejoin="round" />
           : null}
       </svg>
+    </span>
+  );
+}
+
+/** Tipo de carta según el nivel: el mismo marco que la tarjeta de jugador. */
+export type TipoCarta = "bronce" | "plata" | "oro" | "neon";
+export const tipoCartaPorNivel = (n: number): TipoCarta => (n >= 10 ? "neon" : n >= 6 ? "oro" : n >= 3 ? "plata" : "bronce");
+
+/**
+ * Retrato de los hombros hacia arriba, como foto de credencial, con el fondo del tipo de carta y el personaje respirando.
+ * Se usa en todas las vistas chicas; el cuerpo completo queda para el escenario, el podio y el editor.
+ * Encuadre: en el lienzo de las piezas (400×520) toma de x=50 a 350 y de y=5 a 305: del pelo o la corona a los hombros.
+ */
+export function Retrato({ j, p, nombre, size, nivel }:
+  { j?: JugadorLocal; p?: Personaje; nombre?: string; size: number; nivel?: number }) {
+  const personaje = j?.personaje ?? p;
+  if (!personaje) return null;
+  const n = nivel ?? (j ? nivelPorXp(saldosDe(j).acumulada) : 1);
+  const quien = nombre ?? j?.nombre;
+  const s = size / 1.0345; // ancho del Avatar para que 300 unidades del lienzo llenen el retrato
+  // Desfase de la animación por nombre, para que no respiren todos al mismo tiempo.
+  const desfase = ((quien ?? "").split("").reduce((a, c) => a + c.charCodeAt(0), 0) % 9) * -0.4;
+  return (
+    <span className={"retrato t-" + tipoCartaPorNivel(n)} style={{ width: size, height: size }} role="img" aria-label={`Personaje de ${quien ?? "jugador"}`}>
+      <span className="retrato-cuerpo" aria-hidden="true" style={{ left: 0.0173 * s, top: 0.1208 * s, animationDelay: `${desfase}s` }}>
+        <Avatar p={personaje} size={s} lider={false} />
+      </span>
     </span>
   );
 }

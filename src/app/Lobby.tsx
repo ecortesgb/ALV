@@ -8,7 +8,7 @@ import { nivelPorXp } from "../engine/economia";
 import { juegosCompatibles } from "../engine/filtros";
 import { crearPartida, type EstadoPartida } from "../engine/partida";
 import type { DefinicionJuego, Intensidad, SeccionId } from "../engine/types";
-import { Avatar } from "./Avatar";
+import { Avatar, Retrato } from "./Avatar";
 import { aviso, BotonPantallaCompleta, BotonSonido, COLOR_SECCION, confirmar, configuracion, INTENSIDADES } from "./comun";
 import { useAura } from "./efectos";
 import { acciones, parejaDe, saldosDe, useEstado, type JugadorLocal } from "./estado";
@@ -171,8 +171,8 @@ export function Lobby({ jugar, arg }: { jugar: (p: EstadoPartida) => void; arg?:
             return (
               <div key={x.id} className="jugador">
                 {x.remoto
-                  ? <span className="marco"><Avatar p={x.personaje} size={48} nombre={x.nombre} /></span>
-                  : <a className="marco" href={`#/perfil/${x.id}`} aria-label={`Editar personaje de ${x.nombre}`}><Avatar p={x.personaje} size={48} nombre={x.nombre} /></a>}
+                  ? <span className="marco"><Retrato j={x} size={52} /></span>
+                  : <a className="marco" href={`#/perfil/${x.id}`} aria-label={`Editar personaje de ${x.nombre}`}><Retrato j={x} size={52} /></a>}
                 <div style={{ flex: 1, minWidth: 0 }}>
                   {x.remoto
                     ? <b style={{ paddingLeft: 8 }}>{x.nombre}</b>

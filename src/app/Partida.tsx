@@ -5,7 +5,7 @@ import { CONTENIDO } from "../content";
 import { ESCENARIOS, JUEGOS, SECCIONES } from "../content/catalogo";
 import { aplicar, resultados, type AccionSinId, type EstadoPartida } from "../engine/partida";
 import { vistaJugador, vistaPublica } from "../engine/vistas";
-import { Avatar } from "./Avatar";
+import { Avatar, Retrato } from "./Avatar";
 import { acciones, useEstado } from "./estado";
 import { crearPartidaSala, leerAcciones, publicarPartida, terminarPartidaSala } from "./nube";
 import { aviso, BotonPantallaCompleta, BotonSonido, COLOR_SECCION, confirmar, NOMBRE_CARTA_PODER } from "./comun";
@@ -123,7 +123,7 @@ export function Partida({ inicial, salir }: { inicial: EstadoPartida; salir: () 
           const loc = jl(j.id), enTurno = j.id === v.turnoDe, listo = v.fase === "contestando" && !v.turnoDe && v.contestaron.includes(j.id);
           return (
             <li key={j.id} className={(enTurno ? "activo" : "") + (listo ? " listo" : "")} aria-current={enTurno ? "true" : undefined}>
-              <span className="burbuja">{loc && <Avatar p={loc.personaje} size={40} nombre={j.nombre} />}</span>
+              <span className="burbuja">{loc && <Retrato j={loc} size={44} />}</span>
               <small>{enTurno ? "Su turno" : listo ? "✓ Listo" : j.nombre}</small>
             </li>
           );
@@ -150,7 +150,7 @@ export function Partida({ inicial, salir }: { inicial: EstadoPartida; salir: () 
           const loc = jl(j.id);
           return (
             <div key={j.id} className={"lugar" + (j.id === v.turnoDe ? " activo" : "")}>
-              {loc && <Avatar p={loc.personaje} size={34} nombre={j.nombre} />}
+              {loc && <Retrato j={loc} size={34} />}
               <b>{j.nombre}</b>
               <span>{v.puntos[j.id] ?? 0}</span>
               {(v.cartasEnMano[j.id] ?? 0) > 0 && <small className="muted">🃏 {v.cartasEnMano[j.id]}</small>}
@@ -228,7 +228,7 @@ function TurnoCartas({ e, accion }: { e: EstadoPartida; accion: (a: AccionSinId)
       {e.motor === "dados" && <Dados e={e} />}
       {!animando && <>
       <div className="turno">
-        <div className="marco">{turno && <Avatar p={turno.personaje} size={60} nombre={turno.nombre} />}</div>
+        <div className="marco">{turno && <Retrato p={turno.personaje} nombre={turno.nombre} size={60} />}</div>
         <div style={{ flex: 1, minWidth: 0 }}>
           <span className="label">{etiqueta}</span>
           <div className="quien">{turno?.nombre.toUpperCase()}</div>
@@ -311,7 +311,7 @@ function RelojBotella({ e }: { e: EstadoPartida }) {
         const activo = j.id === sel.pregunta ? " pregunta" : j.id === sel.responde ? " responde" : "";
         return (
           <div key={j.id} className={"asiento" + activo} style={{ left: `${50 + 41 * Math.cos(a)}%`, top: `${50 + 41 * Math.sin(a)}%` }}>
-            {loc && <Avatar p={loc.personaje} size={34} nombre={j.nombre} />}
+            {loc && <Retrato j={loc} size={34} />}
             <small>{j.nombre}</small>
           </div>
         );
@@ -394,7 +394,7 @@ function Conteo({ e, accion }: { e: EstadoPartida; accion: (a: AccionSinId) => v
   return (
     <>
       <div className="turno">
-        <div className="marco">{turno && <Avatar p={turno.personaje} size={60} nombre={turno.nombre} />}</div>
+        <div className="marco">{turno && <Retrato p={turno.personaje} nombre={turno.nombre} size={60} />}</div>
         <div style={{ flex: 1, minWidth: 0 }}>
           <span className="label">{e.mazo === "palabra" ? (e.juegoId === "mimica" ? "Haz mímica, sin hablar" : "Describe sin decir las tachadas") : "Di todo lo que puedas"}</span>
           <div className="quien">{turno?.nombre.toUpperCase()}</div>
@@ -447,7 +447,7 @@ function Confesion({ e, accion }: { e: EstadoPartida; accion: (a: AccionSinId) =
           const loc = s.jugadores.find(x => x.id === j.id), ya = v.contestaron.includes(j.id);
           return (
             <div key={j.id} className="jugador">
-              <span className="marco">{loc && <Avatar p={loc.personaje} size={48} nombre={j.nombre} />}</span>
+              <span className="marco">{loc && <Retrato j={loc} size={48} />}</span>
               <b style={{ flex: 1 }}>{j.nombre}</b>
               {ya ? <span className="chip lime">Listo</span> : <>
                 <button className="btn sm lime" onClick={() => accion({ tipo: "contestar", jugador: j.id, valor: "si" })}>Yo sí</button>
@@ -481,7 +481,7 @@ function Senalar({ e, accion }: { e: EstadoPartida; accion: (a: AccionSinId) => 
           <div className="pila">
             {e.cfg.jugadores.map(j => (
               <button key={j.id} className="btn" style={{ display: "flex", alignItems: "center", gap: 10 }} onClick={() => accion({ tipo: "contestar", jugador: pendiente.id, valor: j.id })}>
-                {jl(j.id) && <Avatar p={jl(j.id)!.personaje} size={28} nombre={j.nombre} />} {j.nombre}
+                {jl(j.id) && <Retrato j={jl(j.id)!} size={28} />} {j.nombre}
               </button>
             ))}
           </div>
@@ -512,7 +512,7 @@ function Competencia({ e, accion }: { e: EstadoPartida; accion: (a: AccionSinId)
           const loc = s.jugadores.find(x => x.id === j.id);
           return (
             <button key={j.id} className="jugador" style={{ color: "inherit" }} onClick={() => { accion({ tipo: "contestar", jugador: anfitrion, valor: j.id }); accion({ tipo: "revelar" }); }}>
-              <span className="marco">{loc && <Avatar p={loc.personaje} size={48} nombre={j.nombre} />}</span>
+              <span className="marco">{loc && <Retrato j={loc} size={48} />}</span>
               <b>{j.nombre}</b>
             </button>
           );
@@ -564,7 +564,7 @@ function Secreto({ e, accion }: { e: EstadoPartida; accion: (a: AccionSinId) => 
 function PasarCelular({ j, onListo, texto }: { j?: { nombre: string; personaje: import("../content/personaje").Personaje }; onListo: () => void; texto?: string }) {
   return (
     <div className="pasar">
-      <div className="marco">{j && <Avatar p={j.personaje} size={110} nombre={j.nombre} />}</div>
+      <div className="marco">{j && <Retrato p={j.personaje} nombre={j.nombre} size={114} />}</div>
       <h1 className="titulo">Pásale el celular a {j?.nombre}</h1>
       <p className="hint">{texto ?? "Nadie más debe ver la pantalla."}</p>
       <button className="btn principal" onClick={onListo}>Soy {j?.nombre}</button>
@@ -710,7 +710,7 @@ function Impostor({ e, accion }: { e: EstadoPartida; accion: (a: AccionSinId) =>
         <div className="pila">
           {e.cfg.jugadores.filter(j => j.id !== porVotar).map(j => (
             <button key={j.id} className="btn" style={{ display: "flex", alignItems: "center", gap: 10 }} onClick={() => accion({ tipo: "contestar", jugador: porVotar, valor: j.id })}>
-              {jl(j.id) && <Avatar p={jl(j.id)!.personaje} size={28} nombre={j.nombre} />} {j.nombre}
+              {jl(j.id) && <Retrato j={jl(j.id)!} size={28} />} {j.nombre}
             </button>
           ))}
         </div>

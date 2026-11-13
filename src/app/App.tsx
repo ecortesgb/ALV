@@ -8,7 +8,7 @@ import { sorprendeme } from "../engine/filtros";
 import { logrosDe } from "../engine/logros";
 import type { EstadoPartida } from "../engine/partida";
 import type { SeccionId } from "../engine/types";
-import { Avatar } from "./Avatar";
+import { Retrato } from "./Avatar";
 import { Cuenta, SincroCuenta } from "./Cuenta";
 import { hayNube, sesionActual } from "./nube";
 import { Avisos, BotonSonido, COLOR_SECCION, Confirmaciones, configuracion, Icono, INTENSIDADES, aviso } from "./comun";
@@ -93,7 +93,7 @@ function Encabezado() {
       <div className="fila" style={{ gap: 8 }}>
       <BotonSonido />
       <a className="yo" href="#/perfil" style={{ textDecoration: "none" }}>
-        <span className="marco"><Avatar p={yo.personaje} size={38} nombre={yo.nombre} /></span>
+        <span className="marco"><Retrato j={yo} size={40} /></span>
         <span className="pila" style={{ gap: 4 }}>
           <span style={{ fontSize: 12, fontWeight: 800 }}>{yo.nombre} · Nv {nivel}</span>
           <span className="barra"><span style={{ width: `${avance}%` }} /></span>
@@ -205,7 +205,7 @@ function QuienSoy({ id, base }: { id?: string; base: "tienda" | "perfil" }) {
     <div className="chips quien-soy" role="group" aria-label="Jugador">
       {s.jugadores.map(j => (
         <a key={j.id} className="opcion" href={`#/${base}/${j.id}`} aria-pressed={j.id === actual.id} aria-current={j.id === actual.id ? "true" : undefined}>
-          <Avatar p={j.personaje} size={22} nombre={j.nombre} /> {j.nombre}
+          <Retrato j={j} size={22} /> {j.nombre}
         </a>
       ))}
     </div>

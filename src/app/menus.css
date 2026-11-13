@@ -137,6 +137,20 @@
   .modos { grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
   .lobby .modos { grid-template-columns: 1fr; }
 }
+/* ───────── Retrato de credencial: hombros hacia arriba, fondo del tipo de carta ───────── */
+.retrato { position: relative; display: inline-block; flex-shrink: 0; overflow: hidden; border-radius: 12px; vertical-align: middle;
+  background: radial-gradient(circle at 50% 35%, rgba(255,255,255,.45), transparent 58%), linear-gradient(150deg, #E8B07A, #8A5A33 60%, #D9965C); }
+.retrato.t-plata { background: radial-gradient(circle at 50% 35%, rgba(255,255,255,.55), transparent 58%), linear-gradient(150deg, #EEF2F7, #8E99A8 60%, #D5DCE5); }
+.retrato.t-oro { background: radial-gradient(circle at 50% 35%, rgba(255,255,255,.5), transparent 58%), linear-gradient(150deg, #FFE38A, #B8860B 60%, #FFD24A); }
+.retrato.t-neon { background: radial-gradient(circle at 50% 35%, rgba(255,255,255,.35), transparent 58%), linear-gradient(150deg, var(--pink), var(--violet) 55%, var(--cyan)); }
+.retrato::after { content: ""; position: absolute; inset: 0; pointer-events: none; border-radius: inherit; box-shadow: inset 0 -10px 16px -10px rgba(14,10,31,.55); }
+.retrato-cuerpo { position: absolute; display: block; transform-origin: 50% 85%; animation: retrato-vivo 4.2s ease-in-out infinite; }
+.retrato-cuerpo .av { display: block; }
+@keyframes retrato-vivo { 0%, 100% { transform: none; } 30% { transform: translateY(-2%) rotate(-2deg); } 60% { transform: translateY(1%) rotate(1.5deg) scale(1.01); } }
+/* Dentro de marcos y burbujas el retrato llena el hueco y toma su forma */
+.marco > .retrato, .burbuja > .retrato, .cara > .retrato { border-radius: 0; }
+.marco:has(> .retrato), .burbuja:has(> .retrato), .cara:has(> .retrato) { align-items: center; }
+
 /* ───────── Herramientas dinámicas de partida ───────── */
 /* Cabecera de partida: salir, juego con su herramienta, rondas por segmentos */
 .hud-partida { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 18px; background: var(--vidrio2); border: 1.5px solid var(--borde-vidrio);

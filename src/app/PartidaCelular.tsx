@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { JUEGOS, SECCIONES } from "../content/catalogo";
 import type { VistaPublica } from "../engine/vistas";
-import { Avatar } from "./Avatar";
+import { Retrato } from "./Avatar";
 import { aviso, NOMBRE_CARTA_PODER } from "./comun";
 import { useEstado } from "./estado";
 import { enviarAccion, miSecreto, miUid, partidaDeSala, type PartidaPublicada } from "./nube";
@@ -81,7 +81,7 @@ export function PartidaCelular({ p }: { p: PartidaPublicada }) {
       <div className="marcador" aria-label="Puntos">
         {[...v.jugadores].sort((a, b) => (v.puntos[b.id] ?? 0) - (v.puntos[a.id] ?? 0)).map((j, i) => (
           <div key={j.id} className={"lugar" + (j.id === yo ? " activo" : "")}>
-            <Avatar p={miembro(j.id)?.personaje ?? personajeInicial(i)} size={28} nombre={j.nombre} />
+            <Retrato p={miembro(j.id)?.personaje ?? personajeInicial(i)} nombre={j.nombre} size={28} />
             <b>{j.id === yo ? "Tú" : j.nombre}</b>
             <span>{v.puntos[j.id] ?? 0}</span>
           </div>

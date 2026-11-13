@@ -5,13 +5,11 @@ import { useEffect, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { nivelPorXp, tituloPorNivel, xpParaNivel } from "../engine/economia";
 import { RAREZAS, type CartaSobre, type DefinicionSobre, type Rareza, type TipoSobre } from "../engine/sobres";
-import { Avatar } from "./Avatar";
+import { Avatar, tipoCartaPorNivel } from "./Avatar";
 import { Confeti } from "./efectos";
 import { saldosDe, type JugadorLocal } from "./estado";
 import { sonar } from "./sonido";
 
-/** Marco de la tarjeta de jugador según el nivel: bronce, plata, oro y neón. */
-const marcoPorNivel = (n: number) => (n >= 10 ? "neon" : n >= 6 ? "oro" : n >= 3 ? "plata" : "bronce");
 
 export function TarjetaJugador({ j }: { j: JugadorLocal }) {
   const s = saldosDe(j);
@@ -20,7 +18,7 @@ export function TarjetaJugador({ j }: { j: JugadorLocal }) {
   const avance = Math.round(((s.acumulada - desde) / (hasta - desde)) * 100);
   return (
     <div className="ficha-jugador">
-      <div className={"tarjeta-jugador " + marcoPorNivel(nivel)} aria-label={`Tarjeta de ${j.nombre}, nivel ${nivel}`}>
+      <div className={"tarjeta-jugador " + tipoCartaPorNivel(nivel)} aria-label={`Tarjeta de ${j.nombre}, nivel ${nivel}`}>
         <span className="tj-nivel"><small>NIVEL</small><b>{nivel}</b></span>
         <span className="tj-arte"><Avatar p={j.personaje} size={150} nombre={j.nombre} /></span>
         <span className="tj-pie"><b>{j.nombre}</b><small>{tituloPorNivel(nivel)}</small></span>
