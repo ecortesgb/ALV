@@ -19,6 +19,7 @@ import { Partida } from "./Partida";
 import { EditorPersonaje, NivelYSaldos, Tienda } from "./Personaje";
 import { Ranking } from "./Ranking";
 import { SincroSala, Unirse } from "./Sala";
+import { useAPartidaDeSala } from "./PartidaCelular";
 import { instalarClics, sonar } from "./sonido";
 
 type Ruta = "inicio" | "lobby" | "tienda" | "ranking" | "perfil" | "unirse";
@@ -66,6 +67,7 @@ export function App() {
           ))}
         </nav>
       )}
+      <AvisoPartidaSala ruta={ruta} />
       <Avisos />
       <SincroCuenta />
       <SincroSala />
@@ -189,6 +191,13 @@ function QuienSoy({ id, base }: { id?: string; base: "tienda" | "perfil" }) {
       ))}
     </div>
   );
+}
+
+/** En el celular invitado: si el anfitrión empezó una partida y estás en otra pestaña, un botón te lleva. */
+function AvisoPartidaSala({ ruta }: { ruta: Ruta }) {
+  const p = useAPartidaDeSala();
+  if (!p || ruta === "lobby") return null;
+  return <a className="btn principal aviso-partida" href="#/lobby">¡Empezó la partida! Ir a jugar →</a>;
 }
 
 function PaginaUnirse({ codigo }: { codigo?: string }) {

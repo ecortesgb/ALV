@@ -16,6 +16,7 @@ import { lugaresDeSesion } from "./ranking";
 import { sonar } from "./sonido";
 import { XpExtra } from "./XpExtra";
 import { PanelSala, SalaInvitado } from "./Sala";
+import { PartidaCelular, useAPartidaDeSala } from "./PartidaCelular";
 import { personajeInicial } from "../content/personaje";
 
 type Gesto = "saludar" | "bailar" | "chocar" | "empujar" | "caer" | "listo";
@@ -66,7 +67,9 @@ export function Lobby({ jugar, arg }: { jugar: (p: EstadoPartida) => void; arg?:
     setCargando(juego);
   };
 
+  const enJuego = useAPartidaDeSala();
   // Celular que entró a la sala de otro: ve a todos en el escenario; el anfitrión inicia la partida.
+  if (s.sala && !s.sala.anfitrion && enJuego) return <PartidaCelular p={enJuego} />;
   if (s.sala && !s.sala.anfitrion) {
     const enSala: JugadorLocal[] = (s.miembros ?? []).map((m, i) => ({ id: m.id, nombre: m.nombre, personaje: m.personaje ?? personajeInicial(i), movimientos: [], tiene: [] }));
     return (

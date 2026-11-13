@@ -6,6 +6,9 @@ import type { EstadoPartida } from "./partida";
 export interface VistaPublica {
   version: number;
   juegoId: string;
+  /** Mecánica y mazo: el celular los usa para saber qué herramienta mostrar. */
+  motor: EstadoPartida["motor"];
+  mazo?: string;
   ronda: number;
   totalRondas: number;
   fase: EstadoPartida["fase"];
@@ -27,6 +30,8 @@ export function vistaPublica(e: EstadoPartida): VistaPublica {
   return {
     version: e.version,
     juegoId: e.juegoId,
+    motor: e.motor,
+    mazo: e.mazo,
     ronda: e.ronda,
     totalRondas: e.totalRondas,
     fase: e.fase,

@@ -37,7 +37,7 @@ Fecha de corte: 12 de noviembre de 2026, 3:46 PM (hora de México).
 1. ~~Compras e inventario en la cuenta~~ Hecho el 13 de noviembre (migraciones 004 y 005).
 2. ~~Validar en el servidor los resultados de partida~~ Hecho el 13 de noviembre (migración 006): el servidor calcula la XP con los hechos de la partida. Falta que los hechos los vea el servidor directamente (sala compartida).
 3. ~~Unirse al lobby desde el celular con enlace o QR~~ Hecho el 13 de noviembre (sala con QR y código, migración 007).
-4. Herramientas por mecánica en cada celular (votar, escribir, dibujar, elegir, dado, carta). La pantalla principal muestra escenario, turno y personajes.
+4. ~~Herramientas por mecánica en cada celular~~ Hecho el 13 de noviembre (migración 008). Falta «dibujar» cuando exista un juego que lo use.
 5. Neo-Arcade tanda 3, resto: botella interactiva, destello de cartas de poder, inclinación 3D de la carta, confeti de la ruleta.
 6. Logros pendientes: más fachero, castigado, sospechoso, afortunado, alma de la fiesta (requieren datos que no guardamos aún).
 7. Ranking de Equipos cuando exista el modo por equipos.
