@@ -15,6 +15,8 @@ import { acciones, parejaDe, saldosDe, useEstado, type JugadorLocal } from "./es
 import { lugaresDeSesion } from "./ranking";
 import { sonar } from "./sonido";
 import { XpExtra } from "./XpExtra";
+import { PanelSala, SalaInvitado } from "./Sala";
+import { personajeInicial } from "../content/personaje";
 
 type Gesto = "saludar" | "bailar" | "chocar" | "empujar" | "caer" | "listo";
 interface Anim { gesto: Gesto; clave: number; hacia?: "izq" | "der" }
@@ -63,6 +65,21 @@ export function Lobby({ jugar, arg }: { jugar: (p: EstadoPartida) => void; arg?:
     sonar("revelar");
     setCargando(juego);
   };
+
+  // Celular que entró a la sala de otro: ve a todos en el escenario; el anfitrión inicia la partida.
+  if (s.sala && !s.sala.anfitrion) {
+    const enSala: JugadorLocal[] = (s.miembros ?? []).map((m, i) => ({ id: m.id, nombre: m.nombre, personaje: m.personaje ?? personajeInicial(i), movimientos: [], tiene: [] }));
+    return (
+      <div className="lobby">
+        <div className="lobby-escena">
+          <span className="label">Sala {s.sala.codigo} · {enSala.length} de 8</span>
+          <h1 className="titulo">{esc.emoji} {esc.nombre}</h1>
+          {enSala.length > 0 && <Escenario jugadores={enSala} color={esc.color} />}
+        </div>
+        <SalaInvitado />
+      </div>
+    );
+  }
 
   if (cargando) return <Carga juego={cargando} alTerminar={() => jugar(crearPartida(cargando, cfg, Date.now() % 100000, CONTENIDO))} />;
 
@@ -138,19 +155,25 @@ export function Lobby({ jugar, arg }: { jugar: (p: EstadoPartida) => void; arg?:
           {s.ajustes.drunk && <p className="aviso">Siempre hay opción sin alcohol, pasar no tiene castigo, máximo 3 por persona por hora y tomar nunca da XP.</p>}
         </section>
 
+        <PanelSala />
+
         <section className="pila" aria-labelledby="t-jug">
           <span id="t-jug" className="label">Jugadores</span>
           {s.jugadores.map((x, i) => {
             const pareja = s.jugadores.find(o => o.id === parejaDe(i, s));
             return (
               <div key={x.id} className="jugador">
-                <a className="marco" href={`#/perfil/${x.id}`} aria-label={`Editar personaje de ${x.nombre}`}><Avatar p={x.personaje} size={48} nombre={x.nombre} /></a>
+                {x.remoto
+                  ? <span className="marco"><Avatar p={x.personaje} size={48} nombre={x.nombre} /></span>
+                  : <a className="marco" href={`#/perfil/${x.id}`} aria-label={`Editar personaje de ${x.nombre}`}><Avatar p={x.personaje} size={48} nombre={x.nombre} /></a>}
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <input value={x.nombre} maxLength={30} aria-label="Nombre" onChange={ev => acciones.renombrar(x.id, ev.target.value)} />
-                  <small className="muted" style={{ paddingLeft: 8 }}>Nv {nivelPorXp(saldosDe(x).acumulada)}{pareja ? ` · pareja de ${pareja.nombre}` : ""}</small>
+                  {x.remoto
+                    ? <b style={{ paddingLeft: 8 }}>{x.nombre}</b>
+                    : <input value={x.nombre} maxLength={30} aria-label="Nombre" onChange={ev => acciones.renombrar(x.id, ev.target.value)} />}
+                  <small className="muted" style={{ paddingLeft: 8 }}>{x.remoto ? "📱 desde su celular" : `Nv ${nivelPorXp(saldosDe(x).acumulada)}`}{pareja ? ` · pareja de ${pareja.nombre}` : ""}</small>
                 </div>
-                <button className="btn sm cyan" aria-label={`Dar XP extra a ${x.nombre}`} onClick={() => setPremiado(x.id)}>+XP</button>
-                {s.jugadores.length > 2 && <button className="btn sm" aria-label={`Quitar a ${x.nombre}`} onClick={() => acciones.quitar(x.id)}>✕</button>}
+                {!x.remoto && <button className="btn sm cyan" aria-label={`Dar XP extra a ${x.nombre}`} onClick={() => setPremiado(x.id)}>+XP</button>}
+                {s.jugadores.length > 2 && !x.remoto && <button className="btn sm" aria-label={`Quitar a ${x.nombre}`} onClick={() => acciones.quitar(x.id)}>✕</button>}
               </div>
             );
           })}

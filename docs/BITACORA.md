@@ -142,3 +142,14 @@ Falta de esta tanda: en ¿Cuánto conoces a tu pareja? la respuesta se ve mientr
 - La función vieja `registrar_xp_partida` ya no se puede llamar.
 - Lo que falta: los hechos todavía los reporta el celular. Se cierra del todo cuando la partida corra en la sala compartida, donde el servidor ve cada acción.
 - Pruebas: 35 del motor (una nueva compara la fórmula de la app con la de la base); 11 en SQL (trampas rechazadas y cálculo de 52 XP como el ejemplo del Maestro); punta a punta con cuenta real: Verdad o reto de 8 rondas, la app calculó 57 y el servidor acreditó 57. La cuenta de prueba se borró.
+
+## 2026-11-13 · Sala en línea: entrar desde el celular con QR o código
+
+- En el Lobby, el anfitrión (con cuenta) abre la sala: aparece un QR y un código de 6 letras.
+- Cada quien escanea el QR o escribe el código en Inicio, entra o crea su cuenta, y aparece en el Lobby de la laptop con su personaje. La lista se actualiza cada 3 segundos.
+- En la laptop, quienes entraron desde su celular se suman al grupo (máximo 8). Su nombre y personaje vienen de su cuenta; no se editan desde la laptop.
+- El celular invitado ve la sala y a todos en el escenario; mientras, personaliza, compra o revisa el Ranking con su cuenta. Puede salir de la sala; el anfitrión la cierra.
+- Al recargar, la app recupera la sala abierta.
+- Base: función nueva `salir_evento` (migración 007).
+- Límite: la partida todavía se juega en la pantalla del anfitrión, y lo secreto se ve pasando el celular. La XP de los jugadores que vinieron de otro celular aún no llega a su cuenta. Las dos cosas son el punto 4 (herramientas en cada celular).
+- Pruebas: 35 del motor; punta a punta con dos navegadores (laptop y celular) contra el servidor real: abrir sala, entrar con el código, aparecer en la laptop, salir y desaparecer. Las cuentas de prueba se borraron.

@@ -424,3 +424,9 @@ button.juego[aria-pressed="true"] { border-color: var(--sc); box-shadow: 0 0 0 1
 .arte-grande img { width: 150px; height: 150px; object-fit: contain; }
 .chip.rareza.comun { background: #5b6170; } .chip.rareza.rara { background: #22E1FF; color: #05121a; }
 .chip.rareza.epica { background: #A77BFF; } .chip.rareza.legendaria { background: #FFCF4A; color: #2a1b00; }
+
+/* Sala en línea */
+.sala-qr { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; }
+.qr { border-radius: 12px; background: #fff; padding: 4px; flex-shrink: 0; }
+.codigo-sala { font-family: var(--display); font-size: 34px; letter-spacing: 4px; color: var(--lime); }
+.input.codigo { font-family: var(--display); font-size: 26px; letter-spacing: 6px; text-align: center; text-transform: uppercase; }

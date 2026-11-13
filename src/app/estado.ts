@@ -5,12 +5,14 @@ import { useSyncExternalStore } from "react";
 import { nivelPorXp, saldos, puedeComprarAccesorio, puedeComprarCarta, XP_EXTRA, xpExtraValida, type Movimiento } from "../engine/economia";
 import { abrirSobre, SOBRES, type CartaSobre, type Rareza, type TipoSobre } from "../engine/sobres";
 import type { Azar } from "../engine/azar";
-import { comprarAccesorioNube, comprarSobreNube, cuentaActiva, leerCuenta, registrarPartidaNube, registrarXpExtraNube, type DatosCuenta } from "./nube";
+import { type MiembroSala, type Sala, comprarAccesorioNube, comprarSobreNube, cuentaActiva, leerCuenta, registrarPartidaNube, registrarXpExtraNube, type DatosCuenta } from "./nube";
 import { idActual, migrarPersonaje, personajeInicial, TIENDA, cambioValido, type Personaje, type Zona } from "../content/personaje";
 import type { EscenarioId, Intensidad } from "../engine/types";
 
 export interface JugadorLocal {
   id: string;
+  /** Jugador que entró desde su propio celular con su cuenta. Su nombre y personaje vienen del servidor. */
+  remoto?: boolean;
   nombre: string;
   personaje: Personaje;
   movimientos: Movimiento[];
@@ -29,6 +31,10 @@ export interface EstadoLocal {
   historial: Partida[];
   /** Jugador de este celular con cuenta abierta: su saldo y su inventario vienen del servidor. */
   cuenta?: { jugador: string; acumulada: number; disponible: number; delEvento: number };
+  /** Sala en línea abierta en este celular (como anfitrión o como invitado). */
+  sala?: Sala;
+  /** Quién está en la sala, según el servidor. */
+  miembros?: MiembroSala[];
 }
 
 const CLAVE = "alv-local-v2";
@@ -52,7 +58,7 @@ function leer(): EstadoLocal {
     const s = JSON.parse(localStorage.getItem(CLAVE) ?? "null") as EstadoLocal | null;
     if (s && s.version === 2 && Array.isArray(s.jugadores) && s.jugadores.length >= 2) {
       // La cuenta se vuelve a leer del servidor en cada visita: no se confía en la copia guardada.
-      return { ...s, cuenta: undefined, jugadores: s.jugadores.map(j => ({ ...j, personaje: migrarPersonaje(j.personaje), tiene: (j.tiene ?? []).map(idActual) })) };
+      return { ...s, cuenta: undefined, sala: undefined, miembros: undefined, jugadores: s.jugadores.map(j => ({ ...j, personaje: migrarPersonaje(j.personaje), tiene: (j.tiene ?? []).map(idActual) })) };
     }
   } catch { /* sin almacenamiento: se usa el inicial */ }
   return inicial();
@@ -111,7 +117,27 @@ export const acciones = {
     });
   },
   /** Al salir de la cuenta, el jugador vuelve a usar su saldo de este celular. */
-  olvidarCuenta() { if (estado.cuenta) guardar({ ...estado, cuenta: undefined }); },
+  olvidarCuenta() { if (estado.cuenta || estado.sala) guardar({ ...estado, cuenta: undefined, sala: undefined, miembros: undefined, jugadores: estado.jugadores.filter(j => !j.remoto) }); },
+  /** Entra o sale de una sala. Al salir se quitan del grupo los jugadores que venían de otros celulares. */
+  sala(sala: Sala | undefined) {
+    guardar({ ...estado, sala, miembros: sala ? estado.miembros : undefined, jugadores: sala ? estado.jugadores : estado.jugadores.filter(j => !j.remoto) });
+  },
+  /**
+   * Pone en el grupo a quienes entraron desde su celular (solo en la pantalla del anfitrión).
+   * El anfitrión mismo ya es el jugador de la cuenta. Nunca se pasa de 8.
+   */
+  miembrosSala(miembros: MiembroSala[]) {
+    const locales = estado.jugadores.filter(j => !j.remoto);
+    let remotos: JugadorLocal[] = [];
+    if (estado.sala?.anfitrion) {
+      remotos = miembros.filter(m => !m.anfitrion).map((m, i) => {
+        const id = `c-${m.id}`;
+        const antes = estado.jugadores.find(j => j.id === id);
+        return { id, remoto: true, nombre: m.nombre, personaje: m.personaje ? migrarPersonaje({ ...personajeInicial(i + 4), ...m.personaje }) : personajeInicial(i + 4), movimientos: antes?.movimientos ?? [], tiene: [] };
+      }).slice(0, Math.max(0, 8 - locales.length));
+    }
+    guardar({ ...estado, miembros, jugadores: [...locales, ...remotos] });
+  },
   renombrar(id: string, nombre: string) {
     const limpio = nombre.replace(/\s+/g, " ").slice(0, 30);
     cambiaJugador(id, j => ({ ...j, nombre: limpio }));

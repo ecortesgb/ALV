@@ -165,3 +165,88 @@ export async function comprarSobreNube(sobre: string): Promise<{ ok: true; carta
     return { ok: true, cartas: ((data ?? []) as { articulo: string; rareza: string }[]).map(c => ({ id: c.articulo, rareza: c.rareza })) };
   } catch (e) { console.error("comprarSobreNube", e); return { ok: false, motivo: "No se pudo comprar. Intenta otra vez." }; }
 }
+
+// ---------- Sala en línea (evento) ----------
+
+export interface Sala { id: string; codigo: string; nombre: string; anfitrion: boolean }
+export interface MiembroSala { id: string; nombre: string; personaje: Personaje | null; anfitrion: boolean }
+
+const uidActual = async () => (await cliente?.auth.getUser())?.data.user?.id ?? null;
+
+/** Abre una sala nueva; quien la abre es el anfitrión. */
+export async function abrirSala(nombre: string, adulto: boolean, drunk: boolean): Promise<Sala | null> {
+  if (!cliente || !usuario) return null;
+  try {
+    const { data, error } = await cliente.rpc("crear_evento", { p_nombre: nombre.slice(0, 60) || "Sala ALV", p_adulto: adulto, p_drunk: drunk });
+    if (error) { console.error("abrirSala", error.message); return null; }
+    const fila = (data as { id: string; codigo: string }[] | null)?.[0];
+    return fila ? { id: fila.id, codigo: fila.codigo, nombre, anfitrion: true } : null;
+  } catch (e) { console.error("abrirSala", e); return null; }
+}
+
+/** Entra a una sala con su código. Devuelve la sala o un motivo. */
+export async function unirseSala(codigo: string): Promise<Sala | string> {
+  if (!cliente || !usuario) return "Primero entra a tu cuenta.";
+  const limpio = codigo.trim().toUpperCase();
+  if (!/^[A-Z0-9]{6}$/.test(limpio)) return "El código tiene 6 letras o números.";
+  try {
+    const { data, error } = await cliente.rpc("unirse_evento", { p_codigo: limpio });
+    if (error) { console.error("unirseSala", error.message); return error.message.includes("llena") ? "La sala está llena (8)." : "No encontramos esa sala o ya se cerró."; }
+    const sala = await leerSala(data as string);
+    return sala ?? "No se pudo entrar a la sala.";
+  } catch (e) { console.error("unirseSala", e); return "No se pudo entrar a la sala."; }
+}
+
+async function leerSala(id: string): Promise<Sala | null> {
+  if (!cliente) return null;
+  const uid = await uidActual();
+  const { data, error } = await cliente.from("eventos").select("id, codigo, nombre, anfitrion, cerrado").eq("id", id).maybeSingle();
+  if (error || !data || data.cerrado) return null;
+  return { id: data.id, codigo: data.codigo, nombre: data.nombre, anfitrion: data.anfitrion === uid };
+}
+
+/** La sala abierta más reciente en la que está la cuenta (para volver después de recargar). */
+export async function miSalaAbierta(): Promise<Sala | null> {
+  if (!cliente || !usuario) return null;
+  try {
+    const uid = await uidActual();
+    const { data, error } = await cliente.from("eventos").select("id, codigo, nombre, anfitrion").eq("cerrado", false).order("inicia", { ascending: false }).limit(1);
+    if (error || !data?.[0]) return null;
+    const e = data[0];
+    return { id: e.id, codigo: e.codigo, nombre: e.nombre, anfitrion: e.anfitrion === uid };
+  } catch (e) { console.error("miSalaAbierta", e); return null; }
+}
+
+/** Quién está en la sala, con su personaje. Devuelve null si la sala ya no existe o se cerró. */
+export async function miembrosSala(sala: Sala): Promise<MiembroSala[] | null> {
+  if (!cliente || !usuario) return null;
+  try {
+    const ev = await cliente.from("eventos").select("anfitrion, cerrado").eq("id", sala.id).maybeSingle();
+    if (ev.error || !ev.data || ev.data.cerrado) return null;
+    const m = await cliente.from("miembros_evento").select("jugador, unido").eq("evento", sala.id).order("unido");
+    if (m.error) return null;
+    const ids = (m.data ?? []).map(x => x.jugador as string);
+    if (ids.length === 0) return [];
+    const [perf, pers] = await Promise.all([
+      cliente.from("perfiles").select("id, nombre").in("id", ids),
+      cliente.from("personajes").select("jugador, piezas").in("jugador", ids),
+    ]);
+    const nombre = new Map((perf.data ?? []).map(x => [x.id as string, x.nombre as string]));
+    // Una cuenta recién creada guarda su personaje un segundo después: mientras, va el de inicio.
+    const piezas = new Map((pers.data ?? []).filter(x => (x.piezas as Partial<Personaje>)?.piel).map(x => [x.jugador as string, x.piezas as Personaje]));
+    return ids.map(id => ({ id, nombre: nombre.get(id) ?? "Jugador", personaje: piezas.get(id) ?? null, anfitrion: id === ev.data!.anfitrion }));
+  } catch (e) { console.error("miembrosSala", e); return null; }
+}
+
+export async function cerrarSala(sala: Sala): Promise<void> {
+  try { const r = await cliente?.rpc("cerrar_evento", { p_evento: sala.id }); if (r?.error) console.error("cerrarSala", r.error.message); }
+  catch (e) { console.error("cerrarSala", e); }
+}
+
+export async function salirDeSala(sala: Sala): Promise<void> {
+  try { const r = await cliente?.rpc("salir_evento", { p_evento: sala.id }); if (r?.error) console.error("salirDeSala", r.error.message); }
+  catch (e) { console.error("salirDeSala", e); }
+}
+
+/** Enlace que abre la app directo en la pantalla para unirse. */
+export const enlaceSala = (codigo: string) => `${location.origin}${location.pathname}#/unirse/${codigo}`;
