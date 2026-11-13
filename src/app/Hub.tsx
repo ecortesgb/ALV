@@ -209,3 +209,14 @@ function EscenaModo({ modo }: { modo: Modo["id"] }) {
     </span>
   );
 }
+
+/** Encabezado de las pantallas del menú: volver a la principal, título grande y lo que vaya a la derecha. */
+export function CabeceraJuego({ titulo, color, derecha }: { titulo: string; color?: string; derecha?: React.ReactNode }) {
+  return (
+    <header className="cabecera-juego" style={color ? { ["--sc" as string]: color } : undefined}>
+      <a className="hub-icono volver" href="#/inicio" aria-label="Volver a la pantalla principal">‹</a>
+      <h1>{titulo}</h1>
+      <span className="cabecera-derecha">{derecha}</span>
+    </header>
+  );
+}

@@ -141,9 +141,14 @@ export function Tienda({ j }: { j: JugadorLocal }) {
   const s = saldosDe(j);
   const nivel = nivelPorXp(s.acumulada);
   const [tab, setTab] = useState<PestanaTienda>("sobres");
+  const [probando, setProbando] = useState<string | null>(null);
+  const probar = (id: string) => { sonar("clic"); setProbando(p => (p === id ? null : id)); };
   const TABS: [PestanaTienda, string][] = [["sobres", "Sobres"], ["accesorios", "Accesorios"], ["comodines", "Comodines"]];
   return (
-    <div className="pila">
+    <div className="tienda-juego">
+      <Probador j={j} articulo={probando} quitar={() => setProbando(null)} />
+      <div className="pila tienda-contenido">
+      <Destacado j={j} probar={id => { setTab("accesorios"); probar(id); }} />
       <div className="pestanas-menu" role="tablist" aria-label="Secciones de la tienda">
         {TABS.map(([k, n]) => <button key={k} role="tab" aria-selected={tab === k} onClick={() => setTab(k)}>{n}</button>)}
       </div>
@@ -160,6 +165,7 @@ export function Tienda({ j }: { j: JugadorLocal }) {
                   const bloqueado = nivel < a.nivel, alcanza = s.disponible >= a.precio;
                   return (
                     <TarjetaArticulo key={a.id} rareza={rarezaDe(a.precio)} arte={arteArticulo(a.id)} nombre={a.nombre} puesto={puesto}
+                      alTocar={() => probar(a.id)} activa={probando === a.id}
                       etiqueta={puesto ? "Puesto" : tiene ? "Tuyo" : undefined}>
                       {tiene ? (
                         <button className={"btn sm" + (puesto ? " on" : "")} onClick={() => acciones.ponerse(j.id, a.id)}>{puesto ? "Quitar" : "Ponérmelo"}</button>
@@ -187,6 +193,45 @@ export function Tienda({ j }: { j: JugadorLocal }) {
           </div>
         </>
       )}
+      </div>
     </div>
   );
 }
+
+/** Probador: tu personaje con el artículo que tocaste puesto, para verlo antes de comprar. */
+function Probador({ j, articulo, quitar }: { j: JugadorLocal; articulo: string | null; quitar: () => void }) {
+  const a = TIENDA.find(x => x.id === articulo);
+  const p = a ? { ...j.personaje, puesto: { ...j.personaje.puesto, [a.zona]: a.id } } : j.personaje;
+  return (
+    <aside className={"probador" + (a ? " con-articulo" : "")} aria-label="Probador">
+      <span className="probador-luz" aria-hidden="true" />
+      <span key={articulo ?? "nada"} className="probador-cuerpo"><Avatar p={p} size={150} nombre={j.nombre} /></span>
+      <div className="probador-info">
+        {a ? <><span className="label">Probándote</span><b>{a.nombre}</b><button className="btn sm" onClick={quitar}>Quitar</button></>
+           : <><span className="label">Probador</span><small className="muted">Toca un accesorio para vértelo puesto.</small></>}
+      </div>
+    </aside>
+  );
+}
+
+/** Destacado del día: un accesorio que todavía no tienes, distinto cada día. */
+function Destacado({ j, probar }: { j: JugadorLocal; probar: (id: string) => void }) {
+  const faltan = TIENDA.filter(a => !j.tiene.includes(a.id));
+  if (!faltan.length) return null;
+  const hoy = new Date();
+  const semilla = hoy.getFullYear() * 400 + hoy.getMonth() * 31 + hoy.getDate();
+  const a = [...faltan].sort((x, y) => y.precio - x.precio)[semilla % Math.min(faltan.length, 6)]!;
+  const r = rarezaDe(a.precio);
+  return (
+    <button className={"destacado r-" + r} onClick={() => probar(a.id)}>
+      <span className="destacado-arte" aria-hidden="true">{arteArticulo(a.id)}</span>
+      <span className="pila" style={{ gap: 4, minWidth: 0 }}>
+        <span className="destacado-cinta">⭐ Destacado de hoy</span>
+        <b className="destacado-nombre">{a.nombre}</b>
+        <small>{RAREZA_NOMBRE[r]} · nivel {a.nivel} · <b>{a.precio} XP</b></small>
+        <span className="destacado-ver">Pruébatelo ›</span>
+      </span>
+    </button>
+  );
+}
+const RAREZA_NOMBRE = { comun: "Común", rara: "Rara", epica: "Épica", legendaria: "Legendaria" } as const;

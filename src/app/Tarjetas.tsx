@@ -49,10 +49,14 @@ export function TarjetaJugador({ j }: { j: JugadorLocal }) {
 }
 
 /** Tarjeta de artículo de la tienda o de comodín. El marco cambia con la rareza. */
-export function TarjetaArticulo({ rareza, arte, nombre, detalle, etiqueta, puesto, children }:
-  { rareza: Rareza | "poder"; arte?: ReactNode; nombre: string; detalle?: string; etiqueta?: string; puesto?: boolean; children?: ReactNode }) {
+export function TarjetaArticulo({ rareza, arte, nombre, detalle, etiqueta, puesto, children, alTocar, activa }:
+  { rareza: Rareza | "poder"; arte?: ReactNode; nombre: string; detalle?: string; etiqueta?: string; puesto?: boolean; children?: ReactNode;
+    /** Tocar la tarjeta (no sus botones) la prueba en el personaje. */ alTocar?: () => void; activa?: boolean }) {
   return (
-    <div className={"tarjeta-articulo r-" + rareza + (puesto ? " puesto" : "")}>
+    <div className={"tarjeta-articulo r-" + rareza + (puesto ? " puesto" : "") + (activa ? " activa" : "") + (alTocar ? " tocable" : "")}
+      onClick={alTocar ? e => { if (!(e.target as HTMLElement).closest("button")) alTocar(); } : undefined}
+      role={alTocar ? "button" : undefined} tabIndex={alTocar ? 0 : undefined} aria-pressed={alTocar ? !!activa : undefined}
+      onKeyDown={alTocar ? e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); alTocar(); } } : undefined}>
       <span className="ta-cinta">{etiqueta ?? (rareza === "poder" ? "Comodín" : RAREZAS[rareza])}</span>
       <span className="ta-arte" aria-hidden="true">{arte}</span>
       <b className="ta-nombre">{nombre}</b>

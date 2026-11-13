@@ -524,3 +524,63 @@
 .carrusel-juegos .juego.modo b { padding-right: 0; }
 .carrusel-juegos .juego.modo[aria-pressed="true"] { transform: translateY(-6px) scale(1.03); }
 @media (min-width: 900px) { .lobby .carrusel-juegos, .armado .carrusel-juegos { display: flex; } }
+
+/* ───────── Encabezado de pantallas del menú ───────── */
+.cabecera-juego { display: flex; align-items: center; gap: 12px; }
+.cabecera-juego h1 { flex: 1; margin: 0; font-family: var(--display); font-weight: 400; font-size: clamp(28px, 7vw, 44px); line-height: 1; color: var(--sc, var(--ink));
+  text-shadow: 0 0 24px color-mix(in srgb, var(--sc, var(--pink)) 55%, transparent); transform: skewX(-6deg); }
+.hub-icono.volver { font-size: 30px; font-weight: 800; text-decoration: none; line-height: 1; }
+.cabecera-derecha { display: flex; gap: 8px; align-items: center; }
+
+/* ───────── Tienda: probador y destacado ───────── */
+.tienda-juego { display: flex; flex-direction: column; gap: 14px; }
+.tienda-contenido { min-width: 0; }
+.probador { position: sticky; top: 8px; z-index: 6; display: flex; align-items: flex-end; gap: 12px; min-height: 150px; padding: 10px 14px 0; border-radius: 22px; overflow: hidden;
+  background: radial-gradient(ellipse at 30% 110%, rgba(255,194,61,.45), transparent 60%), linear-gradient(160deg, #2E2160, #160F2E); border: 2px solid rgba(255,194,61,.35); }
+.probador-luz { position: absolute; left: 6%; bottom: -20px; width: 150px; height: 60px; border-radius: 50%; background: radial-gradient(ellipse, rgba(255,240,180,.55), transparent 70%); }
+.probador-cuerpo { position: relative; display: block; flex-shrink: 0; margin-bottom: -6px; transform-origin: bottom center; animation: subir-carta .45s cubic-bezier(.2,.9,.3,1.3) both; }
+.probador-cuerpo .av { width: 100px !important; height: 150px !important; }
+.probador-info { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; padding-bottom: 14px; min-width: 0; }
+.probador-info b { font-family: var(--display); font-weight: 400; font-size: 20px; }
+.probador.con-articulo { border-color: var(--gold); box-shadow: 0 0 30px -10px var(--gold); }
+
+.destacado { --r: var(--cyan); display: flex; align-items: center; gap: 14px; padding: 14px; border-radius: 22px; text-align: left; color: var(--ink); font: inherit; overflow: hidden; position: relative;
+  background: linear-gradient(120deg, color-mix(in srgb, var(--r) 45%, #1A1236), #1A1236 70%); border: 3px solid var(--r); box-shadow: 0 0 34px -12px var(--r); }
+.destacado.r-epica { --r: var(--violet); } .destacado.r-legendaria { --r: var(--gold); } .destacado.r-comun { --r: #9AA3B5; }
+.destacado::after { content: ""; position: absolute; inset: -50%; background: linear-gradient(115deg, transparent 45%, rgba(255,255,255,.25) 50%, transparent 55%); animation: brillo-sobre 4s ease-in-out infinite; pointer-events: none; }
+.destacado-arte { display: grid; place-items: center; width: 92px; height: 92px; flex-shrink: 0; border-radius: 18px; background: rgba(8,6,18,.5); animation: flotar 3s ease-in-out infinite; }
+.destacado-arte img, .destacado-arte svg { width: 80px; height: 80px; object-fit: contain; }
+@keyframes flotar { 50% { transform: translateY(-6px) rotate(-3deg); } }
+.destacado-cinta { align-self: flex-start; padding: 3px 10px; border-radius: 999px; background: var(--r); color: var(--bg); font-size: 11px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; }
+.destacado-nombre { font-family: var(--display); font-weight: 400; font-size: 22px; line-height: 1.05; }
+.destacado small { color: var(--soft); font-weight: 600; } .destacado small b { color: var(--lime); }
+.destacado-ver { font-weight: 800; font-size: 13px; color: var(--r); }
+.tarjeta-articulo.tocable { cursor: pointer; transition: transform .15s, box-shadow .15s; }
+.tarjeta-articulo.tocable:hover { transform: translateY(-3px); }
+.tarjeta-articulo.activa { transform: translateY(-4px) scale(1.03); box-shadow: 0 0 0 3px var(--gold), 0 14px 30px -12px var(--gold); }
+@media (min-width: 900px) {
+  .tienda-juego { display: grid; grid-template-columns: minmax(0, 1fr) 280px; align-items: start; }
+  .tienda-juego > .probador { order: 2; flex-direction: column; align-items: center; min-height: 420px; padding: 20px; top: 16px; }
+  .probador-cuerpo .av { width: 180px !important; height: 270px !important; }
+  .probador-info { align-items: center; text-align: center; }
+}
+
+/* ───────── Casillero ───────── */
+.casillero-tabs button { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; padding: 10px 16px; }
+.casillero-panel { display: flex; flex-direction: column; gap: 14px; animation: subir-carta .35s cubic-bezier(.2,.9,.3,1.1) both; }
+
+/* ───────── Ranking con podio ───────── */
+.podio-ranking { margin-top: 6px; padding: 10px 6px 0; border-radius: 24px; background: radial-gradient(ellipse at 50% 100%, rgba(255,207,74,.25), transparent 65%); }
+.podio-gente { display: flex; justify-content: center; align-items: flex-end; }
+.podio-nombre { font-size: 13px; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.podio-xp { font-family: var(--display); color: var(--lime); }
+
+/* ───────── Armado: escenario y modalidad en carrusel ───────── */
+.armado .postales, .armado .modalidades { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; gap: 12px; padding: 6px 2px 12px; scrollbar-width: none; }
+.armado .postales::-webkit-scrollbar, .armado .modalidades::-webkit-scrollbar { display: none; }
+.armado .postal { flex: 0 0 min(72vw, 280px); min-height: 190px; scroll-snap-align: center; transition: transform .25s, box-shadow .25s; }
+.armado .postal[aria-pressed="true"] { transform: translateY(-6px) scale(1.03); }
+.armado .modalidad { flex: 0 0 min(58vw, 220px); min-height: 170px; scroll-snap-align: center; transition: transform .25s; }
+.armado .modalidad .mj-icono { font-size: 42px; }
+.armado .modalidad[aria-pressed="true"] { transform: translateY(-6px) scale(1.03); }
+.armado .modalidad[aria-pressed="true"] .mj-icono, .armado .postal[aria-pressed="true"] .postal-emoji { animation: brinco-modo 1.2s ease-in-out infinite; }

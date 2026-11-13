@@ -17,7 +17,7 @@ import { Ranking } from "./Ranking";
 import { SincroSala, Unirse } from "./Sala";
 import { useAPartidaDeSala } from "./PartidaCelular";
 import { instalarClics } from "./sonido";
-import { Hub, PantallaModos } from "./Hub";
+import { CabeceraJuego, Hub, PantallaModos } from "./Hub";
 import { Notificaciones, PaginaAjustes, PaginaFisico, PantallaCarga, PantallaCuenta } from "./Bienvenida";
 
 type Ruta = "inicio" | "lobby" | "tienda" | "ranking" | "perfil" | "unirse" | "fisico" | "ajustes" | "jugar";
@@ -137,7 +137,7 @@ function PaginaTienda({ id }: { id?: string }) {
   const j = s.jugadores.find(x => x.id === id) ?? s.jugadores[0]!;
   return (
     <>
-      <div className="entre"><h1 className="titulo">Tienda</h1><span className="chip lime">{saldosDe(j).disponible} XP disponible</span></div>
+      <CabeceraJuego titulo="Tienda" color="#FFC23D" derecha={<span className="hub-moneda"><i aria-hidden="true">✦</i>{saldosDe(j).disponible}</span>} />
       <QuienSoy id={j.id} base="tienda" />
       <Tienda j={j} />
     </>
@@ -165,18 +165,28 @@ function LogrosDe({ j }: { j: JugadorLocal }) {
   );
 }
 
+type PestanaCasillero = "armar" | "equipo" | "logros" | "cuenta";
+const PESTANAS_CASILLERO: [PestanaCasillero, string, string][] = [["armar", "🧱", "Armar"], ["equipo", "🛡️", "Equipo"], ["logros", "🏅", "Logros"], ["cuenta", "👤", "Cuenta"]];
+
+/** Casillero: tu carta arriba y pestañas para armar al personaje, el equipo, los logros y la cuenta. */
 function Perfil({ id }: { id?: string }) {
   const s = useEstado();
   const j = s.jugadores.find(x => x.id === id) ?? s.jugadores[0]!;
+  const [tab, setTab] = useState<PestanaCasillero>("armar");
   return (
     <>
-      <h1 className="titulo">Tu personaje</h1>
+      <CabeceraJuego titulo="Casillero" color="#FF2E88" />
       <QuienSoy id={j.id} base="perfil" />
       <TarjetaJugador j={j} />
-      <SelectorEquipo j={j} />
-      <Cuenta j={j} />
-      <LogrosDe j={j} />
-      <EditorPersonaje j={j} />
+      <div className="pestanas-menu casillero-tabs" role="tablist" aria-label="Casillero">
+        {PESTANAS_CASILLERO.map(([k, ic, n]) => <button key={k} role="tab" aria-selected={tab === k} onClick={() => setTab(k)}><span aria-hidden="true">{ic}</span> {n}</button>)}
+      </div>
+      <div key={tab} className="casillero-panel">
+        {tab === "armar" && <EditorPersonaje j={j} />}
+        {tab === "equipo" && <SelectorEquipo j={j} />}
+        {tab === "logros" && <LogrosDe j={j} />}
+        {tab === "cuenta" && (hayNube ? <Cuenta j={j} /> : <p className="hint">Las cuentas necesitan conexión con el servidor.</p>)}
+      </div>
     </>
   );
 }
