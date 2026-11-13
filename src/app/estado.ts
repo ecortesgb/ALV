@@ -26,6 +26,7 @@ export interface JugadorLocal {
 export interface Partida { fecha: string; juego: string; resultados: { id?: string; nombre: string; puntos: number; xp: number }[]; extra?: string }
 
 export type Modalidad = "individual" | "parejas" | "equipos" | "sexos";
+export type ModoJuego = "local" | "linea" | "fisico";
 
 /** Neón sofisticado (por defecto) o Midnight Lounge, como alternativa para comparar en pantalla. */
 export type Paleta = "neon" | "lounge";
@@ -39,7 +40,9 @@ export interface EstadoLocal {
     /** Rondas por partida y segundos para responder (Ajustes). */
     rondas?: number; segundos?: number;
     /** Cómo se elige el turno en los juegos de cartas por turno. */
-    turno?: "orden" | "ruleta" };
+    turno?: "orden" | "ruleta";
+    /** Modo elegido en la pantalla de modos: local (un celular), en línea (cuentas reales) o físico. */
+    modo?: ModoJuego };
   historial: Partida[];
   /** Jugador de este celular con cuenta abierta: su saldo y su inventario vienen del servidor. */
   cuenta?: { jugador: string; acumulada: number; disponible: number; delEvento: number };
@@ -382,4 +385,15 @@ export function equipoPartidaDe(s: EstadoLocal, i: number): string | undefined {
   if (s.modalidad === "equipos") return s.equipos?.[j.id];
   if (s.modalidad === "sexos") { const g = generoDe(s, i); return g ? NOMBRE_EQUIPO_SEXOS[g] : undefined; }
   return undefined;
+}
+
+/**
+ * Quién juega según el modo. Local y físico: los jugadores creados en este celular (nunca los de la sala).
+ * En línea: solo cuentas reales — la tuya y las que entraron a tu sala desde su celular.
+ */
+export function jugadoresDelModo(s: EstadoLocal): JugadorLocal[] {
+  const locales = s.jugadores.filter(j => !j.remoto);
+  if (s.ajustes.modo !== "linea" || !s.sala) return locales;
+  const mia = s.jugadores.find(j => j.id === s.cuenta?.jugador) ?? s.jugadores[0]!;
+  return [mia, ...s.jugadores.filter(j => j.remoto)];
 }

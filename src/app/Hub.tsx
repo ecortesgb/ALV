@@ -8,9 +8,10 @@ import { crearAzar } from "../engine/azar";
 import { nivelPorXp, xpParaNivel } from "../engine/economia";
 import { sorprendeme } from "../engine/filtros";
 import { Avatar, Retrato, tipoCartaPorNivel } from "./Avatar";
-import { aviso, configuracion, Icono } from "./comun";
+import { aviso, configuracion, confirmar, Icono, INTENSIDADES } from "./comun";
 import { useAura } from "./efectos";
-import { saldosDe, useEstado } from "./estado";
+import { acciones, esMenorConCuenta, saldosDe, useEstado } from "./estado";
+import type { Intensidad } from "../engine/types";
 import { hayNube } from "./nube";
 import { sonar } from "./sonido";
 
@@ -105,6 +106,7 @@ export function Hub({ abrirNovedades }: { abrirNovedades: () => void }) {
       </div>
 
       <aside className="hub-lado">
+        <Ambiente />
         <button className="hub-tarjeta sorpresa" onClick={sorpresa} aria-label="Sorpréndeme: un juego al azar">
           <span className={"mini-ruleta" + (girando ? " gira" : "")} aria-hidden="true" />
           <span className="pila" style={{ gap: 2 }}><b>¡Sorpréndeme!</b><small>Un juego al azar</small></span>
@@ -145,7 +147,12 @@ export function PantallaModos() {
     if (mejor !== i) setI(mejor);
   };
   const m = modos[i]!;
-  const elegir = (x: Modo) => { if (x.id === "linea" && !hayNube) { aviso("El juego en línea necesita conexión."); return; } sonar("revelar"); location.hash = x.ir.slice(1); };
+  const elegir = (x: Modo) => {
+    if (x.id === "linea" && !hayNube) { aviso("El juego en línea necesita conexión."); return; }
+    acciones.ajustes({ modo: x.id });
+    sonar("revelar");
+    location.hash = x.ir.slice(1);
+  };
 
   return (
     <div className="modos-pantalla" style={{ ["--sc" as string]: m.color }}>
@@ -219,5 +226,42 @@ export function CabeceraJuego({ titulo, color, derecha }: { titulo: string; colo
       <h1>{titulo}</h1>
       <span className="cabecera-derecha">{derecha}</span>
     </header>
+  );
+}
+
+const ICONO_INTENSIDAD: Record<Intensidad, string> = { 1: "🌱", 2: "🌶️", 3: "🔥", 4: "💀" };
+
+/** Ambiente de la fiesta, desde la pantalla principal: intensidad (cambia en cada toque), adulto y Drunk. */
+function Ambiente() {
+  const s = useEstado();
+  const menor = esMenorConCuenta(s);
+  const i = s.ajustes.intensidad;
+  // Cuenta de un menor: adulto y Drunk se apagan aunque estuvieran encendidos.
+  useEffect(() => { if (menor && (s.ajustes.adulto || s.ajustes.drunk)) acciones.ajustes({ adulto: false, drunk: false }); }, [menor, s.ajustes.adulto, s.ajustes.drunk]);
+  const intensidad = () => { sonar("clic"); acciones.ajustes({ intensidad: ((i % 4) + 1) as Intensidad }); };
+  const adulto = async () => {
+    if (menor) { aviso("Tu cuenta es de menor de 18."); return; }
+    const encender = !s.ajustes.adulto;
+    if (encender && !(await confirmar({ titulo: "¿Encender contenido adulto?", texto: "Solo si todos son mayores de 18 y están de acuerdo.", si: "Sí, encender", no: "Mejor no" }))) return;
+    acciones.ajustes({ adulto: encender }); sonar(encender ? "exito" : "clic");
+  };
+  const drunk = () => {
+    if (menor) { aviso("Tu cuenta es de menor de 18."); return; }
+    const encender = !s.ajustes.drunk;
+    acciones.ajustes({ drunk: encender }); sonar(encender ? "exito" : "clic");
+    if (encender) aviso("Siempre hay opción sin alcohol. Tomar nunca da XP.");
+  };
+  return (
+    <div className="hub-ambiente" role="group" aria-label="Ambiente de la fiesta">
+      <button className={"amb-ficha i" + i} onClick={intensidad} aria-label={`Intensidad: ${INTENSIDADES[i]}. Toca para cambiar.`}>
+        <span key={i} className="amb-icono" aria-hidden="true">{ICONO_INTENSIDAD[i]}</span><small>{INTENSIDADES[i]}</small>
+      </button>
+      <button className={"amb-ficha adulto" + (s.ajustes.adulto ? " on" : "")} aria-pressed={s.ajustes.adulto} disabled={menor} onClick={() => void adulto()}>
+        <span className="amb-icono" aria-hidden="true">🔞</span><small>Adulto</small>
+      </button>
+      <button className={"amb-ficha drunk" + (s.ajustes.drunk ? " on" : "")} aria-pressed={s.ajustes.drunk} disabled={menor} onClick={drunk}>
+        <span className="amb-icono" aria-hidden="true">🍻</span><small>Drunk</small>
+      </button>
+    </div>
   );
 }

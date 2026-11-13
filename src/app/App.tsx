@@ -6,7 +6,7 @@ import type { EstadoPartida } from "../engine/partida";
 import { Retrato } from "./Avatar";
 import { Cuenta, SincroCuenta } from "./Cuenta";
 import { hayNube, sesionActual } from "./nube";
-import { Avisos, Confirmaciones, Icono } from "./comun";
+import { Avisos, Confirmaciones } from "./comun";
 import { Fondo } from "./efectos";
 import { type JugadorLocal, parejaDe, saldosDe, useEstado } from "./estado";
 import { Lobby } from "./Lobby";
@@ -24,7 +24,6 @@ type Ruta = "inicio" | "lobby" | "tienda" | "ranking" | "perfil" | "unirse" | "f
 const RUTAS: Ruta[] = ["inicio", "lobby", "tienda", "ranking", "perfil", "unirse", "fisico", "ajustes", "jugar"];
 /** Rutas viejas que siguen funcionando si alguien las tenía guardadas. */
 const ANTES: Record<string, Ruta> = { juegos: "lobby", grupo: "lobby", historial: "ranking" };
-const NOMBRES: [Exclude<Ruta, "unirse" | "fisico" | "ajustes" | "jugar">, string][] = [["inicio", "Inicio"], ["lobby", "Lobby"], ["tienda", "Tienda"], ["ranking", "Ranking"], ["perfil", "Perfil"]];
 
 const leerRuta = (): { ruta: Ruta; arg?: string } => {
   const [r = "", arg] = location.hash.replace(/^#\/?/, "").split("/");
@@ -70,17 +69,10 @@ export function App() {
           : ruta === "tienda" ? <PaginaTienda id={arg} />
           : ruta === "ranking" ? <Ranking />
           : ruta === "unirse" ? <PaginaUnirse codigo={arg} />
-          : ruta === "fisico" ? <PaginaFisico />
+          : ruta === "fisico" ? <><CabeceraJuego titulo="Juego físico" color="#C6FF3D" /><PaginaFisico /></>
           : ruta === "ajustes" ? <PaginaAjustes />
           : <Perfil id={arg} />}
       </main>
-      {!partida && ruta !== "inicio" && ruta !== "jugar" && (
-        <nav className="abajo" aria-label="Secciones">
-          {NOMBRES.map(([r, n]) => (
-            <a key={r} href={`#/${r}`} aria-current={ruta === r ? "page" : undefined}>{Icono[r]}{n}</a>
-          ))}
-        </nav>
-      )}
       <AvisoPartidaSala ruta={ruta} />
       <Avisos />
       <SincroCuenta />
@@ -120,7 +112,7 @@ function PaginaUnirse({ codigo }: { codigo?: string }) {
   const conCuenta = !!s.cuenta;
   return (
     <>
-      <h1 className="titulo">Sala</h1>
+      <CabeceraJuego titulo="Sala" color="#22E1FF" />
       {!conCuenta && <Cuenta j={s.jugadores[0]!} />}
       <Unirse codigo={codigo} />
       <section className="card">

@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { ESCENARIOS } from "../content/catalogo";
 import type { Configuracion, SeccionId } from "../engine/types";
-import { equipoPartidaDe, parejaDe, type EstadoLocal } from "./estado";
+import { equipoPartidaDe, jugadoresDelModo, parejaDe, type EstadoLocal } from "./estado";
 import { alternarSonido, useSonidoActivo } from "./sonido";
 
 export const COLOR_SECCION: Record<SeccionId, string> = {
@@ -17,11 +17,12 @@ export const NOMBRE_CARTA_PODER: Record<string, string> = {
 /** Configuración del motor a partir del grupo y los ajustes guardados. */
 export function configuracion(s: EstadoLocal): Configuracion {
   const esc = ESCENARIOS.find(e => e.id === s.ajustes.escenario && e.activo) ?? ESCENARIOS[0]!;
+  const enModo = new Set(jugadoresDelModo(s).map(j => j.id));
   return {
     jugadores: s.jugadores.map((j, i) => {
       const equipo = equipoPartidaDe(s, i);
       return { id: j.id, nombre: j.nombre || `Jugador ${i + 1}`, parejaDe: parejaDe(i, s), ...(equipo ? { equipo } : {}) };
-    }),
+    }).filter(j => enModo.has(j.id)).map(j => (j.parejaDe && !enModo.has(j.parejaDe) ? { ...j, parejaDe: undefined } : j)),
     lugar: esc.lugar, escenario: esc.id, intensidad: s.ajustes.intensidad, dificultad: 1,
     adulto: s.ajustes.adulto, drunk: s.ajustes.drunk, turno: s.ajustes.turno ?? "orden",
   };

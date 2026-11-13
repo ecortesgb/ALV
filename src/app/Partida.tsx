@@ -13,6 +13,8 @@ import { aviso, BotonPantallaCompleta, BotonSonido, COLOR_SECCION, confirmar, NO
 import { sonar } from "./sonido";
 import { Anillo, Confeti, Flotantes, useAura, useFlotantes } from "./efectos";
 import { BotonVoto, ChipHerramienta, PanelHerramienta, Rondas } from "./Hud";
+import { Escenario } from "./Lobby";
+import { personajeInicial } from "../content/personaje";
 
 let contador = 0;
 const nuevoId = () => `l${Date.now().toString(36)}${(contador++).toString(36)}`;
@@ -121,17 +123,11 @@ export function Partida({ inicial, salir }: { inicial: EstadoPartida; salir: () 
         <span className="fila hud-derecha" style={{ gap: 8 }}><Rondas ronda={v.ronda} total={v.totalRondas} /><BotonPantallaCompleta /><BotonSonido /></span>
       </header>
 
-      <ol className="turnos" aria-label="Jugadores y turno">
-        {v.jugadores.map(j => {
-          const loc = jl(j.id), enTurno = j.id === v.turnoDe, listo = v.fase === "contestando" && !v.turnoDe && v.contestaron.includes(j.id);
-          return (
-            <li key={j.id} className={(enTurno ? "activo" : "") + (listo ? " listo" : "")} aria-current={enTurno ? "true" : undefined}>
-              <span className="burbuja">{loc && <Retrato j={loc} size={44} />}</span>
-              <small>{enTurno ? "Su turno" : listo ? "✓ Listo" : j.nombre}</small>
-            </li>
-          );
-        })}
-      </ol>
+      <div className="escena-partida" aria-label="Jugadores y turno">
+        <Escenario jugadores={v.jugadores.map((j, i) => jl(j.id) ?? { id: j.id, nombre: j.nombre, personaje: personajeInicial(i), movimientos: [], tiene: [] })}
+          color={esc?.color ?? color} fondo={esc?.id} interactivo={false} destacado={v.turnoDe}
+          listosIds={v.fase === "contestando" && !v.turnoDe ? v.contestaron : undefined} />
+      </div>
 
       <PanelHerramienta motor={e.motor}>
         {["turnos-cartas", "botella", "ruleta", "dados"].includes(e.motor) && <TurnoCartas key={e.motor} e={e} accion={accion} />}

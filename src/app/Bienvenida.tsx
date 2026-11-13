@@ -201,12 +201,12 @@ export function PaginaFisico() {
           <div><span className="label">Juego físico</span><h1 className="titulo">{esc.emoji} {esc.nombre}</h1></div>
           <BotonSonido />
         </div>
-        <Escenario jugadores={s.jugadores} color={esc.color} />
+        <Escenario jugadores={s.jugadores.filter(j => !j.remoto)} color={esc.color} />
       </div>
       <div className="lobby-config">
         <p className="hint">Hagan el reto en vivo (carreras, fuerzas, baile, lo que se les ocurra). Al terminar, dale XP a quien se la ganó. Mientras, los personajes pueden saludarse, bailar o empujarse.</p>
         <div className="pila">
-          {s.jugadores.map(j => (
+          {s.jugadores.filter(j => !j.remoto).map(j => (
             <div key={j.id} className="jugador">
               <span className="marco"><Retrato j={j} size={52} /></span>
               <div style={{ flex: 1, minWidth: 0 }}>

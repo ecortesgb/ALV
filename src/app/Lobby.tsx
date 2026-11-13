@@ -3,20 +3,23 @@
 // Abajo se configura: juego, escenario, intensidad y jugadores. «Iniciar» abre la pantalla de carga.
 import { useEffect, useMemo, useRef, useState } from "react";
 import { CONTENIDO } from "../content";
-import { ESCENARIOS, LUGARES, SECCIONES } from "../content/catalogo";
+import { ESCENARIOS, SECCIONES } from "../content/catalogo";
 import { nivelPorXp } from "../engine/economia";
 import { juegosCompatibles } from "../engine/filtros";
 import { crearPartida, type EstadoPartida } from "../engine/partida";
-import type { DefinicionJuego, EscenarioId, Intensidad, SeccionId } from "../engine/types";
+import type { DefinicionJuego, EscenarioId, SeccionId } from "../engine/types";
 import { ArmadoPartida } from "./Armado";
+import { IlustracionJuego, VentanaReglas } from "./Juegos";
+import { REGLAS } from "../content/reglas";
+import { createPortal } from "react-dom";
 import { Avatar, Retrato } from "./Avatar";
-import { aviso, BotonPantallaCompleta, BotonSonido, COLOR_SECCION, confirmar, configuracion, INTENSIDADES } from "./comun";
+import { aviso, BotonPantallaCompleta, BotonSonido, COLOR_SECCION, confirmar, configuracion } from "./comun";
 import { useAura } from "./efectos";
-import { acciones, esMenorConCuenta, parejaDe, saldosDe, useEstado, type JugadorLocal, type Modalidad } from "./estado";
+import { acciones, esMenorConCuenta, jugadoresDelModo, parejaDe, saldosDe, useEstado, type JugadorLocal } from "./estado";
 import { lugaresDeSesion } from "./puntos-sesion";
 import { sonar } from "./sonido";
 import { XpExtra } from "./XpExtra";
-import { PanelSala, SalaInvitado } from "./Sala";
+import { PanelSala, SalaInvitado, Unirse } from "./Sala";
 import { marcarEnSala, miUid, type GestoSala } from "./nube";
 import { traducirSala } from "./salaVista";
 import { sorprendeme } from "../engine/filtros";
@@ -24,8 +27,6 @@ import { crearAzar } from "../engine/azar";
 import { PartidaCelular, useAPartidaDeSala } from "./PartidaCelular";
 import { personajeInicial } from "../content/personaje";
 
-const ICONO_INTENSIDAD: Record<Intensidad, string> = { 1: "🌱", 2: "🌶️", 3: "🔥", 4: "💀" };
-const NOMBRE_MODALIDAD: Record<Modalidad, string> = { individual: "Individual", parejas: "Parejas", equipos: "Equipos", sexos: "Guerra de sexos" };
 
 type Gesto = "saludar" | "bailar" | "chocar" | "empujar" | "caer" | "listo";
 interface Anim { gesto: Gesto; clave: number; hacia?: "izq" | "der" }
@@ -51,7 +52,6 @@ export function Lobby({ jugar, arg }: { jugar: (p: EstadoPartida) => void; arg?:
   const s = useEstado();
   const cfg = configuracion(s);
   const esc = ESCENARIOS.find(e => e.id === cfg.escenario)!;
-  const lugar = LUGARES.find(l => l.id === esc.lugar)!;
   useAura(esc.color);
 
   const [seccion, setSeccion] = useState<SeccionId | "todas">(arg?.startsWith("s-") ? (arg.slice(2) as SeccionId) : "todas");
@@ -81,7 +81,7 @@ export function Lobby({ jugar, arg }: { jugar: (p: EstadoPartida) => void; arg?:
   const enJuego = useAPartidaDeSala();
   const invitado = !!s.sala && !s.sala.anfitrion;
   const enSala = useMemo<JugadorLocal[]>(() => (s.miembros ?? []).map((m, i) => ({ id: m.id, nombre: m.nombre, personaje: m.personaje ?? personajeInicial(i), movimientos: [], tiene: [] })), [s.miembros]);
-  const sincro = useSincroSala(invitado ? "invitado" : "anfitrion", invitado ? enSala : s.jugadores);
+  const sincro = useSincroSala(invitado ? "invitado" : "anfitrion", invitado ? enSala : jugadoresDelModo(s));
   // Todos los de la sala (mínimo 2) dieron «listo».
   const todosListos = !!s.sala && (s.miembros?.length ?? 0) >= 2 && (s.miembros ?? []).every(m => m.listo);
 
@@ -92,141 +92,135 @@ export function Lobby({ jugar, arg }: { jugar: (p: EstadoPartida) => void; arg?:
     setJuegoId(def.id); sonar("revelar"); setCargando(def);
   };
 
-  // Celular que entró a la sala de otro: ve a todos en el escenario; el anfitrión inicia la partida.
-  if (invitado && enJuego) return <PartidaCelular p={enJuego} />;
-  if (s.sala && invitado) {
-    return (
-      <div className="lobby">
-        <div className="lobby-escena">
-          <span className="label">Sala {s.sala.codigo} · {enSala.length} de 8</span>
-          <h1 className="titulo">{esc.emoji} {esc.nombre}</h1>
-          {todosListos && <div className="todos-listos"><b>¡Todos listos!</b><span className="hint">El anfitrión elige: Sorpréndeme o continuar.</span></div>}
-          {enSala.length > 0 && <Escenario jugadores={enSala} color={esc.color} sincro={sincro} />}
-        </div>
-        <SalaInvitado />
-      </div>
-    );
-  }
+  // Local: solo los creados en este celular. En línea: solo cuentas reales de la sala. No se mezclan.
+  const enLinea = (s.ajustes.modo ?? (s.sala ? "linea" : "local")) === "linea";
+  const [hoja, setHoja] = useState<"jugadores" | "sala" | null>(null);
+
+  if (enLinea && invitado && enJuego) return <PartidaCelular p={enJuego} />;
 
   if (armando && !cargando) {
     return <ArmadoPartida juegoInicial={juegoId} seccionInicial={seccion} cerrar={() => setArmando(false)}
       iniciar={def => { setArmando(false); setJuegoId(def.id); setCargando(def); }} />;
   }
 
-  if (cargando) return <Carga juego={cargando} alTerminar={() => jugar(crearPartida(cargando, cfg, Date.now() % 100000, CONTENIDO, s.ajustes.rondas ?? 8))} />;
+  if (cargando) {
+    return <Carga juego={cargando} cancelar={() => { setCargando(null); setArmando(true); }}
+      iniciar={() => jugar(crearPartida(cargando, cfg, Date.now() % 100000, CONTENIDO, s.ajustes.rondas ?? 8))} />;
+  }
 
+  const vista = enLinea ? (s.sala ? (invitado ? enSala : jugadoresDelModo(s)) : []) : s.jugadores.filter(j => !j.remoto);
+  const anfitrion = !enLinea || !!s.sala?.anfitrion;
   return (
-    <div className="lobby">
-      <div className="lobby-escena">
-        <div className="entre">
-          <div>
-            <span className="label">Lobby · {s.jugadores.length} de 8</span>
-            <h1 className="titulo">{esc.emoji} {esc.nombre}</h1>
-          </div>
-          <div className="fila" style={{ gap: 8 }}><BotonPantallaCompleta /><BotonSonido /></div>
+    <div className="lobby-grande">
+      <header className="lobby-arriba">
+        <a className="hub-icono volver" href="#/inicio" aria-label="Volver a la pantalla principal">‹</a>
+        <span className="pila" style={{ gap: 0, minWidth: 0, flex: 1 }}>
+          <span className="label">{enLinea ? (s.sala ? `En línea · sala ${s.sala.codigo}` : "En línea") : "Juego local"} · {vista.length} de 8</span>
+          <h1 className="lobby-titulo">{esc.emoji} {esc.nombre}</h1>
+        </span>
+        {enLinea
+          ? <button className="lobby-boton" onClick={() => setHoja("sala")}>📡 Sala</button>
+          : <button className="lobby-boton" onClick={() => setHoja("jugadores")}>👥 Jugadores</button>}
+        <BotonPantallaCompleta /><BotonSonido />
+      </header>
+
+      {enLinea && todosListos && (
+        <div className="todos-listos">
+          <b>¡Todos listos!</b>
+          {anfitrion ? <span className="hint">Elige Sorpréndeme o Comenzar.</span> : <span className="hint">El anfitrión elige el juego.</span>}
         </div>
-        {todosListos && (
-          <div className="todos-listos">
-            <b>¡Todos listos!</b>
-            <div className="fila" style={{ gap: 8 }}>
-              <button className="btn principal" onClick={sorpresa}>🎲 Sorpréndeme</button>
-              <button className="btn" onClick={() => setArmando(true)}>Continuar ›</button>
+      )}
+
+      <div className="lobby-escenario">
+        {vista.length > 0
+          ? <Escenario jugadores={vista} color={esc.color} fondo={esc.id} lugares={!enLinea && hayXpSesion ? lugares : undefined} sincro={enLinea && s.sala ? sincro : undefined} />
+          : (
+            <div className="lobby-vacio">
+              <b>Todavía no hay sala</b>
+              <p className="hint">Abre una sala y comparte el código, o entra a la de alguien más. Aquí solo juegan cuentas reales.</p>
+              <button className="btn principal" onClick={() => setHoja("sala")}>📡 Abrir o entrar a una sala</button>
             </div>
-          </div>
-        )}
-        <Escenario jugadores={s.jugadores} color={esc.color} fondo={esc.id} lugares={hayXpSesion ? lugares : undefined} sincro={s.sala ? sincro : undefined} />
-        <div className="lobby-iniciar">
-          {juego ? (
+          )}
+      </div>
+
+      <footer className="lobby-abajo">
+        {!anfitrion ? <p className="hint" style={{ textAlign: "center", flex: 1 }}>Da «listo» tocando a tu personaje. El anfitrión elige el juego.</p>
+          : juego ? (
             <>
-              <div className="pila" style={{ gap: 2, flex: 1, minWidth: 0 }}>
-                <span className="label">Siguiente juego</span>
-                <b className="juego-elegido">{juego.nombre}</b>
-              </div>
+              <span className="lobby-juego"><span className="label">Siguiente juego</span><b>{juego.nombre}</b></span>
               <button className="btn" onClick={() => setArmando(true)}>Cambiar</button>
-              <button className="btn principal" onClick={iniciar}>Iniciar</button>
+              <button className="hub-jugar lobby-comenzar" onClick={iniciar}>¡Comenzar!</button>
             </>
           ) : (
             <>
-              <button className="btn" style={{ flex: 1 }} onClick={sorpresa}>🎲 Sorpréndeme</button>
-              <button className="btn principal" style={{ flex: 1.4 }} onClick={() => setArmando(true)}>Continuar ›</button>
+              <button className="lobby-sorpresa" onClick={sorpresa} disabled={vista.length < 2}><span className="mini-ruleta" aria-hidden="true" /> Sorpréndeme</button>
+              <button className="hub-jugar lobby-comenzar" onClick={() => setArmando(true)} disabled={vista.length < 2}>¡Comenzar!</button>
             </>
           )}
-        </div>
-      </div>
+      </footer>
 
-      <div className="lobby-config">
-        <section className="pila" aria-labelledby="t-cond">
-          <span id="t-cond" className="label">¿Qué tan intenso?</span>
-          <div className="intensidades" role="group" aria-label="Intensidad">
-            {([1, 2, 3, 4] as Intensidad[]).map(x => (
-              <button key={x} className={"intensidad i" + x} aria-pressed={cfg.intensidad === x} onClick={() => { sonar("clic"); acciones.ajustes({ intensidad: x }); }}>
-                <span className="int-icono" aria-hidden="true">{ICONO_INTENSIDAD[x]}</span>
-                <b>{INTENSIDADES[x]}</b>
-              </button>
-            ))}
-          </div>
-          <div className="interruptores">
-            <label className={"interruptor-grande" + (s.ajustes.adulto ? " on" : "") + (menor ? " bloqueado" : "")}>
-              <span className="ig-icono" aria-hidden="true">🔞</span>
-              <span className="pila" style={{ gap: 0, flex: 1 }}><b>Contenido adulto</b><small>FAP · solo mayores de 18</small></span>
-              <input type="checkbox" disabled={menor} checked={s.ajustes.adulto} onChange={async x => {
-                const encender = x.target.checked;
-                if (encender && !(await confirmar({ titulo: "¿Encender contenido adulto?", texto: "Solo si todos son mayores de 18 y están de acuerdo.", si: "Sí, encender", no: "Mejor no" }))) return;
-                acciones.ajustes({ adulto: encender });
-              }} />
-            </label>
-            <label className={"interruptor-grande drunk" + (s.ajustes.drunk ? " on" : "") + (menor ? " bloqueado" : "")}>
-              <span className="ig-icono" aria-hidden="true">🍻</span>
-              <span className="pila" style={{ gap: 0, flex: 1 }}><b>Modo Drunk</b><small>HBD · siempre hay opción sin alcohol</small></span>
-              <input type="checkbox" disabled={menor} checked={s.ajustes.drunk} onChange={x => acciones.ajustes({ drunk: x.target.checked })} />
-            </label>
-          </div>
-          {menor && <p className="aviso">Tu cuenta es de menor de 18: el contenido adulto y el modo Drunk no están disponibles.</p>}
-          {s.ajustes.drunk && <p className="aviso">Pasar no tiene castigo, máximo 3 por persona por hora y tomar nunca da XP.</p>}
-          <div className="mp-tags">
-            <span className="mp-tag">{NOMBRE_MODALIDAD[s.modalidad ?? (s.enParejas ? "parejas" : "individual")]}</span>
-            <span className="mp-tag">{esc.emoji} {lugar.nombre}</span>
-            <span className="mp-tag">🔁 {s.ajustes.rondas ?? 8} rondas</span>
-          </div>
-          <p className="hint">Reglas de {lugar.nombre.toLowerCase()}: nunca {lugar.nuncaSePermite.join(", ").toLowerCase()}.</p>
-        </section>
-
-        <PanelSala />
-
-        <section className="pila" aria-labelledby="t-jug">
-          <div className="entre"><span id="t-jug" className="label">Jugadores · {s.jugadores.length} de 8</span><small className="muted">Desliza →</small></div>
-          <div className="cartas-jugadores">
-            {s.jugadores.map((x, i) => {
-              const pareja = s.jugadores.find(o => o.id === parejaDe(i, s));
-              return (
-                <div key={x.id} className="carta-jugador" style={{ ["--i" as string]: i }}>
-                  {x.remoto
-                    ? <span className="cj-retrato"><Retrato j={x} size={84} /></span>
-                    : <a className="cj-retrato" href={`#/perfil/${x.id}`} aria-label={`Editar personaje de ${x.nombre}`}><Retrato j={x} size={84} /></a>}
-                  {x.remoto
-                    ? <b className="cj-nombre">{x.nombre}</b>
-                    : <input className="cj-nombre" value={x.nombre} maxLength={30} aria-label="Nombre" onChange={ev => acciones.renombrar(x.id, ev.target.value)} />}
-                  <small className="muted">{x.remoto ? "📱 su celular" : `Nv ${nivelPorXp(saldosDe(x).acumulada)}`}{pareja ? ` · 💞 ${pareja.nombre}` : ""}</small>
-                  <span className="cj-botones">
-                    {!x.remoto && <button className="btn sm cyan" aria-label={`Dar XP extra a ${x.nombre}`} onClick={() => setPremiado(x.id)}>+XP</button>}
-                    {s.jugadores.length > 2 && !x.remoto && <button className="btn sm" aria-label={`Quitar a ${x.nombre}`} onClick={() => acciones.quitar(x.id)}>✕</button>}
-                  </span>
-                </div>
-              );
-            })}
-            {s.jugadores.length < 8 && (
-              <button className="carta-jugador agregar" onClick={() => { sonar("exito"); acciones.agregar(); }} aria-label="Agregar jugador">
-                <span className="cj-mas" aria-hidden="true">+</span><b>Agregar</b><small className="muted">{8 - s.jugadores.length} lugares</small>
-              </button>
-            )}
-          </div>
-          <div className="evento-chip">
-            <span className="pila" style={{ gap: 0, flex: 1 }}><b>🎟️ Evento abierto</b><small className="muted">Su XP compra cartas de poder y ordena el podio.</small></span>
-            <button className="btn sm" onClick={async () => { if (await confirmar({ titulo: "¿Cerrar el evento?", texto: "La XP del evento ya no comprará cartas.", si: "Sí, cerrar", no: "Seguir en el evento", peligro: true })) { acciones.cerrarEvento(); aviso("Evento cerrado. Empieza uno nuevo."); } }}>Cerrar</button>
-          </div>
-        </section>
-      </div>
+      {hoja && (
+        <HojaLobby titulo={hoja === "sala" ? "Sala en línea" : "Jugadores de este celular"} cerrar={() => setHoja(null)}>
+          {hoja === "sala"
+            ? <>{!s.sala && <Unirse />}{invitado ? <SalaInvitado /> : <PanelSala />}</>
+            : <JugadoresLocales premiar={setPremiado} />}
+        </HojaLobby>
+      )}
       {s.jugadores.find(x => x.id === premiado) && <XpExtra j={s.jugadores.find(x => x.id === premiado)!} cerrar={() => setPremiado(null)} />}
+    </div>
+  );
+}
+
+/** Hoja que sube desde abajo, para lo que no debe estorbar al escenario. */
+function HojaLobby({ titulo, cerrar, children }: { titulo: string; cerrar: () => void; children: React.ReactNode }) {
+  useEffect(() => {
+    const f = (e: KeyboardEvent) => { if (e.key === "Escape") cerrar(); };
+    addEventListener("keydown", f);
+    return () => removeEventListener("keydown", f);
+  }, [cerrar]);
+  return createPortal(
+    <div className="hoja-fondo" onClick={e => { if (e.target === e.currentTarget) cerrar(); }}>
+      <section className="hoja" role="dialog" aria-modal="true" aria-label={titulo}>
+        <header className="entre"><h2>{titulo}</h2><button className="btn sm" onClick={cerrar}>Listo</button></header>
+        <div className="hoja-cuerpo">{children}</div>
+      </section>
+    </div>,
+    document.body,
+  );
+}
+
+/** Jugadores creados en este celular (modo local): nombre, personaje, XP extra, quitar y agregar. */
+function JugadoresLocales({ premiar }: { premiar: (id: string) => void }) {
+  const s = useEstado();
+  const locales = s.jugadores.filter(j => !j.remoto);
+  return (
+    <div className="pila">
+      <div className="cartas-jugadores">
+        {locales.map((x, i) => {
+          const pareja = s.jugadores.find(o => o.id === parejaDe(s.jugadores.indexOf(x), s));
+          return (
+            <div key={x.id} className="carta-jugador" style={{ ["--i" as string]: i }}>
+              <a className="cj-retrato" href={`#/perfil/${x.id}`} aria-label={`Editar personaje de ${x.nombre}`}><Retrato j={x} size={84} /></a>
+              <input className="cj-nombre" value={x.nombre} maxLength={30} aria-label="Nombre" onChange={ev => acciones.renombrar(x.id, ev.target.value)} />
+              <small className="muted">Nv {nivelPorXp(saldosDe(x).acumulada)}{pareja ? ` · 💞 ${pareja.nombre}` : ""}</small>
+              <span className="cj-botones">
+                <button className="btn sm cyan" aria-label={`Dar XP extra a ${x.nombre}`} onClick={() => premiar(x.id)}>+XP</button>
+                {locales.length > 2 && <button className="btn sm" aria-label={`Quitar a ${x.nombre}`} onClick={() => acciones.quitar(x.id)}>✕</button>}
+              </span>
+            </div>
+          );
+        })}
+        {locales.length < 8 && (
+          <button className="carta-jugador agregar" onClick={() => { sonar("exito"); acciones.agregar(); }} aria-label="Agregar jugador">
+            <span className="cj-mas" aria-hidden="true">+</span><b>Agregar</b><small className="muted">{8 - locales.length} lugares</small>
+          </button>
+        )}
+      </div>
+      <p className="hint">Toca un retrato para armar su personaje. Estos jugadores solo existen en este celular.</p>
+      <div className="evento-chip">
+        <span className="pila" style={{ gap: 0, flex: 1 }}><b>🎟️ Evento abierto</b><small className="muted">Su XP compra cartas de poder y ordena el podio.</small></span>
+        <button className="btn sm" onClick={async () => { if (await confirmar({ titulo: "¿Cerrar el evento?", texto: "La XP del evento ya no comprará cartas.", si: "Sí, cerrar", no: "Seguir en el evento", peligro: true })) { acciones.cerrarEvento(); aviso("Evento cerrado. Empieza uno nuevo."); } }}>Cerrar</button>
+      </div>
     </div>
   );
 }
@@ -245,10 +239,11 @@ export interface SincroEscenario {
  * Con `sincro` (sala en línea) cada quien mueve solo a su personaje, sus gestos y su «listo» van al servidor
  * y los gestos de los demás celulares se animan aquí cuando llegan.
  */
-export function Escenario({ jugadores, color, lugares, interactivo = true, todosListos = false, sincro, fondo, fiesta = false }:
+export function Escenario({ jugadores, color, lugares, interactivo = true, todosListos = false, sincro, fondo, fiesta = false, destacado, listosIds }:
   { jugadores: JugadorLocal[]; color: string; lugares?: Record<string, number>; interactivo?: boolean; todosListos?: boolean; sincro?: SincroEscenario;
     /** Dibujo de fondo del lugar (alberca, bosque, fogata). */ fondo?: EscenarioId;
-    /** Los personajes se animan solos (pantalla de carga y vista previa). */ fiesta?: boolean }) {
+    /** Los personajes se animan solos (pantalla de carga y vista previa). */ fiesta?: boolean;
+    /** En la partida: a quién le toca (pasa al frente con reflector) y quiénes ya contestaron. */ destacado?: string; listosIds?: string[] }) {
   const [anims, setAnims] = useState<Record<string, Anim>>({});
   const [listosLocal, setListos] = useState<Set<string>>(new Set());
   // Mi «listo» se ve al instante aunque el servidor tarde un par de segundos en confirmarlo.
@@ -338,16 +333,18 @@ export function Escenario({ jugadores, color, lugares, interactivo = true, todos
   };
 
   return (
-    <div className={"escenario-vivo" + (fondo ? " fondo-" + fondo : "")} style={{ ["--sc" as string]: color }}>
+    <div className={"escenario-vivo" + (fondo ? " fondo-" + fondo : "") + (destacado ? " con-turno" : "")} style={{ ["--sc" as string]: color }}>
       {fondo && <div className="paisaje" aria-hidden="true" />}
       <div className="piso" aria-hidden="true" />
       <ul className="elenco" aria-label="Personajes en el lobby">
         {jugadores.map((j, i) => {
           const centro = (n - 1) / 2, d = n > 1 ? Math.abs(i - centro) / centro : 0;
           const anim = anims[j.id];
-          const listo = todosListos || listos.has(j.id);
+          const listo = todosListos || listos.has(j.id) || !!listosIds?.includes(j.id);
           const soyYo = !!sincro && sincro.yo === j.id;
-          const cls = ["actor", anim ? `g-${anim.gesto}` : "", anim?.hacia ? `h-${anim.hacia}` : "", listo ? "listo" : "", elegido === j.id ? "elegido" : "", soyYo ? "soy-yo" : ""].join(" ");
+          const turno = destacado === j.id;
+          const cls = ["actor", anim ? `g-${anim.gesto}` : "", anim?.hacia ? `h-${anim.hacia}` : "", listo ? "listo" : "", elegido === j.id || turno ? "elegido" : "", soyYo ? "soy-yo" : "",
+            turno ? "en-turno" : destacado ? "atras" : ""].join(" ");
           return (
             <li key={j.id} className={cls} style={{ ["--d" as string]: d.toFixed(2), ["--i" as string]: i, zIndex: 10 - Math.round(d * 5) }}>
               <button className="actor-boton" data-sin-clic disabled={!interactivo} aria-pressed={elegido === j.id}
@@ -355,7 +352,7 @@ export function Escenario({ jugadores, color, lugares, interactivo = true, todos
                 {lugares?.[j.id] && <span className={"lugar-chip l" + Math.min(4, lugares[j.id]!)}>#{lugares[j.id]}</span>}
                 <span key={anim?.clave ?? 0} className="cuerpo"><Avatar p={j.personaje} size={n > 6 ? 62 : 74} nombre={j.nombre} /></span>
                 <span className="sombra" aria-hidden="true" />
-                <small className="nombre">{listo ? "✓ " : ""}{soyYo ? "Tú" : j.nombre}</small>
+                <small className="nombre">{turno ? "▶ " : listo ? "✓ " : ""}{soyYo ? "Tú" : j.nombre}</small>
               </button>
             </li>
           );
@@ -389,14 +386,14 @@ export function Escenario({ jugadores, color, lugares, interactivo = true, todos
 }
 
 /** Pantalla de carga entre el lobby y la partida: personajes listos, barra de bloques y consejos. */
-function Carga({ juego, alTerminar }: { juego: DefinicionJuego; alTerminar: () => void }) {
+function Carga({ juego, iniciar, cancelar }: { juego: DefinicionJuego; iniciar: () => void; cancelar: () => void }) {
   const s = useEstado();
   const esc = ESCENARIOS.find(e => e.id === s.ajustes.escenario) ?? ESCENARIOS[0]!;
   const rapido = typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches;
   const total = rapido ? 400 : 3200;
   const [avance, setAvance] = useState(0);
+  const [reglas, setReglas] = useState(false);
   const consejo = useMemo(() => CONSEJOS[Math.floor(Math.random() * CONSEJOS.length)]!, []);
-  const listo = useRef(alTerminar);
   useEffect(() => {
     const inicio = performance.now();
     let marco = 0;
@@ -404,22 +401,32 @@ function Carga({ juego, alTerminar }: { juego: DefinicionJuego; alTerminar: () =
       const p = Math.min(1, (performance.now() - inicio) / total);
       setAvance(p);
       if (p < 1) marco = requestAnimationFrame(paso);
-      else { sonar("carta"); listo.current(); }
+      else { sonar("carta"); setReglas(true); }
     };
     marco = requestAnimationFrame(paso);
-    return () => cancelAnimationFrame(marco);
+    // Respaldo: si el navegador frena las animaciones (ahorro de batería, pestaña oculta), igual se termina a tiempo.
+    const respaldo = window.setTimeout(() => { setAvance(1); setReglas(true); }, total + 400);
+    return () => { cancelAnimationFrame(marco); window.clearTimeout(respaldo); };
   }, [total]);
   const bloques = 12, llenos = Math.round(avance * bloques);
+  const r = juego.motor ? REGLAS[juego.motor] : null;
   return (
-    <div className="carga" role="status" aria-live="polite" style={{ ["--sc" as string]: COLOR_SECCION[juego.seccion] }}>
-      <span className="sigla carga-sigla">{juego.sigla ?? SECCIONES[juego.seccion].sigla}</span>
-      <h1 className="titulo" style={{ textAlign: "center" }}>{juego.nombre}</h1>
-      <p className="hint" style={{ textAlign: "center" }}>{esc.emoji} {esc.nombre}</p>
-      <Escenario jugadores={s.jugadores} color={esc.color} interactivo={false} todosListos fondo={esc.id} fiesta />
+    <div className="carga carga-juego" role="status" aria-live="polite" style={{ ["--sc" as string]: COLOR_SECCION[juego.seccion] }}>
+      <div className="carga-info">
+        <IlustracionJuego juego={juego} grande />
+        <span className="pila" style={{ gap: 4 }}>
+          <span className="label">{SECCIONES[juego.seccion].trata} · {esc.emoji} {esc.nombre}</span>
+          <h1 className="carga-nombre">{juego.nombre}</h1>
+          <p className="carga-desc">{r?.objetivo ?? juego.descripcion}</p>
+          {r && <small className="carga-gana">🏆 {r.gana}</small>}
+        </span>
+      </div>
+      <Escenario jugadores={jugadoresDelModo(s)} color={esc.color} interactivo={false} todosListos fondo={esc.id} fiesta />
       <div className="bloques" aria-label={`Cargando ${Math.round(avance * 100)}%`}>
         {Array.from({ length: bloques }, (_, i) => <span key={i} className={i < llenos ? "lleno" : ""} />)}
       </div>
       <p className="consejo">{consejo}</p>
+      {reglas && <VentanaReglas juego={juego} cerrar={cancelar} iniciar={() => { sonar("revelar"); iniciar(); }} />}
     </div>
   );
 }

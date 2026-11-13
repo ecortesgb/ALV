@@ -1,16 +1,14 @@
 // Armado de la partida al estilo de los menús de consola: 1 Escenario → 2 Modalidad → 3 Juego (y su herramienta).
 // Al terminar se abre la pantalla de carga. Todo lo que se elige queda en los ajustes del grupo.
-import { useEffect, useRef, useState } from "react";
-import { ESCENARIOS, SECCIONES } from "../content/catalogo";
-import { xpDePartida } from "../engine/economia";
+import { useEffect, useState } from "react";
+import { ESCENARIOS } from "../content/catalogo";
 import { juegosCompatibles } from "../engine/filtros";
-import { HERRAMIENTAS } from "./Hud";
 import type { DefinicionJuego, SeccionId } from "../engine/types";
-import { Retrato } from "./Avatar";
-import { aviso, COLOR_SECCION, configuracion } from "./comun";
+import { Avatar, Retrato } from "./Avatar";
+import { aviso, configuracion } from "./comun";
 import { useAura } from "./efectos";
-import { acciones, generoDe, NOMBRE_EQUIPO_SEXOS, useEstado, type Modalidad } from "./estado";
-import { Escenario } from "./Lobby";
+import { acciones, generoDe, jugadoresDelModo, NOMBRE_EQUIPO_SEXOS, useEstado, type Modalidad } from "./estado";
+import { JuegosPorCategoria, VentanaReglas } from "./Juegos";
 import { generosSala, hayNube, type Genero } from "./nube";
 import { sonar } from "./sonido";
 
@@ -33,7 +31,8 @@ export function ArmadoPartida({ iniciar, cerrar, juegoInicial, seccionInicial }:
   useAura(esc.color);
   const [paso, setPaso] = useState(juegoInicial ? 2 : 0);
   const [juegoId, setJuegoId] = useState<string | null>(juegoInicial ?? null);
-  const [seccion, setSeccion] = useState<SeccionId | "todas">(seccionInicial ?? "todas");
+  const [reglasDe, setReglasDe] = useState<DefinicionJuego | null>(null);
+  const grupo = jugadoresDelModo(s);
   const compatibles = juegosCompatibles(cfg).filter(j => j.motor);
   const juego = compatibles.find(j => j.id === juegoId) ?? null;
 
@@ -61,14 +60,20 @@ export function ArmadoPartida({ iniciar, cerrar, juegoInicial, seccionInicial }:
       {paso === 0 && (
         <section className="pila" aria-labelledby="t-a-esc">
           <h1 id="t-a-esc" className="titulo">¿Dónde es la fiesta?</h1>
-          <Escenario jugadores={s.jugadores} color={esc.color} fondo={esc.id} interactivo={false} fiesta />
           <div className="postales">
             {ESCENARIOS.filter(e => e.activo).map(e => (
               <button key={e.id} className={"postal fondo-" + e.id} aria-pressed={e.id === cfg.escenario} style={{ ["--sc" as string]: e.color }}
-                onClick={() => { sonar("clic"); acciones.ajustes({ escenario: e.id }); }}>
-                <span className="postal-emoji" aria-hidden="true">{e.emoji}</span>
-                <b>{e.nombre}</b>
-                <small>{e.ambientacion}</small>
+                onClick={ev => { sonar("clic"); acciones.ajustes({ escenario: e.id }); ev.currentTarget.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" }); }}>
+                <span className="paisaje" aria-hidden="true" />
+                <span className="postal-elenco" aria-hidden="true">
+                  {grupo.slice(0, 5).map((j, k) => <span key={j.id} style={{ ["--k" as string]: k }}><Avatar p={j.personaje} size={50} nombre={j.nombre} /></span>)}
+                </span>
+                <span className="postal-texto">
+                  <span className="postal-emoji" aria-hidden="true">{e.emoji}</span>
+                  <b>{e.nombre}</b>
+                  <small>{e.ambientacion}</small>
+                </span>
+                {e.id === cfg.escenario && <span className="postal-elegida">✓ Aquí</span>}
               </button>
             ))}
           </div>
@@ -81,23 +86,8 @@ export function ArmadoPartida({ iniciar, cerrar, juegoInicial, seccionInicial }:
       {paso === 2 && (
         <section className="pila" aria-labelledby="t-a-juego">
           <h1 id="t-a-juego" className="titulo">Elige el juego</h1>
-          <div className="pestanas-menu" role="group" aria-label="Filtrar por sección">
-            <button aria-pressed={seccion === "todas"} onClick={() => setSeccion("todas")}>Todos</button>
-            {(Object.keys(SECCIONES) as SeccionId[]).filter(k => k !== "mix" && compatibles.some(j => j.seccion === k)).map(k => (
-              <button key={k} style={{ ["--sc" as string]: COLOR_SECCION[k] }} aria-pressed={seccion === k} onClick={() => setSeccion(k)}>{SECCIONES[k].sigla}</button>
-            ))}
-          </div>
-          <div className="modos carrusel-juegos">
-            {compatibles.filter(j => seccion === "todas" || j.seccion === seccion).map(j => (
-              <button key={j.id} className="juego modo" aria-pressed={juegoId === j.id} style={{ ["--sc" as string]: COLOR_SECCION[j.seccion] }}
-                onClick={e => { setJuegoId(j.id); sonar("clic"); e.currentTarget.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" }); }}>
-                <span className="modo-cinta">{juegoId === j.id ? "✓ Elegido" : SECCIONES[j.seccion].sigla}</span>
-                <span className="icono">{j.sigla ?? SECCIONES[j.seccion].sigla}</span>
-                <span className="texto"><b>{j.nombre}</b><span className="modo-meta">{SECCIONES[j.seccion].trata}</span><small>{j.descripcion}</small></span>
-              </button>
-            ))}
-          </div>
-          {juego && <FichaJuego juego={juego} />}
+          <JuegosPorCategoria juegos={seccionInicial && seccionInicial !== "todas" ? [...compatibles].sort((a, b) => Number(b.seccion === seccionInicial) - Number(a.seccion === seccionInicial)) : compatibles}
+            elegido={juegoId} elegir={j => { sonar("clic"); setJuegoId(j.id); }} verReglas={setReglasDe} />
           {juego?.motor === "turnos-cartas" && (
             <div className="card">
               <span className="label">Herramienta · ¿cómo se elige el turno?</span>
@@ -108,15 +98,20 @@ export function ArmadoPartida({ iniciar, cerrar, juegoInicial, seccionInicial }:
             </div>
           )}
           {juego && juego.motor !== "turnos-cartas" && <p className="hint">Este juego usa su propia herramienta.</p>}
-          <button className="btn principal" disabled={!juego} onClick={empezar}>{juego ? `Iniciar · ${juego.nombre}` : "Elige un juego"}</button>
+          <div className="armado-iniciar">
+            <button className="btn principal" disabled={!juego} onClick={empezar}>{juego ? `Iniciar · ${juego.nombre}` : "Elige un juego"}</button>
+          </div>
         </section>
       )}
+      {reglasDe && <VentanaReglas juego={reglasDe} cerrar={() => setReglasDe(null)} elegir={() => setJuegoId(reglasDe.id)} />}
     </div>
   );
 }
 
 function PasoModalidad({ seguir }: { seguir: () => void }) {
-  const s = useEstado();
+  const s0 = useEstado();
+  // Solo los jugadores del modo (local o en línea): los demás no se mezclan.
+  const s = { ...s0, jugadores: jugadoresDelModo(s0) };
   const modalidad = s.modalidad ?? (s.enParejas ? "parejas" : "individual");
   const n = s.jugadores.length;
 
@@ -213,41 +208,6 @@ function PasoModalidad({ seguir }: { seguir: () => void }) {
       )}
 
       <button className="btn principal" disabled={!listo} onClick={seguir}>{listo ? "Siguiente · Juego" : modalidad === "equipos" ? "Pon a cada quien en un equipo (mínimo 2 equipos)" : "Falta el género de alguien"}</button>
-    </section>
-  );
-}
-
-/** Ficha del juego elegido: etiquetas, cómo se juega y la XP que da cada lugar con la configuración de hoy. */
-function FichaJuego({ juego }: { juego: DefinicionJuego }) {
-  const s = useEstado();
-  const caja = useRef<HTMLElement>(null);
-  useEffect(() => { caja.current?.scrollIntoView({ behavior: "smooth", block: "nearest" }); }, [juego.id]);
-  const n = s.jugadores.length, rondas = s.ajustes.rondas ?? 8;
-  const xp = (lugar: number) => xpDePartida({ rondas, retosCumplidos: 0, lugar }, n);
-  const h = juego.motor ? HERRAMIENTAS[juego.motor] : null;
-  return (
-    <section ref={caja} className="ficha-juego" key={juego.id} style={{ ["--sc" as string]: COLOR_SECCION[juego.seccion] }} aria-labelledby="t-ficha">
-      <h2 id="t-ficha">{juego.nombre}</h2>
-      <div className="fj-tags">
-        <span className="fj-tag">👥 {juego.minJugadores}–{juego.maxJugadores}</span>
-        <span className="fj-tag">{SECCIONES[juego.seccion].sigla}</span>
-        {h && <span className="fj-tag">{h.icono} {h.nombre}</span>}
-        <span className="fj-tag">🔁 {rondas} rondas</span>
-        {juego.adulto && <span className="fj-tag">🔞 Adulto</span>}
-      </div>
-      <div className="pila" style={{ gap: 4 }}>
-        <span className="label">Cómo se juega</span>
-        <p className="hint" style={{ color: "var(--soft)" }}>{juego.descripcion}{n <= 3 && juego.modoCorto ? ` ${juego.modoCorto}` : ""}{h ? ` ${h.como}` : ""}</p>
-      </div>
-      <div className="pila" style={{ gap: 6 }}>
-        <span className="label">Recompensas</span>
-        <div className="fj-medallas">
-          {([["oro", "1.º", 1, "🥇"], ["plata", "2.º", 2, "🥈"], ["bronce", "3.º", 3, "🥉"]] as const).map(([c, t, l, e]) => (
-            <span key={c} className={"fj-medalla " + c}><span className="cab">{t} lugar</span><span className="hex" aria-hidden="true">{e}</span><b>+{xp(l)} XP</b></span>
-          ))}
-        </div>
-        <small className="muted">Más XP por cada reto cumplido. Pasar no tiene castigo.</small>
-      </div>
     </section>
   );
 }
