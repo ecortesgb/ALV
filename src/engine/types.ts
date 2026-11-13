@@ -98,6 +98,8 @@ export interface Jugador {
   id: string;
   nombre: string;
   parejaDe?: string;
+  /** Equipo de la partida (modalidad equipos o guerra de sexos). Los puntos siguen siendo de cada quien. */
+  equipo?: string;
 }
 
 /** Lo que elige el anfitrión en el configurador. */
@@ -109,4 +111,6 @@ export interface Configuracion {
   dificultad: Dificultad;
   adulto: boolean;
   drunk: boolean;
+  /** Herramienta para elegir de quién es el turno en los juegos de cartas por turno: en orden o con ruleta. */
+  turno?: "orden" | "ruleta";
 }

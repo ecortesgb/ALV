@@ -3,7 +3,8 @@
 import { useEffect, useMemo, useRef, useState, type PointerEvent as PE } from "react";
 import { CONTENIDO } from "../content";
 import { ESCENARIOS, JUEGOS, SECCIONES } from "../content/catalogo";
-import { aplicar, resultados, type AccionSinId, type EstadoPartida } from "../engine/partida";
+import { aplicar, puntosPorEquipo, resultados, type AccionSinId, type EstadoPartida } from "../engine/partida";
+import { COLORES_EQUIPO } from "./Armado";
 import { vistaJugador, vistaPublica } from "../engine/vistas";
 import { Avatar, Retrato } from "./Avatar";
 import { acciones, useEstado } from "./estado";
@@ -224,7 +225,7 @@ function TurnoCartas({ e, accion }: { e: EstadoPartida; accion: (a: AccionSinId)
     <>
       {destello && <div className="destello" key={destello.clave} role="status" aria-live="polite">{NOMBRE_CARTA_PODER[destello.carta] ?? "Carta de poder"}</div>}
       {e.motor === "botella" && <RelojBotella e={e} />}
-      {e.motor === "ruleta" && <RuletaJugadores e={e} />}
+      {(e.motor === "ruleta" || (e.motor === "turnos-cartas" && e.cfg.turno === "ruleta")) && <RuletaJugadores e={e} />}
       {e.motor === "dados" && <Dados e={e} />}
       {!animando && <>
       <div className="turno">
@@ -767,6 +768,7 @@ function Revelado({ e, accion }: { e: EstadoPartida; accion: (a: AccionSinId) =>
 function Podio({ e, salir }: { e: EstadoPartida; salir: () => void }) {
   const s = useEstado();
   const res = useMemo(() => resultados(e), [e]);
+  const equipos = useMemo(() => puntosPorEquipo(e), [e]);
   const acreditado = useRef(false);
   useEffect(() => {
     if (acreditado.current) return;
@@ -792,6 +794,18 @@ function Podio({ e, salir }: { e: EstadoPartida; salir: () => void }) {
           </div>
         ) : <div key={i} />)}
       </div>
+      {equipos.length > 0 && (
+        <div className="card marcador-equipos">
+          <span className="label">Por equipos</span>
+          {equipos.map((t, i) => (
+            <div key={t.equipo} className={"fila-equipo" + (i === 0 ? " gana" : "")} style={{ ["--eqc" as string]: COLORES_EQUIPO[t.equipo] ?? "var(--cyan)" }}>
+              <b>{i === 0 ? "🏆 " : ""}{t.equipo.length === 1 ? `Equipo ${t.equipo}` : t.equipo}</b>
+              <span className="muted">{t.jugadores.map(id => e.cfg.jugadores.find(j => j.id === id)?.nombre).join(", ")}</span>
+              <span className="sigla">{t.puntos}</span>
+            </div>
+          ))}
+        </div>
+      )}
       <div className="card">
         {res.map(r => (
           <div key={r.jugador} className="entre"><span><b>{r.lugar}.</b> {r.nombre} · {r.puntos} pts</span><span className="chip lime">+{r.xp} XP</span></div>

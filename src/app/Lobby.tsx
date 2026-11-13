@@ -3,15 +3,16 @@
 // Abajo se configura: juego, escenario, intensidad y jugadores. «Iniciar» abre la pantalla de carga.
 import { useEffect, useMemo, useRef, useState } from "react";
 import { CONTENIDO } from "../content";
-import { ESCENARIOS, JUEGOS, LUGARES, SECCIONES } from "../content/catalogo";
+import { ESCENARIOS, LUGARES, SECCIONES } from "../content/catalogo";
 import { nivelPorXp } from "../engine/economia";
 import { juegosCompatibles } from "../engine/filtros";
 import { crearPartida, type EstadoPartida } from "../engine/partida";
-import type { DefinicionJuego, Intensidad, SeccionId } from "../engine/types";
+import type { DefinicionJuego, EscenarioId, Intensidad, SeccionId } from "../engine/types";
+import { ArmadoPartida } from "./Armado";
 import { Avatar, Retrato } from "./Avatar";
 import { aviso, BotonPantallaCompleta, BotonSonido, COLOR_SECCION, confirmar, configuracion, INTENSIDADES } from "./comun";
 import { useAura } from "./efectos";
-import { acciones, esMenorConCuenta, parejaDe, saldosDe, useEstado, type JugadorLocal } from "./estado";
+import { acciones, esMenorConCuenta, parejaDe, saldosDe, useEstado, type JugadorLocal, type Modalidad } from "./estado";
 import { lugaresDeSesion } from "./puntos-sesion";
 import { sonar } from "./sonido";
 import { XpExtra } from "./XpExtra";
@@ -22,6 +23,8 @@ import { sorprendeme } from "../engine/filtros";
 import { crearAzar } from "../engine/azar";
 import { PartidaCelular, useAPartidaDeSala } from "./PartidaCelular";
 import { personajeInicial } from "../content/personaje";
+
+const NOMBRE_MODALIDAD: Record<Modalidad, string> = { individual: "Individual", parejas: "Parejas", equipos: "Equipos", sexos: "Guerra de sexos" };
 
 type Gesto = "saludar" | "bailar" | "chocar" | "empujar" | "caer" | "listo";
 interface Anim { gesto: Gesto; clave: number; hacia?: "izq" | "der" }
@@ -53,10 +56,10 @@ export function Lobby({ jugar, arg }: { jugar: (p: EstadoPartida) => void; arg?:
   const [seccion, setSeccion] = useState<SeccionId | "todas">(arg?.startsWith("s-") ? (arg.slice(2) as SeccionId) : "todas");
   const [juegoId, setJuegoId] = useState<string | null>(arg?.startsWith("j-") ? arg.slice(2) : null);
   const compatibles = juegosCompatibles(cfg).filter(j => j.motor);
-  const lista = compatibles.filter(j => seccion === "todas" || j.seccion === seccion);
   const juego = compatibles.find(j => j.id === juegoId) ?? null;
   const [cargando, setCargando] = useState<DefinicionJuego | null>(null);
   const [premiado, setPremiado] = useState<string | null>(null);
+  const [armando, setArmando] = useState(arg?.startsWith("s-") ?? false);
   const lugares = lugaresDeSesion(s);
   // Cuenta de un menor de 18: sin contenido adulto ni Drunk, aunque estuvieran encendidos de antes.
   const menor = esMenorConCuenta(s);
@@ -65,7 +68,7 @@ export function Lobby({ jugar, arg }: { jugar: (p: EstadoPartida) => void; arg?:
 
   useEffect(() => {
     if (arg?.startsWith("j-")) setJuegoId(arg.slice(2));
-    if (arg?.startsWith("s-")) setSeccion(arg.slice(2) as SeccionId);
+    if (arg?.startsWith("s-")) { setSeccion(arg.slice(2) as SeccionId); setArmando(true); }
   }, [arg]);
 
   const iniciar = () => {
@@ -104,6 +107,11 @@ export function Lobby({ jugar, arg }: { jugar: (p: EstadoPartida) => void; arg?:
     );
   }
 
+  if (armando && !cargando) {
+    return <ArmadoPartida juegoInicial={juegoId} seccionInicial={seccion} cerrar={() => setArmando(false)}
+      iniciar={def => { setArmando(false); setJuegoId(def.id); setCargando(def); }} />;
+  }
+
   if (cargando) return <Carga juego={cargando} alTerminar={() => jugar(crearPartida(cargando, cfg, Date.now() % 100000, CONTENIDO, s.ajustes.rondas ?? 8))} />;
 
   return (
@@ -121,67 +129,39 @@ export function Lobby({ jugar, arg }: { jugar: (p: EstadoPartida) => void; arg?:
             <b>¡Todos listos!</b>
             <div className="fila" style={{ gap: 8 }}>
               <button className="btn principal" onClick={sorpresa}>🎲 Sorpréndeme</button>
-              <button className="btn" onClick={() => document.getElementById("t-juego")?.scrollIntoView({ behavior: "smooth", block: "start" })}>Continuar</button>
+              <button className="btn" onClick={() => setArmando(true)}>Continuar ›</button>
             </div>
           </div>
         )}
-        <Escenario jugadores={s.jugadores} color={esc.color} lugares={hayXpSesion ? lugares : undefined} sincro={s.sala ? sincro : undefined} />
+        <Escenario jugadores={s.jugadores} color={esc.color} fondo={esc.id} lugares={hayXpSesion ? lugares : undefined} sincro={s.sala ? sincro : undefined} />
         <div className="lobby-iniciar">
-          <div className="pila" style={{ gap: 2, flex: 1, minWidth: 0 }}>
-            <span className="label">Siguiente juego</span>
-            <b className="juego-elegido">{juego ? juego.nombre : "Elige un juego abajo"}</b>
-          </div>
-          <button className="btn principal" disabled={!juego} onClick={iniciar}>Iniciar</button>
+          {juego ? (
+            <>
+              <div className="pila" style={{ gap: 2, flex: 1, minWidth: 0 }}>
+                <span className="label">Siguiente juego</span>
+                <b className="juego-elegido">{juego.nombre}</b>
+              </div>
+              <button className="btn" onClick={() => setArmando(true)}>Cambiar</button>
+              <button className="btn principal" onClick={iniciar}>Iniciar</button>
+            </>
+          ) : (
+            <>
+              <button className="btn" style={{ flex: 1 }} onClick={sorpresa}>🎲 Sorpréndeme</button>
+              <button className="btn principal" style={{ flex: 1.4 }} onClick={() => setArmando(true)}>Continuar ›</button>
+            </>
+          )}
         </div>
       </div>
 
       <div className="lobby-config">
-        <section className="pila" aria-labelledby="t-juego">
-          <span id="t-juego" className="label paso-armado"><i>1</i> Modo de juego</span>
-          <div className="pestanas-menu" role="group" aria-label="Filtrar por sección">
-            <button className="opcion" aria-pressed={seccion === "todas"} onClick={() => setSeccion("todas")}>Todos</button>
-            {(Object.keys(SECCIONES) as SeccionId[]).filter(k => k !== "mix" && compatibles.some(j => j.seccion === k)).map(k => (
-              <button key={k} className="opcion" style={{ ["--sc" as string]: COLOR_SECCION[k] }} aria-pressed={seccion === k} onClick={() => setSeccion(k)}>{SECCIONES[k].sigla}</button>
-            ))}
-          </div>
-          <div className="modos">
-            {lista.map(j => (
-              <button key={j.id} className="juego modo" aria-pressed={juegoId === j.id} style={{ ["--sc" as string]: COLOR_SECCION[j.seccion] }} onClick={() => setJuegoId(j.id)}>
-                <span className="modo-cinta">{juegoId === j.id ? "✓ Elegido" : SECCIONES[j.seccion].sigla}</span>
-                <span className="icono">{j.sigla ?? SECCIONES[j.seccion].sigla}</span>
-                <span className="texto">
-                  <b>{j.nombre}</b>
-                  <span className="modo-meta">{SECCIONES[j.seccion].trata}</span>
-                  <small>{j.descripcion}{s.jugadores.length <= 3 && j.modoCorto ? ` ${j.modoCorto}` : ""}</small>
-                </span>
-              </button>
-            ))}
-            {lista.length === 0 && <p className="hint">No hay juegos de esta sección con la configuración actual.</p>}
-          </div>
-          {JUEGOS.some(j => !j.motor) && <p className="hint">Próximamente: {JUEGOS.filter(j => !j.motor).map(j => j.nombre).join(", ")}.</p>}
-        </section>
-
-        <section className="pila" aria-labelledby="t-esc">
-          <span id="t-esc" className="label paso-armado"><i>2</i> Escenario</span>
-          <div className="escenarios">
-            {ESCENARIOS.filter(e => e.activo).map(e => (
-              <button key={e.id} className="escenario" aria-pressed={e.id === cfg.escenario} style={{ ["--sc" as string]: e.color }} onClick={() => acciones.ajustes({ escenario: e.id })}>
-                <span className="emoji" aria-hidden="true">{e.emoji}</span>
-                <span><b>{e.nombre}</b><small>{e.ambientacion}</small></span>
-              </button>
-            ))}
-          </div>
-          <p className="hint">Reglas de {lugar.nombre.toLowerCase()}: nunca {lugar.nuncaSePermite.join(", ").toLowerCase()}.</p>
-        </section>
-
         <section className="card" aria-labelledby="t-cond">
-          <span id="t-cond" className="label paso-armado"><i>3</i> Condiciones</span>
+          <span id="t-cond" className="label">Condiciones</span>
           <div className="opciones">
             {([1, 2, 3, 4] as Intensidad[]).map(x => (
               <button key={x} className="opcion" aria-pressed={cfg.intensidad === x} onClick={() => acciones.ajustes({ intensidad: x })}>{INTENSIDADES[x]}</button>
             ))}
           </div>
-          <label className="interruptor">Juegan en parejas (1.º con 2.º, 3.º con 4.º…)<input type="checkbox" checked={s.enParejas} onChange={x => acciones.enParejas(x.target.checked)} /></label>
+          <p className="hint">Modalidad: <b>{NOMBRE_MODALIDAD[s.modalidad ?? (s.enParejas ? "parejas" : "individual")]}</b> · se cambia en «Continuar». Reglas de {lugar.nombre.toLowerCase()}: nunca {lugar.nuncaSePermite.join(", ").toLowerCase()}.</p>
           <label className="interruptor">Contenido adulto (FAP)<input type="checkbox" disabled={menor} checked={s.ajustes.adulto} onChange={async x => {
             const encender = x.target.checked;
             if (encender && !(await confirmar({ titulo: "¿Encender contenido adulto?", texto: "Solo si todos son mayores de 18 y están de acuerdo.", si: "Sí, encender", no: "Mejor no" }))) return;
@@ -241,8 +221,10 @@ export interface SincroEscenario {
  * Con `sincro` (sala en línea) cada quien mueve solo a su personaje, sus gestos y su «listo» van al servidor
  * y los gestos de los demás celulares se animan aquí cuando llegan.
  */
-export function Escenario({ jugadores, color, lugares, interactivo = true, todosListos = false, sincro }:
-  { jugadores: JugadorLocal[]; color: string; lugares?: Record<string, number>; interactivo?: boolean; todosListos?: boolean; sincro?: SincroEscenario }) {
+export function Escenario({ jugadores, color, lugares, interactivo = true, todosListos = false, sincro, fondo, fiesta = false }:
+  { jugadores: JugadorLocal[]; color: string; lugares?: Record<string, number>; interactivo?: boolean; todosListos?: boolean; sincro?: SincroEscenario;
+    /** Dibujo de fondo del lugar (alberca, bosque, fogata). */ fondo?: EscenarioId;
+    /** Los personajes se animan solos (pantalla de carga y vista previa). */ fiesta?: boolean }) {
   const [anims, setAnims] = useState<Record<string, Anim>>({});
   const [listosLocal, setListos] = useState<Set<string>>(new Set());
   // Mi «listo» se ve al instante aunque el servidor tarde un par de segundos en confirmarlo.
@@ -295,6 +277,19 @@ export function Escenario({ jugadores, color, lugares, interactivo = true, todos
     setPendiente(null);
   };
 
+  // Modo fiesta: cada poco alguien saluda, baila o festeja, sin sonido.
+  useEffect(() => {
+    if (!fiesta || n === 0) return;
+    if (typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const t = window.setInterval(() => {
+      const j = jugadores[Math.floor(Math.random() * n)];
+      const g = (["saludar", "bailar", "listo"] as const)[Math.floor(Math.random() * 3)]!;
+      if (j) animar(j.id, { gesto: g }, g === "bailar" ? 1600 : 1000);
+    }, 900);
+    return () => window.clearInterval(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fiesta, n]);
+
   // Gestos que llegan de los demás celulares: se anima cada uno cuya cuenta subió desde la última lectura.
   const vistos = useRef<Record<string, number> | null>(null);
   const claveGestos = sincro ? Object.entries(sincro.gestos).map(([k, v]) => `${k}:${v.n}`).join("|") : "";
@@ -319,7 +314,8 @@ export function Escenario({ jugadores, color, lugares, interactivo = true, todos
   };
 
   return (
-    <div className="escenario-vivo" style={{ ["--sc" as string]: color }}>
+    <div className={"escenario-vivo" + (fondo ? " fondo-" + fondo : "")} style={{ ["--sc" as string]: color }}>
+      {fondo && <div className="paisaje" aria-hidden="true" />}
       <div className="piso" aria-hidden="true" />
       <ul className="elenco" aria-label="Personajes en el lobby">
         {jugadores.map((j, i) => {
@@ -395,7 +391,7 @@ function Carga({ juego, alTerminar }: { juego: DefinicionJuego; alTerminar: () =
       <span className="sigla carga-sigla">{juego.sigla ?? SECCIONES[juego.seccion].sigla}</span>
       <h1 className="titulo" style={{ textAlign: "center" }}>{juego.nombre}</h1>
       <p className="hint" style={{ textAlign: "center" }}>{esc.emoji} {esc.nombre}</p>
-      <Escenario jugadores={s.jugadores} color={esc.color} interactivo={false} todosListos />
+      <Escenario jugadores={s.jugadores} color={esc.color} interactivo={false} todosListos fondo={esc.id} fiesta />
       <div className="bloques" aria-label={`Cargando ${Math.round(avance * 100)}%`}>
         {Array.from({ length: bloques }, (_, i) => <span key={i} className={i < llenos ? "lleno" : ""} />)}
       </div>

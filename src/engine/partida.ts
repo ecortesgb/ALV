@@ -101,13 +101,17 @@ export function normalizar(t: string): string {
 /** Verdad o reto: el jugador en turno cumple (+1 verdad, +2 reto) o pasa (0, sin castigo). */
 const turnosCartas: Mecanica = {
   preparar(e, c) {
-    const turno = e.cfg.jugadores[(e.ronda - 1) % e.cfg.jugadores.length];
+    // En orden, o la ruleta elige a alguien al azar (la pantalla la gira con `seleccion.indice`).
+    const conRuleta = e.cfg.turno === "ruleta";
+    const indice = conRuleta ? azarDeRonda(e).entero(e.cfg.jugadores.length) : (e.ronda - 1) % e.cfg.jugadores.length;
+    const turno = e.cfg.jugadores[indice];
     const carta = sacarCarta(e, c, ["verdad", "reto"]);
     const otros = e.cfg.jugadores.filter(j => j.id !== turno?.id);
     const otro = otros.length ? azarDeRonda(e).elegir(otros) : undefined;
     return {
       turnoDe: turno?.id,
       privado: {},
+      ...(conRuleta ? { seleccion: { indice } } : {}),
       carta: carta && { id: carta.id, texto: personalizar(carta.texto, e, turno, otro), tipo: carta.mazo },
     };
   },
@@ -456,6 +460,19 @@ export function aplicar(e: EstadoPartida, a: Accion, contenido: Contenido): Esta
 }
 
 /** Ranking final y XP por jugador (la XP real la confirma el servidor con la misma regla). */
+/** Puntos por equipo (suma de sus integrantes), de mayor a menor. Vacío si nadie tiene equipo. */
+export function puntosPorEquipo(e: EstadoPartida): { equipo: string; puntos: number; jugadores: string[] }[] {
+  const mapa = new Map<string, { puntos: number; jugadores: string[] }>();
+  for (const j of e.cfg.jugadores) {
+    if (!j.equipo) continue;
+    const t = mapa.get(j.equipo) ?? { puntos: 0, jugadores: [] };
+    t.puntos += e.puntos[j.id] ?? 0;
+    t.jugadores.push(j.id);
+    mapa.set(j.equipo, t);
+  }
+  return [...mapa].map(([equipo, t]) => ({ equipo, ...t })).sort((a, b) => b.puntos - a.puntos || a.equipo.localeCompare(b.equipo));
+}
+
 export function resultados(e: EstadoPartida) {
   const rondasJugadas = e.bitacora.filter(b => b.tipo === "revelada").length;
   const orden = [...e.cfg.jugadores].sort((x, y) => (e.puntos[y.id] ?? 0) - (e.puntos[x.id] ?? 0));

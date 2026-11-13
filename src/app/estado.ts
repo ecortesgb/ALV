@@ -5,7 +5,7 @@ import { useSyncExternalStore } from "react";
 import { nivelPorXp, saldos, puedeComprarAccesorio, puedeComprarCarta, XP_EXTRA, xpExtraValida, type Movimiento } from "../engine/economia";
 import { abrirSobre, SOBRES, type CartaSobre, type Rareza, type TipoSobre } from "../engine/sobres";
 import type { Azar } from "../engine/azar";
-import { type MiembroSala, type Registro, type Sala, comprarAccesorioNube, comprarSobreNube, cuentaActiva, leerCuenta, registrarPartidaNube, registrarXpExtraNube, type DatosCuenta } from "./nube";
+import { type Genero, type MiembroSala, type Registro, type Sala, comprarAccesorioNube, comprarSobreNube, cuentaActiva, leerCuenta, registrarPartidaNube, registrarXpExtraNube, type DatosCuenta } from "./nube";
 import { idActual, migrarPersonaje, personajeInicial, TIENDA, cambioValido, type Personaje, type Zona } from "../content/personaje";
 import type { EscenarioId, Intensidad } from "../engine/types";
 import { EQUIPOS } from "../content/equipos";
@@ -25,6 +25,8 @@ export interface JugadorLocal {
 /** `extra` marca la XP que dio el administrador fuera de un juego; lleva el motivo. */
 export interface Partida { fecha: string; juego: string; resultados: { id?: string; nombre: string; puntos: number; xp: number }[]; extra?: string }
 
+export type Modalidad = "individual" | "parejas" | "equipos" | "sexos";
+
 /** Neón sofisticado (por defecto) o Midnight Lounge, como alternativa para comparar en pantalla. */
 export type Paleta = "neon" | "lounge";
 
@@ -35,12 +37,24 @@ export interface EstadoLocal {
   eventoId: string;
   ajustes: { escenario: EscenarioId; intensidad: Intensidad; adulto: boolean; drunk: boolean; paleta?: Paleta;
     /** Rondas por partida y segundos para responder (Ajustes). */
-    rondas?: number; segundos?: number };
+    rondas?: number; segundos?: number;
+    /** Cómo se elige el turno en los juegos de cartas por turno. */
+    turno?: "orden" | "ruleta" };
   historial: Partida[];
   /** Jugador de este celular con cuenta abierta: su saldo y su inventario vienen del servidor. */
   cuenta?: { jugador: string; acumulada: number; disponible: number; delEvento: number };
   /** Fecha de nacimiento y género de la cuenta abierta (se vuelven a leer del servidor en cada visita). */
   registro?: Registro;
+  /** Cómo se juega la partida: cada quien, en parejas elegidas, en equipos o guerra de sexos. */
+  modalidad?: Modalidad;
+  /** Parejas elegidas a mano (las dos direcciones). Si falta alguna, se usa el orden 1.º con 2.º… */
+  parejas?: Record<string, string>;
+  /** Equipo de cada jugador en la modalidad equipos. */
+  equipos?: Record<string, string>;
+  /** Género puesto a mano para quien juega en este celular sin cuenta (guerra de sexos). */
+  generosLocales?: Record<string, Genero>;
+  /** Género de las cuentas de la sala (lo da el servidor solo a los de la misma sala). */
+  generosSala?: Record<string, Genero>;
   /** Sala en línea abierta en este celular (como anfitrión o como invitado). */
   sala?: Sala;
   /** Quién está en la sala, según el servidor. */
@@ -107,7 +121,10 @@ export async function refrescarCuenta(): Promise<void> {
 
 /** Pareja según el orden: 1.º con 2.º, 3.º con 4.º… */
 export function parejaDe(i: number, s: EstadoLocal = estado): string | undefined {
-  if (!s.enParejas) return undefined;
+  const id = s.jugadores[i]?.id;
+  if (s.modalidad && s.modalidad !== "parejas") return undefined;
+  if (s.modalidad === "parejas" && id && s.parejas?.[id] && s.jugadores.some(j => j.id === s.parejas![id])) return s.parejas[id];
+  if (!s.enParejas && s.modalidad !== "parejas") return undefined;
   const otro = i % 2 === 0 ? i + 1 : i - 1;
   return s.jugadores[otro]?.id;
 }
@@ -166,6 +183,19 @@ export const acciones = {
     guardar({ ...estado, jugadores: estado.jugadores.filter(j => j.id !== id) });
   },
   enParejas(v: boolean) { guardar({ ...estado, enParejas: v }); },
+  modalidad(m: Modalidad) { guardar({ ...estado, modalidad: m, enParejas: m === "parejas" }); },
+  /** Junta a dos como pareja; a quienes eran sus parejas los deja libres. */
+  pareja(a: string, b: string) {
+    if (a === b) return;
+    const p = { ...(estado.parejas ?? {}) };
+    for (const x of [a, b]) { const antes = p[x]; if (antes) delete p[antes]; delete p[x]; }
+    p[a] = b; p[b] = a;
+    guardar({ ...estado, parejas: p });
+  },
+  equipoPartida(id: string, equipo: string) { guardar({ ...estado, equipos: { ...(estado.equipos ?? {}), [id]: equipo } }); },
+  repartirEquipos(equipos: Record<string, string>) { guardar({ ...estado, equipos }); },
+  generoLocal(id: string, g: Genero) { guardar({ ...estado, generosLocales: { ...(estado.generosLocales ?? {}), [id]: g } }); },
+  generosSala(g: Record<string, Genero>) { guardar({ ...estado, generosSala: g }); },
   ajustes(a: Partial<EstadoLocal["ajustes"]>) { guardar({ ...estado, ajustes: { ...estado.ajustes, ...a } }); },
   /** Reemplaza el personaje con el que está guardado en la cuenta. */
   personajeDeNube(id: string, p: Personaje) {
@@ -298,3 +328,23 @@ export function edadDe(nacimiento: string, hoy = new Date()): number {
 }
 /** La cuenta abierta es de un menor de 18. Sin cuenta o sin fecha no se sabe: devuelve false. */
 export const esMenorConCuenta = (s: EstadoLocal) => !!s.registro && edadDe(s.registro.nacimiento) < 18;
+
+/** Género conocido de un jugador: su cuenta (este celular), la sala, o el que se puso a mano. */
+export function generoDe(s: EstadoLocal, i: number): Genero | undefined {
+  const j = s.jugadores[i];
+  if (!j) return undefined;
+  if (j.remoto && j.id.startsWith("c-")) return s.generosSala?.[j.id.slice(2)];
+  if (i === 0 && s.registro) return s.registro.genero;
+  return s.generosLocales?.[j.id];
+}
+
+export const NOMBRE_EQUIPO_SEXOS: Record<Genero, string> = { hombre: "Hombres", mujer: "Mujeres", otro: "Libres" };
+
+/** Equipo de la partida según la modalidad (undefined = individual o parejas). */
+export function equipoPartidaDe(s: EstadoLocal, i: number): string | undefined {
+  const j = s.jugadores[i];
+  if (!j) return undefined;
+  if (s.modalidad === "equipos") return s.equipos?.[j.id];
+  if (s.modalidad === "sexos") { const g = generoDe(s, i); return g ? NOMBRE_EQUIPO_SEXOS[g] : undefined; }
+  return undefined;
+}

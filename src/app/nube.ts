@@ -288,6 +288,16 @@ export async function marcarEnSala(sala: Sala, cambio: { listo?: boolean; gesto?
   } catch (e) { console.error("marcarEnSala", e); return false; }
 }
 
+/** Género de las cuentas de mi sala (solo para guerra de sexos). Nunca trae la fecha de nacimiento. */
+export async function generosSala(sala: Sala): Promise<Record<string, Genero> | null> {
+  if (!cliente || !usuario) return null;
+  try {
+    const { data, error } = await cliente.rpc("generos_sala", { p_evento: sala.id });
+    if (error) { console.error("generosSala", error.message); return null; }
+    return Object.fromEntries(((data ?? []) as { jugador: string; genero: Genero }[]).map(x => [x.jugador, x.genero]));
+  } catch (e) { console.error("generosSala", e); return null; }
+}
+
 export async function cerrarSala(sala: Sala): Promise<void> {
   try { const r = await cliente?.rpc("cerrar_evento", { p_evento: sala.id }); if (r?.error) console.error("cerrarSala", r.error.message); }
   catch (e) { console.error("cerrarSala", e); }

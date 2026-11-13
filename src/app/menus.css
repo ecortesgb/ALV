@@ -279,3 +279,82 @@
 .todos-listos b { font-family: var(--display); font-weight: 400; font-size: 20px; color: var(--lime); }
 .actor.soy-yo .nombre { background: var(--cyan); color: var(--bg); }
 .actor.soy-yo .sombra { background: radial-gradient(ellipse, rgba(34,225,255,.7), transparent 70%); height: 12px; }
+
+/* ───────── Armado de partida (Escenario → Modalidad → Juego) ───────── */
+.armado { display: flex; flex-direction: column; gap: 16px; max-width: 880px; width: 100%; margin: 0 auto; }
+.armado-cab { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.armado-pasos { list-style: none; margin: 0; padding: 0; display: flex; gap: 6px; flex: 1; min-width: 0; }
+.armado-pasos li { flex: 1; min-width: 0; }
+.armado-pasos button { width: 100%; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 9px 6px; border-radius: 12px; border: 1.5px solid var(--borde-vidrio);
+  background: var(--vidrio2); color: var(--muted); font-weight: 800; font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.armado-pasos i { font-style: normal; display: grid; place-items: center; width: 20px; height: 20px; flex-shrink: 0; border-radius: 50%; background: var(--btn); font-family: var(--display); font-size: 11px; }
+.armado-pasos .actual button { color: var(--ink); border-color: var(--pink); box-shadow: 0 0 16px -6px var(--pink); }
+.armado-pasos .actual i { background: var(--pink); color: var(--bg); }
+.armado-pasos .hecho i { background: var(--lime); color: var(--bg); }
+.armado-pasos button:disabled { opacity: .55; }
+
+/* Postales de escenario con su paisaje */
+.postales { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; }
+.postal { position: relative; display: flex; flex-direction: column; justify-content: flex-end; gap: 2px; min-height: 150px; padding: 14px; border-radius: 20px; overflow: hidden; text-align: left; color: var(--ink); font: inherit;
+  border: 2px solid color-mix(in srgb, var(--sc) 50%, transparent); background: var(--card2); }
+.postal::before { content: ""; position: absolute; inset: 0; z-index: 0; }
+.postal::after { content: ""; position: absolute; inset: 0; z-index: 0; background: linear-gradient(180deg, transparent 30%, rgba(8,6,18,.85)); }
+.postal > * { position: relative; z-index: 1; }
+.postal b { font-size: 15px; } .postal small { color: var(--soft); font-weight: 600; font-size: 12px; }
+.postal-emoji { position: absolute !important; top: 10px; right: 12px; font-size: 30px; }
+.postal[aria-pressed="true"] { border-color: var(--sc); box-shadow: 0 0 0 2px var(--sc), 0 0 30px -8px var(--sc); }
+
+/* Paisajes (escenario vivo y postales) dibujados con degradados */
+.escenario-vivo .paisaje { position: absolute; inset: 0; z-index: 0; pointer-events: none; }
+.escenario-vivo > .elenco, .escenario-vivo > .gestos, .escenario-vivo > .escenario-ayuda { position: relative; z-index: 2; }
+.escenario-vivo > .piso { z-index: 1; }
+/* Alberca: cielo de tarde, agua con ondas y orilla de azulejo */
+.fondo-alverca .paisaje, .postal.fondo-alverca::before {
+  background:
+    repeating-linear-gradient(0deg, rgba(255,255,255,.18) 0 2px, transparent 2px 14px) 0 62% / 100% 38% no-repeat,
+    linear-gradient(180deg, transparent 58%, #E9F3F7 58%, #E9F3F7 61%, transparent 61%),
+    linear-gradient(180deg, #2B1F48 0%, #6A3D7A 30%, #F08A6B 52%, transparent 58%),
+    linear-gradient(180deg, transparent 61%, #1FB5D6 61%, #0B6E99 100%); }
+/* Bosque: cielo verde azulado y pinos en capas */
+.fondo-parque .paisaje, .postal.fondo-parque::before {
+  background:
+    radial-gradient(60px 120px at 10% 100%, #0E3B24 98%, transparent 100%),
+    radial-gradient(70px 150px at 28% 100%, #12482C 98%, transparent 100%),
+    radial-gradient(60px 130px at 52% 100%, #0E3B24 98%, transparent 100%),
+    radial-gradient(80px 160px at 75% 100%, #12482C 98%, transparent 100%),
+    radial-gradient(60px 120px at 94% 100%, #0E3B24 98%, transparent 100%),
+    radial-gradient(90px 90px at 80% 20%, rgba(255,240,200,.55), transparent 70%),
+    linear-gradient(180deg, #123A4A 0%, #2D6E5A 60%, #1C4A33 100%); }
+/* Fogata: noche estrellada y resplandor naranja del fuego */
+.fondo-fogata .paisaje, .postal.fondo-fogata::before {
+  background:
+    radial-gradient(ellipse 120px 60px at 50% 92%, rgba(255,170,60,.95), rgba(255,90,30,.6) 40%, transparent 75%),
+    radial-gradient(ellipse 260px 140px at 50% 100%, rgba(255,122,46,.45), transparent 70%),
+    radial-gradient(1.5px 1.5px at 20% 20%, #fff 50%, transparent 51%), radial-gradient(1.5px 1.5px at 70% 12%, #fff 50%, transparent 51%),
+    radial-gradient(1px 1px at 45% 30%, #fff 50%, transparent 51%), radial-gradient(1px 1px at 85% 35%, #fff 50%, transparent 51%),
+    linear-gradient(180deg, #070A1F 0%, #1A1036 70%, #2A1408 100%); }
+.fondo-fogata .paisaje { animation: fuego 1.6s ease-in-out infinite alternate; }
+@keyframes fuego { to { filter: brightness(1.15) saturate(1.1); } }
+
+/* Modalidades */
+.modalidades { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; }
+.modalidad { position: relative; display: flex; flex-direction: column; gap: 4px; min-height: 120px; padding: 16px; border-radius: 20px; text-align: left; color: var(--ink); font: inherit;
+  background: var(--vidrio); border: 2px solid var(--borde-vidrio); }
+.modalidad b { font-family: var(--display); font-weight: 400; font-size: 18px; margin-top: auto; }
+.modalidad small { color: var(--soft); font-weight: 600; font-size: 12px; }
+.modalidad[aria-pressed="true"] { border-color: var(--pink); box-shadow: 0 0 0 2px var(--pink), 0 0 26px -8px var(--pink); }
+.modalidad .mj-icono { --sc: var(--pink); }
+
+.asignacion { display: flex; align-items: center; gap: 10px; }
+.asignacion > b { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.asignacion select.input { width: auto; max-width: 48%; padding: 8px 10px; }
+.equipos-botones { display: flex; gap: 6px; }
+.eq { min-width: 38px; height: 38px; padding: 0 10px; border-radius: 10px; border: 2px solid var(--line); background: var(--btn); color: var(--ink); font-family: var(--display); font-size: 14px; }
+.eq.ancho { font-family: inherit; font-weight: 800; font-size: 12px; }
+.eq[aria-pressed="true"] { background: var(--eqc, var(--pink)); border-color: var(--eqc, var(--pink)); color: var(--bg); }
+
+/* Marcador por equipos en el podio */
+.fila-equipo { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 14px; background: var(--card2); border-left: 5px solid var(--eqc); }
+.fila-equipo .muted { font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fila-equipo .sigla { font-size: 22px; color: var(--eqc); }
+.fila-equipo.gana { box-shadow: 0 0 24px -8px var(--eqc); }
