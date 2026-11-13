@@ -358,3 +358,13 @@
 .fila-equipo .muted { font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .fila-equipo .sigla { font-size: 22px; color: var(--eqc); }
 .fila-equipo.gana { box-shadow: 0 0 24px -8px var(--eqc); }
+
+/* ───────── Recompensas de equipo ───────── */
+.marco-equipo { position: relative; isolation: isolate; }
+.tarjeta-jugador.marco-equipo { background: conic-gradient(from var(--giro, 0deg), var(--eq1), var(--eq2), var(--eq1), var(--eq2), var(--eq1)); animation: marco-gira 4s linear infinite; box-shadow: 0 0 28px -6px var(--eq1); }
+.retrato.marco-equipo { box-shadow: 0 0 0 2px var(--eq1), 0 0 0 4px var(--eq2), 0 0 14px var(--eq1); animation: marco-late 2.4s ease-in-out infinite; }
+@property --giro { syntax: "<angle>"; inherits: false; initial-value: 0deg; }
+@keyframes marco-gira { to { --giro: 360deg; } }
+@keyframes marco-late { 50% { box-shadow: 0 0 0 2px var(--eq2), 0 0 0 4px var(--eq1), 0 0 22px var(--eq2); } }
+.marco-muestra { display: block; width: 52px; height: 70px; border-radius: 10px; border: 5px solid var(--eq1); box-shadow: 0 0 0 3px var(--eq2), 0 0 18px var(--eq1); animation: marco-late 2.4s ease-in-out infinite; }
+.recompensas { margin-top: 6px; }

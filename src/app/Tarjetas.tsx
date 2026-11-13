@@ -8,7 +8,7 @@ import { RAREZAS, type CartaSobre, type DefinicionSobre, type Rareza, type TipoS
 import { Avatar, tipoCartaPorNivel } from "./Avatar";
 import { Confeti } from "./efectos";
 import { acciones, saldosDe, type JugadorLocal } from "./estado";
-import { EQUIPOS, GRUPOS_EQUIPO, equipoDe } from "../content/equipos";
+import { EQUIPOS, GRUPOS_EQUIPO, RECOMPENSAS_EQUIPO, equipoDe, type AdornoEquipo } from "../content/equipos";
 import { sonar } from "./sonido";
 
 
@@ -17,10 +17,11 @@ export function TarjetaJugador({ j }: { j: JugadorLocal }) {
   const nivel = nivelPorXp(s.acumulada);
   const desde = xpParaNivel(nivel), hasta = xpParaNivel(nivel + 1);
   const avance = Math.round(((s.acumulada - desde) / (hasta - desde)) * 100);
-  const eq = equipoDe(j.equipo);
+  const eq = equipoDe(j.personaje.equipo?.id ?? j.equipo);
+  const marco = !!eq && !!j.personaje.equipo?.adornos?.includes("marco");
   return (
     <div className="ficha-jugador">
-      <div className={"tarjeta-jugador " + tipoCartaPorNivel(nivel) + (eq ? " con-equipo" : "")} aria-label={`Tarjeta de ${j.nombre}, nivel ${nivel}`}
+      <div className={"tarjeta-jugador " + tipoCartaPorNivel(nivel) + (eq ? " con-equipo" : "") + (marco ? " marco-equipo" : "")} aria-label={`Tarjeta de ${j.nombre}, nivel ${nivel}`}
         style={eq ? { ["--eq1" as string]: eq.c1, ["--eq2" as string]: eq.c2 } : undefined}>
         {eq && <span className="tj-equipo" title={eq.nombre}>{eq.icono}</span>}
         <span className="tj-nivel"><small>NIVEL</small><b>{nivel}</b></span>
@@ -185,6 +186,44 @@ export function SelectorEquipo({ j }: { j: JugadorLocal }) {
           </button>
         ))}
       </div>
+      <Recompensas j={j} />
     </section>
   );
+}
+
+/** Recompensas del equipo: se desbloquean por nivel, sin pagar XP. */
+function Recompensas({ j }: { j: JugadorLocal }) {
+  const eqId = j.personaje.equipo?.id ?? j.equipo;
+  const eq = equipoDe(eqId);
+  const nivel = nivelPorXp(saldosDe(j).acumulada);
+  const puestos = new Set(j.personaje.equipo?.adornos ?? []);
+  return (
+    <div className="pila recompensas">
+      <span className="label">Recompensas de tu equipo</span>
+      {!eq && <p className="hint">Elige un equipo o casa para desbloquear sus recompensas.</p>}
+      <div className="rejilla-tarjetas">
+        {RECOMPENSAS_EQUIPO.map(r => {
+          const listo = !!eq && nivel >= r.nivel, puesto = puestos.has(r.id);
+          return (
+            <TarjetaArticulo key={r.id} rareza={r.nivel >= 8 ? "legendaria" : r.nivel >= 6 ? "epica" : r.nivel >= 4 ? "rara" : "comun"}
+              etiqueta={puesto ? "Puesto" : listo ? "Desbloqueado" : `Nivel ${r.nivel}`} puesto={puesto}
+              arte={eq ? <IconoRecompensa adorno={r.id} c1={eq.c1} c2={eq.c2} icono={eq.icono} /> : <span className="ta-sigla">?</span>}
+              nombre={r.nombre} detalle={r.donde}>
+              {listo
+                ? <button className={"btn sm" + (puesto ? " on" : "")} onClick={() => { acciones.adornoEquipo(j.id, r.id, !puesto); sonar(puesto ? "clic" : "exito"); }}>{puesto ? "Quitar" : "Ponérmelo"}</button>
+                : <span className="chip pink">🔒 Nivel {r.nivel}</span>}
+            </TarjetaArticulo>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+/** Dibujo chico de cada recompensa, con los colores del equipo. */
+function IconoRecompensa({ adorno, c1, c2, icono }: { adorno: AdornoEquipo; c1: string; c2: string; icono: string }) {
+  if (adorno === "bufanda") return <svg viewBox="0 0 100 100" aria-hidden="true"><path d="M14 30 Q50 62 86 30" fill="none" stroke={c1} strokeWidth="18" strokeLinecap="round" /><path d="M14 30 Q50 62 86 30" fill="none" stroke={c2} strokeWidth="5" strokeDasharray="9 10" /><rect x="58" y="44" width="18" height="48" rx="4" fill={c1} /><path d="M58 60h18M58 76h18" stroke={c2} strokeWidth="5" /></svg>;
+  if (adorno === "escudo") return <svg viewBox="0 0 100 100" aria-hidden="true"><path d="M20 14 L80 14 L80 52 Q50 92 20 52 Z" fill={c1} stroke={c2} strokeWidth="6" strokeLinejoin="round" /><text x="50" y="58" textAnchor="middle" fontSize="30">{icono}</text></svg>;
+  if (adorno === "capa") return <svg viewBox="0 0 100 100" aria-hidden="true"><path d="M30 10 L70 10 L90 92 L10 92Z" fill={c1} /><path d="M30 10 L70 10 L72 22 L28 22Z" fill={c2} /><path d="M50 22 V90" stroke={c2} strokeWidth="5" opacity=".7" /></svg>;
+  return <span className="marco-muestra" style={{ ["--eq1" as string]: c1, ["--eq2" as string]: c2 }} />;
 }

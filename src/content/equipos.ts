@@ -43,3 +43,18 @@ export function fraseEquipo(id: string | undefined, xp: number): string | null {
   if (e.id === "jedi") return `Que la fuerza te acompañe: +${xp}`;
   return `${e.icono} +${xp} para ${e.nombre}`;
 }
+
+/** Recompensas de equipo: se ganan al llegar al nivel (no se compran) y se pintan con los colores del equipo. */
+export type AdornoEquipo = "bufanda" | "escudo" | "capa" | "marco";
+export const RECOMPENSAS_EQUIPO: { id: AdornoEquipo; nombre: string; nivel: number; donde: string }[] = [
+  { id: "bufanda", nombre: "Bufanda del equipo", nivel: 2, donde: "Cuello" },
+  { id: "escudo", nombre: "Escudo en el pecho", nivel: 4, donde: "Pecho" },
+  { id: "capa", nombre: "Capa del equipo", nivel: 6, donde: "Espalda" },
+  { id: "marco", nombre: "Marco de carta animado", nivel: 8, donde: "Tu carta y tu retrato" },
+];
+
+/** ¿Puede ponerse esta recompensa? Necesita equipo y el nivel pedido. */
+export function puedePonerse(adorno: AdornoEquipo, nivel: number, equipo: string | undefined): boolean {
+  const r = RECOMPENSAS_EQUIPO.find(x => x.id === adorno);
+  return !!r && !!equipoDe(equipo) && nivel >= r.nivel;
+}

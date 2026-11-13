@@ -19,16 +19,31 @@ export function Avatar({ p, size, nombre, lider, mesero }: Props) {
   const puesto = p.puesto ?? {};
   const mano = puesto.mano && TIENDA.some(a => a.id === puesto.mano && a.pieza) ? puesto.mano : null;
   const capas = [p.piernas, p.piel, p.torso, p.facial || p.rostro, p.cabello, mano].filter(Boolean) as string[];
+  // Recompensas de equipo: con los colores del equipo; en su zona tapan al adorno de la tienda.
+  const eq = equipoDe(p.equipo?.id);
+  const adornos = new Set(eq ? p.equipo?.adornos ?? [] : []);
   return (
     <span className="av" style={{ width: size, height: Math.round(size * 1.5) }} role="img" aria-label={`Personaje de ${nombre ?? "jugador"}`}>
-      {puesto.espalda === "capa" && (
+      {eq && adornos.has("capa") ? (
+        <svg viewBox="0 0 400 520" aria-hidden="true"><path d="M140 212 L260 212 L308 478 L92 478Z" fill={eq.c1} /><path d="M200 236 L200 470" stroke={eq.c2} strokeWidth="10" opacity=".7" /><path d="M140 212 L260 212 L266 236 L134 236Z" fill={eq.c2} /></svg>
+      ) : puesto.espalda === "capa" && (
         <svg viewBox="0 0 400 520" aria-hidden="true"><path d="M140 212 L260 212 L308 478 L92 478Z" fill="#C8102E" /><path d="M140 212 L260 212 L266 236 L134 236Z" fill="#FFCF4A" /></svg>
       )}
       {capas.map(id => <img key={id} src={rutaPieza(id)} alt="" loading="lazy" decoding="async" />)}
       <svg viewBox="0 0 400 520" aria-hidden="true">
         {mesero && <><path d="M162 226 L238 226 L250 340 L150 340Z" fill="#F7F2FF" opacity=".95" /><path d="M162 226 Q200 205 238 226" fill="none" stroke="#F7F2FF" strokeWidth="5" /></>}
-        {puesto.cuello === "collar" && <><path d="M160 213 Q200 262 240 213" fill="none" stroke="#FFCF4A" strokeWidth="8" strokeLinecap="round" /><circle cx="200" cy="252" r="12" fill="#FFCF4A" stroke="#B8861B" strokeWidth="3" /></>}
-        {puesto.pecho === "medallas" && <><path d="M176 222 L180 262" stroke="#FF2E88" strokeWidth="7" /><path d="M224 222 L220 262" stroke="#22E1FF" strokeWidth="7" /><circle cx="180" cy="274" r="14" fill="#FF7A2E" stroke="#0E0A1F" strokeWidth="2" /><circle cx="220" cy="274" r="14" fill="#A77BFF" stroke="#0E0A1F" strokeWidth="2" /></>}
+        {eq && adornos.has("bufanda") && <>
+          <path d="M152 206 Q200 248 248 206" fill="none" stroke={eq.c1} strokeWidth="24" strokeLinecap="round" />
+          <path d="M152 206 Q200 248 248 206" fill="none" stroke={eq.c2} strokeWidth="6" strokeDasharray="12 14" />
+          <rect x="214" y="222" width="24" height="74" rx="5" fill={eq.c1} transform="rotate(-8 226 222)" />
+          <path d="M214 246 h24 M214 266 h24" stroke={eq.c2} strokeWidth="6" transform="rotate(-8 226 222)" />
+        </>}
+        {eq && adornos.has("escudo") && <>
+          <path d="M174 250 L226 250 L226 282 Q200 308 174 282 Z" fill={eq.c1} stroke={eq.c2} strokeWidth="5" strokeLinejoin="round" />
+          <text x="200" y="284" textAnchor="middle" fontSize="26">{eq.icono}</text>
+        </>}
+        {!(eq && adornos.has("bufanda")) && puesto.cuello === "collar" && <><path d="M160 213 Q200 262 240 213" fill="none" stroke="#FFCF4A" strokeWidth="8" strokeLinecap="round" /><circle cx="200" cy="252" r="12" fill="#FFCF4A" stroke="#B8861B" strokeWidth="3" /></>}
+        {!(eq && adornos.has("escudo")) && puesto.pecho === "medallas" && <><path d="M176 222 L180 262" stroke="#FF2E88" strokeWidth="7" /><path d="M224 222 L220 262" stroke="#22E1FF" strokeWidth="7" /><circle cx="180" cy="274" r="14" fill="#FF7A2E" stroke="#0E0A1F" strokeWidth="2" /><circle cx="220" cy="274" r="14" fill="#A77BFF" stroke="#0E0A1F" strokeWidth="2" /></>}
         {lider
           ? <Corona relleno="#FFCF4A" gema="#FF2E88" extra />
           : puesto.cabeza === "corona-neon" ? <Corona relleno="#FF2E88" gema="#22E1FF" />
@@ -54,12 +69,13 @@ export function Retrato({ j, p, nombre, size, nivel }:
   if (!personaje) return null;
   const n = nivel ?? (j ? nivelPorXp(saldosDe(j).acumulada) : 1);
   const quien = nombre ?? j?.nombre;
-  const eq = equipoDe(j?.equipo);
+  const eq = equipoDe(personaje.equipo?.id ?? j?.equipo);
+  const marco = !!eq && !!personaje.equipo?.adornos?.includes("marco");
   const s = size / 1.0345; // ancho del Avatar para que 300 unidades del lienzo llenen el retrato
   // Desfase de la animación por nombre, para que no respiren todos al mismo tiempo.
   const desfase = ((quien ?? "").split("").reduce((a, c) => a + c.charCodeAt(0), 0) % 9) * -0.4;
   return (
-    <span className={"retrato t-" + tipoCartaPorNivel(n) + (eq ? " con-equipo" : "")} style={{ width: size, height: size, ...(eq ? { ["--eq1" as string]: eq.c1 } : {}) }} role="img" aria-label={`Personaje de ${quien ?? "jugador"}`}>
+    <span className={"retrato t-" + tipoCartaPorNivel(n) + (eq ? " con-equipo" : "") + (marco ? " marco-equipo" : "")} style={{ width: size, height: size, ...(eq ? { ["--eq1" as string]: eq.c1, ["--eq2" as string]: eq.c2 } : {}) }} role="img" aria-label={`Personaje de ${quien ?? "jugador"}`}>
       <span className="retrato-cuerpo" aria-hidden="true" style={{ left: 0.0173 * s, top: 0.1208 * s, animationDelay: `${desfase}s` }}>
         <Avatar p={personaje} size={s} lider={false} />
       </span>

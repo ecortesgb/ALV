@@ -8,7 +8,7 @@ import type { Azar } from "../engine/azar";
 import { type Genero, type MiembroSala, type Registro, type Sala, comprarAccesorioNube, comprarSobreNube, cuentaActiva, leerCuenta, registrarPartidaNube, registrarXpExtraNube, type DatosCuenta } from "./nube";
 import { idActual, migrarPersonaje, personajeInicial, TIENDA, cambioValido, type Personaje, type Zona } from "../content/personaje";
 import type { EscenarioId, Intensidad } from "../engine/types";
-import { EQUIPOS } from "../content/equipos";
+import { EQUIPOS, puedePonerse, type AdornoEquipo } from "../content/equipos";
 
 export interface JugadorLocal {
   id: string;
@@ -168,7 +168,23 @@ export const acciones = {
   },
   equipo(id: string, equipo: string | undefined) {
     if (equipo !== undefined && !EQUIPOS.some(e => e.id === equipo)) return;
-    cambiaJugador(id, j => ({ ...j, equipo }));
+    cambiaJugador(id, j => {
+      const { equipo: _antes, ...resto } = j.personaje;
+      // Las recompensas ya puestas se quedan al cambiar de equipo: se pintan con los colores del nuevo.
+      const personaje = equipo ? { ...resto, equipo: { id: equipo, adornos: j.personaje.equipo?.adornos ?? [] } } : resto;
+      return { ...j, equipo, personaje };
+    });
+  },
+  /** Pone o quita una recompensa de equipo. Solo si ya llegó al nivel y tiene equipo. */
+  adornoEquipo(id: string, adorno: AdornoEquipo, poner: boolean) {
+    cambiaJugador(id, j => {
+      const eq = j.personaje.equipo ?? (j.equipo ? { id: j.equipo } : undefined);
+      if (!eq) return j;
+      if (poner && !puedePonerse(adorno, nivelPorXp(saldosDe(j).acumulada), eq.id)) return j;
+      const adornos = new Set(eq.adornos ?? []);
+      if (poner) adornos.add(adorno); else adornos.delete(adorno);
+      return { ...j, personaje: { ...j.personaje, equipo: { id: eq.id, adornos: [...adornos] } } };
+    });
   },
   renombrar(id: string, nombre: string) {
     const limpio = nombre.replace(/\s+/g, " ").slice(0, 30);

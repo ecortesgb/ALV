@@ -3,6 +3,7 @@
 import piezas from "./piezas.json";
 import migracion from "./piezas-migracion.json";
 import type { Azar } from "../engine/azar";
+import type { AdornoEquipo } from "./equipos";
 
 export type Paso = "piel" | "rostro" | "facial" | "cabello" | "torso" | "piernas";
 export type Zona = "mano" | "cabeza" | "cuello" | "pecho" | "espalda";
@@ -23,6 +24,8 @@ export interface Personaje {
   piel: string; rostro: string; facial: string | null; cabello: string | null; torso: string; piernas: string;
   /** Lo que lleva puesto de la tienda, por zona. */
   puesto: Partial<Record<Zona, string | null>>;
+  /** Equipo o casa y las recompensas de equipo que lleva puestas. Viaja con el personaje a la nube. */
+  equipo?: { id: string; adornos?: AdornoEquipo[] };
 }
 
 /** Artículos de la tienda. Todo es para lucir: nada da ventaja. Precio en XP disponible. */
