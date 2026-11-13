@@ -15,6 +15,7 @@ import { adminAjustarXp, adminJugadores, guardarRegistro, hayNube, restablecerCl
 import { lugaresDeSesion } from "./puntos-sesion";
 import { sonar } from "./sonido";
 import { XpExtra } from "./XpExtra";
+import { CabeceraJuego } from "./Hub";
 
 const AÑO = new Date().getFullYear();
 
@@ -232,17 +233,17 @@ export function PaginaAjustes() {
   const paleta = s.ajustes.paleta === "lounge" ? "lounge" : "neon";
   return (
     <>
-      <h1 className="titulo">Ajustes</h1>
-      <section className="card" aria-labelledby="t-dur">
-        <h2 id="t-dur">Partidas</h2>
+      <CabeceraJuego titulo="Ajustes" color="#A77BFF" />
+      <section className="card ajuste-seccion" aria-labelledby="t-dur">
+        <h2 id="t-dur"><span aria-hidden="true">⏱️</span> Partidas</h2>
         <span className="label">Rondas por partida</span>
-        <div className="opciones">{RONDAS.map(n => <button key={n} className="opcion" aria-pressed={rondas === n} onClick={() => acciones.ajustes({ rondas: n })}>{n}</button>)}</div>
+        <div className="fichas-num">{RONDAS.map(n => <button key={n} className="ficha-num" aria-pressed={rondas === n} onClick={() => { sonar("clic"); acciones.ajustes({ rondas: n }); }}><b>{n}</b><small>rondas</small></button>)}</div>
         <span className="label">Tiempo para responder</span>
-        <div className="opciones">{SEGUNDOS.map(n => <button key={n} className="opcion" aria-pressed={segundos === n} onClick={() => acciones.ajustes({ segundos: n })}>{n} s</button>)}</div>
+        <div className="fichas-num">{SEGUNDOS.map(n => <button key={n} className="ficha-num" aria-pressed={segundos === n} onClick={() => { sonar("clic"); acciones.ajustes({ segundos: n }); }}><b>{n}</b><small>seg</small></button>)}</div>
         <p className="hint">Los dados y los juegos contra reloj usan su propio tiempo.</p>
       </section>
-      <section className="card" aria-labelledby="t-vis">
-        <h2 id="t-vis">Pantalla y sonido</h2>
+      <section className="card ajuste-seccion" aria-labelledby="t-vis">
+        <h2 id="t-vis"><span aria-hidden="true">🎨</span> Pantalla y sonido</h2>
         <span className="label">Paleta</span>
         <div className="paleta-opciones" role="group" aria-label="Paleta de colores">
           {([["neon", "Neón sofisticado", ["#0E0A1F", "#1B1230", "#FF2E88", "#22E1FF"]], ["lounge", "Midnight Lounge", ["#0B0E14", "#161B26", "#E8417F", "#7FDDF2"]]] as const).map(([k, n, cs]) => (
@@ -253,8 +254,8 @@ export function PaginaAjustes() {
         </div>
         <div className="entre"><span className="label">Efectos de sonido</span><BotonSonido /></div>
       </section>
-      <section className="card" aria-labelledby="t-perf">
-        <h2 id="t-perf">Perfiles</h2>
+      <section className="card ajuste-seccion" aria-labelledby="t-perf">
+        <h2 id="t-perf"><span aria-hidden="true">👥</span> Perfiles</h2>
         <div className="pila">
           {s.jugadores.map(j => (
             <a key={j.id} className="jugador" href={`#/perfil/${j.id}`} style={{ textDecoration: "none", color: "inherit" }}>
@@ -289,8 +290,8 @@ function XpEsteCelular() {
     aviso(`${delta > 0 ? "+" : ""}${delta} XP a ${s.jugadores.find(j => j.id === id)?.nombre}`);
   };
   return (
-    <section className="card" aria-labelledby="t-xp-local">
-      <h2 id="t-xp-local">XP y posiciones (este celular)</h2>
+    <section className="card ajuste-seccion" aria-labelledby="t-xp-local">
+      <h2 id="t-xp-local"><span aria-hidden="true">📈</span> XP y posiciones (este celular)</h2>
       <p className="hint">Para quien juega aquí sin cuenta. Las posiciones del ranking salen de la XP, así que se mueven con este ajuste.</p>
       <input className="input" value={motivo} maxLength={50} placeholder="Motivo (opcional)" aria-label="Motivo del ajuste" onChange={e => setMotivo(e.target.value)} />
       {locales.map(j => (
@@ -315,8 +316,8 @@ function CambiarGenero() {
     aviso("Listo.");
   };
   return (
-    <section className="card" aria-labelledby="t-genero-aj">
-      <h2 id="t-genero-aj">Género</h2>
+    <section className="card ajuste-seccion" aria-labelledby="t-genero-aj">
+      <h2 id="t-genero-aj"><span aria-hidden="true">⚔️</span> Género</h2>
       <div className="chips">
         {(["hombre", "mujer", "otro"] as Genero[]).map(g => <button key={g} className="opcion" aria-pressed={r.genero === g} onClick={() => void cambiar(g)}>{NOMBRE_GENERO_AJ[g]}</button>)}
       </div>
@@ -363,7 +364,7 @@ function Administracion() {
 
   return (
     <section className="card admin" aria-labelledby="t-admin">
-      <div className="entre"><h2 id="t-admin">Administración</h2><span className="chip gold">Administrador</span></div>
+      <div className="entre"><h2 id="t-admin"><span aria-hidden="true">🛠️</span> Administración</h2><span className="chip gold">Administrador</span></div>
       <p className="hint">Ajustes a cualquier cuenta. Quedan registrados con su motivo. Las posiciones salen de la XP.</p>
       <input className="input" value={motivo} maxLength={50} placeholder="Motivo del ajuste" aria-label="Motivo del ajuste" onChange={e => setMotivo(e.target.value)} />
       {cuentas === null && <p className="hint">Cargando cuentas…</p>}

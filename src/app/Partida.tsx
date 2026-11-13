@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState, type PointerEvent as PE } from "react";
 import { CONTENIDO } from "../content";
 import { ESCENARIOS, JUEGOS, SECCIONES } from "../content/catalogo";
-import { aplicar, puntosPorEquipo, resultados, type AccionSinId, type EstadoPartida } from "../engine/partida";
+import { aplicar, crearPartida, puntosPorEquipo, resultados, type AccionSinId, type EstadoPartida } from "../engine/partida";
 import { COLORES_EQUIPO } from "./Armado";
 import { vistaJugador, vistaPublica } from "../engine/vistas";
 import { Avatar, Retrato } from "./Avatar";
@@ -103,7 +103,9 @@ export function Partida({ inicial, salir }: { inicial: EstadoPartida; salir: () 
   const color = COLOR_SECCION[juego.seccion];
   useAura(esc?.color ?? color);
 
-  if (e.fase === "terminada") return <Podio e={e} salir={salir} />;
+  // Revancha: el mismo juego otra vez con el mismo grupo (solo en este celular; en sala se arma desde el lobby).
+  const revancha = s.sala ? undefined : () => { sonar("revelar"); setE(crearPartida(juego, e.cfg, Date.now() % 100000, CONTENIDO, e.totalRondas)); };
+  if (e.fase === "terminada") return <Podio e={e} salir={salir} revancha={revancha} />;
 
   return (
     <div className="pila partida" style={{ ["--sc" as string]: esc?.color ?? color }}>
@@ -765,7 +767,7 @@ function Revelado({ e, accion }: { e: EstadoPartida; accion: (a: AccionSinId) =>
   );
 }
 
-function Podio({ e, salir }: { e: EstadoPartida; salir: () => void }) {
+function Podio({ e, salir, revancha }: { e: EstadoPartida; salir: () => void; revancha?: () => void }) {
   const s = useEstado();
   const res = useMemo(() => resultados(e), [e]);
   const equipos = useMemo(() => puntosPorEquipo(e), [e]);
@@ -781,10 +783,10 @@ function Podio({ e, salir }: { e: EstadoPartida; salir: () => void }) {
   useAura("#FFCF4A");
   const cuenta = res.some(r => r.xp > 0);
   return (
-    <div className="pila">
+    <div className="pila fin-partida">
       {cuenta && <Confeti />}
       <div style={{ alignSelf: "flex-end" }}><BotonSonido /></div>
-      <div style={{ textAlign: "center", marginTop: -36 }}><span className="sigla" style={{ fontSize: 40, color: "var(--gold)" }}>GG</span><p className="hint">Fin de partida</p></div>
+      <div className="gg"><span className="gg-letras">GG</span><b>{JUEGOS.find(j => j.id === e.juegoId)?.nombre}</b><small>Fin de partida · {e.totalRondas} rondas</small></div>
       <div className="podio">
         {top.map((r, i) => r ? (
           <div key={r.jugador} className={"puesto p" + [2, 1, 3][i]}>
@@ -806,13 +808,21 @@ function Podio({ e, salir }: { e: EstadoPartida; salir: () => void }) {
           ))}
         </div>
       )}
-      <div className="card">
-        {res.map(r => (
-          <div key={r.jugador} className="entre"><span><b>{r.lugar}.</b> {r.nombre} · {r.puntos} pts</span><span className="chip lime">+{r.xp} XP</span></div>
+      <div className="resultados-fin">
+        {res.map((r, i) => (
+          <div key={r.jugador} className={"resultado-fin l" + Math.min(4, r.lugar)} style={{ ["--i" as string]: i }}>
+            <span className="rf-lugar">{r.lugar}</span>
+            {jl(r.jugador) && <Retrato j={jl(r.jugador)} size={44} />}
+            <span className="pila" style={{ gap: 0, flex: 1, minWidth: 0 }}><b>{r.nombre}</b><small className="muted">{r.puntos} pts{r.retos ? ` · ${r.retos} retos` : ""}</small></span>
+            <span className="rf-xp">+<ContadorXp valor={r.xp} retraso={600 + i * 250} /> XP</span>
+          </div>
         ))}
         {!cuenta && <p className="hint">Una partida cuenta para XP desde 5 rondas.</p>}
       </div>
-      <button className="btn principal" onClick={salir}>Volver</button>
+      <div className="fin-botones">
+        {revancha && <button className="hub-jugar fin-revancha" onClick={revancha}>🔁 Revancha</button>}
+        <button className={revancha ? "btn" : "btn principal"} onClick={salir}>Volver al lobby</button>
+      </div>
     </div>
   );
 }
@@ -843,4 +853,24 @@ function useArrastre({ activo, derecha, izquierda, arriba }: { activo: boolean; 
       ? { transform: `translate(${d.x * 0.6}px, ${d.y * 0.4}px) perspective(900px) rotateY(${d.x / 18}deg) rotateX(${-d.y / 24}deg) rotate(${d.x / 14}deg)`, transition: "none", touchAction: "none" }
       : { touchAction: activo ? "pan-y" : undefined },
   } as const;
+}
+
+/** Número que sube de 0 a su valor (la XP ganada). Con «reducir movimiento» aparece de una vez. */
+function ContadorXp({ valor, retraso = 0 }: { valor: number; retraso?: number }) {
+  const [v, setV] = useState(0);
+  useEffect(() => {
+    if (typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches) { setV(valor); return; }
+    let cuadro = 0;
+    const t = window.setTimeout(() => {
+      const inicio = performance.now();
+      const paso = () => {
+        const k = Math.min(1, (performance.now() - inicio) / 900);
+        setV(Math.round(valor * (1 - Math.pow(1 - k, 3))));
+        if (k < 1) cuadro = requestAnimationFrame(paso);
+      };
+      cuadro = requestAnimationFrame(paso);
+    }, retraso);
+    return () => { window.clearTimeout(t); cancelAnimationFrame(cuadro); };
+  }, [valor, retraso]);
+  return <>{v}</>;
 }

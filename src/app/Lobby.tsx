@@ -24,6 +24,7 @@ import { crearAzar } from "../engine/azar";
 import { PartidaCelular, useAPartidaDeSala } from "./PartidaCelular";
 import { personajeInicial } from "../content/personaje";
 
+const ICONO_INTENSIDAD: Record<Intensidad, string> = { 1: "🌱", 2: "🌶️", 3: "🔥", 4: "💀" };
 const NOMBRE_MODALIDAD: Record<Modalidad, string> = { individual: "Individual", parejas: "Parejas", equipos: "Equipos", sexos: "Guerra de sexos" };
 
 type Gesto = "saludar" | "bailar" | "chocar" | "empujar" | "caer" | "listo";
@@ -154,51 +155,74 @@ export function Lobby({ jugar, arg }: { jugar: (p: EstadoPartida) => void; arg?:
       </div>
 
       <div className="lobby-config">
-        <section className="card" aria-labelledby="t-cond">
-          <span id="t-cond" className="label">Condiciones</span>
-          <div className="opciones">
+        <section className="pila" aria-labelledby="t-cond">
+          <span id="t-cond" className="label">¿Qué tan intenso?</span>
+          <div className="intensidades" role="group" aria-label="Intensidad">
             {([1, 2, 3, 4] as Intensidad[]).map(x => (
-              <button key={x} className="opcion" aria-pressed={cfg.intensidad === x} onClick={() => acciones.ajustes({ intensidad: x })}>{INTENSIDADES[x]}</button>
+              <button key={x} className={"intensidad i" + x} aria-pressed={cfg.intensidad === x} onClick={() => { sonar("clic"); acciones.ajustes({ intensidad: x }); }}>
+                <span className="int-icono" aria-hidden="true">{ICONO_INTENSIDAD[x]}</span>
+                <b>{INTENSIDADES[x]}</b>
+              </button>
             ))}
           </div>
-          <p className="hint">Modalidad: <b>{NOMBRE_MODALIDAD[s.modalidad ?? (s.enParejas ? "parejas" : "individual")]}</b> · se cambia en «Continuar». Reglas de {lugar.nombre.toLowerCase()}: nunca {lugar.nuncaSePermite.join(", ").toLowerCase()}.</p>
-          <label className="interruptor">Contenido adulto (FAP)<input type="checkbox" disabled={menor} checked={s.ajustes.adulto} onChange={async x => {
-            const encender = x.target.checked;
-            if (encender && !(await confirmar({ titulo: "¿Encender contenido adulto?", texto: "Solo si todos son mayores de 18 y están de acuerdo.", si: "Sí, encender", no: "Mejor no" }))) return;
-            acciones.ajustes({ adulto: encender });
-          }} /></label>
-          <label className="interruptor">Modo Drunk (HBD)<input type="checkbox" disabled={menor} checked={s.ajustes.drunk} onChange={x => acciones.ajustes({ drunk: x.target.checked })} /></label>
+          <div className="interruptores">
+            <label className={"interruptor-grande" + (s.ajustes.adulto ? " on" : "") + (menor ? " bloqueado" : "")}>
+              <span className="ig-icono" aria-hidden="true">🔞</span>
+              <span className="pila" style={{ gap: 0, flex: 1 }}><b>Contenido adulto</b><small>FAP · solo mayores de 18</small></span>
+              <input type="checkbox" disabled={menor} checked={s.ajustes.adulto} onChange={async x => {
+                const encender = x.target.checked;
+                if (encender && !(await confirmar({ titulo: "¿Encender contenido adulto?", texto: "Solo si todos son mayores de 18 y están de acuerdo.", si: "Sí, encender", no: "Mejor no" }))) return;
+                acciones.ajustes({ adulto: encender });
+              }} />
+            </label>
+            <label className={"interruptor-grande drunk" + (s.ajustes.drunk ? " on" : "") + (menor ? " bloqueado" : "")}>
+              <span className="ig-icono" aria-hidden="true">🍻</span>
+              <span className="pila" style={{ gap: 0, flex: 1 }}><b>Modo Drunk</b><small>HBD · siempre hay opción sin alcohol</small></span>
+              <input type="checkbox" disabled={menor} checked={s.ajustes.drunk} onChange={x => acciones.ajustes({ drunk: x.target.checked })} />
+            </label>
+          </div>
           {menor && <p className="aviso">Tu cuenta es de menor de 18: el contenido adulto y el modo Drunk no están disponibles.</p>}
-          {s.ajustes.drunk && <p className="aviso">Siempre hay opción sin alcohol, pasar no tiene castigo, máximo 3 por persona por hora y tomar nunca da XP.</p>}
+          {s.ajustes.drunk && <p className="aviso">Pasar no tiene castigo, máximo 3 por persona por hora y tomar nunca da XP.</p>}
+          <div className="mp-tags">
+            <span className="mp-tag">{NOMBRE_MODALIDAD[s.modalidad ?? (s.enParejas ? "parejas" : "individual")]}</span>
+            <span className="mp-tag">{esc.emoji} {lugar.nombre}</span>
+            <span className="mp-tag">🔁 {s.ajustes.rondas ?? 8} rondas</span>
+          </div>
+          <p className="hint">Reglas de {lugar.nombre.toLowerCase()}: nunca {lugar.nuncaSePermite.join(", ").toLowerCase()}.</p>
         </section>
 
         <PanelSala />
 
         <section className="pila" aria-labelledby="t-jug">
-          <span id="t-jug" className="label">Jugadores</span>
-          {s.jugadores.map((x, i) => {
-            const pareja = s.jugadores.find(o => o.id === parejaDe(i, s));
-            return (
-              <div key={x.id} className="jugador">
-                {x.remoto
-                  ? <span className="marco"><Retrato j={x} size={52} /></span>
-                  : <a className="marco" href={`#/perfil/${x.id}`} aria-label={`Editar personaje de ${x.nombre}`}><Retrato j={x} size={52} /></a>}
-                <div style={{ flex: 1, minWidth: 0 }}>
+          <div className="entre"><span id="t-jug" className="label">Jugadores · {s.jugadores.length} de 8</span><small className="muted">Desliza →</small></div>
+          <div className="cartas-jugadores">
+            {s.jugadores.map((x, i) => {
+              const pareja = s.jugadores.find(o => o.id === parejaDe(i, s));
+              return (
+                <div key={x.id} className="carta-jugador" style={{ ["--i" as string]: i }}>
                   {x.remoto
-                    ? <b style={{ paddingLeft: 8 }}>{x.nombre}</b>
-                    : <input value={x.nombre} maxLength={30} aria-label="Nombre" onChange={ev => acciones.renombrar(x.id, ev.target.value)} />}
-                  <small className="muted" style={{ paddingLeft: 8 }}>{x.remoto ? "📱 desde su celular" : `Nv ${nivelPorXp(saldosDe(x).acumulada)}`}{pareja ? ` · pareja de ${pareja.nombre}` : ""}</small>
+                    ? <span className="cj-retrato"><Retrato j={x} size={84} /></span>
+                    : <a className="cj-retrato" href={`#/perfil/${x.id}`} aria-label={`Editar personaje de ${x.nombre}`}><Retrato j={x} size={84} /></a>}
+                  {x.remoto
+                    ? <b className="cj-nombre">{x.nombre}</b>
+                    : <input className="cj-nombre" value={x.nombre} maxLength={30} aria-label="Nombre" onChange={ev => acciones.renombrar(x.id, ev.target.value)} />}
+                  <small className="muted">{x.remoto ? "📱 su celular" : `Nv ${nivelPorXp(saldosDe(x).acumulada)}`}{pareja ? ` · 💞 ${pareja.nombre}` : ""}</small>
+                  <span className="cj-botones">
+                    {!x.remoto && <button className="btn sm cyan" aria-label={`Dar XP extra a ${x.nombre}`} onClick={() => setPremiado(x.id)}>+XP</button>}
+                    {s.jugadores.length > 2 && !x.remoto && <button className="btn sm" aria-label={`Quitar a ${x.nombre}`} onClick={() => acciones.quitar(x.id)}>✕</button>}
+                  </span>
                 </div>
-                {!x.remoto && <button className="btn sm cyan" aria-label={`Dar XP extra a ${x.nombre}`} onClick={() => setPremiado(x.id)}>+XP</button>}
-                {s.jugadores.length > 2 && !x.remoto && <button className="btn sm" aria-label={`Quitar a ${x.nombre}`} onClick={() => acciones.quitar(x.id)}>✕</button>}
-              </div>
-            );
-          })}
-          {s.jugadores.length < 8 && <button className="btn" onClick={acciones.agregar}>+ Agregar jugador ({s.jugadores.length} de 8)</button>}
-          <div className="card">
-            <b>Evento</b>
-            <p className="hint">La XP que ganan en este evento sirve para comprar cartas de poder y ordena el podio. Al cerrarlo, la que sobre queda solo para accesorios.</p>
-            <button className="btn sm" onClick={async () => { if (await confirmar({ titulo: "¿Cerrar el evento?", texto: "La XP del evento ya no comprará cartas.", si: "Sí, cerrar", no: "Seguir en el evento", peligro: true })) { acciones.cerrarEvento(); aviso("Evento cerrado. Empieza uno nuevo."); } }}>Cerrar evento y empezar otro</button>
+              );
+            })}
+            {s.jugadores.length < 8 && (
+              <button className="carta-jugador agregar" onClick={() => { sonar("exito"); acciones.agregar(); }} aria-label="Agregar jugador">
+                <span className="cj-mas" aria-hidden="true">+</span><b>Agregar</b><small className="muted">{8 - s.jugadores.length} lugares</small>
+              </button>
+            )}
+          </div>
+          <div className="evento-chip">
+            <span className="pila" style={{ gap: 0, flex: 1 }}><b>🎟️ Evento abierto</b><small className="muted">Su XP compra cartas de poder y ordena el podio.</small></span>
+            <button className="btn sm" onClick={async () => { if (await confirmar({ titulo: "¿Cerrar el evento?", texto: "La XP del evento ya no comprará cartas.", si: "Sí, cerrar", no: "Seguir en el evento", peligro: true })) { acciones.cerrarEvento(); aviso("Evento cerrado. Empieza uno nuevo."); } }}>Cerrar</button>
           </div>
         </section>
       </div>
