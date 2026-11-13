@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { crearAzar } from "../engine/azar";
 import { nivelPorXp, tituloPorNivel, xpParaNivel, PRECIO_CARTAS } from "../engine/economia";
-import { PASOS, PIEZAS, TIENDA, ZONAS, personajeAlAzar, rutaPieza, type Paso } from "../content/personaje";
+import { PASOS, PIEZAS, piezaEquipo, TIENDA, ZONAS, personajeAlAzar, rutaPieza, type Paso } from "../content/personaje";
 import { rarezaDe, SOBRES, type CartaSobre, type TipoSobre } from "../engine/sobres";
 import { AperturaSobre, PaqueteSobre, TarjetaArticulo } from "./Tarjetas";
 import { sonar } from "./sonido";
@@ -42,13 +42,13 @@ export function EditorPersonaje({ j }: { j: JugadorLocal }) {
     <div className="pila">
       <div className="vitrina">
         <span key={emote?.clave ?? 0} className={"emote" + (emote ? " e-" + emote.k : "")} onAnimationEnd={() => setEmote(null)}>
-          <Avatar p={p} size={150} nombre={j.nombre} />
+          <Avatar p={p} size={150} nombre={j.nombre} articulado />
         </span>
       </div>
       <div className="chips" role="group" aria-label="Animaciones del personaje" style={{ justifyContent: "center" }}>
-        <button className="opcion" onClick={() => animar("saludar")}>👋 Saludo</button>
-        <button className="opcion" onClick={() => animar("festejar")}>🏆 Festejo de victoria</button>
-        <button className="opcion" onClick={() => animar("bailar")}>🕺 Baile</button>
+        {([["saludar", "👋 Saludo"], ["festejar", "🏆 Festejo"], ["bailar", "🕺 Baile"], ["aplaudir", "👏 Aplauso"], ["robot", "🤖 Robot"], ["caminar", "🚶 Caminar"], ["mirar", "👀 Mirar"]] as const).map(([k, n]) => (
+          <button key={k} className="opcion" onClick={() => animar(k)}>{n}</button>
+        ))}
       </div>
       <div className="entre">
         <b>{j.nombre}</b>
@@ -65,6 +65,8 @@ export function EditorPersonaje({ j }: { j: JugadorLocal }) {
 function Piezas({ j, paso }: { j: JugadorLocal; paso: Paso }) {
   const st = PASOS.find(s => s.k === paso)!;
   const actual = j.personaje[paso];
+  const equipoDe = j.personaje.equipo?.id ?? j.equipo;
+  const nivel = nivelPorXp(saldosDe(j).acumulada);
   return (
     <div className="pila">
       <span className="label">{st.titulo}</span>
@@ -75,11 +77,17 @@ function Piezas({ j, paso }: { j: JugadorLocal; paso: Paso }) {
             <span className="muted" style={{ fontWeight: 800 }}>Sin</span>
           </button>
         )}
-        {PIEZAS[paso].map(x => (
-          <button key={x.id} className="pieza" aria-pressed={actual === x.id} aria-label={x.nombre} title={x.nombre} onClick={() => acciones.personaje(j.id, { [paso]: x.id })}>
-            <img src={rutaPieza(x.id, true)} alt="" loading="lazy" />
-          </button>
-        ))}
+        {PIEZAS[paso].filter(x => { const pe = piezaEquipo(x.id); return !pe || pe.equipo === equipoDe; }).map(x => {
+          const pe = piezaEquipo(x.id);
+          const bloqueada = !!pe && nivel < pe.nivel;
+          return (
+            <button key={x.id} className={"pieza" + (pe ? " de-equipo" : "")} aria-pressed={actual === x.id} disabled={bloqueada}
+              aria-label={x.nombre + (bloqueada ? `, se desbloquea en nivel ${pe!.nivel}` : "")} title={x.nombre} onClick={() => acciones.personaje(j.id, { [paso]: x.id })}>
+              <img src={rutaPieza(x.id, true)} alt="" loading="lazy" />
+              {pe && <span className="pieza-equipo">{bloqueada ? `🔒 ${pe.nivel}` : "★"}</span>}
+            </button>
+          );
+        })}
       </div>
     </div>
   );
@@ -150,7 +158,7 @@ export function Tienda({ j }: { j: JugadorLocal }) {
       <div className="pila tienda-contenido">
       <Destacado j={j} probar={id => { setTab("accesorios"); probar(id); }} />
       <div className="pestanas-menu" role="tablist" aria-label="Secciones de la tienda">
-        {TABS.map(([k, n]) => <button key={k} role="tab" aria-selected={tab === k} onClick={() => setTab(k)}>{n}</button>)}
+        {TABS.map(([k, n]) => <button key={k} role="tab" aria-selected={tab === k} onClick={() => setTab(k)}>{n}{k === "accesorios" && (j.nuevos?.length ?? 0) > 0 && <i className="burbuja-nuevos" aria-label={`${j.nuevos!.length} nuevos`}>{j.nuevos!.length}</i>}</button>)}
       </div>
       {tab === "sobres" && <Sobres j={j} />}
       {tab === "accesorios" && (
@@ -165,7 +173,7 @@ export function Tienda({ j }: { j: JugadorLocal }) {
                   const bloqueado = nivel < a.nivel, alcanza = s.disponible >= a.precio;
                   return (
                     <TarjetaArticulo key={a.id} rareza={rarezaDe(a.precio)} arte={arteArticulo(a.id)} nombre={a.nombre} puesto={puesto}
-                      alTocar={() => probar(a.id)} activa={probando === a.id}
+                      alTocar={() => { probar(a.id); if (j.nuevos?.includes(a.id)) acciones.verNuevos(j.id, [a.id]); }} activa={probando === a.id} nuevo={j.nuevos?.includes(a.id)}
                       etiqueta={puesto ? "Puesto" : tiene ? "Tuyo" : undefined}>
                       {tiene ? (
                         <button className={"btn sm" + (puesto ? " on" : "")} onClick={() => acciones.ponerse(j.id, a.id)}>{puesto ? "Quitar" : "Ponérmelo"}</button>
@@ -205,7 +213,7 @@ function Probador({ j, articulo, quitar }: { j: JugadorLocal; articulo: string |
   return (
     <aside className={"probador" + (a ? " con-articulo" : "")} aria-label="Probador">
       <span className="probador-luz" aria-hidden="true" />
-      <span key={articulo ?? "nada"} className="probador-cuerpo"><Avatar p={p} size={150} nombre={j.nombre} /></span>
+      <span key={articulo ?? "nada"} className="probador-cuerpo"><Avatar p={p} size={150} nombre={j.nombre} articulado /></span>
       <div className="probador-info">
         {a ? <><span className="label">Probándote</span><b>{a.nombre}</b><button className="btn sm" onClick={quitar}>Quitar</button></>
            : <><span className="label">Probador</span><small className="muted">Toca un accesorio para vértelo puesto.</small></>}
@@ -235,3 +243,29 @@ function Destacado({ j, probar }: { j: JugadorLocal; probar: (id: string) => voi
   );
 }
 const RAREZA_NOMBRE = { comun: "Común", rara: "Rara", epica: "Épica", legendaria: "Legendaria" } as const;
+
+/** Lo que ya tienes: lo nuevo primero y resaltado, para ponértelo desde aquí. */
+export function MisCosas({ j }: { j: JugadorLocal }) {
+  const nuevos = new Set(j.nuevos ?? []);
+  const mios = TIENDA.filter(a => j.tiene.includes(a.id)).sort((a, b) => Number(nuevos.has(b.id)) - Number(nuevos.has(a.id)));
+  return (
+    <section className="pila" aria-labelledby="t-cosas">
+      <div className="entre">
+        <h2 id="t-cosas">Mis cosas <small className="muted">({mios.length})</small></h2>
+        {nuevos.size > 0 && <button className="btn sm" onClick={() => acciones.verNuevos(j.id)}>Ya las vi</button>}
+      </div>
+      {mios.length === 0 && <p className="hint">Todavía no tienes accesorios. Ábrelos en sobres o cómpralos en la <a href="#/tienda">Tienda</a>.</p>}
+      <div className="rejilla-tarjetas">
+        {mios.map(a => {
+          const puesto = j.personaje.puesto[a.zona] === a.id;
+          return (
+            <TarjetaArticulo key={a.id} rareza={rarezaDe(a.precio)} arte={arteArticulo(a.id)} nombre={a.nombre} puesto={puesto} nuevo={nuevos.has(a.id)}
+              etiqueta={puesto ? "Puesto" : undefined} detalle={ZONAS.find(z => z[0] === a.zona)?.[1]}>
+              <button className={"btn sm" + (puesto ? " on" : "")} onClick={() => { acciones.ponerse(j.id, a.id); acciones.verNuevos(j.id, [a.id]); sonar(puesto ? "clic" : "exito"); }}>{puesto ? "Quitar" : "Ponérmelo"}</button>
+            </TarjetaArticulo>
+          );
+        })}
+      </div>
+    </section>
+  );
+}

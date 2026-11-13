@@ -13,23 +13,55 @@ interface Props {
   lider?: boolean;
   /** Delantal del mesero (no se vende). */
   mesero?: boolean;
+  /** Con articulaciones: cabeza, brazos y piernas se mueven por separado (escenario, editor, pantalla principal). */
+  articulado?: boolean;
 }
 
-export function Avatar({ p, size, nombre, lider, mesero }: Props) {
+/**
+ * Esqueleto del personaje. Las piezas son capas de 400×520 (piernas aparte; cabeza, brazos y manos vienen en la piel
+ * y el torso). Cada parte es una máscara sobre esas capas y gira sobre su articulación (hombro, cuello, cadera).
+ * Coordenadas en el lienzo de las piezas; se pasan a porcentaje de la caja del personaje.
+ */
+const PARTES: { k: string; pts: [number, number][]; piv: [number, number]; piernas: boolean }[] = [
+  { k: "pierna_i", pts: [[100, 330], [200, 330], [200, 520], [100, 520]], piv: [172, 350], piernas: true },
+  { k: "pierna_d", pts: [[200, 330], [300, 330], [300, 520], [200, 520]], piv: [228, 350], piernas: true },
+  { k: "brazo_i", pts: [[0, 200], [153, 206], [127, 336], [150, 400], [0, 400]], piv: [150, 226], piernas: false },
+  { k: "brazo_d", pts: [[400, 200], [247, 206], [273, 336], [250, 400], [400, 400]], piv: [250, 226], piernas: false },
+  { k: "torso", pts: [[153, 206], [247, 206], [273, 336], [250, 400], [150, 400], [127, 336]], piv: [200, 300], piernas: false },
+  { k: "cabeza", pts: [[0, -60], [400, -60], [400, 214], [0, 214]], piv: [200, 214], piernas: false },
+];
+const aCaja = (x: number, y: number) => [-18.97 + (137.93 * x) / 400, -9.2 + (119.54 * y) / 520] as const;
+const ESTILO_PARTE = Object.fromEntries(PARTES.map(p => {
+  const [ox, oy] = aCaja(...p.piv);
+  return [p.k, { clipPath: `polygon(${p.pts.map(([x, y]) => aCaja(x, y).map(v => `${v.toFixed(2)}%`).join(" ")).join(", ")})`, transformOrigin: `${ox.toFixed(2)}% ${oy.toFixed(2)}%` }];
+}));
+
+export function Avatar({ p, size, nombre, lider, mesero, articulado = false }: Props) {
   const puesto = p.puesto ?? {};
-  const mano = puesto.mano && TIENDA.some(a => a.id === puesto.mano && a.pieza) ? puesto.mano : null;
+  const mano = p.equipo?.mano ?? (puesto.mano && TIENDA.some(a => a.id === puesto.mano && a.pieza) ? puesto.mano : null);
   const capas = [p.piernas, p.piel, p.torso, p.facial || p.rostro, p.cabello, mano].filter(Boolean) as string[];
   // Recompensas de equipo: con los colores del equipo; en su zona tapan al adorno de la tienda.
   const eq = equipoDe(p.equipo?.id);
   const adornos = new Set(eq ? p.equipo?.adornos ?? [] : []);
+  // La corona va en la cabeza: si el personaje está articulado, se mueve con ella.
+  const corona = lider
+    ? <Corona relleno="#FFCF4A" gema="#FF2E88" extra />
+    : puesto.cabeza === "corona-neon" ? <Corona relleno="#FF2E88" gema="#22E1FF" />
+    : puesto.cabeza === "corona-carton" ? <path d="M150 102 L158 52 L182 80 L200 44 L218 80 L242 52 L250 102Z" fill="#C9A26B" stroke="#8A6A3B" strokeWidth="4" strokeLinejoin="round" />
+    : null;
   return (
-    <span className="av" style={{ width: size, height: Math.round(size * 1.5) }} role="img" aria-label={`Personaje de ${nombre ?? "jugador"}`}>
+    <span className={"av" + (articulado ? " articulado" : "")} style={{ width: size, height: Math.round(size * 1.5) }} role="img" aria-label={`Personaje de ${nombre ?? "jugador"}`}>
       {eq && adornos.has("capa") ? (
         <svg viewBox="0 0 400 520" aria-hidden="true"><path d="M140 212 L260 212 L308 478 L92 478Z" fill={eq.c1} /><path d="M200 236 L200 470" stroke={eq.c2} strokeWidth="10" opacity=".7" /><path d="M140 212 L260 212 L266 236 L134 236Z" fill={eq.c2} /></svg>
       ) : puesto.espalda === "capa" && (
         <svg viewBox="0 0 400 520" aria-hidden="true"><path d="M140 212 L260 212 L308 478 L92 478Z" fill="#C8102E" /><path d="M140 212 L260 212 L266 236 L134 236Z" fill="#FFCF4A" /></svg>
       )}
-      {capas.map(id => <img key={id} src={rutaPieza(id)} alt="" loading="lazy" decoding="async" />)}
+      {articulado ? PARTES.map(parte => (
+        <span key={parte.k} className={"parte p-" + parte.k} style={ESTILO_PARTE[parte.k]}>
+          {(parte.piernas ? [p.piernas] : capas.filter(id => id !== p.piernas)).map(id => <img key={id} src={rutaPieza(id)} alt="" loading="lazy" decoding="async" />)}
+          {parte.k === "cabeza" && <svg viewBox="0 0 400 520" aria-hidden="true">{corona}</svg>}
+        </span>
+      )) : capas.map(id => <img key={id} src={rutaPieza(id)} alt="" loading="lazy" decoding="async" />)}
       <svg viewBox="0 0 400 520" aria-hidden="true">
         {mesero && <><path d="M162 226 L238 226 L250 340 L150 340Z" fill="#F7F2FF" opacity=".95" /><path d="M162 226 Q200 205 238 226" fill="none" stroke="#F7F2FF" strokeWidth="5" /></>}
         {eq && adornos.has("bufanda") && <>
@@ -44,11 +76,7 @@ export function Avatar({ p, size, nombre, lider, mesero }: Props) {
         </>}
         {!(eq && adornos.has("bufanda")) && puesto.cuello === "collar" && <><path d="M160 213 Q200 262 240 213" fill="none" stroke="#FFCF4A" strokeWidth="8" strokeLinecap="round" /><circle cx="200" cy="252" r="12" fill="#FFCF4A" stroke="#B8861B" strokeWidth="3" /></>}
         {!(eq && adornos.has("escudo")) && puesto.pecho === "medallas" && <><path d="M176 222 L180 262" stroke="#FF2E88" strokeWidth="7" /><path d="M224 222 L220 262" stroke="#22E1FF" strokeWidth="7" /><circle cx="180" cy="274" r="14" fill="#FF7A2E" stroke="#0E0A1F" strokeWidth="2" /><circle cx="220" cy="274" r="14" fill="#A77BFF" stroke="#0E0A1F" strokeWidth="2" /></>}
-        {lider
-          ? <Corona relleno="#FFCF4A" gema="#FF2E88" extra />
-          : puesto.cabeza === "corona-neon" ? <Corona relleno="#FF2E88" gema="#22E1FF" />
-          : puesto.cabeza === "corona-carton" ? <path d="M150 102 L158 52 L182 80 L200 44 L218 80 L242 52 L250 102Z" fill="#C9A26B" stroke="#8A6A3B" strokeWidth="4" strokeLinejoin="round" />
-          : null}
+        {!articulado && corona}
       </svg>
     </span>
   );

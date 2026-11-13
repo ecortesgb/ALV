@@ -786,7 +786,7 @@ function Podio({ e, salir, revancha }: { e: EstadoPartida; salir: () => void; re
       <div className="podio">
         {top.map((r, i) => r ? (
           <div key={r.jugador} className={"puesto p" + [2, 1, 3][i]}>
-            <span className="sube">{jl(r.jugador) && <Avatar p={jl(r.jugador)!.personaje} size={i === 1 ? 84 : 64} nombre={r.nombre} lider={i === 1} />}</span>
+            <span className="sube">{jl(r.jugador) && <Avatar p={jl(r.jugador)!.personaje} size={i === 1 ? 84 : 64} nombre={r.nombre} lider={i === 1} articulado />}</span>
             <b>{r.nombre}</b>
             <div className="escalon">{[2, 1, 3][i]}</div>
           </div>

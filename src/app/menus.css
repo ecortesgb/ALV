@@ -826,3 +826,17 @@ nav.abajo { display: none; }
   background: linear-gradient(180deg, transparent, color-mix(in srgb, var(--sc) 35%, transparent)); clip-path: polygon(40% 0, 60% 0, 100% 100%, 0 100%); }
 .actor.atras { opacity: .55; }
 .actor.atras .cuerpo { transform: scale(.88); transform-origin: bottom center; }
+
+/* ───────── Lo nuevo ───────── */
+.burbuja-nuevos { display: inline-grid; place-items: center; min-width: 18px; height: 18px; margin-left: 6px; padding: 0 5px; border-radius: 999px; font-style: normal; font-size: 11px; font-weight: 800;
+  background: var(--lime); color: var(--bg); box-shadow: 0 0 10px rgba(198,255,61,.7); animation: latido .7s ease-in-out infinite alternate; }
+.hub-ficha .punto.nuevos { background: var(--lime); }
+.tarjeta-articulo.nuevo { box-shadow: 0 0 0 2px var(--lime), 0 0 24px -6px var(--lime); animation: nuevo-late 1.4s ease-in-out infinite; }
+@keyframes nuevo-late { 50% { box-shadow: 0 0 0 3px var(--lime), 0 0 34px -4px var(--lime); } }
+.ta-nuevo { position: absolute; top: 22px; right: 6px; z-index: 2; padding: 2px 8px; border-radius: 999px; background: var(--lime); color: var(--bg); font-size: 10px; font-weight: 800; transform: rotate(6deg); }
+
+/* Piezas de equipo en el editor */
+.pieza { position: relative; }
+.pieza.de-equipo { border-color: var(--gold); }
+.pieza-equipo { position: absolute; top: 2px; right: 4px; font-size: 10px; font-weight: 800; color: var(--gold); text-shadow: 0 0 6px rgba(0,0,0,.8); }
+.pieza:disabled { opacity: .45; }

@@ -76,7 +76,7 @@ function PodioRanking({ filas }: { filas: Fila[] }) {
       {orden.map((f, i) => f ? (
         <div key={f.id} className={"puesto p" + [2, 1, 3][i]}>
           <span className="sube podio-gente">
-            {f.jugadores.map((j, k) => <Avatar key={j.id} p={j.personaje} size={(i === 1 ? 84 : 66) - (f.jugadores.length > 1 ? 18 : 0)} nombre={j.nombre} lider={i === 1 && k === 0} />)}
+            {f.jugadores.map((j, k) => <Avatar key={j.id} p={j.personaje} size={(i === 1 ? 84 : 66) - (f.jugadores.length > 1 ? 18 : 0)} nombre={j.nombre} lider={i === 1 && k === 0} articulado />)}
           </span>
           <b className="podio-nombre">{f.nombre}</b>
           <small className="podio-xp">{f.valor} XP</small>

@@ -1,0 +1,87 @@
+/* Animaciones por partes del personaje articulado (Avatar con articulado).
+   Brazos giran en el hombro, la cabeza en el cuello y las piernas suben y bajan desde la cadera.
+   Los gestos se activan con la clase .g-<gesto> (escenario) o .e-<gesto> (editor y pantalla principal).
+   Giro positivo = sentido del reloj: el brazo izquierdo sube con grados positivos y el derecho con negativos. */
+
+.av.articulado .parte { position: absolute; inset: 0; display: block; will-change: transform; }
+
+/* Reposo: nunca tieso */
+:where(.av.articulado) .p-brazo_i { animation: reposo-bi 3.6s ease-in-out infinite; }
+:where(.av.articulado) .p-brazo_d { animation: reposo-bd 3.6s ease-in-out .5s infinite; }
+:where(.av.articulado) .p-cabeza { animation: mira-reposo 9s ease-in-out infinite; }
+@keyframes reposo-bi { 50% { transform: rotate(5deg); } }
+@keyframes reposo-bd { 50% { transform: rotate(-5deg); } }
+@keyframes mira-reposo { 0%, 60%, 100% { transform: none; } 66%, 72% { transform: rotate(-7deg); } 78%, 84% { transform: rotate(6deg); } }
+
+/* Saludo: la mano derecha arriba, moviéndose de lado a lado */
+:is(.g-saludar, .e-saludar) .p-brazo_d { animation: saluda-bd 1s ease-in-out both; }
+:is(.g-saludar, .e-saludar) .p-cabeza { animation: ladea 1s ease-in-out both; }
+@keyframes saluda-bd { 0%, 100% { transform: none; } 18% { transform: rotate(-145deg); } 34% { transform: rotate(-115deg); } 50% { transform: rotate(-150deg); } 66% { transform: rotate(-118deg); } 82% { transform: rotate(-140deg); } }
+@keyframes ladea { 0%, 100% { transform: none; } 25%, 80% { transform: rotate(-9deg); } }
+
+/* Festejo: los dos brazos arriba, bombeando */
+:is(.g-festejar, .e-festejar) .p-brazo_i { animation: festeja-bi 1.1s ease-in-out both; }
+:is(.g-festejar, .e-festejar) .p-brazo_d { animation: festeja-bd 1.1s ease-in-out both; }
+@keyframes festeja-bi { 0%, 100% { transform: none; } 15%, 55% { transform: rotate(155deg); } 35%, 75% { transform: rotate(128deg); } }
+@keyframes festeja-bd { 0%, 100% { transform: none; } 15%, 55% { transform: rotate(-155deg); } 35%, 75% { transform: rotate(-128deg); } }
+.actor.g-festejar .cuerpo { animation: festejar 1.1s cubic-bezier(.3,1.4,.5,1) both; }
+
+/* Aplauso: las manos se juntan al frente varias veces */
+:is(.g-aplaudir, .e-aplaudir) .p-brazo_i { animation: aplaude-bi 1.2s ease-in-out both; }
+:is(.g-aplaudir, .e-aplaudir) .p-brazo_d { animation: aplaude-bd 1.2s ease-in-out both; }
+@keyframes aplaude-bi { 0%, 100% { transform: none; } 15%, 35%, 55%, 75% { transform: rotate(-40deg); } 25%, 45%, 65% { transform: rotate(-14deg); } }
+@keyframes aplaude-bd { 0%, 100% { transform: none; } 15%, 35%, 55%, 75% { transform: rotate(40deg); } 25%, 45%, 65% { transform: rotate(14deg); } }
+
+/* Baile: brazos arriba y abajo por turnos, piernas que marcan el paso, cabeza al ritmo */
+:is(.g-bailar, .e-bailar) .p-brazo_i { animation: baila-bi .8s ease-in-out 2 both; }
+:is(.g-bailar, .e-bailar) .p-brazo_d { animation: baila-bd .8s ease-in-out 2 both; }
+:is(.g-bailar, .e-bailar) .p-pierna_i { animation: paso-i .4s ease-in-out 4 both; }
+:is(.g-bailar, .e-bailar) .p-pierna_d { animation: paso-d .4s ease-in-out 4 both; }
+:is(.g-bailar, .e-bailar) .p-cabeza { animation: cabecea .4s ease-in-out 4 alternate both; }
+@keyframes baila-bi { 0%, 100% { transform: none; } 25% { transform: rotate(125deg); } 75% { transform: rotate(35deg); } }
+@keyframes baila-bd { 0%, 100% { transform: none; } 25% { transform: rotate(-35deg); } 75% { transform: rotate(-125deg); } }
+@keyframes paso-i { 50% { transform: translateY(-5%); } }
+@keyframes paso-d { 0%, 100% { transform: translateY(-5%); } 50% { transform: none; } }
+@keyframes cabecea { from { transform: rotate(-9deg); } to { transform: rotate(9deg); } }
+
+/* Robot: movimientos secos, de golpe */
+:is(.g-robot, .e-robot) .p-brazo_i { animation: robot-bi 1.6s steps(1, end) both; }
+:is(.g-robot, .e-robot) .p-brazo_d { animation: robot-bd 1.6s steps(1, end) both; }
+:is(.g-robot, .e-robot) .p-cabeza { animation: robot-cab 1.6s steps(1, end) both; }
+@keyframes robot-bi { 0% { transform: rotate(90deg); } 25% { transform: rotate(0deg); } 50% { transform: rotate(160deg); } 75% { transform: rotate(90deg); } 100% { transform: none; } }
+@keyframes robot-bd { 0% { transform: rotate(0deg); } 25% { transform: rotate(-90deg); } 50% { transform: rotate(-160deg); } 75% { transform: rotate(-90deg); } 100% { transform: none; } }
+@keyframes robot-cab { 0% { transform: rotate(15deg); } 25% { transform: rotate(-15deg); } 50% { transform: none; } 75% { transform: rotate(15deg); } 100% { transform: none; } }
+
+/* Caminar en su lugar: piernas alternadas, brazos que se balancean */
+:is(.g-caminar, .e-caminar) .p-pierna_i { animation: paso-i .4s ease-in-out 4 both; }
+:is(.g-caminar, .e-caminar) .p-pierna_d { animation: paso-d .4s ease-in-out 4 both; }
+:is(.g-caminar, .e-caminar) .p-brazo_i { animation: balanceo-i .8s ease-in-out 2 both; }
+:is(.g-caminar, .e-caminar) .p-brazo_d { animation: balanceo-d .8s ease-in-out 2 both; }
+.actor.g-caminar .cuerpo, .e-caminar { animation: rebotito .4s ease-in-out 4 both; }
+@keyframes balanceo-i { 25% { transform: rotate(22deg); } 75% { transform: rotate(-12deg); } }
+@keyframes balanceo-d { 25% { transform: rotate(12deg); } 75% { transform: rotate(-22deg); } }
+@keyframes rebotito { 50% { transform: translateY(-4px); } }
+
+/* Mirar a los lados */
+:is(.g-mirar, .e-mirar) .p-cabeza { animation: mira 1.4s ease-in-out both; }
+@keyframes mira { 0%, 100% { transform: none; } 20%, 40% { transform: rotate(-15deg); } 60%, 80% { transform: rotate(15deg); } }
+
+/* Chocar la mano, empujar y «listo» */
+.g-chocar .p-brazo_d, .h-izq.g-chocar .p-brazo_i { animation: choca-bd .8s ease-out both; }
+.h-izq.g-chocar .p-brazo_d { animation: none; }
+@keyframes choca-bd { 0%, 100% { transform: none; } 30%, 60% { transform: rotate(-160deg); } }
+.g-empujar .p-brazo_i { animation: empuja-bi .55s ease-out both; }
+.g-empujar .p-brazo_d { animation: empuja-bd .55s ease-out both; }
+@keyframes empuja-bi { 40% { transform: rotate(75deg); } }
+@keyframes empuja-bd { 40% { transform: rotate(-75deg); } }
+.g-listo .p-brazo_d { animation: puno .7s ease-out both; }
+@keyframes puno { 0%, 100% { transform: none; } 30% { transform: rotate(-165deg); } 50% { transform: rotate(-135deg); } 70% { transform: rotate(-165deg); } }
+.g-caer .p-brazo_i { animation: festeja-bi 1.25s ease-in-out both; }
+.g-caer .p-brazo_d { animation: festeja-bd 1.25s ease-in-out both; }
+
+/* Con articulaciones, el saludo ya no gira todo el cuerpo */
+.actor.g-saludar .cuerpo:has(.articulado), .emote.e-saludar:has(.articulado) { animation: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .av.articulado .parte { animation: none !important; }
+}

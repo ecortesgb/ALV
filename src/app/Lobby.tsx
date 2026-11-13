@@ -28,15 +28,22 @@ import { PartidaCelular, useAPartidaDeSala } from "./PartidaCelular";
 import { personajeInicial } from "../content/personaje";
 
 
-type Gesto = "saludar" | "bailar" | "chocar" | "empujar" | "caer" | "listo";
+type Gesto = GestoSala | "caer" | "listo";
 interface Anim { gesto: Gesto; clave: number; hacia?: "izq" | "der" }
 
 const GESTOS: { k: Gesto; icono: string; nombre: string; conOtro?: boolean }[] = [
   { k: "saludar", icono: "👋", nombre: "Saludar" },
   { k: "bailar", icono: "🕺", nombre: "Bailar" },
+  { k: "festejar", icono: "🏆", nombre: "Festejar" },
+  { k: "aplaudir", icono: "👏", nombre: "Aplaudir" },
+  { k: "robot", icono: "🤖", nombre: "Robot" },
+  { k: "caminar", icono: "🚶", nombre: "Caminar" },
+  { k: "mirar", icono: "👀", nombre: "Mirar" },
   { k: "chocar", icono: "🙌", nombre: "Chocar", conOtro: true },
   { k: "empujar", icono: "🫸", nombre: "Empujar", conOtro: true },
 ];
+/** Cuánto dura cada gesto (ms), igual que su animación. */
+const DURACION: Partial<Record<Gesto, number>> = { bailar: 1600, robot: 1600, caminar: 1600, aplaudir: 1200, festejar: 1100, mirar: 1400 };
 
 const CONSEJOS = [
   "Toca a un personaje para saludar, bailar, chocar la mano o empujar a alguien.",
@@ -278,7 +285,7 @@ export function Escenario({ jugadores, color, lugares, interactivo = true, todos
       aviso(gesto === "empujar" ? `${nombre(de)} empujó a ${nombre(a)}` : `${nombre(de)} y ${nombre(a)} chocaron la mano`);
     } else {
       sonar("clic");
-      animar(de, { gesto }, gesto === "bailar" ? 1600 : 1000);
+      animar(de, { gesto }, DURACION[gesto] ?? 1000);
     }
   };
 
@@ -302,8 +309,9 @@ export function Escenario({ jugadores, color, lugares, interactivo = true, todos
     if (typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     const t = window.setInterval(() => {
       const j = jugadores[Math.floor(Math.random() * n)];
-      const g = (["saludar", "bailar", "listo"] as const)[Math.floor(Math.random() * 3)]!;
-      if (j) animar(j.id, { gesto: g }, g === "bailar" ? 1600 : 1000);
+      const lista = ["saludar", "bailar", "festejar", "aplaudir", "robot", "caminar", "mirar"] as const;
+      const g = lista[Math.floor(Math.random() * lista.length)]!;
+      if (j) animar(j.id, { gesto: g }, DURACION[g] ?? 1000);
     }, 900);
     return () => window.clearInterval(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -350,7 +358,7 @@ export function Escenario({ jugadores, color, lugares, interactivo = true, todos
               <button className="actor-boton" data-sin-clic disabled={!interactivo} aria-pressed={elegido === j.id}
                 aria-label={`${j.nombre}${soyYo ? " (tú)" : ""}${lugares?.[j.id] ? `, lugar ${lugares[j.id]}` : ""}${listo ? ", listo" : ""}`} onClick={() => tocar(j.id)}>
                 {lugares?.[j.id] && <span className={"lugar-chip l" + Math.min(4, lugares[j.id]!)}>#{lugares[j.id]}</span>}
-                <span key={anim?.clave ?? 0} className="cuerpo"><Avatar p={j.personaje} size={n > 6 ? 62 : 74} nombre={j.nombre} /></span>
+                <span key={anim?.clave ?? 0} className="cuerpo"><Avatar p={j.personaje} size={n > 6 ? 62 : 74} nombre={j.nombre} articulado /></span>
                 <span className="sombra" aria-hidden="true" />
                 <small className="nombre">{turno ? "▶ " : listo ? "✓ " : ""}{soyYo ? "Tú" : j.nombre}</small>
               </button>

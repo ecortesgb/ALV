@@ -6,7 +6,7 @@ import { nivelPorXp, saldos, puedeComprarAccesorio, puedeComprarCarta, XP_EXTRA,
 import { abrirSobre, SOBRES, type CartaSobre, type Rareza, type TipoSobre } from "../engine/sobres";
 import type { Azar } from "../engine/azar";
 import { type Genero, type MiembroSala, type Registro, type Sala, comprarAccesorioNube, comprarSobreNube, cuentaActiva, leerCuenta, registrarPartidaNube, registrarXpExtraNube, type DatosCuenta } from "./nube";
-import { idActual, migrarPersonaje, personajeInicial, TIENDA, cambioValido, type Personaje, type Zona } from "../content/personaje";
+import { idActual, migrarPersonaje, personajeInicial, piezaEquipo, TIENDA, cambioValido, type Personaje, type Zona } from "../content/personaje";
 import type { EscenarioId, Intensidad } from "../engine/types";
 import { EQUIPOS, puedePonerse, type AdornoEquipo } from "../content/equipos";
 
@@ -20,6 +20,8 @@ export interface JugadorLocal {
   personaje: Personaje;
   movimientos: Movimiento[];
   tiene: string[];
+  /** Artículos recién comprados o sacados de un sobre que todavía no ha visto. */
+  nuevos?: string[];
 }
 
 /** `extra` marca la XP que dio el administrador fuera de un juego; lleva el motivo. */
@@ -169,6 +171,15 @@ export const acciones = {
     }
     guardar({ ...estado, miembros, jugadores: [...locales, ...remotos] });
   },
+  /** Marca artículos como nuevos (los que llegan de la cuenta tras comprar). */
+  marcarNuevos(id: string, ids: string[]) {
+    if (!ids.length) return;
+    cambiaJugador(id, j => ({ ...j, nuevos: [...new Set([...(j.nuevos ?? []), ...ids])] }));
+  },
+  /** Ya los vio: deja de resaltarlos. Sin lista, todos. */
+  verNuevos(id: string, ids?: string[]) {
+    cambiaJugador(id, j => ({ ...j, nuevos: ids ? (j.nuevos ?? []).filter(x => !ids.includes(x)) : [] }));
+  },
   equipo(id: string, equipo: string | undefined) {
     if (equipo !== undefined && !EQUIPOS.some(e => e.id === equipo)) return;
     cambiaJugador(id, j => {
@@ -176,6 +187,18 @@ export const acciones = {
       // Las recompensas ya puestas se quedan al cambiar de equipo: se pintan con los colores del nuevo.
       const personaje = equipo ? { ...resto, equipo: { id: equipo, adornos: j.personaje.equipo?.adornos ?? [] } } : resto;
       return { ...j, equipo, personaje };
+    });
+  },
+  /** Pone o quita lo de la mano de su equipo (varita, escudo…). Solo si es de ese equipo y tiene el nivel. */
+  manoEquipo(id: string, pieza: string | undefined) {
+    cambiaJugador(id, j => {
+      const eq = j.personaje.equipo ?? (j.equipo ? { id: j.equipo } : undefined);
+      if (!eq) return j;
+      if (pieza) {
+        const pe = piezaEquipo(pieza);
+        if (!pe || pe.paso !== "mano" || pe.equipo !== eq.id || nivelPorXp(saldosDe(j).acumulada) < pe.nivel) return j;
+      }
+      return { ...j, personaje: { ...j.personaje, equipo: { ...eq, mano: pieza } } };
     });
   },
   /** Pone o quita una recompensa de equipo. Solo si ya llegó al nivel y tiene equipo. */
@@ -235,7 +258,7 @@ export const acciones = {
     const r = puedeComprarAccesorio(saldosDe(j), art.precio, art.nivel);
     if (!r.ok) return r.motivo === "nivel" ? `Se desbloquea en el nivel ${art.nivel}.` : "No te alcanza la XP disponible.";
     cambiaJugador(id, x => ({
-      ...x, tiene: [...x.tiene, art.id],
+      ...x, tiene: [...x.tiene, art.id], nuevos: [...new Set([...(x.nuevos ?? []), art.id])],
       movimientos: [...x.movimientos, { tipo: "accesorio", xp: art.precio }],
       personaje: { ...x.personaje, puesto: { ...x.personaje.puesto, [art.zona]: art.id } },
     }));
@@ -254,7 +277,7 @@ export const acciones = {
     const cartas = abrirSobre(def, azar, disponibles);
     cambiaJugador(id, x => ({
       ...x,
-      tiene: [...x.tiene, ...cartas.map(c => c.id)],
+      tiene: [...x.tiene, ...cartas.map(c => c.id)], nuevos: [...new Set([...(x.nuevos ?? []), ...cartas.map(c => c.id)])],
       movimientos: [...x.movimientos, { tipo: "accesorio", xp: def.precio }],
     }));
     return { ok: true, cartas };
@@ -344,6 +367,7 @@ export async function comprarAccesorio(id: string, articulo: string): Promise<st
   const m = await comprarAccesorioNube(articulo);
   if (m) return m;
   await refrescarCuenta();
+  acciones.marcarNuevos(id, [articulo]);
   acciones.ponerse(id, articulo);
   return null;
 }
@@ -354,7 +378,9 @@ export async function comprarSobre(id: string, tipo: TipoSobre, azar: Azar): Pro
   const r = await comprarSobreNube(tipo);
   if (!r.ok) return r;
   await refrescarCuenta();
-  return { ok: true, cartas: r.cartas.map(c => ({ id: idActual(c.id), rareza: c.rareza as Rareza })) };
+  const cartas = r.cartas.map(c => ({ id: idActual(c.id), rareza: c.rareza as Rareza }));
+  acciones.marcarNuevos(id, cartas.map(c => c.id));
+  return { ok: true, cartas };
 }
 
 /** Años cumplidos a hoy con una fecha AAAA-MM-DD. */

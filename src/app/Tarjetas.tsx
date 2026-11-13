@@ -9,6 +9,7 @@ import { Avatar, tipoCartaPorNivel } from "./Avatar";
 import { Confeti } from "./efectos";
 import { acciones, saldosDe, type JugadorLocal } from "./estado";
 import { EQUIPOS, GRUPOS_EQUIPO, RECOMPENSAS_EQUIPO, equipoDe, type AdornoEquipo } from "../content/equipos";
+import { PIEZAS_EQUIPO, rutaPieza } from "../content/personaje";
 import { sonar } from "./sonido";
 
 
@@ -49,15 +50,16 @@ export function TarjetaJugador({ j }: { j: JugadorLocal }) {
 }
 
 /** Tarjeta de artículo de la tienda o de comodín. El marco cambia con la rareza. */
-export function TarjetaArticulo({ rareza, arte, nombre, detalle, etiqueta, puesto, children, alTocar, activa }:
-  { rareza: Rareza | "poder"; arte?: ReactNode; nombre: string; detalle?: string; etiqueta?: string; puesto?: boolean; children?: ReactNode;
+export function TarjetaArticulo({ rareza, arte, nombre, detalle, etiqueta, puesto, children, alTocar, activa, nuevo }:
+  { rareza: Rareza | "poder"; arte?: ReactNode; nombre: string; detalle?: string; etiqueta?: string; puesto?: boolean; children?: ReactNode; nuevo?: boolean;
     /** Tocar la tarjeta (no sus botones) la prueba en el personaje. */ alTocar?: () => void; activa?: boolean }) {
   return (
-    <div className={"tarjeta-articulo r-" + rareza + (puesto ? " puesto" : "") + (activa ? " activa" : "") + (alTocar ? " tocable" : "")}
+    <div className={"tarjeta-articulo r-" + rareza + (puesto ? " puesto" : "") + (activa ? " activa" : "") + (alTocar ? " tocable" : "") + (nuevo ? " nuevo" : "")}
       onClick={alTocar ? e => { if (!(e.target as HTMLElement).closest("button")) alTocar(); } : undefined}
       role={alTocar ? "button" : undefined} tabIndex={alTocar ? 0 : undefined} aria-pressed={alTocar ? !!activa : undefined}
       onKeyDown={alTocar ? e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); alTocar(); } } : undefined}>
       <span className="ta-cinta">{etiqueta ?? (rareza === "poder" ? "Comodín" : RAREZAS[rareza])}</span>
+      {nuevo && <span className="ta-nuevo">¡Nuevo!</span>}
       <span className="ta-arte" aria-hidden="true">{arte}</span>
       <b className="ta-nombre">{nombre}</b>
       {detalle && <small className="ta-detalle">{detalle}</small>}
@@ -166,8 +168,11 @@ export function AperturaSobre({ def, cartas, nombreDe, arteDe, cerrar }:
               </span>
             ))}
           </div>
-          <p className="hint" style={{ textAlign: "center" }}>Póntelas desde la pestaña Accesorios.</p>
-          <button className="btn principal" onClick={cerrar}>Listo</button>
+          <p className="hint" style={{ textAlign: "center" }}>Quedan marcadas como nuevas en tu Casillero → Mis cosas.</p>
+          <div className="fila" style={{ justifyContent: "center" }}>
+            <button className="btn" onClick={cerrar}>Seguir comprando</button>
+            <a className="btn principal" href="#/perfil/cosas" onClick={cerrar} style={{ textDecoration: "none" }}>🎒 Ver y ponérmelas</a>
+          </div>
         </div>
       )}
     </div>,
@@ -209,6 +214,21 @@ function Recompensas({ j }: { j: JugadorLocal }) {
     <div className="pila recompensas">
       <span className="label">Recompensas de tu equipo</span>
       {!eq && <p className="hint">Elige un equipo o casa para desbloquear sus recompensas.</p>}
+      {eq && PIEZAS_EQUIPO.some(p => p.equipo === eq.id && p.paso === "mano") && (
+        <div className="rejilla-tarjetas">
+          {PIEZAS_EQUIPO.filter(p => p.equipo === eq.id && p.paso === "mano").map(p => {
+            const listo = nivel >= p.nivel, puesta = j.personaje.equipo?.mano === p.id;
+            return (
+              <TarjetaArticulo key={p.id} rareza={p.nivel >= 8 ? "legendaria" : p.nivel >= 5 ? "epica" : "rara"} etiqueta={puesta ? "En la mano" : listo ? "De tu equipo" : `Nivel ${p.nivel}`}
+                puesto={puesta} arte={<img src={rutaPieza(p.id, true)} alt="" />} nombre={p.nombre} detalle={p.personaje ?? "En la mano"}>
+                {listo
+                  ? <button className={"btn sm" + (puesta ? " on" : "")} onClick={() => { acciones.manoEquipo(j.id, puesta ? undefined : p.id); sonar(puesta ? "clic" : "exito"); }}>{puesta ? "Quitar" : "Ponérmelo"}</button>
+                  : <span className="chip pink">🔒 Nivel {p.nivel}</span>}
+              </TarjetaArticulo>
+            );
+          })}
+        </div>
+      )}
       <div className="rejilla-tarjetas">
         {RECOMPENSAS_EQUIPO.map(r => {
           const listo = !!eq && nivel >= r.nivel, puesto = puestos.has(r.id);

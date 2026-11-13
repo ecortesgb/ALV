@@ -4,6 +4,7 @@ import { App } from "./App";
 import "./styles.css";
 import "./menus.css";
 import "./pantalla.css";
+import "./animaciones.css";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>

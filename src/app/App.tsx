@@ -11,7 +11,7 @@ import { Fondo } from "./efectos";
 import { type JugadorLocal, parejaDe, saldosDe, useEstado } from "./estado";
 import { Lobby } from "./Lobby";
 import { Partida } from "./Partida";
-import { EditorPersonaje, Tienda } from "./Personaje";
+import { EditorPersonaje, MisCosas, Tienda } from "./Personaje";
 import { SelectorEquipo, TarjetaJugador } from "./Tarjetas";
 import { Ranking } from "./Ranking";
 import { SincroSala, Unirse } from "./Sala";
@@ -157,14 +157,15 @@ function LogrosDe({ j }: { j: JugadorLocal }) {
   );
 }
 
-type PestanaCasillero = "armar" | "equipo" | "logros" | "cuenta";
-const PESTANAS_CASILLERO: [PestanaCasillero, string, string][] = [["armar", "🧱", "Armar"], ["equipo", "🛡️", "Equipo"], ["logros", "🏅", "Logros"], ["cuenta", "👤", "Cuenta"]];
+type PestanaCasillero = "armar" | "cosas" | "equipo" | "logros" | "cuenta";
+const PESTANAS_CASILLERO: [PestanaCasillero, string, string][] = [["armar", "🧱", "Armar"], ["cosas", "🎒", "Mis cosas"], ["equipo", "🛡️", "Equipo"], ["logros", "🏅", "Logros"], ["cuenta", "👤", "Cuenta"]];
 
 /** Casillero: tu carta arriba y pestañas para armar al personaje, el equipo, los logros y la cuenta. */
 function Perfil({ id }: { id?: string }) {
   const s = useEstado();
   const j = s.jugadores.find(x => x.id === id) ?? s.jugadores[0]!;
-  const [tab, setTab] = useState<PestanaCasillero>("armar");
+  // «#/perfil/cosas» abre directo lo nuevo (desde la apertura de sobres o la burbuja de la pantalla principal).
+  const [tab, setTab] = useState<PestanaCasillero>(id === "cosas" || (j.nuevos?.length ?? 0) > 0 ? "cosas" : "armar");
   return (
     <>
       <CabeceraJuego titulo="Casillero" color="#FF2E88" />
@@ -175,10 +176,11 @@ function Perfil({ id }: { id?: string }) {
         </div>
         <div className="pd-der">
           <div className="pestanas-menu casillero-tabs" role="tablist" aria-label="Casillero">
-            {PESTANAS_CASILLERO.map(([k, ic, n]) => <button key={k} role="tab" aria-selected={tab === k} onClick={() => setTab(k)}><span aria-hidden="true">{ic}</span> {n}</button>)}
+            {PESTANAS_CASILLERO.map(([k, ic, n]) => <button key={k} role="tab" aria-selected={tab === k} onClick={() => setTab(k)}><span aria-hidden="true">{ic}</span> {n}{k === "cosas" && (j.nuevos?.length ?? 0) > 0 && <i className="burbuja-nuevos">{j.nuevos!.length}</i>}</button>)}
           </div>
           <div key={tab} className="casillero-panel pd-desliza">
             {tab === "armar" && <EditorPersonaje j={j} />}
+            {tab === "cosas" && <MisCosas j={j} />}
             {tab === "equipo" && <SelectorEquipo j={j} />}
             {tab === "logros" && <LogrosDe j={j} />}
             {tab === "cuenta" && (hayNube ? <Cuenta j={j} /> : <p className="hint">Las cuentas necesitan conexión con el servidor.</p>)}

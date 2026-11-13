@@ -195,7 +195,7 @@ export async function comprarSobreNube(sobre: string): Promise<{ ok: true; carta
 // ---------- Sala en línea (evento) ----------
 
 export interface Sala { id: string; codigo: string; nombre: string; anfitrion: boolean }
-export type GestoSala = "saludar" | "bailar" | "chocar" | "empujar";
+export type GestoSala = "saludar" | "bailar" | "chocar" | "empujar" | "festejar" | "aplaudir" | "robot" | "caminar" | "mirar";
 export interface MiembroSala {
   id: string; nombre: string; personaje: Personaje | null; anfitrion: boolean;
   /** Dio «listo» en el lobby. */

@@ -15,7 +15,8 @@ import type { Intensidad } from "../engine/types";
 import { hayNube } from "./nube";
 import { sonar } from "./sonido";
 
-type Emote = "saludar" | "bailar" | "festejar" | null;
+type Emote = "saludar" | "bailar" | "festejar" | "aplaudir" | "robot" | "caminar" | "mirar" | null;
+const EMOTES = ["saludar", "bailar", "festejar", "aplaudir", "robot", "caminar", "mirar"] as const;
 const FRASES = ["¿Listos para la fiesta?", "¡Hoy se arma!", "Pasar no tiene castigo… ¿o sí?", "¿Quién se lleva la corona?", "¡Vamos a jugar!"];
 
 /** Tamaño del personaje según la pantalla. */
@@ -47,13 +48,13 @@ export function Hub({ abrirNovedades }: { abrirNovedades: () => void }) {
   };
   useEffect(() => {
     if (typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    const t = window.setInterval(() => hacer((["saludar", "bailar", "festejar"] as const)[Math.floor(Math.random() * 3)]!), 7000);
+    const t = window.setInterval(() => hacer(EMOTES[Math.floor(Math.random() * EMOTES.length)]!), 6000);
     const primera = window.setTimeout(() => hacer("saludar", true), 900);
     return () => { window.clearInterval(t); window.clearTimeout(primera); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   useEffect(() => { if (!frase) return; const t = setTimeout(() => setFrase(null), 3200); return () => clearTimeout(t); }, [frase]);
-  const tocar = () => { sonar("clic"); const sig = emote.k === "saludar" ? "bailar" : emote.k === "bailar" ? "festejar" : "saludar"; hacer(sig, true); };
+  const tocar = () => { sonar("clic"); const i = EMOTES.indexOf((emote.k ?? "mirar") as typeof EMOTES[number]); hacer(EMOTES[(i + 1) % EMOTES.length]!, true); };
 
   // Sorpréndeme: la ruleta gira y abre el lobby con un juego al azar.
   const [girando, setGirando] = useState(false);
@@ -89,7 +90,7 @@ export function Hub({ abrirNovedades }: { abrirNovedades: () => void }) {
 
       <nav className="hub-menu" aria-label="Menú">
         <a href="#/tienda" className="hub-ficha">{Icono.tienda}<span>Tienda</span>{(nuevos > 0 || desbloqueados > 0) && <i className="punto" aria-label="Novedades">!</i>}</a>
-        <a href="#/perfil" className="hub-ficha">{Icono.perfil}<span>Personaje</span></a>
+        <a href={(yo.nuevos?.length ?? 0) > 0 ? "#/perfil/cosas" : "#/perfil"} className="hub-ficha">{Icono.perfil}<span>Personaje</span>{(yo.nuevos?.length ?? 0) > 0 && <i className="punto nuevos" aria-label={`${yo.nuevos!.length} nuevos`}>{yo.nuevos!.length}</i>}</a>
         <a href="#/ranking" className="hub-ficha">{Icono.ranking}<span>Ranking</span></a>
         <button className="hub-ficha" onClick={abrirNovedades}>{Icono.historial}<span>Novedades</span></button>
         <a href="#/lobby" className="hub-ficha">{Icono.lobby}<span>Lobby</span></a>
@@ -99,7 +100,7 @@ export function Hub({ abrirNovedades }: { abrirNovedades: () => void }) {
         {frase && <span className="hub-globo" key={frase} role="status">{frase}</span>}
         <button className="hub-personaje" onClick={tocar} aria-label="Toca a tu personaje">
           <span key={emote.clave} className={"emote" + (emote.k ? " e-" + emote.k : "")}>
-            <span className="hub-respira"><Avatar p={yo.personaje} size={tam} nombre={yo.nombre} /></span>
+            <span className="hub-respira"><Avatar p={yo.personaje} size={tam} nombre={yo.nombre} articulado /></span>
           </span>
         </button>
         <span className="hub-pedestal" aria-hidden="true" style={eq ? { ["--eq1" as string]: eq.c1, ["--eq2" as string]: eq.c2 } : undefined} />

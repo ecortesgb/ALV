@@ -132,3 +132,39 @@
   .app.pagina-partida > .partida > p.hint { grid-row: 1; grid-column: 2; align-self: end; }
   .app.pagina-partida .fin-partida { overflow-y: auto; height: 100%; }
 }
+
+/* Arreglos en horizontal: nada se encima ni se encoge, y todo más compacto */
+@media (min-width: 900px), (orientation: landscape) and (max-height: 520px) and (min-width: 560px) {
+  .armado > section > * { flex-shrink: 0; }
+  .armado-iniciar, .armado > section > .btn.principal { position: sticky; bottom: 0; z-index: 3; }
+}
+@media (orientation: landscape) and (max-height: 520px) and (min-width: 560px) {
+  /* Armado */
+  .armado-pasos button { padding: 6px; font-size: 11px; }
+  .armado .titulo { font-size: 18px; }
+  .armado .postal { min-height: 170px; flex-basis: 260px; }
+  .postal-elenco .av { width: 40px !important; height: 60px !important; }
+  .armado .modalidad { min-height: 108px; flex-basis: 170px; padding: 10px 12px; }
+  .armado .modalidad .mj-icono { font-size: 30px; top: 8px; }
+  .armado .modalidad b { font-size: 15px; }
+  .asignacion { gap: 8px; }
+  .asignacion select.input { max-width: 55%; padding: 6px 8px; }
+  .carta-juego { flex-basis: 200px; }
+  .ilustracion-juego { height: 90px; }
+  /* Tienda */
+  .pagina-tienda .quien-soy .opcion { padding: 2px 8px 2px 2px; font-size: 12px; }
+  .destacado { padding: 8px 10px; gap: 10px; border-width: 2px; }
+  .destacado-arte { width: 54px; height: 54px; border-radius: 12px; }
+  .destacado-arte img, .destacado-arte svg { width: 46px; height: 46px; }
+  .destacado-nombre { font-size: 16px; }
+  .destacado small, .destacado-ver, .destacado-cinta { font-size: 10px; }
+  .tienda-contenido > .pila > .hint, .tienda-contenido .lista-sobres ~ .hint { display: none; }
+  .ficha-sobre { flex-direction: row; flex-basis: 290px; text-align: left; align-items: center; padding: 10px; gap: 10px; }
+  .ficha-sobre > .paquete { width: 64px; height: 90px; }
+  .ficha-sobre > .paquete .paquete-sigla { font-size: 20px; }
+  .ficha-sobre .fs-cuerpo { gap: 6px; }
+  .ficha-sobre .fs-cuerpo h3 { font-size: 15px; }
+  .ficha-sobre .fs-stats b { font-size: 15px; }
+  .ficha-sobre .precio { padding: 6px 10px; font-size: 12px; }
+  .tienda-contenido { gap: 8px; }
+}

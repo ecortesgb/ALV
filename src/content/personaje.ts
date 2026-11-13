@@ -1,6 +1,7 @@
 // Personaje de bloques: las capas del armador del Centro de Mando (sin piezas GB ni Movistar).
 // Capas de 400×520 que se apilan: piernas, piel, torso, rostro (o facial), cabello y lo que lleva en la mano.
 import piezas from "./piezas.json";
+import piezasEquipo from "./piezas-equipo.json";
 import migracion from "./piezas-migracion.json";
 import type { Azar } from "../engine/azar";
 import type { AdornoEquipo } from "./equipos";
@@ -10,6 +11,15 @@ export type Zona = "mano" | "cabeza" | "cuello" | "pecho" | "espalda";
 
 export interface Pieza { id: string; nombre: string }
 export const PIEZAS = piezas as unknown as Record<Paso | "accesorio", Pieza[]>;
+
+/**
+ * Piezas de equipo (personajes y marcas de cada casa o equipo): rostro, cabello, torso, facial, piernas o algo en la mano.
+ * Solo las ve y se las pone quien es de ese equipo y tiene el nivel. Imágenes en public/piezas (ver docs/PIEZAS_DE_EQUIPO.md).
+ */
+export interface PiezaEquipo { id: string; nombre: string; paso: Paso | "mano"; equipo: string; nivel: number; personaje?: string }
+export const PIEZAS_EQUIPO = piezasEquipo as PiezaEquipo[];
+export const piezaEquipo = (id: string | null | undefined) => (id ? PIEZAS_EQUIPO.find(p => p.id === id) : undefined);
+for (const p of PIEZAS_EQUIPO) if (p.paso !== "mano" && !PIEZAS[p.paso].some(x => x.id === p.id)) PIEZAS[p.paso].push({ id: p.id, nombre: p.nombre });
 
 export const PASOS: { k: Paso; nombre: string; titulo: string; opcional?: boolean; nota?: string }[] = [
   { k: "piel", nombre: "Piel", titulo: "Tono de piel" },
@@ -24,8 +34,8 @@ export interface Personaje {
   piel: string; rostro: string; facial: string | null; cabello: string | null; torso: string; piernas: string;
   /** Lo que lleva puesto de la tienda, por zona. */
   puesto: Partial<Record<Zona, string | null>>;
-  /** Equipo o casa y las recompensas de equipo que lleva puestas. Viaja con el personaje a la nube. */
-  equipo?: { id: string; adornos?: AdornoEquipo[] };
+  /** Equipo o casa, las recompensas de equipo que lleva puestas y lo que lleva en la mano de su equipo. Viaja a la nube. */
+  equipo?: { id: string; adornos?: AdornoEquipo[]; mano?: string };
 }
 
 /** Artículos de la tienda. Todo es para lucir: nada da ventaja. Precio en XP disponible. */
@@ -58,7 +68,7 @@ export function personajeInicial(i: number): Personaje {
 }
 
 export function personajeAlAzar(p: Personaje, azar: Azar): Personaje {
-  const r = (k: Paso) => azar.elegir(ids(k));
+  const r = (k: Paso) => azar.elegir(ids(k).filter(id => !piezaEquipo(id)));
   return { ...p, piel: r("piel"), rostro: r("rostro"), facial: azar.siguiente() < 0.25 ? r("facial") : null,
     cabello: azar.siguiente() < 0.92 ? r("cabello") : null, torso: r("torso"), piernas: r("piernas") };
 }
