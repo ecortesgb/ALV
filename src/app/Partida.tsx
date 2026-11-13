@@ -1,5 +1,5 @@
-// Partida en un solo dispositivo. Lo secreto (palabra del impostor, respuestas de pareja, votos)
-// se contesta pasando el celular: cada quien ve solo lo suyo y la pantalla se tapa entre jugadores.
+// Partida en la pantalla del anfitrión. Lo secreto (palabra del impostor, respuestas de pareja, votos)
+// se contesta pasando el celular, o en el celular propio si el jugador entró a la sala con su cuenta.
 import { useEffect, useMemo, useRef, useState, type PointerEvent as PE } from "react";
 import { CONTENIDO } from "../content";
 import { ESCENARIOS, JUEGOS, SECCIONES } from "../content/catalogo";
@@ -7,12 +7,87 @@ import { aplicar, resultados, type AccionSinId, type EstadoPartida } from "../en
 import { vistaJugador, vistaPublica } from "../engine/vistas";
 import { Avatar } from "./Avatar";
 import { acciones, useEstado } from "./estado";
+import { crearPartidaSala, leerAcciones, publicarPartida, terminarPartidaSala } from "./nube";
 import { aviso, BotonPantallaCompleta, BotonSonido, COLOR_SECCION, confirmar, NOMBRE_CARTA_PODER } from "./comun";
 import { sonar } from "./sonido";
 import { Anillo, Confeti, Flotantes, useAura, useFlotantes } from "./efectos";
 
 let contador = 0;
 const nuevoId = () => `l${Date.now().toString(36)}${(contador++).toString(36)}`;
+/** Jugador que entró a la sala desde su celular: contesta allá, no aquí. */
+const esRemoto = (id?: string) => !!id && id.startsWith("c-");
+/** Primero los que juegan en esta pantalla; los de celular contestan solos. */
+const localPrimero = (ids: string[]) => [...ids].sort((a, b) => Number(esRemoto(a)) - Number(esRemoto(b)));
+
+function EsperaCelular({ nombre }: { nombre: string }) {
+  return (
+    <div className="pasar">
+      <h1 className="titulo">📱 {nombre} contesta en su celular</h1>
+      <p className="hint">La pantalla sigue sola cuando llegue su respuesta.</p>
+    </div>
+  );
+}
+
+/**
+ * Sala en línea: si hay jugadores que entraron desde su celular, la partida se crea en el servidor,
+ * se publica cada cambio (lo público y el secreto de cada uno) y se leen sus respuestas cada segundo y medio.
+ */
+function useSalaEnLinea(e: EstadoPartida, setE: (f: (x: EstadoPartida) => EstadoPartida) => void) {
+  const s = useEstado();
+  const sala = s.sala?.anfitrion ? s.sala : undefined;
+  const remotos = e.cfg.jugadores.filter(j => esRemoto(j.id)).map(j => j.id);
+  const enLinea = !!sala && remotos.length > 0;
+  const id = useRef<string | null>(null);
+  const [listo, setListo] = useState(0);
+  const vistas = useRef(new Set<string>());
+  const terminado = useRef(false);
+
+  useEffect(() => {
+    if (!enLinea || id.current || !sala) return;
+    void crearPartidaSala(sala, e.juegoId, e.semilla).then(x => { id.current = x; setListo(n => n + 1); });
+  }, [enLinea]);
+
+  useEffect(() => {
+    if (!id.current || e.fase === "terminada") return;
+    const privados = Object.fromEntries(remotos.map(r => {
+      const vj = vistaJugador(e, r);
+      return [r.slice(2), { mio: vj.mio ?? null, miRespuesta: vj.miRespuesta ?? null, miMano: vj.miMano }];
+    }));
+    void publicarPartida(id.current, e.version + 1, vistaPublica(e), privados);
+  }, [e.version, listo]);
+
+  useEffect(() => {
+    if (!enLinea) return;
+    const t = window.setInterval(async () => {
+      if (!id.current) return;
+      for (const a of await leerAcciones(id.current)) {
+        if (vistas.current.has(a.id)) continue;
+        vistas.current.add(a.id);
+        const jugador = `c-${a.jugador}`;
+        if (a.tipo === "contestar") setE(x => aplicar(x, { id: a.id, tipo: "contestar", jugador, valor: a.datos.valor }, CONTENIDO));
+        if (a.tipo === "carta") setE(x => aplicar(x, { id: a.id, tipo: "usar-carta", jugador, carta: String(a.datos.carta) }, CONTENIDO));
+      }
+    }, 1500);
+    return () => window.clearInterval(t);
+  }, [enLinea]);
+
+  // En los juegos por turno, cuando el del turno ya contestó desde su celular, la ronda se revela sola.
+  useEffect(() => {
+    if (e.fase !== "contestando" || !e.turnoDe || !esRemoto(e.turnoDe)) return;
+    if (!["turnos-cartas", "botella", "ruleta", "dados", "conteo"].includes(e.motor)) return;
+    if (e.turnoDe in e.respuestas) setE(x => aplicar(x, { id: nuevoId(), tipo: "revelar" }, CONTENIDO));
+  }, [e.version]);
+
+  // Al terminar, el servidor suma la XP de cada jugador con cuenta (misma fórmula y topes).
+  const cerrar = (conXp: boolean) => {
+    if (!id.current || terminado.current) return;
+    terminado.current = true;
+    const res = conXp ? resultados(e).filter(r => esRemoto(r.jugador)).map(r => ({ jugador: r.jugador.slice(2), rondas: r.rondas, retos: r.retos, lugar: r.lugar })) : [];
+    void terminarPartidaSala(id.current, e.juegoId, e.cfg.jugadores.length, res);
+  };
+  useEffect(() => { if (e.fase === "terminada") cerrar(true); }, [e.fase]);
+  return { enLinea, cerrar };
+}
 
 export function Partida({ inicial, salir }: { inicial: EstadoPartida; salir: () => void }) {
   const [e, setE] = useState(inicial);
@@ -22,6 +97,7 @@ export function Partida({ inicial, salir }: { inicial: EstadoPartida; salir: () 
   const v = vistaPublica(e);
   const jl = (id?: string) => s.jugadores.find(j => j.id === id);
   const accion = (a: AccionSinId) => setE(x => aplicar(x, { ...a, id: nuevoId() } as Parameters<typeof aplicar>[1], CONTENIDO));
+  const enSala = useSalaEnLinea(e, setE);
   const color = COLOR_SECCION[juego.seccion];
   useAura(esc?.color ?? color);
 
@@ -30,7 +106,7 @@ export function Partida({ inicial, salir }: { inicial: EstadoPartida; salir: () 
   return (
     <div className="pila partida" style={{ ["--sc" as string]: esc?.color ?? color }}>
       <div className="entre">
-        <button className="btn sm" onClick={async () => { if (await confirmar({ titulo: "¿Salir de la partida?", texto: "No se guarda la XP de una partida sin terminar.", si: "Sí, salir", no: "Continuar jugando", peligro: true })) salir(); }}>Salir</button>
+        <button className="btn sm" onClick={async () => { if (await confirmar({ titulo: "¿Salir de la partida?", texto: "No se guarda la XP de una partida sin terminar.", si: "Sí, salir", no: "Continuar jugando", peligro: true })) { enSala.cerrar(false); salir(); } }}>Salir</button>
         <span className="sigla" style={{ color }}>{juego.sigla ?? SECCIONES[juego.seccion].sigla}</span>
         <span className="fila" style={{ gap: 8 }}><span className="label">Ronda {v.ronda} de {v.totalRondas}</span><BotonPantallaCompleta /><BotonSonido /></span>
       </div>
@@ -298,6 +374,7 @@ function Conteo({ e, accion }: { e: EstadoPartida; accion: (a: AccionSinId) => v
   };
 
   if (v.fase === "revelada") return <Revelado e={e} accion={accion} />;
+  if (esRemoto(v.turnoDe)) return <EsperaCelular nombre={turno?.nombre ?? ""} />;
   if (etapa === "pasar") return <PasarCelular j={turno} onListo={() => setEtapa("listo")} texto="Solo tú vas a ver las palabras. Los demás adivinan." />;
 
   return (
@@ -375,7 +452,8 @@ function Confesion({ e, accion }: { e: EstadoPartida; accion: (a: AccionSinId) =
 function Senalar({ e, accion }: { e: EstadoPartida; accion: (a: AccionSinId) => void }) {
   const s = useEstado();
   const v = vistaPublica(e);
-  const pendiente = e.cfg.jugadores.find(j => !v.contestaron.includes(j.id));
+  const idPendiente = localPrimero(e.cfg.jugadores.map(j => j.id).filter(id => !v.contestaron.includes(id)))[0];
+  const pendiente = e.cfg.jugadores.find(j => j.id === idPendiente);
   const [mostrando, setMostrando] = useState(false);
   useEffect(() => setMostrando(false), [pendiente?.id]);
   if (v.fase === "revelada") return <Revelado e={e} accion={accion} />;
@@ -383,7 +461,7 @@ function Senalar({ e, accion }: { e: EstadoPartida; accion: (a: AccionSinId) => 
   return (
     <>
       <div className="carta" style={{ height: "auto", minHeight: 180, alignSelf: "center" }}><div className="cara"><span className="tipo">¿Quién es más probable que…? · POV</span><p>{v.carta?.texto}</p></div></div>
-      {pendiente ? (mostrando ? (
+      {pendiente ? (esRemoto(pendiente.id) ? <EsperaCelular nombre={pendiente.nombre} /> : mostrando ? (
         <div className="card">
           <span className="label">{pendiente.nombre}, señala en secreto</span>
           <div className="pila">
@@ -435,7 +513,7 @@ function Secreto({ e, accion }: { e: EstadoPartida; accion: (a: AccionSinId) => 
   const s = useEstado();
   const v = vistaPublica(e);
   const debenContestar = e.motor === "pareja" ? e.cfg.jugadores.filter(j => j.id in e.privado).map(j => j.id) : e.cfg.jugadores.map(j => j.id);
-  const pendiente = debenContestar.find(id => !v.contestaron.includes(id));
+  const pendiente = localPrimero(debenContestar.filter(id => !v.contestaron.includes(id)))[0];
   const [mostrando, setMostrando] = useState(false);
   useEffect(() => setMostrando(false), [pendiente]);
   const nombre = (id?: string) => e.cfg.jugadores.find(j => j.id === id)?.nombre ?? "";
@@ -454,6 +532,7 @@ function Secreto({ e, accion }: { e: EstadoPartida; accion: (a: AccionSinId) => 
         </div>
       </div>
       {pendiente ? (
+        esRemoto(pendiente) ? <EsperaCelular nombre={nombre(pendiente)} /> :
         mostrando
           ? <Contestar e={e} jugador={pendiente} enviar={valor => accion({ tipo: "contestar", jugador: pendiente, valor })} />
           : <PasarCelular j={s.jugadores.find(x => x.id === pendiente)} onListo={() => setMostrando(true)} />
@@ -573,8 +652,9 @@ function Impostor({ e, accion }: { e: EstadoPartida; accion: (a: AccionSinId) =>
   const [etapa, setEtapa] = useState<"ver" | "hablar" | "votar">("ver");
   const [yaVio, setYaVio] = useState(false);
   useEffect(() => { setVistos([]); setEtapa("ver"); setMostrando(false); }, [v.ronda]);
-  const porVer = ids.find(id => !vistos.includes(id));
-  const porVotar = ids.find(id => !v.contestaron.includes(id));
+  // Los que tienen celular ven su palabra allá; aquí solo pasan el celular los demás.
+  const porVer = ids.find(id => !vistos.includes(id) && !esRemoto(id));
+  const porVotar = localPrimero(ids.filter(id => !v.contestaron.includes(id)))[0];
   useEffect(() => { setMostrando(false); setYaVio(false); }, [porVer, porVotar]);
   const jl = (id?: string) => s.jugadores.find(j => j.id === id);
   useEffect(() => { if (etapa === "ver" && !porVer) setEtapa("hablar"); }, [etapa, porVer]);
@@ -608,6 +688,7 @@ function Impostor({ e, accion }: { e: EstadoPartida; accion: (a: AccionSinId) =>
     );
   }
   if (porVotar) {
+    if (esRemoto(porVotar)) return <EsperaCelular nombre={jl(porVotar)?.nombre ?? ""} />;
     if (!mostrando) return <PasarCelular j={jl(porVotar)} onListo={() => setMostrando(true)} texto="Vas a votar en secreto." />;
     return (
       <div className="card">

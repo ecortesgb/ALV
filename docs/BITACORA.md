@@ -169,3 +169,19 @@ Falta de esta tanda: en ¿Cuánto conoces a tu pareja? la respuesta se ve mientr
 - Dados HOT ahora se permiten en fogata, bosque, campo, terraza e interior (antes solo interior, y ningún escenario activo era interior).
 - Se corrigió que las cartas de fondo taparan los botones.
 - Pruebas: 30 del motor pasan; prueba en navegador de reloj, ruleta, lista, palabra prohibida, yo nunca, más probable, reto del lugar y dados sin errores.
+
+## 2026-11-13 · Partida en varios celulares
+
+- Si en la sala hay jugadores que entraron desde su celular, la partida se crea en el servidor. La pantalla grande corre el motor y publica cada cambio: lo público (lo ven todos los de la sala) y el secreto de cada quien (solo lo lee su dueño).
+- Cada celular muestra la herramienta que le toca:
+  - cumplir o pasar en su turno, y usar sus cartas de poder;
+  - votar A o B y señalar en secreto;
+  - escribir su respuesta de pareja;
+  - ver su palabra o su rol del impostor manteniendo presionado;
+  - contar contra reloj; en Mímica y Prohibida solo él ve las palabras.
+- La pantalla grande ya no pide pasar el celular a quien tiene el suyo: muestra «contesta en su celular» y sigue sola cuando llega la respuesta. En los juegos por turno, la ronda se revela sola.
+- Si el celular está en otra pestaña cuando empieza la partida, aparece un botón para ir a jugar.
+- Al terminar, el servidor suma la XP de cada jugador con cuenta (`terminar_partida_sala`), con la misma fórmula y el tope diario. Salir a media partida la cierra sin XP.
+- Base (migración 008): `publicar_partida` (solo el anfitrión, solo avanza de versión, cada secreto solo a un miembro) y `terminar_partida_sala`; la fórmula de XP vive en `privado.xp_de_partida`.
+- Seguridad probada en SQL: el anfitrión no puede leer los secretos ajenos; un invitado no publica, no se da XP ni manda respuestas a nombre de otro; alguien fuera de la sala no ve la partida ni sus secretos.
+- Punta a punta con dos navegadores contra el servidor real: votación secreta de «¿Quién es más probable?» con un jugador en su celular, y Verdad o reto completo de 8 rondas donde el celular cumplió sus 2 turnos. La XP llegó a las dos cuentas: 54 al anfitrión y 36 al celular, igual que el podio.
