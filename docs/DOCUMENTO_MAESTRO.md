@@ -1,7 +1,7 @@
 # ALV — Amigos, Locuras y Verdades
 ## Documento Maestro del Producto
-**Versión:** 1.10  
-**Última actualización:** 12 de noviembre de 2026  
+**Versión:** 1.11  
+**Última actualización:** 15 de noviembre de 2026  
 **Estado:** Documento vivo de producto; decisiones y propuestas identificadas por separado.
 
 ---
@@ -419,6 +419,8 @@ El personaje debe conservar proporciones consistentes y permitir intercambio de 
 - Posibilidad de mostrar espalda cuando un accesorio lo requiera.
 
 CSS/SVG puede utilizarse para prototipos. No se ha elegido la técnica final; no prometer 3D real antes de validar viabilidad.
+
+**DECISIÓN (v1.11, Elías, 15 de noviembre):** ALV se reconstruye completo en 3D con el modelo de figura por capas de Minifig Studio (`minifig-core`, piezas LDraw, Three.js). Reemplaza al personaje 2D por capas de imagen. Cada jugador tiene 3 cápsulas (figuras guardadas) y una activa, en `public.figuras_jugador`. Cada pantalla dibuja una sola escena 3D con todas las figuras; las listas chicas (ranking, tarjetas) usan una foto sacada del 3D. Orden: primero el personaje (editor, cápsulas, lobby y partida), después el rediseño de pantallas estilo cómic.
 
 ## 9.4 Personalidad, idles y emotes — propuestas
 
@@ -915,6 +917,8 @@ La frase de referencia que se había propuesto sobre LEGO y The LEGO Group no de
 
 **PENDIENTE:** las imágenes de las piezas siguen siendo las del armador anterior. Antes de cobrar por la app o difundirla fuera del grupo hay que redibujarlas como piezas originales (fase 2, Personajes).
 
+**PENDIENTE (v1.11):** el modelo 3D nuevo usa geometría LDraw (figuras de LEGO) y colecciones de personajes de terceros (Marvel, Harry Potter). El repo y la app son públicos. Lo de arriba sigue aplicando: antes de cobrar o difundir fuera del grupo hace falta revisión jurídica o cambiar a personajes y piezas propias.
+
 ---
 
 # 20. Reglas de animación, audio y accesibilidad
@@ -1017,7 +1021,7 @@ No saltar fases. Cada fase requiere alcance, entregables, criterios de aceptaci�
 |---|---|---|
 | Previa | Explorar y seleccionar dirección visual | Resuelta en v1.3: Neo-Arcade (8.6) |
 | 1 | Design System | Pendiente; ya no está bloqueada |
-| 2 | Personajes y personalización | Pendiente |
+| 2 | Personajes y personalización | En curso (v1.11): figura 3D por cápsulas |
 | 3 | Onboarding, HUB y perfil | Pendiente |
 | 4 | Navegación, tienda e inventario | Pendiente |
 | 5 | Lobby y acceso | Pendiente |
@@ -1079,7 +1083,7 @@ Requisitos:
 10. Definir licencias y fuente de audio para Karaoke relámpago.
 11. Validar el tono de animaciones de derrota y del último lugar.
 12. Definir captura y compartición de fotos de podio.
-13. Seleccionar técnica de representación y animación de personajes.
+13. ~~Seleccionar técnica de representación y animación de personajes.~~ Resuelto en v1.11: 3D con Minifig Studio (9.3).
 14. Seleccionar arquitectura backend y estrategia de despliegue.
 15. Confirmar si la XP que compra cartas se cuenta por sesión o por evento.
 16. Definir las reglas de XP para sesiones posteriores a la primera prueba.
@@ -1173,6 +1177,9 @@ Decisiones del usuario del 12 de noviembre de 2026:
 ## v1.7
 - Tienda de sobres en pestaña propia (13.2). Valores de prueba pendientes de aprobación: precios, pesos de rareza, cantidad de cartas.
 
+## v1.11
+- Reconstrucción completa en 3D con el modelo de Minifig Studio (9.3). Se borraron todas las cuentas, XP, salas, partidas, inventario, sobres, el catálogo 2D de la tienda y los personajes (decisión de Elías, 15 de noviembre, sin respaldo). Los accesorios y recompensas 2D no se devuelven. Tabla nueva `figuras_jugador` (migración 015). Riesgo de propiedad intelectual anotado en 19.1.
+
 ## v1.10
 - Cuentas nuevas empiezan en cero XP; la XP del celular no se importa (decisión de Elías, 12 de noviembre).
 - La XP de partidas de una cuenta llega al servidor con una función que valida el rango (0 a 200) y un tope diario (600). Pendiente: validar los resultados de la partida en el servidor, porque hoy el resultado lo envía el celular.
@@ -1185,5 +1192,5 @@ Decisiones del usuario del 12 de noviembre de 2026:
 
 ---
 
-**Fin del Documento Maestro ALV v1.10**  
+**Fin del Documento Maestro ALV v1.11**  
 Este documento debe actualizarse de forma incremental y conservar la distinción entre decisiones aprobadas, propuestas, pendientes y descartadas.
