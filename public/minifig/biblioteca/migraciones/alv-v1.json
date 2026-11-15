@@ -1,0 +1,679 @@
+{
+ "nota": "Equivalencias del avatar 2D de ALV (src/content/piezas.json) con la biblioteca. Se puede editar a mano; minifig-core la usa para migrar.",
+ "piel": {
+  "piel-01": "#f2cd37",
+  "piel-02": "#f6d7b3",
+  "piel-03": "#d09168",
+  "piel-04": "#cca373",
+  "piel-05": "#aa7d55",
+  "piel-06": "#755945",
+  "piel-07": "#582a12",
+  "piel-08": "#352100"
+ },
+ "rostro": {
+  "rostro-01": {
+   "rostro": "FACE_001",
+   "detalles": []
+  },
+  "rostro-02": {
+   "rostro": "FACE_001",
+   "detalles": [
+    "DETAIL_008"
+   ]
+  },
+  "rostro-03": {
+   "rostro": "FACE_010",
+   "detalles": []
+  },
+  "rostro-04": {
+   "rostro": "FACE_010",
+   "detalles": []
+  },
+  "rostro-05": {
+   "rostro": "FACE_002",
+   "detalles": [
+    "DETAIL_008"
+   ]
+  },
+  "rostro-06": {
+   "rostro": "FACE_009",
+   "detalles": []
+  },
+  "rostro-07": {
+   "rostro": "FACE_002",
+   "detalles": []
+  },
+  "rostro-08": {
+   "rostro": "FACE_011",
+   "detalles": []
+  },
+  "rostro-09": {
+   "rostro": "FACE_011",
+   "detalles": []
+  },
+  "rostro-10": {
+   "rostro": "FACE_004",
+   "detalles": [
+    "DETAIL_008"
+   ]
+  },
+  "rostro-11": {
+   "rostro": "FACE_004",
+   "detalles": []
+  },
+  "rostro-12": {
+   "rostro": "FACE_003",
+   "detalles": []
+  },
+  "rostro-13": {
+   "rostro": "FACE_003",
+   "detalles": [
+    "DETAIL_006"
+   ]
+  },
+  "rostro-14": {
+   "rostro": "FACE_009",
+   "detalles": []
+  },
+  "rostro-15": {
+   "rostro": "FACE_010",
+   "detalles": []
+  },
+  "rostro-16": {
+   "rostro": "FACE_003",
+   "detalles": [
+    "DETAIL_001",
+    "DETAIL_007"
+   ]
+  },
+  "rostro-17": {
+   "rostro": "FACE_002",
+   "detalles": []
+  },
+  "rostro-18": {
+   "rostro": "FACE_002",
+   "detalles": []
+  },
+  "rostro-19": {
+   "rostro": "FACE_004",
+   "detalles": []
+  }
+ },
+ "facial": {
+  "facial-01": "DETAIL_005",
+  "facial-02": "DETAIL_003",
+  "facial-03": "DETAIL_002",
+  "facial-04": "DETAIL_001",
+  "facial-05": "DETAIL_002",
+  "facial-06": "DETAIL_001",
+  "facial-07": "DETAIL_005",
+  "facial-08": "DETAIL_002",
+  "facial-09": "DETAIL_001",
+  "facial-10": "DETAIL_001",
+  "facial-11": "DETAIL_006",
+  "facial-12": "DETAIL_002",
+  "facial-13": "DETAIL_001",
+  "facial-14": "DETAIL_005",
+  "facial-15": "DETAIL_005"
+ },
+ "cabello": {
+  "cabello-01": {
+   "cabello": {
+    "id": "HAIR_001",
+    "color": "#1b2a34"
+   }
+  },
+  "cabello-02": {
+   "cabello": {
+    "id": "HAIR_001",
+    "color": "#352100"
+   }
+  },
+  "cabello-03": {
+   "cabello": {
+    "id": "HAIR_001",
+    "color": "#582a12"
+   }
+  },
+  "cabello-04": {
+   "cabello": {
+    "id": "HAIR_001",
+    "color": "#e4cd9e"
+   }
+  },
+  "cabello-05": {
+   "cabello": {
+    "id": "HAIR_001",
+    "color": "#a0a5a9"
+   }
+  },
+  "cabello-06": {
+   "cabello": {
+    "id": "HAIR_004",
+    "color": "#1b2a34"
+   }
+  },
+  "cabello-07": {
+   "cabello": {
+    "id": "HAIR_004",
+    "color": "#352100"
+   }
+  },
+  "cabello-08": {
+   "cabello": {
+    "id": "HAIR_004",
+    "color": "#582a12"
+   }
+  },
+  "cabello-09": {
+   "cabello": {
+    "id": "HAIR_004",
+    "color": "#e4cd9e"
+   }
+  },
+  "cabello-10": {
+   "cabello": {
+    "id": "HAIR_004",
+    "color": "#a0a5a9"
+   }
+  },
+  "cabello-11": {
+   "cabello": {
+    "id": "HAIR_002",
+    "color": "#1b2a34"
+   }
+  },
+  "cabello-12": {
+   "cabello": {
+    "id": "HAIR_002",
+    "color": "#352100"
+   }
+  },
+  "cabello-13": {
+   "cabello": {
+    "id": "HAIR_002",
+    "color": "#582a12"
+   }
+  },
+  "cabello-14": {
+   "cabello": {
+    "id": "HAIR_002",
+    "color": "#e4cd9e"
+   }
+  },
+  "cabello-15": {
+   "cabello": {
+    "id": "HAIR_002",
+    "color": "#a0a5a9"
+   }
+  },
+  "cabello-16": {
+   "cabello": {
+    "id": "HAIR_005",
+    "color": "#1b2a34"
+   }
+  },
+  "cabello-17": {
+   "cabello": {
+    "id": "HAIR_005",
+    "color": "#352100"
+   }
+  },
+  "cabello-18": {
+   "cabello": {
+    "id": "HAIR_005",
+    "color": "#582a12"
+   }
+  },
+  "cabello-19": {
+   "cabello": {
+    "id": "HAIR_005",
+    "color": "#e4cd9e"
+   }
+  },
+  "cabello-20": {
+   "cabello": {
+    "id": "HAIR_005",
+    "color": "#a0a5a9"
+   }
+  },
+  "cabello-21": {
+   "cabello": {
+    "id": "HAIR_006",
+    "color": "#1b2a34"
+   }
+  },
+  "cabello-22": {
+   "cabello": {
+    "id": "HAIR_006",
+    "color": "#352100"
+   }
+  },
+  "cabello-23": {
+   "cabello": {
+    "id": "HAIR_006",
+    "color": "#582a12"
+   }
+  },
+  "cabello-24": {
+   "cabello": {
+    "id": "HAIR_006",
+    "color": "#e4cd9e"
+   }
+  },
+  "cabello-25": {
+   "cabello": {
+    "id": "HAIR_006",
+    "color": "#a0a5a9"
+   }
+  },
+  "cabello-26": {
+   "cabello": {
+    "id": "HAIR_010",
+    "color": "#1b2a34"
+   }
+  },
+  "cabello-27": {
+   "cabello": {
+    "id": "HAIR_010",
+    "color": "#352100"
+   }
+  },
+  "cabello-28": {
+   "cabello": {
+    "id": "HAIR_010",
+    "color": "#582a12"
+   }
+  },
+  "cabello-29": {
+   "cabello": {
+    "id": "HAIR_010",
+    "color": "#e4cd9e"
+   }
+  },
+  "cabello-30": {
+   "cabello": {
+    "id": "HAIR_010",
+    "color": "#a0a5a9"
+   }
+  },
+  "cabello-31": {
+   "cabello": {
+    "id": "HAIR_008",
+    "color": "#1b2a34"
+   }
+  },
+  "cabello-32": {
+   "cabello": {
+    "id": "HAIR_008",
+    "color": "#352100"
+   }
+  },
+  "cabello-33": {
+   "cabello": {
+    "id": "HAIR_008",
+    "color": "#582a12"
+   }
+  },
+  "cabello-34": {
+   "cabello": {
+    "id": "HAIR_008",
+    "color": "#e4cd9e"
+   }
+  },
+  "cabello-35": {
+   "cabello": {
+    "id": "HAIR_008",
+    "color": "#a0a5a9"
+   }
+  },
+  "cabello-36": {
+   "cabello": {
+    "id": "HAIR_004",
+    "color": "#1b2a34"
+   },
+   "pendiente": "No hay pieza LDraw de afro en la biblioteca: se usó la más parecida"
+  },
+  "cabello-37": {
+   "cabello": {
+    "id": "HAIR_004",
+    "color": "#352100"
+   },
+   "pendiente": "No hay pieza LDraw de afro en la biblioteca: se usó la más parecida"
+  },
+  "cabello-38": {
+   "cabello": {
+    "id": "HAIR_004",
+    "color": "#582a12"
+   },
+   "pendiente": "No hay pieza LDraw de afro en la biblioteca: se usó la más parecida"
+  },
+  "cabello-39": {
+   "cabello": {
+    "id": "HAIR_004",
+    "color": "#e4cd9e"
+   },
+   "pendiente": "No hay pieza LDraw de afro en la biblioteca: se usó la más parecida"
+  },
+  "cabello-40": {
+   "cabello": {
+    "id": "HAIR_004",
+    "color": "#a0a5a9"
+   },
+   "pendiente": "No hay pieza LDraw de afro en la biblioteca: se usó la más parecida"
+  },
+  "cabello-41": {
+   "cabello": {
+    "id": "HAIR_013",
+    "color": "#1b2a34"
+   }
+  },
+  "cabello-42": {
+   "cabello": {
+    "id": "HAIR_013",
+    "color": "#352100"
+   }
+  },
+  "cabello-43": {
+   "cabello": {
+    "id": "HAIR_013",
+    "color": "#582a12"
+   }
+  },
+  "cabello-44": {
+   "cabello": {
+    "id": "HAIR_013",
+    "color": "#e4cd9e"
+   }
+  },
+  "cabello-45": {
+   "cabello": {
+    "id": "HAIR_013",
+    "color": "#a0a5a9"
+   }
+  },
+  "cabello-46": {
+   "cabello": {
+    "id": "HAIR_007",
+    "color": "#1b2a34"
+   }
+  },
+  "cabello-47": {
+   "cabello": {
+    "id": "HAIR_007",
+    "color": "#352100"
+   }
+  },
+  "cabello-48": {
+   "cabello": {
+    "id": "HAIR_007",
+    "color": "#582a12"
+   }
+  },
+  "cabello-49": {
+   "cabello": {
+    "id": "HAIR_007",
+    "color": "#e4cd9e"
+   }
+  },
+  "cabello-50": {
+   "cabello": {
+    "id": "HAIR_007",
+    "color": "#a0a5a9"
+   }
+  },
+  "cabello-51": {
+   "cabello": {
+    "id": "HAIR_019",
+    "color": "#1b2a34"
+   }
+  },
+  "cabello-52": {
+   "cabello": {
+    "id": "HAIR_019",
+    "color": "#352100"
+   }
+  },
+  "cabello-53": {
+   "cabello": {
+    "id": "HAIR_019",
+    "color": "#582a12"
+   }
+  },
+  "cabello-54": {
+   "cabello": {
+    "id": "HAIR_019",
+    "color": "#e4cd9e"
+   }
+  },
+  "cabello-55": {
+   "cabello": {
+    "id": "HAIR_019",
+    "color": "#a0a5a9"
+   }
+  },
+  "cabello-56": {
+   "cabello": {
+    "id": "HAIR_020",
+    "color": "#1b2a34"
+   },
+   "pendiente": "No hay pieza LDraw de chongo en la biblioteca: se usó la más parecida"
+  },
+  "cabello-57": {
+   "cabello": {
+    "id": "HAIR_020",
+    "color": "#352100"
+   },
+   "pendiente": "No hay pieza LDraw de chongo en la biblioteca: se usó la más parecida"
+  },
+  "cabello-58": {
+   "cabello": {
+    "id": "HAIR_020",
+    "color": "#582a12"
+   },
+   "pendiente": "No hay pieza LDraw de chongo en la biblioteca: se usó la más parecida"
+  },
+  "cabello-59": {
+   "cabello": {
+    "id": "HAIR_020",
+    "color": "#e4cd9e"
+   },
+   "pendiente": "No hay pieza LDraw de chongo en la biblioteca: se usó la más parecida"
+  },
+  "cabello-60": {
+   "cabello": {
+    "id": "HAIR_020",
+    "color": "#a0a5a9"
+   },
+   "pendiente": "No hay pieza LDraw de chongo en la biblioteca: se usó la más parecida"
+  },
+  "cabello-61": {
+   "cabello": {
+    "id": "HAIR_014",
+    "color": "#1b2a34"
+   }
+  },
+  "cabello-62": {
+   "cabello": {
+    "id": "HAIR_014",
+    "color": "#352100"
+   }
+  },
+  "cabello-63": {
+   "cabello": {
+    "id": "HAIR_014",
+    "color": "#582a12"
+   }
+  },
+  "cabello-64": {
+   "cabello": {
+    "id": "HAIR_014",
+    "color": "#e4cd9e"
+   }
+  },
+  "cabello-65": {
+   "cabello": {
+    "id": "HAIR_014",
+    "color": "#a0a5a9"
+   }
+  },
+  "cabello-66": {
+   "cabello": {
+    "id": "HAIR_012",
+    "color": "#1b2a34"
+   }
+  },
+  "cabello-67": {
+   "cabello": {
+    "id": "HAIR_012",
+    "color": "#352100"
+   }
+  },
+  "cabello-68": {
+   "cabello": {
+    "id": "HAIR_012",
+    "color": "#582a12"
+   }
+  },
+  "cabello-69": {
+   "cabello": {
+    "id": "HAIR_012",
+    "color": "#e4cd9e"
+   }
+  },
+  "cabello-70": {
+   "cabello": {
+    "id": "HAIR_012",
+    "color": "#a0a5a9"
+   }
+  },
+  "cabello-71": {
+   "cabeza": {
+    "id": "HELM_003",
+    "color": "#fe8a18"
+   }
+  },
+  "cabello-72": {
+   "cabeza": {
+    "id": "HELM_003",
+    "color": "#f4f4f4"
+   }
+  },
+  "cabello-73": {
+   "cabeza": {
+    "id": "HELM_002",
+    "color": "#fe8a18"
+   }
+  },
+  "cabello-74": {
+   "cabeza": {
+    "id": "HELM_002",
+    "color": "#0a3463"
+   }
+  },
+  "cabello-75": {
+   "cabeza": {
+    "id": "HELM_004",
+    "color": "#f4f4f4"
+   }
+  }
+ },
+ "torso": {
+  "torso-01": {
+   "color": "#6b4a2b",
+   "estampado": null,
+   "pendiente": "Chamarra de borrego sin estampado: torso liso"
+  },
+  "torso-02": {
+   "color": "#c91a09",
+   "estampado": null,
+   "pendiente": "Camisa de cuadros sin estampado: torso liso"
+  },
+  "torso-03": {
+   "color": "#237841",
+   "estampado": "PRINT_020",
+   "colores": [
+    "#f4f4f4",
+    "#ffffff",
+    "#6b4a2b"
+   ]
+  },
+  "torso-04": {
+   "color": "#81007b",
+   "estampado": "PRINT_020",
+   "colores": [
+    "#f4f4f4",
+    "#ffffff",
+    "#6b4a2b"
+   ]
+  },
+  "torso-05": {
+   "color": "#2a2a2a",
+   "estampado": null,
+   "pendiente": "Chamarra de piel sin estampado: torso liso"
+  },
+  "torso-06": {
+   "color": "#5a93db",
+   "estampado": null,
+   "pendiente": "Chamarra de mezclilla sin estampado: torso liso"
+  },
+  "torso-07": {
+   "color": "#f4f4f4",
+   "estampado": null,
+   "brazos": "#c91a09",
+   "pendiente": "Playera raglan: torso liso con mangas de color"
+  },
+  "torso-08": {
+   "color": "#f4f4f4",
+   "estampado": "PRINT_019",
+   "colores": [
+    "#1a2b6b",
+    "#1a2b6b",
+    "#6b4a2b"
+   ],
+   "texto": "10"
+  },
+  "torso-09": {
+   "color": "#1b2a34",
+   "estampado": "PRINT_020",
+   "colores": [
+    "#f4f4f4",
+    "#ffffff",
+    "#6b4a2b"
+   ]
+  },
+  "torso-10": {
+   "color": "#958a73",
+   "estampado": null,
+   "pendiente": "Chaleco de campo sin estampado: torso liso"
+  },
+  "torso-11": {
+   "color": "#f4f4f4",
+   "estampado": "PRINT_014",
+   "colores": [
+    "#9aa1ad",
+    "#ffffff",
+    "#6b4a2b"
+   ]
+  }
+ },
+ "piernas": {
+  "piernas-01": "#0a3463",
+  "piernas-02": "#1b2a34",
+  "piernas-03": "#0055bf",
+  "piernas-04": "#6c6e68",
+  "piernas-05": "#a0a5a9",
+  "piernas-06": "#e4cd9e",
+  "piernas-07": "#958a73",
+  "piernas-08": "#582a12",
+  "piernas-09": "#f4f4f4",
+  "piernas-10": "#c91a09",
+  "piernas-11": "#fe8a18",
+  "piernas-12": "#237841"
+ },
+ "accesorio": {
+  "acc-taza": "ACC_010",
+  "acc-radio": "ACC_012",
+  "acc-martillo": "ACC_008"
+ }
+}

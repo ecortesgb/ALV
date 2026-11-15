@@ -11,7 +11,9 @@ import { Fondo } from "./efectos";
 import { type JugadorLocal, parejaDe, saldosDe, useEstado } from "./estado";
 import { Lobby } from "./Lobby";
 import { Partida } from "./Partida";
-import { EditorPersonaje, MisCosas, Tienda } from "./Personaje";
+import { MisCosas, Tienda } from "./Personaje";
+import { ArmarFigura, PantallaFigura } from "./Figuras";
+import { SincroFiguras } from "./SincroFiguras";
 import { SelectorEquipo, TarjetaJugador } from "./Tarjetas";
 import { Ranking } from "./Ranking";
 import { SincroSala, Unirse } from "./Sala";
@@ -20,8 +22,8 @@ import { instalarClics } from "./sonido";
 import { CabeceraJuego, Hub, PantallaModos } from "./Hub";
 import { Notificaciones, PaginaAjustes, PaginaFisico, PantallaCarga, PantallaCuenta } from "./Bienvenida";
 
-type Ruta = "inicio" | "lobby" | "tienda" | "ranking" | "perfil" | "unirse" | "fisico" | "ajustes" | "jugar";
-const RUTAS: Ruta[] = ["inicio", "lobby", "tienda", "ranking", "perfil", "unirse", "fisico", "ajustes", "jugar"];
+type Ruta = "inicio" | "lobby" | "tienda" | "ranking" | "perfil" | "unirse" | "fisico" | "ajustes" | "jugar" | "figura";
+const RUTAS: Ruta[] = ["inicio", "lobby", "tienda", "ranking", "perfil", "unirse", "fisico", "ajustes", "jugar", "figura"];
 /** Rutas viejas que siguen funcionando si alguien las tenía guardadas. */
 const ANTES: Record<string, Ruta> = { juegos: "lobby", grupo: "lobby", historial: "ranking" };
 
@@ -71,11 +73,13 @@ export function App() {
           : ruta === "unirse" ? <PaginaUnirse codigo={arg} />
           : ruta === "fisico" ? <><CabeceraJuego titulo="Juego físico" color="#C6FF3D" /><PaginaFisico /></>
           : ruta === "ajustes" ? <PaginaAjustes />
+          : ruta === "figura" ? <PantallaFigura arg={arg} />
           : <Perfil id={arg} />}
       </main>
       <AvisoPartidaSala ruta={ruta} />
       <Avisos />
       <SincroCuenta />
+      <SincroFiguras />
       <SincroSala />
       <Confirmaciones />
       {entrada === "carga" && <PantallaCarga iniciar={() => void iniciar()} />}
@@ -179,7 +183,7 @@ function Perfil({ id }: { id?: string }) {
             {PESTANAS_CASILLERO.map(([k, ic, n]) => <button key={k} role="tab" aria-selected={tab === k} onClick={() => setTab(k)}><span aria-hidden="true">{ic}</span> {n}{k === "cosas" && (j.nuevos?.length ?? 0) > 0 && <i className="burbuja-nuevos">{j.nuevos!.length}</i>}</button>)}
           </div>
           <div key={tab} className="casillero-panel pd-desliza">
-            {tab === "armar" && <EditorPersonaje j={j} />}
+            {tab === "armar" && <ArmarFigura j={j} />}
             {tab === "cosas" && <MisCosas j={j} />}
             {tab === "equipo" && <SelectorEquipo j={j} />}
             {tab === "logros" && <LogrosDe j={j} />}

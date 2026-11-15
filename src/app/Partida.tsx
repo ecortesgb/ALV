@@ -126,7 +126,7 @@ export function Partida({ inicial, salir }: { inicial: EstadoPartida; salir: () 
       <div className="escena-partida" aria-label="Jugadores y turno">
         <Escenario jugadores={v.jugadores.map((j, i) => jl(j.id) ?? { id: j.id, nombre: j.nombre, personaje: personajeInicial(i), movimientos: [], tiene: [] })}
           color={esc?.color ?? color} fondo={esc?.id} interactivo={false} destacado={v.turnoDe}
-          listosIds={v.fase === "contestando" && !v.turnoDe ? v.contestaron : undefined} />
+          listosIds={v.fase === "contestando" && !v.turnoDe ? v.contestaron : undefined} puntos={v.puntos} />
       </div>
 
       <PanelHerramienta motor={e.motor}>

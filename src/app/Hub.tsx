@@ -7,7 +7,8 @@ import { TIENDA } from "../content/personaje";
 import { crearAzar } from "../engine/azar";
 import { nivelPorXp, xpParaNivel } from "../engine/economia";
 import { sorprendeme } from "../engine/filtros";
-import { Avatar, Retrato, tipoCartaPorNivel } from "./Avatar";
+import { Avatar, Retrato, semillaPersonaje, tipoCartaPorNivel } from "./Avatar";
+import { Escena3D } from "./figura3d";
 import { aviso, configuracion, confirmar, Icono, INTENSIDADES } from "./comun";
 import { useAura } from "./efectos";
 import { acciones, esMenorConCuenta, saldosDe, useEstado } from "./estado";
@@ -99,8 +100,10 @@ export function Hub({ abrirNovedades }: { abrirNovedades: () => void }) {
       <div className="hub-escena">
         {frase && <span className="hub-globo" key={frase} role="status">{frase}</span>}
         <button className="hub-personaje" onClick={tocar} aria-label="Toca a tu personaje">
-          <span key={emote.clave} className={"emote" + (emote.k ? " e-" + emote.k : "")}>
-            <span className="hub-respira"><Avatar p={yo.personaje} size={tam} nombre={yo.nombre} articulado /></span>
+          {/* Figura 3D en vivo (la suya, o una al azar fija si aún no arma). Los gestos se vuelven momentos: festejar = al ganar; los demás = al anotar. */}
+          <span className="hub-3d" style={{ width: Math.round(tam * 1.5), height: Math.round(tam * 1.7) }}>
+            <Escena3D figuras={[{ id: yo.id, figura: yo.personaje.figura, semilla: semillaPersonaje(yo.personaje) }]}
+              momentos={emote.k ? [{ id: yo.id, cual: emote.k === "festejar" ? "victoria" : "punto", n: emote.clave }] : []} />
           </span>
         </button>
         <span className="hub-pedestal" aria-hidden="true" style={eq ? { ["--eq1" as string]: eq.c1, ["--eq2" as string]: eq.c2 } : undefined} />

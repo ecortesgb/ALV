@@ -1,0 +1,536 @@
+{
+ "version": 1,
+ "actualizado": "2026-11-14",
+ "estampados": [
+  {
+   "id": "FACE_001",
+   "categoria": "cara",
+   "clave": "sonrisa",
+   "nombre": "Sonrisa",
+   "aplica_a": "HEAD_001",
+   "tipo": "dibujo",
+   "archivo": null,
+   "estilo": "neutro"
+  },
+  {
+   "id": "FACE_002",
+   "categoria": "cara",
+   "clave": "sonrisa-grande",
+   "nombre": "Sonrisa grande",
+   "aplica_a": "HEAD_001",
+   "tipo": "dibujo",
+   "archivo": null,
+   "estilo": "neutro"
+  },
+  {
+   "id": "FACE_003",
+   "categoria": "cara",
+   "clave": "serio",
+   "nombre": "Serio",
+   "aplica_a": "HEAD_001",
+   "tipo": "dibujo",
+   "archivo": null,
+   "estilo": "neutro"
+  },
+  {
+   "id": "FACE_004",
+   "categoria": "cara",
+   "clave": "determinado",
+   "nombre": "Determinado",
+   "aplica_a": "HEAD_001",
+   "tipo": "dibujo",
+   "archivo": null,
+   "estilo": "neutro"
+  },
+  {
+   "id": "FACE_005",
+   "categoria": "cara",
+   "clave": "enojado",
+   "nombre": "Enojado",
+   "aplica_a": "HEAD_001",
+   "tipo": "dibujo",
+   "archivo": null,
+   "estilo": "neutro"
+  },
+  {
+   "id": "FACE_006",
+   "categoria": "cara",
+   "clave": "sorpresa",
+   "nombre": "Sorpresa",
+   "aplica_a": "HEAD_001",
+   "tipo": "dibujo",
+   "archivo": null,
+   "estilo": "neutro"
+  },
+  {
+   "id": "FACE_007",
+   "categoria": "cara",
+   "clave": "guino",
+   "nombre": "Guiño",
+   "aplica_a": "HEAD_001",
+   "tipo": "dibujo",
+   "archivo": null,
+   "estilo": "neutro"
+  },
+  {
+   "id": "FACE_008",
+   "categoria": "cara",
+   "clave": "preocupado",
+   "nombre": "Preocupado",
+   "aplica_a": "HEAD_001",
+   "tipo": "dibujo",
+   "archivo": null,
+   "estilo": "neutro"
+  },
+  {
+   "id": "FACE_009",
+   "categoria": "cara",
+   "clave": "carcajada",
+   "nombre": "Carcajada",
+   "aplica_a": "HEAD_001",
+   "tipo": "dibujo",
+   "archivo": null,
+   "estilo": "neutro"
+  },
+  {
+   "id": "FACE_010",
+   "categoria": "cara",
+   "clave": "sonrisa-mujer",
+   "nombre": "Sonrisa (pestañas)",
+   "aplica_a": "HEAD_001",
+   "tipo": "dibujo",
+   "archivo": null,
+   "estilo": "fem"
+  },
+  {
+   "id": "FACE_011",
+   "categoria": "cara",
+   "clave": "segura-mujer",
+   "nombre": "Segura (pestañas)",
+   "aplica_a": "HEAD_001",
+   "tipo": "dibujo",
+   "archivo": null,
+   "estilo": "fem"
+  },
+  {
+   "id": "FACE_012",
+   "categoria": "cara",
+   "clave": "mascara-arana",
+   "nombre": "Máscara araña",
+   "aplica_a": "HEAD_001",
+   "tipo": "dibujo",
+   "archivo": null,
+   "ocupa": "cara",
+   "oculta": [
+    "rostro",
+    "detalles"
+   ],
+   "estilo": "neutro"
+  },
+  {
+   "id": "FACE_013",
+   "categoria": "cara",
+   "clave": "mascara-pantera",
+   "nombre": "Máscara pantera",
+   "aplica_a": "HEAD_001",
+   "tipo": "dibujo",
+   "archivo": null,
+   "ocupa": "cara",
+   "oculta": [
+    "rostro",
+    "detalles"
+   ],
+   "estilo": "neutro"
+  },
+  {
+   "id": "FACE_014",
+   "categoria": "cara",
+   "clave": "mascara-capitan",
+   "nombre": "Capucha del Capitán",
+   "aplica_a": "HEAD_001",
+   "tipo": "dibujo",
+   "archivo": null,
+   "ocupa": "cara",
+   "oculta": [
+    "rostro",
+    "detalles"
+   ],
+   "estilo": "neutro"
+  },
+  {
+   "id": "FACE_015",
+   "categoria": "cara",
+   "clave": "mascara-ironman",
+   "nombre": "Careta de Iron Man",
+   "aplica_a": "HEAD_001",
+   "tipo": "dibujo",
+   "archivo": null,
+   "ocupa": "cara",
+   "oculta": [
+    "rostro",
+    "detalles"
+   ],
+   "estilo": "neutro"
+  },
+  {
+   "id": "DETAIL_001",
+   "categoria": "detalle",
+   "clave": "lentes-redondos",
+   "nombre": "Lentes redondos",
+   "aplica_a": "HEAD_001",
+   "tipo": "dibujo",
+   "archivo": null,
+   "ocupa": "ojos",
+   "estilo": "neutro"
+  },
+  {
+   "id": "DETAIL_002",
+   "categoria": "detalle",
+   "clave": "lentes-cuadrados",
+   "nombre": "Lentes cuadrados",
+   "aplica_a": "HEAD_001",
+   "tipo": "dibujo",
+   "archivo": null,
+   "ocupa": "ojos",
+   "estilo": "neutro"
+  },
+  {
+   "id": "DETAIL_003",
+   "categoria": "detalle",
+   "clave": "lentes-sol",
+   "nombre": "Lentes de sol",
+   "aplica_a": "HEAD_001",
+   "tipo": "dibujo",
+   "archivo": null,
+   "ocupa": "ojos",
+   "estilo": "neutro"
+  },
+  {
+   "id": "DETAIL_004",
+   "categoria": "detalle",
+   "clave": "rayo",
+   "nombre": "Cicatriz de rayo",
+   "aplica_a": "HEAD_001",
+   "tipo": "dibujo",
+   "archivo": null,
+   "estilo": "neutro"
+  },
+  {
+   "id": "DETAIL_005",
+   "categoria": "detalle",
+   "clave": "barba",
+   "nombre": "Barba",
+   "aplica_a": "HEAD_001",
+   "tipo": "dibujo",
+   "archivo": null,
+   "ocupa": "barba",
+   "estilo": "masc"
+  },
+  {
+   "id": "DETAIL_006",
+   "categoria": "detalle",
+   "clave": "candado",
+   "nombre": "Candado",
+   "aplica_a": "HEAD_001",
+   "tipo": "dibujo",
+   "archivo": null,
+   "ocupa": "barba",
+   "estilo": "masc"
+  },
+  {
+   "id": "DETAIL_007",
+   "categoria": "detalle",
+   "clave": "bigote",
+   "nombre": "Bigote",
+   "aplica_a": "HEAD_001",
+   "tipo": "dibujo",
+   "archivo": null,
+   "ocupa": "barba",
+   "estilo": "masc"
+  },
+  {
+   "id": "DETAIL_008",
+   "categoria": "detalle",
+   "clave": "pecas",
+   "nombre": "Pecas",
+   "aplica_a": "HEAD_001",
+   "tipo": "dibujo",
+   "archivo": null,
+   "estilo": "neutro"
+  },
+  {
+   "id": "DETAIL_009",
+   "categoria": "detalle",
+   "clave": "mejillas",
+   "nombre": "Mejillas",
+   "aplica_a": "HEAD_001",
+   "tipo": "dibujo",
+   "archivo": null,
+   "estilo": "neutro"
+  },
+  {
+   "id": "DETAIL_010",
+   "categoria": "detalle",
+   "clave": "parche",
+   "nombre": "Parche",
+   "aplica_a": "HEAD_001",
+   "tipo": "dibujo",
+   "archivo": null,
+   "ocupa": "ojos",
+   "estilo": "neutro"
+  },
+  {
+   "id": "PRINT_001",
+   "categoria": "estampado-torso",
+   "clave": "capitan",
+   "nombre": "Capitán (estrella)",
+   "aplica_a": "TORSO_001",
+   "tipo": "dibujo",
+   "archivo": null,
+   "estilo": "neutro",
+   "mangas": "larga"
+  },
+  {
+   "id": "PRINT_002",
+   "categoria": "estampado-torso",
+   "clave": "ironman",
+   "nombre": "Armadura reactor",
+   "aplica_a": "TORSO_001",
+   "tipo": "dibujo",
+   "archivo": null,
+   "estilo": "neutro",
+   "mangas": "larga"
+  },
+  {
+   "id": "PRINT_003",
+   "categoria": "estampado-torso",
+   "clave": "thor",
+   "nombre": "Armadura nórdica",
+   "aplica_a": "TORSO_001",
+   "tipo": "dibujo",
+   "archivo": null,
+   "estilo": "neutro",
+   "mangas": "larga"
+  },
+  {
+   "id": "PRINT_004",
+   "categoria": "estampado-torso",
+   "clave": "arana",
+   "nombre": "Traje araña",
+   "aplica_a": "TORSO_001",
+   "tipo": "dibujo",
+   "archivo": null,
+   "estilo": "neutro",
+   "mangas": "larga"
+  },
+  {
+   "id": "PRINT_005",
+   "categoria": "estampado-torso",
+   "clave": "hulk",
+   "nombre": "Músculos",
+   "aplica_a": "TORSO_001",
+   "tipo": "dibujo",
+   "archivo": null,
+   "estilo": "neutro",
+   "mangas": "sin"
+  },
+  {
+   "id": "PRINT_006",
+   "categoria": "estampado-torso",
+   "clave": "viuda",
+   "nombre": "Traje táctico",
+   "aplica_a": "TORSO_001",
+   "tipo": "dibujo",
+   "archivo": null,
+   "estilo": "fem",
+   "mangas": "larga"
+  },
+  {
+   "id": "PRINT_007",
+   "categoria": "estampado-torso",
+   "clave": "pantera",
+   "nombre": "Traje pantera",
+   "aplica_a": "TORSO_001",
+   "tipo": "dibujo",
+   "archivo": null,
+   "estilo": "neutro",
+   "mangas": "larga"
+  },
+  {
+   "id": "PRINT_008",
+   "categoria": "estampado-torso",
+   "clave": "strange",
+   "nombre": "Túnica hechicero",
+   "aplica_a": "TORSO_001",
+   "tipo": "dibujo",
+   "archivo": null,
+   "estilo": "neutro",
+   "mangas": "larga"
+  },
+  {
+   "id": "PRINT_009",
+   "categoria": "estampado-torso",
+   "clave": "hogwarts",
+   "nombre": "Uniforme Hogwarts",
+   "aplica_a": "TORSO_001",
+   "tipo": "dibujo",
+   "archivo": null,
+   "estilo": "neutro",
+   "mangas": "larga"
+  },
+  {
+   "id": "PRINT_010",
+   "categoria": "estampado-torso",
+   "clave": "letra",
+   "nombre": "Suéter con letra",
+   "aplica_a": "TORSO_001",
+   "tipo": "dibujo",
+   "archivo": null,
+   "estilo": "neutro",
+   "mangas": "larga"
+  },
+  {
+   "id": "PRINT_011",
+   "categoria": "estampado-torso",
+   "clave": "dumbledore",
+   "nombre": "Túnica de estrellas",
+   "aplica_a": "TORSO_001",
+   "tipo": "dibujo",
+   "archivo": null,
+   "estilo": "neutro",
+   "mangas": "larga"
+  },
+  {
+   "id": "PRINT_012",
+   "categoria": "estampado-torso",
+   "clave": "camisa-corbata",
+   "nombre": "Camisa y corbata",
+   "aplica_a": "TORSO_001",
+   "tipo": "dibujo",
+   "archivo": null,
+   "estilo": "neutro",
+   "mangas": "larga"
+  },
+  {
+   "id": "PRINT_013",
+   "categoria": "estampado-torso",
+   "clave": "bata",
+   "nombre": "Bata de laboratorio",
+   "aplica_a": "TORSO_001",
+   "tipo": "dibujo",
+   "archivo": null,
+   "estilo": "neutro",
+   "mangas": "larga"
+  },
+  {
+   "id": "PRINT_014",
+   "categoria": "estampado-torso",
+   "clave": "chef",
+   "nombre": "Filipina de chef",
+   "aplica_a": "TORSO_001",
+   "tipo": "dibujo",
+   "archivo": null,
+   "estilo": "neutro",
+   "mangas": "larga"
+  },
+  {
+   "id": "PRINT_015",
+   "categoria": "estampado-torso",
+   "clave": "policia",
+   "nombre": "Policía",
+   "aplica_a": "TORSO_001",
+   "tipo": "dibujo",
+   "archivo": null,
+   "estilo": "neutro",
+   "mangas": "larga"
+  },
+  {
+   "id": "PRINT_016",
+   "categoria": "estampado-torso",
+   "clave": "bombero",
+   "nombre": "Bombero",
+   "aplica_a": "TORSO_001",
+   "tipo": "dibujo",
+   "archivo": null,
+   "estilo": "neutro",
+   "mangas": "larga"
+  },
+  {
+   "id": "PRINT_017",
+   "categoria": "estampado-torso",
+   "clave": "obrero",
+   "nombre": "Chaleco de obra",
+   "aplica_a": "TORSO_001",
+   "tipo": "dibujo",
+   "archivo": null,
+   "estilo": "neutro",
+   "mangas": "larga"
+  },
+  {
+   "id": "PRINT_018",
+   "categoria": "estampado-torso",
+   "clave": "pirata",
+   "nombre": "Pirata",
+   "aplica_a": "TORSO_001",
+   "tipo": "dibujo",
+   "archivo": null,
+   "estilo": "neutro",
+   "mangas": "larga"
+  },
+  {
+   "id": "PRINT_019",
+   "categoria": "estampado-torso",
+   "clave": "futbol",
+   "nombre": "Jersey de fútbol",
+   "aplica_a": "TORSO_001",
+   "tipo": "dibujo",
+   "archivo": null,
+   "estilo": "neutro",
+   "mangas": "corta"
+  },
+  {
+   "id": "PRINT_020",
+   "categoria": "estampado-torso",
+   "clave": "sudadera",
+   "nombre": "Sudadera",
+   "aplica_a": "TORSO_001",
+   "tipo": "dibujo",
+   "archivo": null,
+   "estilo": "neutro",
+   "mangas": "larga"
+  },
+  {
+   "id": "PRINT_021",
+   "categoria": "estampado-torso",
+   "clave": "batman",
+   "nombre": "Emblema de murciélago",
+   "aplica_a": "TORSO_001",
+   "tipo": "dibujo",
+   "archivo": null,
+   "estilo": "neutro",
+   "mangas": "larga"
+  },
+  {
+   "id": "PRINT_022",
+   "categoria": "estampado-torso",
+   "clave": "superman",
+   "nombre": "Escudo con S",
+   "aplica_a": "TORSO_001",
+   "tipo": "dibujo",
+   "archivo": null,
+   "estilo": "neutro",
+   "mangas": "larga"
+  },
+  {
+   "id": "PRINT_023",
+   "categoria": "estampado-torso",
+   "clave": "mujer-maravilla",
+   "nombre": "Armadura dorada",
+   "aplica_a": "TORSO_001",
+   "tipo": "dibujo",
+   "archivo": null,
+   "estilo": "fem",
+   "mangas": "larga"
+  }
+ ]
+}

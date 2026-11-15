@@ -167,6 +167,28 @@ h2 { margin: 0; font-size: 18px; font-weight: 800; }
 /* Personaje */
 .av { display: inline-block; position: relative; overflow: hidden; vertical-align: bottom; flex-shrink: 0; }
 .av img, .av svg { position: absolute; left: -18.97%; top: -9.2%; width: 137.93%; height: 119.54%; pointer-events: none; max-width: none; }
+/* Figura 3D: foto sacada de la escena (figura3d.tsx). */
+.av.av-3d img { left: 0; top: 0; width: 100%; height: 100%; object-fit: contain; object-position: center bottom; }
+.av-3d-cargando { position: absolute; left: 30%; right: 30%; bottom: 4%; height: 60%; border-radius: 40% 40% 12% 12%; background: color-mix(in srgb, currentColor 14%, transparent); animation: av3dLatido 1.2s ease-in-out infinite; }
+@keyframes av3dLatido { 50% { opacity: .45; } }
+.escena3d { position: relative; width: 100%; height: 100%; min-height: 220px; }
+.escena3d iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; background: transparent; color-scheme: normal; }
+.escena3d-cargando { position: absolute; inset: auto 0 12px; text-align: center; font-weight: 800; opacity: .7; pointer-events: none; }
+.editor3d { position: fixed; inset: 0; width: 100%; height: 100%; border: 0; z-index: 60; background: #0d1321; }
+.editor3d-salir { position: fixed; z-index: 61; right: 12px; top: max(12px, env(safe-area-inset-top)); }
+.vitrina-3d { place-items: stretch; height: 300px; }
+.vitrina-vacia { display: grid; place-content: center; gap: 6px; padding: 20px; border: 0; background: none; color: inherit; text-align: center; font-size: 18px; }
+.tira-capsulas { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.tira-capsulas.compacta { display: flex; gap: 6px; }
+.capsula { display: grid; justify-items: center; gap: 4px; padding: 8px 6px 6px; border-radius: 16px; border: 2px solid var(--line); background: var(--bg2); color: inherit; min-width: 0; transition: transform .15s, border-color .15s; }
+.capsula small { font-size: 11px; font-weight: 800; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--muted); }
+.capsula.activa { border-color: var(--sc, #FFCF4A); box-shadow: 0 0 0 3px color-mix(in srgb, var(--sc, #FFCF4A) 30%, transparent); }
+.capsula.activa small { color: var(--ink); }
+.capsula:active { transform: scale(.96); }
+.capsula.vacia { border-style: dashed; }
+.capsula-mas { display: grid; place-items: center; width: 44px; aspect-ratio: 2 / 3; font-size: 28px; font-weight: 900; color: var(--muted); }
+.tira-capsulas.compacta .capsula { padding: 4px; border-radius: 12px; }
+.tira-capsulas.compacta .capsula-mas { width: 30px; font-size: 20px; }
 .vitrina { display: grid; place-items: end center; height: 260px; border-radius: 24px; background: radial-gradient(circle at 50% 40%, color-mix(in srgb, var(--sc) 30%, var(--bg2)), var(--bg2) 70%); border: 2px solid var(--line); overflow: hidden; }
 .pestanas { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 2px; border-bottom: 2px solid var(--line); }
 .pestanas button { padding: 10px 0; font-size: 11px; font-weight: 800; color: var(--muted); border: 0; background: none; border-radius: 10px 10px 0 0; min-width: 0; }

@@ -1,15 +1,19 @@
-// El personaje de bloques: capas de imagen apiladas y, encima, los adornos de la tienda dibujados en SVG.
-import { rutaPieza, TIENDA, type Personaje } from "../content/personaje";
+// El personaje: siempre la figura 3D (foto sacada de la escena de figura3d.tsx), en cuerpo completo o como retrato.
+import type { Personaje } from "../content/personaje";
 import { nivelPorXp } from "../engine/economia";
 import { equipoDe } from "../content/equipos";
 import { saldosDe, type JugadorLocal } from "./estado";
+import { FotoFigura, semillaDe, useFoto } from "./figura3d";
+
+/** Semilla de la figura al azar de quien no tiene figura: sale de sus piezas 2D, distintas para cada lugar del grupo. */
+export const semillaPersonaje = (p: Personaje) => semillaDe([p.piel, p.rostro, p.cabello, p.torso, p.piernas].join("|"));
 
 interface Props {
   p: Personaje;
   /** Ancho en px; el alto es 1.5 veces. */
   size: number;
   nombre?: string;
-  /** Corona del ALV vigente (no se vende). */
+  /** Ya no se dibujan (eran adornos 2D); se dejan para no tocar a quien los pasa. */
   lider?: boolean;
   /** Delantal del mesero (no se vende). */
   mesero?: boolean;
@@ -17,69 +21,10 @@ interface Props {
   articulado?: boolean;
 }
 
-/**
- * Esqueleto del personaje. Las piezas son capas de 400×520 (piernas aparte; cabeza, brazos y manos vienen en la piel
- * y el torso). Cada parte es una máscara sobre esas capas y gira sobre su articulación (hombro, cuello, cadera).
- * Coordenadas en el lienzo de las piezas; se pasan a porcentaje de la caja del personaje.
- */
-const PARTES: { k: string; pts: [number, number][]; piv: [number, number]; piernas: boolean }[] = [
-  { k: "pierna_i", pts: [[100, 330], [200, 330], [200, 520], [100, 520]], piv: [172, 350], piernas: true },
-  { k: "pierna_d", pts: [[200, 330], [300, 330], [300, 520], [200, 520]], piv: [228, 350], piernas: true },
-  { k: "brazo_i", pts: [[0, 200], [153, 206], [127, 336], [150, 400], [0, 400]], piv: [150, 226], piernas: false },
-  { k: "brazo_d", pts: [[400, 200], [247, 206], [273, 336], [250, 400], [400, 400]], piv: [250, 226], piernas: false },
-  { k: "torso", pts: [[153, 206], [247, 206], [273, 336], [250, 400], [150, 400], [127, 336]], piv: [200, 300], piernas: false },
-  { k: "cabeza", pts: [[0, -60], [400, -60], [400, 214], [0, 214]], piv: [200, 214], piernas: false },
-];
-const aCaja = (x: number, y: number) => [-18.97 + (137.93 * x) / 400, -9.2 + (119.54 * y) / 520] as const;
-const ESTILO_PARTE = Object.fromEntries(PARTES.map(p => {
-  const [ox, oy] = aCaja(...p.piv);
-  return [p.k, { clipPath: `polygon(${p.pts.map(([x, y]) => aCaja(x, y).map(v => `${v.toFixed(2)}%`).join(" ")).join(", ")})`, transformOrigin: `${ox.toFixed(2)}% ${oy.toFixed(2)}%` }];
-}));
-
-export function Avatar({ p, size, nombre, lider, mesero, articulado = false }: Props) {
-  const puesto = p.puesto ?? {};
-  const mano = p.equipo?.mano ?? (puesto.mano && TIENDA.some(a => a.id === puesto.mano && a.pieza) ? puesto.mano : null);
-  const capas = [p.piernas, p.piel, p.torso, p.facial || p.rostro, p.cabello, mano].filter(Boolean) as string[];
-  // Recompensas de equipo: con los colores del equipo; en su zona tapan al adorno de la tienda.
-  const eq = equipoDe(p.equipo?.id);
-  const adornos = new Set(eq ? p.equipo?.adornos ?? [] : []);
-  // La corona va en la cabeza: si el personaje está articulado, se mueve con ella.
-  const corona = lider
-    ? <Corona relleno="#FFCF4A" gema="#FF2E88" extra />
-    : puesto.cabeza === "corona-neon" ? <Corona relleno="#FF2E88" gema="#22E1FF" />
-    : puesto.cabeza === "corona-carton" ? <path d="M150 102 L158 52 L182 80 L200 44 L218 80 L242 52 L250 102Z" fill="#C9A26B" stroke="#8A6A3B" strokeWidth="4" strokeLinejoin="round" />
-    : null;
-  return (
-    <span className={"av" + (articulado ? " articulado" : "")} style={{ width: size, height: Math.round(size * 1.5) }} role="img" aria-label={`Personaje de ${nombre ?? "jugador"}`}>
-      {eq && adornos.has("capa") ? (
-        <svg viewBox="0 0 400 520" aria-hidden="true"><path d="M140 212 L260 212 L308 478 L92 478Z" fill={eq.c1} /><path d="M200 236 L200 470" stroke={eq.c2} strokeWidth="10" opacity=".7" /><path d="M140 212 L260 212 L266 236 L134 236Z" fill={eq.c2} /></svg>
-      ) : puesto.espalda === "capa" && (
-        <svg viewBox="0 0 400 520" aria-hidden="true"><path d="M140 212 L260 212 L308 478 L92 478Z" fill="#C8102E" /><path d="M140 212 L260 212 L266 236 L134 236Z" fill="#FFCF4A" /></svg>
-      )}
-      {articulado ? PARTES.map(parte => (
-        <span key={parte.k} className={"parte p-" + parte.k} style={ESTILO_PARTE[parte.k]}>
-          {(parte.piernas ? [p.piernas] : capas.filter(id => id !== p.piernas)).map(id => <img key={id} src={rutaPieza(id)} alt="" loading="lazy" decoding="async" />)}
-          {parte.k === "cabeza" && <svg viewBox="0 0 400 520" aria-hidden="true">{corona}</svg>}
-        </span>
-      )) : capas.map(id => <img key={id} src={rutaPieza(id)} alt="" loading="lazy" decoding="async" />)}
-      <svg viewBox="0 0 400 520" aria-hidden="true">
-        {mesero && <><path d="M162 226 L238 226 L250 340 L150 340Z" fill="#F7F2FF" opacity=".95" /><path d="M162 226 Q200 205 238 226" fill="none" stroke="#F7F2FF" strokeWidth="5" /></>}
-        {eq && adornos.has("bufanda") && <>
-          <path d="M152 206 Q200 248 248 206" fill="none" stroke={eq.c1} strokeWidth="24" strokeLinecap="round" />
-          <path d="M152 206 Q200 248 248 206" fill="none" stroke={eq.c2} strokeWidth="6" strokeDasharray="12 14" />
-          <rect x="214" y="222" width="24" height="74" rx="5" fill={eq.c1} transform="rotate(-8 226 222)" />
-          <path d="M214 246 h24 M214 266 h24" stroke={eq.c2} strokeWidth="6" transform="rotate(-8 226 222)" />
-        </>}
-        {eq && adornos.has("escudo") && <>
-          <path d="M174 250 L226 250 L226 282 Q200 308 174 282 Z" fill={eq.c1} stroke={eq.c2} strokeWidth="5" strokeLinejoin="round" />
-          <text x="200" y="284" textAnchor="middle" fontSize="26">{eq.icono}</text>
-        </>}
-        {!(eq && adornos.has("bufanda")) && puesto.cuello === "collar" && <><path d="M160 213 Q200 262 240 213" fill="none" stroke="#FFCF4A" strokeWidth="8" strokeLinecap="round" /><circle cx="200" cy="252" r="12" fill="#FFCF4A" stroke="#B8861B" strokeWidth="3" /></>}
-        {!(eq && adornos.has("escudo")) && puesto.pecho === "medallas" && <><path d="M176 222 L180 262" stroke="#FF2E88" strokeWidth="7" /><path d="M224 222 L220 262" stroke="#22E1FF" strokeWidth="7" /><circle cx="180" cy="274" r="14" fill="#FF7A2E" stroke="#0E0A1F" strokeWidth="2" /><circle cx="220" cy="274" r="14" fill="#A77BFF" stroke="#0E0A1F" strokeWidth="2" /></>}
-        {!articulado && corona}
-      </svg>
-    </span>
-  );
+export function Avatar({ p, size, nombre }: Props) {
+  // Todo es 3D: la foto de su figura en juego, o una al azar fija mientras no arme la suya.
+  // Los adornos 2D (tienda, equipo, corona del líder, delantal) ya no se dibujan: se rehacen como piezas 3D.
+  return <FotoFigura figura={p.figura} semilla={semillaPersonaje(p)} size={size} nombre={nombre} />;
 }
 
 /** Tipo de carta según el nivel: el mismo marco que la tarjeta de jugador. */
@@ -99,26 +44,25 @@ export function Retrato({ j, p, nombre, size, nivel }:
   const quien = nombre ?? j?.nombre;
   const eq = equipoDe(personaje.equipo?.id ?? j?.equipo);
   const marco = !!eq && !!personaje.equipo?.adornos?.includes("marco");
-  const s = size / 1.0345; // ancho del Avatar para que 300 unidades del lienzo llenen el retrato
   // Desfase de la animación por nombre, para que no respiren todos al mismo tiempo.
   const desfase = ((quien ?? "").split("").reduce((a, c) => a + c.charCodeAt(0), 0) % 9) * -0.4;
   return (
     <span className={"retrato t-" + tipoCartaPorNivel(n) + (eq ? " con-equipo" : "") + (marco ? " marco-equipo" : "")} style={{ width: size, height: size, ...(eq ? { ["--eq1" as string]: eq.c1, ["--eq2" as string]: eq.c2 } : {}) }} role="img" aria-label={`Personaje de ${quien ?? "jugador"}`}>
-      <span className="retrato-cuerpo" aria-hidden="true" style={{ left: 0.0173 * s, top: 0.1208 * s, animationDelay: `${desfase}s` }}>
-        <Avatar p={personaje} size={s} lider={false} />
+      <span className="retrato-cuerpo" aria-hidden="true" style={{ inset: 0, animationDelay: `${desfase}s` }}>
+        <FotoRetrato p={personaje} size={size} />
       </span>
     </span>
   );
 }
 
-function Corona({ relleno, gema, extra }: { relleno: string; gema: string; extra?: boolean }) {
-  return (
-    <>
-      <path d="M146 100 L156 44 L180 76 L200 30 L220 76 L244 44 L254 100Z" fill={relleno} stroke="#B8861B" strokeWidth="4" strokeLinejoin="round" />
-      <circle cx="200" cy="80" r="9" fill={gema} />
-      {extra && <><circle cx="165" cy="88" r="6" fill="#22E1FF" /><circle cx="235" cy="88" r="6" fill="#22E1FF" /></>}
-    </>
-  );
+/**
+ * La foto de la figura (240×300, de y=-0.22 a 2.98 en unidades de la escena) recortada de los hombros al pelo:
+ * de y≈1.6 a 2.85, o sea del 4 % al 43 % del alto de la foto, centrado a lo ancho.
+ */
+function FotoRetrato({ p, size }: { p: Personaje; size: number }) {
+  const url = useFoto(p.figura, semillaPersonaje(p));
+  if (!url) return <span className="av-3d-cargando" />;
+  return <img src={url} alt="" draggable={false} style={{ position: "absolute", width: 2.05 * size, height: 2.56 * size, left: -0.526 * size, top: -0.1 * size, maxWidth: "none" }} />;
 }
 
 /** Ícono de un adorno de la tienda que no es pieza de bloques. */

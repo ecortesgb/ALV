@@ -1,0 +1,89 @@
+{
+ "version": 1,
+ "actualizado": "2026-11-14",
+ "colecciones": [
+  {
+   "id": "marvel",
+   "nombre": "Marvel",
+   "grupo": "Superhéroes",
+   "apps": [
+    "alv"
+   ],
+   "personajes": [
+    "capitan-america",
+    "iron-man",
+    "thor",
+    "spider-man",
+    "hulk",
+    "black-widow",
+    "black-panther",
+    "doctor-strange"
+   ]
+  },
+  {
+   "id": "dc",
+   "nombre": "DC",
+   "grupo": "Superhéroes",
+   "apps": [
+    "alv"
+   ],
+   "personajes": [
+    "batman",
+    "superman",
+    "mujer-maravilla"
+   ]
+  },
+  {
+   "id": "harry-potter",
+   "nombre": "Harry Potter",
+   "grupo": "Películas",
+   "apps": [
+    "alv"
+   ],
+   "personajes": [
+    "harry-potter",
+    "hermione-granger",
+    "ron-weasley",
+    "albus-dumbledore",
+    "severus-snape",
+    "draco-malfoy",
+    "luna-lovegood",
+    "cedric-diggory"
+   ]
+  },
+  {
+   "id": "oficios",
+   "nombre": "Oficios",
+   "grupo": "Oficios",
+   "apps": [
+    "alv"
+   ],
+   "personajes": [
+    "chef",
+    "cientifica",
+    "constructor",
+    "policia",
+    "bombera",
+    "pirata",
+    "caballero",
+    "futbolista",
+    "gamer"
+   ]
+  },
+  {
+   "id": "set-76248",
+   "nombre": "Avengers Quinjet (76248)",
+   "grupo": "Superhéroes",
+   "apps": [
+    "alv"
+   ],
+   "personajes": [
+    "black-widow-black-jumpsuit-plain-legs-013391",
+    "captain-america-with-dark-blue-suit-helm-013390",
+    "iron-man-mark-7-armor-red-panels-013393",
+    "loki-pearl-titanium-outfit-013392",
+    "thor-tan-hair-black-armor-red-cape-012329"
+   ]
+  }
+ ]
+}

@@ -2,7 +2,8 @@
 // El nickname se guarda como correo interno (no real) para que Supabase lo haga único.
 // Solo se usa la llave publicable. Los errores hacia el jugador son genéricos; el detalle no se muestra.
 import { createClient, type Session, type SupabaseClient } from "@supabase/supabase-js";
-import type { Personaje } from "../content/personaje";
+import type { FiguraV2, Personaje } from "../content/personaje";
+import { esFigura, normalizar, N_CAPSULAS, type EstadoCapsulas } from "./figura3d";
 
 const URL = import.meta.env.VITE_SUPABASE_URL as string | undefined;
 const LLAVE = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string | undefined;
@@ -137,9 +138,57 @@ export async function guardarPersonaje(p: Personaje): Promise<void> {
     // Solo se guarda puesto lo que la cuenta tiene; la base rechaza lo demás.
     const tiene = new Set(tieneCuenta);
     const puesto = Object.fromEntries(Object.entries(p.puesto ?? {}).map(([z, v]) => [z, v && tiene.has(v) ? v : null]));
-    const { error } = await cliente.from("personajes").update({ piezas: { ...p, puesto }, actualizado: new Date().toISOString() }).eq("jugador", uid);
+    const { figura: _figura, ...sinFigura } = p;
+    const { error } = await cliente.from("personajes").update({ piezas: { ...sinFigura, puesto }, actualizado: new Date().toISOString() }).eq("jugador", uid);
     if (error) console.error("guardarPersonaje", error.message);
   } catch (e) { console.error("guardarPersonaje", e); }
+}
+
+// ---------- Figuras 3D (cápsulas) ----------
+
+/** Las cápsulas de la cuenta (tabla figuras_jugador). null si no hay sesión o falla; slots vacíos si no tiene ninguna. */
+export async function cargarCapsulasNube(): Promise<EstadoCapsulas | null> {
+  if (!cliente) return null;
+  try {
+    const uid = await uidActual();
+    if (!uid) return null;
+    const { data, error } = await cliente.from("figuras_jugador").select("capsula, nombre, figura, activa, actualizado").eq("jugador", uid);
+    if (error || !data) return null;
+    const slots: EstadoCapsulas["slots"] = Array(N_CAPSULAS).fill(null);
+    let activa: number | null = null;
+    for (const f of data) {
+      const i = Number(f.capsula) - 1;
+      if (i < 0 || i >= N_CAPSULAS || !esFigura(f.figura)) continue;
+      slots[i] = { nombre: String(f.nombre ?? ""), figura: f.figura as FiguraV2, actualizado: String(f.actualizado ?? "") };
+      if (f.activa) activa = i;
+    }
+    return normalizar({ version: 1, activa, slots });
+  } catch (e) { console.error("cargarCapsulasNube", e); return null; }
+}
+
+/** Sube las cápsulas tal como están en el celular: guarda las llenas, borra las vacías y marca la activa. */
+export async function guardarCapsulasNube(e: EstadoCapsulas): Promise<boolean> {
+  if (!cliente) return false;
+  try {
+    const uid = await uidActual();
+    if (!uid) return false;
+    const llenas = e.slots.flatMap((c, i) => (c ? [{ jugador: uid, capsula: i + 1, nombre: c.nombre.slice(0, 24), figura: c.figura, actualizado: new Date().toISOString() }] : []));
+    const vacias = e.slots.flatMap((c, i) => (c ? [] : [i + 1]));
+    if (llenas.length) {
+      // Sin la columna activa: solo la cambia la función activar_capsula.
+      const { error } = await cliente.from("figuras_jugador").upsert(llenas, { onConflict: "jugador,capsula" });
+      if (error) { console.error("guardarCapsulasNube", error.message); return false; }
+    }
+    if (vacias.length) {
+      const { error } = await cliente.from("figuras_jugador").delete().eq("jugador", uid).in("capsula", vacias);
+      if (error) { console.error("guardarCapsulasNube borrar", error.message); return false; }
+    }
+    if (e.activa != null) {
+      const { error } = await cliente.rpc("activar_capsula", { p_capsula: e.activa + 1 });
+      if (error) { console.error("activar_capsula", error.message); return false; }
+    }
+    return true;
+  } catch (err) { console.error("guardarCapsulasNube", err); return false; }
 }
 
 /** Lo que el servidor dice de la cuenta: saldos y artículos comprados. */
@@ -198,6 +247,8 @@ export interface Sala { id: string; codigo: string; nombre: string; anfitrion: b
 export type GestoSala = "saludar" | "bailar" | "chocar" | "empujar" | "festejar" | "aplaudir" | "robot" | "caminar" | "mirar";
 export interface MiembroSala {
   id: string; nombre: string; personaje: Personaje | null; anfitrion: boolean;
+  /** Figura 3D de su cápsula activa. */
+  figura?: FiguraV2 | null;
   /** Dio «listo» en el lobby. */
   listo: boolean;
   /** Último gesto, a quién (chocar o empujar) y contador: sube con cada gesto nuevo. */
@@ -260,10 +311,12 @@ export async function miembrosSala(sala: Sala): Promise<MiembroSala[] | null> {
     if (m.error) return null;
     const ids = (m.data ?? []).map(x => x.jugador as string);
     if (ids.length === 0) return [];
-    const [perf, pers] = await Promise.all([
+    const [perf, pers, figs] = await Promise.all([
       cliente.from("perfiles").select("id, nombre").in("id", ids),
       cliente.from("personajes").select("jugador, piezas").in("jugador", ids),
+      cliente.from("figuras_jugador").select("jugador, figura").eq("activa", true).in("jugador", ids),
     ]);
+    const figuras = new Map((figs.data ?? []).filter(x => esFigura(x.figura)).map(x => [x.jugador as string, x.figura as FiguraV2]));
     const nombre = new Map((perf.data ?? []).map(x => [x.id as string, x.nombre as string]));
     // Una cuenta recién creada guarda su personaje un segundo después: mientras, va el de inicio.
     const piezas = new Map((pers.data ?? []).filter(x => (x.piezas as Partial<Personaje>)?.piel).map(x => [x.jugador as string, x.piezas as Personaje]));
@@ -271,7 +324,7 @@ export async function miembrosSala(sala: Sala): Promise<MiembroSala[] | null> {
     return ids.map(id => {
       const f = fila.get(id)!;
       return {
-        id, nombre: nombre.get(id) ?? "Jugador", personaje: piezas.get(id) ?? null, anfitrion: id === ev.data!.anfitrion,
+        id, nombre: nombre.get(id) ?? "Jugador", personaje: piezas.get(id) ?? null, figura: figuras.get(id) ?? null, anfitrion: id === ev.data!.anfitrion,
         listo: !!f.listo, gesto: (f.gesto as GestoSala | null) ?? null, gestoA: (f.gesto_a as string | null) ?? null, gestoN: Number(f.gesto_n ?? 0),
       };
     });

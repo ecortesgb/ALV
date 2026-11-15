@@ -1,0 +1,1409 @@
+{
+ "version": 1,
+ "actualizado": "2026-11-14",
+ "piezas": [
+  {
+   "id": "HEAD_001",
+   "categoria": "cabeza",
+   "clave": "3626c",
+   "nombre": "Cabeza con stud hueco",
+   "ldraw": "3626c",
+   "ldraw_nombre": "Minifig Head with Hollow Stud",
+   "fuente": "ldraw",
+   "licencia": "CC BY 4.0 · LDraw.org",
+   "conexion": {
+    "monta_en": "cuello_torso",
+    "origen_ldu": [
+     0,
+     -24,
+     0
+    ],
+    "gira": "eje Y (cuello)"
+   },
+   "color_defecto": "#f2cd37",
+   "estilo": "neutro"
+  },
+  {
+   "id": "TORSO_001",
+   "categoria": "torso",
+   "clave": "973",
+   "nombre": "Torso",
+   "ldraw": "973",
+   "ldraw_nombre": "Minifig Torso",
+   "fuente": "ldraw",
+   "licencia": "CC BY 4.0 · LDraw.org",
+   "conexion": {
+    "monta_en": "cadera",
+    "origen_ldu": [
+     0,
+     0,
+     0
+    ]
+   }
+  },
+  {
+   "id": "ARM_001",
+   "categoria": "brazo",
+   "clave": "3818",
+   "nombre": "Brazo derecho",
+   "ldraw": "3818",
+   "ldraw_nombre": "Minifig Arm Right",
+   "fuente": "ldraw",
+   "licencia": "CC BY 4.0 · LDraw.org",
+   "conexion": {
+    "monta_en": "hombro_der",
+    "origen_ldu": [
+     -15.552,
+     9,
+     0
+    ],
+    "inclinacion_z": 9.782,
+    "gira": "eje X (pin del hombro)"
+   }
+  },
+  {
+   "id": "ARM_002",
+   "categoria": "brazo",
+   "clave": "3819",
+   "nombre": "Brazo izquierdo",
+   "ldraw": "3819",
+   "ldraw_nombre": "Minifig Arm Left",
+   "fuente": "ldraw",
+   "licencia": "CC BY 4.0 · LDraw.org",
+   "conexion": {
+    "monta_en": "hombro_izq",
+    "origen_ldu": [
+     15.552,
+     9,
+     0
+    ],
+    "inclinacion_z": -9.782,
+    "gira": "eje X (pin del hombro)"
+   }
+  },
+  {
+   "id": "HAND_001",
+   "categoria": "mano",
+   "clave": "3820",
+   "nombre": "Mano",
+   "ldraw": "3820",
+   "ldraw_nombre": "Minifig Hand",
+   "fuente": "ldraw",
+   "licencia": "CC BY 4.0 · LDraw.org",
+   "conexion": {
+    "monta_en": "puno",
+    "origen_ldu": [
+     5,
+     18.9,
+     -9.9
+    ],
+    "rot_x": 45,
+    "gira": "eje del poste",
+    "agarre": {
+     "barra_mm": 3.18,
+     "centro_ldu": [
+      0,
+      -0.8229,
+      -9.8948
+     ],
+     "angulo": 14.5
+    }
+   }
+  },
+  {
+   "id": "HIPS_001",
+   "categoria": "cadera",
+   "clave": "3815",
+   "nombre": "Cadera",
+   "ldraw": "3815",
+   "ldraw_nombre": "~Minifig Hips (Obsolete)",
+   "fuente": "ldraw",
+   "licencia": "CC BY 4.0 · LDraw.org",
+   "conexion": {
+    "monta_en": "base_torso",
+    "origen_ldu": [
+     0,
+     32,
+     0
+    ]
+   }
+  },
+  {
+   "id": "LEGS_001",
+   "categoria": "piernas",
+   "clave": "normales",
+   "nombre": "Piernas articuladas",
+   "ldraw": "3816",
+   "ldraw_nombre": "~Minifig Leg Right (Obsolete)",
+   "fuente": "ldraw",
+   "licencia": "CC BY 4.0 · LDraw.org",
+   "ldraw_par": [
+    "3816",
+    "3817"
+   ],
+   "conexion": {
+    "monta_en": "eje_cadera",
+    "origen_ldu": [
+     0,
+     44,
+     0
+    ],
+    "gira": "eje X (±90°)"
+   }
+  },
+  {
+   "id": "LEGS_002",
+   "categoria": "piernas",
+   "clave": "cortas",
+   "nombre": "Cadera y piernas cortas",
+   "ldraw": "41879a",
+   "ldraw_nombre": "Minifig Hips and Legs Short without Hole",
+   "fuente": "ldraw",
+   "licencia": "CC BY 4.0 · LDraw.org",
+   "tipo": "cortas",
+   "conexion": {
+    "monta_en": "base_torso",
+    "origen_ldu": [
+     0,
+     32,
+     0
+    ]
+   }
+  },
+  {
+   "id": "BELT_001",
+   "categoria": "cinturon",
+   "clave": "27145",
+   "nombre": "Cinturón de utilidades",
+   "ldraw": "27145",
+   "ldraw_nombre": "Minifig Utility Belt",
+   "fuente": "ldraw",
+   "licencia": "CC BY 4.0 · LDraw.org",
+   "conexion": {
+    "monta_en": "base_torso",
+    "origen_ldu": [
+     0,
+     32,
+     0
+    ]
+   }
+  },
+  {
+   "id": "CAPE_001",
+   "categoria": "capa",
+   "clave": "522",
+   "nombre": "Capa de tela",
+   "ldraw": "522",
+   "ldraw_nombre": "~Minifig Cape Cloth (Obsolete)",
+   "fuente": "ldraw",
+   "licencia": "CC BY 4.0 · LDraw.org",
+   "conexion": {
+    "monta_en": "entre_cabeza_y_torso",
+    "origen_ldu": [
+     0,
+     0,
+     0
+    ]
+   },
+   "ocupa": "espalda"
+  },
+  {
+   "id": "HAIR_001",
+   "categoria": "cabello",
+   "clave": "ld-3901",
+   "nombre": "Corto clásico",
+   "ldraw": "3901",
+   "ldraw_nombre": "Minifig Hair Male",
+   "fuente": "ldraw",
+   "licencia": "CC BY 4.0 · LDraw.org",
+   "conexion": {
+    "monta_en": "tope_cabeza",
+    "origen_ldu": [
+     0,
+     -24,
+     0
+    ]
+   },
+   "ocupa": "sobre_cabeza",
+   "estilo": "masc"
+  },
+  {
+   "id": "HAIR_002",
+   "categoria": "cabello",
+   "clave": "ld-40233",
+   "nombre": "Corto despeinado",
+   "ldraw": "40233",
+   "ldraw_nombre": "Minifig Hair Short Tousled",
+   "fuente": "ldraw",
+   "licencia": "CC BY 4.0 · LDraw.org",
+   "conexion": {
+    "monta_en": "tope_cabeza",
+    "origen_ldu": [
+     0,
+     -24,
+     0
+    ]
+   },
+   "ocupa": "sobre_cabeza",
+   "estilo": "neutro"
+  },
+  {
+   "id": "HAIR_003",
+   "categoria": "cabello",
+   "clave": "ld-62810",
+   "nombre": "Despeinado con raya",
+   "ldraw": "62810",
+   "ldraw_nombre": "Minifig Hair Short, Tousled with Side Parting",
+   "fuente": "ldraw",
+   "licencia": "CC BY 4.0 · LDraw.org",
+   "conexion": {
+    "monta_en": "tope_cabeza",
+    "origen_ldu": [
+     0,
+     -24,
+     0
+    ]
+   },
+   "ocupa": "sobre_cabeza",
+   "estilo": "neutro"
+  },
+  {
+   "id": "HAIR_004",
+   "categoria": "cabello",
+   "clave": "ld-10048",
+   "nombre": "Despeinado",
+   "ldraw": "10048",
+   "ldraw_nombre": "Minifig Hair Tousled",
+   "fuente": "ldraw",
+   "licencia": "CC BY 4.0 · LDraw.org",
+   "conexion": {
+    "monta_en": "tope_cabeza",
+    "origen_ldu": [
+     0,
+     -24,
+     0
+    ]
+   },
+   "ocupa": "sobre_cabeza",
+   "estilo": "neutro"
+  },
+  {
+   "id": "HAIR_005",
+   "categoria": "cabello",
+   "clave": "ld-92746",
+   "nombre": "Despeinado en capas",
+   "ldraw": "92746",
+   "ldraw_nombre": "Minifig Hair Tousled and Layered",
+   "fuente": "ldraw",
+   "licencia": "CC BY 4.0 · LDraw.org",
+   "conexion": {
+    "monta_en": "tope_cabeza",
+    "origen_ldu": [
+     0,
+     -24,
+     0
+    ]
+   },
+   "ocupa": "sobre_cabeza",
+   "estilo": "neutro"
+  },
+  {
+   "id": "HAIR_006",
+   "categoria": "cabello",
+   "clave": "ld-92081",
+   "nombre": "Peinado hacia atrás",
+   "ldraw": "92081",
+   "ldraw_nombre": "Minifig Hair Combed Front to Rear",
+   "fuente": "ldraw",
+   "licencia": "CC BY 4.0 · LDraw.org",
+   "conexion": {
+    "monta_en": "tope_cabeza",
+    "origen_ldu": [
+     0,
+     -24,
+     0
+    ]
+   },
+   "ocupa": "sobre_cabeza",
+   "estilo": "masc"
+  },
+  {
+   "id": "HAIR_007",
+   "categoria": "cabello",
+   "clave": "ld-99930",
+   "nombre": "Corto de lado",
+   "ldraw": "99930",
+   "ldraw_nombre": "Minifig Hair Short Combed Sideways with Left Parting",
+   "fuente": "ldraw",
+   "licencia": "CC BY 4.0 · LDraw.org",
+   "conexion": {
+    "monta_en": "tope_cabeza",
+    "origen_ldu": [
+     0,
+     -24,
+     0
+    ]
+   },
+   "ocupa": "sobre_cabeza",
+   "estilo": "masc"
+  },
+  {
+   "id": "HAIR_008",
+   "categoria": "cabello",
+   "clave": "ld-11256",
+   "nombre": "Corto ondulado",
+   "ldraw": "11256",
+   "ldraw_nombre": "Minifig Hair Short, Wavy with Side Part",
+   "fuente": "ldraw",
+   "licencia": "CC BY 4.0 · LDraw.org",
+   "conexion": {
+    "monta_en": "tope_cabeza",
+    "origen_ldu": [
+     0,
+     -24,
+     0
+    ]
+   },
+   "ocupa": "sobre_cabeza",
+   "estilo": "neutro"
+  },
+  {
+   "id": "HAIR_009",
+   "categoria": "cabello",
+   "clave": "ld-40240",
+   "nombre": "Corte de tazón",
+   "ldraw": "40240",
+   "ldraw_nombre": "Minifig Hair Short Bowl Cut",
+   "fuente": "ldraw",
+   "licencia": "CC BY 4.0 · LDraw.org",
+   "conexion": {
+    "monta_en": "tope_cabeza",
+    "origen_ldu": [
+     0,
+     -24,
+     0
+    ]
+   },
+   "ocupa": "sobre_cabeza",
+   "estilo": "neutro"
+  },
+  {
+   "id": "HAIR_010",
+   "categoria": "cabello",
+   "clave": "ld-98371",
+   "nombre": "Rockero con patillas",
+   "ldraw": "98371",
+   "ldraw_nombre": "Minifig Hair Rocker with Sideburns",
+   "fuente": "ldraw",
+   "licencia": "CC BY 4.0 · LDraw.org",
+   "conexion": {
+    "monta_en": "tope_cabeza",
+    "origen_ldu": [
+     0,
+     -24,
+     0
+    ]
+   },
+   "ocupa": "sobre_cabeza",
+   "estilo": "masc"
+  },
+  {
+   "id": "HAIR_011",
+   "categoria": "cabello",
+   "clave": "ld-88283",
+   "nombre": "Media melena con raya",
+   "ldraw": "88283",
+   "ldraw_nombre": "Minifig Hair Mid-Length Tousled with Centre Parting",
+   "fuente": "ldraw",
+   "licencia": "CC BY 4.0 · LDraw.org",
+   "conexion": {
+    "monta_en": "tope_cabeza",
+    "origen_ldu": [
+     0,
+     -24,
+     0
+    ]
+   },
+   "ocupa": "sobre_cabeza",
+   "estilo": "neutro"
+  },
+  {
+   "id": "HAIR_012",
+   "categoria": "cabello",
+   "clave": "ld-4530",
+   "nombre": "Melena al hombro",
+   "ldraw": "4530",
+   "ldraw_nombre": "Minifig Hair Shoulder Length",
+   "fuente": "ldraw",
+   "licencia": "CC BY 4.0 · LDraw.org",
+   "conexion": {
+    "monta_en": "tope_cabeza",
+    "origen_ldu": [
+     0,
+     -24,
+     0
+    ]
+   },
+   "ocupa": "sobre_cabeza",
+   "estilo": "fem"
+  },
+  {
+   "id": "HAIR_013",
+   "categoria": "cabello",
+   "clave": "ld-95328",
+   "nombre": "Bob ancho",
+   "ldraw": "95328",
+   "ldraw_nombre": "Minifig Hair Mid-Length Smooth Wide Bob Cut",
+   "fuente": "ldraw",
+   "licencia": "CC BY 4.0 · LDraw.org",
+   "conexion": {
+    "monta_en": "tope_cabeza",
+    "origen_ldu": [
+     0,
+     -24,
+     0
+    ]
+   },
+   "ocupa": "sobre_cabeza",
+   "estilo": "fem"
+  },
+  {
+   "id": "HAIR_014",
+   "categoria": "cabello",
+   "clave": "ld-40251",
+   "nombre": "Largo ondulado",
+   "ldraw": "40251",
+   "ldraw_nombre": "Minifig Hair Long Wavy",
+   "fuente": "ldraw",
+   "licencia": "CC BY 4.0 · LDraw.org",
+   "conexion": {
+    "monta_en": "tope_cabeza",
+    "origen_ldu": [
+     0,
+     -24,
+     0
+    ]
+   },
+   "ocupa": "sobre_cabeza",
+   "estilo": "fem"
+  },
+  {
+   "id": "HAIR_015",
+   "categoria": "cabello",
+   "clave": "ld-85974",
+   "nombre": "Largo con mechón",
+   "ldraw": "85974",
+   "ldraw_nombre": "Minifig Hair Long with One Front Lock",
+   "fuente": "ldraw",
+   "licencia": "CC BY 4.0 · LDraw.org",
+   "conexion": {
+    "monta_en": "tope_cabeza",
+    "origen_ldu": [
+     0,
+     -24,
+     0
+    ]
+   },
+   "ocupa": "sobre_cabeza",
+   "estilo": "fem"
+  },
+  {
+   "id": "HAIR_016",
+   "categoria": "cabello",
+   "clave": "ld-59363",
+   "nombre": "Largo con trenza",
+   "ldraw": "59363",
+   "ldraw_nombre": "Minifig Hair Long with French Braid",
+   "fuente": "ldraw",
+   "licencia": "CC BY 4.0 · LDraw.org",
+   "conexion": {
+    "monta_en": "tope_cabeza",
+    "origen_ldu": [
+     0,
+     -24,
+     0
+    ]
+   },
+   "ocupa": "sobre_cabeza",
+   "estilo": "fem"
+  },
+  {
+   "id": "HAIR_017",
+   "categoria": "cabello",
+   "clave": "ld-30114",
+   "nombre": "Largo con diadema",
+   "ldraw": "30114",
+   "ldraw_nombre": "Minifig Hair Long with Headband",
+   "fuente": "ldraw",
+   "licencia": "CC BY 4.0 · LDraw.org",
+   "conexion": {
+    "monta_en": "tope_cabeza",
+    "origen_ldu": [
+     0,
+     -24,
+     0
+    ]
+   },
+   "ocupa": "sobre_cabeza",
+   "estilo": "fem"
+  },
+  {
+   "id": "HAIR_018",
+   "categoria": "cabello",
+   "clave": "ld-87990",
+   "nombre": "Coleta con flequillo",
+   "ldraw": "87990",
+   "ldraw_nombre": "Minifig Hair with Ponytail and Swept Sideways Fringe",
+   "fuente": "ldraw",
+   "licencia": "CC BY 4.0 · LDraw.org",
+   "conexion": {
+    "monta_en": "tope_cabeza",
+    "origen_ldu": [
+     0,
+     -24,
+     0
+    ]
+   },
+   "ocupa": "sobre_cabeza",
+   "estilo": "fem"
+  },
+  {
+   "id": "HAIR_019",
+   "categoria": "cabello",
+   "clave": "ld-62696",
+   "nombre": "Coleta con flequillo largo",
+   "ldraw": "62696",
+   "ldraw_nombre": "Minifig Hair Ponytail with Long Bangs",
+   "fuente": "ldraw",
+   "licencia": "CC BY 4.0 · LDraw.org",
+   "conexion": {
+    "monta_en": "tope_cabeza",
+    "origen_ldu": [
+     0,
+     -24,
+     0
+    ]
+   },
+   "ocupa": "sobre_cabeza",
+   "estilo": "fem"
+  },
+  {
+   "id": "HAIR_020",
+   "categoria": "cabello",
+   "clave": "ld-17630",
+   "nombre": "Coleta corta",
+   "ldraw": "17630",
+   "ldraw_nombre": "Minifig Hair Straight Cut with Short Ponytail",
+   "fuente": "ldraw",
+   "licencia": "CC BY 4.0 · LDraw.org",
+   "conexion": {
+    "monta_en": "tope_cabeza",
+    "origen_ldu": [
+     0,
+     -24,
+     0
+    ]
+   },
+   "ocupa": "sobre_cabeza",
+   "estilo": "fem"
+  },
+  {
+   "id": "HAIR_021",
+   "categoria": "cabello",
+   "clave": "ld-3625",
+   "nombre": "Coletas",
+   "ldraw": "3625",
+   "ldraw_nombre": "Minifig Hair Female with Pigtails",
+   "fuente": "ldraw",
+   "licencia": "CC BY 4.0 · LDraw.org",
+   "conexion": {
+    "monta_en": "tope_cabeza",
+    "origen_ldu": [
+     0,
+     -24,
+     0
+    ]
+   },
+   "ocupa": "sobre_cabeza",
+   "estilo": "fem"
+  },
+  {
+   "id": "HELM_001",
+   "categoria": "casco",
+   "clave": "ld-3624",
+   "nombre": "Gorra de policía",
+   "ldraw": "3624",
+   "ldraw_nombre": "Minifig Police Hat",
+   "fuente": "ldraw",
+   "licencia": "CC BY 4.0 · LDraw.org",
+   "conexion": {
+    "monta_en": "tope_cabeza",
+    "origen_ldu": [
+     0,
+     -24,
+     0
+    ]
+   },
+   "ocupa": "sobre_cabeza",
+   "oculta": [
+    "cabello"
+   ],
+   "estilo": "neutro"
+  },
+  {
+   "id": "HELM_002",
+   "categoria": "casco",
+   "clave": "ld-4485",
+   "nombre": "Gorra con visera",
+   "ldraw": "4485",
+   "ldraw_nombre": "~Minifig Cap with Long Flat Peak (Obsolete)",
+   "fuente": "ldraw",
+   "licencia": "CC BY 4.0 · LDraw.org",
+   "conexion": {
+    "monta_en": "tope_cabeza",
+    "origen_ldu": [
+     0,
+     -24,
+     0
+    ]
+   },
+   "ocupa": "sobre_cabeza",
+   "oculta": [
+    "cabello"
+   ],
+   "estilo": "neutro"
+  },
+  {
+   "id": "HELM_003",
+   "categoria": "casco",
+   "clave": "ld-3833",
+   "nombre": "Casco de obra",
+   "ldraw": "3833",
+   "ldraw_nombre": "Minifig Construction Helmet",
+   "fuente": "ldraw",
+   "licencia": "CC BY 4.0 · LDraw.org",
+   "conexion": {
+    "monta_en": "tope_cabeza",
+    "origen_ldu": [
+     0,
+     -24,
+     0
+    ]
+   },
+   "ocupa": "sobre_cabeza",
+   "oculta": [
+    "cabello"
+   ],
+   "estilo": "neutro"
+  },
+  {
+   "id": "HELM_004",
+   "categoria": "casco",
+   "clave": "ld-3898",
+   "nombre": "Gorro de chef",
+   "ldraw": "3898",
+   "ldraw_nombre": "Minifig Cook's Hat",
+   "fuente": "ldraw",
+   "licencia": "CC BY 4.0 · LDraw.org",
+   "conexion": {
+    "monta_en": "tope_cabeza",
+    "origen_ldu": [
+     0,
+     -24,
+     0
+    ]
+   },
+   "ocupa": "sobre_cabeza",
+   "oculta": [
+    "cabello"
+   ],
+   "estilo": "neutro"
+  },
+  {
+   "id": "HELM_005",
+   "categoria": "casco",
+   "clave": "ld-6131",
+   "nombre": "Sombrero de mago",
+   "ldraw": "6131",
+   "ldraw_nombre": "Minifig Wizards Hat",
+   "fuente": "ldraw",
+   "licencia": "CC BY 4.0 · LDraw.org",
+   "conexion": {
+    "monta_en": "tope_cabeza",
+    "origen_ldu": [
+     0,
+     -24,
+     0
+    ]
+   },
+   "ocupa": "sobre_cabeza",
+   "oculta": [
+    "cabello"
+   ],
+   "estilo": "neutro"
+  },
+  {
+   "id": "HELM_006",
+   "categoria": "casco",
+   "clave": "ld-3878",
+   "nombre": "Sombrero de copa",
+   "ldraw": "3878",
+   "ldraw_nombre": "Minifig Top Hat",
+   "fuente": "ldraw",
+   "licencia": "CC BY 4.0 · LDraw.org",
+   "conexion": {
+    "monta_en": "tope_cabeza",
+    "origen_ldu": [
+     0,
+     -24,
+     0
+    ]
+   },
+   "ocupa": "sobre_cabeza",
+   "oculta": [
+    "cabello"
+   ],
+   "estilo": "neutro"
+  },
+  {
+   "id": "HELM_007",
+   "categoria": "casco",
+   "clave": "ld-30381",
+   "nombre": "Capucha",
+   "ldraw": "30381",
+   "ldraw_nombre": "Minifig Hood",
+   "fuente": "ldraw",
+   "licencia": "CC BY 4.0 · LDraw.org",
+   "conexion": {
+    "monta_en": "tope_cabeza",
+    "origen_ldu": [
+     0,
+     -24,
+     0
+    ]
+   },
+   "ocupa": "sobre_cabeza",
+   "oculta": [
+    "cabello"
+   ],
+   "estilo": "neutro"
+  },
+  {
+   "id": "HELM_008",
+   "categoria": "casco",
+   "clave": "ld-30133",
+   "nombre": "Bandana",
+   "ldraw": "30133",
+   "ldraw_nombre": "Minifig Bandana",
+   "fuente": "ldraw",
+   "licencia": "CC BY 4.0 · LDraw.org",
+   "conexion": {
+    "monta_en": "tope_cabeza",
+    "origen_ldu": [
+     0,
+     -24,
+     0
+    ]
+   },
+   "ocupa": "sobre_cabeza",
+   "oculta": [
+    "cabello"
+   ],
+   "estilo": "neutro"
+  },
+  {
+   "id": "HELM_009",
+   "categoria": "casco",
+   "clave": "ld-3896",
+   "nombre": "Casco de castillo",
+   "ldraw": "3896",
+   "ldraw_nombre": "Minifig Helmet Castle with Chin-Guard",
+   "fuente": "ldraw",
+   "licencia": "CC BY 4.0 · LDraw.org",
+   "conexion": {
+    "monta_en": "tope_cabeza",
+    "origen_ldu": [
+     0,
+     -24,
+     0
+    ]
+   },
+   "ocupa": "sobre_cabeza",
+   "oculta": [
+    "cabello"
+   ],
+   "estilo": "neutro"
+  },
+  {
+   "id": "HELM_010",
+   "categoria": "casco",
+   "clave": "ld-3844",
+   "nombre": "Casco con cubrenuca",
+   "ldraw": "3844",
+   "ldraw_nombre": "Minifig Helmet Castle with Neck Protector",
+   "fuente": "ldraw",
+   "licencia": "CC BY 4.0 · LDraw.org",
+   "conexion": {
+    "monta_en": "tope_cabeza",
+    "origen_ldu": [
+     0,
+     -24,
+     0
+    ]
+   },
+   "ocupa": "sobre_cabeza",
+   "oculta": [
+    "cabello"
+   ],
+   "estilo": "neutro"
+  },
+  {
+   "id": "HELM_011",
+   "categoria": "casco",
+   "clave": "ld-53450",
+   "nombre": "Casco vikingo",
+   "ldraw": "53450",
+   "ldraw_nombre": "Minifig Helmet Viking with Nose Protector",
+   "fuente": "ldraw",
+   "licencia": "CC BY 4.0 · LDraw.org",
+   "conexion": {
+    "monta_en": "tope_cabeza",
+    "origen_ldu": [
+     0,
+     -24,
+     0
+    ]
+   },
+   "ocupa": "sobre_cabeza",
+   "oculta": [
+    "cabello"
+   ],
+   "estilo": "neutro"
+  },
+  {
+   "id": "HELM_012",
+   "categoria": "casco",
+   "clave": "ld-55704",
+   "nombre": "Máscara de Batman",
+   "ldraw": "55704",
+   "ldraw_nombre": "Minifig Headdress Batman",
+   "fuente": "ldraw",
+   "licencia": "CC BY 4.0 · LDraw.org",
+   "conexion": {
+    "monta_en": "tope_cabeza",
+    "origen_ldu": [
+     0,
+     -24,
+     0
+    ]
+   },
+   "ocupa": "sobre_cabeza",
+   "oculta": [
+    "cabello"
+   ],
+   "estilo": "neutro"
+  },
+  {
+   "id": "HELM_013",
+   "categoria": "casco",
+   "clave": "ld-3842a",
+   "nombre": "Casco espacial",
+   "ldraw": "3842a",
+   "ldraw_nombre": "Minifig Helmet Classic with Thin Chin Guard and Visor Dimples",
+   "fuente": "ldraw",
+   "licencia": "CC BY 4.0 · LDraw.org",
+   "conexion": {
+    "monta_en": "tope_cabeza",
+    "origen_ldu": [
+     0,
+     -24,
+     0
+    ]
+   },
+   "ocupa": "sobre_cabeza",
+   "oculta": [
+    "cabello"
+   ],
+   "estilo": "neutro"
+  },
+  {
+   "id": "HELM_014",
+   "categoria": "casco",
+   "clave": "ld-30172",
+   "nombre": "Casco de explorador",
+   "ldraw": "30172",
+   "ldraw_nombre": "Minifig Hat Pith Helmet",
+   "fuente": "ldraw",
+   "licencia": "CC BY 4.0 · LDraw.org",
+   "conexion": {
+    "monta_en": "tope_cabeza",
+    "origen_ldu": [
+     0,
+     -24,
+     0
+    ]
+   },
+   "ocupa": "sobre_cabeza",
+   "oculta": [
+    "cabello"
+   ],
+   "estilo": "neutro"
+  },
+  {
+   "id": "NECK_001",
+   "categoria": "cuello",
+   "clave": "ld-3838",
+   "nombre": "Tanques de aire",
+   "ldraw": "3838",
+   "ldraw_nombre": "Minifig Airtanks",
+   "fuente": "ldraw",
+   "licencia": "CC BY 4.0 · LDraw.org",
+   "conexion": {
+    "monta_en": "entre_cabeza_y_torso",
+    "origen_ldu": [
+     0,
+     0,
+     0
+    ]
+   },
+   "ocupa": "espalda"
+  },
+  {
+   "id": "NECK_002",
+   "categoria": "cuello",
+   "clave": "ld-2524",
+   "nombre": "Mochila",
+   "ldraw": "2524",
+   "ldraw_nombre": "Minifig Backpack Non-Opening",
+   "fuente": "ldraw",
+   "licencia": "CC BY 4.0 · LDraw.org",
+   "conexion": {
+    "monta_en": "entre_cabeza_y_torso",
+    "origen_ldu": [
+     0,
+     0,
+     0
+    ]
+   },
+   "ocupa": "espalda"
+  },
+  {
+   "id": "NECK_003",
+   "categoria": "cuello",
+   "clave": "ld-4498",
+   "nombre": "Carcaj de flechas",
+   "ldraw": "4498",
+   "ldraw_nombre": "Minifig Arrow Quiver",
+   "fuente": "ldraw",
+   "licencia": "CC BY 4.0 · LDraw.org",
+   "conexion": {
+    "monta_en": "entre_cabeza_y_torso",
+    "origen_ldu": [
+     0,
+     0,
+     0
+    ]
+   },
+   "ocupa": "espalda"
+  },
+  {
+   "id": "NECK_004",
+   "categoria": "cuello",
+   "clave": "ld-2587",
+   "nombre": "Armadura",
+   "ldraw": "2587",
+   "ldraw_nombre": "Minifig Armour Plate",
+   "fuente": "ldraw",
+   "licencia": "CC BY 4.0 · LDraw.org",
+   "conexion": {
+    "monta_en": "entre_cabeza_y_torso",
+    "origen_ldu": [
+     0,
+     0,
+     0
+    ]
+   },
+   "ocupa": "espalda"
+  },
+  {
+   "id": "NECK_005",
+   "categoria": "cuello",
+   "clave": "ld-3840",
+   "nombre": "Chaleco",
+   "ldraw": "3840",
+   "ldraw_nombre": "Minifig Vest",
+   "fuente": "ldraw",
+   "licencia": "CC BY 4.0 · LDraw.org",
+   "conexion": {
+    "monta_en": "entre_cabeza_y_torso",
+    "origen_ldu": [
+     0,
+     0,
+     0
+    ]
+   },
+   "ocupa": "espalda"
+  },
+  {
+   "id": "NECK_006",
+   "categoria": "cuello",
+   "clave": "ld-15423",
+   "nombre": "Chaleco antibalas",
+   "ldraw": "15423",
+   "ldraw_nombre": "Minifig Body Armour Vest",
+   "fuente": "ldraw",
+   "licencia": "CC BY 4.0 · LDraw.org",
+   "conexion": {
+    "monta_en": "entre_cabeza_y_torso",
+    "origen_ldu": [
+     0,
+     0,
+     0
+    ]
+   },
+   "ocupa": "espalda"
+  },
+  {
+   "id": "NECK_007",
+   "categoria": "cuello",
+   "clave": "ld-10052",
+   "nombre": "Barba larga",
+   "ldraw": "10052",
+   "ldraw_nombre": "Minifig Beard with Rounded End",
+   "fuente": "ldraw",
+   "licencia": "CC BY 4.0 · LDraw.org",
+   "conexion": {
+    "monta_en": "entre_cabeza_y_torso",
+    "origen_ldu": [
+     0,
+     0,
+     0
+    ]
+   },
+   "ocupa": "espalda"
+  },
+  {
+   "id": "NECK_008",
+   "categoria": "cuello",
+   "clave": "ld-95348",
+   "nombre": "Funda de espada",
+   "ldraw": "95348",
+   "ldraw_nombre": "Minifig Sword Scabbard with Shoulder Strap",
+   "fuente": "ldraw",
+   "licencia": "CC BY 4.0 · LDraw.org",
+   "conexion": {
+    "monta_en": "entre_cabeza_y_torso",
+    "origen_ldu": [
+     0,
+     0,
+     0
+    ]
+   },
+   "ocupa": "espalda"
+  },
+  {
+   "id": "NECK_009",
+   "categoria": "cuello",
+   "clave": "ld-61976",
+   "nombre": "Morral",
+   "ldraw": "61976",
+   "ldraw_nombre": "Minifig Satchel",
+   "fuente": "ldraw",
+   "licencia": "CC BY 4.0 · LDraw.org",
+   "conexion": {
+    "monta_en": "entre_cabeza_y_torso",
+    "origen_ldu": [
+     0,
+     0,
+     0
+    ]
+   },
+   "ocupa": "espalda"
+  },
+  {
+   "id": "NECK_010",
+   "categoria": "cuello",
+   "clave": "ld-30091",
+   "nombre": "Tanque de buceo",
+   "ldraw": "30091",
+   "ldraw_nombre": "Minifig Scuba Tank",
+   "fuente": "ldraw",
+   "licencia": "CC BY 4.0 · LDraw.org",
+   "conexion": {
+    "monta_en": "entre_cabeza_y_torso",
+    "origen_ldu": [
+     0,
+     0,
+     0
+    ]
+   },
+   "ocupa": "espalda"
+  },
+  {
+   "id": "ACC_001",
+   "categoria": "objeto",
+   "clave": "varita",
+   "nombre": "Varita",
+   "ldraw": "36752a",
+   "ldraw_nombre": "Minifig Tool Wand",
+   "fuente": "ldraw",
+   "licencia": "CC BY 4.0 · LDraw.org",
+   "conexion": {
+    "monta_en": "agarre_mano",
+    "barra_mm": 3.18
+   },
+   "color_defecto": "#582a12",
+   "estampado": null,
+   "ocupa": "mano"
+  },
+  {
+   "id": "ACC_002",
+   "categoria": "objeto",
+   "clave": "espada",
+   "nombre": "Espada",
+   "ldraw": "3847",
+   "ldraw_nombre": "Minifig Sword Shortsword",
+   "fuente": "ldraw",
+   "licencia": "CC BY 4.0 · LDraw.org",
+   "conexion": {
+    "monta_en": "agarre_mano",
+    "barra_mm": 3.18
+   },
+   "color_defecto": "#a0a5a9",
+   "estampado": null,
+   "ocupa": "mano"
+  },
+  {
+   "id": "ACC_003",
+   "categoria": "objeto",
+   "clave": "escudo-redondo",
+   "nombre": "Escudo redondo",
+   "ldraw": "3876",
+   "ldraw_nombre": "Minifig Shield Round",
+   "fuente": "ldraw",
+   "licencia": "CC BY 4.0 · LDraw.org",
+   "conexion": {
+    "monta_en": "agarre_mano",
+    "barra_mm": 3.18
+   },
+   "color_defecto": "#a0a5a9",
+   "estampado": null,
+   "ocupa": "mano"
+  },
+  {
+   "id": "ACC_004",
+   "categoria": "objeto",
+   "clave": "escudo-capitan",
+   "nombre": "Escudo del Capitán",
+   "ldraw": "3876",
+   "ldraw_nombre": "Minifig Shield Round",
+   "fuente": "ldraw",
+   "licencia": "CC BY 4.0 · LDraw.org",
+   "conexion": {
+    "monta_en": "agarre_mano",
+    "barra_mm": 3.18
+   },
+   "color_defecto": "#c8102e",
+   "estampado": "escudo-capitan",
+   "ocupa": "mano"
+  },
+  {
+   "id": "ACC_005",
+   "categoria": "objeto",
+   "clave": "escudo-triangular",
+   "nombre": "Escudo triangular",
+   "ldraw": "3846",
+   "ldraw_nombre": "Minifig Shield Triangular",
+   "fuente": "ldraw",
+   "licencia": "CC BY 4.0 · LDraw.org",
+   "conexion": {
+    "monta_en": "agarre_mano",
+    "barra_mm": 3.18
+   },
+   "color_defecto": "#a0a5a9",
+   "estampado": null,
+   "ocupa": "mano"
+  },
+  {
+   "id": "ACC_006",
+   "categoria": "objeto",
+   "clave": "escudo-ovalado",
+   "nombre": "Escudo ovalado",
+   "ldraw": "2586",
+   "ldraw_nombre": "Minifig Shield Ovoid",
+   "fuente": "ldraw",
+   "licencia": "CC BY 4.0 · LDraw.org",
+   "conexion": {
+    "monta_en": "agarre_mano",
+    "barra_mm": 3.18
+   },
+   "color_defecto": "#a0a5a9",
+   "estampado": null,
+   "ocupa": "mano"
+  },
+  {
+   "id": "ACC_007",
+   "categoria": "objeto",
+   "clave": "lanza",
+   "nombre": "Lanza o bastón",
+   "ldraw": "4497",
+   "ldraw_nombre": "Minifig Spear with Round End",
+   "fuente": "ldraw",
+   "licencia": "CC BY 4.0 · LDraw.org",
+   "conexion": {
+    "monta_en": "agarre_mano",
+    "barra_mm": 3.18
+   },
+   "color_defecto": "#582a12",
+   "estampado": null,
+   "ocupa": "mano"
+  },
+  {
+   "id": "ACC_008",
+   "categoria": "objeto",
+   "clave": "mazo",
+   "nombre": "Mazo",
+   "ldraw": "4522",
+   "ldraw_nombre": "~Minifig Tool Mallet (Obsolete)",
+   "fuente": "ldraw",
+   "licencia": "CC BY 4.0 · LDraw.org",
+   "conexion": {
+    "monta_en": "agarre_mano",
+    "barra_mm": 3.18
+   },
+   "color_defecto": "#6c6e68",
+   "estampado": null,
+   "ocupa": "mano"
+  },
+  {
+   "id": "ACC_009",
+   "categoria": "objeto",
+   "clave": "escoba",
+   "nombre": "Escoba",
+   "ldraw": "4332",
+   "ldraw_nombre": "Minifig Broom",
+   "fuente": "ldraw",
+   "licencia": "CC BY 4.0 · LDraw.org",
+   "conexion": {
+    "monta_en": "agarre_mano",
+    "barra_mm": 3.18
+   },
+   "color_defecto": "#582a12",
+   "estampado": null,
+   "ocupa": "mano"
+  },
+  {
+   "id": "ACC_010",
+   "categoria": "objeto",
+   "clave": "taza",
+   "nombre": "Taza",
+   "ldraw": "3899",
+   "ldraw_nombre": "Minifig Cup",
+   "fuente": "ldraw",
+   "licencia": "CC BY 4.0 · LDraw.org",
+   "conexion": {
+    "monta_en": "agarre_mano",
+    "barra_mm": 3.18
+   },
+   "color_defecto": "#f4f4f4",
+   "estampado": null,
+   "ocupa": "mano"
+  },
+  {
+   "id": "ACC_011",
+   "categoria": "objeto",
+   "clave": "sarten",
+   "nombre": "Sartén",
+   "ldraw": "4528",
+   "ldraw_nombre": "Minifig Frypan",
+   "fuente": "ldraw",
+   "licencia": "CC BY 4.0 · LDraw.org",
+   "conexion": {
+    "monta_en": "agarre_mano",
+    "barra_mm": 3.18
+   },
+   "color_defecto": "#1b2a34",
+   "estampado": null,
+   "ocupa": "mano"
+  },
+  {
+   "id": "ACC_012",
+   "categoria": "objeto",
+   "clave": "radio",
+   "nombre": "Radio",
+   "ldraw": "3962b",
+   "ldraw_nombre": "Minifig Radio with Long Handle",
+   "fuente": "ldraw",
+   "licencia": "CC BY 4.0 · LDraw.org",
+   "conexion": {
+    "monta_en": "agarre_mano",
+    "barra_mm": 3.18
+   },
+   "color_defecto": "#1b2a34",
+   "estampado": null,
+   "ocupa": "mano"
+  },
+  {
+   "id": "HIPS_002",
+   "categoria": "cadera",
+   "clave": "3815b",
+   "nombre": "Cadera",
+   "ldraw": "3815b",
+   "ldraw_nombre": "Cadera",
+   "fuente": "ldraw",
+   "licencia": "CC BY 4.0 · LDraw.org"
+  },
+  {
+   "id": "LEGS_003",
+   "categoria": "piernas",
+   "clave": "3816c|3817c",
+   "nombre": "Hips and Black Legs",
+   "ldraw": "3816c",
+   "ldraw_nombre": "Hips and Black Legs",
+   "fuente": "ldraw",
+   "licencia": "CC BY 4.0 · LDraw.org",
+   "ldraw_par": [
+    "3816c",
+    "3817c"
+   ]
+  },
+  {
+   "id": "HAIR_022",
+   "categoria": "cabello",
+   "clave": "ld-20877",
+   "nombre": "Hair Mid-Length Swept Sideways",
+   "ldraw": "20877",
+   "ldraw_nombre": "Hair Mid-Length Swept Sideways",
+   "fuente": "ldraw",
+   "licencia": "CC BY 4.0 · LDraw.org",
+   "ocupa": "sobre_cabeza",
+   "estilo": "fem"
+  },
+  {
+   "id": "HEAD_002",
+   "categoria": "cabeza",
+   "clave": "3626cp0e",
+   "nombre": "Minifig Head, Brown Eyebrows, Peach Lips, Beauty Mark Print",
+   "ldraw": "3626cp0e",
+   "ldraw_nombre": "Minifig Head, Brown Eyebrows, Peach Lips, Beauty Mark Print",
+   "fuente": "ldraw",
+   "licencia": "CC BY 4.0 · LDraw.org",
+   "estilo": "fem"
+  },
+  {
+   "id": "HELM_015",
+   "categoria": "casco",
+   "clave": "ld-49556p02",
+   "nombre": "Helmet / Mask, Top Hole with White Wings, White 'A' Print",
+   "ldraw": "49556p02",
+   "ldraw_nombre": "Helmet / Mask, Top Hole with White Wings, White 'A' Print",
+   "fuente": "ldraw",
+   "licencia": "CC BY 4.0 · LDraw.org",
+   "ocupa": "sobre_cabeza",
+   "oculta": [
+    "cabello"
+   ],
+   "estilo": "neutro"
+  }
+ ]
+}

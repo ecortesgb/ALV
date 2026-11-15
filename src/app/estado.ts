@@ -6,7 +6,7 @@ import { nivelPorXp, saldos, puedeComprarAccesorio, puedeComprarCarta, XP_EXTRA,
 import { abrirSobre, SOBRES, type CartaSobre, type Rareza, type TipoSobre } from "../engine/sobres";
 import type { Azar } from "../engine/azar";
 import { type Genero, type MiembroSala, type Registro, type Sala, comprarAccesorioNube, comprarSobreNube, cuentaActiva, leerCuenta, registrarPartidaNube, registrarXpExtraNube, type DatosCuenta } from "./nube";
-import { idActual, migrarPersonaje, personajeInicial, piezaEquipo, TIENDA, cambioValido, type Personaje, type Zona } from "../content/personaje";
+import { idActual, migrarPersonaje, personajeInicial, piezaEquipo, TIENDA, cambioValido, type FiguraV2, type Personaje, type Zona } from "../content/personaje";
 import type { EscenarioId, Intensidad } from "../engine/types";
 import { EQUIPOS, puedePonerse, type AdornoEquipo } from "../content/equipos";
 
@@ -166,7 +166,7 @@ export const acciones = {
       remotos = miembros.filter(m => !m.anfitrion).map((m, i) => {
         const id = `c-${m.id}`;
         const antes = estado.jugadores.find(j => j.id === id);
-        return { id, remoto: true, nombre: m.nombre, personaje: m.personaje ? migrarPersonaje({ ...personajeInicial(i + 4), ...m.personaje }) : personajeInicial(i + 4), movimientos: antes?.movimientos ?? [], tiene: [] };
+        return { id, remoto: true, nombre: m.nombre, personaje: { ...(m.personaje ? migrarPersonaje({ ...personajeInicial(i + 4), ...m.personaje }) : personajeInicial(i + 4)), figura: m.figura ?? undefined }, movimientos: antes?.movimientos ?? [], tiene: [] };
       }).slice(0, Math.max(0, 8 - locales.length));
     }
     guardar({ ...estado, miembros, jugadores: [...locales, ...remotos] });
@@ -242,7 +242,17 @@ export const acciones = {
   /** Reemplaza el personaje con el que está guardado en la cuenta. */
   personajeDeNube(id: string, p: Personaje) {
     if (!estado.jugadores.some(x => x.id === id)) return;
-    cambiaJugador(id, x => ({ ...x, personaje: migrarPersonaje(p) }));
+    // La figura 3D no viaja en `personajes`: se conserva la que ya tiene.
+    cambiaJugador(id, x => ({ ...x, personaje: { ...migrarPersonaje(p), ...(x.personaje.figura ? { figura: x.personaje.figura } : {}) } }));
+  },
+  /** Figura 3D de la cápsula activa (o ninguna: vuelve a las capas 2D). Solo cambia si es otra. */
+  figura(id: string, figura: FiguraV2 | null) {
+    const j = estado.jugadores.find(x => x.id === id);
+    if (!j || JSON.stringify(j.personaje.figura ?? null) === JSON.stringify(figura)) return;
+    cambiaJugador(id, x => {
+      const { figura: _antes, ...resto } = x.personaje;
+      return { ...x, personaje: figura ? { ...resto, figura } : resto };
+    });
   },
   personaje(id: string, cambio: Partial<Personaje>) {
     const j = estado.jugadores.find(x => x.id === id);

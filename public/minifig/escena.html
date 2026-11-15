@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Escena ALV</title>
+<style>
+html,body{margin:0;height:100%;background:transparent;overflow:hidden}
+canvas{display:block;width:100%;height:100%;touch-action:none}
+</style>
+</head>
+<body>
+<canvas id="lienzo" aria-hidden="true"></canvas>
+<!-- Escena 3D de ALV: varias figuras en una sola escena y fotos para las listas chicas. Reutiliza el núcleo y el
+     dibujo de Minifig Studio (copiados por tools/copiar-minifig.mjs); escena-base.js crea lo que esos scripts esperan. -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="nucleo/minifig-core.js"></script>
+<script src="nucleo/momentos.js"></script>
+<script src="escena-base.js"></script>
+<script src="js/00-biblioteca.js"></script>
+<script src="js/01-catalogo.js"></script>
+<script src="js/04-materiales.js"></script>
+<script src="js/05-estampados.js"></script>
+<script src="js/06-motor-ldraw.js"></script>
+<script src="js/07-construccion.js"></script>
+<script src="js/08-poses.js"></script>
+<script src="escena.js"></script>
+</body>
+</html>

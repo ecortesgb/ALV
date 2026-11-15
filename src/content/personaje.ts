@@ -36,7 +36,12 @@ export interface Personaje {
   puesto: Partial<Record<Zona, string | null>>;
   /** Equipo o casa, las recompensas de equipo que lleva puestas y lo que lleva en la mano de su equipo. Viaja a la nube. */
   equipo?: { id: string; adornos?: AdornoEquipo[]; mano?: string };
+  /** Figura 3D activa (cápsula en juego). Si está, se dibuja en lugar de las capas 2D. No se guarda en `personajes`. */
+  figura?: FiguraV2;
 }
+
+/** Figura por capas de Minifig Studio (nucleo/minifig-core.js). ALV solo la guarda y la pasa al 3D. */
+export interface FiguraV2 { version: 2; nombre?: string; [k: string]: unknown }
 
 /** Artículos de la tienda. Todo es para lucir: nada da ventaja. Precio en XP disponible. */
 export interface Articulo { id: string; nombre: string; zona: Zona; precio: number; nivel: number; pieza?: boolean }

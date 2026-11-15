@@ -12,7 +12,9 @@ import { ArmadoPartida } from "./Armado";
 import { IlustracionJuego, VentanaReglas } from "./Juegos";
 import { REGLAS } from "../content/reglas";
 import { createPortal } from "react-dom";
-import { Avatar, Retrato } from "./Avatar";
+import { Retrato, semillaPersonaje } from "./Avatar";
+import { Escena3D, type Momento } from "./figura3d";
+import { jugadorDeFigura, TiraCapsulas } from "./Figuras";
 import { aviso, BotonPantallaCompleta, BotonSonido, COLOR_SECCION, confirmar, configuracion } from "./comun";
 import { useAura } from "./efectos";
 import { acciones, esMenorConCuenta, jugadoresDelModo, parejaDe, saldosDe, useEstado, type JugadorLocal } from "./estado";
@@ -43,6 +45,8 @@ const GESTOS: { k: Gesto; icono: string; nombre: string; conOtro?: boolean }[] =
   { k: "empujar", icono: "🫸", nombre: "Empujar", conOtro: true },
 ];
 /** Cuánto dura cada gesto (ms), igual que su animación. */
+/** Gesto del lobby → momento de la figura 3D. */
+const MOMENTO_DE_GESTO: Partial<Record<Gesto, Momento>> = { festejar: "victoria", bailar: "victoria", aplaudir: "victoria", robot: "victoria", caer: "derrota" };
 const DURACION: Partial<Record<Gesto, number>> = { bailar: 1600, robot: 1600, caminar: 1600, aplaudir: 1200, festejar: 1100, mirar: 1400 };
 
 const CONSEJOS = [
@@ -117,6 +121,8 @@ export function Lobby({ jugar, arg }: { jugar: (p: EstadoPartida) => void; arg?:
 
   const vista = enLinea ? (s.sala ? (invitado ? enSala : jugadoresDelModo(s)) : []) : s.jugadores.filter(j => !j.remoto);
   const anfitrion = !enLinea || !!s.sala?.anfitrion;
+  // Cápsulas de quien usa este celular (la cuenta, o el primer jugador local): un toque cambia la figura EN JUEGO.
+  const yo = jugadorDeFigura(s.jugadores, s.cuenta?.jugador);
   return (
     <div className="lobby-grande">
       <header className="lobby-arriba">
@@ -130,6 +136,12 @@ export function Lobby({ jugar, arg }: { jugar: (p: EstadoPartida) => void; arg?:
           : <button className="lobby-boton" onClick={() => setHoja("jugadores")}>👥 Jugadores</button>}
         <BotonPantallaCompleta /><BotonSonido />
       </header>
+      {yo && (
+        <div className="lobby-capsulas">
+          <span className="label">{yo.nombre === "Tú" || enLinea ? "Tu figura" : `Figura de ${yo.nombre}`}</span>
+          <TiraCapsulas j={yo} compacta />
+        </div>
+      )}
 
       {enLinea && todosListos && (
         <div className="todos-listos">
@@ -246,11 +258,12 @@ export interface SincroEscenario {
  * Con `sincro` (sala en línea) cada quien mueve solo a su personaje, sus gestos y su «listo» van al servidor
  * y los gestos de los demás celulares se animan aquí cuando llegan.
  */
-export function Escenario({ jugadores, color, lugares, interactivo = true, todosListos = false, sincro, fondo, fiesta = false, destacado, listosIds }:
+export function Escenario({ jugadores, color, lugares, interactivo = true, todosListos = false, sincro, fondo, fiesta = false, destacado, listosIds, puntos }:
   { jugadores: JugadorLocal[]; color: string; lugares?: Record<string, number>; interactivo?: boolean; todosListos?: boolean; sincro?: SincroEscenario;
     /** Dibujo de fondo del lugar (alberca, bosque, fogata). */ fondo?: EscenarioId;
     /** Los personajes se animan solos (pantalla de carga y vista previa). */ fiesta?: boolean;
-    /** En la partida: a quién le toca (pasa al frente con reflector) y quiénes ya contestaron. */ destacado?: string; listosIds?: string[] }) {
+    /** En la partida: a quién le toca (pasa al frente con reflector) y quiénes ya contestaron. */ destacado?: string; listosIds?: string[];
+    /** En la partida: puntos de cada quien; al subir, su figura hace el momento «al anotar». */ puntos?: Record<string, number> }) {
   const [anims, setAnims] = useState<Record<string, Anim>>({});
   const [listosLocal, setListos] = useState<Set<string>>(new Set());
   // Mi «listo» se ve al instante aunque el servidor tarde un par de segundos en confirmarlo.
@@ -340,10 +353,17 @@ export function Escenario({ jugadores, color, lugares, interactivo = true, todos
     setElegido(e => (e === id ? null : id));
   };
 
+  // Una sola escena 3D con todas las figuras; los gestos se vuelven momentos de cada figura.
+  const enEscena = jugadores.map(j => ({ id: j.id, figura: j.personaje.figura, semilla: semillaPersonaje(j.personaje), foco: destacado === j.id }));
+  const momentos = [
+    ...Object.entries(anims).map(([id, a]) => ({ id, cual: MOMENTO_DE_GESTO[a.gesto] ?? "punto", n: a.clave })),
+    ...Object.entries(puntos ?? {}).map(([id, p]) => ({ id, cual: "punto" as const, n: p })),
+  ];
+
   return (
-    <div className={"escenario-vivo" + (fondo ? " fondo-" + fondo : "") + (destacado ? " con-turno" : "")} style={{ ["--sc" as string]: color }}>
+    <div className={"escenario-vivo en-3d" + (fondo ? " fondo-" + fondo : "") + (destacado ? " con-turno" : "")} style={{ ["--sc" as string]: color }}>
       {fondo && <div className="paisaje" aria-hidden="true" />}
-      <div className="piso" aria-hidden="true" />
+      <Escena3D figuras={enEscena} momentos={momentos} className="escenario-3d" />
       <ul className="elenco" aria-label="Personajes en el lobby">
         {jugadores.map((j, i) => {
           const centro = (n - 1) / 2, d = n > 1 ? Math.abs(i - centro) / centro : 0;
@@ -358,8 +378,6 @@ export function Escenario({ jugadores, color, lugares, interactivo = true, todos
               <button className="actor-boton" data-sin-clic disabled={!interactivo} aria-pressed={elegido === j.id}
                 aria-label={`${j.nombre}${soyYo ? " (tú)" : ""}${lugares?.[j.id] ? `, lugar ${lugares[j.id]}` : ""}${listo ? ", listo" : ""}`} onClick={() => tocar(j.id)}>
                 {lugares?.[j.id] && <span className={"lugar-chip l" + Math.min(4, lugares[j.id]!)}>#{lugares[j.id]}</span>}
-                <span key={anim?.clave ?? 0} className="cuerpo"><Avatar p={j.personaje} size={n > 6 ? 62 : 74} nombre={j.nombre} articulado /></span>
-                <span className="sombra" aria-hidden="true" />
                 <small className="nombre">{turno ? "▶ " : listo ? "✓ " : ""}{soyYo ? "Tú" : j.nombre}</small>
               </button>
             </li>
