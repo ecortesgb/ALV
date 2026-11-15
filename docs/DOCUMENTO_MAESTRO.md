@@ -1,6 +1,6 @@
-# ALV — Amigos, Locuras y Verdades
+# ALV — Amigos Legendarios Verdaderos
 ## Documento Maestro del Producto
-**Versión:** 1.11  
+**Versión:** 1.12  
 **Última actualización:** 15 de noviembre de 2026  
 **Estado:** Documento vivo de producto; decisiones y propuestas identificadas por separado.
 
@@ -42,6 +42,8 @@ Referencias de experiencia: Mario Party, Jackbox Games, Heads Up y Fall Guys. So
 ALV debe permitir que un grupo se reúna, cree una sala, elija cómo competir, configure minijuegos y juegue rondas. Cada persona conserva una cuenta, personaje, nivel, inventario, logros y estadísticas entre reuniones.
 
 **DECISIÓN (v1.3) — nombre:** la marca es **ALV** y no cambia. Su significado sí puede cambiar: cualquier frase que encaje con las letras A, L y V. El significado principal es «Amigos, Locuras y Verdades»; «Amigos Legendarios Verdaderos» es una alternativa aceptada. Cada pantalla puede usar una variante distinta, como un eslogan que se adapta. «Aventuras con Amigos» deja de ser el nombre principal.
+
+**DECISIÓN (v1.12, Elías, 15 de noviembre) — nombre:** el significado principal pasa a ser **«Amigos Legendarios Verdaderos»**. «Amigos, Locuras y Verdades» queda como variante aceptada. Sigue vigente que cada pantalla puede usar otra frase con A, L y V.
 
 ## 1.2 Qué NO es ALV
 
@@ -125,6 +127,10 @@ Puede:
 - Participar en turnos.
 - Usar cartas o herramientas cuando corresponda.
 - Consultar su resultado y progreso.
+
+**DECISIÓN (v1.12, Elías) — cuentas y edad:** todo jugador necesita cuenta, también en el juego local (se acaban los jugadores creados sin cuenta en el celular). Los menores de 18 sí pueden tener cuenta. Si en la sala o en la partida local hay al menos un menor, no se pueden activar el contenido adulto ni el modo Drunk y solo queda disponible el contenido **familiar**: temas, preguntas, retos y castigos marcados como familiares. La edad es la que declara cada quien al registrarse.
+
+**PENDIENTE:** cómo entran varias cuentas en un mismo celular para el juego local (apodo y contraseña de cada quien, o código desde su propio celular), qué pasa con la XP local que existe hoy sin cuenta, y etiquetar el contenido actual como familiar o no (hoy las cartas solo tienen adulto y Drunk).
 
 ## 3.3 SCREEN — Pantalla compartida
 
@@ -346,7 +352,9 @@ Probar en teléfono real. No pedir al diseñador o modelo que se autoevalúe. Si
 
 ## 8.6 Dirección visual «Neo-Arcade / Party Game» — DECISIÓN (v1.3)
 
-**DECISIÓN (v1.3):** Neo-Arcade es la dirección visual de ALV. Parte del diseño que ya existe en la app (fondo espacial, un neón por sección) y lo mejora con la lista de abajo, aportada por el usuario. Sustituye la comparación A/B/C de 8.3.
+**DESCARTADO (v1.12):** Neo-Arcade deja de ser la dirección visual. La sustituye «Comic Gaming — Premium Party Experience» (8.7). Lo de abajo se conserva como historial.
+
+**DECISIÓN (v1.3, sustituida en v1.12):** Neo-Arcade es la dirección visual de ALV. Parte del diseño que ya existe en la app (fondo espacial, un neón por sección) y lo mejora con la lista de abajo, aportada por el usuario. Sustituye la comparación A/B/C de 8.3.
 
 La lista se implementa por tandas, cada una en su propio cambio para que el usuario la pruebe antes de seguir:
 1. Uso: modales propios, mantener presionado para ver el secreto, turno visible y sonido con botón de silencio.
@@ -382,6 +390,12 @@ Mecánicas y fricción al pasar el celular:
 Condiciones que ya fija este documento y aplican a toda la lista: respetar movimiento reducido, poder silenciar, no depender solo de color o de sonido, y cuidar el rendimiento en móviles (capítulo 20). Los gestos deben conservar botones equivalentes.
 
 ---
+
+## 8.7 Dirección visual «Comic Gaming — Premium Party Experience» — DECISIÓN (v1.12)
+
+**DECISIÓN (v1.12, Elías):** la dirección visual de ALV 2.0 es Comic Gaming: personalidad de cómic, profundidad y figuras 3D, tipografía contundente, animaciones fluidas y efectos moderados. Evitar pixel art, estética RPG o medieval, apariencia infantil, aspecto de dashboard o SaaS, exceso de neón y glassmorphism por costumbre. En la fase de dirección artística se presentan **tres propuestas realmente distintas** dentro de Comic Gaming (no variaciones de color) y Elías elige una. Esto reabre, solo para Comic Gaming, la comparación de tres direcciones que 8.3 había descartado.
+
+Referencia de Elías: lámina de 12 pantallas (carga, registro, personalizar, menú, modos, lobby con QR, ruleta, resultados, tienda, perfil, TV y administración) con figuras tipo bloque sobre ciudad nocturna, paneles azules con borde de cómic y botones grandes de colores.
 
 # 9. Personajes y personalización
 
@@ -549,6 +563,14 @@ El administrador del lobby o de la sesión puede dar XP directamente a un partic
 ---
 
 # 13. Tienda, sobres, colección y cartas
+
+**DECISIÓN (v1.12, Elías):** la tienda 2D se retira (vendía accesorios que ya no se ven en la figura 3D). Hay dos tipos de sobre:
+- **Sobres cosméticos:** piezas 3D para la figura.
+- **Sobres de contenido:** desbloquean cartas de preguntas, retos y castigos (ejemplos de nombre: «Verdades Incómodas», «Retos Extremos», «Duelos Rápidos»). Lo desbloqueado sirve para toda la sala donde juega su dueño.
+
+Ningún sobre da ventaja dentro de una partida. Las rarezas (común, épica, legendaria) son solo de colección. La apertura animada actual (pista de rareza, temblor, «Abrir todas») se conserva.
+
+**PENDIENTE:** precios, contenido de cada sobre, duplicados, si los sobres de contenido llevan etiqueta de intensidad, adulto y familiar, y qué pasa con el contenido base (que siempre debe alcanzar para jugar sin comprar nada).
 
 ## 13.1 Tienda e inventario
 
@@ -807,6 +829,10 @@ Conservar los juegos clásicos que ya estaban definidos en ALV. Su listado y reg
 13. Ruleta de castigos
 14. Dados HOT (solo parejas, contenido adulto)
 
+**DECISIÓN (v1.12, Elías) — variantes:** en el catálogo, «Ronda de bienvenida» se presenta como variante de «Lista relámpago» y «Palabra prohibida» como variante de «Mímica», porque usan el mismo motor y el mismo mazo. «Ruleta de castigos» pasa a ser una herramienta (cobrar castigos y desempatar), no un juego del catálogo. En el motor no se borra nada.
+
+**DECISIÓN (v1.12, Elías) — juegos nuevos:** se agregan **Trivia ALV** (juego nuevo, de preguntas de conocimiento) y **Dibuja y Adivina** (es el «Dibujar» de 16.3; necesita el pizarrón). **PENDIENTE:** reglas, puntuación y mazo de Trivia ALV.
+
 Con los de esta sección, el catálogo completo tiene 21 juegos: los 14 clásicos y 7 nuevos (No te rías, Dos verdades y una mentira, Respuesta infiltrada, Dibujar, Memoria fotográfica, Emoji secreto y Karaoke relámpago).
 
 ---
@@ -967,7 +993,9 @@ Elementos propuestos:
 
 Navegación explorada: Inicio, Juegos, Lobby, Tienda y Perfil.
 
-**DECISIÓN (v1.5):** la navegación queda Inicio, Lobby, Tienda, Ranking y Perfil. «Juegos» y «Grupo» viven dentro del Lobby y el historial dentro de Ranking.
+**DECISIÓN (v1.12, Elías):** la navegación de ALV 2.0 sale del hub (pantalla principal con el personaje, nivel, XP y ajustes) con cinco botones: **Jugar, Personalizar, Tienda, Ranking y Logros**, como en su lámina de referencia. Perfil se abre desde el retrato y el nivel de arriba. La Tienda reúne los sobres (13) y la colección. Sustituye la de v1.5.
+
+**DECISIÓN (v1.5, sustituida en v1.12):** la navegación queda Inicio, Lobby, Tienda, Ranking y Perfil. «Juegos» y «Grupo» viven dentro del Lobby y el historial dentro de Ranking.
 
 ## 21.2 Flujo de juego tipo «Clubes Pro / The Grounds» — DECISIÓN (v1.5)
 
@@ -1019,7 +1047,7 @@ No saltar fases. Cada fase requiere alcance, entregables, criterios de aceptaci�
 
 | Fase | Alcance | Estado |
 |---|---|---|
-| Previa | Explorar y seleccionar dirección visual | Resuelta en v1.3: Neo-Arcade (8.6) |
+| Previa | Explorar y seleccionar dirección visual | Reabierta en v1.12: tres propuestas Comic Gaming (8.7) |
 | 1 | Design System | Pendiente; ya no está bloqueada |
 | 2 | Personajes y personalización | En curso (v1.11): figura 3D por cápsulas |
 | 3 | Onboarding, HUB y perfil | Pendiente |
@@ -1071,7 +1099,7 @@ Requisitos:
 
 # 24. Pendientes principales
 
-1. Resuelto en v1.3: la dirección visual es Neo-Arcade (8.6).
+1. Elegir una de las tres propuestas Comic Gaming (8.7). Neo-Arcade quedó descartado en v1.12.
 2. Fijar paleta y tipografía oficiales en la fase de Design System.
 3. Resuelto en v1.4: catálogo clásico enumerado en 16.8.
 4. Completar matriz de compatibilidad entre modalidad y minijuegos.
@@ -1096,7 +1124,7 @@ Requisitos:
 
 - ALV es un party game multijugador, no un RPG.
 - La plataforma debe tener dos personalidades visuales: HUB premium y gameplay energético.
-- La dirección visual es Neo-Arcade (8.6). La paleta y la tipografía oficiales se fijan en el Design System.
+- La paleta y la tipografía oficiales se fijan en el Design System, ya dentro de Comic Gaming (8.7).
 - HOST crea y controla el lobby; los demás se unen.
 - El producto contempla HOST, PLAYER y SCREEN.
 - La progresión y el inventario persisten entre sesiones.
@@ -1107,7 +1135,9 @@ Requisitos:
 - El castigo es ganar la mitad de la XP en el siguiente juego; nunca resta XP ni deja a nadie sin jugar.
 - El administrador puede dar XP extra a un participante por actividades fuera del juego.
 - Primera prueba: una sola sesión y toda la XP sirve para todo.
-- La marca es ALV; su significado puede variar por pantalla. Principal: «Amigos, Locuras y Verdades».
+- La marca es ALV; su significado puede variar por pantalla. Principal: «Amigos Legendarios Verdaderos» (v1.12).
+- Dirección visual: Comic Gaming, con tres propuestas para elegir (8.7).
+- Todo jugador tiene cuenta; con un menor en la sala solo hay contenido familiar (3.2).
 - El lenguaje de la app usa siglas con ingenio.
 - ALVerca, FBI y GPS son los escenarios activos.
 - Los cosméticos no otorgan ventajas competitivas.
@@ -1174,6 +1204,9 @@ Decisiones del usuario del 12 de noviembre de 2026:
 ## v1.6
 - Primeros logros (14.2), con ámbito de sesión o histórico (ver DECISIÓN v1.6 en 14.2).
 
+## v1.12
+- Decisiones de la Fase 0 de ALV 2.0 (Elías, 15 de noviembre): significado principal «Amigos Legendarios Verdaderos» (1.1); Comic Gaming sustituye a Neo-Arcade, con tres propuestas a elegir (8.7); navegación desde el hub con Jugar, Personalizar, Tienda, Ranking y Logros (21.1); tienda 2D retirada y sobres cosméticos 3D más sobres de contenido (13); variantes en el catálogo, Ruleta de castigos como herramienta, Trivia ALV y Dibuja y Adivina se agregan (16.8); todo jugador con cuenta, menores con contenido familiar (3.2).
+
 ## v1.7
 - Tienda de sobres en pestaña propia (13.2). Valores de prueba pendientes de aprobación: precios, pesos de rareza, cantidad de cartas.
 
@@ -1192,5 +1225,5 @@ Decisiones del usuario del 12 de noviembre de 2026:
 
 ---
 
-**Fin del Documento Maestro ALV v1.11**  
+**Fin del Documento Maestro ALV v1.12**  
 Este documento debe actualizarse de forma incremental y conservar la distinción entre decisiones aprobadas, propuestas, pendientes y descartadas.
