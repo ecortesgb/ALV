@@ -1,6 +1,6 @@
 # ALV — Amigos Legendarios Verdaderos
 ## Documento Maestro del Producto
-**Versión:** 1.28  
+**Versión:** 1.29  
 **Última actualización:** 15 de noviembre de 2026  
 **Estado:** Documento vivo de producto; decisiones y propuestas identificadas por separado.
 
@@ -139,7 +139,15 @@ Puede:
 4. **Las cartas de trago no se pueden omitir.** El texto dice «trago» o «shot», nunca exige alcohol, y cada quien elige qué tomar (agua, refresco, lo que quiera). Tomar nunca da XP.
 5. Comodines: se aprueba **Cambio de pregunta o reto**, y **¿Voy a tener suerte?** pasa a ser un comodín cuyo resultado puede ser mejor o peor para quien lo usa.
 6. **Más contenido:** se crean más preguntas y retos, y el contenido se ampliará con otras fuentes, para que haya variedad en cada nivel, categoría y combinación y **no se repita ninguna carta en toda la jornada de juego prevista**.
-**PENDIENTE (v1.28):** (a) consentimiento para retos de contacto: el brief de Elías pide que nunca haya contacto sin consentimiento explícito; con pasar solo con comodín, la propuesta es que cada jugador diga una vez si acepta retos de contacto y que esos retos solo salgan entre quienes aceptaron; (b) duración de la jornada prevista (define cuántas cartas hacen falta); (c) si siguen los eventos sorpresa automáticos además del comodín; (d) si los niveles altos dan más puntos; (e) el freno anónimo de la propuesta se descarta con el nivel general, salvo que Elías lo pida; (f) «otras fuentes»: se adaptan ideas, no se copian textos de juegos comerciales.
+\1
+**DECISIÓN (v1.29, Elías, 15 de noviembre) — resuelve los pendientes de v1.28:**
+- (a) **Consentimiento:** los retos de contacto piden consentimiento explícito. Además, **siempre hay una alternativa** al reto: tomar agua, cumplir un castigo o responder otra pregunta. No se fuerza a nadie a nada. Pasar sin hacer nada sigue costando un comodín.
+- (b) **Primera jornada de prueba:** de sábado 12:00 a domingo 17:00 (29 horas). Para entonces tiene que haber juegos y contenido suficientes para que no se repita nada en toda la jornada.
+- (c) **Eventos sorpresa:** son una opción que se enciende al configurar la partida y también un ajuste predeterminado del anfitrión en la administración de partidas.
+- (d) **Ajustes predeterminados del anfitrión** («reglas de la casa»), que se aplican a todas las partidas hasta que los cambie: por ejemplo, usar solo dados para todos los juegos, dejar fijo el nivel de Temperatura o de Voltaje, eventos sorpresa encendidos o apagados.
+- (e) **Puntos:** todos los niveles dan el mismo puntaje. El anfitrión puede dar un premio de XP adicional (la XP por reto en vivo de 22.1).
+- (f) **Fuentes del contenido nuevo:** ideas propias y anécdotas personales de los amigos que participan en la prueba.
+**PENDIENTE (v1.29):** (1) la fecha exacta del sábado de prueba; (2) las anécdotas de los amigos son datos personales y el repo es público: no pueden ir en `src/content`. Propuesta: guardarlas en la base, visibles solo para el grupo que juega y cargadas por el administrador; esto cambia, solo para ese contenido, la decisión 2 de 22.1 (textos en el código); (3) cómo se juntan las anécdotas (formulario dentro de ALV para que cada amigo mande las suyas y el administrador las apruebe, o una lista que Elías pasa).
 
 **DECISIÓN (v1.12, Elías; la parte de menores y contenido familiar queda sustituida por D1 en v1.25) — cuentas y edad:** todo jugador necesita cuenta, también en el juego local (se acaban los jugadores creados sin cuenta en el celular). Los menores de 18 sí pueden tener cuenta. Si en la sala o en la partida local hay al menos un menor, no se pueden activar el contenido adulto ni el modo Drunk y solo queda disponible el contenido **familiar**: temas, preguntas, retos y castigos marcados como familiares. La edad es la que declara cada quien al registrarse.
 
@@ -1363,6 +1371,9 @@ Decisiones del usuario del 12 de noviembre de 2026:
 ## v1.6
 - Primeros logros (14.2), con ámbito de sesión o histórico (ver DECISIÓN v1.6 en 14.2).
 
+## v1.29
+- Pendientes de Temperatura + Voltaje resueltos (3.2): consentimiento explícito y alternativa siempre (agua, castigo u otra pregunta); primera jornada de prueba sábado 12:00 a domingo 17:00; eventos sorpresa como opción de partida y ajuste del anfitrión; reglas de la casa predeterminadas; mismo puntaje en todos los niveles con premio opcional del anfitrión; contenido nuevo con ideas propias y anécdotas de los amigos (pendiente dónde se guardan por privacidad).
+
 ## v1.28
 - Temperatura + Voltaje aprobado con cambios de Elías (3.2): nivel general de la sala que pone el anfitrión tras votar el grupo fuera de la app, sin límites individuales; pasar solo con comodín; cartas de trago obligatorias con la bebida que cada quien elija; comodines Cambio de pregunta o reto y ¿Voy a tener suerte?; más contenido sin repetir en toda la jornada. Pendientes anotados.
 
@@ -1433,5 +1444,5 @@ Decisiones del usuario del 12 de noviembre de 2026:
 
 ---
 
-**Fin del Documento Maestro ALV v1.28**  
+**Fin del Documento Maestro ALV v1.29**  
 Este documento debe actualizarse de forma incremental y conservar la distinción entre decisiones aprobadas, propuestas, pendientes y descartadas.
