@@ -1,6 +1,6 @@
 # ALV — Amigos Legendarios Verdaderos
 ## Documento Maestro del Producto
-**Versión:** 1.24  
+**Versión:** 1.25  
 **Última actualización:** 15 de noviembre de 2026  
 **Estado:** Documento vivo de producto; decisiones y propuestas identificadas por separado.
 
@@ -128,7 +128,10 @@ Puede:
 - Usar cartas o herramientas cuando corresponda.
 - Consultar su resultado y progreso.
 
-**DECISIÓN (v1.12, Elías) — cuentas y edad:** todo jugador necesita cuenta, también en el juego local (se acaban los jugadores creados sin cuenta en el celular). Los menores de 18 sí pueden tener cuenta. Si en la sala o en la partida local hay al menos un menor, no se pueden activar el contenido adulto ni el modo Drunk y solo queda disponible el contenido **familiar**: temas, preguntas, retos y castigos marcados como familiares. La edad es la que declara cada quien al registrarse.
+**DECISIÓN (v1.25, Elías, 15 de noviembre) — D1, acceso solo para mayores de 18:** ALV es exclusivo para mayores de 18. **No hay modelo familiar.** Cartas y juegos llevan etiquetas de intensidad **tranquila / adulta / Drunk**. Sustituye la parte de edad de la decisión v1.12 de abajo (menores con cuenta y contenido familiar), la decisión 7 de 22.1 (la sala deja de ser familiar) y la etiqueta «familiar» de 13 (tanda 4, decisión 4) y 22.1. Sigue vigente que todo jugador necesita cuenta, también en el juego local.
+**PENDIENTE (D1):** cómo se comprueba la edad al registrarse (hoy es la fecha declarada); qué hacer con una cuenta que ya exista con fecha de menor; cómo conviven las etiquetas tranquila / adulta / Drunk con los 4 niveles de intensidad que ya existen en el motor (Tranquilo, Picante, Sin filtro, Salvaje) y con los interruptores adulto y Drunk de hoy.
+
+**DECISIÓN (v1.12, Elías; la parte de menores y contenido familiar queda sustituida por D1 en v1.25) — cuentas y edad:** todo jugador necesita cuenta, también en el juego local (se acaban los jugadores creados sin cuenta en el celular). Los menores de 18 sí pueden tener cuenta. Si en la sala o en la partida local hay al menos un menor, no se pueden activar el contenido adulto ni el modo Drunk y solo queda disponible el contenido **familiar**: temas, preguntas, retos y castigos marcados como familiares. La edad es la que declara cada quien al registrarse.
 
 **PENDIENTE:** cómo entran varias cuentas en un mismo celular para el juego local (apodo y contraseña de cada quien, o código desde su propio celular), qué pasa con la XP local que existe hoy sin cuenta, y etiquetar el contenido actual como familiar o no (hoy las cartas solo tienen adulto y Drunk).
 
@@ -484,6 +487,9 @@ Reglas propuestas:
 
 # 10. Armario y editor de personaje — propuestas
 
+**DECISIÓN (v1.25, Elías, 15 de noviembre) — D3, un solo personalizador:** hay **un personalizador** con dos modos, **Simple** y **Avanzado**. Al cambiar de modo se conserva lo que se lleva armado (**continuidad de estado**). Los trajes **no son destructivos**: probar o cambiar piezas no borra la cápsula guardada hasta que se guarda. Sustituye el «editor rápido» y el «taller completo» como dos editores separados (21.3 y tanda 4 de 8.7, v1.20); el contenido del modo Simple es el del editor rápido aprobado y el del Avanzado, el del taller de Minifig Studio.
+**PENDIENTE (D3):** si el modo Avanzado sigue solo en tablet o computadora (decisión 6 de la tanda 4) o también en celular.
+
 Interacciones exploradas:
 - Sonido «snap/click» al equipar una pieza.
 - Destello o VFX al seleccionar.
@@ -649,6 +655,9 @@ No es una tabla definitiva. La categoría poco común, probabilidades finales, d
 Podrían modificar temporalmente reglas de una partida: pasar/saltar reto, repetir tirada, segunda oportunidad o comodín.
 
 Deben equilibrarse para que no sean pay-to-win. Los cosméticos no dan ventajas. La disponibilidad, límites, compatibilidad y balance de cartas funcionales siguen pendientes.
+
+**DECISIÓN (v1.25, Elías, 15 de noviembre) — D2, comodines como acciones del motor:** los comodines (las cartas de poder de `catalogo.ts`: escudo, salvavidas, relevo, doble castigo, cambio de pregunta, pasa turno, cambio de mesero) son **acciones del motor**, **consumibles** (se gastan al usarse) y tienen una **matriz de compatibilidad por juego** que dice cuáles se pueden usar en cada juego. Se agregan a las acciones nuevas del motor de 22.1, junto a `dar-carta`; usarlos lo valida la Pantalla con el motor y la TV solo ve cuántos tiene cada quien y el que se usó (21.4).
+**PENDIENTE (D2):** la matriz misma (qué comodín sirve en cuál de los juegos) y si se mantienen los 7 comodines de hoy o cambian.
 
 ---
 
@@ -1101,7 +1110,7 @@ Tecnología: se mantiene React, TypeScript, Vite y Supabase, publicada en GitHub
 
 Qué se queda y qué se va:
 - Se conserva el motor (`src/engine`, con `vistas.ts` como frontera de lo que ve cada aparato), `logros`, `azar`, el contenido, `figura3d` y Minifig Studio (`public/minifig`), `sonido.ts`, las migraciones 001 a 016 (no se editan; todo cambio va de la 017 en adelante) y la función `restablecer-clave` como respaldo.
-- Se ajustan: tipos y filtros (etiqueta `familiar` en las cartas), economía (sale el saldo calculado en el aparato), sobres (pesos de la tanda 4), catálogo (filas por intención), equipos (sin adornos 2D), cuenta, tarjetas (se conserva la apertura animada), avatar, sincronización de figuras, HUD y XP extra.
+- Se ajustan: tipos y filtros (etiqueta `familiar` en las cartas; desde v1.25, etiquetas tranquila / adulta / Drunk por D1), economía (sale el saldo calculado en el aparato), sobres (pesos de la tanda 4), catálogo (filas por intención), equipos (sin adornos 2D), cuenta, tarjetas (se conserva la apertura animada), avatar, sincronización de figuras, HUD y XP extra.
 - Se escriben de nuevo: `App.tsx`, `Partida.tsx` (se parte en motor de la Pantalla, una parte por mecánica para TV y otra para celular, y el modo de un celular), `PartidaCelular.tsx`, `Sala.tsx`, `Lobby.tsx`, `Armado.tsx`, `Hub.tsx`, `Juegos.tsx`, `Bienvenida.tsx`, ranking, `nube.ts` (se parte en `servicios/`), `estado.ts` (solo preferencias, id del aparato y copia de cápsulas) y los tres CSS apilados (`styles.css`, `menus.css`, `pantalla.css`).
 - Se elimina el personaje 2D: `EditorPersonaje`, tienda 2D, `piezas*.json`, `public/piezas`, `preparar_pieza.py`, recompensas de equipo 2D y `salaVista.ts`; en la base, `personajes`, `inventario`, accesorios 2D, `comprar_accesorio` y `public.saldos_de` (en la limpieza final).
 
@@ -1119,12 +1128,12 @@ Orden de la Fase 6, cada paso publicado y probado por Elías antes del siguiente
 
 Decisiones:
 1. El motor se queda en la Pantalla.
-2. Los textos de las cartas siguen en el código con su etiqueta familiar; la base guarda quién tiene cada sobre de contenido. Si ALV se publica, pasan a la base.
+2. Los textos de las cartas siguen en el código con su etiqueta (familiar hasta v1.24; tranquila / adulta / Drunk desde v1.25, D1); la base guarda quién tiene cada sobre de contenido. Si ALV se publica, pasan a la base.
 3. La XP vive solo en el servidor; se quita la XP y las compras guardadas en el aparato.
 4. Código de recuperación de 12 caracteres en 3 grupos, sin letras que se confunden.
 5. La Fase 6 se publica por pasos.
 6. (Elías) La XP por reto en vivo no tiene tope y también se le puede dar al anfitrión; queda registrado quién la dio. Las reglas de costos y ganancias de XP (general, por reto, por equipos, por parejas, y la XP extra al equipo ganador) se definen al final, en el paso 12; mientras, quedan los valores de hoy.
-7. La sala deja de ser familiar cuando sale el último menor, con aviso en la TV.
+7. ~~La sala deja de ser familiar cuando sale el último menor, con aviso en la TV.~~ Sustituida por D1 (v1.25, 3.2): no hay menores ni modo familiar. La migración 020 «edad y sala familiar» cambia de alcance: solo comprobar que la cuenta es mayor de 18.
 
 Riesgo aceptado: la cuenta con el control puede leer la semilla y todas las acciones, porque la Pantalla la usa.
 
@@ -1193,6 +1202,9 @@ No saltar fases. Cada fase requiere alcance, entregables, criterios de aceptaci�
 
 ## 23.2 Exploración visual: entregables previstos
 
+**DECISIÓN (v1.25, Elías, 15 de noviembre) — D4, entregable de diseño:** el diseño final se entrega como **ocho pantallas de alta fidelidad** y un **prototipo HTML navegable** que las une, no como 17 maquetas estáticas. Lo de abajo (conceptos A/B/C) queda como historial.
+**PENDIENTE (D4):** cuáles son las ocho pantallas; si el prototipo se hace antes de seguir con la Fase 6 o en paralelo; y cómo se relaciona con las 5 tandas ya aprobadas de la Fase 3 (v1.17 a v1.21), que siguen siendo la referencia de contenido.
+
 Tres archivos HTML:
 - `ALV_Concepto_A.html`
 - `ALV_Concepto_B.html`
@@ -1257,7 +1269,10 @@ Requisitos:
 - Primera prueba: una sola sesión y toda la XP sirve para todo.
 - La marca es ALV; su significado puede variar por pantalla. Principal: «Amigos Legendarios Verdaderos» (v1.12).
 - Dirección visual: Comic Gaming, con tres propuestas para elegir (8.7).
-- Todo jugador tiene cuenta; con un menor en la sala solo hay contenido familiar (3.2).
+- Todo jugador tiene cuenta. ALV es solo para mayores de 18, sin modelo familiar; etiquetas tranquila / adulta / Drunk (D1, 3.2).
+- Comodines = acciones del motor, consumibles, con matriz por juego (D2, 13.4).
+- Un personalizador con modos Simple y Avanzado, sin perder lo armado (D3, 10).
+- Diseño final: 8 pantallas de alta fidelidad + prototipo HTML navegable (D4, 23.2).
 - El lenguaje de la app usa siglas con ingenio.
 - ALVerca, FBI y GPS son los escenarios activos.
 - Los cosméticos no otorgan ventajas competitivas.
@@ -1324,6 +1339,9 @@ Decisiones del usuario del 12 de noviembre de 2026:
 ## v1.6
 - Primeros logros (14.2), con ámbito de sesión o histórico (ver DECISIÓN v1.6 en 14.2).
 
+## v1.25
+- Decisiones D1 a D4 de Elías: solo mayores de 18, sin modelo familiar, con etiquetas tranquila / adulta / Drunk (3.2; sustituye la parte de edad de v1.12, la decisión 7 de 22.1 y la etiqueta familiar); comodines como acciones del motor, consumibles y con matriz por juego (13.4); un personalizador con modos Simple y Avanzado y continuidad de estado (10); diseño final en 8 pantallas de alta fidelidad y prototipo navegable (23.2). Cada una deja sus pendientes anotados. Los pasos 2 a 12 de la Fase 6 no empiezan hasta resolverlos.
+
 ## v1.24
 - Fase 6, paso 1 (cimientos) publicado: Design System en código con página `#/ds`, enrutador con las rutas por aparato, `servicios/` sacado de `nube.ts` y 82 pruebas nuevas de la red de seguridad (22.1, «Avance de la Fase 6»). Sin cambios visibles ni en la base.
 
@@ -1381,5 +1399,5 @@ Decisiones del usuario del 12 de noviembre de 2026:
 
 ---
 
-**Fin del Documento Maestro ALV v1.22**  
+**Fin del Documento Maestro ALV v1.25**  
 Este documento debe actualizarse de forma incremental y conservar la distinción entre decisiones aprobadas, propuestas, pendientes y descartadas.
