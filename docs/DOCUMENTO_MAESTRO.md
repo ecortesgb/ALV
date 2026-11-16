@@ -1,6 +1,6 @@
 # ALV — Amigos Legendarios Verdaderos
 ## Documento Maestro del Producto
-**Versión:** 1.12  
+**Versión:** 1.13  
 **Última actualización:** 15 de noviembre de 2026  
 **Estado:** Documento vivo de producto; decisiones y propuestas identificadas por separado.
 
@@ -145,6 +145,8 @@ Muestra:
 - Ruletas, tableros y herramientas.
 - Dibujos y resultados cuando corresponda.
 - Revelaciones, puntuaciones, podios y celebraciones.
+
+**DECISIÓN (v1.13, Elías, 15 de noviembre):** la pantalla que se proyecta (laptop o TV) no participa: solo muestra la partida. Quien organiza juega desde su celular con su cuenta de jugador, donde ve su palabra secreta, sus herramientas y sus preguntas. Sale de la prueba real de sala, donde el jugador de la laptop no podía ver su palabra en El impostor. **PENDIENTE (propuesta de la Fase 1 de ALV 2.0):** si se usa la misma cuenta en los dos aparatos o una aparte, quién puede proyectar y si la partida corre en la pantalla.
 
 **Regla de privacidad:** no mostrar respuestas, roles, palabras secretas ni información privada antes del momento definido por la mecánica.
 
@@ -1204,6 +1206,9 @@ Decisiones del usuario del 12 de noviembre de 2026:
 ## v1.6
 - Primeros logros (14.2), con ámbito de sesión o histórico (ver DECISIÓN v1.6 en 14.2).
 
+## v1.13
+- La pantalla proyectada no juega; el anfitrión juega desde su celular (3.3). Decisión de Elías tras la primera prueba real de sala.
+
 ## v1.12
 - Decisiones de la Fase 0 de ALV 2.0 (Elías, 15 de noviembre): significado principal «Amigos Legendarios Verdaderos» (1.1); Comic Gaming sustituye a Neo-Arcade, con tres propuestas a elegir (8.7); navegación desde el hub con Jugar, Personalizar, Tienda, Ranking y Logros (21.1); tienda 2D retirada y sobres cosméticos 3D más sobres de contenido (13); variantes en el catálogo, Ruleta de castigos como herramienta, Trivia ALV y Dibuja y Adivina se agregan (16.8); todo jugador con cuenta, menores con contenido familiar (3.2).
 
@@ -1225,5 +1230,5 @@ Decisiones del usuario del 12 de noviembre de 2026:
 
 ---
 
-**Fin del Documento Maestro ALV v1.12**  
+**Fin del Documento Maestro ALV v1.13**  
 Este documento debe actualizarse de forma incremental y conservar la distinción entre decisiones aprobadas, propuestas, pendientes y descartadas.
