@@ -1,6 +1,6 @@
 # ALV — Amigos Legendarios Verdaderos
 ## Documento Maestro del Producto
-**Versión:** 1.13  
+**Versión:** 1.14  
 **Última actualización:** 15 de noviembre de 2026  
 **Estado:** Documento vivo de producto; decisiones y propuestas identificadas por separado.
 
@@ -146,7 +146,7 @@ Muestra:
 - Dibujos y resultados cuando corresponda.
 - Revelaciones, puntuaciones, podios y celebraciones.
 
-**DECISIÓN (v1.13, Elías, 15 de noviembre):** la pantalla que se proyecta (laptop o TV) no participa: solo muestra la partida. Quien organiza juega desde su celular con su cuenta de jugador, donde ve su palabra secreta, sus herramientas y sus preguntas. Sale de la prueba real de sala, donde el jugador de la laptop no podía ver su palabra en El impostor. **PENDIENTE (propuesta de la Fase 1 de ALV 2.0):** si se usa la misma cuenta en los dos aparatos o una aparte, quién puede proyectar y si la partida corre en la pantalla.
+**DECISIÓN (v1.13, Elías, 15 de noviembre):** la pantalla que se proyecta (laptop o TV) no participa: solo muestra la partida. Quien organiza juega desde su celular con su cuenta de jugador, donde ve su palabra secreta, sus herramientas y sus preguntas. Sale de la prueba real de sala, donde el jugador de la laptop no podía ver su palabra en El impostor. Resuelto en v1.14: ver 21.3.
 
 **Regla de privacidad:** no mostrar respuestas, roles, palabras secretas ni información privada antes del momento definido por la mecánica.
 
@@ -1017,6 +1017,31 @@ Estado: los pasos 1 a 4 y la vista ancha ya funcionan en un solo dispositivo. El
 
 ---
 
+## 21.3 Arquitectura de ALV 2.0 — DECISIÓN (v1.14)
+
+**DECISIÓN (v1.14, Elías aprobó la Fase 1 completa, 15 de noviembre).** Referencia con diagramas: página «ALV 2.0 Fase 1» (https://claude.ai/artifact/X6o8LBveVn6WyKDZwwrmKK).
+
+Mapa: todo sale del hub. Jugar (Unirme a una sala, Proyectar en pantalla, Jugar en este celular, Catálogo y ficha del juego), Personalizar (3 cápsulas, editor rápido, editor completo), Tienda (sobres cosméticos, sobres de contenido, mi colección), Ranking (sesión, histórico, parejas, equipos, historial) y Logros. Perfil desde el retrato; Ajustes y Administración desde el engrane. «Lobby» deja de ser sección propia (la sala vive en Jugar) y «Juego físico» deja de ser modo: pasa a herramienta del anfitrión («Reto en vivo» con +XP).
+
+Roles:
+- **Pantalla** (laptop o TV): corre la partida con el motor actual, muestra lo público, no juega ni muestra secretos. Tiene controles de respaldo.
+- **Anfitrión**: un celular que juega como todos y además controla (elegir juego, iniciar, pausar, saltar, ruleta de castigos, XP por reto en vivo).
+- **Jugador**: su celular, una herramienta a la vez, su secreto con «mantener presionado».
+
+Decisiones de la Fase 1:
+1. El anfitrión usa **la misma cuenta** en la Pantalla y en su celular.
+2. **Cualquier cuenta mayor de edad** puede proyectar. La Administración sigue siendo solo de los administradores.
+3. Jugar **sin pantalla** (solo celulares) queda como segunda opción: el celular del anfitrión hace de Pantalla, con la pantalla siempre encendida.
+4. El **escenario y el ambiente se eligen una vez** al abrir la sala (se pueden cambiar). En cada partida solo se eligen juego, modalidad y rondas. La mecánica viene con el juego.
+5. **Un solo celular:** cada jugador se agrega escribiendo su apodo y contraseña; se valida, se suma a la partida y no queda su sesión abierta. Escanear un QR con su propio teléfono queda como opción.
+6. **Recuperar contraseña:** código de recuperación que se muestra una sola vez al registrarse; el restablecimiento por un administrador queda de respaldo.
+
+Además:
+- El QR deja a la persona **dentro de la sala**; si no tiene sesión, entra o se registra y vuelve a la sala sin pasar por el hub.
+- El servidor **avisa al instante** (tiempo real de Supabase) en lugar de que cada aparato pregunte cada 1.5 s; la consulta periódica queda de respaldo.
+- Catálogo por intención: Para empezar, Para reír, Para soltar secretos, ¿Quién miente?, A competir, En pareja y una fila de Herramientas. Se filtra solo por jugadores, escenario y ambiente; lo que no se puede jugar sale con candado y la razón. Las siglas (PTM, HDSPM…) quedan como sello de cada juego.
+- Usuario que regresa: entra directo al hub; «Volver a la sala» si tiene una abierta; novedades como burbujas, no como ventana al entrar.
+
 # 22. Arquitectura técnica — hipótesis
 
 No hay arquitectura final aprobada.
@@ -1206,6 +1231,9 @@ Decisiones del usuario del 12 de noviembre de 2026:
 ## v1.6
 - Primeros logros (14.2), con ámbito de sesión o histórico (ver DECISIÓN v1.6 en 14.2).
 
+## v1.14
+- Fase 1 de ALV 2.0 aprobada: mapa, roles Pantalla/Anfitrión/Jugador, flujos, configuración en tres momentos, catálogo por intención y 6 decisiones (21.3).
+
 ## v1.13
 - La pantalla proyectada no juega; el anfitrión juega desde su celular (3.3). Decisión de Elías tras la primera prueba real de sala.
 
@@ -1230,5 +1258,5 @@ Decisiones del usuario del 12 de noviembre de 2026:
 
 ---
 
-**Fin del Documento Maestro ALV v1.13**  
+**Fin del Documento Maestro ALV v1.14**  
 Este documento debe actualizarse de forma incremental y conservar la distinción entre decisiones aprobadas, propuestas, pendientes y descartadas.
