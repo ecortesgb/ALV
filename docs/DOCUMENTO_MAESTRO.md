@@ -1,6 +1,6 @@
 # ALV — Amigos Legendarios Verdaderos
 ## Documento Maestro del Producto
-**Versión:** 1.22  
+**Versión:** 1.23  
 **Última actualización:** 15 de noviembre de 2026  
 **Estado:** Documento vivo de producto; decisiones y propuestas identificadas por separado.
 
@@ -1091,9 +1091,44 @@ Fallas de la prueba real del 15 de noviembre y cómo las evita este diseño (su 
 
 **PENDIENTE (Fase 6), riesgos encontrados en el código:** `partidas.semilla` la puede leer cualquier miembro de la sala y, con el motor público, permite calcular el impostor y la palabra: debe pasar a un lugar que solo lea el anfitrión. La cuenta del anfitrión puede leer todas las acciones antes de la revelación (aceptado para fiestas entre amigos; la Fase 5 puede mover el motor al servidor si hace falta). `Partida.tsx` llama a `vistaJugador` dentro de lo que dibuja la pantalla grande. `revelar` y `siguiente` hoy no se guardan en `acciones`.
 
-# 22. Arquitectura técnica — hipótesis
+# 22. Arquitectura técnica
 
-No hay arquitectura final aprobada.
+## 22.1 Arquitectura técnica de ALV 2.0 — DECISIÓN (v1.23)
+
+**DECISIÓN (v1.23, Elías aprobó la Fase 5 completa, 15 de noviembre).** Referencia: página «ALV Fase 5 Arquitectura» (https://claude.ai/artifact/HLQeJUZHR7zbpfzkAjPB2p, fuente `alv2\fase5\` fuera del repo). Es el plan de la Fase 6; el código y la base no se tocaron en la Fase 5. Punto de partida medido: 65 pruebas pasan, 14 juegos sobre 11 mecánicas, 16 migraciones.
+
+Tecnología: se mantiene React, TypeScript, Vite y Supabase, publicada en GitHub Pages, sin dependencias nuevas.
+
+Qué se queda y qué se va:
+- Se conserva el motor (`src/engine`, con `vistas.ts` como frontera de lo que ve cada aparato), `logros`, `azar`, el contenido, `figura3d` y Minifig Studio (`public/minifig`), `sonido.ts`, las migraciones 001 a 016 (no se editan; todo cambio va de la 017 en adelante) y la función `restablecer-clave` como respaldo.
+- Se ajustan: tipos y filtros (etiqueta `familiar` en las cartas), economía (sale el saldo calculado en el aparato), sobres (pesos de la tanda 4), catálogo (filas por intención), equipos (sin adornos 2D), cuenta, tarjetas (se conserva la apertura animada), avatar, sincronización de figuras, HUD y XP extra.
+- Se escriben de nuevo: `App.tsx`, `Partida.tsx` (se parte en motor de la Pantalla, una parte por mecánica para TV y otra para celular, y el modo de un celular), `PartidaCelular.tsx`, `Sala.tsx`, `Lobby.tsx`, `Armado.tsx`, `Hub.tsx`, `Juegos.tsx`, `Bienvenida.tsx`, ranking, `nube.ts` (se parte en `servicios/`), `estado.ts` (solo preferencias, id del aparato y copia de cápsulas) y los tres CSS apilados (`styles.css`, `menus.css`, `pantalla.css`).
+- Se elimina el personaje 2D: `EditorPersonaje`, tienda 2D, `piezas*.json`, `public/piezas`, `preparar_pieza.py`, recompensas de equipo 2D y `salaVista.ts`; en la base, `personajes`, `inventario`, accesorios 2D, `comprar_accesorio` y `public.saldos_de` (en la limpieza final).
+
+Estructura: `engine`, `content`, `ds` (Design System en código: tokens copiados de la fuente aprobada y los 13 componentes), `servicios`, `local`, `figura3d`, `juegos/<mecánica>/{tv,celular}`, `roles/{pantalla,jugador,control,mesa}`, `pantallas` y `app`. Solo `roles/pantalla/motor.ts` llama a `aplicar`. Una prueba revisa que lo que dibuja la TV no use `vistaJugador`, `privado`, `respuestas`, `manos` ni `semilla`. Los componentes no hablan con la base.
+
+Rutas por aparato (enrutador propio con `#`): `#/s/código` (el QR deja dentro de la sala), `#/sala/código` (celular; la barra aparece a quien tiene el control), `#/tv/código` (la Pantalla), `#/proyectar`, `#/mesa/código` (sin pantalla o un celular), más hub, jugar, catálogo, ficha, personalizar, tienda, colección, ranking, logros, perfil, ajustes y admin. El papel lo da la ruta del aparato, no la cuenta.
+
+Tiempo real: un solo archivo (`servicios/tiempoReal.ts`) escucha los cambios de `partidas`, `datos_privados`, `acciones`, `miembros_evento`, `eventos` y `figuras_jugador`, más presencia y mensajes de paso en un canal privado por sala. Estados Conectando, En vivo y Respaldo: si no hay respuesta en 5 s, consulta cada 3 s; al volver lee todo una vez. Las acciones llevan número del servidor y se aplican en orden; el fin del reloj se vuelve la acción `revelar` para que repetir semilla y acciones dé lo mismo.
+
+Acciones nuevas del motor: `pausar`, `reanudar`, `saltar`, `ruleta`, `xp-reto`, `pasar-control` (control) y `pista` (El impostor, hasta 40 caracteres); `revelar`, `siguiente`, `terminar` y `dar-carta` se guardan siempre; «ya la vi», «pedir pausa» y gestos son mensajes de paso que no se guardan.
+
+Migraciones futuras, cada una con RLS, quién escribe y prueba con un usuario sin acceso: 017 semilla privada y control/pantalla; 018 acciones nuevas en orden; 019 tiempo real y canal privado; 020 edad y sala familiar; 021 apodos e intentos; 022 código de recuperación; 023 cuentas en un solo celular y su XP; 024 colección de piezas y sobres; 025 sobres de contenido; 026 XP por reto, logros y ranking; 027 limpieza.
+
+Orden de la Fase 6, cada paso publicado y probado por Elías antes del siguiente: (1) cimientos, (2) base segura 017–019, (3) tiempo real, (4) partida en tres aparatos, primero El impostor, ¿Quién es más probable? y Verdad o reto, (5) sala, (6) acceso y cuentas, (7) hub y catálogo, (8) personalizar, tienda y colección, (9) perfil, logros y ranking, (10) limpieza, (11) correcciones de la prueba real del 15 de noviembre y nueva prueba de sala, (12) reglas de XP. Red de seguridad: las pruebas de hoy, prueba de los 14 juegos completos, de repetición, del secreto y de la frontera, y prueba manual con tres aparatos.
+
+Decisiones:
+1. El motor se queda en la Pantalla.
+2. Los textos de las cartas siguen en el código con su etiqueta familiar; la base guarda quién tiene cada sobre de contenido. Si ALV se publica, pasan a la base.
+3. La XP vive solo en el servidor; se quita la XP y las compras guardadas en el aparato.
+4. Código de recuperación de 12 caracteres en 3 grupos, sin letras que se confunden.
+5. La Fase 6 se publica por pasos.
+6. (Elías) La XP por reto en vivo no tiene tope y también se le puede dar al anfitrión; queda registrado quién la dio. Las reglas de costos y ganancias de XP (general, por reto, por equipos, por parejas, y la XP extra al equipo ganador) se definen al final, en el paso 12; mientras, quedan los valores de hoy.
+7. La sala deja de ser familiar cuando sale el último menor, con aviso en la TV.
+
+Riesgo aceptado: la cuenta con el control puede leer la semilla y todas las acciones, porque la Pantalla la usa.
+
+## 22.2 Hipótesis iniciales (historial)
 
 Hipótesis de implementación:
 - Aplicación web responsive.
@@ -1113,7 +1148,7 @@ Producción requiere:
 - Seguridad contra manipulación de puntuaciones.
 - Pruebas de concurrencia y rendimiento móvil.
 
-No presentar estas tecnologías como decisiones aprobadas.
+Sustituido en v1.23 por 22.1.
 
 ---
 
@@ -1188,11 +1223,11 @@ Requisitos:
 11. Validar el tono de animaciones de derrota y del último lugar.
 12. Definir captura y compartición de fotos de podio.
 13. ~~Seleccionar técnica de representación y animación de personajes.~~ Resuelto en v1.11: 3D con Minifig Studio (9.3).
-14. Seleccionar arquitectura backend y estrategia de despliegue.
+14. ~~Seleccionar arquitectura backend y estrategia de despliegue.~~ Resuelto en v1.23 (22.1). Siguen la Fase 6 (implementación) y la 7 (calidad), solo con aprobación de Elías.
 15. Confirmar si la XP que compra cartas se cuenta por sesión o por evento.
 16. Definir las reglas de XP para sesiones posteriores a la primera prueba.
 17. Redactar el banco de frases con siglas.
-18. Definir topes, motivo y efecto en el podio de la XP extra que da el administrador.
+18. Definir topes, motivo y efecto en el podio de la XP extra que da el administrador. La XP por reto en vivo ya no tiene tope (v1.23); el resto se define con las reglas de XP al final de la Fase 6.
 
 ---
 
@@ -1220,7 +1255,7 @@ Requisitos:
 - El catálogo son los 14 clásicos de 16.8 y los 7 nuevos del capítulo 16. Se pueden agregar más juegos cuando el usuario lo pida.
 - La clasificación por forma de participación es transversal y un juego puede combinar varias formas.
 - No recuperar las propuestas descartadas de lluvias de ideas.
-- Las tecnologías candidatas son hipótesis, no decisiones.
+- La arquitectura técnica de ALV 2.0 está aprobada (22.1): React, TypeScript, Vite y Supabase; motor en la Pantalla; XP solo en el servidor.
 
 ---
 
@@ -1279,6 +1314,9 @@ Decisiones del usuario del 12 de noviembre de 2026:
 
 ## v1.6
 - Primeros logros (14.2), con ámbito de sesión o histórico (ver DECISIÓN v1.6 en 14.2).
+
+## v1.23
+- Fase 5 de ALV 2.0 aprobada: arquitectura técnica (22.1) con mapa del código, estructura, rutas por aparato, tiempo real con respaldo, acciones nuevas, migraciones 017 a 027, orden de la Fase 6 en 12 pasos y 7 decisiones. La XP por reto en vivo queda sin tope y también para el anfitrión; las reglas de XP se definen al final. §22 deja de ser hipótesis.
 
 ## v1.22
 - Fase 4 de ALV 2.0 aprobada: la partida en tres aparatos, cómo se comunican, reconexión, lo que nunca llega a la TV y 7 decisiones (21.4). Se anotan como pendientes de la Fase 6 la semilla legible por los jugadores y otros riesgos del código.
