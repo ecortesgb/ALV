@@ -1,0 +1,75 @@
+// Ajustes del aparato y Administración (solo cuentas administradoras; el servidor lo valida en cada función).
+import { useEffect, useState } from "react";
+import { Boton, Chip, Etiqueta, Panel } from "../ds";
+import { ir } from "../app/rutas";
+import { useSesion } from "../app/sesion";
+import { alternarSonido, useSonidoActivo } from "../app/sonido";
+import { adminAjustarXp, adminJugadores, restablecerClave, type CuentaAdmin } from "../servicios/admin";
+import { Cabecera, Campo, Marco, Vacio, aviso, confirmar } from "./comun";
+
+export function Ajustes() {
+  const s = useSesion();
+  const sonido = useSonidoActivo();
+  const completa = () => { if (document.fullscreenElement) void document.exitFullscreen(); else void document.documentElement.requestFullscreen?.().catch(() => aviso("Este navegador no deja usar pantalla completa.")); };
+  return (
+    <Marco>
+      <div className="a-ancho a-angosto a-pila">
+        <Cabecera titulo="Ajustes" icono="gear" />
+        <Panel className="a-pila" como="section">
+          <div className="a-entre"><span>Sonidos</span><Chip texto={sonido ? "Encendidos" : "Apagados"} seleccionado={sonido} onClick={alternarSonido} /></div>
+          <div className="a-entre"><span>Pantalla completa</span><Chip texto="Cambiar" icono="eye" onClick={completa} /></div>
+        </Panel>
+        <Boton color="azul" texto="Perfil y cuenta" icono="users" onClick={() => ir("perfil")} />
+        {s.admin && <Boton color="rojo" texto="Administración" sub="Cuentas, XP y contraseñas" icono="lock" onClick={() => ir("admin")} />}
+        <p className="a-nota">ALV 2.0 · versión de prueba</p>
+      </div>
+    </Marco>
+  );
+}
+
+export function Admin() {
+  const s = useSesion();
+  const [cuentas, setCuentas] = useState<CuentaAdmin[] | null | undefined>(undefined);
+  const [abierta, setAbierta] = useState<string | null>(null), [clave, setClave] = useState(""), [busca, setBusca] = useState("");
+  const leer = () => void adminJugadores().then(setCuentas);
+  useEffect(() => { if (s.admin) leer(); }, [s.admin]);
+  if (!s.admin) return <Marco clase="a-centro"><Vacio titulo="Solo administradores" texto="Tu cuenta no tiene este permiso."><Boton color="amarillo" texto="Ir al inicio" icono="back" onClick={() => ir("inicio")} /></Vacio></Marco>;
+  const xp = async (c: CuentaAdmin, n: number) => {
+    if (!(await confirmar({ titulo: `${n > 0 ? "Dar" : "Quitar"} ${Math.abs(n)} XP a ${c.nombre}`, si: "Confirmar", peligro: n < 0 }))) return;
+    const r = await adminAjustarXp(c.id, n, "ajuste de administrador");
+    aviso(r ?? "XP ajustada"); leer();
+  };
+  const poner = async (c: CuentaAdmin) => {
+    if (!(await confirmar({ titulo: `¿Cambiar la contraseña de ${c.nombre}?`, texto: "La anterior deja de servir.", si: "Cambiar", peligro: true }))) return;
+    const r = await restablecerClave(c.id, clave);
+    aviso(r ?? "Contraseña cambiada"); if (!r) { setClave(""); setAbierta(null); }
+  };
+  const lista = (cuentas ?? []).filter(c => c.nombre.toLowerCase().includes(busca.trim().toLowerCase()));
+  return (
+    <Marco>
+      <div className="a-ancho a-angosto a-pila">
+        <Cabecera titulo="Administración" icono="lock" />
+        {cuentas === undefined ? <p className="a-suave a-pulso" role="status">Leyendo cuentas…</p> : cuentas === null ? <Vacio titulo="No se pudo leer" texto="Revisa la conexión." /> : <>
+          <Campo etiqueta="Buscar cuenta" value={busca} onChange={e => setBusca(e.target.value)} />
+          <ul className="a-admin">
+            {lista.map(c => (
+              <li key={c.id} className="d-pnl a-pila">
+                <div className="a-entre"><span className="dsp a-t3">{c.nombre}</span><small>{c.acumulada.toLocaleString("es-MX")} XP · {c.disponible.toLocaleString("es-MX")} para gastar</small></div>
+                <div className="a-fila a-envuelve">
+                  {[50, 100].map(n => <Chip key={n} texto={`+${n} XP`} onClick={() => void xp(c, n)} />)}
+                  <Chip texto="−50 XP" onClick={() => void xp(c, -50)} />
+                  <Chip texto="Contraseña" icono="lock" seleccionado={abierta === c.id} onClick={() => { setAbierta(abierta === c.id ? null : c.id); setClave(""); }} />
+                </div>
+                {abierta === c.id && <form className="a-pila" onSubmit={e => { e.preventDefault(); void poner(c); }}>
+                  <Campo etiqueta="Contraseña nueva (8 o más)" type="password" value={clave} onChange={e => setClave(e.target.value)} autoComplete="new-password" maxLength={72} />
+                  <Boton color="rojo" texto="Poner contraseña" icono="lock" desactivado={clave.length < 8} onClick={() => void poner(c)} />
+                </form>}
+              </li>
+            ))}
+          </ul>
+          <Etiqueta texto={`${cuentas.length} cuentas`} icono="users" />
+        </>}
+      </div>
+    </Marco>
+  );
+}

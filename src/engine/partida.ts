@@ -42,6 +42,16 @@ export interface EstadoPartida {
   cambios: number;
   /** Última carta de poder usada, pública: «Ana usó Escudo». */
   cartaUsada?: { jugador: string; carta: string; ronda: number };
+  /** El anfitrión detuvo la partida: nadie puede contestar hasta reanudar. */
+  pausada?: boolean;
+  /** El impostor: la pista que cada quien dijo en la ronda (pública, máximo 40 letras). */
+  pistas?: Record<string, string>;
+  /** XP por reto en vivo que dio quien tiene el control (la acredita el servidor al dársela). */
+  xpReto?: Record<string, number>;
+  /** Ruleta de castigos del anfitrión: a quién le tocó y qué. `n` sube con cada giro. */
+  ruletaExtra?: { jugador: string; texto: string; n: number };
+  /** Cuenta que tiene el control (anfitrión). Solo ella pausa, salta, revela y pasa de ronda. */
+  control?: string;
   accionesVistas: string[];
   bitacora: EventoMotor[];
 }
@@ -53,7 +63,17 @@ export type Accion =
   | { id: string; tipo: "terminar" }
   /** El anfitrión entrega una carta ya pagada (la compra la valida el servidor). */
   | { id: string; tipo: "dar-carta"; jugador: string; carta: string }
-  | { id: string; tipo: "usar-carta"; jugador: string; carta: string };
+  | { id: string; tipo: "usar-carta"; jugador: string; carta: string }
+  | { id: string; tipo: "pausar" }
+  | { id: string; tipo: "reanudar" }
+  /** Salta la ronda sin puntos (se acabó el tiempo o alguien no contesta). */
+  | { id: string; tipo: "saltar" }
+  | { id: string; tipo: "pista"; jugador: string; texto: string }
+  | { id: string; tipo: "xp-reto"; jugador: string; xp: number }
+  | { id: string; tipo: "ruleta" }
+  | { id: string; tipo: "pasar-control"; jugador: string };
+
+export const MAX_PISTA = 40;
 
 export const MAX_EN_MANO = 3;
 export const RETOS_POR_CARTA = 3;
@@ -373,11 +393,14 @@ const MECANICAS: Record<Motor, Mecanica> = {
   botella, ruleta, dados, conteo, confesion, senalar, competencia,
 };
 
+/** Quién debe contestar en la ronda actual. */
+export const quienesContestan = (e: EstadoPartida): string[] => MECANICAS[e.motor].quienes(e);
+
 // ---------- Máquina de estados ----------
 
 function prepararRonda(e: EstadoPartida, c: Contenido): EstadoPartida {
   const p = MECANICAS[e.motor].preparar(e, c);
-  return { ...e, fase: "contestando", carta: p.carta, privado: p.privado, turnoDe: p.turnoDe, seleccion: p.seleccion, respuestas: {}, revelado: undefined };
+  return { ...e, fase: "contestando", carta: p.carta, privado: p.privado, turnoDe: p.turnoDe, seleccion: p.seleccion, respuestas: {}, revelado: undefined, pistas: {} };
 }
 
 /** Da una carta de poder si hay lugar en la mano. */
@@ -412,6 +435,7 @@ export function aplicar(e: EstadoPartida, a: Accion, contenido: Contenido): Esta
 
   switch (a.tipo) {
     case "contestar": {
+      if (e.pausada) return e;
       if (e.fase !== "contestando" || !m.quienes(e).includes(a.jugador) || a.jugador in e.respuestas) return e;
       if (!m.valida(e, a.jugador, a.valor)) return e;
       return sube({ ...e, respuestas: { ...e.respuestas, [a.jugador]: a.valor }, bitacora: registrar(e, "contesto", a.jugador) });
@@ -443,7 +467,40 @@ export function aplicar(e: EstadoPartida, a: Accion, contenido: Contenido): Esta
       if (!IDS_PODER.includes(a.carta) || !(a.jugador in e.manos) || (e.manos[a.jugador]?.length ?? 0) >= MAX_EN_MANO) return e;
       return sube({ ...e, manos: conCarta(e.manos, a.jugador, a.carta), bitacora: registrar(e, "carta-recibida", a.jugador, { carta: a.carta }) });
     }
+    case "pausar":
+      return e.pausada ? e : sube({ ...e, pausada: true, bitacora: registrar(e, "pausada") });
+    case "reanudar":
+      return e.pausada ? sube({ ...e, pausada: false, bitacora: registrar(e, "reanudada") }) : e;
+    case "saltar": {
+      if (e.fase !== "contestando") return e;
+      return sube({ ...e, fase: "revelada", revelado: { saltada: true }, bitacora: registrar(e, "saltada") });
+    }
+    case "pista": {
+      const texto = typeof a.texto === "string" ? a.texto.replace(/\s+/g, " ").trim().slice(0, MAX_PISTA) : "";
+      if (e.motor !== "rol-secreto" || e.fase !== "contestando" || !ids(e).includes(a.jugador) || !texto) return e;
+      return sube({ ...e, pistas: { ...(e.pistas ?? {}), [a.jugador]: texto }, bitacora: registrar(e, "pista", a.jugador) });
+    }
+    case "xp-reto": {
+      if (!ids(e).includes(a.jugador) || !Number.isInteger(a.xp) || a.xp < 1 || a.xp > 200) return e;
+      const xpReto = { ...(e.xpReto ?? {}), [a.jugador]: (e.xpReto?.[a.jugador] ?? 0) + a.xp };
+      return sube({ ...e, xpReto, bitacora: registrar(e, "xp-reto", a.jugador, { xp: a.xp }) });
+    }
+    case "ruleta": {
+      const n = (e.ruletaExtra?.n ?? 0) + 1;
+      const azar = crearAzar(e.semilla * 31 + e.ronda * 101 + n * 7907);
+      const j = azar.elegir(e.cfg.jugadores);
+      const pool = cartasPermitidas(e.cfg, contenido.cartas, ["castigo", "castigo-iva"]);
+      if (!pool.length) return e;
+      const otros = e.cfg.jugadores.filter(x => x.id !== j.id);
+      const texto = personalizar(azar.elegir(pool).texto, e, j, otros.length ? azar.elegir(otros) : undefined);
+      return sube({ ...e, ruletaExtra: { jugador: j.id, texto, n }, bitacora: registrar(e, "ruleta", j.id) });
+    }
+    case "pasar-control": {
+      if (!ids(e).includes(a.jugador) || a.jugador === e.control) return e;
+      return sube({ ...e, control: a.jugador, bitacora: registrar(e, "control", a.jugador) });
+    }
     case "usar-carta": {
+      if (e.pausada) return e;
       const mano = e.manos[a.jugador] ?? [];
       const i = mano.indexOf(a.carta);
       if (i < 0 || e.fase !== "contestando") return e;

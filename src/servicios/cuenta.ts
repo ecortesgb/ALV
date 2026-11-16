@@ -1,9 +1,9 @@
 // Cuenta: entrar es con nickname y contraseña; no se pide correo.
 // El nickname se guarda como correo interno (no real) para que Supabase lo haga único.
 import type { Session } from "@supabase/supabase-js";
-import type { FiguraV2, Personaje } from "../content/personaje";
+import type { FiguraV2 } from "../content/personaje";
 import { esFigura, normalizar, N_CAPSULAS, type EstadoCapsulas } from "../app/figura3d";
-import { articulosCuenta, cliente, cuentaActiva, fijarArticulos, fijarUsuario, GENERICO, uidActual } from "./cliente";
+import { cliente, cuentaActiva, fijarArticulos, fijarUsuario, GENERICO, uidActual } from "./cliente";
 
 const NICK = /^[a-z0-9_]{3,20}$/;
 export const nickValido = (n: string) => NICK.test(n.trim().toLowerCase());
@@ -99,33 +99,6 @@ export async function registrarXpExtraNube(xp: number, motivo: string): Promise<
   } catch (e) { console.error("registrarXpExtraNube", e); return false; }
 }
 
-/** Lee el personaje guardado en la cuenta. Devuelve null si no hay nada o falla. */
-export async function cargarPersonaje(): Promise<Personaje | null> {
-  if (!cliente) return null;
-  try {
-    const uid = (await cliente.auth.getUser()).data.user?.id;
-    if (!uid) return null;
-    const { data, error } = await cliente.from("personajes").select("piezas").eq("jugador", uid).maybeSingle();
-    if (error || !data) return null;
-    return data.piezas as Personaje;
-  } catch (e) { console.error("cargarPersonaje", e); return null; }
-}
-
-/** Guarda el personaje en la cuenta. La base solo deja tocar tu propio personaje. */
-export async function guardarPersonaje(p: Personaje): Promise<void> {
-  if (!cliente) return;
-  try {
-    const uid = (await cliente.auth.getUser()).data.user?.id;
-    if (!uid) return;
-    // Solo se guarda puesto lo que la cuenta tiene; la base rechaza lo demás.
-    const tiene = new Set(articulosCuenta());
-    const puesto = Object.fromEntries(Object.entries(p.puesto ?? {}).map(([z, v]) => [z, v && tiene.has(v) ? v : null]));
-    const { figura: _figura, ...sinFigura } = p;
-    const { error } = await cliente.from("personajes").update({ piezas: { ...sinFigura, puesto }, actualizado: new Date().toISOString() }).eq("jugador", uid);
-    if (error) console.error("guardarPersonaje", error.message);
-  } catch (e) { console.error("guardarPersonaje", e); }
-}
-
 // ---------- Figuras 3D (cápsulas) ----------
 
 /** Las cápsulas de la cuenta (tabla figuras_jugador). null si no hay sesión o falla; slots vacíos si no tiene ninguna. */
@@ -173,23 +146,35 @@ export async function guardarCapsulasNube(e: EstadoCapsulas): Promise<boolean> {
   } catch (err) { console.error("guardarCapsulasNube", err); return false; }
 }
 
-/** Lo que el servidor dice de la cuenta: saldos y artículos comprados. */
-export interface DatosCuenta { acumulada: number; disponible: number; delEvento: number; tiene: string[] }
-
-export async function leerCuenta(): Promise<DatosCuenta | null> {
-  if (!cliente || !cuentaActiva()) return null;
+/** Cambia la contraseña de la cuenta abierta. Devuelve null si salió bien, o el motivo. */
+export async function cambiarClave(nueva: string): Promise<string | null> {
+  if (!cliente) return GENERICO;
+  if (!passValida(nueva)) return "La contraseña va de 8 a 72 caracteres.";
   try {
-    const uid = (await cliente.auth.getUser()).data.user?.id;
-    if (!uid) return null;
-    const [sal, inv] = await Promise.all([
-      cliente.rpc("mis_saldos"),
-      cliente.from("inventario").select("articulo").eq("jugador", uid),
-    ]);
-    if (sal.error || inv.error) { console.error("leerCuenta", sal.error?.message ?? inv.error?.message); return null; }
-    const fila = (sal.data as { acumulada: number; disponible: number; del_evento: number }[] | null)?.[0];
-    return {
-      acumulada: fila?.acumulada ?? 0, disponible: fila?.disponible ?? 0, delEvento: fila?.del_evento ?? 0,
-      tiene: fijarArticulos((inv.data ?? []).map(x => (x as { articulo: string }).articulo)),
-    };
-  } catch (e) { console.error("leerCuenta", e); return null; }
+    const { error } = await cliente.auth.updateUser({ password: nueva });
+    if (error) { console.error("cambiarClave", error.message); return "No se pudo cambiar la contraseña."; }
+    return null;
+  } catch (e) { console.error("cambiarClave", e); return "No se pudo cambiar la contraseña."; }
+}
+
+export interface MovimientoXp { tipo: string; xp: number; motivo: string; creado: string }
+/** Mis movimientos de XP (solo los míos: RLS), del más nuevo al más viejo. */
+export async function misMovimientos(): Promise<MovimientoXp[]> {
+  if (!cliente) return [];
+  try {
+    const { data, error } = await cliente.from("movimientos_xp").select("tipo, xp, motivo, creado").order("creado", { ascending: false }).limit(500);
+    if (error) { console.error("misMovimientos", error.message); return []; }
+    return (data ?? []) as MovimientoXp[];
+  } catch (e) { console.error("misMovimientos", e); return []; }
+}
+
+export interface FilaRanking { id: string; nombre: string; acumulada: number; nivel: number }
+/** Ranking entre la cuenta y la gente con la que ha compartido sala. */
+export async function rankingConocidos(): Promise<FilaRanking[] | null> {
+  if (!cliente) return null;
+  try {
+    const { data, error } = await cliente.rpc("ranking_conocidos");
+    if (error) { console.error("rankingConocidos", error.message); return null; }
+    return (data ?? []) as FilaRanking[];
+  } catch (e) { console.error("rankingConocidos", e); return null; }
 }

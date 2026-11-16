@@ -1,189 +1,46 @@
-// ALV: una sola app. Pestañas de abajo: Inicio, Lobby, Tienda, Ranking y Perfil.
-// El flujo es como en los juegos de futbol en línea: Jugar → lobby con los personajes → condiciones → Iniciar → carga → partida.
-import { lazy, Suspense, useEffect, useState } from "react";
-import { logrosDe } from "../engine/logros";
-import type { EstadoPartida } from "../engine/partida";
-import { Retrato } from "./Avatar";
-import { Cuenta, SincroCuenta } from "./Cuenta";
-import { hayNube, sesionActual } from "./nube";
-import { Avisos, Confirmaciones } from "./comun";
-import { Fondo } from "./efectos";
-import { type JugadorLocal, parejaDe, saldosDe, useEstado } from "./estado";
-import { Lobby } from "./Lobby";
-import { Partida } from "./Partida";
-import { MisCosas, Tienda } from "./Personaje";
-import { ArmarFigura, PantallaFigura } from "./Figuras";
-import { SincroFiguras } from "./SincroFiguras";
-import { SelectorEquipo, TarjetaJugador } from "./Tarjetas";
-import { Ranking } from "./Ranking";
-import { SincroSala, Unirse } from "./Sala";
-import { useAPartidaDeSala } from "./PartidaCelular";
+// ALV 2.0: una sola app. La entrada decide por la sesión; después manda la ruta.
+// El papel del aparato lo da la ruta: #/tv/código es la Pantalla, #/sala/código un celular.
+import { lazy, Suspense, useEffect } from "react";
+import { Acceso, Carga, CompletarRegistro, SoloMayores } from "../pantallas/Acceso";
+import { Ajustes, Admin } from "../pantallas/Ajustes";
+import { Catalogo, FichaJuego } from "../pantallas/Catalogo";
+import { Hub, Jugar } from "../pantallas/Hub";
+import { Editor, Personalizar, SincroCapsulas } from "../pantallas/Personalizar";
+import { Sala } from "../pantallas/Sala";
+import { Logros, Perfil, Ranking } from "../pantallas/Social";
+import { Avisos } from "../pantallas/comun";
+import { PantallaTv } from "../roles/pantalla/Pantalla";
+import { refrescarSesion, useSesion } from "./sesion";
 import { instalarClics } from "./sonido";
-import { CabeceraJuego, Hub, PantallaModos } from "./Hub";
-import { Notificaciones, PaginaAjustes, PaginaFisico, PantallaCarga, PantallaCuenta } from "./Bienvenida";
+import { useRuta } from "./rutas";
 
-import { ir, type Ruta, useRuta } from "./rutas";
-
-/** Rutas de ALV 2.0 (TV, mesa, proyectar y la página del Design System): se cargan aparte, con sus estilos. */
-const RutaNueva = lazy(() => import("../roles"));
-const NUEVAS = new Set<Ruta>(["tv", "mesa", "proyectar", "ds"]);
+/** Página interna del Design System (sin enlace en la app): se carga aparte. */
+const PaginaDS = lazy(() => import("../pantallas/ds"));
 
 export function App() {
-  const destino = useRuta();
-  const { ruta, arg } = destino;
-  const [partida, setPartida] = useState<EstadoPartida | null>(null);
-  const paleta = useEstado().ajustes.paleta;
-  useEffect(() => { document.documentElement.dataset.paleta = paleta === "lounge" ? "lounge" : "neon"; }, [paleta]);
-  useEffect(() => { void sesionActual(); }, []);
-  useEffect(() => { scrollTo(0, 0); }, [ruta, partida === null]);
+  const { ruta, arg } = useRuta();
+  const { fase } = useSesion();
+  useEffect(() => { void refrescarSesion(); }, []);
   useEffect(instalarClics, []);
 
-  // Entrada: pantalla de carga (una vez por visita) → cuenta (si hay servidor y no hay sesión) → novedades → menú.
-  const [entrada, setEntrada] = useState<"carga" | "cuenta" | "avisos" | "lista">(() => {
-    try { return sessionStorage.getItem("alv.iniciado") ? "lista" : "carga"; } catch { return "carga"; }
-  });
-  const iniciar = async () => {
-    try { sessionStorage.setItem("alv.iniciado", "1"); } catch { /* sin almacenamiento */ }
-    setEntrada(hayNube && !(await sesionActual()) ? "cuenta" : "avisos");
-  };
-  // La primera vez que alguien crea su cuenta entra directo a armar su personaje.
-  const trasCuenta = (creada: boolean) => { if (creada) { ir("perfil"); setEntrada("lista"); } else setEntrada("avisos"); };
-
-  // Las rutas nuevas ocupan toda la pantalla y no pasan por la carga ni las novedades de hoy.
-  if (NUEVAS.has(ruta) && !partida) return <Suspense fallback={null}><RutaNueva destino={destino} /></Suspense>;
-
-  const ancho = !!partida || ruta === "lobby" || ruta === "ranking" || ruta === "fisico";
-  return (
-    <>
-      <Fondo />
-      <main className={"app" + (ancho ? " ancho" : "") + (!partida && (ruta === "inicio" || ruta === "jugar") ? " inmersiva" : "") + " pagina-" + (partida ? "partida" : ruta)}>
-        {partida ? <Partida inicial={partida} salir={() => setPartida(null)} />
-          : ruta === "inicio" ? <Hub abrirNovedades={() => setEntrada("avisos")} />
-          : ruta === "jugar" ? <PantallaModos />
-          : ruta === "lobby" ? <Lobby jugar={setPartida} arg={arg} />
-          : ruta === "tienda" ? <PaginaTienda id={arg} />
-          : ruta === "ranking" ? <Ranking />
-          : ruta === "unirse" ? <PaginaUnirse codigo={arg} />
-          : ruta === "fisico" ? <><CabeceraJuego titulo="Juego físico" color="#C6FF3D" /><PaginaFisico /></>
-          : ruta === "ajustes" ? <PaginaAjustes />
-          : ruta === "figura" ? <PantallaFigura arg={arg} />
-          : <Perfil id={arg} />}
-      </main>
-      <AvisoPartidaSala ruta={ruta} />
-      <Avisos />
-      <SincroCuenta />
-      <SincroFiguras />
-      <SincroSala />
-      <Confirmaciones />
-      {entrada === "carga" && <PantallaCarga iniciar={() => void iniciar()} />}
-      {entrada === "cuenta" && <PantallaCuenta seguir={trasCuenta} />}
-      {entrada === "avisos" && !partida && <Notificaciones cerrar={() => setEntrada("lista")} />}
-    </>
-  );
-}
-
-/** Elige de qué jugador se trata (todos juegan en este dispositivo por ahora). */
-function QuienSoy({ id, base }: { id?: string; base: "tienda" | "perfil" }) {
-  const s = useEstado();
-  const actual = s.jugadores.find(j => j.id === id) ?? s.jugadores[0]!;
-  return (
-    <div className="chips quien-soy" role="group" aria-label="Jugador">
-      {s.jugadores.map(j => (
-        <a key={j.id} className="opcion" href={`#/${base}/${j.id}`} aria-pressed={j.id === actual.id} aria-current={j.id === actual.id ? "true" : undefined}>
-          <Retrato j={j} size={22} /> {j.nombre}
-        </a>
-      ))}
-    </div>
-  );
-}
-
-/** En el celular invitado: si el anfitrión empezó una partida y estás en otra pestaña, un botón te lleva. */
-function AvisoPartidaSala({ ruta }: { ruta: Ruta }) {
-  const p = useAPartidaDeSala();
-  if (!p || ruta === "lobby") return null;
-  return <a className="btn principal aviso-partida" href="#/lobby">¡Empezó la partida! Ir a jugar →</a>;
-}
-
-function PaginaUnirse({ codigo }: { codigo?: string }) {
-  const s = useEstado();
-  const conCuenta = !!s.cuenta;
-  return (
-    <>
-      <CabeceraJuego titulo="Sala" color="#22E1FF" />
-      {!conCuenta && <Cuenta j={s.jugadores[0]!} />}
-      <Unirse codigo={codigo} />
-      <section className="card">
-        <h2>¿Tú armas la sala?</h2>
-        <p className="hint">Crea la sala desde el lobby y comparte el código o el QR. Pueden entrar hasta 8.</p>
-        <a className="btn principal jugar" href="#/lobby">Crear mi sala</a>
-      </section>
-    </>
-  );
-}
-
-function PaginaTienda({ id }: { id?: string }) {
-  const s = useEstado();
-  const j = s.jugadores.find(x => x.id === id) ?? s.jugadores[0]!;
-  return (
-    <>
-      <CabeceraJuego titulo="Tienda" color="#FFC23D" derecha={<span className="hub-moneda"><i aria-hidden="true">✦</i>{saldosDe(j).disponible}</span>} />
-      <QuienSoy id={j.id} base="tienda" />
-      <Tienda j={j} />
-    </>
-  );
-}
-
-function LogrosDe({ j }: { j: JugadorLocal }) {
-  const s = useEstado();
-  const datos = s.jugadores.map((x, i) => ({ id: x.id, nombre: x.nombre, delEvento: saldosDe(x).delEvento, pareja: parejaDe(i, s) }));
-  const lista = logrosDe(j.id, datos, s.historial);
-  const ganados = lista.filter(l => l.ganado).length;
-  return (
-    <section className="card" aria-labelledby="t-logros">
-      <div className="entre"><h2 id="t-logros">Logros</h2><small className="muted">{ganados} de {lista.length}</small></div>
-      <ul className="logros">
-        {lista.map(l => (
-          <li key={l.clave} className={"logro" + (l.ganado ? " ganado" : "")}>
-            <b>{l.nombre}</b>
-            <small className="muted">{l.ambito === "sesion" ? "Sesión" : "Histórico"} · {l.descripcion}</small>
-            {l.ganado && <span className="chip lime">Ganado</span>}
-          </li>
-        ))}
-      </ul>
-    </section>
-  );
-}
-
-type PestanaCasillero = "armar" | "cosas" | "equipo" | "logros" | "cuenta";
-const PESTANAS_CASILLERO: [PestanaCasillero, string, string][] = [["armar", "🧱", "Armar"], ["cosas", "🎒", "Mis cosas"], ["equipo", "🛡️", "Equipo"], ["logros", "🏅", "Logros"], ["cuenta", "👤", "Cuenta"]];
-
-/** Casillero: tu carta arriba y pestañas para armar al personaje, el equipo, los logros y la cuenta. */
-function Perfil({ id }: { id?: string }) {
-  const s = useEstado();
-  const j = s.jugadores.find(x => x.id === id) ?? s.jugadores[0]!;
-  // «#/perfil/cosas» abre directo lo nuevo (desde la apertura de sobres o la burbuja de la pantalla principal).
-  const [tab, setTab] = useState<PestanaCasillero>(id === "cosas" || (j.nuevos?.length ?? 0) > 0 ? "cosas" : "armar");
-  return (
-    <>
-      <CabeceraJuego titulo="Casillero" color="#FF2E88" />
-      <div className="pagina-dividida">
-        <div className="pd-izq">
-          <QuienSoy id={j.id} base="perfil" />
-          <TarjetaJugador j={j} />
-        </div>
-        <div className="pd-der">
-          <div className="pestanas-menu casillero-tabs" role="tablist" aria-label="Casillero">
-            {PESTANAS_CASILLERO.map(([k, ic, n]) => <button key={k} role="tab" aria-selected={tab === k} onClick={() => setTab(k)}><span aria-hidden="true">{ic}</span> {n}{k === "cosas" && (j.nuevos?.length ?? 0) > 0 && <i className="burbuja-nuevos">{j.nuevos!.length}</i>}</button>)}
-          </div>
-          <div key={tab} className="casillero-panel pd-desliza">
-            {tab === "armar" && <ArmarFigura j={j} />}
-            {tab === "cosas" && <MisCosas j={j} />}
-            {tab === "equipo" && <SelectorEquipo j={j} />}
-            {tab === "logros" && <LogrosDe j={j} />}
-            {tab === "cuenta" && (hayNube ? <Cuenta j={j} /> : <p className="hint">Las cuentas necesitan conexión con el servidor.</p>)}
-          </div>
-        </div>
-      </div>
-    </>
-  );
+  if (ruta === "ds") return <Suspense fallback={null}><PaginaDS /></Suspense>;
+  // Sin sesión se entra o se crea cuenta aquí mismo: la dirección (por ejemplo la del QR) no cambia y al entrar se sigue a la sala.
+  const pantalla = fase === "cargando" ? <Carga />
+    : fase === "fuera" ? <Acceso />
+    : fase === "registro" ? <CompletarRegistro />
+    : fase === "menor" ? <SoloMayores />
+    : ruta === "jugar" ? <Jugar />
+    : ruta === "catalogo" ? <Catalogo />
+    : ruta === "juego" && arg ? <FichaJuego id={arg} />
+    : ruta === "sala" && arg ? <Sala key={arg} codigo={arg} />
+    : ruta === "tv" && arg ? <PantallaTv key={arg} codigo={arg} />
+    : ruta === "personalizar" ? <Personalizar />
+    : ruta === "editor" ? <Editor />
+    : ruta === "ranking" ? <Ranking />
+    : ruta === "logros" ? <Logros />
+    : ruta === "perfil" ? <Perfil />
+    : ruta === "ajustes" ? <Ajustes />
+    : ruta === "admin" ? <Admin />
+    : <Hub />;
+  return <>{pantalla}{fase === "dentro" && <SincroCapsulas />}<Avisos /></>;
 }

@@ -1,7 +1,7 @@
 // Qué puede ver cada interfaz. La Pantalla (TV) y el Anfitrión reciben la vista pública;
 // cada celular recibe además solo lo suyo. En producción el servidor arma estas vistas
 // y la base de datos (RLS) impide leer lo privado de otro; esto define exactamente qué sale.
-import type { EstadoPartida } from "./partida";
+import { quienesContestan, type EstadoPartida } from "./partida";
 
 export interface VistaPublica {
   version: number;
@@ -24,6 +24,17 @@ export interface VistaPublica {
   cartasEnMano: Record<string, number>;
   cartaUsada?: EstadoPartida["cartaUsada"];
   jugadores: { id: string; nombre: string }[];
+  pausada: boolean;
+  /** El impostor: pistas dichas en la ronda. */
+  pistas: Record<string, string>;
+  xpReto: Record<string, number>;
+  ruleta?: EstadoPartida["ruletaExtra"];
+  /** Quién tiene el control. */
+  control?: string;
+  /** Quiénes deben contestar en esta ronda (para saber a quién se espera). */
+  esperados: string[];
+  /** Al revelar una votación (El impostor, ¿Quién es más probable?): quién votó a quién. Antes, nada. */
+  votosDe?: Record<string, string>;
 }
 
 export function vistaPublica(e: EstadoPartida): VistaPublica {
@@ -45,6 +56,14 @@ export function vistaPublica(e: EstadoPartida): VistaPublica {
     cartasEnMano: Object.fromEntries(Object.entries(e.manos).map(([j, m]) => [j, m.length])),
     cartaUsada: e.cartaUsada,
     jugadores: e.cfg.jugadores.map(j => ({ id: j.id, nombre: j.nombre })),
+    pausada: !!e.pausada,
+    pistas: { ...(e.pistas ?? {}) },
+    xpReto: { ...(e.xpReto ?? {}) },
+    ruleta: e.ruletaExtra,
+    control: e.control,
+    esperados: quienesContestan(e),
+    votosDe: e.fase !== "contestando" && (e.motor === "rol-secreto" || e.motor === "senalar") && !(e.revelado as { saltada?: boolean } | undefined)?.saltada
+      ? Object.fromEntries(Object.entries(e.respuestas).map(([j, v]) => [j, String(v)])) : undefined,
   };
 }
 

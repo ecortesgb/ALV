@@ -1,0 +1,102 @@
+// Piezas comunes de las pantallas de ALV 2.0: marco con ciudad, cabecera, avisos, confirmación y figuras.
+import { useEffect, useState, useSyncExternalStore, type ReactNode } from "react";
+import type { FiguraV2 } from "../content/personaje";
+import { FondoCiudad, Icono, RaizDS, type IconoId } from "../ds";
+import { Escena3D, FotoFigura, semillaDe, type EnEscena, type Momento } from "../app/figura3d";
+import { atras } from "../app/rutas";
+
+/** ¿Pantalla ancha (laptop o TV)? */
+export function useAncho(min = 900): boolean {
+  const [a, setA] = useState(() => matchMedia(`(min-width:${min}px)`).matches);
+  useEffect(() => {
+    const m = matchMedia(`(min-width:${min}px)`), f = () => setA(m.matches);
+    m.addEventListener("change", f);
+    return () => m.removeEventListener("change", f);
+  }, [min]);
+  return a;
+}
+
+/** Marco de toda pantalla: tokens del Design System, ciudad de noche y zona que se desliza. */
+export function Marco({ children, clase = "", fijo }: { children: ReactNode; clase?: string; fijo?: ReactNode }) {
+  const ancho = useAncho();
+  return (
+    <RaizDS ancho={ancho} className={`alv ${clase}`.trim()}>
+      <FondoCiudad />
+      <div className="a-scroll">{children}</div>
+      {fijo}
+    </RaizDS>
+  );
+}
+
+/** Cabecera con regreso y el nombre de la sección en su etiqueta amarilla. */
+export function Cabecera({ titulo, icono, derecha, alVolver }: { titulo: string; icono?: IconoId; derecha?: ReactNode; alVolver?: () => void }) {
+  return (
+    <header className="a-cab">
+      <button type="button" className="a-atras" onClick={alVolver ?? atras} aria-label="Regresar"><Icono id="back" /></button>
+      <h1 className="d-lbl a-titulo">{icono && <Icono id={icono} />}{titulo}</h1>
+      {derecha && <div className="a-cab-der">{derecha}</div>}
+    </header>
+  );
+}
+
+// ---------- Avisos (uno a la vez, abajo) y confirmación ----------
+let avisoActual: { texto: string; n: number } | null = null, n = 0;
+const oyentes = new Set<() => void>();
+const avisar = () => oyentes.forEach(f => f());
+export function aviso(texto: string) {
+  const mio = ++n;
+  avisoActual = { texto, n: mio }; avisar();
+  setTimeout(() => { if (avisoActual?.n === mio) { avisoActual = null; avisar(); } }, 3200);
+}
+export interface Pregunta { titulo: string; texto?: string; si: string; no?: string; peligro?: boolean }
+let pregunta: (Pregunta & { responder: (v: boolean) => void }) | null = null;
+export const confirmar = (p: Pregunta) => new Promise<boolean>(r => { pregunta = { ...p, responder: v => { pregunta = null; avisar(); r(v); } }; avisar(); });
+
+export function Avisos() {
+  const a = useSyncExternalStore(f => { oyentes.add(f); return () => oyentes.delete(f); }, () => avisoActual);
+  const p = useSyncExternalStore(f => { oyentes.add(f); return () => oyentes.delete(f); }, () => pregunta);
+  useEffect(() => {
+    if (!p) return;
+    const f = (e: KeyboardEvent) => { if (e.key === "Escape") p.responder(false); };
+    addEventListener("keydown", f);
+    return () => removeEventListener("keydown", f);
+  }, [p]);
+  return (
+    <RaizDS className="a-capa">
+      {a && <div key={a.n} className="a-aviso" role="status">{a.texto}</div>}
+      {p && (
+        <div className="a-velo" onClick={() => p.responder(false)}>
+          <div className="d-pnl a-dialogo" role="alertdialog" aria-modal="true" aria-label={p.titulo} onClick={e => e.stopPropagation()}>
+            <span className="dsp ol a-t2">{p.titulo}</span>
+            {p.texto && <p className="a-suave">{p.texto}</p>}
+            <div className="a-fila">
+              <button type="button" className="a-plano" onClick={() => p.responder(false)}>{p.no ?? "Cancelar"}</button>
+              <button type="button" className={"d-btn " + (p.peligro ? "k-red" : "k-yel")} autoFocus onClick={() => p.responder(true)}><span className="dsp">{p.si}</span></button>
+            </div>
+          </div>
+        </div>
+      )}
+    </RaizDS>
+  );
+}
+
+// ---------- Figuras ----------
+/** Retrato de un jugador (foto de su figura 3D; sin figura, una fija al azar por su id). */
+export function Retrato({ id, figura, nombre, size = 44 }: { id: string; figura?: FiguraV2 | null; nombre?: string; size?: number }) {
+  return <FotoFigura figura={figura ?? undefined} semilla={figura ? undefined : semillaDe(id)} size={size} nombre={nombre} />;
+}
+/** Escena 3D con varios jugadores de pie. */
+export function Elenco({ gente, foco, momentos, alto }: { gente: { id: string; figura?: FiguraV2 | null }[]; foco?: string; momentos?: { id: string; cual: Momento; n: number }[]; alto?: number | string }) {
+  const figuras: EnEscena[] = gente.map(g => ({ id: g.id, figura: g.figura ?? undefined, semilla: g.figura ? undefined : semillaDe(g.id), foco: g.id === foco }));
+  return <Escena3D figuras={figuras} momentos={momentos} alto={alto} />;
+}
+
+/** Campo de texto con su etiqueta. */
+export function Campo({ etiqueta, ...props }: { etiqueta: string } & React.InputHTMLAttributes<HTMLInputElement>) {
+  return <label className="a-campo"><span>{etiqueta}</span><input {...props} /></label>;
+}
+
+/** Estado vacío o de espera: un texto grande y uno chico, sin cajas grises. */
+export function Vacio({ titulo, texto, children }: { titulo: string; texto?: string; children?: ReactNode }) {
+  return <div className="a-vacio"><span className="dsp ol a-t2">{titulo}</span>{texto && <p className="a-suave">{texto}</p>}{children}</div>;
+}
