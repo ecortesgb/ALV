@@ -44,4 +44,6 @@ Paso 1.5 (prototipo HTML), paso 12, tienda, sobres y colección 3D (024, 025), c
 
 ## Siguiente tarea exacta
 
-Esperar la prueba de Elías con aparatos reales (lista en `ALV_QA_PROTOCOL.md` §6) y corregir lo que falle. Decisiones abiertas en `ALV_DECISION_LOG.md` §3.
+1. Paso 0: modo invitado para probar sin cuenta (Maestro §3.2, v1.32). Sin esto Elías no ve las pantallas en el sitio publicado.
+2. Luego, etapa 1 del diseño (solo diagnóstico, sin cambios de código) según `ALV_DISENO_NEON.md`. Esperar la aprobación de Elías de D1 a D4 antes de la etapa 2.
+3. En paralelo, Elías prueba con aparatos reales (lista en `ALV_QA_PROTOCOL.md` §6). Decisiones abiertas en `ALV_DECISION_LOG.md` §3 y §6.

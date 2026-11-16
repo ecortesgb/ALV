@@ -169,6 +169,8 @@ Muestra:
 
 **DECISIÓN (v1.13, Elías, 15 de noviembre):** la pantalla que se proyecta (laptop o TV) no participa: solo muestra la partida. Quien organiza juega desde su celular con su cuenta de jugador, donde ve su palabra secreta, sus herramientas y sus preguntas. Sale de la prueba real de sala, donde el jugador de la laptop no podía ver su palabra en El impostor. Resuelto en v1.14: ver 21.3.
 
+**DECISIÓN (v1.32, Elías, 16 de noviembre) — acceso sin cuenta (modo invitado):** se puede entrar a probar sin crear cuenta. Modo invitado: el juego corre en este aparato, con etiqueta visible «Prueba»; no guarda XP, figura ni historial; no escribe en la base. Para entrar pide apodo y confirmar que es mayor de 18, sin fecha de nacimiento. Sustituye, solo para este modo, la decisión de v1.12 de que el juego local necesita cuenta. **PENDIENTE (v1.32):** las salas en la nube (QR, dos celulares) necesitan un usuario en la base; un invitado sin cuenta solo puede jugar en este aparato hasta que Elías decida si acepta un usuario anónimo (revisión del asesor de seguridad antes).
+
 **Regla de privacidad:** no mostrar respuestas, roles, palabras secretas ni información privada antes del momento definido por la mecánica.
 
 ---
@@ -440,6 +442,12 @@ Referencia de Elías: lámina de 12 pantallas (carga, registro, personalizar, me
 **DECISIÓN (v1.20, Elías aprobó, 15 de noviembre) — Fase 3, tanda 4: personalizador, colección y sobres.** Referencia: https://claude.ai/artifact/DLmnegsSqJy7mQ9aSKWjeF (fuente `alv2\fase3-t4\`). Cápsulas (tocar una la activa al instante), editor rápido (cara, pelo, playera, pantalón, accesorios, pose; al azar solo con piezas propias), taller completo de Minifig Studio, tienda (sobres de piezas y de contenido), apertura de sobre y mi colección. Decisiones, todas las recomendadas, que resuelven pendientes de 13: (1) sobres de piezas bronce 60 XP (nivel 1, 2 piezas), plata 120 (nivel 3, 3 piezas), oro 240 (nivel 6, 4 piezas); (2) sin repetidas: los sobres solo traen piezas que no se tienen y uno sin piezas nuevas no se vende; (3) cuatro rarezas solo de colección, común 60 %, rara 28 %, épica 10 %, legendaria 2 %, visibles antes de comprar; (4) sobres de contenido de 100 a 150 XP, con etiquetas de familiar, adulto e intensidad, válidos para toda la sala del dueño, y el contenido base siempre alcanza para jugar; (5) en el editor se ven las piezas que faltan, en gris y con el sobre donde salen; (6) el taller completo solo en tablet o computadora; en celular, el editor rápido.
 
 **DECISIÓN (v1.21, Elías aprobó, 15 de noviembre) — Fase 3, tanda 5: perfil, logros y rankings. Con esto la Fase 3 de ALV 2.0 queda cerrada.** Referencia: https://claude.ai/artifact/6kYG6Lr7vp7i1ynjx3aSYv (fuente `alv2\fase3-t5\`). Perfil con tarjeta de jugador (figura, nivel, título por nivel y números con siglas), logros de sesión e históricos con avance, y ranking con Esta reunión, Histórico, Parejas, Equipos e Historial. Decisiones, todas las recomendadas: (1) el perfil que ven los demás muestra figura, apodo, nivel, título, números, logros y últimas partidas, nunca fecha de nacimiento ni género; (2) el ranking histórico compara por defecto con «Mi grupo» (gente con la que se ha jugado), con «Todo ALV» y «Este mes» como filtros; (3) cada quien elige 3 logros destacados; (4) unos pocos logros secretos, visibles como «???» con pista; (5) los logros no dan XP; (6) la tarjeta usa siglas: PJ partidas jugadas, PG ganadas, RC retos cumplidos, MVP, IMP impostores atrapados, RAC mejor racha.
+
+## 8.8 Propuesta de diseño Neon Party — PROPUESTA (v1.32)
+
+**PROPUESTA (v1.32):** instrucciones de transformación visual de Elías («ALV — Neon Party Universe»): tokens y tipografía en `theme-game.css`, HUD con avatar y XP, HUB con JUGAR protagonista, selector de juegos con tarjetas ilustradas, lobby con placas, tienda con rarezas y apertura de sobres con omisión, microinteracciones con `prefers-reduced-motion`. Plan completo y decisiones abiertas en `app\docs\ALV_DISENO_NEON.md`.
+
+**PENDIENTE (v1.32):** D1, si reemplaza a Cine Cómic Nocturno (8.7) o se aplican solo sus partes compatibles (recomendado); D2, fuentes; D3, economía visual (sin monedas ni gemas hasta decidir); D4, nombre visible; D5, personajes sin LEGO (análisis separado; las maquetas tienen nombres parecidos a personajes de terceros y no se usan). No se implementa hasta que Elías responda.
 
 # 9. Personajes y personalización
 
@@ -1383,6 +1391,10 @@ Decisiones del usuario del 12 de noviembre de 2026:
 ## v1.6
 - Primeros logros (14.2), con ámbito de sesión o histórico (ver DECISIÓN v1.6 en 14.2).
 
+## v1.32
+- Acceso sin cuenta en modo invitado para probar (3.2, decisión de Elías). Pendiente: salas en la nube para invitados.
+- Propuesta de diseño Neon Party recibida y anotada (8.8). Pendiente de decidir si reemplaza a Cine Cómic Nocturno.
+
 ## v1.31
 - 16 nov 2026. Elías autoriza publicar la versión de prueba de ALV 2.0 en la página. Se agregan los documentos de continuidad `docs/ALV_*.md`. Siguen sin aplicar 017, 018 y 027; las pruebas con cuentas reales en laptop, TV y celulares quedan a cargo de Elías (`docs/ALV_QA_PROTOCOL.md`, sección 6).
 
@@ -1462,5 +1474,5 @@ Decisiones del usuario del 12 de noviembre de 2026:
 
 ---
 
-**Fin del Documento Maestro ALV v1.29**  
+**Fin del Documento Maestro ALV v1.32**  
 Este documento debe actualizarse de forma incremental y conservar la distinción entre decisiones aprobadas, propuestas, pendientes y descartadas.

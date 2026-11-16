@@ -46,3 +46,14 @@ La fuente de las decisiones de producto es `DOCUMENTO_MAESTRO.md`. Aquí se anot
 - Decisión 5 de §22.1 («la Fase 6 se publica por pasos»): sustituida en v1.30.
 - Decisión 7 de §22.1 (sala familiar): sustituida por D1 en v1.25.
 - Personaje 2D, tienda 2D y XP guardada en el aparato: retirados del código en v1.30.
+
+## 5. Decisiones de Elías del 16 de noviembre
+
+- Acceso sin cuenta: modo invitado para probar, con etiqueta «Prueba», sin XP ni figura guardada ni escritura en la base. Confirma mayoría de edad sin guardar fecha (Maestro v1.32, §3.2). Pendiente: salas en la nube para invitados.
+- Propuesta visual «Neon Party Universe»: recibida, no aprobada. Se anota en `docs/ALV_DISENO_NEON.md` con sus decisiones D1 a D5 (Maestro §8.8).
+
+## 6. Pendientes nuevos
+
+8. Acceso invitado a salas en la nube: usuario anónimo en la base o solo local (revisión del asesor antes).
+9. Dirección visual: Cine Cómic Nocturno (recomendado) o Neon Party Universe; fuentes; sin monedas ni gemas; nombre visible; personajes sin LEGO.
+
