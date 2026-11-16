@@ -1,7 +1,7 @@
 # ALV — Amigos Legendarios Verdaderos
 ## Documento Maestro del Producto
-**Versión:** 1.29  
-**Última actualización:** 15 de noviembre de 2026  
+**Versión:** 1.30  
+**Última actualización:** 16 de noviembre de 2026  
 **Estado:** Documento vivo de producto; decisiones y propuestas identificadas por separado.
 
 ---
@@ -1166,6 +1166,18 @@ Riesgo aceptado: la cuenta con el control puede leer la semilla y todas las acci
 - Pruebas nuevas (82; total 147): los 14 juegos completos con 4 jugadores, repetición con semilla y acciones (también a media partida y con acciones repetidas), el secreto en cada momento de los 14 juegos, la frontera (`roles/pantalla` y los `juegos/*/tv.tsx` no usan `vistaJugador`, `privado`, `respuestas`, `manos` ni `semilla`), los componentes que no hablan con la base, las rutas y que `nube.ts` ofrece lo mismo que antes.
 - Quedan para su paso: `local/`, `figura3d/`, `juegos/` y `roles/*/motor.ts` (paso 4), `servicios/tiempoReal.ts` (paso 3) y las piezas de apoyo del Design System (aviso, confirmar, contador de XP, confeti, apertura de sobre).
 
+**Pasos 2 a 11, versión de prueba (v1.30, 16 de noviembre).** Elías autorizó hacer los pasos 2 a 12 seguidos y la Fase 7 (documento «ALV 2.0 — Dirección técnica»), lo que sustituye a la decisión 5 de arriba («se publica por pasos»). Se trabajó en la rama `alv2-fase6`; **no está publicado en la página** hasta que Elías lo decida. Se hizo:
+- **Base (paso 2).** Aplicadas: 019 (tiempo real en `partidas`, `datos_privados`, `acciones`, `miembros_evento`, `eventos`, `figuras_jugador`), 020 (nadie abre ni entra a una sala sin `mayor_18`; se revisa con un disparador, también ante solicitudes manipuladas) y 026 en su parte necesaria (`dar_xp_reto`, `ranking_conocidos`). Escritas y **sin aplicar**: 017 (semilla y arranque en tabla aparte, partidas solo por función) y 018 (número de orden y tipo `control`); la herramienta las rechazó por quitar permisos en producción y esperan autorización expresa. 027 está en `supabase/pendientes/` y no se aplica. 021 a 025 no existen todavía.
+- **El riesgo de la semilla queda cerrado sin esperar a 017:** la semilla real ya no se escribe en `partidas` (va 0); viaja en la acción de arranque, que por RLS solo lee quien tiene el control. Probado con usuarios simulados en una transacción deshecha: quien no tiene el control ve 0 acciones ajenas y lee semilla 0.
+- **Tiempo real (paso 3).** `servicios/tiempoReal.ts`: avisos al instante; sin confirmación en 5 s, consulta cada 3 s y se marca «Reconectando»; latido cada 12 s.
+- **Partida en tres aparatos (paso 4).** `roles/pantalla/motor.ts` es el único que llama a `aplicar`: reconstruye con arranque + acciones guardadas, publica la vista pública y lo privado de cada quien, y revela sola a los 2 s. Corre en la Pantalla (`#/tv/código`) o en el celular del anfitrión si juegan sin pantalla. Acciones nuevas del motor: `pausar`, `reanudar`, `saltar`, `pista`, `xp-reto`, `ruleta`, `pasar-control`. Las 11 mecánicas (14 juegos) tienen herramienta de celular y escena de TV en `juegos/general/` (un archivo general por papel, no una carpeta por mecánica).
+- **Sala, acceso, hub, catálogo, personalizar, perfil, logros, ranking y administración (pasos 5 a 9)** con el Design System, en `src/pantallas/`. El QR deja dentro de la sala; sin sesión se entra o se crea cuenta ahí mismo y se sigue a la sala. Registro solo para mayores de 18 (D1).
+- **Limpieza (paso 10), parte de código:** se retiró la app 2D (pantallas, estado local con XP, tienda 2D y los tres CSS). La limpieza de la base es la 027, sin aplicar.
+- **Correcciones de la prueba del 15 de noviembre (paso 11):** el celular del anfitrión es un jugador más y ve su palabra; avisos al instante en lugar de consultas cada 1.5 s; QR siempre visible; tocar una cápsula llama al servidor en el momento y la sala lo ve por tiempo real. Falta la nueva prueba de sala con aparatos reales.
+- **Pruebas:** 149 automáticas (nuevas: motor de sala, repetición, control, secreto de lo publicado, rutas), build, y en navegador con el respaldo local (3 y 4 pestañas) El impostor completo con y sin pantalla. Sin probar contra el servidor con cuentas reales ni en celulares y TV: lo prueba Elías.
+- **No se hizo y queda PENDIENTE:** paso 1.5 (prototipo HTML de 8 pantallas, 23.2): se construyó la app directamente y falta que Elías confirme que lo acepta; paso 12 (reglas de XP); tienda, sobres y colección 3D (024, 025); código de recuperación (022); apodos e intentos (021); cuentas en un solo celular (023); personalizador Simple/Avanzado propio (hoy abre el editor de Minifig Studio); motor Temperatura + Voltaje y contenido nuevo (3.2); pasar la partida al celular si la Pantalla no vuelve, espera al desconectado y «pedir pausa» (21.4); entorno de pruebas con Supabase aparte (la organización ya tiene dos proyectos).
+- **Decisiones técnicas tomadas sin consulta** (detalle en `docs/ALV_DECISION_LOG.md`): el modo de la sala se guarda en `eventos.nombre`; parejas por orden de llegada si el número es par; «No lo cumplí» vale 0 puntos y no hay botón de pasar (se pasa con comodín, v1.28); un solo brillo en bucle por pantalla; sin dependencias nuevas; respaldo local sin servidor para probar varios aparatos en pestañas; Tienda con candado «Abre pronto».
+
 ## 22.2 Hipótesis iniciales (historial)
 
 Hipótesis de implementación:
@@ -1370,6 +1382,9 @@ Decisiones del usuario del 12 de noviembre de 2026:
 
 ## v1.6
 - Primeros logros (14.2), con ámbito de sesión o histórico (ver DECISIÓN v1.6 en 14.2).
+
+## v1.30
+- 16 nov 2026. Fase 6, pasos 2 a 11 en versión de prueba (22.1, «Avance de la Fase 6»): app 2.0 sobre el Design System, motor de sala, tiempo real y migraciones 019, 020 y 026 aplicadas. La autorización de Elías para hacer los pasos 2 a 12 y la Fase 7 seguidos sustituye a la decisión 5 de 22.1. Quedan pendientes y anotados: 017 y 018 (escritas, sin aplicar), 027 (no se aplica), paso 1.5, paso 12, tienda 3D, publicación en la página.
 
 ## v1.29
 - Pendientes de Temperatura + Voltaje resueltos (3.2): consentimiento explícito y alternativa siempre (agua, castigo u otra pregunta); primera jornada de prueba sábado 12:00 a domingo 17:00; eventos sorpresa como opción de partida y ajuste del anfitrión; reglas de la casa predeterminadas; mismo puntaje en todos los niveles con premio opcional del anfitrión; contenido nuevo con ideas propias y anécdotas de los amigos (pendiente dónde se guardan por privacidad).

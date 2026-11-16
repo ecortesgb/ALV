@@ -1,3 +1,11 @@
+-- ESTADO (16 nov 2026): 019, 020 y 026 están aplicadas; 017 y 018 esperan autorización de Elías.
+-- Este archivo es la prueba para DESPUÉS de aplicar 017 y 018 (usa crear_partida_sala, arranques_partida y el tipo 'control').
+-- La prueba que sí se corrió el 16 nov, con el esquema de hoy y usuarios simulados en una transacción deshecha, dio:
+--   menor no entra / no abre sala / no se inserta directo: rechazado («solo mayores de 18», permiso denegado)
+--   quien no tiene el control: no crea partida, no publica, no da XP, no suplanta a otro, ve 0 acciones ajenas
+--     (el arranque con la semilla no lo lee), lee semilla 0 en partidas y solo su propio secreto
+--   cuenta fuera de la sala: 0 partidas, 0 acciones, 0 secretos; no manda acciones ni da XP; su ranking es solo ella
+--   quien tiene el control: ve las acciones, da XP por reto (1 a 200) solo a miembros; anon no ejecuta nada
 -- Prueba de 017–020 y 026 con usuarios simulados. Termina SIEMPRE con una excepción: nada queda guardado.
 do $$
 declare

@@ -24,6 +24,8 @@ body { overscroll-behavior: none; -webkit-tap-highlight-color: transparent; }
 .D.alv .d-pnl { padding: 16px; }
 .D.alv .d-pnl.hold { padding: 0; }
 .D.alv .d-chip { font-size: var(--chico); }
+.D.alv button.d-chip { min-height: 40px; padding-inline: 16px; transition: transform var(--tiempo-toque) var(--sale); }
+.D.alv button.d-chip:active { transform: scale(.97); }
 .D.alv .d-top .d-jug { padding: 6px 16px 6px 6px; }
 .D.alv .d-ret { display: grid; place-items: end center; }
 .D.alv button { font-family: inherit; }
@@ -232,7 +234,7 @@ body { overscroll-behavior: none; -webkit-tap-highlight-color: transparent; }
 .D .a-tv-msj { position: relative; z-index: 1; grid-row: 1 / -1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1em; text-align: center; padding: 2em; }
 .D .a-tv-velo { position: absolute; inset: 0; z-index: 6; display: grid; place-items: center; padding: 2em; background: color-mix(in srgb, var(--tinta) 72%, transparent); animation: aVelo 180ms ease-out backwards; }
 .D .a-tv-ruleta { display: flex; flex-direction: column; align-items: center; gap: .6em; max-width: 34em; padding: 1.6em !important; text-align: center; animation: aEntra 260ms var(--sale) backwards; }
-.D .a-tv-respaldo { position: absolute; z-index: 7; left: 1.6em; top: 50%; translate: 0 -50%; display: flex; flex-direction: column; gap: .5em; opacity: .28; transition: opacity 200ms ease-out; }
+.D .a-tv-respaldo { position: absolute; z-index: 7; left: 50%; top: 1.1em; translate: -50% 0; display: flex; gap: .5em; opacity: .28; transition: opacity 200ms ease-out; }
 .D .a-tv-respaldo:hover, .D .a-tv-respaldo:focus-within { opacity: 1; }
 .D .a-tv-respaldo button { min-width: 6em; min-height: 44px; padding: 8px 12px; font: var(--etiqueta); text-transform: uppercase; color: var(--texto); background: var(--panel-oscuro); border: 2px solid var(--borde-luz); border-radius: var(--radio-boton); cursor: pointer; }
 .D .a-tv .d-rueda { font-size: clamp(13px, 1.05vw, 28px); height: clamp(300px, 52vh, 640px) !important; }
