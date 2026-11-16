@@ -24,29 +24,20 @@ Este archivo convierte esas instrucciones en un plan que cabe en la app real. No
 | Sobre épico con cartas «Helmet», «Legendary», «Star-Loic», «Ikaris» | Sobres de la tienda 3D todavía no construidos (024, 025) | No copiar. **Los nombres de las maquetas parecen personajes de terceros; no se usan** (Maestro §19.1) |
 | Nombre «Aventuras con Amigos» | Maestro v1.12: nombre principal «Amigos Legendarios Verdaderos» | Pregunta D4 |
 
-## 3. Decisiones que necesita Elías (no se programan sin respuesta)
+## 3. Decisiones de Elías (resueltas el 16 de noviembre, Maestro v1.33)
 
-**D1. ¿Neon Party Universe reemplaza a Cine Cómic Nocturno o se aplican solo sus partes compatibles?**
-- Opción A (recomendada): mantener Cine Cómic Nocturno, que ya está aprobado y en código. Aplicar: barra superior, estados de botón (hover, presionado, foco), microinteracciones, rarezas con color y marco, apertura de sobres con partículas y botón para omitir, transiciones y `prefers-reduced-motion`.
-- Opción B: reabrir la dirección visual. Pasa por una nueva propuesta con su página de aprobación, como en la Fase 2. Choca con Maestro §8.7, que pide evitar neón en todo y glassmorphism indiscriminado.
-- Recomendación: A. Es lo que ya aprobaste y ya está construido; el resultado se parece más a «videojuego comercial» si se aplican bien los detalles, no con otra paleta.
+- **D1. Dirección:** se mantiene Cine Cómic Nocturno. Se aplican las partes de Neon Party que sirven (barra superior, estados de botón, rarezas, apertura de sobres con omisión, movimiento reducido).
+- **D2. Fuentes:** Bangers y Barlow. No Outfit ni Fredoka.
+- **D3. Economía visual:** vuelven las **monedas** como moneda de tienda. Las **gemas son la XP**. Pendiente: cómo se ganan y se gastan las monedas y sus precios (Maestro §13.1). Hasta entonces, la tienda cobra en XP.
+- **D4. Nombre:** «Amigos Legendarios Verdaderos».
+- **D5. Personajes:** se mantiene LEGO para la prueba. Riesgo de propiedad intelectual en el repo público (Maestro §19.1), a revisar antes de difundir fuera del grupo.
+- **D6. Invitados:** pueden entrar a salas en la nube y en local, solo para pruebas. Elías borra todo al terminar. Antes de activar el acceso anónimo, revisión del asesor de seguridad.
 
-**D2. ¿Qué fuentes?**
-- Las fuentes aprobadas son Bangers (onomatopeyas), Barlow y Barlow Condensed (títulos y botones).
-- Propuesta: mantener las aprobadas. Si Elías quiere Outfit y Fredoka, se cambian los tokens de `src/ds`, pero hay que rehacer las pantallas aprobadas.
-- Las fuentes vienen de Google Fonts: por eso el archivo de estilos ya dice que las cargue por red. Para que la interfaz no dependa de internet, se agregan los archivos de fuente en `public/fuentes/` y `@font-face` local con respaldo. Es un cambio de recursos, no de dependencias.
-
-**D3. Economía visual.** ¿Confirmas que la app solo muestra XP y que no habrá monedas ni gemas? (Son decisiones de economía, reglas 4 y 5.)
-
-**D4. Nombre visible.** ¿«Amigos Legendarios Verdaderos» (Maestro v1.12) o «Aventuras con Amigos» (maquetas)? Se usa uno solo en toda la app.
-
-**D5. Personajes.** Las instrucciones piden quitar la dependencia de LEGO y crear personajes propios. Eso es un cambio de arquitectura de las piezas 3D y del Maestro §9 y §19.1. **Va en un análisis separado**, no en esta tarea. Mientras tanto no se crean personajes nuevos a partir de las maquetas.
-
-**D6. Acceso sin cuenta (ya decidido: modo invitado).** Ver `docs/DOCUMENTO_MAESTRO.md` §3.2 (v1.32). Antes de probar el diseño hay que implementarlo. Hay un punto abierto: las pruebas con varios celulares en sala usan la base, y un invitado sin cuenta no puede entrar a una sala en la nube sin crear un usuario anónimo en la base. Esa opción necesita decisión y revisión del asesor de seguridad.
+Pendientes que quedan: monedas (ganar, gastar, precios) y el evento de la barra («Luna de Octubre» sigue fuera; no hay evento real).
 
 ## 4. Orden de ejecución
 
-**Paso 0 (antes de diseñar).** Implementar el modo invitado (§3.2 del Maestro, v1.32). Sin esto no hay forma de que Elías vea las pantallas en el sitio publicado sin cuenta.
+**Paso 0 (antes de diseñar).** Implementar el modo invitado (§3.2 del Maestro, v1.32 y v1.33): puede entrar a salas en la nube, solo para pruebas.
 
 **Etapa 1. Diagnóstico (sin cambios de código).** Entregar una tabla con:
 - archivos de estilos actuales: `src/ds/componentes.css`, `src/ds/extra.css`, `src/pantallas/alv.css` (o el que corresponda), y los tokens generados;
@@ -55,7 +46,7 @@ Este archivo convierte esas instrucciones en un plan que cabe en la app real. No
 - limitaciones de la figura 3D en el hub y el lobby (rendimiento en celular).
 Entregar prioridades. Parar aquí y esperar a Elías.
 
-**Etapa 2. Base del diseño (solo después de la etapa 1 aprobada).**
+**Etapa 2. Base del diseño (solo después de la etapa 1 aprobada). Ya están resueltas D1 a D6.**
 - **Trampa:** `src/ds/tokens.css`, `componentes.css` e `iconos.ts` se generan con `node tools/copiar-ds.mjs`. No se editan a mano.
 - Para la capa nueva, crear un archivo escrito a mano, por ejemplo `src/ds/theme-game.css`, que **importe** los tokens generados y solo agregue lo que falta (estados de selección, deshabilitado, éxito, error, advertencia, información, marcos de rareza). Los tokens viven dentro de `.D`, no en `:root`; el archivo nuevo sigue esa regla.
 - Colores de las instrucciones: los valores que no existan en la paleta aprobada se agregan como tokens con comentario de origen. Ningún color fuera de tokens.

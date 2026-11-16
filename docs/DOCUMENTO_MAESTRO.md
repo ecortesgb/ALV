@@ -169,7 +169,7 @@ Muestra:
 
 **DECISIÓN (v1.13, Elías, 15 de noviembre):** la pantalla que se proyecta (laptop o TV) no participa: solo muestra la partida. Quien organiza juega desde su celular con su cuenta de jugador, donde ve su palabra secreta, sus herramientas y sus preguntas. Sale de la prueba real de sala, donde el jugador de la laptop no podía ver su palabra en El impostor. Resuelto en v1.14: ver 21.3.
 
-**DECISIÓN (v1.32, Elías, 16 de noviembre) — acceso sin cuenta (modo invitado):** se puede entrar a probar sin crear cuenta. Modo invitado: el juego corre en este aparato, con etiqueta visible «Prueba»; no guarda XP, figura ni historial; no escribe en la base. Para entrar pide apodo y confirmar que es mayor de 18, sin fecha de nacimiento. Sustituye, solo para este modo, la decisión de v1.12 de que el juego local necesita cuenta. **PENDIENTE (v1.32):** las salas en la nube (QR, dos celulares) necesitan un usuario en la base; un invitado sin cuenta solo puede jugar en este aparato hasta que Elías decida si acepta un usuario anónimo (revisión del asesor de seguridad antes).
+**DECISIÓN (v1.32, Elías, 16 de noviembre) — acceso sin cuenta (modo invitado):** se puede entrar a probar sin crear cuenta. Modo invitado: el juego corre en este aparato, con etiqueta visible «Prueba»; no guarda XP, figura ni historial; no escribe en la base. Para entrar pide apodo y confirmar que es mayor de 18, sin fecha de nacimiento. Sustituye, solo para este modo, la decisión de v1.12 de que el juego local necesita cuenta. **DECISIÓN (v1.33, Elías, 16 de noviembre):** el invitado de prueba puede entrar a salas en la nube y en el modo local, igual que una cuenta. Es solo para pruebas: al terminar, Elías borra todo lo que dejen los invitados (cuentas, XP, figuras y salas). Después creará los perfiles de todas las personas cuando la app esté lista. Antes de activar el acceso anónimo en la base, se revisa con el asesor de seguridad (regla de `app\CLAUDE.md`).
 
 **Regla de privacidad:** no mostrar respuestas, roles, palabras secretas ni información privada antes del momento definido por la mecánica.
 
@@ -447,7 +447,7 @@ Referencia de Elías: lámina de 12 pantallas (carga, registro, personalizar, me
 
 **PROPUESTA (v1.32):** instrucciones de transformación visual de Elías («ALV — Neon Party Universe»): tokens y tipografía en `theme-game.css`, HUD con avatar y XP, HUB con JUGAR protagonista, selector de juegos con tarjetas ilustradas, lobby con placas, tienda con rarezas y apertura de sobres con omisión, microinteracciones con `prefers-reduced-motion`. Plan completo y decisiones abiertas en `app\docs\ALV_DISENO_NEON.md`.
 
-**PENDIENTE (v1.32):** D1, si reemplaza a Cine Cómic Nocturno (8.7) o se aplican solo sus partes compatibles (recomendado); D2, fuentes; D3, economía visual (sin monedas ni gemas hasta decidir); D4, nombre visible; D5, personajes sin LEGO (análisis separado; las maquetas tienen nombres parecidos a personajes de terceros y no se usan). No se implementa hasta que Elías responda.
+**DECISIÓN (v1.33, Elías, 16 de noviembre) — dirección visual:** se mantiene **Cine Cómic Nocturno** (8.7, aprobado) y se le aplican las partes de Neon Party que sirven: barra superior con avatar, XP y monedas; estados de botón; rarezas con color y marco; apertura de sobres con omisión; animaciones que respetan el modo de movimiento reducido. Fuentes: **Bangers y Barlow** (no Outfit ni Fredoka). Monedas y gemas según 13.1. Nombre visible: **«Amigos Legendarios Verdaderos»**. Personajes: **se mantiene LEGO** (figura 3D de 9.3) para la prueba; el riesgo de §19.1 sigue vigente y debe revisarse antes de difundir la app fuera del grupo. No se usan las figuras ni nombres de las maquetas de referencia.
 
 # 9. Personajes y personalización
 
@@ -628,6 +628,8 @@ Ningún sobre da ventaja dentro de una partida. Las rarezas (común, épica, leg
 **PENDIENTE:** precios, contenido de cada sobre, duplicados, si los sobres de contenido llevan etiqueta de intensidad, adulto y familiar, y qué pasa con el contenido base (que siempre debe alcanzar para jugar sin comprar nada).
 
 ## 13.1 Tienda e inventario
+
+**DECISIÓN (v1.33, Elías, 16 de noviembre) — monedas y gemas:** vuelve la opción de **monedas** como moneda de la tienda. Las **gemas son la XP** que ya existe: lo que se muestra en la barra superior con el ícono de gema. **PENDIENTE (v1.33):** cómo se ganan las monedas (por partida, por nivel, por logros o por compra), en qué se gastan y el precio de cada artículo en monedas. Hasta decidirlo, la tienda sigue cobrando en XP como en 13.2.
 
 **DECISIÓN (v1.27, Elías, 15 de noviembre) — tienda inicial:** al principio la tienda tiene solo **sobres de accesorios** del personaje y **sobres de comodines**, cada uno en versión **básica** o **especial**, más una sección de **outfits y comodines básicos fijos** que se compran directo (por ejemplo «Saltar reto»). Los sobres de contenido (mazos) quedan para después. Los costos en XP no son oficiales; para empezar se usan valores de referencia: sobre de accesorios básico 60 XP (2 piezas) y especial 150 (3, una rara o mejor); sobre de comodines básico 50 (2 básicos) y especial 120 (3, uno especial); comodín básico suelto 40; outfit armado 100. Se fijan en el paso 12 de la Fase 6. Resuelve en parte el pendiente de la «Tienda de comodines» de 23.2 (sí se venden fuera de partida; falta decidir con qué XP).
 
@@ -1391,6 +1393,11 @@ Decisiones del usuario del 12 de noviembre de 2026:
 ## v1.6
 - Primeros logros (14.2), con ámbito de sesión o histórico (ver DECISIÓN v1.6 en 14.2).
 
+## v1.33
+- Decisiones de Elías sobre la propuesta visual (8.8): Cine Cómic Nocturno con partes de Neon Party; Bangers y Barlow; nombre «Amigos Legendarios Verdaderos»; LEGO se mantiene para la prueba.
+- Monedas vuelven como moneda de tienda; gemas = XP (13.1). Pendiente: cómo se ganan y gastan las monedas.
+- Invitado de prueba puede entrar a salas en la nube; se borra todo al terminar (3.2).
+
 ## v1.32
 - Acceso sin cuenta en modo invitado para probar (3.2, decisión de Elías). Pendiente: salas en la nube para invitados.
 - Propuesta de diseño Neon Party recibida y anotada (8.8). Pendiente de decidir si reemplaza a Cine Cómic Nocturno.
@@ -1474,5 +1481,5 @@ Decisiones del usuario del 12 de noviembre de 2026:
 
 ---
 
-**Fin del Documento Maestro ALV v1.32**  
+**Fin del Documento Maestro ALV v1.33**  
 Este documento debe actualizarse de forma incremental y conservar la distinción entre decisiones aprobadas, propuestas, pendientes y descartadas.

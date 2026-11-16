@@ -57,3 +57,14 @@ La fuente de las decisiones de producto es `DOCUMENTO_MAESTRO.md`. Aquí se anot
 8. Acceso invitado a salas en la nube: usuario anónimo en la base o solo local (revisión del asesor antes).
 9. Dirección visual: Cine Cómic Nocturno (recomendado) o Neon Party Universe; fuentes; sin monedas ni gemas; nombre visible; personajes sin LEGO.
 
+## 7. Decisiones de Elías del 16 de noviembre (segunda ronda)
+
+- Invitados de prueba: pueden entrar a sala en la nube y en local; se borra todo al terminar; los perfiles reales se crean después (Maestro v1.33, §3.2).
+- Dirección: Cine Cómic Nocturno con partes de Neon Party. Fuentes Bangers y Barlow. Nombre «Amigos Legendarios Verdaderos». LEGO se mantiene para la prueba.
+- Monedas vuelven; gemas = XP (Maestro §13.1).
+
+## 8. Pendientes que quedan
+
+- Monedas: cómo se ganan, cómo se gastan y precios.
+- Propiedad intelectual de LEGO en repo público (Maestro §19.1): revisar antes de difundir fuera del grupo.
+
