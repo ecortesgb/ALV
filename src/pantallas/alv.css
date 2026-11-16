@@ -44,7 +44,7 @@ body { overscroll-behavior: none; -webkit-tap-highlight-color: transparent; }
 .D .a-crece { flex: 1; min-width: 0; }
 .D .a-dos { display: grid; gap: 16px; align-items: start; }
 .D.wide .a-dos { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 24px; }
-.D .a-centro .a-scroll { align-items: center; justify-content: center; gap: 24px; text-align: center; }
+.D.a-centro .a-scroll { align-items: center; justify-content: center; gap: 24px; text-align: center; }
 .D .a-centro-txt { text-align: center; align-items: center; }
 
 /* ---------- Letra ---------- */
