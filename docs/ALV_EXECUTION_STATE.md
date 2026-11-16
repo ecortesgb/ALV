@@ -13,8 +13,10 @@ Se actualiza al empezar y al terminar cada paso.
 
 | Prueba | Resultado | Fecha |
 |---|---|---|
-| `npm test` | 149 pasan | 16 nov |
+| `npm test` | 148 pasan y 1 se salta (149); la saltada solo corre sin servidor configurado | 16 nov |
 | `npm run build` | pasa | 16 nov |
+| Sitio publicado contra el build local | mismo archivo `index-BKaXfdPj.js` | 16 nov |
+| Historial de migraciones en la base (solo lectura) | 001 a 020, 026 y 028 aplicadas; 027 no | 16 nov |
 | Permisos con usuarios simulados (transacción deshecha) | sin fallas | 16 nov |
 | Asesor de seguridad de Supabase | sin errores; avisos esperados | 16 nov |
 | El impostor sin pantalla, 3 pestañas, modo local | completo hasta el podio | 16 nov |
@@ -47,6 +49,11 @@ Paso 12, tienda, sobres y colección 3D (024, 025), código de recuperación (02
 
 ## Siguiente tarea exacta
 
-1. Paso 0: modo invitado para probar sin cuenta (Maestro §3.2, v1.32). Sin esto Elías no ve las pantallas en el sitio publicado.
-2. Luego, etapa 1 del diseño (solo diagnóstico, sin cambios de código) según `ALV_DISENO_NEON.md`. Esperar la aprobación de Elías de D1 a D4 antes de la etapa 2.
-3. En paralelo, Elías prueba con aparatos reales (lista en `ALV_QA_PROTOCOL.md` §6). Decisiones abiertas en `ALV_DECISION_LOG.md` §3 y §6.
+Verificado el 16 nov (tercera vuelta, sin cambios de código): el paso 0 (modo invitado) y la etapa 1 del diseño ya están hechos, y 017, 018 y 028 ya están aplicadas. No queda nada que construir sin una decisión de Elías.
+
+1. Elías contesta las 3 preguntas de `ALV_DIAGNOSTICO_DISENO.md` §7 y aprueba (o no) la etapa 2 del diseño. Sin eso no se empieza.
+2. Elías dice cuándo se empieza la tienda, Temperatura y Voltaje y el personalizador. Su último encargo pide no empezarlas todavía; el orden que había dado es ese.
+3. Elías prueba con aparatos reales (lista en `ALV_QA_PROTOCOL.md` §6) y borra a los invitados de prueba desde Administración.
+4. Detalle menor: el pie del Maestro dice «v1.34» y el encabezado «1.35». Se corrige en el siguiente cambio del Maestro.
+
+Decisiones abiertas: `ALV_DECISION_LOG.md` §3 y §8.

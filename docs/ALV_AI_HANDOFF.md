@@ -28,7 +28,7 @@ Si alguna respuesta no coincide con el código, vuelve a leer antes de cambiar n
 
 - El repo y la página son públicos: sin llaves, sin datos personales, sin anécdotas de los amigos.
 - No se crean cuentas de prueba en la base real. Los permisos se prueban con usuarios simulados en una transacción deshecha.
-- La migración 027 no se aplica sin permiso expreso de Elías. 017 y 018 tampoco.
+- La migración 027 no se aplica sin permiso expreso de Elías. 017, 018 y 028 ya están aplicadas (16 nov, Maestro v1.35).
 - No se editan a mano `src/ds/tokens.css`, `componentes.css` ni `iconos.ts`: se generan con `node tools/copiar-ds.mjs`.
 - Sin dependencias nuevas.
 - Una PROPUESTA o un PENDIENTE del Maestro no se construye como aprobado. Lo que cambia el producto, las reglas de un juego o la economía lo decide Elías.
