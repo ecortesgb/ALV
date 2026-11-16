@@ -1,6 +1,6 @@
 # ALV — Amigos Legendarios Verdaderos
 ## Documento Maestro del Producto
-**Versión:** 1.25  
+**Versión:** 1.26  
 **Última actualización:** 15 de noviembre de 2026  
 **Estado:** Documento vivo de producto; decisiones y propuestas identificadas por separado.
 
@@ -129,7 +129,8 @@ Puede:
 - Consultar su resultado y progreso.
 
 **DECISIÓN (v1.25, Elías, 15 de noviembre) — D1, acceso solo para mayores de 18:** ALV es exclusivo para mayores de 18. **No hay modelo familiar.** Cartas y juegos llevan etiquetas de intensidad **tranquila / adulta / Drunk**. Sustituye la parte de edad de la decisión v1.12 de abajo (menores con cuenta y contenido familiar), la decisión 7 de 22.1 (la sala deja de ser familiar) y la etiqueta «familiar» de 13 (tanda 4, decisión 4) y 22.1. Sigue vigente que todo jugador necesita cuenta, también en el juego local.
-**PENDIENTE (D1):** cómo se comprueba la edad al registrarse (hoy es la fecha declarada); qué hacer con una cuenta que ya exista con fecha de menor; cómo conviven las etiquetas tranquila / adulta / Drunk con los 4 niveles de intensidad que ya existen en el motor (Tranquilo, Picante, Sin filtro, Salvaje) y con los interruptores adulto y Drunk de hoy.
+**DECISIÓN (v1.26, Elías, 15 de noviembre) — D1, cómo se aplica:** la edad se comprueba con la fecha de nacimiento. Hoy no hay ningún menor y no debe haberlo: si la fecha da menos de 18 años, la app muestra un **mensaje de bloqueo por minoría de edad** y no deja seguir hasta que se corrija la fecha de nacimiento. La intensidad funciona como un **termómetro** de cuatro niveles (Tranquilo, Picante, Sin filtro, Salvaje) que sube o baja de uno en uno.
+**PENDIENTE (D1):** cómo encajan las etiquetas tranquila / adulta / Drunk dentro del termómetro (por ejemplo, si «adulta» equivale a los niveles altos y Drunk sigue como interruptor aparte).
 
 **DECISIÓN (v1.12, Elías; la parte de menores y contenido familiar queda sustituida por D1 en v1.25) — cuentas y edad:** todo jugador necesita cuenta, también en el juego local (se acaban los jugadores creados sin cuenta en el celular). Los menores de 18 sí pueden tener cuenta. Si en la sala o en la partida local hay al menos un menor, no se pueden activar el contenido adulto ni el modo Drunk y solo queda disponible el contenido **familiar**: temas, preguntas, retos y castigos marcados como familiares. La edad es la que declara cada quien al registrarse.
 
@@ -488,7 +489,7 @@ Reglas propuestas:
 # 10. Armario y editor de personaje — propuestas
 
 **DECISIÓN (v1.25, Elías, 15 de noviembre) — D3, un solo personalizador:** hay **un personalizador** con dos modos, **Simple** y **Avanzado**. Al cambiar de modo se conserva lo que se lleva armado (**continuidad de estado**). Los trajes **no son destructivos**: probar o cambiar piezas no borra la cápsula guardada hasta que se guarda. Sustituye el «editor rápido» y el «taller completo» como dos editores separados (21.3 y tanda 4 de 8.7, v1.20); el contenido del modo Simple es el del editor rápido aprobado y el del Avanzado, el del taller de Minifig Studio.
-**PENDIENTE (D3):** si el modo Avanzado sigue solo en tablet o computadora (decisión 6 de la tanda 4) o también en celular.
+**DECISIÓN (v1.26, Elías, 15 de noviembre) — D3:** el modo Avanzado también está en celular. Sustituye la decisión 6 de la tanda 4 (v1.20), que lo dejaba solo en tablet o computadora.
 
 Interacciones exploradas:
 - Sonido «snap/click» al equipar una pieza.
@@ -657,7 +658,7 @@ Podrían modificar temporalmente reglas de una partida: pasar/saltar reto, repet
 Deben equilibrarse para que no sean pay-to-win. Los cosméticos no dan ventajas. La disponibilidad, límites, compatibilidad y balance de cartas funcionales siguen pendientes.
 
 **DECISIÓN (v1.25, Elías, 15 de noviembre) — D2, comodines como acciones del motor:** los comodines (las cartas de poder de `catalogo.ts`: escudo, salvavidas, relevo, doble castigo, cambio de pregunta, pasa turno, cambio de mesero) son **acciones del motor**, **consumibles** (se gastan al usarse) y tienen una **matriz de compatibilidad por juego** que dice cuáles se pueden usar en cada juego. Se agregan a las acciones nuevas del motor de 22.1, junto a `dar-carta`; usarlos lo valida la Pantalla con el motor y la TV solo ve cuántos tiene cada quien y el que se usó (21.4).
-**PENDIENTE (D2):** la matriz misma (qué comodín sirve en cuál de los juegos) y si se mantienen los 7 comodines de hoy o cambian.
+**DECISIÓN (v1.26, Elías, 15 de noviembre) — D2, matriz:** los comodines sirven en **todos los juegos**. Cada comodín se usa **una sola vez** y se gasta (desechable). La matriz de compatibilidad queda en «todos con todos»; si un juego llega a necesitar una excepción, se anota aquí.
 
 ---
 
@@ -1203,7 +1204,18 @@ No saltar fases. Cada fase requiere alcance, entregables, criterios de aceptaci�
 ## 23.2 Exploración visual: entregables previstos
 
 **DECISIÓN (v1.25, Elías, 15 de noviembre) — D4, entregable de diseño:** el diseño final se entrega como **ocho pantallas de alta fidelidad** y un **prototipo HTML navegable** que las une, no como 17 maquetas estáticas. Lo de abajo (conceptos A/B/C) queda como historial.
-**PENDIENTE (D4):** cuáles son las ocho pantallas; si el prototipo se hace antes de seguir con la Fase 6 o en paralelo; y cómo se relaciona con las 5 tandas ya aprobadas de la Fase 3 (v1.17 a v1.21), que siguen siendo la referencia de contenido.
+**DECISIÓN (v1.26, Elías, 15 de noviembre) — D4, paso 1.5 de la Fase 6 (obligatorio antes del paso 2):** se hace `ALV_Prototipos_Fase6.html`, un solo archivo HTML que abre con doble clic, sin servidor, con CSS y JS dentro, responsive en 375, 768, 1280 y 1920 px y con el Design System «Cine Cómic Nocturno» igual en todas las pantallas. Las ocho pantallas, navegables con clics reales:
+1. Hub principal.
+2. Personalizador Simple.
+3. Personalizador Avanzado.
+4. Tienda de accesorios.
+5. Tienda de comodines.
+6. Apertura de sobre (simulada, con animación).
+7. Partida en la TV (Pantalla).
+8. Partida en el celular (jugador y anfitrión).
+
+Al pasar de Simple a Avanzado se conserva la figura. La vista de TV y la del celular se ven distintas en la misma maqueta. Si faltan recursos 3D, se usan figuras SVG coherentes y se anota la limitación. El prototipo es la referencia visual de los pasos 2 a 12: cada pantalla implementada se compara contra él; si difieren, se decide cuál manda y se actualiza el otro, sin dejar dos versiones distintas. Las 5 tandas de la Fase 3 siguen siendo la referencia de contenido.
+**PENDIENTE (D4):** la «Tienda de comodines» es nueva frente a 13 (hoy los comodines se compran dentro de la partida con XP de la sesión, `comprar_carta`); falta decidir si también se compran fuera de partida y con qué XP.
 
 Tres archivos HTML:
 - `ALV_Concepto_A.html`
@@ -1272,7 +1284,8 @@ Requisitos:
 - Todo jugador tiene cuenta. ALV es solo para mayores de 18, sin modelo familiar; etiquetas tranquila / adulta / Drunk (D1, 3.2).
 - Comodines = acciones del motor, consumibles, con matriz por juego (D2, 13.4).
 - Un personalizador con modos Simple y Avanzado, sin perder lo armado (D3, 10).
-- Diseño final: 8 pantallas de alta fidelidad + prototipo HTML navegable (D4, 23.2).
+- Diseño final: 8 pantallas de alta fidelidad + prototipo HTML navegable, hecho en el paso 1.5 antes del paso 2 (D4, 23.2).
+- Menores de 18: mensaje de bloqueo hasta corregir la fecha. Intensidad como termómetro de 4 niveles. Comodines en todos los juegos, de un solo uso. Modo Avanzado también en celular (v1.26).
 - El lenguaje de la app usa siglas con ingenio.
 - ALVerca, FBI y GPS son los escenarios activos.
 - Los cosméticos no otorgan ventajas competitivas.
@@ -1339,6 +1352,9 @@ Decisiones del usuario del 12 de noviembre de 2026:
 ## v1.6
 - Primeros logros (14.2), con ámbito de sesión o histórico (ver DECISIÓN v1.6 en 14.2).
 
+## v1.26
+- Elías resuelve los pendientes de D1 a D4: bloqueo por minoría de edad hasta corregir la fecha; intensidad como termómetro de 4 niveles; comodines en todos los juegos y de un solo uso; modo Avanzado también en celular; paso 1.5 de la Fase 6 = prototipo navegable `ALV_Prototipos_Fase6.html` con 8 pantallas, obligatorio antes del paso 2. Quedan dos pendientes: cómo encajan tranquila/adulta/Drunk en el termómetro y la tienda de comodines fuera de partida.
+
 ## v1.25
 - Decisiones D1 a D4 de Elías: solo mayores de 18, sin modelo familiar, con etiquetas tranquila / adulta / Drunk (3.2; sustituye la parte de edad de v1.12, la decisión 7 de 22.1 y la etiqueta familiar); comodines como acciones del motor, consumibles y con matriz por juego (13.4); un personalizador con modos Simple y Avanzado y continuidad de estado (10); diseño final en 8 pantallas de alta fidelidad y prototipo navegable (23.2). Cada una deja sus pendientes anotados. Los pasos 2 a 12 de la Fase 6 no empiezan hasta resolverlos.
 
@@ -1399,5 +1415,5 @@ Decisiones del usuario del 12 de noviembre de 2026:
 
 ---
 
-**Fin del Documento Maestro ALV v1.25**  
+**Fin del Documento Maestro ALV v1.26**  
 Este documento debe actualizarse de forma incremental y conservar la distinción entre decisiones aprobadas, propuestas, pendientes y descartadas.
