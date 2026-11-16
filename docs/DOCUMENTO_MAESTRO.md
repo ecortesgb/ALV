@@ -1,6 +1,6 @@
 # ALV — Amigos Legendarios Verdaderos
 ## Documento Maestro del Producto
-**Versión:** 1.17  
+**Versión:** 1.18  
 **Última actualización:** 15 de noviembre de 2026  
 **Estado:** Documento vivo de producto; decisiones y propuestas identificadas por separado.
 
@@ -411,6 +411,8 @@ Referencia de Elías: lámina de 12 pantallas (carga, registro, personalizar, me
 **DECISIÓN (v1.16, Elías aprobó, 15 de noviembre) — Design System:** «ALV Cine Cómic Nocturno» (https://claude.ai/artifact/Sp4sNhojH6nv6skwgcwzSn, fuente `alv2\fase3-design-system\`) fija colores, estilos de letra, espacios, radios, sombras, inclinación, tiempos de animación y 13 componentes con sus estados (botón, etiqueta, pestañas, chip, panel, tarjeta del jugador, tarjeta de juego, barra del anfitrión, reloj, escáner, onomatopeya, fondo de ciudad, rueda de sospechosos). Es la base de todas las pantallas de la Fase 3. Aviso abierto: el texto blanco sobre verde y naranja da 2.6:1 y depende del contorno de tinta; revisar con usuarios antes de la Fase 6.
 
 **DECISIÓN (v1.17, Elías aprobó, 15 de noviembre) — Fase 3, tanda 1: acceso, registro e inicio.** Referencia: https://claude.ai/artifact/QL8Uy2kc9stUsVmD8hcgAm (fuente `alv2\fase3-t1\`). Nueve pantallas: carga (solo sin sesión), entrar, crear cuenta, código de recuperación, recuperar contraseña, elige tu figura (solo la primera vez), bienvenida (solo la primera vez sin QR), unirme a una sala y proyectar en esta pantalla. Decisiones, todas las recomendadas: (1) en la Pantalla se entra escaneando un QR desde el celular con sesión, teclado de respaldo; (2) registro en 3 pasos: apodo y contraseña, fecha de nacimiento y género, avisos; (3) el código de recuperación es obligatorio: no se sigue sin marcar «Ya lo guardé»; (4) la figura del registro se puede saltar y toca una al azar fija; (5) apodo de 3 a 16 caracteres, letras, números y guion bajo, único sin importar mayúsculas, respetando los apodos que ya existen; (6) 5 intentos fallidos y espera de 1 minuto al entrar o 15 al recuperar. Las figuras de las maquetas son siluetas de referencia: en la app son las figuras 3D de Minifig Studio (9.3).
+
+**DECISIÓN (v1.18, Elías aprobó, 15 de noviembre) — Fase 3, tanda 2: menú principal, catálogo y ficha de juego.** Referencia: https://claude.ai/artifact/XAAp2GCgE7CFPbGjafEvAZ (fuente `alv2\fase3-t2\`). Menú principal con aviso de sala abierta, burbujas de novedades y engrane; menú de Jugar; catálogo con estados explorando, anfitrión en sala, menor en la sala y Sorpréndeme, más la fila de Herramientas; ficha del juego con cómo se juega, puntos, XP por lugar, modalidades y etiquetas, y botón según quién mira. Decisiones, todas las recomendadas: (1) Jugar abre primero un menú de 4 opciones (unirme, proyectar, este celular, ver juegos); (2) los invitados ven el catálogo y pueden mandar una sugerencia al anfitrión, sin elegir; (3) Sorpréndeme muestra el juego elegido con «¡Este!» u «Otro» antes de empezar; (4) la ficha muestra la XP por lugar con los jugadores reales; (5) el engrane abre Ajustes (sonido, música, menos movimiento, cuenta, cerrar sesión y Administración solo para administradores) y el Perfil se abre desde el retrato.
 
 # 9. Personajes y personalización
 
@@ -1243,6 +1245,9 @@ Decisiones del usuario del 12 de noviembre de 2026:
 
 ## v1.6
 - Primeros logros (14.2), con ámbito de sesión o histórico (ver DECISIÓN v1.6 en 14.2).
+
+## v1.18
+- Fase 3, tanda 2 (menú principal, catálogo y ficha de juego) aprobada con sus 5 decisiones (8.7).
 
 ## v1.17
 - Fase 3, tanda 1 (acceso, registro e inicio) aprobada con sus 6 decisiones (8.7).
