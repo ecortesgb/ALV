@@ -1,6 +1,6 @@
 # ALV — Amigos Legendarios Verdaderos
 ## Documento Maestro del Producto
-**Versión:** 1.15  
+**Versión:** 1.16  
 **Última actualización:** 15 de noviembre de 2026  
 **Estado:** Documento vivo de producto; decisiones y propuestas identificadas por separado.
 
@@ -407,6 +407,8 @@ Referencia de Elías: lámina de 12 pantallas (carga, registro, personalizar, me
 - Cada juego del catálogo tiene ilustración: rayos de cómic del color de su fila, personajes y el objeto del juego. En la app salen de fotos del 3D.
 - Paleta de trabajo: noche #0d1a45, panel #2453c4, borde #5fb4ff, amarillo #ffd23f, azul #2f7bff, morado #8b3dff, verde #35b84a, naranja #ff7a1a, rojo FBI #ff3d4a. Los valores finales se fijan en el Design System.
 - En Three.js: material de caricatura con contorno y dos luces (reflector y relleno azul).
+
+**DECISIÓN (v1.16, Elías aprobó, 15 de noviembre) — Design System:** «ALV Cine Cómic Nocturno» (https://claude.ai/artifact/Sp4sNhojH6nv6skwgcwzSn, fuente `alv2\fase3-design-system\`) fija colores, estilos de letra, espacios, radios, sombras, inclinación, tiempos de animación y 13 componentes con sus estados (botón, etiqueta, pestañas, chip, panel, tarjeta del jugador, tarjeta de juego, barra del anfitrión, reloj, escáner, onomatopeya, fondo de ciudad, rueda de sospechosos). Es la base de todas las pantallas de la Fase 3. Aviso abierto: el texto blanco sobre verde y naranja da 2.6:1 y depende del contorno de tinta; revisar con usuarios antes de la Fase 6.
 
 # 9. Personajes y personalización
 
@@ -1136,7 +1138,7 @@ Requisitos:
 # 24. Pendientes principales
 
 1. Dirección visual elegida en v1.15 («Cine Cómic Nocturno», 8.7). Sigue la Fase 3 de ALV 2.0, solo con aprobación de Elías.
-2. Fijar paleta y tipografía oficiales en la fase de Design System.
+2. Paleta y tipografía oficiales fijadas en el Design System (v1.16, 8.7).
 3. Resuelto en v1.4: catálogo clásico enumerado en 16.8.
 4. Completar matriz de compatibilidad entre modalidad y minijuegos.
 5. Definir reglas, duración, turnos, rondas, empates y puntuación de cada minijuego.
@@ -1239,6 +1241,9 @@ Decisiones del usuario del 12 de noviembre de 2026:
 
 ## v1.6
 - Primeros logros (14.2), con ámbito de sesión o histórico (ver DECISIÓN v1.6 en 14.2).
+
+## v1.16
+- Design System «ALV Cine Cómic Nocturno» aprobado (8.7). Arranca la Fase 3 de ALV 2.0 (diseño de experiencia y pantallas, sin programar hasta la Fase 6), por tandas.
 
 ## v1.15
 - Fase 2 de ALV 2.0 aprobada: dirección visual «Cine Cómic Nocturno», mezcla de las propuestas C y A pegada a la lámina de Elías (8.7). A, B y C quedan como historial.
