@@ -1,6 +1,6 @@
 # ALV — Amigos Legendarios Verdaderos
 ## Documento Maestro del Producto
-**Versión:** 1.31  
+**Versión:** 1.35  
 **Última actualización:** 16 de noviembre de 2026  
 **Estado:** Documento vivo de producto; decisiones y propuestas identificadas por separado.
 
@@ -1185,7 +1185,7 @@ Riesgo aceptado: la cuenta con el control puede leer la semilla y todas las acci
 - **Limpieza (paso 10), parte de código:** se retiró la app 2D (pantallas, estado local con XP, tienda 2D y los tres CSS). La limpieza de la base es la 027, sin aplicar.
 - **Correcciones de la prueba del 15 de noviembre (paso 11):** el celular del anfitrión es un jugador más y ve su palabra; avisos al instante en lugar de consultas cada 1.5 s; QR siempre visible; tocar una cápsula llama al servidor en el momento y la sala lo ve por tiempo real. Falta la nueva prueba de sala con aparatos reales.
 - **Pruebas:** 149 automáticas (nuevas: motor de sala, repetición, control, secreto de lo publicado, rutas), build, y en navegador con el respaldo local (3 y 4 pestañas) El impostor completo con y sin pantalla. Sin probar contra el servidor con cuentas reales ni en celulares y TV: lo prueba Elías.
-- **No se hizo y queda PENDIENTE:** paso 1.5 (prototipo HTML de 8 pantallas, 23.2): se construyó la app directamente y falta que Elías confirme que lo acepta; paso 12 (reglas de XP); tienda, sobres y colección 3D (024, 025); código de recuperación (022); apodos e intentos (021); cuentas en un solo celular (023); personalizador Simple/Avanzado propio (hoy abre el editor de Minifig Studio); motor Temperatura + Voltaje y contenido nuevo (3.2); pasar la partida al celular si la Pantalla no vuelve, espera al desconectado y «pedir pausa» (21.4); entorno de pruebas con Supabase aparte (la organización ya tiene dos proyectos).
+- **No se hizo y queda PENDIENTE:** (el paso 1.5 se saltó por decisión de Elías, v1.35; 017 y 018 se aplicaron en v1.35) paso 12 (reglas de XP); tienda, sobres y colección 3D (024, 025); código de recuperación (022); apodos e intentos (021); cuentas en un solo celular (023); personalizador Simple/Avanzado propio (hoy abre el editor de Minifig Studio); motor Temperatura + Voltaje y contenido nuevo (3.2); pasar la partida al celular si la Pantalla no vuelve, espera al desconectado y «pedir pausa» (21.4); entorno de pruebas con Supabase aparte (la organización ya tiene dos proyectos).
 - **Decisiones técnicas tomadas sin consulta** (detalle en `docs/ALV_DECISION_LOG.md`): el modo de la sala se guarda en `eventos.nombre`; parejas por orden de llegada si el número es par; «No lo cumplí» vale 0 puntos y no hay botón de pasar (se pasa con comodín, v1.28); un solo brillo en bucle por pantalla; sin dependencias nuevas; respaldo local sin servidor para probar varios aparatos en pestañas; Tienda con candado «Abre pronto».
 
 ## 22.2 Hipótesis iniciales (historial)
@@ -1245,7 +1245,7 @@ No saltar fases. Cada fase requiere alcance, entregables, criterios de aceptaci�
 ## 23.2 Exploración visual: entregables previstos
 
 **DECISIÓN (v1.25, Elías, 15 de noviembre) — D4, entregable de diseño:** el diseño final se entrega como **ocho pantallas de alta fidelidad** y un **prototipo HTML navegable** que las une, no como 17 maquetas estáticas. Lo de abajo (conceptos A/B/C) queda como historial.
-**DECISIÓN (v1.26, Elías, 15 de noviembre) — D4, paso 1.5 de la Fase 6 (obligatorio antes del paso 2):** se hace `ALV_Prototipos_Fase6.html`, un solo archivo HTML que abre con doble clic, sin servidor, con CSS y JS dentro, responsive en 375, 768, 1280 y 1920 px y con el Design System «Cine Cómic Nocturno» igual en todas las pantallas. Las ocho pantallas, navegables con clics reales:
+**SUSTITUIDA (v1.35, Elías, 16 de noviembre):** el paso 1.5 se salta; la app publicada es la referencia. El texto de v1.26 queda como historial. **DECISIÓN (v1.26, Elías, 15 de noviembre) — D4, paso 1.5 de la Fase 6 (obligatorio antes del paso 2):** se hace `ALV_Prototipos_Fase6.html`, un solo archivo HTML que abre con doble clic, sin servidor, con CSS y JS dentro, responsive en 375, 768, 1280 y 1920 px y con el Design System «Cine Cómic Nocturno» igual en todas las pantallas. Las ocho pantallas, navegables con clics reales:
 1. Hub principal.
 2. Personalizador Simple.
 3. Personalizador Avanzado.
@@ -1392,6 +1392,14 @@ Decisiones del usuario del 12 de noviembre de 2026:
 
 ## v1.6
 - Primeros logros (14.2), con ámbito de sesión o histórico (ver DECISIÓN v1.6 en 14.2).
+
+## v1.35
+- 16 nov 2026. **Paso 1.5 saltado** por decisión de Elías: el prototipo HTML de 8 pantallas (23.2) ya no es requisito; la app publicada es la referencia navegable.
+- **Migraciones 017 y 018 aplicadas** con autorización de Elías, después de probarlas con usuarios simulados en una transacción deshecha (sin fallas) y del asesor de seguridad (sin errores). `partidas.semilla` ya no la lee ninguna cuenta y las partidas solo se crean con `crear_partida_sala`.
+- **Paso 0, modo invitado (3.2, v1.32 y v1.33) construido:** migración 028 (`perfiles.invitado`, `entrar_invitado`, `admin_borrar_invitados`). El invitado entra con apodo y confirma que es mayor de 18; la app le crea una cuenta desechable y la marca. Lleva la etiqueta «Prueba». Entra a salas en la nube igual que una cuenta. Elías borra a todos los invitados desde Administración. Una cuenta normal o una bloqueada por edad no puede volverse invitada.
+- Primera prueba contra el servidor real: dos invitados, sala sin pantalla, ¿Qué prefieres? completo (iniciar, contestar, revelar, terminar) con tiempo real en vivo.
+- **Etapa 1 del diseño entregada:** `docs/ALV_DIAGNOSTICO_DISENO.md`, solo diagnóstico. La etapa 2 espera a Elías.
+- Orden que sigue, dicho por Elías: tienda (13), después Temperatura y Voltaje (3.2) y el personalizador (10), en su orden de la Fase 6. Las mecánicas, premios, costos y juegos se ajustan después de probar.
 
 ## v1.34
 - Sin fecha límite (3.2, v1.29): la jornada de prueba ya no tiene fecha fija; se hace cuando la app esté lista. La meta de contenido de v1.29 queda como referencia, no como plazo.

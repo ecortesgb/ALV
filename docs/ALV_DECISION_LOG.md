@@ -13,6 +13,8 @@ La fuente de las decisiones de producto es `DOCUMENTO_MAESTRO.md`. Aquí se anot
 | Pasar solo con comodín; cartas de trago sin exigir alcohol | Maestro v1.28, `CLAUDE.md` |
 | Hacer los pasos 2 a 12 y la Fase 7 seguidos (sustituye a «se publica por pasos») | Maestro v1.30 |
 | Publicar la versión de prueba en la página (16 nov 2026, «Sí, publica») | Maestro v1.31 |
+| Modo invitado para pruebas; Elías borra a los invitados al terminar | Maestro §3.2, v1.32 y v1.33 |
+| Aplicar 017 y 018; saltar el paso 1.5 | Maestro v1.35 |
 
 ## 2. Técnicas, tomadas sin consulta
 
@@ -28,13 +30,14 @@ La fuente de las decisiones de producto es `DOCUMENTO_MAESTRO.md`. Aquí se anot
 | Un solo brillo en bucle por pantalla | Criterio de animación: un ciclo decorativo por pantalla | Se apaga el barrido de los botones que no son Jugar, sin tocar los archivos generados |
 | Avisos y confirmación propios, animación en CSS | Se evaluaron Sonner y Motion; se descartaron por «sin dependencias nuevas» | `src/pantallas/comun.tsx` y `alv.css` |
 | Logros calculados con los movimientos de XP del servidor | El historial local desapareció con la app 2D | Seis logros en `src/pantallas/Social.tsx`; no dan premio |
+| El invitado es una cuenta desechable (correo interno `inv_…`) y no el acceso anónimo de Supabase | No hay que cambiar la configuración de acceso del proyecto y se borra igual que cualquier cuenta | Migración 028 |
 | Botón Tienda con candado «Abre pronto» | No hay tienda 3D en el servidor | Se quita el candado al construir 024 y 025 |
 | Ranking solo entre la cuenta y quienes han compartido sala | No exponer apodos a cualquier cuenta | Función `ranking_conocidos` |
 
 ## 3. Pendientes de Elías
 
-1. Autorizar las migraciones 017 y 018. Están escritas en `supabase/migrations/`. La herramienta las rechazó por quitar permisos en producción.
-2. Aceptar o pedir el paso 1.5 (prototipo HTML de 8 pantallas, Maestro §23.2). Se construyó la app directamente.
+1. Las 3 preguntas de `ALV_DIAGNOSTICO_DISENO.md` §7 (arte de los juegos, tono de rareza «especial», tablet).
+2. Aprobar la etapa 2 del diseño.
 3. La migración 027 (`supabase/pendientes/`) borra tablas. No se aplica sin su permiso expreso.
 4. Con qué XP se compran los comodines fuera de partida (Maestro §13.1).
 5. Entorno de pruebas con Supabase aparte: la organización ya tiene dos proyectos y uno más puede costar.

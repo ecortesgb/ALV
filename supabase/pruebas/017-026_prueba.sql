@@ -1,4 +1,8 @@
--- ESTADO (16 nov 2026): 019, 020 y 026 están aplicadas; 017 y 018 esperan autorización de Elías.
+-- ESTADO (16 nov 2026, tarde): 017, 018 y 028 quedaron aplicadas con autorización de Elías. Antes se probaron junto con 028
+-- (invitados) con usuarios simulados en una transacción deshecha: sin fallas. El menor no entra ni como invitado, una cuenta
+-- normal no se vuelve invitada, nadie lee partidas.semilla, solo el control crea partidas y manda 'control', y
+-- admin_borrar_invitados borra invitados sin tocar cuentas normales.
+-- Nota anterior: 019, 020 y 026 están aplicadas; 017 y 018 esperaban autorización.
 -- Este archivo es la prueba para DESPUÉS de aplicar 017 y 018 (usa crear_partida_sala, arranques_partida y el tipo 'control').
 -- La prueba que sí se corrió el 16 nov, con el esquema de hoy y usuarios simulados en una transacción deshecha, dio:
 --   menor no entra / no abre sala / no se inserta directo: rechazado («solo mayores de 18», permiso denegado)

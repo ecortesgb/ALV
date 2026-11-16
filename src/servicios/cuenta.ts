@@ -22,7 +22,7 @@ export async function sesionActual(): Promise<Session | null> {
 /** Crea la cuenta y deja su nombre visible como lo escribió. Devuelve null si salió bien, o un mensaje. */
 export async function registrar(nick: string, pass: string): Promise<string | null> {
   if (!cliente) return GENERICO;
-  if (!nickValido(nick) || !passValida(pass)) return "Nickname de 3 a 20 letras, números o _. Contraseña de 8 o más.";
+  if (!nickValido(nick) || !passValida(pass) || esNickInvitado(nick)) return "Nickname de 3 a 20 letras, números o _. Contraseña de 8 o más.";
   try {
     const { data, error } = await cliente.auth.signUp({ email: correoInterno(nick), password: pass });
     if (error || !data.user) return GENERICO;
@@ -30,6 +30,30 @@ export async function registrar(nick: string, pass: string): Promise<string | nu
     fijarUsuario(nick.trim().toLowerCase());
     return null;
   } catch (e) { console.error("registrar", e); return GENERICO; }
+}
+
+/** Los apodos que empiezan con «inv_» son de las cuentas de invitado: no se pueden registrar a mano. */
+export const esNickInvitado = (n: string) => n.trim().toLowerCase().startsWith("inv_");
+const azar = (n: number) => Array.from(crypto.getRandomValues(new Uint8Array(n)), b => "abcdefghijklmnopqrstuvwxyz0123456789"[b % 36]).join("");
+
+/**
+ * Invitado de prueba (Maestro §3.2, v1.32 y v1.33): crea una cuenta desechable sin pedir contraseña ni fecha.
+ * La persona solo elige apodo y confirma que es mayor de 18. Elías borra estas cuentas al terminar las pruebas.
+ * Devuelve null si salió bien, o un mensaje.
+ */
+export async function entrarInvitado(apodo: string): Promise<string | null> {
+  if (!cliente) return GENERICO;
+  const limpio = apodo.replace(/\s+/g, " ").trim();
+  if (limpio.length < 2 || limpio.length > 20) return "El apodo va de 2 a 20 letras.";
+  try {
+    const nick = "inv_" + azar(12);
+    const { data, error } = await cliente.auth.signUp({ email: correoInterno(nick), password: azar(28) });
+    if (error || !data.session) { console.error("entrarInvitado", error?.message ?? "sin sesión"); return "No se pudo entrar como invitado. Intenta otra vez."; }
+    const r = await cliente.rpc("entrar_invitado", { p_apodo: limpio });
+    if (r.error) { console.error("entrarInvitado", r.error.message); await cliente.auth.signOut(); return "No se pudo entrar como invitado. Intenta otra vez."; }
+    fijarUsuario(nick);
+    return null;
+  } catch (e) { console.error("entrarInvitado", e); return "No se pudo entrar como invitado. Intenta otra vez."; }
 }
 
 export type Genero = "hombre" | "mujer" | "otro";

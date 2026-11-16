@@ -6,7 +6,8 @@ Se actualiza al empezar y al terminar cada paso.
 
 - Fase 6, pasos 2 a 11 hechos en versión de prueba. Paso 12 (reglas de XP) sin empezar. Fase 7 (control de calidad) parcial.
 - Publicado en `main` y en https://ecortesgb.github.io/ALV/ el 16 nov 2026 por instrucción de Elías.
-- Maestro vigente: v1.31.
+- Maestro vigente: v1.35.
+- 16 nov, segunda vuelta: 017, 018 y 028 aplicadas; modo invitado construido y probado contra el servidor real (dos invitados, ¿Qué prefieres? completo en una sala sin pantalla); etapa 1 del diseño entregada en `ALV_DIAGNOSTICO_DISENO.md`. El paso 1.5 se saltó por decisión de Elías.
 
 ## Pruebas corridas
 
@@ -26,21 +27,23 @@ Se actualiza al empezar y al terminar cada paso.
 | Migración | Estado |
 |---|---|
 | 001 a 016 | aplicadas |
-| 017 semilla privada, 018 acciones en orden | escritas, **sin aplicar**: esperan autorización |
+| 017 semilla privada, 018 acciones en orden, 028 invitados | aplicadas el 16 nov con autorización de Elías |
 | 019 tiempo real, 020 solo mayores, 026 XP por reto y ranking | aplicadas el 16 nov |
 | 021 a 025 | no existen |
 | 027 limpieza | escrita en `supabase/pendientes/`, **no se aplica** |
 
 ## Problemas conocidos
 
-- La conexión con el servidor real no se probó de punta a punta con cuentas.
+- Contra el servidor real solo se probó con dos invitados en una computadora y un juego. Falta TV, celulares y El impostor con 3.
+- La revelación tarda cerca de 6 s desde la última respuesta (2 s son el suspenso). Hay margen de mejora en el motor.
+- Los códigos de sala pueden traer I y O, que se confunden con 1 y 0 al dictarlos.
 - Sin revisión visual en 768 y 1920 px, ni medición de carga en 4G.
 - Si la Pantalla se cierra a media partida, la partida espera a que vuelva: no se pasa sola al celular.
 - La escena 3D de la sala puede cortar figuras en celulares angostos con muchos jugadores.
 
 ## No hecho
 
-Paso 1.5 (prototipo HTML), paso 12, tienda, sobres y colección 3D (024, 025), código de recuperación (022), apodos e intentos (021), cuentas en un solo celular (023), personalizador Simple/Avanzado propio, motor Temperatura + Voltaje y contenido nuevo, espera al desconectado, «pedir pausa», entorno de pruebas aparte, informe final de entrega.
+Paso 12, tienda, sobres y colección 3D (024, 025), código de recuperación (022), apodos e intentos (021), cuentas en un solo celular (023), personalizador Simple/Avanzado propio, motor Temperatura + Voltaje y contenido nuevo, espera al desconectado, «pedir pausa», entorno de pruebas aparte, informe final de entrega.
 
 ## Siguiente tarea exacta
 

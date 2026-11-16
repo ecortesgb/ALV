@@ -7,7 +7,7 @@ import { ir } from "../app/rutas";
 import { refrescarSesion, salirDemo, useSesion } from "../app/sesion";
 import { hayNube } from "../servicios/cliente";
 import { cambiarClave, misMovimientos, rankingConocidos, salir, type FilaRanking, type MovimientoXp } from "../servicios/cuenta";
-import { Cabecera, Campo, Marco, Retrato, Vacio, aviso } from "./comun";
+import { Cabecera, Campo, Marco, Retrato, Vacio, aviso, confirmar } from "./comun";
 
 const num = (n: number) => n.toLocaleString("es-MX");
 
@@ -85,7 +85,11 @@ export function Perfil() {
     aviso(r ?? "Contraseña cambiada");
     if (!r) setClave("");
   };
-  const cerrar = async () => { if (hayNube) { await salir(); await refrescarSesion(); } else salirDemo(); ir("inicio"); };
+  const cerrar = async () => {
+    if (s.invitado && hayNube && !(await confirmar({ titulo: "¿Salir de la prueba?", texto: "Entraste sin cuenta: al salir no podrás volver a este apodo ni a su XP.", si: "Salir", peligro: true }))) return;
+    if (hayNube) { await salir(); await refrescarSesion(); } else salirDemo();
+    ir("inicio");
+  };
   return (
     <Marco>
       <div className="a-ancho a-angosto a-pila">
@@ -98,14 +102,15 @@ export function Perfil() {
           {movs && movs.length > 0 && <ul className="a-tabla">{movs.slice(0, 6).map((m, i) => <li key={i}><span>{m.motivo.replace("partida:", "Partida · ")}</span><b className="dsp a-xp">{m.tipo === "ganada" ? "+" : "−"}{m.xp}</b></li>)}</ul>}
           {movs && movs.length === 0 && <p className="a-suave">Tu primera XP llega al terminar una partida de 5 rondas o más.</p>}
         </Panel>
-        {hayNube && <Panel className="a-pila" como="section">
+        {hayNube && !s.invitado && <Panel className="a-pila" como="section">
           <Etiqueta texto="Cuenta" icono="lock" />
           <form className="a-pila" onSubmit={e => { e.preventDefault(); void cambiar(); }}>
             <Campo etiqueta="Contraseña nueva (8 o más)" type="password" value={clave} onChange={e => setClave(e.target.value)} autoComplete="new-password" maxLength={72} />
             <Boton color="azul" texto="Cambiar contraseña" icono="lock" desactivado={clave.length < 8} cargando={ocupado} onClick={() => void cambiar()} />
           </form>
         </Panel>}
-        <Boton color="rojo" texto="Cerrar sesión" icono="back" onClick={() => void cerrar()} />
+        {s.invitado && <p className="a-nota">Entrada de prueba: tu XP y tu figura se borran cuando terminen las pruebas. Para conservarlas, crea una cuenta.</p>}
+        <Boton color="rojo" texto={s.invitado ? "Salir de la prueba" : "Cerrar sesión"} icono="back" onClick={() => void cerrar()} />
       </div>
     </Marco>
   );

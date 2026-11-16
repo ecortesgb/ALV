@@ -7,9 +7,9 @@ import { soyAdmin } from "../servicios/admin";
 import { yoLocal } from "../servicios/enlace";
 
 export type Fase = "cargando" | "fuera" | "registro" | "menor" | "dentro";
-export interface Sesion { fase: Fase; uid: string; nombre: string; acumulada: number; disponible: number; nivel: number; admin: boolean }
+export interface Sesion { fase: Fase; uid: string; nombre: string; acumulada: number; disponible: number; nivel: number; admin: boolean; /** Cuenta desechable de prueba. */ invitado: boolean }
 
-const VACIA: Sesion = { fase: "cargando", uid: "", nombre: "", acumulada: 0, disponible: 0, nivel: 1, admin: false };
+const VACIA: Sesion = { fase: "cargando", uid: "", nombre: "", acumulada: 0, disponible: 0, nivel: 1, admin: false, invitado: false };
 let sesion: Sesion = VACIA;
 const oyentes = new Set<() => void>();
 const fijar = (s: Sesion) => { sesion = s; oyentes.forEach(f => f()); };
@@ -37,7 +37,7 @@ export async function refrescarSesion(): Promise<void> {
   if (!hayNube || !cliente) {
     const n = nombreDemo();
     yoLocal.id = n ? "demo-" + n.toLowerCase().replace(/[^a-z0-9]/g, "") : ""; yoLocal.nombre = n;
-    fijar(n ? { fase: "dentro", uid: yoLocal.id, nombre: n, acumulada: 0, disponible: 0, nivel: 1, admin: false } : { ...VACIA, fase: "fuera" });
+    fijar(n ? { fase: "dentro", uid: yoLocal.id, nombre: n, acumulada: 0, disponible: 0, nivel: 1, admin: false, invitado: true } : { ...VACIA, fase: "fuera" });
     return;
   }
   const ses = await sesionActual();
@@ -46,7 +46,7 @@ export async function refrescarSesion(): Promise<void> {
   const uid = (await uidActual()) ?? ses.user.id;
   try {
     const [perfil, registro, saldos, admin] = await Promise.all([
-      cliente.from("perfiles").select("nombre, mayor_18").eq("id", uid).maybeSingle(),
+      cliente.from("perfiles").select("nombre, mayor_18, invitado").eq("id", uid).maybeSingle(),
       miRegistro(),
       cliente.rpc("mis_saldos"),
       soyAdmin(),
@@ -54,8 +54,10 @@ export async function refrescarSesion(): Promise<void> {
     if (mio !== turno) return;
     const nombre = (perfil.data?.nombre as string | undefined) ?? ses.user.email?.split("@")[0] ?? "Jugador";
     const fila = (saldos.data as { acumulada: number; disponible: number; nivel: number }[] | null)?.[0];
-    const fase: Fase = !registro ? "registro" : perfil.data?.mayor_18 === true ? "dentro" : "menor";
-    fijar({ fase, uid, nombre, acumulada: fila?.acumulada ?? 0, disponible: fila?.disponible ?? 0, nivel: fila?.nivel ?? 1, admin });
+    const invitado = perfil.data?.invitado === true;
+    // El invitado no tiene fecha de nacimiento: confirmó ser mayor al entrar y el servidor lo marcó.
+    const fase: Fase = invitado && perfil.data?.mayor_18 === true ? "dentro" : !registro ? "registro" : perfil.data?.mayor_18 === true ? "dentro" : "menor";
+    fijar({ fase, uid, nombre, acumulada: fila?.acumulada ?? 0, disponible: fila?.disponible ?? 0, nivel: fila?.nivel ?? 1, admin, invitado });
   } catch (e) {
     console.error("refrescarSesion", e);
     if (mio === turno) fijar({ ...VACIA, fase: "fuera" });

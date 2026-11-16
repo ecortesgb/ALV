@@ -1,7 +1,7 @@
 // Pantalla de carga, acceso y registro. ALV es solo para mayores de 18 (D1): la fecha la valida el servidor.
 import { useState, type FormEvent } from "react";
 import { Boton, Onomatopeya, Panel, Pestanas } from "../ds";
-import { entrar, guardarRegistro, nickValido, passValida, registrar, salir, type Genero } from "../servicios/cuenta";
+import { entrar, entrarInvitado, esNickInvitado, guardarRegistro, nickValido, passValida, registrar, salir, type Genero } from "../servicios/cuenta";
 import { hayNube } from "../servicios/cliente";
 import { entrarDemo, refrescarSesion, useSesion } from "../app/sesion";
 import { Campo, Marco } from "./comun";
@@ -43,8 +43,41 @@ function DatosEdad({ nac, setNac, genero, setGenero }: { nac: string; setNac: (v
   );
 }
 
+/** Entrar sin cuenta, solo para probar: apodo y confirmar mayoría de edad. No pide fecha ni contraseña. */
+function Invitado({ volver }: { volver: () => void }) {
+  const [apodo, setApodo] = useState(""), [mayor, setMayor] = useState(false), [error, setError] = useState<string | null>(null), [ocupado, setOcupado] = useState(false);
+  const enviar = async (e?: FormEvent) => {
+    e?.preventDefault();
+    if (ocupado) return;
+    if (apodo.trim().length < 2) { setError("Escribe un apodo de 2 a 20 letras."); return; }
+    if (!mayor) { setError("ALV es solo para mayores de 18 años."); return; }
+    setOcupado(true); setError(null);
+    const fallo = await entrarInvitado(apodo);
+    setOcupado(false);
+    if (fallo) { setError(fallo); return; }
+    await refrescarSesion();
+  };
+  return (
+    <Marco clase="a-centro">
+      <Logo sub="Entrar de prueba" />
+      <Panel className="a-form" como="section">
+        <form onSubmit={e => void enviar(e)} className="a-pila">
+          <p className="a-suave">Juegas sin crear cuenta. Es una entrada de prueba: lo que ganes se borra cuando terminen las pruebas.</p>
+          <Campo etiqueta="Tu apodo" value={apodo} maxLength={20} onChange={e => setApodo(e.target.value)} autoComplete="off" autoFocus required />
+          <label className="a-check"><input type="checkbox" checked={mayor} onChange={e => setMayor(e.target.checked)} /><span>Soy mayor de 18 y acepto jugar con respeto: nadie está obligado a tomar ni a cumplir un reto.</span></label>
+          {error && <p className="a-error" role="alert">{error}</p>}
+          <Boton color="amarillo" texto="Entrar de prueba" icono="play" cargando={ocupado} onClick={() => void enviar()} />
+          <button type="submit" hidden />
+          <button type="button" className="a-plano" onClick={volver}>Tengo cuenta o quiero crear una</button>
+        </form>
+      </Panel>
+    </Marco>
+  );
+}
+
 export function Acceso() {
   const [tab, setTab] = useState<"entrar" | "crear">("entrar");
+  const [invitado, setInvitado] = useState(false);
   const [nick, setNick] = useState(""), [pass, setPass] = useState(""), [nac, setNac] = useState(""), [genero, setGenero] = useState<Genero | "">("");
   const [acepto, setAcepto] = useState(false), [error, setError] = useState<string | null>(null), [ocupado, setOcupado] = useState(false);
 
@@ -62,10 +95,13 @@ export function Acceso() {
     );
   }
 
+  if (invitado) return <Invitado volver={() => setInvitado(false)} />;
+
   const enviar = async (e?: FormEvent) => {
     e?.preventDefault();
     if (ocupado) return;
     setError(null);
+    if (tab === "crear" && esNickInvitado(nick)) { setError("Ese apodo no se puede usar. Prueba con otro."); return; }
     if (!nickValido(nick) || !passValida(pass)) { setError("Apodo de 3 a 20 letras, números o guion bajo. Contraseña de 8 o más."); return; }
     if (tab === "crear") {
       if (!nac || !genero) { setError("Falta tu fecha de nacimiento o tu género."); return; }
@@ -98,6 +134,7 @@ export function Acceso() {
           {tab === "entrar" && <p className="a-nota">¿Olvidaste tu contraseña? Pídele a Elías que te ponga una nueva.</p>}
         </form>
       </Panel>
+      <button type="button" className="a-plano" onClick={() => setInvitado(true)}>Solo quiero probar: entrar sin cuenta</button>
     </Marco>
   );
 }

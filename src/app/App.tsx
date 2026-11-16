@@ -19,7 +19,7 @@ const PaginaDS = lazy(() => import("../pantallas/ds"));
 
 export function App() {
   const { ruta, arg } = useRuta();
-  const { fase } = useSesion();
+  const { fase, invitado } = useSesion();
   useEffect(() => { void refrescarSesion(); }, []);
   useEffect(instalarClics, []);
 
@@ -42,5 +42,5 @@ export function App() {
     : ruta === "ajustes" ? <Ajustes />
     : ruta === "admin" ? <Admin />
     : <Hub />;
-  return <>{pantalla}{fase === "dentro" && <SincroCapsulas />}<Avisos /></>;
+  return <>{pantalla}{fase === "dentro" && <SincroCapsulas />}{fase === "dentro" && invitado && ruta !== "tv" && ruta !== "editor" && <span className="a-prueba" aria-label="Estás en una entrada de prueba">Prueba</span>}<Avisos /></>;
 }

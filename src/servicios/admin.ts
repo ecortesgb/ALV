@@ -42,3 +42,13 @@ export async function restablecerClave(jugador: string, clave: string): Promise<
     return null;
   } catch (e) { console.error("restablecerClave", e); return "No se pudo cambiar la contraseña."; }
 }
+
+/** Borra todas las cuentas de invitado con su XP, figuras y salas. Devuelve cuántas borró, o null si no se pudo. */
+export async function adminBorrarInvitados(): Promise<number | null> {
+  if (!cliente || !cuentaActiva()) return null;
+  try {
+    const { data, error } = await cliente.rpc("admin_borrar_invitados");
+    if (error) { console.error("adminBorrarInvitados", error.message); return null; }
+    return typeof data === "number" ? data : 0;
+  } catch (e) { console.error("adminBorrarInvitados", e); return null; }
+}

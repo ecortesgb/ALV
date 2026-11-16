@@ -4,7 +4,7 @@ import { Boton, Chip, Etiqueta, Panel } from "../ds";
 import { ir } from "../app/rutas";
 import { useSesion } from "../app/sesion";
 import { alternarSonido, useSonidoActivo } from "../app/sonido";
-import { adminAjustarXp, adminJugadores, restablecerClave, type CuentaAdmin } from "../servicios/admin";
+import { adminAjustarXp, adminBorrarInvitados, adminJugadores, restablecerClave, type CuentaAdmin } from "../servicios/admin";
 import { Cabecera, Campo, Marco, Vacio, aviso, confirmar } from "./comun";
 
 export function Ajustes() {
@@ -44,6 +44,11 @@ export function Admin() {
     const r = await restablecerClave(c.id, clave);
     aviso(r ?? "Contraseña cambiada"); if (!r) { setClave(""); setAbierta(null); }
   };
+  const borrarInvitados = async () => {
+    if (!(await confirmar({ titulo: "¿Borrar a todos los invitados?", texto: "Se borran sus cuentas, su XP, sus figuras y las salas que abrieron. No se puede deshacer. Las cuentas normales no se tocan.", si: "Borrar invitados", peligro: true }))) return;
+    const n = await adminBorrarInvitados();
+    aviso(n === null ? "No se pudo borrar." : n === 0 ? "No había invitados." : `Se borraron ${n} invitados`); leer();
+  };
   const lista = (cuentas ?? []).filter(c => c.nombre.toLowerCase().includes(busca.trim().toLowerCase()));
   return (
     <Marco>
@@ -68,6 +73,11 @@ export function Admin() {
             ))}
           </ul>
           <Etiqueta texto={`${cuentas.length} cuentas`} icono="users" />
+          <Panel className="a-pila" como="section">
+            <span className="dsp a-t3">Invitados de prueba</span>
+            <p className="a-suave">Quien entra sin cuenta deja una cuenta desechable. Bórralas al terminar las pruebas.</p>
+            <Boton color="rojo" texto="Borrar invitados" icono="lock" onClick={() => void borrarInvitados()} />
+          </Panel>
         </>}
       </div>
     </Marco>

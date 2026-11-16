@@ -32,13 +32,18 @@ export function useSala(codigo: string | undefined, yo: string): EstadoSala {
 
   const refrescar = useCallback(() => {
     if (!sala) return;
+    // El motor no espera a esta lectura: arranca con el aviso y lee las acciones al mismo tiempo.
+    setTic(t => t + 1);
     if (ocupado.current) { otra.current = true; return; }
     ocupado.current = true;
     void (async () => {
       try {
-        const [ms, p] = await Promise.all([enlace.miembros(sala), enlace.partida(sala)]);
-        if (ms === null) { setCerrada(true); return; }
-        setMiembros(prev => (JSON.stringify(prev) === JSON.stringify(ms) ? prev : ms));
+        // La partida no espera a la lista de miembros (que son varias consultas): cada una avanza por su lado.
+        const gente = enlace.miembros(sala).then(ms => {
+          if (ms === null) setCerrada(true);
+          else setMiembros(prev => (JSON.stringify(prev) === JSON.stringify(ms) ? prev : ms));
+        });
+        const p = await enlace.partida(sala);
         const u = ultima.current;
         if (p && (!u || u.id !== p.id || p.version >= u.version)) {
           const s = p.terminada ? null : await enlace.secreto(p.id);
@@ -46,6 +51,7 @@ export function useSala(codigo: string | undefined, yo: string): EstadoSala {
           setPartida(prev => (prev && prev.id === p.id && prev.version === p.version && prev.terminada === p.terminada && Object.keys(prev.estado).length === Object.keys(p.estado).length ? prev : p));
           setSecreto(prev => (JSON.stringify(prev) === JSON.stringify(s) ? prev : s));
         } else if (!p) setPartida(null);
+        await gente;
         setTic(t => t + 1);
       } finally {
         ocupado.current = false;

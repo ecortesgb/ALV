@@ -255,3 +255,6 @@ body { overscroll-behavior: none; -webkit-tap-highlight-color: transparent; }
 @media (prefers-reduced-motion: reduce) {
   .D .a-entra, .D .a-aviso, .D .a-dialogo, .D .a-podio-3 li, .D .a-tv-carta, .D .a-tv-ruleta { animation: aVelo 160ms ease-out backwards !important; }
 }
+
+/* Etiqueta fija de la entrada de prueba (invitado). */
+.a-prueba { position: fixed; z-index: 75; left: 0; bottom: max(8px, env(safe-area-inset-bottom)); padding: 4px 16px 4px 12px; font: italic 800 13px/1 "Barlow Condensed", "Arial Narrow", sans-serif; letter-spacing: .1em; text-transform: uppercase; color: #0a1030; background: #ffd23f; border: 2px solid #0a1030; border-left: 0; border-radius: 0 999px 999px 0; pointer-events: none; }
