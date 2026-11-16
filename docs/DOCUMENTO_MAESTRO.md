@@ -1,6 +1,6 @@
 # ALV — Amigos Legendarios Verdaderos
 ## Documento Maestro del Producto
-**Versión:** 1.19  
+**Versión:** 1.20  
 **Última actualización:** 15 de noviembre de 2026  
 **Estado:** Documento vivo de producto; decisiones y propuestas identificadas por separado.
 
@@ -415,6 +415,8 @@ Referencia de Elías: lámina de 12 pantallas (carga, registro, personalizar, me
 **DECISIÓN (v1.18, Elías aprobó, 15 de noviembre) — Fase 3, tanda 2: menú principal, catálogo y ficha de juego.** Referencia: https://claude.ai/artifact/XAAp2GCgE7CFPbGjafEvAZ (fuente `alv2\fase3-t2\`). Menú principal con aviso de sala abierta, burbujas de novedades y engrane; menú de Jugar; catálogo con estados explorando, anfitrión en sala, menor en la sala y Sorpréndeme, más la fila de Herramientas; ficha del juego con cómo se juega, puntos, XP por lugar, modalidades y etiquetas, y botón según quién mira. Decisiones, todas las recomendadas: (1) Jugar abre primero un menú de 4 opciones (unirme, proyectar, este celular, ver juegos); (2) los invitados ven el catálogo y pueden mandar una sugerencia al anfitrión, sin elegir; (3) Sorpréndeme muestra el juego elegido con «¡Este!» u «Otro» antes de empezar; (4) la ficha muestra la XP por lugar con los jugadores reales; (5) el engrane abre Ajustes (sonido, música, menos movimiento, cuenta, cerrar sesión y Administración solo para administradores) y el Perfil se abre desde el retrato.
 
 **DECISIÓN (v1.19, Elías aprobó, 15 de noviembre) — Fase 3, tanda 3: configuración de partida y lobby.** Referencia: https://claude.ai/artifact/V3wBZpELqq62HeDazPRCvy (fuente `alv2\fase3-t3\`). Abrir sala (lugar con postales, intensidad Tranquilo/Picante/Sin filtro/Salvaje, Adulto y Drunk), sala en la TV (QR, figuras que llegan, «eligiendo», siguiente juego con reglas y cuenta regresiva), sala en el celular del anfitrión (quién está, Elegir juego, Iniciar) y del jugador (cápsulas que cambian el traje al instante en la TV, gestos, Listo), armar partida (modalidad y rondas) y partida en un solo celular (agregar jugadores con apodo y contraseña). Decisiones, todas las recomendadas: (1) el anfitrión puede iniciar cuando el mínimo del juego está listo; quien no, entra en la siguiente partida; (2) rondas 5, 8, 10 o 15, con 5 marcado; (3) equipos repartidos parejo de forma automática y ajustables tocando a alguien; (4) el anfitrión puede sacar a alguien de la sala, con confirmación; (5) quien llega a media partida juega desde la siguiente; (6) si entra un menor, la sala pasa a familiar y la TV lo avisa sin decir quién.
+
+**DECISIÓN (v1.20, Elías aprobó, 15 de noviembre) — Fase 3, tanda 4: personalizador, colección y sobres.** Referencia: https://claude.ai/artifact/DLmnegsSqJy7mQ9aSKWjeF (fuente `alv2\fase3-t4\`). Cápsulas (tocar una la activa al instante), editor rápido (cara, pelo, playera, pantalón, accesorios, pose; al azar solo con piezas propias), taller completo de Minifig Studio, tienda (sobres de piezas y de contenido), apertura de sobre y mi colección. Decisiones, todas las recomendadas, que resuelven pendientes de 13: (1) sobres de piezas bronce 60 XP (nivel 1, 2 piezas), plata 120 (nivel 3, 3 piezas), oro 240 (nivel 6, 4 piezas); (2) sin repetidas: los sobres solo traen piezas que no se tienen y uno sin piezas nuevas no se vende; (3) cuatro rarezas solo de colección, común 60 %, rara 28 %, épica 10 %, legendaria 2 %, visibles antes de comprar; (4) sobres de contenido de 100 a 150 XP, con etiquetas de familiar, adulto e intensidad, válidos para toda la sala del dueño, y el contenido base siempre alcanza para jugar; (5) en el editor se ven las piezas que faltan, en gris y con el sobre donde salen; (6) el taller completo solo en tablet o computadora; en celular, el editor rápido.
 
 # 9. Personajes y personalización
 
@@ -1247,6 +1249,9 @@ Decisiones del usuario del 12 de noviembre de 2026:
 
 ## v1.6
 - Primeros logros (14.2), con ámbito de sesión o histórico (ver DECISIÓN v1.6 en 14.2).
+
+## v1.20
+- Fase 3, tanda 4 (personalizador, colección y sobres) aprobada con sus 6 decisiones; fija precios, repetidas, rarezas y sobres de contenido (8.7, pendientes de 13).
 
 ## v1.19
 - Fase 3, tanda 3 (configuración de partida y lobby) aprobada con sus 6 decisiones (8.7).
