@@ -1,0 +1,48 @@
+# ALV: registro de decisiones
+
+La fuente de las decisiones de producto es `DOCUMENTO_MAESTRO.md`. Aquí se anota quién decidió cada cosa de la Fase 6 y qué sigue abierto. Una propuesta no se construye como si estuviera aprobada.
+
+## 1. Aprobadas por Elías
+
+| Decisión | Dónde está |
+|---|---|
+| Arquitectura de ALV 2.0: Pantalla, Anfitrión y Jugador; el papel es del aparato | Maestro §21.3, §21.4 |
+| Tecnología sin dependencias nuevas; motor en la Pantalla; XP solo en el servidor | Maestro §22.1 |
+| Design System «Cine Cómic Nocturno» | Maestro §8.7 |
+| Solo mayores de 18, sin modo familiar (D1) | Maestro §3.2, v1.25 |
+| Pasar solo con comodín; cartas de trago sin exigir alcohol | Maestro v1.28, `CLAUDE.md` |
+| Hacer los pasos 2 a 12 y la Fase 7 seguidos (sustituye a «se publica por pasos») | Maestro v1.30 |
+| Publicar la versión de prueba en la página (16 nov 2026, «Sí, publica») | Maestro v1.31 |
+
+## 2. Técnicas, tomadas sin consulta
+
+| Decisión | Por qué | Consecuencia |
+|---|---|---|
+| Un archivo general por papel en `src/juegos/general/` (celular, tv, texto) en vez de una carpeta por mecánica | 11 mecánicas comparten casi toda la pantalla; separar ahora duplicaba código | Si una mecánica crece, se saca a su carpeta |
+| La semilla viaja en la acción de arranque, no en `partidas` | Cierra el riesgo del impostor sin esperar a la migración 017 | `partidas.semilla` vale 0 en partidas nuevas |
+| `enlace.ts` prueba primero lo nuevo (función `crear_partida_sala`, tipo `control`) y si el servidor no lo tiene usa lo de hoy | La app debía funcionar con y sin 017 y 018 | Al aplicar 017 y 018 no hay que cambiar código |
+| Respaldo local sin servidor (localStorage y BroadcastChannel) | Probar varios aparatos en pestañas sin crear cuentas en la base real | Solo se activa si no hay Supabase configurado |
+| El modo de la sala se guarda en `eventos.nombre` («ALV con pantalla», «ALV sin pantalla») | Evita una migración para un dato que ya tenía columna libre | El nombre de sala ya no se muestra |
+| Parejas por orden de llegada cuando el número de jugadores es par | No existe todavía pantalla para armar parejas | Los juegos de pareja salen con candado si son impares |
+| «No lo cumplí» vale 0 puntos; no hay botón de pasar | Regla v1.28: sin comodín se cumple o se responde | El motor sigue aceptando `paso` como valor |
+| Un solo brillo en bucle por pantalla | Criterio de animación: un ciclo decorativo por pantalla | Se apaga el barrido de los botones que no son Jugar, sin tocar los archivos generados |
+| Avisos y confirmación propios, animación en CSS | Se evaluaron Sonner y Motion; se descartaron por «sin dependencias nuevas» | `src/pantallas/comun.tsx` y `alv.css` |
+| Logros calculados con los movimientos de XP del servidor | El historial local desapareció con la app 2D | Seis logros en `src/pantallas/Social.tsx`; no dan premio |
+| Botón Tienda con candado «Abre pronto» | No hay tienda 3D en el servidor | Se quita el candado al construir 024 y 025 |
+| Ranking solo entre la cuenta y quienes han compartido sala | No exponer apodos a cualquier cuenta | Función `ranking_conocidos` |
+
+## 3. Pendientes de Elías
+
+1. Autorizar las migraciones 017 y 018. Están escritas en `supabase/migrations/`. La herramienta las rechazó por quitar permisos en producción.
+2. Aceptar o pedir el paso 1.5 (prototipo HTML de 8 pantallas, Maestro §23.2). Se construyó la app directamente.
+3. La migración 027 (`supabase/pendientes/`) borra tablas. No se aplica sin su permiso expreso.
+4. Con qué XP se compran los comodines fuera de partida (Maestro §13.1).
+5. Entorno de pruebas con Supabase aparte: la organización ya tiene dos proyectos y uno más puede costar.
+6. Fecha del sábado de prueba y cómo juntar las anécdotas de los amigos (datos personales: no van al repo).
+7. La XP por reto en vivo se guarda como `ganada` y cuenta para el tope diario de 600. Revisar en el paso 12.
+
+## 4. Sustituidas o descartadas
+
+- Decisión 5 de §22.1 («la Fase 6 se publica por pasos»): sustituida en v1.30.
+- Decisión 7 de §22.1 (sala familiar): sustituida por D1 en v1.25.
+- Personaje 2D, tienda 2D y XP guardada en el aparato: retirados del código en v1.30.

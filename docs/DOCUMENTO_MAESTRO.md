@@ -1,6 +1,6 @@
 # ALV — Amigos Legendarios Verdaderos
 ## Documento Maestro del Producto
-**Versión:** 1.30  
+**Versión:** 1.31  
 **Última actualización:** 16 de noviembre de 2026  
 **Estado:** Documento vivo de producto; decisiones y propuestas identificadas por separado.
 
@@ -1166,7 +1166,7 @@ Riesgo aceptado: la cuenta con el control puede leer la semilla y todas las acci
 - Pruebas nuevas (82; total 147): los 14 juegos completos con 4 jugadores, repetición con semilla y acciones (también a media partida y con acciones repetidas), el secreto en cada momento de los 14 juegos, la frontera (`roles/pantalla` y los `juegos/*/tv.tsx` no usan `vistaJugador`, `privado`, `respuestas`, `manos` ni `semilla`), los componentes que no hablan con la base, las rutas y que `nube.ts` ofrece lo mismo que antes.
 - Quedan para su paso: `local/`, `figura3d/`, `juegos/` y `roles/*/motor.ts` (paso 4), `servicios/tiempoReal.ts` (paso 3) y las piezas de apoyo del Design System (aviso, confirmar, contador de XP, confeti, apertura de sobre).
 
-**Pasos 2 a 11, versión de prueba (v1.30, 16 de noviembre).** Elías autorizó hacer los pasos 2 a 12 seguidos y la Fase 7 (documento «ALV 2.0 — Dirección técnica»), lo que sustituye a la decisión 5 de arriba («se publica por pasos»). Se trabajó en la rama `alv2-fase6`; **no está publicado en la página** hasta que Elías lo decida. Se hizo:
+**Pasos 2 a 11, versión de prueba (v1.30, 16 de noviembre).** Elías autorizó hacer los pasos 2 a 12 seguidos y la Fase 7 (documento «ALV 2.0 — Dirección técnica»), lo que sustituye a la decisión 5 de arriba («se publica por pasos»). Se trabajó en la rama `alv2-fase6`. **Publicado en la página el 16 de noviembre (v1.31)** por instrucción de Elías («Sí, publica»), con las pruebas manuales en aparatos reales todavía pendientes. Se hizo:
 - **Base (paso 2).** Aplicadas: 019 (tiempo real en `partidas`, `datos_privados`, `acciones`, `miembros_evento`, `eventos`, `figuras_jugador`), 020 (nadie abre ni entra a una sala sin `mayor_18`; se revisa con un disparador, también ante solicitudes manipuladas) y 026 en su parte necesaria (`dar_xp_reto`, `ranking_conocidos`). Escritas y **sin aplicar**: 017 (semilla y arranque en tabla aparte, partidas solo por función) y 018 (número de orden y tipo `control`); la herramienta las rechazó por quitar permisos en producción y esperan autorización expresa. 027 está en `supabase/pendientes/` y no se aplica. 021 a 025 no existen todavía.
 - **El riesgo de la semilla queda cerrado sin esperar a 017:** la semilla real ya no se escribe en `partidas` (va 0); viaja en la acción de arranque, que por RLS solo lee quien tiene el control. Probado con usuarios simulados en una transacción deshecha: quien no tiene el control ve 0 acciones ajenas y lee semilla 0.
 - **Tiempo real (paso 3).** `servicios/tiempoReal.ts`: avisos al instante; sin confirmación en 5 s, consulta cada 3 s y se marca «Reconectando»; latido cada 12 s.
@@ -1382,6 +1382,9 @@ Decisiones del usuario del 12 de noviembre de 2026:
 
 ## v1.6
 - Primeros logros (14.2), con ámbito de sesión o histórico (ver DECISIÓN v1.6 en 14.2).
+
+## v1.31
+- 16 nov 2026. Elías autoriza publicar la versión de prueba de ALV 2.0 en la página. Se agregan los documentos de continuidad `docs/ALV_*.md`. Siguen sin aplicar 017, 018 y 027; las pruebas con cuentas reales en laptop, TV y celulares quedan a cargo de Elías (`docs/ALV_QA_PROTOCOL.md`, sección 6).
 
 ## v1.30
 - 16 nov 2026. Fase 6, pasos 2 a 11 en versión de prueba (22.1, «Avance de la Fase 6»): app 2.0 sobre el Design System, motor de sala, tiempo real y migraciones 019, 020 y 026 aplicadas. La autorización de Elías para hacer los pasos 2 a 12 y la Fase 7 seguidos sustituye a la decisión 5 de 22.1. Quedan pendientes y anotados: 017 y 018 (escritas, sin aplicar), 027 (no se aplica), paso 1.5, paso 12, tienda 3D, publicación en la página.
