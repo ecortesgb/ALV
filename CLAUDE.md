@@ -22,8 +22,8 @@
 ## Producto
 - Un solo motor (`src/engine`), puro y sin pantallas. Anfitrión, Jugador y Pantalla solo leen sus vistas (`src/engine/vistas.ts`).
 - La Pantalla (TV) solo recibe la vista pública.
-- Contenido separado de la lógica (`src/content`). Toda carta lleva etiquetas de escenario, intensidad, esfuerzo, adulto y Drunk.
-- Seguridad física: los filtros por lugar no se saltan. Tomar nunca da XP. Pasar no tiene castigo.
+- Contenido separado de la lógica (`src/content`). Toda carta lleva etiquetas de escenario, nivel (Temperatura para preguntas o Voltaje para retos, 1 a 5), categoría, esfuerzo y si es de trago.
+- Seguridad física: los filtros por lugar no se saltan. Pasar solo con comodín (Maestro v1.28); sin comodín se cumple el reto o se responde. Las cartas de trago nunca exigen alcohol: cada quien elige qué tomar. Tomar nunca da XP. Ningún reto de contacto sale sin el consentimiento de las personas involucradas.
 - Fuente de verdad del producto: `docs/DOCUMENTO_MAESTRO.md` (Documento Maestro, versión vigente en su encabezado). Respetar su clasificación DECISIÓN / PROPUESTA / PENDIENTE / DESCARTADO: una propuesta no se implementa como si estuviera aprobada, lo descartado no se recupera y no se salta ni se inicia una fase sin aprobación de Elías.
 - El documento "ALV — Definición integral de la plataforma" sigue vigente. Ninguno de los dos manda en general: cada choque entre ambos, o con lo ya construido, lo decide Elías punto por punto. Mientras no esté decidido, no cambiar lo que ya funciona; preguntar.
 - Cambios al Documento Maestro: incrementales, con entrada en su historial de versiones.
