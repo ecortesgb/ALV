@@ -1,6 +1,6 @@
 # ALV — Amigos Legendarios Verdaderos
 ## Documento Maestro del Producto
-**Versión:** 1.14  
+**Versión:** 1.15  
 **Última actualización:** 15 de noviembre de 2026  
 **Estado:** Documento vivo de producto; decisiones y propuestas identificadas por separado.
 
@@ -398,6 +398,15 @@ Condiciones que ya fija este documento y aplican a toda la lista: respetar movim
 **DECISIÓN (v1.12, Elías):** la dirección visual de ALV 2.0 es Comic Gaming: personalidad de cómic, profundidad y figuras 3D, tipografía contundente, animaciones fluidas y efectos moderados. Evitar pixel art, estética RPG o medieval, apariencia infantil, aspecto de dashboard o SaaS, exceso de neón y glassmorphism por costumbre. En la fase de dirección artística se presentan **tres propuestas realmente distintas** dentro de Comic Gaming (no variaciones de color) y Elías elige una. Esto reabre, solo para Comic Gaming, la comparación de tres direcciones que 8.3 había descartado.
 
 Referencia de Elías: lámina de 12 pantallas (carga, registro, personalizar, menú, modos, lobby con QR, ruleta, resultados, tienda, perfil, TV y administración) con figuras tipo bloque sobre ciudad nocturna, paneles azules con borde de cómic y botones grandes de colores.
+
+**DECISIÓN (v1.15, Elías aprobó la Fase 2, 15 de noviembre) — «Cine Cómic Nocturno»:** de las propuestas A (Viñeta Nocturna), B (Cartelazo) y C (Cine Cómic), Elías pidió una mezcla, la D, y la aprobó. Referencia con las cuatro pantallas (hub, catálogo, TV con El impostor y celular con palabra secreta) en celular, laptop y TV: página «ALV 2.0 Fase 2» (https://claude.ai/artifact/9eYPazP8GC2U3nbMaLG44y, fuente `alv2\fase2.html` fuera del repo). A, B y C quedan como historial.
+- De la C: títulos en Barlow Condensed itálica con contorno oscuro, texto en Barlow; pestañas y etiquetas inclinadas; brillo que cruza botones y tarjeta enfocada; escáner de huella del FBI para ver el secreto; en la TV de El impostor, rueda de reconocimiento con pared de estaturas, reflector fijo en quien habla y otro que barre a los sospechosos.
+- De la A: azul y amarillo como base; fondo de ciudad gótica de noche (agujas, luna, ventanas encendidas); onomatopeyas en Bangers, una por pantalla; figuras con contorno de tinta.
+- De la lámina de Elías: botones inclinados con bisel y color por sección (Jugar amarillo, Personalizar azul, Tienda morado, Ranking verde, Logros naranja), icono blanco; tarjeta del jugador arriba; figura sobre pedestal con reflector; etiquetas amarillas de sección.
+- Botones vivos: brillo periódico, se levantan al pasar, el icono se mueve, se hunden al tocar; Jugar late.
+- Cada juego del catálogo tiene ilustración: rayos de cómic del color de su fila, personajes y el objeto del juego. En la app salen de fotos del 3D.
+- Paleta de trabajo: noche #0d1a45, panel #2453c4, borde #5fb4ff, amarillo #ffd23f, azul #2f7bff, morado #8b3dff, verde #35b84a, naranja #ff7a1a, rojo FBI #ff3d4a. Los valores finales se fijan en el Design System.
+- En Three.js: material de caricatura con contorno y dos luces (reflector y relleno azul).
 
 # 9. Personajes y personalización
 
@@ -1074,7 +1083,7 @@ No saltar fases. Cada fase requiere alcance, entregables, criterios de aceptaci�
 
 | Fase | Alcance | Estado |
 |---|---|---|
-| Previa | Explorar y seleccionar dirección visual | Reabierta en v1.12: tres propuestas Comic Gaming (8.7) |
+| Previa | Explorar y seleccionar dirección visual | Hecha en v1.15: «Cine Cómic Nocturno» (8.7) |
 | 1 | Design System | Pendiente; ya no está bloqueada |
 | 2 | Personajes y personalización | En curso (v1.11): figura 3D por cápsulas |
 | 3 | Onboarding, HUB y perfil | Pendiente |
@@ -1126,7 +1135,7 @@ Requisitos:
 
 # 24. Pendientes principales
 
-1. Elegir una de las tres propuestas Comic Gaming (8.7). Neo-Arcade quedó descartado en v1.12.
+1. Dirección visual elegida en v1.15 («Cine Cómic Nocturno», 8.7). Sigue la Fase 3 de ALV 2.0, solo con aprobación de Elías.
 2. Fijar paleta y tipografía oficiales en la fase de Design System.
 3. Resuelto en v1.4: catálogo clásico enumerado en 16.8.
 4. Completar matriz de compatibilidad entre modalidad y minijuegos.
@@ -1230,6 +1239,9 @@ Decisiones del usuario del 12 de noviembre de 2026:
 
 ## v1.6
 - Primeros logros (14.2), con ámbito de sesión o histórico (ver DECISIÓN v1.6 en 14.2).
+
+## v1.15
+- Fase 2 de ALV 2.0 aprobada: dirección visual «Cine Cómic Nocturno», mezcla de las propuestas C y A pegada a la lámina de Elías (8.7). A, B y C quedan como historial.
 
 ## v1.14
 - Fase 1 de ALV 2.0 aprobada: mapa, roles Pantalla/Anfitrión/Jugador, flujos, configuración en tres momentos, catálogo por intención y 6 decisiones (21.3).
