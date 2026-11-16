@@ -1,6 +1,6 @@
 # ALV — Amigos Legendarios Verdaderos
 ## Documento Maestro del Producto
-**Versión:** 1.23  
+**Versión:** 1.24  
 **Última actualización:** 15 de noviembre de 2026  
 **Estado:** Documento vivo de producto; decisiones y propuestas identificadas por separado.
 
@@ -1128,6 +1128,15 @@ Decisiones:
 
 Riesgo aceptado: la cuenta con el control puede leer la semilla y todas las acciones, porque la Pantalla la usa.
 
+### Avance de la Fase 6
+
+**Paso 1, cimientos (v1.24, 15 de noviembre).** Publicado; no cambia nada visible en la app de hoy. Se hizo:
+- `src/ds/`: tokens, estilos e iconos copiados tal cual de la fuente aprobada con `tools/copiar-ds.mjs` (no se editan a mano; viven dentro de la clase `.D` para no tocar los estilos de hoy) y los 13 componentes en React. Página interna `#/ds` con todos sus estados, sin enlace en la app. Se agregaron solo los estados que la fuente no traía en código: cargando, chip elegido, botón con burbuja y votos en la rueda.
+- Enrutador propio (`src/app/rutas.ts`): las rutas de hoy siguen igual. `#/s/código` y `#/sala/código` abren la sala de hoy con el código escrito; `#/tv/código`, `#/mesa/código` y `#/proyectar` muestran una pantalla provisional hasta los pasos 4 y 5; `#/hub`, `#/catalogo`, `#/juego/x`, `#/personalizar`, `#/coleccion`, `#/logros` y `#/admin` llevan a su pantalla de hoy. Las rutas nuevas se cargan aparte, con los estilos del Design System.
+- `src/servicios/`: `nube.ts` partido en `cliente`, `cuenta`, `sala`, `partida`, `tienda` y `admin`, sin cambiar ninguna función; `nube.ts` queda como puente para las pantallas de hoy.
+- Pruebas nuevas (82; total 147): los 14 juegos completos con 4 jugadores, repetición con semilla y acciones (también a media partida y con acciones repetidas), el secreto en cada momento de los 14 juegos, la frontera (`roles/pantalla` y los `juegos/*/tv.tsx` no usan `vistaJugador`, `privado`, `respuestas`, `manos` ni `semilla`), los componentes que no hablan con la base, las rutas y que `nube.ts` ofrece lo mismo que antes.
+- Quedan para su paso: `local/`, `figura3d/`, `juegos/` y `roles/*/motor.ts` (paso 4), `servicios/tiempoReal.ts` (paso 3) y las piezas de apoyo del Design System (aviso, confirmar, contador de XP, confeti, apertura de sobre).
+
 ## 22.2 Hipótesis iniciales (historial)
 
 Hipótesis de implementación:
@@ -1314,6 +1323,9 @@ Decisiones del usuario del 12 de noviembre de 2026:
 
 ## v1.6
 - Primeros logros (14.2), con ámbito de sesión o histórico (ver DECISIÓN v1.6 en 14.2).
+
+## v1.24
+- Fase 6, paso 1 (cimientos) publicado: Design System en código con página `#/ds`, enrutador con las rutas por aparato, `servicios/` sacado de `nube.ts` y 82 pruebas nuevas de la red de seguridad (22.1, «Avance de la Fase 6»). Sin cambios visibles ni en la base.
 
 ## v1.23
 - Fase 5 de ALV 2.0 aprobada: arquitectura técnica (22.1) con mapa del código, estructura, rutas por aparato, tiempo real con respaldo, acciones nuevas, migraciones 017 a 027, orden de la Fase 6 en 12 pasos y 7 decisiones. La XP por reto en vivo queda sin tope y también para el anfitrión; las reglas de XP se definen al final. §22 deja de ser hipótesis.

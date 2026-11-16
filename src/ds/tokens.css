@@ -1,0 +1,84 @@
+/* Generado por tools/copiar-ds.mjs desde la fuente aprobada del Design System. No editar a mano. */
+/* ALV Cine Cómic Nocturno · versión 1 */
+.D {
+  /* Color */
+  --noche: #0d1a45;
+  --cielo-alto: #1b1552;
+  --cielo-medio: #2b3c90;
+  --edificio-lejos: #3a3f95;
+  --edificio-cerca: #0b1234;
+  --luna: #fff4cf;
+  --panel: #2453c4;
+  --panel-oscuro: #14307e;
+  --borde-luz: #5fb4ff;
+  --tinta: #0a1030;
+  --texto: #ffffff;
+  --texto-suave: #b4c3ee;
+  --amarillo: #ffd23f;
+  --amarillo-claro: #fff09a;
+  --amarillo-oscuro: #e39a00;
+  --azul: #2f7bff;
+  --azul-claro: #7fb5ff;
+  --azul-oscuro: #1a4fc4;
+  --morado: #8b3dff;
+  --morado-claro: #c39bff;
+  --morado-oscuro: #5d1fc0;
+  --verde: #35b84a;
+  --verde-claro: #8ae67f;
+  --verde-oscuro: #1f7f2c;
+  --naranja: #ff7a1a;
+  --naranja-claro: #ffc07a;
+  --naranja-oscuro: #cf4f00;
+  --rojo-fbi: #ff3d4a;
+  --rojo-claro: #ff8f96;
+  --rojo-oscuro: #c41d2a;
+  --oro-xp: #ffc83d;
+  --cian-escaner: #41d6ff;
+  --papel-evidencia: #fff3c4;
+  --rosa-sfx: #ff8fc8;
+  --fila-empezar: #ffc81f;
+  --fila-reir: #ff6fb5;
+  --fila-secretos: #ff7a1a;
+  --fila-miente: #41b8ff;
+  --fila-competir: #35b84a;
+  --fila-pareja: #a66bff;
+  /* Letra */
+  --letra-display: "Barlow Condensed", "Arial Narrow", sans-serif;
+  --letra-cuerpo: Barlow, "Segoe UI", system-ui, sans-serif;
+  --letra-sfx: Bangers, Impact, sans-serif;
+  --titulo-hero: italic 800 44px/0.9 var(--letra-display);
+  --titulo-1: italic 800 34px/0.9 var(--letra-display);
+  --titulo-2: italic 800 21px/0.95 var(--letra-display);
+  --etiqueta: italic 800 16px/1 var(--letra-display);
+  --numero: italic 800 40px/1 var(--letra-display);
+  --cuerpo: 500 16px/22px var(--letra-cuerpo);
+  --cuerpo-chico: 600 13px/18px var(--letra-cuerpo);
+  --chip: 700 11px/14px var(--letra-cuerpo);
+  --sfx: 400 40px/1 var(--letra-sfx);
+  /* Espacios */
+  --espacio-1: 4px;
+  --espacio-2: 8px;
+  --espacio-3: 12px;
+  --espacio-4: 16px;
+  --espacio-6: 24px;
+  --espacio-8: 32px;
+  /* Radios */
+  --radio-boton: 7px;
+  --radio-tarjeta: 10px;
+  --radio-panel: 11px;
+  --radio-pildora: 999px;
+  /* Sombras */
+  --sombra-boton: 0 5px 0 #0a1030;
+  --sombra-boton-alto: 0 8px 0 #0a1030;
+  --sombra-boton-hundido: 0 1px 0 #0a1030;
+  --brillo-jugar: 0 0 26px rgba(255,210,63,0.7);
+  /* Inclinación */
+  --inclinacion: -9deg;
+  --inclinacion-sello: -12deg;
+  /* Tiempos */
+  --tiempo-toque: 150ms;
+  --tiempo-entrada: 450ms;
+  --tiempo-brillo: 4s;
+  --tiempo-latido: 2.4s;
+  --tiempo-reflector: 7s;
+}

@@ -1,6 +1,6 @@
 // ALV: una sola app. Pestañas de abajo: Inicio, Lobby, Tienda, Ranking y Perfil.
 // El flujo es como en los juegos de futbol en línea: Jugar → lobby con los personajes → condiciones → Iniciar → carga → partida.
-import { useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { logrosDe } from "../engine/logros";
 import type { EstadoPartida } from "../engine/partida";
 import { Retrato } from "./Avatar";
@@ -22,29 +22,19 @@ import { instalarClics } from "./sonido";
 import { CabeceraJuego, Hub, PantallaModos } from "./Hub";
 import { Notificaciones, PaginaAjustes, PaginaFisico, PantallaCarga, PantallaCuenta } from "./Bienvenida";
 
-type Ruta = "inicio" | "lobby" | "tienda" | "ranking" | "perfil" | "unirse" | "fisico" | "ajustes" | "jugar" | "figura";
-const RUTAS: Ruta[] = ["inicio", "lobby", "tienda", "ranking", "perfil", "unirse", "fisico", "ajustes", "jugar", "figura"];
-/** Rutas viejas que siguen funcionando si alguien las tenía guardadas. */
-const ANTES: Record<string, Ruta> = { juegos: "lobby", grupo: "lobby", historial: "ranking" };
+import { ir, type Ruta, useRuta } from "./rutas";
 
-const leerRuta = (): { ruta: Ruta; arg?: string } => {
-  const [r = "", arg] = location.hash.replace(/^#\/?/, "").split("/");
-  if (r in ANTES) return { ruta: ANTES[r]!, arg: r === "juegos" && arg ? `s-${arg}` : undefined };
-  return { ruta: (RUTAS as string[]).includes(r) ? (r as Ruta) : "inicio", arg };
-};
-export const ir = (r: Ruta, arg?: string) => { location.hash = `/${r}${arg ? `/${arg}` : ""}`; };
+/** Rutas de ALV 2.0 (TV, mesa, proyectar y la página del Design System): se cargan aparte, con sus estilos. */
+const RutaNueva = lazy(() => import("../roles"));
+const NUEVAS = new Set<Ruta>(["tv", "mesa", "proyectar", "ds"]);
 
 export function App() {
-  const [{ ruta, arg }, setR] = useState(leerRuta());
+  const destino = useRuta();
+  const { ruta, arg } = destino;
   const [partida, setPartida] = useState<EstadoPartida | null>(null);
   const paleta = useEstado().ajustes.paleta;
   useEffect(() => { document.documentElement.dataset.paleta = paleta === "lounge" ? "lounge" : "neon"; }, [paleta]);
   useEffect(() => { void sesionActual(); }, []);
-  useEffect(() => {
-    const f = () => setR(leerRuta());
-    addEventListener("hashchange", f);
-    return () => removeEventListener("hashchange", f);
-  }, []);
   useEffect(() => { scrollTo(0, 0); }, [ruta, partida === null]);
   useEffect(instalarClics, []);
 
@@ -58,6 +48,9 @@ export function App() {
   };
   // La primera vez que alguien crea su cuenta entra directo a armar su personaje.
   const trasCuenta = (creada: boolean) => { if (creada) { ir("perfil"); setEntrada("lista"); } else setEntrada("avisos"); };
+
+  // Las rutas nuevas ocupan toda la pantalla y no pasan por la carga ni las novedades de hoy.
+  if (NUEVAS.has(ruta) && !partida) return <Suspense fallback={null}><RutaNueva destino={destino} /></Suspense>;
 
   const ancho = !!partida || ruta === "lobby" || ruta === "ranking" || ruta === "fisico";
   return (

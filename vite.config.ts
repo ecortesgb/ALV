@@ -5,5 +5,6 @@ import react from "@vitejs/plugin-react";
 export default defineConfig({
   base: "./",
   plugins: [react()],
-  test: { environment: "node", include: ["src/**/*.test.ts"] },
+  // css: la prueba del Design System lee sus estilos copiados (src/ds) para revisar que sean los aprobados.
+  test: { environment: "node", include: ["src/**/*.test.ts"], css: { include: [/src[\\/]ds[\\/].*\.css/] } },
 });

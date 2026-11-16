@@ -1,0 +1,34 @@
+/* Agregados a la fuente aprobada que pide el código y la fuente no trae (la fuente eran maquetas de HTML fijo).
+   No cambian colores ni medidas: solo quitan lo que el navegador pone a botones y suman los estados de la Fase 5. */
+.D.raiz { font-family: var(--letra-cuerpo); color: var(--texto); line-height: 1.25; }
+.D.raiz *, .D.raiz *::before, .D.raiz *::after { box-sizing: border-box; }
+.D button.d-btn, .D button.d-tab, .D button.d-chip, .D button.d-gear, .D button.d-gc { font: inherit; color: inherit; text-align: left; margin: 0; }
+.D button.d-btn.k-yel { color: var(--ink); }
+.D button.d-tab { color: #fff; }
+.D button.d-tab.on { color: var(--ink); }
+.D .d-btn:focus-visible, .D .d-tab:focus-visible, .D .d-chip:focus-visible, .D .d-gc:focus-visible, .D .d-gear:focus-visible { outline: 3px solid var(--yel); outline-offset: 3px; }
+.D .d-btn:disabled { filter: grayscale(1) brightness(.7); cursor: not-allowed; }
+.D .d-btn:disabled::after { display: none; }
+.D button.d-jug { font: inherit; color: inherit; text-align: left; cursor: pointer; }
+.D .d-tabs { overflow-x: auto; scrollbar-width: none; }
+.D .d-tabs::-webkit-scrollbar { display: none; }
+/* Botón con burbuja de aviso: deja lugar para que la burbuja no tape el texto. */
+.D .d-btn.con-aviso { padding-right: 3.4em; }
+/* Cargando: el icono gira y el botón no responde. */
+.D .d-btn.is-carga { cursor: progress; }
+.D .d-btn.is-carga .ic { animation: cSpin 1s linear infinite; }
+/* Chip elegido (filtros del catálogo e intensidad). */
+.D .d-chip { color: #fff; }
+.D button.d-chip { cursor: pointer; }
+.D .d-chip.on { background: var(--yel); color: var(--ink); border-color: var(--ink); }
+.D .d-chip.on .ic { color: var(--ink); }
+/* Números de la tarjeta del jugador (PJ, PG, RC, MVP, IMP, RAC). */
+.D .d-nums { display: flex; flex-wrap: wrap; gap: .35em; margin-top: .45em; }
+.D .d-nums b { font: 800 italic 1.1em/1 "Barlow Condensed", sans-serif; margin-right: .2em; }
+.D .d-jug .tit { font-size: .7em; font-weight: 700; color: var(--mut); letter-spacing: .06em; text-transform: uppercase; }
+/* Reloj en pausa. */
+.D .d-ring.pausa b { opacity: .55; }
+/* Votos de la rueda de sospechosos al revelar. */
+.D .d-p .votos { font: 800 italic 1em/1 "Barlow Condensed", sans-serif; background: var(--red); color: #fff; border: 2px solid var(--ink); border-radius: 99px; padding: .25em .6em; }
+/* Escáner: el botón no tiene borde del navegador. */
+.D .hold { border-width: 2px; padding: 0; width: 100%; }
