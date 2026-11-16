@@ -629,7 +629,7 @@ Ningún sobre da ventaja dentro de una partida. Las rarezas (común, épica, leg
 
 ## 13.1 Tienda e inventario
 
-**DECISIÓN (v1.33, Elías, 16 de noviembre) — monedas y gemas:** vuelve la opción de **monedas** como moneda de la tienda. Las **gemas son la XP** que ya existe: lo que se muestra en la barra superior con el ícono de gema. **PENDIENTE (v1.33):** cómo se ganan las monedas (por partida, por nivel, por logros o por compra), en qué se gastan y el precio de cada artículo en monedas. Hasta decidirlo, la tienda sigue cobrando en XP como en 13.2.
+**DECISIÓN (v1.33, Elías, 16 de noviembre) — monedas y gemas:** vuelve la opción de **monedas** como moneda de la tienda. Las **gemas son la XP** que ya existe: lo que se muestra en la barra superior con el ícono de gema. **DECISIÓN (v1.34, Elías, 16 de noviembre):** la decisión entre monedas y XP, y los precios, se toma **después de la prueba con jugadores**. Hasta entonces la tienda cobra en XP (13.2).
 
 **DECISIÓN (v1.27, Elías, 15 de noviembre) — tienda inicial:** al principio la tienda tiene solo **sobres de accesorios** del personaje y **sobres de comodines**, cada uno en versión **básica** o **especial**, más una sección de **outfits y comodines básicos fijos** que se compran directo (por ejemplo «Saltar reto»). Los sobres de contenido (mazos) quedan para después. Los costos en XP no son oficiales; para empezar se usan valores de referencia: sobre de accesorios básico 60 XP (2 piezas) y especial 150 (3, una rara o mejor); sobre de comodines básico 50 (2 básicos) y especial 120 (3, uno especial); comodín básico suelto 40; outfit armado 100. Se fijan en el paso 12 de la Fase 6. Resuelve en parte el pendiente de la «Tienda de comodines» de 23.2 (sí se venden fuera de partida; falta decidir con qué XP).
 
@@ -1393,6 +1393,10 @@ Decisiones del usuario del 12 de noviembre de 2026:
 ## v1.6
 - Primeros logros (14.2), con ámbito de sesión o histórico (ver DECISIÓN v1.6 en 14.2).
 
+## v1.34
+- Sin fecha límite (3.2, v1.29): la jornada de prueba ya no tiene fecha fija; se hace cuando la app esté lista. La meta de contenido de v1.29 queda como referencia, no como plazo.
+- Monedas o XP y sus precios se deciden después de la prueba con jugadores (13.1). Mientras, la tienda cobra en XP.
+
 ## v1.33
 - Decisiones de Elías sobre la propuesta visual (8.8): Cine Cómic Nocturno con partes de Neon Party; Bangers y Barlow; nombre «Amigos Legendarios Verdaderos»; LEGO se mantiene para la prueba.
 - Monedas vuelven como moneda de tienda; gemas = XP (13.1). Pendiente: cómo se ganan y gastan las monedas.
@@ -1481,5 +1485,5 @@ Decisiones del usuario del 12 de noviembre de 2026:
 
 ---
 
-**Fin del Documento Maestro ALV v1.33**  
+**Fin del Documento Maestro ALV v1.34**  
 Este documento debe actualizarse de forma incremental y conservar la distinción entre decisiones aprobadas, propuestas, pendientes y descartadas.

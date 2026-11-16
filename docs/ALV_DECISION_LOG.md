@@ -38,7 +38,7 @@ La fuente de las decisiones de producto es `DOCUMENTO_MAESTRO.md`. Aquí se anot
 3. La migración 027 (`supabase/pendientes/`) borra tablas. No se aplica sin su permiso expreso.
 4. Con qué XP se compran los comodines fuera de partida (Maestro §13.1).
 5. Entorno de pruebas con Supabase aparte: la organización ya tiene dos proyectos y uno más puede costar.
-6. Fecha del sábado de prueba y cómo juntar las anécdotas de los amigos (datos personales: no van al repo).
+6. Sin fecha límite (v1.34): la prueba se hace cuando la app esté lista. Anécdotas de los amigos: datos personales, fuera del repo.
 7. La XP por reto en vivo se guarda como `ganada` y cuenta para el tope diario de 600. Revisar en el paso 12.
 
 ## 4. Sustituidas o descartadas
@@ -67,4 +67,9 @@ La fuente de las decisiones de producto es `DOCUMENTO_MAESTRO.md`. Aquí se anot
 
 - Monedas: cómo se ganan, cómo se gastan y precios.
 - Propiedad intelectual de LEGO en repo público (Maestro §19.1): revisar antes de difundir fuera del grupo.
+
+## 9. Cambios del 16 de noviembre (tercera ronda)
+
+- Sin fecha límite para la prueba (Maestro v1.34, §3.2).
+- Monedas o XP y sus precios: después de la prueba con jugadores (Maestro v1.34, §13.1). La tienda cobra en XP mientras tanto.
 
