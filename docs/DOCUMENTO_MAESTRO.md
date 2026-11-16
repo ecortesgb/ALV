@@ -1,6 +1,6 @@
 # ALV — Amigos Legendarios Verdaderos
 ## Documento Maestro del Producto
-**Versión:** 1.21  
+**Versión:** 1.22  
 **Última actualización:** 15 de noviembre de 2026  
 **Estado:** Documento vivo de producto; decisiones y propuestas identificadas por separado.
 
@@ -1063,6 +1063,34 @@ Además:
 - Catálogo por intención: Para empezar, Para reír, Para soltar secretos, ¿Quién miente?, A competir, En pareja y una fila de Herramientas. Se filtra solo por jugadores, escenario y ambiente; lo que no se puede jugar sale con candado y la razón. Las siglas (PTM, HDSPM…) quedan como sello de cada juego.
 - Usuario que regresa: entra directo al hub; «Volver a la sala» si tiene una abierta; novedades como burbujas, no como ventana al entrar.
 
+## 21.4 La partida en tres aparatos — DECISIÓN (v1.22)
+
+**DECISIÓN (v1.22, Elías aprobó la Fase 4 completa, 15 de noviembre).** Referencia con simulador (El impostor, ¿Quién es más probable? y Verdad o reto en 12 momentos, con TV, computadora y sin pantalla): página «ALV Fase 4 Multipantalla» (https://claude.ai/artifact/UL3rgCv2HCXXnGYu7xtBdZ, fuente `alv2ase4\` fuera del repo).
+
+Reglas:
+- El papel es del aparato, no de la cuenta. La Pantalla se anuncia como pantalla; el celular del anfitrión es un jugador más con su `vistaJugador` y la barra de control (Pausar, Saltar, Ruleta, XP reto y el botón del momento: Revelar ya, Siguiente ronda).
+- La Pantalla es la única que cambia la partida: aplica las acciones con el motor (`aplicar`) y publica `vistaPublica` y, por jugador, `mio`, `miRespuesta` y `miMano` de `vistaJugador`, cada envío con su `version`. Un aparato ignora avisos con versión menor a la que tiene.
+- Lo que dibuja la Pantalla recibe solo `vistaPublica`. Nunca llegan a la TV palabras, papeles, votos antes de la revelación, cartas de poder (solo cuántas y la usada), la semilla, edad, género ni contraseñas.
+- El servidor avisa al instante (tiempo real); si no responde en 5 s, el aparato consulta cada 3 s y lo marca «Reconectando».
+- Cada celular muestra su propia acción al momento («Votaste») y luego «La TV ya lo recibió».
+- Todas las acciones, también las del anfitrión, se guardan en `acciones`. Si la Pantalla se recarga, repite semilla y acciones con el motor y queda igual. Si no vuelve en 30 s, el anfitrión puede pasar la partida a su celular.
+- Quien recarga o pierde la señal vuelve solo al mismo momento de la partida. El QR y el código quedan en una esquina de la TV toda la partida; quien llega tarde ve «Juegas en la siguiente».
+- Sin pantalla: el celular del anfitrión corre el motor, se queda encendido en la mesa y muestra arriba lo público; su secreto sigue tras el escáner.
+- Acciones nuevas a definir en la Fase 5: `pausar`, `reanudar`, `saltar`, `ruleta`, `xp-reto`, `pasar-control` y `pista`, más avisos de paso que no cambian la partida («ya la vi», «pedir pausa»).
+
+Decisiones, todas las recomendadas:
+1. La revelación sale sola cuando todos contestaron o se acabó el tiempo, con 2 s de suspenso; el anfitrión puede adelantarla con «Revelar ya». Pasar a la siguiente ronda lo toca el anfitrión.
+2. Solo el anfitrión pausa (y la Pantalla como respaldo); los demás tienen «Pedir pausa».
+3. A quien se desconecta se le espera 20 s sin detener a los demás; luego el anfitrión elige esperar o seguir sin él, sin castigo.
+4. En la revelación de El impostor y ¿Quién es más probable? la TV muestra quién votó a quién.
+5. En El impostor, quien habla escribe su pista en el celular, la dice en voz alta y la TV la pone en su etiqueta; «Ya dije» pasa al siguiente.
+6. Las cápsulas se cambian solo en la sala, entre juegos; durante la partida el traje queda fijo.
+7. El anfitrión puede pasar el control a otro jugador mayor de edad de la sala (y, sin pantalla, también la partida).
+
+Fallas de la prueba real del 15 de noviembre y cómo las evita este diseño (su corrección en código va al final): lentitud (consultas cada 1.5 s → avisos al instante), entrar confuso (QR siempre visible y vuelta automática), cápsulas que no cambiaban (cambio inmediato y aviso a la TV; causa exacta por confirmar en la Fase 6) y el anfitrión sin palabra (`useAPartidaDeSala` se apaga si `sala.anfitrion`).
+
+**PENDIENTE (Fase 6), riesgos encontrados en el código:** `partidas.semilla` la puede leer cualquier miembro de la sala y, con el motor público, permite calcular el impostor y la palabra: debe pasar a un lugar que solo lea el anfitrión. La cuenta del anfitrión puede leer todas las acciones antes de la revelación (aceptado para fiestas entre amigos; la Fase 5 puede mover el motor al servidor si hace falta). `Partida.tsx` llama a `vistaJugador` dentro de lo que dibuja la pantalla grande. `revelar` y `siguiente` hoy no se guardan en `acciones`.
+
 # 22. Arquitectura técnica — hipótesis
 
 No hay arquitectura final aprobada.
@@ -1252,6 +1280,9 @@ Decisiones del usuario del 12 de noviembre de 2026:
 ## v1.6
 - Primeros logros (14.2), con ámbito de sesión o histórico (ver DECISIÓN v1.6 en 14.2).
 
+## v1.22
+- Fase 4 de ALV 2.0 aprobada: la partida en tres aparatos, cómo se comunican, reconexión, lo que nunca llega a la TV y 7 decisiones (21.4). Se anotan como pendientes de la Fase 6 la semilla legible por los jugadores y otros riesgos del código.
+
 ## v1.21
 - Fase 3, tanda 5 (perfil, logros y rankings) aprobada con sus 6 decisiones. Fase 3 de ALV 2.0 cerrada (8.7, 14).
 
@@ -1300,5 +1331,5 @@ Decisiones del usuario del 12 de noviembre de 2026:
 
 ---
 
-**Fin del Documento Maestro ALV v1.14**  
+**Fin del Documento Maestro ALV v1.22**  
 Este documento debe actualizarse de forma incremental y conservar la distinción entre decisiones aprobadas, propuestas, pendientes y descartadas.
