@@ -1,6 +1,6 @@
 # ALV — Amigos Legendarios Verdaderos
 ## Documento Maestro del Producto
-**Versión:** 1.20  
+**Versión:** 1.21  
 **Última actualización:** 15 de noviembre de 2026  
 **Estado:** Documento vivo de producto; decisiones y propuestas identificadas por separado.
 
@@ -417,6 +417,8 @@ Referencia de Elías: lámina de 12 pantallas (carga, registro, personalizar, me
 **DECISIÓN (v1.19, Elías aprobó, 15 de noviembre) — Fase 3, tanda 3: configuración de partida y lobby.** Referencia: https://claude.ai/artifact/V3wBZpELqq62HeDazPRCvy (fuente `alv2\fase3-t3\`). Abrir sala (lugar con postales, intensidad Tranquilo/Picante/Sin filtro/Salvaje, Adulto y Drunk), sala en la TV (QR, figuras que llegan, «eligiendo», siguiente juego con reglas y cuenta regresiva), sala en el celular del anfitrión (quién está, Elegir juego, Iniciar) y del jugador (cápsulas que cambian el traje al instante en la TV, gestos, Listo), armar partida (modalidad y rondas) y partida en un solo celular (agregar jugadores con apodo y contraseña). Decisiones, todas las recomendadas: (1) el anfitrión puede iniciar cuando el mínimo del juego está listo; quien no, entra en la siguiente partida; (2) rondas 5, 8, 10 o 15, con 5 marcado; (3) equipos repartidos parejo de forma automática y ajustables tocando a alguien; (4) el anfitrión puede sacar a alguien de la sala, con confirmación; (5) quien llega a media partida juega desde la siguiente; (6) si entra un menor, la sala pasa a familiar y la TV lo avisa sin decir quién.
 
 **DECISIÓN (v1.20, Elías aprobó, 15 de noviembre) — Fase 3, tanda 4: personalizador, colección y sobres.** Referencia: https://claude.ai/artifact/DLmnegsSqJy7mQ9aSKWjeF (fuente `alv2\fase3-t4\`). Cápsulas (tocar una la activa al instante), editor rápido (cara, pelo, playera, pantalón, accesorios, pose; al azar solo con piezas propias), taller completo de Minifig Studio, tienda (sobres de piezas y de contenido), apertura de sobre y mi colección. Decisiones, todas las recomendadas, que resuelven pendientes de 13: (1) sobres de piezas bronce 60 XP (nivel 1, 2 piezas), plata 120 (nivel 3, 3 piezas), oro 240 (nivel 6, 4 piezas); (2) sin repetidas: los sobres solo traen piezas que no se tienen y uno sin piezas nuevas no se vende; (3) cuatro rarezas solo de colección, común 60 %, rara 28 %, épica 10 %, legendaria 2 %, visibles antes de comprar; (4) sobres de contenido de 100 a 150 XP, con etiquetas de familiar, adulto e intensidad, válidos para toda la sala del dueño, y el contenido base siempre alcanza para jugar; (5) en el editor se ven las piezas que faltan, en gris y con el sobre donde salen; (6) el taller completo solo en tablet o computadora; en celular, el editor rápido.
+
+**DECISIÓN (v1.21, Elías aprobó, 15 de noviembre) — Fase 3, tanda 5: perfil, logros y rankings. Con esto la Fase 3 de ALV 2.0 queda cerrada.** Referencia: https://claude.ai/artifact/6kYG6Lr7vp7i1ynjx3aSYv (fuente `alv2\fase3-t5\`). Perfil con tarjeta de jugador (figura, nivel, título por nivel y números con siglas), logros de sesión e históricos con avance, y ranking con Esta reunión, Histórico, Parejas, Equipos e Historial. Decisiones, todas las recomendadas: (1) el perfil que ven los demás muestra figura, apodo, nivel, título, números, logros y últimas partidas, nunca fecha de nacimiento ni género; (2) el ranking histórico compara por defecto con «Mi grupo» (gente con la que se ha jugado), con «Todo ALV» y «Este mes» como filtros; (3) cada quien elige 3 logros destacados; (4) unos pocos logros secretos, visibles como «???» con pista; (5) los logros no dan XP; (6) la tarjeta usa siglas: PJ partidas jugadas, PG ganadas, RC retos cumplidos, MVP, IMP impostores atrapados, RAC mejor racha.
 
 # 9. Personajes y personalización
 
@@ -1145,7 +1147,7 @@ Requisitos:
 
 # 24. Pendientes principales
 
-1. Dirección visual elegida en v1.15 («Cine Cómic Nocturno», 8.7). Sigue la Fase 3 de ALV 2.0, solo con aprobación de Elías.
+1. Fase 3 de ALV 2.0 cerrada en v1.21 (12 pantallas diseñadas en 5 tandas, 8.7). Sigue la Fase 4 (Pantalla, Anfitrión y Jugador: comunicación y qué ve cada uno en la partida), solo con aprobación de Elías.
 2. Paleta y tipografía oficiales fijadas en el Design System (v1.16, 8.7).
 3. Resuelto en v1.4: catálogo clásico enumerado en 16.8.
 4. Completar matriz de compatibilidad entre modalidad y minijuegos.
@@ -1249,6 +1251,9 @@ Decisiones del usuario del 12 de noviembre de 2026:
 
 ## v1.6
 - Primeros logros (14.2), con ámbito de sesión o histórico (ver DECISIÓN v1.6 en 14.2).
+
+## v1.21
+- Fase 3, tanda 5 (perfil, logros y rankings) aprobada con sus 6 decisiones. Fase 3 de ALV 2.0 cerrada (8.7, 14).
 
 ## v1.20
 - Fase 3, tanda 4 (personalizador, colección y sobres) aprobada con sus 6 decisiones; fija precios, repetidas, rarezas y sobres de contenido (8.7, pendientes de 13).
