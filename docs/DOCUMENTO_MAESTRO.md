@@ -1,6 +1,6 @@
 # ALV — Amigos Legendarios Verdaderos
 ## Documento Maestro del Producto
-**Versión:** 1.27  
+**Versión:** 1.28  
 **Última actualización:** 15 de noviembre de 2026  
 **Estado:** Documento vivo de producto; decisiones y propuestas identificadas por separado.
 
@@ -131,7 +131,15 @@ Puede:
 **DECISIÓN (v1.25, Elías, 15 de noviembre) — D1, acceso solo para mayores de 18:** ALV es exclusivo para mayores de 18. **No hay modelo familiar.** Cartas y juegos llevan etiquetas de intensidad **tranquila / adulta / Drunk**. Sustituye la parte de edad de la decisión v1.12 de abajo (menores con cuenta y contenido familiar), la decisión 7 de 22.1 (la sala deja de ser familiar) y la etiqueta «familiar» de 13 (tanda 4, decisión 4) y 22.1. Sigue vigente que todo jugador necesita cuenta, también en el juego local.
 **DECISIÓN (v1.26, Elías, 15 de noviembre) — D1, cómo se aplica:** la edad se comprueba con la fecha de nacimiento. Hoy no hay ningún menor y no debe haberlo: si la fecha da menos de 18 años, la app muestra un **mensaje de bloqueo por minoría de edad** y no deja seguir hasta que se corrija la fecha de nacimiento. La intensidad funciona como un **termómetro** de cuatro niveles (Tranquilo, Picante, Sin filtro, Salvaje) que sube o baja de uno en uno.
 \1
-**PROPUESTA (v1.27) — Temperatura + Voltaje:** motor de intensidad transversal con dos ejes independientes de 5 niveles (Temperatura para preguntas: Frío, Fresco, Tibio, Caliente, Extremo; Voltaje para retos: Bajo voltaje, Voltaje medio, Alto voltaje, Sobrecarga, Máxima tensión), modos Preguntas / Retos / Preguntas y retos / Aleatorio, factor sorpresa «¿Voy a tener suerte?», presets Relax, Picante y Caos, límites privados por jugador con consentimiento de contacto, freno anónimo y biblioteca ampliada. Si se aprueba, sustituye el termómetro de 4 niveles de v1.26 y el interruptor Adulto, y resuelve el pendiente de arriba. Página con demo y 10 decisiones abiertas: https://claude.ai/artifact/Px5uFp3qVawD8Xo3DRKEfU (fuente `alv2\intensidad.html`). No se implementa hasta que Elías la apruebe.
+\1
+**DECISIÓN (v1.28, Elías, 15 de noviembre) — Temperatura + Voltaje:**
+1. Se aprueban los **dos ejes independientes de 5 niveles**, Temperatura (preguntas) y Voltaje (retos). Sustituyen el termómetro de 4 niveles de v1.26 y el interruptor Adulto, y resuelven el pendiente de D1.
+2. El nivel es **general para toda la sala** y lo pone el anfitrión, después de que el grupo lo decide por mayoría fuera de la app. **No hay límites individuales por jugador.**
+3. **Pasar no es gratis:** solo se puede pasar con un comodín. Sin comodín, el jugador cumple el reto o responde la pregunta (cualquier respuesta cuenta).
+4. **Las cartas de trago no se pueden omitir.** El texto dice «trago» o «shot», nunca exige alcohol, y cada quien elige qué tomar (agua, refresco, lo que quiera). Tomar nunca da XP.
+5. Comodines: se aprueba **Cambio de pregunta o reto**, y **¿Voy a tener suerte?** pasa a ser un comodín cuyo resultado puede ser mejor o peor para quien lo usa.
+6. **Más contenido:** se crean más preguntas y retos, y el contenido se ampliará con otras fuentes, para que haya variedad en cada nivel, categoría y combinación y **no se repita ninguna carta en toda la jornada de juego prevista**.
+**PENDIENTE (v1.28):** (a) consentimiento para retos de contacto: el brief de Elías pide que nunca haya contacto sin consentimiento explícito; con pasar solo con comodín, la propuesta es que cada jugador diga una vez si acepta retos de contacto y que esos retos solo salgan entre quienes aceptaron; (b) duración de la jornada prevista (define cuántas cartas hacen falta); (c) si siguen los eventos sorpresa automáticos además del comodín; (d) si los niveles altos dan más puntos; (e) el freno anónimo de la propuesta se descarta con el nivel general, salvo que Elías lo pida; (f) «otras fuentes»: se adaptan ideas, no se copian textos de juegos comerciales.
 
 **DECISIÓN (v1.12, Elías; la parte de menores y contenido familiar queda sustituida por D1 en v1.25) — cuentas y edad:** todo jugador necesita cuenta, también en el juego local (se acaban los jugadores creados sin cuenta en el celular). Los menores de 18 sí pueden tener cuenta. Si en la sala o en la partida local hay al menos un menor, no se pueden activar el contenido adulto ni el modo Drunk y solo queda disponible el contenido **familiar**: temas, preguntas, retos y castigos marcados como familiares. La edad es la que declara cada quien al registrarse.
 
@@ -1288,7 +1296,7 @@ Requisitos:
 - Comodines = acciones del motor, consumibles, con matriz por juego (D2, 13.4).
 - Un personalizador con modos Simple y Avanzado, sin perder lo armado (D3, 10).
 - Diseño final: 8 pantallas de alta fidelidad + prototipo HTML navegable, hecho en el paso 1.5 antes del paso 2 (D4, 23.2).
-- Menores de 18: mensaje de bloqueo hasta corregir la fecha. Intensidad como termómetro de 4 niveles. Comodines en todos los juegos, de un solo uso. Modo Avanzado también en celular (v1.26).
+- Menores de 18: mensaje de bloqueo hasta corregir la fecha. Intensidad: Temperatura (preguntas) y Voltaje (retos), 5 niveles cada uno, nivel general de la sala (v1.28; sustituye el termómetro de 4 niveles). Comodines en todos los juegos, de un solo uso; pasar solo con comodín. Cartas de trago obligatorias con la bebida que cada quien elija; tomar nunca da XP. Modo Avanzado también en celular (v1.26).
 - El lenguaje de la app usa siglas con ingenio.
 - ALVerca, FBI y GPS son los escenarios activos.
 - Los cosméticos no otorgan ventajas competitivas.
@@ -1354,6 +1362,9 @@ Decisiones del usuario del 12 de noviembre de 2026:
 
 ## v1.6
 - Primeros logros (14.2), con ámbito de sesión o histórico (ver DECISIÓN v1.6 en 14.2).
+
+## v1.28
+- Temperatura + Voltaje aprobado con cambios de Elías (3.2): nivel general de la sala que pone el anfitrión tras votar el grupo fuera de la app, sin límites individuales; pasar solo con comodín; cartas de trago obligatorias con la bebida que cada quien elija; comodines Cambio de pregunta o reto y ¿Voy a tener suerte?; más contenido sin repetir en toda la jornada. Pendientes anotados.
 
 ## v1.27
 - Tienda inicial (13.1, decisión de Elías): solo sobres de accesorios y de comodines, básicos o especiales, más outfits y comodines básicos fijos; sobres de contenido para después; precios de referencia provisionales.
@@ -1422,5 +1433,5 @@ Decisiones del usuario del 12 de noviembre de 2026:
 
 ---
 
-**Fin del Documento Maestro ALV v1.27**  
+**Fin del Documento Maestro ALV v1.28**  
 Este documento debe actualizarse de forma incremental y conservar la distinción entre decisiones aprobadas, propuestas, pendientes y descartadas.
