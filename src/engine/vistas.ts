@@ -33,6 +33,10 @@ export interface VistaPublica {
   control?: string;
   /** Quiénes deben contestar en esta ronda (para saber a quién se espera). */
   esperados: string[];
+  /** Quienes no contestaron y la ronda se cerró sin ellos (solo tras «Seguir sin él»). */
+  ausentes: string[];
+  /** Veces que el anfitrión eligió esperar en esta ronda. */
+  esperas: number;
   /** Al revelar una votación (El impostor, ¿Quién es más probable?): quién votó a quién. Antes, nada. */
   votosDe?: Record<string, string>;
 }
@@ -62,6 +66,8 @@ export function vistaPublica(e: EstadoPartida): VistaPublica {
     ruleta: e.ruletaExtra,
     control: e.control,
     esperados: quienesContestan(e),
+    ausentes: [...(e.ausentes ?? [])],
+    esperas: e.esperas ?? 0,
     votosDe: e.fase !== "contestando" && (e.motor === "rol-secreto" || e.motor === "senalar") && !(e.revelado as { saltada?: boolean } | undefined)?.saltada
       ? Object.fromEntries(Object.entries(e.respuestas).map(([j, v]) => [j, String(v)])) : undefined,
   };

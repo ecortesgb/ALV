@@ -3,7 +3,7 @@
 // comparte la sala entre pestañas del mismo navegador, para probar TV + celulares sin cuentas.
 import type { FiguraV2 } from "../content/personaje";
 import { cliente, hayNube, uidActual } from "./cliente";
-import { escucharSala, type EstadoRed } from "./tiempoReal";
+import { escucharSala, vigilarPantalla, type EstadoRed, type PresenciaPantalla } from "./tiempoReal";
 
 export type ModoSala = "tv" | "mesa";
 export interface SalaV { id: string; codigo: string; modo: ModoSala; anfitrionId: string }
@@ -32,6 +32,8 @@ export interface Enlace {
   darXp(sala: SalaV, jugador: string, xp: number): Promise<boolean>;
   activarCapsula(n: number): Promise<void>;
   escuchar(sala: SalaV, alCambiar: () => void, alEstado?: (e: EstadoRed) => void): () => void;
+  /** Dice si la Pantalla de la sala está conectada. Si `soyPantalla`, este aparato se anota como la Pantalla. */
+  vigilarPantalla(sala: SalaV, soyPantalla: boolean, alEstado: (p: PresenciaPantalla) => void): () => void;
 }
 
 const CODIGO = /^[A-Z0-9]{6}$/;
@@ -161,6 +163,7 @@ const nube: Enlace = {
     try { const r = await cliente!.rpc("activar_capsula", { p_capsula: n }); if (r.error) log("activarCapsula", r.error); } catch (e) { log("activarCapsula", e); }
   },
   escuchar: (sala, alCambiar, alEstado) => escucharSala(sala.id, alCambiar, alEstado),
+  vigilarPantalla: (sala, soyPantalla, alEstado) => vigilarPantalla(sala.id, soyPantalla, alEstado),
 };
 
 // ---------- Respaldo local (sin servidor): la sala vive en este navegador y se comparte entre pestañas ----------
@@ -236,6 +239,8 @@ const local: Enlace = {
     oyentes.add(alCambiar); alEstado?.("vivo"); queueMicrotask(alCambiar);
     return () => { oyentes.delete(alCambiar); };
   },
+  /** Sin servidor no hay presencia: no se sabe y no se avisa. */
+  vigilarPantalla: () => () => { /* nada */ },
 };
 
 export const enlace: Enlace = hayNube ? nube : local;

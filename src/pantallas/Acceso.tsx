@@ -1,10 +1,12 @@
 // Pantalla de carga, acceso y registro. ALV es solo para mayores de 18 (D1): la fecha la valida el servidor.
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { Boton, Onomatopeya, Panel, Pestanas } from "../ds";
-import { entrar, entrarInvitado, esNickInvitado, guardarRegistro, nickValido, passValida, registrar, salir, type Genero } from "../servicios/cuenta";
+import { cargarCapsulasNube, entrar, entrarInvitado, esNickInvitado, guardarRegistro, nickValido, passValida, registrar, salir, type Genero } from "../servicios/cuenta";
 import { hayNube } from "../servicios/cliente";
 import { entrarDemo, refrescarSesion, useSesion } from "../app/sesion";
-import { Campo, Marco } from "./comun";
+import { ir } from "../app/rutas";
+import { sonar } from "../app/sonido";
+import { Campo, Elenco, Marco } from "./comun";
 
 const hoy = () => new Date();
 /** Edad cumplida a partir de AAAA-MM-DD. */
@@ -25,9 +27,50 @@ function Logo({ sub }: { sub?: string }) {
   );
 }
 
-/** Carga: se ve mientras se lee la sesión. Sin bloques grises: el logo y la ciudad. */
-export function Carga() {
-  return <Marco clase="a-centro"><Logo sub="Amigos, locuras y verdades" /><p className="a-suave a-pulso" role="status">Entrando…</p></Marco>;
+/** Carga: se ve mientras se lee la sesión y al abrir ALV. Sin bloques grises: el logo, la ciudad y una barra que corre. */
+export function Carga({ texto = "Entrando…" }: { texto?: string }) {
+  return (
+    <Marco clase="a-centro">
+      <Logo sub="Amigos, locuras y verdades" />
+      <div className="a-barra" aria-hidden="true"><i /></div>
+      <p className="a-suave a-pulso" role="status">{texto}</p>
+    </Marco>
+  );
+}
+
+/** Portada: primera vista para quien no tiene sesión. Un toque lleva a Acceso. */
+export function Portada({ onIniciar }: { onIniciar: () => void }) {
+  return (
+    <Marco clase="a-centro a-portada">
+      <div className="a-portada-arte" aria-hidden="true">
+        <Elenco gente={[{ id: "portada-1" }, { id: "portada-2" }, { id: "portada-3" }]} foco="portada-2" />
+      </div>
+      <div className="a-portada-txt">
+        <Logo />
+        <p className="a-suave">Un videojuego de minijuegos para jugar con tus amigos, en pareja o todos juntos.</p>
+      </div>
+      <Boton color="amarillo" principal texto="PRESIONA PARA INICIAR" icono="play" onClick={() => { sonar("clic"); onIniciar(); }} />
+    </Marco>
+  );
+}
+
+/** Entrada sin sesión: carga breve, portada y luego Acceso. Si la dirección es de una sala o de la Pantalla (QR), salta la portada. */
+export function Entrada({ directo }: { directo: boolean }) {
+  const [paso, setPaso] = useState<"carga" | "portada" | "acceso">(directo ? "acceso" : "carga");
+  useEffect(() => {
+    if (directo) { setPaso("acceso"); return; }
+    const t = setTimeout(() => setPaso(p => (p === "carga" ? "portada" : p)), 1600);
+    return () => clearTimeout(t);
+  }, [directo]);
+  if (paso === "carga") return <Carga texto="Cargando…" />;
+  if (paso === "portada") return <Portada onIniciar={() => setPaso("acceso")} />;
+  return <Acceso />;
+}
+
+/** Cuenta nueva: a personalizar, salvo que ya tenga figura guardada en la nube. Si no se pudo leer, va al HUB. */
+async function irAPersonalizarSiNueva(): Promise<void> {
+  const nube = await cargarCapsulasNube();
+  if (nube && !nube.slots.some(Boolean)) ir("personalizar");
 }
 
 function DatosEdad({ nac, setNac, genero, setGenero }: { nac: string; setNac: (v: string) => void; genero: Genero | ""; setGenero: (g: Genero) => void }) {
@@ -55,6 +98,7 @@ function Invitado({ volver }: { volver: () => void }) {
     const fallo = await entrarInvitado(apodo);
     setOcupado(false);
     if (fallo) { setError(fallo); return; }
+    await irAPersonalizarSiNueva();
     await refrescarSesion();
   };
   return (
@@ -113,6 +157,7 @@ export function Acceso() {
     if (!fallo && tab === "crear" && genero) await guardarRegistro(nac, genero);
     setOcupado(false);
     if (fallo) { setError(tab === "crear" ? "No se pudo crear. Puede que ese apodo ya exista." : "Apodo o contraseña incorrectos."); return; }
+    if (tab === "crear") await irAPersonalizarSiNueva();
     await refrescarSesion();
   };
 

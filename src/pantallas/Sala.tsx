@@ -7,7 +7,8 @@ import { BarraAnfitrion, Boton, Chip, Etiqueta, Panel, Reloj } from "../ds";
 import { ir } from "../app/rutas";
 import { refrescarSesion, useSesion } from "../app/sesion";
 import { sonar } from "../app/sonido";
-import { enlace, enlaceSala, type Miembro } from "../servicios/enlace";
+import { enlace, enlaceSala, type Miembro, type SalaV } from "../servicios/enlace";
+import type { PresenciaPantalla } from "../servicios/tiempoReal";
 import { HerramientaCelular, type MiVista } from "../juegos/general/celular";
 import { esPublico, marcador, nombreJuego, quedan, type Publico } from "../juegos/general/texto";
 import { control, iniciarPartida, jugada, useMotor } from "../roles/pantalla/motor";
@@ -29,12 +30,37 @@ export function useDespierta(activo: boolean) {
   }, [activo]);
 }
 
+/** ¿Está conectada la Pantalla de la sala? `soyPantalla`: este aparato es la Pantalla y se anota. Sin `activo` o sin servidor: «desconocida». */
+export function usePantalla(sala: SalaV | null, soyPantalla: boolean, activo: boolean): PresenciaPantalla {
+  const [p, setP] = useState<PresenciaPantalla>("desconocida");
+  useEffect(() => {
+    setP("desconocida");
+    if (!activo || !sala) return;
+    return enlace.vigilarPantalla(sala, soyPantalla, setP);
+  }, [sala?.id, soyPantalla, activo]); // eslint-disable-line react-hooks/exhaustive-deps
+  return p;
+}
+
+/** Atributo `inert` (React 18 no lo conoce): quita el foco y los toques a todo lo de dentro. */
+const inerte = (si: boolean): Record<string, string> => (si ? { inert: "" } : {});
+
 /** Segundos que quedan, actualizados 4 veces por segundo solo si hay reloj. */
 export function useQuedan(v: Publico | null): number {
   const [, set] = useState(0);
   const hay = !!v?.reloj && v.fase === "contestando" && !v.pausada;
   useEffect(() => { if (!hay) return; const t = setInterval(() => set(x => x + 1), 250); return () => clearInterval(t); }, [hay]);
   return v && hay ? quedan(v) : 0;
+}
+
+/** P-03: true cuando ya pasó `fin` (marca de tiempo). Un solo temporizador, sin intervalos. */
+export function useVencida(fin: number | null | undefined): boolean {
+  const [, set] = useState(0);
+  useEffect(() => {
+    if (!fin) return;
+    const t = setTimeout(() => set(x => x + 1), Math.max(0, fin - Date.now()) + 20);
+    return () => clearTimeout(t);
+  }, [fin]);
+  return !!fin && Date.now() >= fin;
 }
 
 export function Conexion({ red }: { red: string }) {
@@ -83,7 +109,11 @@ export function Sala({ codigo }: { codigo: string }) {
   const corroMotor = soyAnfitrion && s.sala?.modo === "mesa";
   useMotor(s.sala, s.partida, corroMotor, s.tic, () => void refrescarSesion());
   useDespierta(corroMotor && !!v);
+  // Con pantalla (modo tv) la partida solo avanza si la Pantalla está. Sin ella, el celular no deja contestar ni avanzar.
+  const pantalla = usePantalla(s.sala, false, s.sala?.modo === "tv" && !!v);
+  const sinPantalla = pantalla === "ausente";
   const quedanS = useQuedan(v);
+  const esperaVencida = useVencida(v?.fase === "contestando" && !v.pausada ? v.espera?.fin : null);
   const [juego, setJuego] = useState("impostor"), [rondas, setRondas] = useState(8), [nivel, setNivel] = useState<1 | 2 | 3 | 4>(2);
   const [iniciando, setIniciando] = useState(false), [xpReto, setXpReto] = useState(false), [verReglas, setVerReglas] = useState(false);
   const terminada = !!s.partida?.terminada;
@@ -110,9 +140,9 @@ export function Sala({ codigo }: { codigo: string }) {
     const ultima = v.ronda >= v.totalRondas;
     return (
       <Marco clase="a-partida" fijo={soyAnfitrion ? (
-        <div className="a-barra">
+        <div className={"a-barra" + (sinPantalla ? " a-sin-pantalla" : "")} {...inerte(sinPantalla)}>
           <BarraAnfitrion pausada={v.pausada}
-            momento={v.fase === "revelada" ? { texto: ultima ? "Ver resultados" : "Siguiente ronda", icono: "skip", onClick: () => void control(pid, "siguiente") } : undefined}
+            momento={v.fase === "revelada" && !sinPantalla ? { texto: ultima ? "Ver resultados" : "Siguiente ronda", icono: "skip", onClick: () => void control(pid, "siguiente") } : undefined}
             onPausar={() => void control(pid, v.pausada ? "reanudar" : "pausar")}
             onSaltar={() => void (v.fase === "contestando" ? control(pid, "saltar") : control(pid, "siguiente"))}
             onRuleta={() => void control(pid, "ruleta")} onXpReto={() => setXpReto(true)} />
@@ -125,12 +155,23 @@ export function Sala({ codigo }: { codigo: string }) {
             {v.reloj && v.fase === "contestando" && <Reloj segundos={quedanS} total={v.reloj.total} pausado={v.pausada} style={{ width: 56, height: 56 }} />}
             <Conexion red={s.red} />
           </header>
-          {estoy ? <HerramientaCelular v={v} mi={mi} miembros={s.miembros} mandar={(t, d) => jugada(pid, t, d)} />
+          {sinPantalla && <div className="a-aviso-tv" role="alert"><span className="dsp ol a-t3">La pantalla se desconectó</span><p>La partida espera. {soyAnfitrion ? "Abre la pantalla otra vez para seguir." : "Lo que ya enviaste se conserva."}</p></div>}
+          {soyAnfitrion && !sinPantalla && esperaVencida && v.fase === "contestando" && (
+            <Panel className="a-pila" como="section"><div role="alert" className="a-pila">
+              <span className="dsp ol a-t3">Falta contestar: {v.esperados.filter(j => !v.contestaron.includes(j)).map(j => v.jugadores.find(p => p.id === j)?.nombre ?? "alguien").join(", ")}</span>
+              <div className="a-fila a-envuelve">
+                <Boton color="verde" texto="Esperar al jugador" icono="clock" onClick={() => void control(pid, "esperar")} />
+                <Boton color="amarillo" texto="Seguir sin él" icono="skip" onClick={() => void control(pid, "seguir-sin")} />
+              </div>
+            </div></Panel>
+          )}
+          {v.fase === "revelada" && v.ausentes?.includes(ses.uid) && <div className="a-aviso-tv" role="status"><span className="dsp ol a-t3">La ronda se cerró sin tu respuesta</span><p>No sumaste puntos en esta ronda. Sigues en la partida y juegas la siguiente.</p></div>}
+          {estoy ? <div className={sinPantalla ? "a-espera-tv" : undefined} {...inerte(sinPantalla)}><HerramientaCelular v={v} mi={mi} miembros={s.miembros} mandar={async (t, d) => !sinPantalla && jugada(pid, t, d)} /></div>
             : <Panel className="a-herr"><span className="dsp ol a-t2">Juegas en la siguiente</span><p className="a-suave">Llegaste con la partida empezada. Mira la pantalla.</p></Panel>}
           <ul className="a-marcador" aria-label="Marcador">
             {marcador(v).map(j => <li key={j.id} className={j.id === ses.uid ? "yo" : ""}><Retrato id={j.id} figura={s.miembros.find(m => m.id === j.id)?.figura} nombre={j.nombre} size={32} /><span>{j.nombre}</span>{(v.cartasEnMano[j.id] ?? 0) > 0 && <Chip texto={String(v.cartasEnMano[j.id])} icono="bolt" />}<b className="dsp">{j.puntos}</b></li>)}
           </ul>
-          {soyAnfitrion && <button type="button" className="a-plano" onClick={() => void confirmar({ titulo: "¿Terminar la partida?", texto: "Se reparten los puntos como van.", si: "Terminar", peligro: true }).then(ok => { if (ok) void control(pid, "terminar"); })}>Terminar partida</button>}
+          {soyAnfitrion && <button type="button" className="a-plano" disabled={sinPantalla} onClick={() => void confirmar({ titulo: "¿Terminar la partida?", texto: "Se reparten los puntos como van.", si: "Terminar", peligro: true }).then(ok => { if (ok) void control(pid, "terminar"); })}>Terminar partida</button>}
         </div>
         {xpReto && <XpReto v={v} cerrar={() => setXpReto(false)} alDar={(j, x) => { void enlace.darXp(sala, j, x).then(ok => { if (ok) { void control(pid, "xp-reto", { jugador: j, xp: x }); aviso(`+${x} XP para ${v.jugadores.find(p => p.id === j)?.nombre ?? ""}`); } else aviso("No se pudo dar la XP."); }); }} />}
       </Marco>

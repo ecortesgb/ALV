@@ -38,6 +38,12 @@ describe("motor de la sala", () => {
     expect(saltada.ronda).toBe(2);
     expect(Object.values(saltada.puntos).every(p => p === 0)).toBe(true);
   });
+  it("P-02: una segunda respuesta del mismo jugador en la ronda se ignora (cuenta la primera)", () => {
+    const una = reconstruir([arranque(), fila(A, "contestar", { valor: B })], A)!;
+    const dos = reconstruir([arranque(), fila(A, "contestar", { valor: B }), fila(A, "contestar", { valor: C })], A)!;
+    expect(dos.respuestas).toEqual(una.respuestas);
+    expect(dos.respuestas[A]).toBe(B);
+  });
   it("nadie contesta por otro: la acción lleva la cuenta que la mandó", () => {
     const acc = aAccion(fila(B, "contestar", { valor: C, jugador: A }), [A]);
     expect(acc).toMatchObject({ tipo: "contestar", jugador: B });

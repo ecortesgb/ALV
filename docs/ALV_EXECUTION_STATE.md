@@ -57,3 +57,6 @@ Verificado el 16 nov (tercera vuelta, sin cambios de código): el paso 0 (modo i
 4. Detalle menor: el pie del Maestro dice «v1.34» y el encabezado «1.35». Se corrige en el siguiente cambio del Maestro.
 
 Decisiones abiertas: `ALV_DECISION_LOG.md` §3 y §8.
+
+- 2026-11-16 (P-02): la Pantalla manda un latido por Realtime y los celulares avisan «La pantalla se desconectó» y se quedan en espera (`tiempoReal.ts`, `Sala.tsx`, `Pantalla.tsx`, `enlace.ts`) · 152 pruebas pasan, tsc sin errores nuevos, probado en sala `SYRRMR` con 3 pestañas · falta probar con celulares reales; detalle en `ALV_CONECTIVIDAD_Y_MULTIDISPOSITIVO.md`, «Correcciones aplicadas».
+- 2026-11-16 (P-03): «Esperar al jugador» / «Seguir sin él» a los 20 s para el anfitrión (`engine/partida.ts`, `roles/pantalla/motor.ts`, `pantallas/Sala.tsx`) · 159 pruebas pasan, tsc igual (3 de la tienda), probado en servidor con sala `VPLAWE` sin migraciones · falta: celulares reales y pantalla con TV; detalle en `ALV_TIEMPO_REVELACION_Y_JUGADOR_AUSENTE.md`, «Implementado».

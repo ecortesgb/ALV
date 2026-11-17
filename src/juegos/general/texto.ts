@@ -2,7 +2,7 @@
 import { JUEGOS } from "../../content/catalogo";
 import type { VistaPublica } from "../../engine/vistas";
 
-export type Publico = VistaPublica & { reloj: { fin: number; total: number } | null };
+export type Publico = VistaPublica & { reloj: { fin: number; total: number } | null; /** P-03: cuándo vence la espera por quien no contesta (null: no hay espera). */ espera?: { fin: number } | null };
 export const esPublico = (e: Record<string, unknown> | null | undefined): e is Publico & Record<string, unknown> =>
   !!e && typeof e.juegoId === "string" && Array.isArray(e.jugadores) && typeof e.fase === "string";
 

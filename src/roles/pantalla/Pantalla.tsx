@@ -8,7 +8,7 @@ import { useSesion } from "../../app/sesion";
 import { enlaceSala } from "../../servicios/enlace";
 import { EscenaTv } from "../../juegos/general/tv";
 import { esPublico, marcador, nombreDe, nombreJuego } from "../../juegos/general/texto";
-import { Conexion, Podio, useDespierta, useQuedan } from "../../pantallas/Sala";
+import { Conexion, Podio, useDespierta, usePantalla, useQuedan } from "../../pantallas/Sala";
 import { Elenco, Retrato } from "../../pantallas/comun";
 import { useSala } from "../sala";
 import { control, useMotor } from "./motor";
@@ -29,6 +29,7 @@ export function PantallaTv({ codigo }: { codigo: string }) {
   const tengoControl = !!s.sala && s.sala.anfitrionId === ses.uid;
   useMotor(s.sala, s.partida, tengoControl, s.tic);
   useDespierta(true);
+  usePantalla(s.sala, true, true); // se anota como la Pantalla: los celulares saben si está
   const v = s.partida && !s.partida.terminada && esPublico(s.partida.estado) ? s.partida.estado : null;
   const final = s.partida?.terminada && esPublico(s.partida.estado) ? s.partida.estado : null;
   const quedanS = useQuedan(v);
@@ -61,7 +62,7 @@ export function PantallaTv({ codigo }: { codigo: string }) {
         <Conexion red={s.red} />
         {v.reloj && v.fase === "contestando" && <Reloj segundos={quedanS} total={v.reloj.total} pausado={v.pausada} style={{ width: "6.5em", height: "6.5em" }} />}
       </header>
-      <main className="a-tv-main"><EscenaTv v={v} miembros={s.miembros} /></main>
+      <main className="a-tv-main"><EscenaTv v={v} miembros={s.miembros} />{v.fase === "revelada" && v.ausentes?.length > 0 && <p className="a-tv-sub">Sin respuesta en esta ronda: {v.ausentes.map(j => nombreDe(v, j)).join(", ")}</p>}</main>
       <footer className="a-tv-pie">
         <ul className="a-tv-marcador" aria-label="Marcador">
           {marcador(v).map(j => <li key={j.id}><Retrato id={j.id} figura={s.miembros.find(m => m.id === j.id)?.figura} nombre={j.nombre} size={44} /><span>{j.nombre}</span><b className="dsp">{j.puntos}</b></li>)}

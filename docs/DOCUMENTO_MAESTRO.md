@@ -1,6 +1,6 @@
 # ALV — Amigos Legendarios Verdaderos
 ## Documento Maestro del Producto
-**Versión:** 1.35  
+**Versión:** 1.40  
 **Última actualización:** 16 de noviembre de 2026  
 **Estado:** Documento vivo de producto; decisiones y propuestas identificadas por separado.
 
@@ -1108,19 +1108,20 @@ Además:
 
 Reglas:
 - El papel es del aparato, no de la cuenta. La Pantalla se anuncia como pantalla; el celular del anfitrión es un jugador más con su `vistaJugador` y la barra de control (Pausar, Saltar, Ruleta, XP reto y el botón del momento: Revelar ya, Siguiente ronda).
-- La Pantalla es la única que cambia la partida: aplica las acciones con el motor (`aplicar`) y publica `vistaPublica` y, por jugador, `mio`, `miRespuesta` y `miMano` de `vistaJugador`, cada envío con su `version`. Un aparato ignora avisos con versión menor a la que tiene.
+- **REEMPLAZADA (v1.38, Elías, 16 de noviembre).** Texto anterior, que queda como historial: ~~La Pantalla es la única que cambia la partida: aplica las acciones con el motor (`aplicar`) y publica `vistaPublica` y, por jugador, `mio`, `miRespuesta` y `miMano` de `vistaJugador`, cada envío con su `version`. Un aparato ignora avisos con versión menor a la que tiene.~~ **DECISIÓN (v1.38):** el servidor (Edge Function `partida`, 22.1 decisión 1) es el único que cambia la partida: aplica las acciones con el motor y entrega `vistaPublica` a todos y a cada jugador solo su parte de `vistaJugador`, cada envío con su `version`. Un aparato ignora avisos con versión menor a la que tiene. La Pantalla se vincula con un código temporal, de un solo uso, con vencimiento y con confirmación expresa del anfitrión en su celular; abrir el enlace no basta. Mientras no se retire el motor actual (22.1 decisión 1), sigue funcionando como dice el texto anterior.
 - Lo que dibuja la Pantalla recibe solo `vistaPublica`. Nunca llegan a la TV palabras, papeles, votos antes de la revelación, cartas de poder (solo cuántas y la usada), la semilla, edad, género ni contraseñas.
 - El servidor avisa al instante (tiempo real); si no responde en 5 s, el aparato consulta cada 3 s y lo marca «Reconectando».
 - Cada celular muestra su propia acción al momento («Votaste») y luego «La TV ya lo recibió».
-- Todas las acciones, también las del anfitrión, se guardan en `acciones`. Si la Pantalla se recarga, repite semilla y acciones con el motor y queda igual. Si no vuelve en 30 s, el anfitrión puede pasar la partida a su celular.
+- **REEMPLAZADA (v1.38, Elías, 16 de noviembre).** Texto anterior, que queda como historial: ~~Todas las acciones, también las del anfitrión, se guardan en `acciones`. Si la Pantalla se recarga, repite semilla y acciones con el motor y queda igual. Si no vuelve en 30 s, el anfitrión puede pasar la partida a su celular.~~ **DECISIÓN (v1.38):** todas las acciones, también las del anfitrión, pasan por el servidor y se guardan en `acciones`; la semilla no sale del servidor. Si la Pantalla se recarga, vuelve a pedir la vista pública y queda igual. La ronda se revela cuando todos contestan o cuando termina el reloj, lo que ocurra primero; si falta un jugador, se aplica P-03 (decisión 3 de abajo). Mientras no se retire el motor actual, sigue funcionando como dice el texto anterior.
 - Quien recarga o pierde la señal vuelve solo al mismo momento de la partida. El QR y el código quedan en una esquina de la TV toda la partida; quien llega tarde ve «Juegas en la siguiente».
-- Sin pantalla: el celular del anfitrión corre el motor, se queda encendido en la mesa y muestra arriba lo público; su secreto sigue tras el escáner.
+- **REEMPLAZADA (v1.38, Elías, 16 de noviembre).** Texto anterior, que queda como historial: ~~Sin pantalla: el celular del anfitrión corre el motor, se queda encendido en la mesa y muestra arriba lo público; su secreto sigue tras el escáner.~~ **DECISIÓN (v1.38):** sin pantalla, el motor también corre en el servidor; el celular del anfitrión se queda encendido en la mesa y muestra arriba lo público (`vistaPublica`); su secreto sigue tras el escáner. Mientras no se retire el motor actual, sigue funcionando como dice el texto anterior.
 - Acciones nuevas a definir en la Fase 5: `pausar`, `reanudar`, `saltar`, `ruleta`, `xp-reto`, `pasar-control` y `pista`, más avisos de paso que no cambian la partida («ya la vi», «pedir pausa»).
 
 Decisiones, todas las recomendadas:
 1. La revelación sale sola cuando todos contestaron o se acabó el tiempo, con 2 s de suspenso; el anfitrión puede adelantarla con «Revelar ya». Pasar a la siguiente ronda lo toca el anfitrión.
 2. Solo el anfitrión pausa (y la Pantalla como respaldo); los demás tienen «Pedir pausa».
 3. A quien se desconecta se le espera 20 s sin detener a los demás; luego el anfitrión elige esperar o seguir sin él, sin castigo.
+   **DECISIÓN (v1.38, Elías aprobó, 16 de noviembre) — P-03, jugador que no responde:** a los 20 s sin respuesta, el anfitrión elige «Esperar al jugador» o «Seguir sin él». Si sigue, la ronda se revela con las respuestas disponibles y el ausente no puntúa esa ronda. No se le expulsa: puede reincorporarse en las rondas siguientes. Esta regla no cambia la XP ni requiere migración.
 4. En la revelación de El impostor y ¿Quién es más probable? la TV muestra quién votó a quién.
 5. En El impostor, quien habla escribe su pista en el celular, la dice en voz alta y la TV la pone en su etiqueta; «Ya dije» pasa al siguiente.
 6. Las cápsulas se cambian solo en la sala, entre juegos; durante la partida el traje queda fijo.
@@ -1128,7 +1129,7 @@ Decisiones, todas las recomendadas:
 
 Fallas de la prueba real del 15 de noviembre y cómo las evita este diseño (su corrección en código va al final): lentitud (consultas cada 1.5 s → avisos al instante), entrar confuso (QR siempre visible y vuelta automática), cápsulas que no cambiaban (cambio inmediato y aviso a la TV; causa exacta por confirmar en la Fase 6) y el anfitrión sin palabra (`useAPartidaDeSala` se apaga si `sala.anfitrion`).
 
-**PENDIENTE (Fase 6), riesgos encontrados en el código:** `partidas.semilla` la puede leer cualquier miembro de la sala y, con el motor público, permite calcular el impostor y la palabra: debe pasar a un lugar que solo lea el anfitrión. La cuenta del anfitrión puede leer todas las acciones antes de la revelación (aceptado para fiestas entre amigos; la Fase 5 puede mover el motor al servidor si hace falta). `Partida.tsx` llama a `vistaJugador` dentro de lo que dibuja la pantalla grande. `revelar` y `siguiente` hoy no se guardan en `acciones`.
+**PENDIENTE (Fase 6), riesgos encontrados en el código:** `partidas.semilla` la puede leer cualquier miembro de la sala y, con el motor público, permite calcular el impostor y la palabra: debe pasar a un lugar que solo lea el anfitrión. ~~La cuenta del anfitrión puede leer todas las acciones antes de la revelación (aceptado para fiestas entre amigos; la Fase 5 puede mover el motor al servidor si hace falta).~~ **REEMPLAZADA (v1.39, Elías, 17 de noviembre):** el anfitrión no puede consultar acciones privadas de otros jugadores: ni semillas, ni roles ajenos, ni palabras ajenas, ni respuestas o votos antes de revelar, ni registros que permitan reconstruir secretos. Prevalece la decisión de privacidad P-07 sobre esta frase. Ver `ALV_SEGURIDAD_PARTIDA.md` §1. `Partida.tsx` llama a `vistaJugador` dentro de lo que dibuja la pantalla grande. `revelar` y `siguiente` hoy no se guardan en `acciones`.
 
 # 22. Arquitectura técnica
 
@@ -1157,7 +1158,7 @@ Migraciones futuras, cada una con RLS, quién escribe y prueba con un usuario si
 Orden de la Fase 6, cada paso publicado y probado por Elías antes del siguiente: (1) cimientos, (2) base segura 017–019, (3) tiempo real, (4) partida en tres aparatos, primero El impostor, ¿Quién es más probable? y Verdad o reto, (5) sala, (6) acceso y cuentas, (7) hub y catálogo, (8) personalizar, tienda y colección, (9) perfil, logros y ranking, (10) limpieza, (11) correcciones de la prueba real del 15 de noviembre y nueva prueba de sala, (12) reglas de XP. Red de seguridad: las pruebas de hoy, prueba de los 14 juegos completos, de repetición, del secreto y de la frontera, y prueba manual con tres aparatos.
 
 Decisiones:
-1. El motor se queda en la Pantalla.
+1. **REEMPLAZADA (v1.37, Elías, 16 de noviembre).** Texto anterior, que queda como historial: «El motor se queda en la Pantalla.» **DECISIÓN (v1.37, Elías aprobó, 16 de noviembre):** el servidor es la autoridad de la partida. El motor corre en una Edge Function llamada `partida` que reutiliza el motor TypeScript (`src/engine`); no se reescribe en PL/pgSQL. Cada migración, cambio de RLS, de esquema y despliegue requiere autorización expresa e independiente. Plan por fases: `ALV_PLAN_IMPLEMENTACION_MOTOR_SERVIDOR.md` (fuera del repo, en la carpeta del proyecto). Mientras no se complete ese plan, el motor sigue en la Pantalla tal como está construido.
 2. Los textos de las cartas siguen en el código con su etiqueta (familiar hasta v1.24; tranquila / adulta / Drunk desde v1.25, D1); la base guarda quién tiene cada sobre de contenido. Si ALV se publica, pasan a la base.
 3. La XP vive solo en el servidor; se quita la XP y las compras guardadas en el aparato.
 4. Código de recuperación de 12 caracteres en 3 grupos, sin letras que se confunden.
@@ -1165,7 +1166,13 @@ Decisiones:
 6. (Elías) La XP por reto en vivo no tiene tope y también se le puede dar al anfitrión; queda registrado quién la dio. Las reglas de costos y ganancias de XP (general, por reto, por equipos, por parejas, y la XP extra al equipo ganador) se definen al final, en el paso 12; mientras, quedan los valores de hoy.
 7. ~~La sala deja de ser familiar cuando sale el último menor, con aviso en la TV.~~ Sustituida por D1 (v1.25, 3.2): no hay menores ni modo familiar. La migración 020 «edad y sala familiar» cambia de alcance: solo comprobar que la cuenta es mayor de 18.
 
-Riesgo aceptado: la cuenta con el control puede leer la semilla y todas las acciones, porque la Pantalla la usa.
+**REEMPLAZADA (v1.37, Elías, 16 de noviembre).** Texto anterior, que queda como historial: «Riesgo aceptado: la cuenta con el control puede leer la semilla y todas las acciones, porque la Pantalla la usa.» Ya no es un riesgo aceptado: con el servidor como autoridad de la partida (decisión 1, v1.37), ninguna cuenta (anfitrión, jugador ni Pantalla) debe poder leer la semilla, los papeles, las palabras ajenas ni las respuestas de otros antes de la revelación, ni manipulando las peticiones del navegador. Hasta que se retire el motor antiguo según `ALV_PLAN_IMPLEMENTACION_MOTOR_SERVIDOR.md` §11, la exposición sigue existiendo en las partidas con el motor actual.
+
+**DECISIÓN (v1.38, Elías aprobó, 16 de noviembre), complementos del motor en servidor:**
+- **Secretos en el cliente (requisito de cliente):** la palabra y el papel no se montan en el DOM hasta que el jugador pida verlos, y se desmontan al soltar. Se corrige primero en la presentación. Es complementario: la protección real es el servidor. No justifica una migración por sí solo.
+- **Latencia:** desde la última respuesta hasta la revelación, mediana de 3.3 s como máximo, máximo observado de 4.7 s y límite visible de 5.8 s. Se conserva la pausa de suspenso de 2 s (21.4, decisión 1). Cada medición documenta método, número de pruebas y condiciones.
+- **Pasar el control:** quien recibe el control (21.4, decisión 7) puede administrar la partida con los permisos que eso requiere, sin ampliar sus privilegios más de lo necesario.
+- **Modo local:** solo para desarrollo y pruebas internas. No es modalidad de producción en esta etapa.
 
 ### Avance de la Fase 6
 
@@ -1177,12 +1184,12 @@ Riesgo aceptado: la cuenta con el control puede leer la semilla y todas las acci
 - Quedan para su paso: `local/`, `figura3d/`, `juegos/` y `roles/*/motor.ts` (paso 4), `servicios/tiempoReal.ts` (paso 3) y las piezas de apoyo del Design System (aviso, confirmar, contador de XP, confeti, apertura de sobre).
 
 **Pasos 2 a 11, versión de prueba (v1.30, 16 de noviembre).** Elías autorizó hacer los pasos 2 a 12 seguidos y la Fase 7 (documento «ALV 2.0 — Dirección técnica»), lo que sustituye a la decisión 5 de arriba («se publica por pasos»). Se trabajó en la rama `alv2-fase6`. **Publicado en la página el 16 de noviembre (v1.31)** por instrucción de Elías («Sí, publica»), con las pruebas manuales en aparatos reales todavía pendientes. Se hizo:
-- **Base (paso 2).** Aplicadas: 019 (tiempo real en `partidas`, `datos_privados`, `acciones`, `miembros_evento`, `eventos`, `figuras_jugador`), 020 (nadie abre ni entra a una sala sin `mayor_18`; se revisa con un disparador, también ante solicitudes manipuladas) y 026 en su parte necesaria (`dar_xp_reto`, `ranking_conocidos`). Escritas y **sin aplicar**: 017 (semilla y arranque en tabla aparte, partidas solo por función) y 018 (número de orden y tipo `control`); la herramienta las rechazó por quitar permisos en producción y esperan autorización expresa. 027 está en `supabase/pendientes/` y no se aplica. 021 a 025 no existen todavía.
+- **Base (paso 2).** Aplicadas: 019 (tiempo real en `partidas`, `datos_privados`, `acciones`, `miembros_evento`, `eventos`, `figuras_jugador`), 020 (nadie abre ni entra a una sala sin `mayor_18`; se revisa con un disparador, también ante solicitudes manipuladas) y 026 en su parte necesaria (`dar_xp_reto`, `ranking_conocidos`). Escritas y **sin aplicar**: 017 (semilla y arranque en tabla aparte, partidas solo por función) y 018 (número de orden y tipo `control`); la herramienta las rechazó por quitar permisos en producción y esperan autorización expresa. 027 está en `supabase/pendientes/` y no se aplica: está bloqueada hasta una auditoría de impacto y recuperación de datos y requiere autorización expresa de Elías (D-002, v1.36). 021 a 025 no existen todavía.
 - **El riesgo de la semilla queda cerrado sin esperar a 017:** la semilla real ya no se escribe en `partidas` (va 0); viaja en la acción de arranque, que por RLS solo lee quien tiene el control. Probado con usuarios simulados en una transacción deshecha: quien no tiene el control ve 0 acciones ajenas y lee semilla 0.
 - **Tiempo real (paso 3).** `servicios/tiempoReal.ts`: avisos al instante; sin confirmación en 5 s, consulta cada 3 s y se marca «Reconectando»; latido cada 12 s.
 - **Partida en tres aparatos (paso 4).** `roles/pantalla/motor.ts` es el único que llama a `aplicar`: reconstruye con arranque + acciones guardadas, publica la vista pública y lo privado de cada quien, y revela sola a los 2 s. Corre en la Pantalla (`#/tv/código`) o en el celular del anfitrión si juegan sin pantalla. Acciones nuevas del motor: `pausar`, `reanudar`, `saltar`, `pista`, `xp-reto`, `ruleta`, `pasar-control`. Las 11 mecánicas (14 juegos) tienen herramienta de celular y escena de TV en `juegos/general/` (un archivo general por papel, no una carpeta por mecánica).
 - **Sala, acceso, hub, catálogo, personalizar, perfil, logros, ranking y administración (pasos 5 a 9)** con el Design System, en `src/pantallas/`. El QR deja dentro de la sala; sin sesión se entra o se crea cuenta ahí mismo y se sigue a la sala. Registro solo para mayores de 18 (D1).
-- **Limpieza (paso 10), parte de código:** se retiró la app 2D (pantallas, estado local con XP, tienda 2D y los tres CSS). La limpieza de la base es la 027, sin aplicar.
+- **Limpieza (paso 10), parte de código:** se retiró la app 2D (pantallas, estado local con XP, tienda 2D y los tres CSS). La limpieza de la base es la 027, sin aplicar y bloqueada: requiere autorización expresa de Elías y una auditoría previa de impacto y recuperación de datos (D-002, v1.36).
 - **Correcciones de la prueba del 15 de noviembre (paso 11):** el celular del anfitrión es un jugador más y ve su palabra; avisos al instante en lugar de consultas cada 1.5 s; QR siempre visible; tocar una cápsula llama al servidor en el momento y la sala lo ve por tiempo real. Falta la nueva prueba de sala con aparatos reales.
 - **Pruebas:** 149 automáticas (nuevas: motor de sala, repetición, control, secreto de lo publicado, rutas), build, y en navegador con el respaldo local (3 y 4 pestañas) El impostor completo con y sin pantalla. Sin probar contra el servidor con cuentas reales ni en celulares y TV: lo prueba Elías.
 - **No se hizo y queda PENDIENTE:** (el paso 1.5 se saltó por decisión de Elías, v1.35; 017 y 018 se aplicaron en v1.35) paso 12 (reglas de XP); tienda, sobres y colección 3D (024, 025); código de recuperación (022); apodos e intentos (021); cuentas en un solo celular (023); personalizador Simple/Avanzado propio (hoy abre el editor de Minifig Studio); motor Temperatura + Voltaje y contenido nuevo (3.2); pasar la partida al celular si la Pantalla no vuelve, espera al desconectado y «pedir pausa» (21.4); entorno de pruebas con Supabase aparte (la organización ya tiene dos proyectos).
@@ -1393,13 +1400,48 @@ Decisiones del usuario del 12 de noviembre de 2026:
 ## v1.6
 - Primeros logros (14.2), con ámbito de sesión o histórico (ver DECISIÓN v1.6 en 14.2).
 
+## v1.40
+- 17 nov 2026. Decisiones de Elías sobre la semilla (X1 a X3b). No cambia ninguna regla de juego.
+- **X1 (ejecutado):** la función remota experimental `partida-prueba` se eliminó del proyecto ALV. Ya no devuelve la semilla. Sin cambios en otros recursos.
+- **X2 (ACEPTADO CON CONDICIONES):** la exposición temporal de la semilla al anfitrión se acepta solo para partidas del motor antiguo (`cliente`). No se usan partidas con información real o sensible mientras dure esa dependencia. Cuando el motor servidor esté habilitado para producción, las partidas nuevas no pueden depender del motor antiguo. La exposición debe quedar identificada y documentada por partida. Esta excepción termina con la retirada definitiva del mecanismo antiguo.
+- **X3 (ENFOQUE APROBADO, no autorizada su ejecución):** se conservan las migraciones 029, 030 y 032 del plan, sin renumerar. Cada una requiere autorización propia.
+- **X3b (NO AUTORIZADO):** no limpiar, borrar ni modificar semillas de partidas históricas.
+- **Precisión de 22.1 (corrección, sin cambio de decisión):** la semilla de `arranques_partida` la lee el anfitrión, no solo quien tiene el control. Ver v1.39.
+- Sin migraciones, sin escrituras remotas, sin despliegues. Detalle en `ALV_PROPUESTA_SEMILLA.md` (§8 a §10).
+
+## v1.39
+- 17 nov 2026. Cierre de privacidad de la partida (P1 a P5). Sin cambio de producto en el juego; corrige una contradicción.
+- **P1, privacidad del anfitrión (DECISIÓN):** el anfitrión no consulta acciones privadas de otros jugadores. Prevalece P-07 sobre la línea de 22.1 que decía lo contrario. Esa línea queda REEMPLAZADA, con su texto anterior tachado como historial. Corrige la frase de que el anfitrión puede leer todas las acciones antes de la revelación.
+- **P2, semilla (DECISIÓN):** la semilla nunca se expone al cliente, tampoco después de terminar la partida. Auditoría o reproducibilidad solo por acceso de servidor.
+- **Precisión de la línea de 22.1 sobre la semilla en la acción de arranque (corrección, sin cambio de decisión):** la frase «por RLS solo lee quien tiene el control» era incorrecta. La política de 017 da lectura de `arranques_partida` al anfitrión (`es_anfitrion`). La semilla también viaja en la acción de arranque de `acciones`. Hasta la Fase 1 esa exposición existe; ver `ALV_SEGURIDAD_PARTIDA.md` §4.
+- **Hallazgo urgente:** la función remota experimental `partida-prueba` devuelve la semilla a quien tenga la llave publicable. Se registra sin cambio remoto; su desactivación requiere autorización.
+- **P3, P4 y P5:** quedan como propuesta en `ALV_SEGURIDAD_PARTIDA.md` (§5, §6 y §7), sin aprobar. No cambian decisiones de producto.
+- No se modificó la función `partida`, ni `partida-prueba`, ni la base. Sin migración ni despliegue.
+
+## v1.38
+- 16 nov 2026. Decisiones de Elías del 16 de noviembre. No cambia ninguna otra decisión de producto.
+- **P-03 como DECISIÓN** (21.4, debajo de la decisión 3): a los 20 s sin respuesta, «Esperar al jugador» o «Seguir sin él»; si sigue, revela con las respuestas disponibles y el ausente no puntúa esa ronda; no se expulsa y puede reincorporarse; sin cambio de XP ni migración.
+- **22.1, complementos del motor en servidor:** secretos en el cliente como requisito de cliente (palabra y papel fuera del DOM hasta que el jugador pide verlos; complementario al servidor; sin migración solo para esto); criterio de latencia (mediana ≤ 3.3 s, máximo ≤ 4.7 s, visible ≤ 5.8 s, se conserva el suspenso de 2 s, con método, número de pruebas y condiciones); pasar el control con permisos para administrar la partida sin privilegios de más; modo local solo para desarrollo y pruebas internas.
+- **Hecho operativo, no regla de producto:** el 16 nov Elías autorizó y se hizo una limpieza total de la base (se borró todo menos su perfil `ecortes7`), verificada con SELECT. Ya no hay partidas, semillas ni salas históricas, así que las reglas del plan del motor sobre conservar el histórico y cerrar partidas viejas quedan sin datos sobre los que aplicar en esta etapa. No se aplicó la migración 027, que sigue bloqueada (D-002, v1.36).
+- **Precisión dentro de v1.38 (16 nov, sin versión nueva):** en 21.4 las reglas de la Pantalla que cambia la partida, de las acciones y recarga, y de sin pantalla pasan a REEMPLAZADA con su texto anterior tachado como historial. Ahora dicen que el servidor cambia la partida; la Pantalla se vincula con código temporal, de un solo uso, con vencimiento y confirmación expresa del anfitrión; la ronda se revela cuando todos contestan o cuando termina el reloj, lo que ocurra primero, y si falta un jugador rige P-03. Mientras no se retire el motor actual, sigue funcionando como decía el texto anterior. Sin migración ni despliegue.
+- Encabezado y pie dicen 1.38. Se conservan las entradas v1.36 y v1.37.
+
+## v1.37
+- 16 nov 2026. Elías aprueba mover el motor al servidor. En 22.1, la decisión 1 («El motor se queda en la Pantalla») y el riesgo aceptado («la cuenta con el control puede leer la semilla y todas las acciones») pasan a REEMPLAZADA, con su texto anterior conservado. Nueva decisión: el servidor es la autoridad de la partida, con el motor en la Edge Function `partida` que reutiliza el motor TypeScript. Plan: `ALV_PLAN_IMPLEMENTACION_MOTOR_SERVIDOR.md`. No se aplicó ninguna migración ni despliegue; cada paso requiere autorización expresa. No cambia ninguna otra decisión de producto.
+
+## v1.36
+- 16 nov 2026. Solo cambios de referencia por dos decisiones formales de Elías; no cambia ninguna decisión de producto.
+- **D-001, tienda experimental:** la tienda encontrada en el árbol de trabajo permanece congelada. No está autorizada para implementación; su evaluación queda pendiente para una etapa posterior. Se corrige en v1.35 la línea «Orden que sigue» (tienda como siguiente desarrollo) para que no contradiga esto. El resto de ese orden (Temperatura y Voltaje, personalizador) no se toca en esta versión.
+- **D-002, permisos de migración:** queda prohibida la ejecución automática de migraciones sobre Supabase. Aplicar migraciones, eliminar tablas o columnas, modificar información existente y operaciones destructivas requieren autorización expresa de Elías. La migración 027 queda bloqueada hasta completar una auditoría de impacto y recuperación de datos. Se aclaran las menciones a la 027 en 22.1 (avance de la Fase 6) y en v1.30.
+- Corrección de versión: el encabezado decía 1.35 y el pie 1.34; ambos dicen ahora 1.36.
+
 ## v1.35
 - 16 nov 2026. **Paso 1.5 saltado** por decisión de Elías: el prototipo HTML de 8 pantallas (23.2) ya no es requisito; la app publicada es la referencia navegable.
 - **Migraciones 017 y 018 aplicadas** con autorización de Elías, después de probarlas con usuarios simulados en una transacción deshecha (sin fallas) y del asesor de seguridad (sin errores). `partidas.semilla` ya no la lee ninguna cuenta y las partidas solo se crean con `crear_partida_sala`.
 - **Paso 0, modo invitado (3.2, v1.32 y v1.33) construido:** migración 028 (`perfiles.invitado`, `entrar_invitado`, `admin_borrar_invitados`). El invitado entra con apodo y confirma que es mayor de 18; la app le crea una cuenta desechable y la marca. Lleva la etiqueta «Prueba». Entra a salas en la nube igual que una cuenta. Elías borra a todos los invitados desde Administración. Una cuenta normal o una bloqueada por edad no puede volverse invitada.
 - Primera prueba contra el servidor real: dos invitados, sala sin pantalla, ¿Qué prefieres? completo (iniciar, contestar, revelar, terminar) con tiempo real en vivo.
 - **Etapa 1 del diseño entregada:** `docs/ALV_DIAGNOSTICO_DISENO.md`, solo diagnóstico. La etapa 2 espera a Elías.
-- Orden que sigue, dicho por Elías: tienda (13), después Temperatura y Voltaje (3.2) y el personalizador (10), en su orden de la Fase 6. Las mecánicas, premios, costos y juegos se ajustan después de probar.
+- ~~Orden que sigue, dicho por Elías: tienda (13), después Temperatura y Voltaje (3.2) y el personalizador (10), en su orden de la Fase 6.~~ **Aclarado en v1.36:** la tienda está congelada y sin implementación autorizada (D-001, 2026-11-16). Las mecánicas, premios, costos y juegos se ajustan después de probar.
 
 ## v1.34
 - Sin fecha límite (3.2, v1.29): la jornada de prueba ya no tiene fecha fija; se hace cuando la app esté lista. La meta de contenido de v1.29 queda como referencia, no como plazo.
@@ -1418,7 +1460,7 @@ Decisiones del usuario del 12 de noviembre de 2026:
 - 16 nov 2026. Elías autoriza publicar la versión de prueba de ALV 2.0 en la página. Se agregan los documentos de continuidad `docs/ALV_*.md`. Siguen sin aplicar 017, 018 y 027; las pruebas con cuentas reales en laptop, TV y celulares quedan a cargo de Elías (`docs/ALV_QA_PROTOCOL.md`, sección 6).
 
 ## v1.30
-- 16 nov 2026. Fase 6, pasos 2 a 11 en versión de prueba (22.1, «Avance de la Fase 6»): app 2.0 sobre el Design System, motor de sala, tiempo real y migraciones 019, 020 y 026 aplicadas. La autorización de Elías para hacer los pasos 2 a 12 y la Fase 7 seguidos sustituye a la decisión 5 de 22.1. Quedan pendientes y anotados: 017 y 018 (escritas, sin aplicar), 027 (no se aplica), paso 1.5, paso 12, tienda 3D, publicación en la página.
+- 16 nov 2026. Fase 6, pasos 2 a 11 en versión de prueba (22.1, «Avance de la Fase 6»): app 2.0 sobre el Design System, motor de sala, tiempo real y migraciones 019, 020 y 026 aplicadas. La autorización de Elías para hacer los pasos 2 a 12 y la Fase 7 seguidos sustituye a la decisión 5 de 22.1. Quedan pendientes y anotados: 017 y 018 (escritas, sin aplicar), 027 (no se aplica sin autorización expresa de Elías, D-002 v1.36), paso 1.5, paso 12, tienda 3D, publicación en la página.
 
 ## v1.29
 - Pendientes de Temperatura + Voltaje resueltos (3.2): consentimiento explícito y alternativa siempre (agua, castigo u otra pregunta); primera jornada de prueba sábado 12:00 a domingo 17:00; eventos sorpresa como opción de partida y ajuste del anfitrión; reglas de la casa predeterminadas; mismo puntaje en todos los niveles con premio opcional del anfitrión; contenido nuevo con ideas propias y anécdotas de los amigos (pendiente dónde se guardan por privacidad).
@@ -1493,5 +1535,5 @@ Decisiones del usuario del 12 de noviembre de 2026:
 
 ---
 
-**Fin del Documento Maestro ALV v1.34**  
+**Fin del Documento Maestro ALV v1.40**  
 Este documento debe actualizarse de forma incremental y conservar la distinción entre decisiones aprobadas, propuestas, pendientes y descartadas.

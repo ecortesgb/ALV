@@ -37,3 +37,49 @@ export function escucharSala(salaId: string, alCambiar: () => void, alEstado?: (
     void cliente?.removeChannel(canal);
   };
 }
+
+// ---------- ¿Está la Pantalla? (P-02) ----------
+// No había ninguna señal de que la Pantalla esté viva (el latido de 12 s de arriba es la consulta de cada aparato, no de la Pantalla).
+// Se usa la misma conexión de Realtime, sin tablas ni funciones nuevas: la Pantalla manda un latido por un canal de difusión
+// (`pantalla-<sala>`, no se guarda) y los celulares avisan si pasan unos segundos sin oírlo.
+// Se probó antes la presencia de Realtime y se descartó: si el canal está vacío cuando un celular entra, supabase-js 2.10 deja
+// encolados los avisos de entrada y salida y el celular nunca se entera.
+export type PresenciaPantalla = "desconocida" | "presente" | "ausente";
+export const LATIDO_PANTALLA_MS = 1500, SILENCIO_PANTALLA_MS = 4000, REVISION_PANTALLA_MS = 500;
+
+/** Lleva la cuenta del último latido: «ausente» solo si pasa el silencio sin oír la Pantalla (también al arrancar sin oírla). */
+export function crearDetectorPantalla(alEstado: (p: PresenciaPantalla) => void, silencioMs = SILENCIO_PANTALLA_MS) {
+  let actual: PresenciaPantalla = "desconocida", desde = Date.now(), ultimo = 0;
+  const poner = (p: PresenciaPantalla) => { if (p !== actual) { actual = p; alEstado(p); } };
+  return {
+    /** Se oyó a la Pantalla. */
+    latido() { ultimo = Date.now(); poner("presente"); },
+    /** Llamar cada rato: da la Pantalla por ida si pasó el silencio. */
+    revisar() { if (actual !== "ausente" && Date.now() - Math.max(ultimo, desde) > silencioMs) poner("ausente"); },
+    /** Sin canal (error o cerrado): no se sabe, así que no se avisa. */
+    perdido() { desde = Date.now(); ultimo = 0; poner("desconocida"); },
+    estado: () => actual,
+  };
+}
+
+/**
+ * Vigila la Pantalla de una sala. Si `soyPantalla`, este aparato manda el latido mientras esté abierto.
+ * Sin servidor (respaldo local) no hay canal: queda «desconocida» y no se avisa nada.
+ */
+export function vigilarPantalla(salaId: string, soyPantalla: boolean, alEstado: (p: PresenciaPantalla) => void): () => void {
+  if (!cliente) return () => { /* nada */ };
+  const det = crearDetectorPantalla(alEstado);
+  let cerrado = false, reloj: ReturnType<typeof setInterval> | undefined;
+  const canal = cliente.channel(`pantalla-${salaId}`);
+  if (!soyPantalla) canal.on("broadcast", { event: "tv" }, () => { if (!cerrado) det.latido(); });
+  const latir = () => { void canal.send({ type: "broadcast", event: "tv", payload: {} }); };
+  canal.subscribe(s => {
+    if (cerrado) return;
+    clearInterval(reloj);
+    if (s === "SUBSCRIBED") {
+      if (soyPantalla) { latir(); reloj = setInterval(latir, LATIDO_PANTALLA_MS); }
+      else { det.perdido(); reloj = setInterval(() => det.revisar(), REVISION_PANTALLA_MS); }
+    } else if (s === "CHANNEL_ERROR" || s === "TIMED_OUT" || s === "CLOSED") det.perdido();
+  });
+  return () => { cerrado = true; clearInterval(reloj); void cliente?.removeChannel(canal); };
+}

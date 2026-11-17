@@ -65,7 +65,7 @@ export function huella(f: unknown): string {
   return h.toString(16);
 }
 
-const FOTOS_CLAVE = "alv-fotos-v3"; // subir el número si cambia el encuadre de las fotos (tools/minifig/escena.js)
+const FOTOS_CLAVE = "alv-fotos-v4"; // subir el número si cambia el encuadre de las fotos (tools/minifig/escena.js)
 const fotos = new Map<string, string>(); // huella → data URL
 const pedidas = new Map<string, ((url: string | null) => void)[]>();
 try { for (const [k, v] of JSON.parse(localStorage.getItem(FOTOS_CLAVE) ?? "[]") as [string, string][]) fotos.set(k, v); } catch { /* nada */ }
@@ -124,11 +124,13 @@ export function useFoto(figura: FiguraV2 | null | undefined, semilla?: number): 
   return url;
 }
 
-/** Figura en imagen, para tarjetas, ranking y listas. Ocupa la caja del Avatar (alto = 1.5 × ancho). */
-export function FotoFigura({ figura, semilla, size, nombre }: { figura?: FiguraV2 | null; semilla?: number; size: number; nombre?: string }) {
+/** Figura en imagen, para tarjetas, ranking y listas. Ocupa la caja del Avatar (alto = 1.5 × ancho).
+ *  `redondo`: retrato circular de cabeza y hombros (ver alv.css, «Retrato circular»). */
+export function FotoFigura({ figura, semilla, size, nombre, redondo = false }: { figura?: FiguraV2 | null; semilla?: number; size: number; nombre?: string; redondo?: boolean }) {
   const url = useFoto(figura, semilla);
+  const caja = redondo ? { width: size, height: size } : { width: size, height: Math.round(size * 1.5) };
   return (
-    <span className="av av-3d" style={{ width: size, height: Math.round(size * 1.5) }} role="img" aria-label={`Figura de ${nombre ?? "jugador"}`}>
+    <span className={"av av-3d" + (redondo ? " av-redondo" : "")} style={caja} role="img" aria-label={`Figura de ${nombre ?? "jugador"}`}>
       {url ? <img src={url} alt="" draggable={false} /> : <span className="av-3d-cargando" aria-hidden="true" />}
     </span>
   );
@@ -144,7 +146,7 @@ export interface EnEscena { id: string; figura?: FiguraV2 | null; semilla?: numb
  * Una sola escena 3D con todas las figuras (de izquierda a derecha en el orden dado).
  * `momentos`: cada vez que cambia `n`, esa figura hace ese momento (al anotar, al ganar, al perder).
  */
-export function Escena3D({ figuras, momentos, className, alto }: { figuras: EnEscena[]; momentos?: { id: string; cual: Momento; n: number }[]; className?: string; alto?: number | string }) {
+export function Escena3D({ figuras, momentos, className, alto, modo }: { figuras: EnEscena[]; momentos?: { id: string; cual: Momento; n: number }[]; className?: string; alto?: number | string; modo?: "hub" }) {
   const ref = useRef<HTMLIFrameElement>(null);
   const [listo, setListo] = useState(false);
   const enviar = (m: object) => ref.current?.contentWindow?.postMessage({ origen: "alv", ...m }, location.origin);
@@ -175,7 +177,7 @@ export function Escena3D({ figuras, momentos, className, alto }: { figuras: EnEs
   }, [listo, JSON.stringify(momentos ?? [])]);
   return (
     <div className={"escena3d" + (className ? " " + className : "")} style={alto ? { height: alto } : undefined}>
-      <iframe ref={ref} src={BASE + "escena.html"} title="Escena con las figuras" tabIndex={-1} />
+      <iframe ref={ref} src={BASE + "escena.html" + (modo ? `?modo=${modo}` : "")} title="Escena con las figuras" tabIndex={-1} />
       {!listo && <span className="escena3d-cargando" aria-live="polite">Armando figuras…</span>}
     </div>
   );

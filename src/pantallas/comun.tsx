@@ -17,11 +17,11 @@ export function useAncho(min = 900): boolean {
 }
 
 /** Marco de toda pantalla: tokens del Design System, ciudad de noche y zona que se desliza. */
-export function Marco({ children, clase = "", fijo }: { children: ReactNode; clase?: string; fijo?: ReactNode }) {
+export function Marco({ children, clase = "", fijo, fondo }: { children: ReactNode; clase?: string; fijo?: ReactNode; fondo?: ReactNode }) {
   const ancho = useAncho();
   return (
     <RaizDS ancho={ancho} className={`alv ${clase}`.trim()}>
-      <FondoCiudad />
+      {fondo ?? <FondoCiudad />}
       <div className="a-scroll">{children}</div>
       {fijo}
     </RaizDS>
@@ -81,14 +81,14 @@ export function Avisos() {
 }
 
 // ---------- Figuras ----------
-/** Retrato de un jugador (foto de su figura 3D; sin figura, una fija al azar por su id). */
+/** Retrato circular de un jugador: cabeza y hombros de su figura 3D (sin figura, una fija al azar por su id). */
 export function Retrato({ id, figura, nombre, size = 44 }: { id: string; figura?: FiguraV2 | null; nombre?: string; size?: number }) {
-  return <FotoFigura figura={figura ?? undefined} semilla={figura ? undefined : semillaDe(id)} size={size} nombre={nombre} />;
+  return <FotoFigura figura={figura ?? undefined} semilla={figura ? undefined : semillaDe(id)} size={size} nombre={nombre} redondo />;
 }
 /** Escena 3D con varios jugadores de pie. */
-export function Elenco({ gente, foco, momentos, alto }: { gente: { id: string; figura?: FiguraV2 | null }[]; foco?: string; momentos?: { id: string; cual: Momento; n: number }[]; alto?: number | string }) {
+export function Elenco({ gente, foco, momentos, alto, modo }: { gente: { id: string; figura?: FiguraV2 | null }[]; foco?: string; momentos?: { id: string; cual: Momento; n: number }[]; alto?: number | string; modo?: "hub" }) {
   const figuras: EnEscena[] = gente.map(g => ({ id: g.id, figura: g.figura ?? undefined, semilla: g.figura ? undefined : semillaDe(g.id), foco: g.id === foco }));
-  return <Escena3D figuras={figuras} momentos={momentos} alto={alto} />;
+  return <Escena3D figuras={figuras} momentos={momentos} alto={alto} modo={modo} />;
 }
 
 /** Campo de texto con su etiqueta. */

@@ -1,6 +1,6 @@
 // Hub: todo sale de aquí. Arriba quién eres; al centro tu figura; el menú con Jugar como acción principal.
-import { useEffect, useState } from "react";
-import { Boton, Onomatopeya, Panel, TarjetaJugador } from "../ds";
+import { useEffect, useState, type CSSProperties } from "react";
+import { Boton, Panel, TarjetaJugador } from "../ds";
 import { costoNivel, tituloPorNivel, xpParaNivel } from "../engine/economia";
 import { figuraActiva, useCapsulas } from "../app/figura3d";
 import { ir } from "../app/rutas";
@@ -15,26 +15,49 @@ export function Hub() {
   const [sala, setSala] = useState<SalaV | null>(null);
   useEffect(() => { let vivo = true; void enlace.miSala().then(x => { if (vivo) setSala(x); }); return () => { vivo = false; }; }, [s.uid]);
   return (
-    <Marco clase="a-hub">
+    <Marco clase="a-hub" fondo={<FondoHub />}>
       <div className="a-ancho a-hub-caja">
         <TarjetaJugador retrato={<Retrato id={s.uid} figura={f} nombre={s.nombre} size={44} />} apodo={s.nombre} nivel={s.nivel} titulo={tituloPorNivel(s.nivel)}
           xp={{ actual: s.acumulada - xpParaNivel(s.nivel), siguiente: costoNivel(s.nivel) }} xpParaGastar={ancho ? s.disponible : undefined}
           onPerfil={() => ir("perfil")} onAjustes={() => ir("ajustes")} />
         <div className="a-hub-cuerpo">
           <div className="a-escenario">
-            <Onomatopeya texto="ALV" color="var(--amarillo)" tamano="4em" giro={-8} style={{ position: "absolute", top: ".1em", left: ".2em", zIndex: 1 }} />
-            <Elenco gente={[{ id: s.uid, figura: f }]} foco={s.uid} />
+            <LogoALV />
+            <Elenco gente={[{ id: s.uid, figura: f }]} modo="hub" />
           </div>
           <nav className="a-menu" aria-label="Menú principal">
             <Boton color="amarillo" principal texto="Jugar" sub={sala ? `Volver a la sala ${sala.codigo}` : "Abre una sala o únete"} icono="play" onClick={() => ir("jugar")} />
             <Boton color="azul" texto="Personalizar" sub="Tu figura y tus cápsulas" icono="shirt" onClick={() => ir("personalizar")} />
-            <Boton color="morado" texto="Tienda" sub="Abre pronto: sobres y comodines" icono="bag" desactivado />
+            <Boton color="morado" texto="Tienda" sub="Sobres y accesorios para tu personaje" icono="bag" onClick={() => ir("tienda")} />
             <Boton color="verde" texto="Ranking" sub="Tú y tus amigos" icono="trophy" onClick={() => ir("ranking")} />
             <Boton color="naranja" texto="Logros" sub="Lo que has desbloqueado" icono="medal" onClick={() => ir("logros")} />
           </nav>
         </div>
       </div>
     </Marco>
+  );
+}
+
+/** Fondo ilustrado del HUB: la ciudad pintada (imagen) y encima, en CSS, la luna y los destellos.
+ *  La luna y los destellos van aparte para que no se recorten en celular (la imagen se recorta por los lados). */
+const ARTE = { "--arte-g": `url(${import.meta.env.BASE_URL}arte/ciudad-noche-1920.webp)`, "--arte-c": `url(${import.meta.env.BASE_URL}arte/ciudad-noche-1100.webp)` } as CSSProperties;
+function FondoHub() {
+  return (
+    <div className="d-bg a-fondo-hub" aria-hidden="true" style={ARTE}>
+      <div className="a-fh-luna" />
+      {[[12, 18, 0], [34, 9, 1.2], [58, 22, 2.1], [71, 7, .6], [88, 30, 1.7], [22, 36, 2.6], [47, 4, 3.1]].map(([x, y, d], i) =>
+        <i key={i} className="a-fh-brillo" style={{ left: `${x}%`, top: `${y}%`, animationDelay: `${d}s` }} />)}
+    </div>
+  );
+}
+
+/** Logotipo ALV: letras gruesas con relieve, contorno de tinta y el nombre completo abajo. */
+function LogoALV() {
+  return (
+    <div className="a-logo" role="img" aria-label="ALV, Amigos Legendarios Verdaderos">
+      <span className="a-logo-letras" aria-hidden="true">ALV</span>
+      <span className="a-logo-sub" aria-hidden="true">Amigos Legendarios Verdaderos</span>
+    </div>
   );
 }
 

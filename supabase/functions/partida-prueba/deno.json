@@ -1,0 +1,12 @@
+{
+  "imports": {
+    "../../../src/content": "../../../src/content/index.ts",
+    "../../../src/content/catalogo": "../../../src/content/catalogo.ts",
+    "../../../src/engine/partida": "../../../src/engine/partida.ts",
+    "../../../src/engine/types": "../../../src/engine/types.ts",
+    "../../../src/engine/vistas": "../../../src/engine/vistas.ts",
+    "../../../src/engine/azar": "../../../src/engine/azar.ts",
+    "../../../src/engine/filtros": "../../../src/engine/filtros.ts",
+    "../../../src/engine/economia": "../../../src/engine/economia.ts"
+  }
+}

@@ -1,7 +1,7 @@
 // ALV 2.0: una sola app. La entrada decide por la sesión; después manda la ruta.
 // El papel del aparato lo da la ruta: #/tv/código es la Pantalla, #/sala/código un celular.
 import { lazy, Suspense, useEffect } from "react";
-import { Acceso, Carga, CompletarRegistro, SoloMayores } from "../pantallas/Acceso";
+import { Carga, CompletarRegistro, Entrada, SoloMayores } from "../pantallas/Acceso";
 import { Ajustes, Admin } from "../pantallas/Ajustes";
 import { Catalogo, FichaJuego } from "../pantallas/Catalogo";
 import { Hub, Jugar } from "../pantallas/Hub";
@@ -26,7 +26,7 @@ export function App() {
   if (ruta === "ds") return <Suspense fallback={null}><PaginaDS /></Suspense>;
   // Sin sesión se entra o se crea cuenta aquí mismo: la dirección (por ejemplo la del QR) no cambia y al entrar se sigue a la sala.
   const pantalla = fase === "cargando" ? <Carga />
-    : fase === "fuera" ? <Acceso />
+    : fase === "fuera" ? <Entrada directo={ruta === "sala" || ruta === "tv"} />
     : fase === "registro" ? <CompletarRegistro />
     : fase === "menor" ? <SoloMayores />
     : ruta === "jugar" ? <Jugar />

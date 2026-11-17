@@ -52,6 +52,10 @@ export interface EstadoPartida {
   ruletaExtra?: { jugador: string; texto: string; n: number };
   /** Cuenta que tiene el control (anfitrión). Solo ella pausa, salta, revela y pasa de ronda. */
   control?: string;
+  /** Quienes no contestaron y la ronda se cerró sin ellos («Seguir sin él»). No puntúan esa ronda. Se limpia al empezar la siguiente. */
+  ausentes?: string[];
+  /** Cuántas veces el anfitrión eligió «Esperar» en esta ronda (rearma el aviso de espera). */
+  esperas?: number;
   accionesVistas: string[];
   bitacora: EventoMotor[];
 }
@@ -68,6 +72,10 @@ export type Accion =
   | { id: string; tipo: "reanudar" }
   /** Salta la ronda sin puntos (se acabó el tiempo o alguien no contesta). */
   | { id: string; tipo: "saltar" }
+  /** El anfitrión elige seguir sin quien no contesta: se revela con lo que hay y los ausentes no puntúan la ronda. */
+  | { id: string; tipo: "seguir-sin" }
+  /** El anfitrión elige seguir esperando: la ronda sigue abierta y el aviso se rearma. */
+  | { id: string; tipo: "esperar" }
   | { id: string; tipo: "pista"; jugador: string; texto: string }
   | { id: string; tipo: "xp-reto"; jugador: string; xp: number }
   | { id: string; tipo: "ruleta" }
@@ -169,14 +177,15 @@ const votacion: Mecanica = {
     const puntos: Record<string, number> = {};
     if (js.length === 2) {
       const [a, b] = js as [string, string];
-      const ra = e.respuestas[a] as { eleccion: string; prediccion: string };
-      const rb = e.respuestas[b] as { eleccion: string; prediccion: string };
-      puntos[a] = ra.prediccion === rb.eleccion ? 1 : 0;
-      puntos[b] = rb.prediccion === ra.eleccion ? 1 : 0;
+      const ra = e.respuestas[a] as { eleccion: string; prediccion: string } | undefined;
+      const rb = e.respuestas[b] as { eleccion: string; prediccion: string } | undefined;
+      // Si falta uno, la predicción del otro no se puede comprobar: nadie suma.
+      puntos[a] = ra && rb && ra.prediccion === rb.eleccion ? 1 : 0;
+      puntos[b] = ra && rb && rb.prediccion === ra.eleccion ? 1 : 0;
       return { puntos, revelado: { respuestas: e.respuestas } };
     }
     const cuenta = { a: 0, b: 0 };
-    for (const j of js) cuenta[e.respuestas[j] as "a" | "b"]++;
+    for (const j of js) if (j in e.respuestas) cuenta[e.respuestas[j] as "a" | "b"]++;
     const mayoria = cuenta.a === cuenta.b ? null : cuenta.a > cuenta.b ? "a" : "b";
     for (const j of js) puntos[j] = mayoria && e.respuestas[j] === mayoria ? 1 : 0;
     return { puntos, revelado: { cuenta, mayoria, respuestas: e.respuestas } };
@@ -200,7 +209,7 @@ const rolSecreto: Mecanica = {
   puntuar(e) {
     const impostor = ids(e).find(j => (e.privado[j] as { rol: string }).rol === "impostor")!;
     const votos: Record<string, number> = {};
-    for (const j of ids(e)) { const v = e.respuestas[j] as string; votos[v] = (votos[v] ?? 0) + 1; }
+    for (const j of ids(e)) { const v = e.respuestas[j] as string | undefined; if (v) votos[v] = (votos[v] ?? 0) + 1; }
     const max = Math.max(...Object.values(votos));
     const masVotados = Object.keys(votos).filter(k => votos[k] === max);
     const atrapado = masVotados.length === 1 && masVotados[0] === impostor; // empate = el impostor escapa
@@ -242,7 +251,8 @@ const pareja: Mecanica = {
     const puntos: Record<string, number> = {};
     const resultados: { pareja: [string, string]; coinciden: boolean }[] = [];
     for (const [a, b] of parejasDe(e)) {
-      const coinciden = normalizar(e.respuestas[a] as string) === normalizar(e.respuestas[b] as string);
+      const ra = e.respuestas[a], rb = e.respuestas[b];
+      const coinciden = typeof ra === "string" && typeof rb === "string" && normalizar(ra) === normalizar(rb);
       puntos[a] = puntos[b] = coinciden ? 2 : 0;
       resultados.push({ pareja: [a, b], coinciden });
     }
@@ -364,7 +374,7 @@ const senalar: Mecanica = {
   valida: (e, _j, v) => typeof v === "string" && ids(e).includes(v),
   puntuar(e) {
     const votos: Record<string, number> = {};
-    for (const j of ids(e)) { const v = e.respuestas[j] as string; votos[v] = (votos[v] ?? 0) + 1; }
+    for (const j of ids(e)) { const v = e.respuestas[j] as string | undefined; if (v) votos[v] = (votos[v] ?? 0) + 1; }
     const max = Math.max(...Object.values(votos));
     const ganadores = Object.keys(votos).filter(k => votos[k] === max);
     const puntos: Record<string, number> = {};
@@ -400,7 +410,7 @@ export const quienesContestan = (e: EstadoPartida): string[] => MECANICAS[e.moto
 
 function prepararRonda(e: EstadoPartida, c: Contenido): EstadoPartida {
   const p = MECANICAS[e.motor].preparar(e, c);
-  return { ...e, fase: "contestando", carta: p.carta, privado: p.privado, turnoDe: p.turnoDe, seleccion: p.seleccion, respuestas: {}, revelado: undefined, pistas: {} };
+  return { ...e, fase: "contestando", carta: p.carta, privado: p.privado, turnoDe: p.turnoDe, seleccion: p.seleccion, respuestas: {}, revelado: undefined, pistas: {}, ausentes: undefined, esperas: 0 };
 }
 
 /** Da una carta de poder si hay lugar en la mano. */
@@ -426,6 +436,23 @@ export function crearPartida(juego: DefinicionJuego, cfg: Configuracion, semilla
   return prepararRonda(base, contenido);
 }
 
+/** Pasa la ronda a «revelada». Los `ausentes` (si hay) no contestaron: no puntúan ni ganan retos esa ronda. */
+function revelarRonda(e: EstadoPartida, ausentes: string[]): EstadoPartida {
+  const p = MECANICAS[e.motor].puntuar(e);
+  const puntos = { ...e.puntos }, retos = { ...e.retos };
+  for (const [j, v] of Object.entries(p.puntos)) if (!ausentes.includes(j)) puntos[j] = (puntos[j] ?? 0) + v;
+  let manos = e.manos;
+  const azar = azarDeRonda(e);
+  for (const [j, v] of Object.entries(p.retos ?? {})) {
+    if (ausentes.includes(j)) continue;
+    const antes = retos[j] ?? 0;
+    retos[j] = antes + v;
+    // Cada 3 retos cumplidos se gana una carta de poder.
+    if (v > 0 && Math.floor(retos[j]! / RETOS_POR_CARTA) > Math.floor(antes / RETOS_POR_CARTA)) manos = conCarta(manos, j, azar.elegir(IDS_PODER));
+  }
+  return { ...e, fase: "revelada", puntos, retos, manos, revelado: p.revelado, ...(ausentes.length ? { ausentes } : {}), bitacora: registrar(e, "revelada", undefined, ausentes.length ? { ...(p.revelado as object), ausentes } : p.revelado) };
+}
+
 /** Aplica una acción. Si es repetida o no es válida en este momento, devuelve el mismo estado sin cambios. */
 export function aplicar(e: EstadoPartida, a: Accion, contenido: Contenido): EstadoPartida {
   if (e.accionesVistas.includes(a.id) || e.fase === "terminada") return e;
@@ -442,18 +469,17 @@ export function aplicar(e: EstadoPartida, a: Accion, contenido: Contenido): Esta
     }
     case "revelar": {
       if (e.fase !== "contestando" || !m.quienes(e).every(j => j in e.respuestas)) return e;
-      const p = m.puntuar(e);
-      const puntos = { ...e.puntos }, retos = { ...e.retos };
-      for (const [j, v] of Object.entries(p.puntos)) puntos[j] = (puntos[j] ?? 0) + v;
-      let manos = e.manos;
-      const azar = azarDeRonda(e);
-      for (const [j, v] of Object.entries(p.retos ?? {})) {
-        const antes = retos[j] ?? 0;
-        retos[j] = antes + v;
-        // Cada 3 retos cumplidos se gana una carta de poder.
-        if (v > 0 && Math.floor(retos[j]! / RETOS_POR_CARTA) > Math.floor(antes / RETOS_POR_CARTA)) manos = conCarta(manos, j, azar.elegir(IDS_PODER));
-      }
-      return sube({ ...e, fase: "revelada", puntos, retos, manos, revelado: p.revelado, bitacora: registrar(e, "revelada", undefined, p.revelado) });
+      return sube(revelarRonda(e, []));
+    }
+    case "seguir-sin": {
+      const quienes = m.quienes(e), faltan = quienes.filter(j => !(j in e.respuestas));
+      // Solo con al menos una respuesta y al menos una falta. Si nadie contestó, la salida es «saltar».
+      if (e.fase !== "contestando" || faltan.length === 0 || faltan.length === quienes.length) return e;
+      return sube(revelarRonda(e, faltan));
+    }
+    case "esperar": {
+      if (e.fase !== "contestando") return e;
+      return sube({ ...e, esperas: (e.esperas ?? 0) + 1, bitacora: registrar(e, "espera") });
     }
     case "siguiente": {
       if (e.fase !== "revelada") return e;

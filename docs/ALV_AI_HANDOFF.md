@@ -41,3 +41,5 @@ Rama de trabajo `alv2-fase6`, unida a `main` y publicada el 16 nov 2026. El últ
 ## Cómo se trabaja cada cambio
 
 Leer lo relacionado, cambiar lo mínimo, `npm test`, `npm run build`, verlo en el navegador (modo local con varias pestañas `?yo=Nombre`), revisar secretos, commit, y actualizar `ALV_EXECUTION_STATE.md`, el Maestro si cambió el producto y la sección Estado del `CLAUDE.md` del proyecto.
+
+- 2026-11-16 (P-02): corregida la desconexión de la Pantalla con latido por Realtime y aviso en los celulares; sin commit todavía, sin cambios de base ni del motor. Ver `ALV_CONECTIVIDAD_Y_MULTIDISPOSITIVO.md`, «Correcciones aplicadas».
