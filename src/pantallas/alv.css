@@ -458,3 +458,57 @@ button.a-logo:focus-visible { outline: 3px solid #ffd23f; outline-offset: 4px; b
 .D.a-hub .a-menu .d-btn .dsp { letter-spacing: .03em; }
 .D.a-hub.wide .a-menu .d-btn:not(.d-play) .dsp { font-size: calc(var(--t2) * 1.08); }
 @media (prefers-reduced-motion: reduce) { .D.a-hub .a-escenario::after, .D.a-hub .a-hub-chispa { animation: none !important; } .D.a-hub .a-hub-chispa { opacity: .6; } }
+
+/* ---------- Acceso: iniciar sesión / registrarse (Acceso.tsx), tarjeta clara sobre la ciudad del cartel ---------- */
+.D.a-acceso .a-fondo-acceso { overflow: hidden; background: #0a1640; }
+.D.a-acceso .a-fondo-acceso::before { content: ""; position: absolute; inset: -20px; background: var(--arte-g) center 70% / cover no-repeat; filter: blur(7px) brightness(.55) saturate(1.15); }
+.D.a-acceso:not(.wide) .a-fondo-acceso::before { background-image: var(--arte-c); }
+.D.a-acceso .a-fondo-acceso::after { background-size: auto; background-image: linear-gradient(180deg, rgba(20,50,140,.35), rgba(8,16,60,.55)); }
+.D.a-acceso .a-scroll { gap: 14px; padding-top: max(20px, env(safe-area-inset-top)); }
+.D.a-acceso .a-acceso-logo { --logo: clamp(76px, 23vw, 118px); margin-bottom: -6px; }
+.D .a-volver { position: absolute; z-index: 6; left: max(14px, env(safe-area-inset-left)); top: max(14px, env(safe-area-inset-top)); width: 52px; height: 52px; display: grid; place-items: center; cursor: pointer;
+  color: #0a1030; background: linear-gradient(180deg, #fff09a, #ffd23f 52%, #e39a00); border: 3px solid #0a1030; border-radius: 12px;
+  box-shadow: inset 0 3px 0 rgba(255,255,255,.6), 0 4px 0 #0a1030, 0 8px 14px rgba(0,0,0,.35); transition: transform .12s; }
+.D .a-volver:active { transform: translateY(3px); box-shadow: 0 1px 0 #0a1030; }
+.D .a-volver .ic { font-size: 26px; stroke-width: 3; }
+
+.D .a-tarjeta { width: min(430px, 100%); text-align: left; filter: drop-shadow(0 14px 22px rgba(0,0,0,.45)); animation: aEntraTarjeta .45s cubic-bezier(.2,1.2,.4,1) backwards; }
+.D .a-tarjeta-tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding: 0 10px; position: relative; z-index: 1; }
+.D .a-tarjeta-tabs.a-una { grid-template-columns: auto; justify-content: start; }
+.D .a-tarjeta-tabs button { min-height: 46px; padding: 8px 14px; font: italic 800 19px/1 "Barlow Condensed", sans-serif; letter-spacing: .02em; cursor: pointer;
+  color: #fff; background: linear-gradient(180deg, #4f86f0, #2453c4); border: 3px solid #0a1030; border-bottom: 0; border-radius: 12px 12px 0 0;
+  box-shadow: inset 0 3px 0 rgba(255,255,255,.3); text-shadow: 0 2px 0 rgba(10,16,48,.6); margin-bottom: -3px; }
+.D .a-tarjeta-tabs button.on { color: #0a1030; text-shadow: none; background: linear-gradient(180deg, #ffffff, #eef4ff); position: relative; z-index: 2; padding-bottom: 11px; }
+.D .a-tarjeta-tabs button:not(.on):hover { filter: brightness(1.1); }
+.D .a-tarjeta-cuerpo { position: relative; padding: 20px 18px 16px; color: #0a1030; background: linear-gradient(180deg, #eef4ff, #d9e6ff); border: 3px solid #0a1030; border-radius: 16px;
+  box-shadow: inset 0 0 0 3px rgba(255,255,255,.7), 0 6px 0 #0a1030; }
+.D .a-tarjeta .a-suave, .D .a-tarjeta .a-nota { color: #3a4f86; margin: 0; }
+.D .a-tarjeta .a-campo { color: #26407f; font-weight: 700; }
+.D .a-tarjeta .a-campo-oculto > span:first-child { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.D .a-campo-fila { position: relative; display: block; }
+.D .a-campo-ic { position: absolute; left: 14px; top: 50%; translate: 0 -50%; width: 22px; height: 22px; fill: #1f3a80; stroke: #1f3a80; stroke-width: 1.2; stroke-linejoin: round; pointer-events: none; }
+.D .a-tarjeta .a-campo input { min-height: 52px; padding: 8px 14px 8px 48px; color: #0a1030; background: #fff; border: 2.5px solid #8fa9df; border-radius: 12px; color-scheme: light;
+  font: 600 17px/1.2 "Barlow", sans-serif; box-shadow: inset 0 2px 0 rgba(10,16,48,.06); transition: border-color .15s, box-shadow .15s; }
+.D .a-tarjeta .a-campo input::placeholder { color: #5a6d9c; font-weight: 600; }
+.D .a-tarjeta .a-campo input:focus { outline: none; border-color: #2f6cf0; box-shadow: 0 0 0 3px rgba(47,108,240,.25); }
+.D .a-tarjeta .a-check { color: #26407f; font-weight: 600; }
+.D .a-tarjeta .a-check input { accent-color: #2f6cf0; width: 22px; height: 22px; }
+.D .a-tarjeta .a-chip-g { color: #0a1030; background: #fff; border: 2.5px solid #0a1030; box-shadow: 0 3px 0 #0a1030; font-weight: 800; }
+.D .a-tarjeta .a-chip-g.on { background: linear-gradient(180deg, #fff09a, #ffc81f); }
+.D .a-tarjeta-boton { width: 100%; justify-content: center; font-size: 19px; margin-top: 4px; }
+.D .a-tarjeta-boton .dsp { font-size: 1.35em; }
+.D .a-tarjeta-pie { align-self: center; background: none; border: 0; padding: 8px; min-height: 44px; cursor: pointer; color: #26407f; font: 600 15px/1.2 "Barlow", sans-serif; }
+.D .a-tarjeta-pie b { color: #1d4fd1; text-decoration: underline; text-underline-offset: 3px; }
+.D.a-acceso .a-plano { color: #dce7ff; }
+@keyframes aEntraTarjeta { from { opacity: 0; transform: translateY(24px) scale(.97); } }
+@media (prefers-reduced-motion: reduce) { .D .a-tarjeta { animation: none; } }
+.D.a-acceso.wide .a-acceso-logo { margin-top: 18px; }
+/* Fecha de nacimiento: tres listas (día, mes, año) en una fila; en celular abren la rueda nativa. */
+.D .a-fecha { border: 0; padding: 0; margin: 0; min-width: 0; }
+.D .a-fecha legend { padding: 0; margin-bottom: 8px; }
+.D .a-fecha-fila { position: relative; display: grid; grid-template-columns: 1fr 1.6fr 1.15fr; gap: 8px; }
+.D .a-fecha select { min-width: 0; min-height: 52px; padding: 8px 26px 8px 12px; font: 600 16px/1.2 "Barlow", sans-serif; color: #0a1030; cursor: pointer;
+  background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%231f3a80' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") right 10px center / 12px no-repeat;
+  border: 2.5px solid #8fa9df; border-radius: 12px; appearance: none; -webkit-appearance: none; color-scheme: light; transition: border-color .15s, box-shadow .15s; }
+.D .a-fecha select:invalid { color: #5a6d9c; }
+.D .a-fecha select:focus { outline: none; border-color: #2f6cf0; box-shadow: 0 0 0 3px rgba(47,108,240,.25); }
