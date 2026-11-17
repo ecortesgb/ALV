@@ -293,7 +293,7 @@ body { overscroll-behavior: none; -webkit-tap-highlight-color: transparent; }
 .D.a-hub:not(.wide) .a-fh-luna { right: 7%; top: 15%; width: 54px; }
 /* Celular: botones chicos en dos columnas; el icono sin placa para que quepa «Personalizar». */
 .D.a-hub:not(.wide) .a-menu .d-btn:not(.d-play) { padding: .55em .7em .55em .55em; gap: .4em; }
-.D.a-hub:not(.wide) .a-menu .d-btn:not(.d-play) .ic { padding: .1em; font-size: 1.15em; }
+.D.a-hub:not(.wide) .a-menu .d-btn:not(.d-play) .ic { padding: 0; font-size: 1.4em; }
 .D.a-hub:not(.wide) .a-menu .d-btn:not(.d-play) .dsp { font-size: clamp(14px, 4.4vw, 18px); white-space: nowrap; }
 .a-fh-brillo { position: absolute; width: 14px; height: 14px; opacity: 0; animation: aBrillo 3.6s ease-in-out infinite;
   background: radial-gradient(circle, #fff 0 18%, transparent 20%), linear-gradient(#fff, #fff) center / 2px 100% no-repeat, linear-gradient(#fff, #fff) center / 100% 2px no-repeat;
@@ -430,3 +430,31 @@ button.a-logo:focus-visible { outline: 3px solid #ffd23f; outline-offset: 4px; b
   .D.a-inicio:not(.wide) .a-logo { --logo: min(33vw, 160px); }
   .D.a-inicio:not(.wide) .a-inicio-logo { bottom: min(calc(150px + 69vw), calc(100% - 228px)); }
 }
+
+/* ---------- HUB, ajustes contra la referencia (2026-11-17) ---------- */
+/* Logo: en web se corre a la izquierda, fuera de la columna de la figura, para no taparla. */
+.D.a-hub.wide .a-logo { left: clamp(-150px, -7vw, -40px); top: -.2em; }
+/* Retrato del recuadro de arriba: cuadro redondeado con marco dorado; cabeza completa y hombros, centrado.
+   La foto (240×300) se amplía a 168 % y se ve del 2 % al 50 % de su alto (de arriba del peinado al pecho). */
+.D.a-hub .d-ret { width: 3.5em; height: 3.5em; border-radius: .55em; border: 3px solid #ffcf3a; box-shadow: 0 0 0 2px #0a1030, inset 0 0 0 2px #0a1030;
+  background: radial-gradient(circle at 50% 35%, #8fe1ff, #3a9be6 60%, #2465b8); }
+.D.a-hub .d-ret .av.av-redondo { border-radius: inherit; box-shadow: none; background: none; }
+.D.a-hub .d-ret .av.av-redondo img { left: -39%; top: -3%; width: 168%; }
+/* Luz del pedestal: rayos suaves que salen de la base hacia arriba y destellos que titilan. */
+.D.a-hub .a-escenario::after { content: ""; position: absolute; z-index: 0; left: 50%; bottom: 6%; width: min(150%, 900px); aspect-ratio: 1; translate: -50% 50%; pointer-events: none;
+  background: repeating-conic-gradient(from 0deg at 50% 50%, rgba(200,230,255,.13) 0 5deg, transparent 5deg 17deg);
+  -webkit-mask-image: radial-gradient(circle at 50% 50%, #000 8%, transparent 48%); mask-image: radial-gradient(circle at 50% 50%, #000 8%, transparent 48%);
+  animation: aRayos 40s linear infinite; }
+.D.a-hub .a-escenario .escena3d { z-index: 1; }
+.D.a-hub .a-hub-chispa { position: absolute; z-index: 2; width: 16px; height: 16px; opacity: 0; pointer-events: none; animation: aBrillo 3.2s ease-in-out infinite;
+  background: radial-gradient(circle, #fff 0 18%, transparent 20%), linear-gradient(#fff, #fff) center / 2px 100% no-repeat, linear-gradient(#fff, #fff) center / 100% 2px no-repeat;
+  filter: drop-shadow(0 0 5px #ffe58a); clip-path: polygon(50% 0, 58% 42%, 100% 50%, 58% 58%, 50% 100%, 42% 58%, 0 50%, 42% 42%); }
+@keyframes aRayos { to { rotate: 360deg; } }
+/* Iconos del menú: rellenos en blanco con contorno de tinta, sin placa (como la referencia). */
+.D.a-hub .a-menu .d-btn .ic { fill: #fff; stroke: #0a1030; stroke-width: 1.7; stroke-linejoin: round; filter: drop-shadow(0 2px 0 #0a1030); }
+.D.a-hub .a-menu .d-btn:not(.d-play) .ic { font-size: 1.85em; padding: 0; background: none; border: 0; }
+.D.a-hub .a-menu .d-play .ic { fill: #0a1030; stroke: #0a1030; filter: none; }
+/* Títulos de botón con un poco más de cuerpo. */
+.D.a-hub .a-menu .d-btn .dsp { letter-spacing: .03em; }
+.D.a-hub.wide .a-menu .d-btn:not(.d-play) .dsp { font-size: calc(var(--t2) * 1.08); }
+@media (prefers-reduced-motion: reduce) { .D.a-hub .a-escenario::after, .D.a-hub .a-hub-chispa { animation: none !important; } .D.a-hub .a-hub-chispa { opacity: .6; } }

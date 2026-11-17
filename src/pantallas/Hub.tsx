@@ -24,10 +24,13 @@ export function Hub() {
         <div className="a-hub-cuerpo">
           <div className="a-escenario">
             <LogoALV tamano="medio" unaVez />
+            {/* Destellos alrededor del pedestal */}
+            {[[18, 70, 0], [80, 64, .9], [26, 88, 1.7], [74, 84, 2.4], [50, 60, 3]].map(([x, y, d], i) =>
+              <i key={i} className="a-hub-chispa" aria-hidden="true" style={{ left: `${x}%`, top: `${y}%`, animationDelay: `${d}s` }} />)}
             <Elenco gente={[{ id: s.uid, figura: f }]} modo="hub" />
           </div>
           <nav className="a-menu" aria-label="Menú principal">
-            <Boton color="amarillo" principal texto="Jugar" sub={sala ? `Volver a la sala ${sala.codigo}` : "Abre una sala o únete"} icono="play" onClick={() => ir("jugar")} />
+            <Boton color="amarillo" principal texto="¡Jugar!" sub={sala ? `Volver a la sala ${sala.codigo}` : "Abre una sala o únete"} icono="play" onClick={() => ir("jugar")} />
             <Boton color="azul" texto="Personalizar" sub="Tu figura y tus cápsulas" icono="shirt" onClick={() => ir("personalizar")} />
             <Boton color="morado" texto="Tienda" sub="Sobres y accesorios para tu personaje" icono="bag" onClick={() => ir("tienda")} />
             <Boton color="verde" texto="Ranking" sub="Tú y tus amigos" icono="trophy" onClick={() => ir("ranking")} />
