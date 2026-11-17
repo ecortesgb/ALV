@@ -134,7 +134,7 @@
       let e = figuras.get(id);
       if (!e || e.huella !== h) {
         if (e) quitar(id);
-        try { const a = armar(fx); e = { obj: a.obj, momentos: a.momentos, huella: h, mom: a.momentos.espera || "respirar", t0: reloj.getElapsedTime() - Math.random() * 3 }; }
+        try { const a = armar(fx); e = { id, obj: a.obj, momentos: a.momentos, huella: h, mom: a.momentos.espera || "respirar", t0: reloj.getElapsedTime() - Math.random() * 3 }; }
         catch (err) { console.error("escena: no se pudo armar", id, err); return; }
         scene.add(e.obj); figuras.set(id, e);
       }

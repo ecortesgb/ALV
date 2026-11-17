@@ -90,7 +90,6 @@ body { overscroll-behavior: none; -webkit-tap-highlight-color: transparent; }
 .D .a-check { display: flex; gap: 12px; align-items: flex-start; font: var(--cuerpo-chico); color: var(--texto-suave); }
 .D .a-check input { width: 24px; height: 24px; flex: none; accent-color: var(--amarillo); }
 .D .a-chip-g { min-height: 44px; padding: 8px 16px; }
-.D .a-logo { display: flex; flex-direction: column; align-items: center; gap: 8px; }
 
 /* ---------- Capa de avisos ---------- */
 .D.a-capa { position: fixed; inset: 0; pointer-events: none; z-index: 80; font-size: 16px; }
@@ -307,18 +306,10 @@ body { overscroll-behavior: none; -webkit-tap-highlight-color: transparent; }
   background: radial-gradient(ellipse 45% 55% at 50% 62%, rgba(140,200,255,.32), rgba(110,120,255,.12) 55%, transparent 75%); }
 .D.a-hub .escena3d { animation: aEntraFig .7s cubic-bezier(.2,.9,.25,1.15) .1s backwards; }
 
-/* Logotipo */
-.a-logo { position: absolute; z-index: 2; top: .2em; left: .3em; display: grid; justify-items: start; transform: rotate(-7deg); transform-origin: left center;
-  pointer-events: none; animation: aLogo .65s cubic-bezier(.2,1.4,.4,1) backwards; }
-.a-logo-letras { font: 400 clamp(64px, 8.5vw, 132px)/.86 Bangers, Impact, sans-serif; letter-spacing: .03em; padding: 0 .08em;
-  background: linear-gradient(180deg, #fff7b0 0%, #ffe14a 30%, #ffc21a 62%, #ff9a00 100%); -webkit-background-clip: text; background-clip: text; color: transparent;
-  -webkit-text-stroke: .055em #0a1030; paint-order: stroke fill;
-  filter: drop-shadow(0 .035em 0 #0a1030) drop-shadow(.04em .06em 0 #0a1030) drop-shadow(0 0 .25em rgba(255,200,40,.45)); }
-.a-logo-sub { margin: .1em 0 0 .7em; padding: .18em .6em; font: italic 800 clamp(11px, 1.05vw, 16px)/1 "Barlow Condensed", sans-serif; letter-spacing: .06em; text-transform: uppercase;
-  color: #fff; background: linear-gradient(180deg, #ff4fa3, #d81f7a); border: 2px solid #0a1030; border-radius: 5px; box-shadow: 0 3px 0 #0a1030; transform: skewX(-9deg); }
-.D.a-hub:not(.wide) .a-logo-letras { font-size: 54px; }
-.D.a-hub:not(.wide) .a-logo-sub { font-size: 10px; }
-@keyframes aLogo { from { opacity: 0; transform: rotate(-7deg) scale(.4); } }
+/* Logotipo: posición en el HUB (el diseño del logo está en «Logo ALV», más abajo). */
+.D.a-hub .a-logo { position: absolute; z-index: 2; top: .1em; left: 0; --logo: clamp(84px, 9vw, 165px); }
+.D.a-hub:not(.wide) .a-logo { --logo: 76px; left: -4px; top: -6px; }
+@keyframes aLogo { from { opacity: 0; transform: scale(.4); } }
 @keyframes aEntraFig { from { opacity: 0; transform: translateY(24px) scale(.94); } }
 
 /* Botones del menú: contorno más grueso, brillo arriba, icono en su placa y más sombra. */
@@ -355,4 +346,87 @@ body { overscroll-behavior: none; -webkit-tap-highlight-color: transparent; }
 @media (prefers-reduced-motion: reduce) {
   .D.a-hub .a-logo, .D.a-hub .escena3d, .D.a-hub .a-menu .d-btn, .D.a-hub .d-top, .a-fh-luna, .a-fh-brillo { animation: none !important; }
   .a-fh-brillo { opacity: .7; }
+}
+
+/* ---------- Logo ALV (Logo.tsx): dibujo SVG; --logo es el alto de las letras ---------- */
+.a-logo { --logo: clamp(92px, 13vw, 210px); position: relative; display: inline-block; line-height: 0; pointer-events: none;
+  animation: aLogo .7s cubic-bezier(.2,1.5,.4,1) backwards; }
+.a-logo svg { display: block; width: calc(var(--logo) * 2.4); height: auto; overflow: visible;
+  /* Luz de neón del fondo en los bordes y sombra que lo asienta en la escena. */
+  filter: drop-shadow(-3px 0 6px rgba(255,70,190,.35)) drop-shadow(3px 0 6px rgba(50,215,255,.4)) drop-shadow(0 10px 14px rgba(2,6,30,.55)); }
+.a-logo-medio { --logo: clamp(70px, 8.4vw, 140px); }
+.a-logo .a-logo-estallido { transform-box: fill-box; transform-origin: center; animation: aEstallido 1s cubic-bezier(.2,1.6,.4,1) .15s backwards, aLatido 3.2s ease-in-out 1.2s infinite; }
+.a-logo .a-logo-cinta { transform-box: fill-box; transform-origin: center; animation: aCinta .55s cubic-bezier(.2,1.4,.4,1) .35s backwards; }
+/* Ruleta: la columna de frases sube y frena (cubic-bezier); desenfoque mientras gira y la frase final se ilumina. */
+/* Cada frase se queda 1 s y la cinta salta a la siguiente con un rebote corto. */
+.a-logo .a-ruleta-col { transition: transform .34s cubic-bezier(.3,1.45,.5,1); }
+/* El logo con ruleta es un botón: tocarlo vuelve a girar. */
+button.a-logo { pointer-events: auto; cursor: pointer; padding: 0; border: 0; background: none; font: inherit; color: inherit; -webkit-tap-highlight-color: transparent; }
+button.a-logo:active svg { transform: scale(.97); }
+button.a-logo:focus-visible { outline: 3px solid #ffd23f; outline-offset: 4px; border-radius: 12px; }
+.a-logo.a-ruleta-fin .a-ruleta-ult { animation: aPopSvg .5s ease-out; }
+@keyframes aEstallido { from { opacity: 0; transform: scale(.2) rotate(-30deg); } }
+@keyframes aLatido { 50% { transform: scale(1.04); } }
+@keyframes aCinta { from { opacity: 0; transform: scaleX(.2); } }
+@keyframes aDesenfoque { 0% { filter: blur(0); } 12% { filter: blur(1.4px); } 70% { filter: blur(.5px); } 100% { filter: blur(0); } }
+@keyframes aPopSvg { 0% { fill: #fff; } 40% { fill: #fffbe0; } 100% { fill: #ffd93a; } }
+@media (prefers-reduced-motion: reduce) {
+  .a-logo, .a-logo .a-logo-estallido, .a-logo .a-logo-cinta, .a-logo .a-ruleta-col, .a-logo .a-ruleta-ult { animation: none !important; transition: none !important; }
+}
+
+/* ---------- Pantalla de inicio (carga + portada): cartel de videojuego ---------- */
+.D.a-inicio .a-fondo-inicio { overflow: hidden;
+  background: radial-gradient(1.5px 1.5px at 12% 18%, #fff 50%, transparent), radial-gradient(1.2px 1.2px at 28% 8%, #cfe6ff 50%, transparent),
+    radial-gradient(1.5px 1.5px at 71% 14%, #fff 50%, transparent), radial-gradient(1.2px 1.2px at 86% 26%, #cfe6ff 50%, transparent),
+    radial-gradient(1.2px 1.2px at 47% 4%, #fff 50%, transparent), radial-gradient(1.5px 1.5px at 92% 7%, #fff 50%, transparent),
+    radial-gradient(ellipse 70% 45% at 50% 62%, rgba(40,150,210,.35), transparent 70%),
+    linear-gradient(180deg, #050b24 0%, #071a3e 40%, #04365f 75%, #032845 100%); }
+/* El cartel (personajes fijos, imagen): abajo y centrado; lo que sobra arriba es cielo para el logo. */
+.D.a-inicio .a-fondo-inicio::before { content: ""; position: absolute; left: 50%; bottom: -9%; translate: -50% 0;
+  width: max(100%, calc(74vh * 2.482)); aspect-ratio: 2.482; background: var(--arte-g) center / 100% 100% no-repeat;
+  -webkit-mask-image: linear-gradient(transparent, #000 16%); mask-image: linear-gradient(transparent, #000 16%);
+  animation: aAcerca 24s ease-in-out infinite alternate; transform-origin: 50% 90%; }
+.D.a-inicio:not(.wide) .a-fondo-inicio::before { background-image: var(--arte-c); width: 190%; bottom: 150px;
+  -webkit-mask-image: linear-gradient(transparent, #000 14%, #000 86%, transparent); mask-image: linear-gradient(transparent, #000 14%, #000 86%, transparent); }
+/* Viñeta para leer el logo y el pie, y lluvia que cae. */
+.D.a-inicio .a-fondo-inicio::after { background-size: auto; inset: -20% 0 0;
+  background-image: radial-gradient(ellipse 75% 60% at 50% 55%, transparent 40%, rgba(6,8,36,.55) 100%),
+    linear-gradient(180deg, rgba(6,10,40,.55), transparent 28%, transparent 70%, rgba(6,8,32,.8)); }
+/* Lluvia delante de todo (también del logo) para meterlo en la escena; dos capas a distinta velocidad. */
+.D .a-inicio-lluvia { position: fixed; inset: -10% 0 0; z-index: 4; pointer-events: none;
+  background-image: repeating-linear-gradient(100deg, transparent 0 22px, rgba(190,225,255,.13) 22px 23px, transparent 23px 61px),
+    repeating-linear-gradient(97deg, transparent 0 37px, rgba(190,225,255,.08) 37px 38px, transparent 38px 97px);
+  animation: aLluvia .7s linear infinite; }
+@keyframes aAcerca { from { transform: scale(1); } to { transform: scale(1.05); } }
+@keyframes aLluvia { from { background-position: 0 0, 0 0; } to { background-position: -14px 80px, -9px 120px; } }
+
+.D .a-inicio-caja { flex: 1; min-height: 100%; display: grid; grid-template-rows: auto minmax(200px, 1fr) auto; justify-items: center; gap: 4px; padding: max(16px, env(safe-area-inset-top)) 16px max(14px, env(safe-area-inset-bottom)); }
+.D .a-inicio-logo { margin-top: 1vh; }
+.D.a-inicio.wide .a-logo { --logo: clamp(120px, 15.5vw, 280px); }
+.D .a-inicio-hueco { min-height: 0; } /* aquí se ven los personajes del cartel */
+.D .a-inicio-pie { display: flex; flex-direction: column; align-items: center; gap: 10px; min-height: 120px; justify-content: flex-end; }
+.D .a-inicio-barra { position: static; width: min(320px, 70vw); height: 12px; padding: 0; border: 2.5px solid #0a1030; background: rgba(10,16,48,.7); box-shadow: 0 3px 0 #0a1030; }
+.D .a-inicio-barra i { background: linear-gradient(90deg, #ffb100, #ffe14a); box-shadow: 0 0 10px #ffd23f; }
+.D .a-inicio-estado { margin: 0; font: italic 800 15px/1 "Barlow Condensed", sans-serif; letter-spacing: .12em; text-transform: uppercase; color: #fff; text-shadow: 0 2px 0 #0a1030; animation: aPulso 1.2s ease-in-out infinite; }
+.D .a-inicio-boton { font-size: clamp(15px, 2.2vw, 22px); animation: aEntraBoton .5s cubic-bezier(.2,1.5,.4,1) backwards, dGlow 2.4s ease-in-out .5s infinite; }
+.D .a-inicio-boton .dsp { font-size: 2.1em; }
+.D .a-inicio-legal { font: 600 11px/1 "Barlow", sans-serif; color: rgba(255,255,255,.65); letter-spacing: .04em; }
+.D .a-logo-acceso { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+@keyframes aEntraBoton { from { opacity: 0; transform: skewX(-9deg) scale(.6); } }
+@media (prefers-reduced-motion: reduce) {
+  .D.a-inicio .a-fondo-inicio::before, .D .a-inicio-lluvia, .D .a-inicio-boton { animation: none !important; }
+}
+.D.a-inicio .a-scroll { padding: 0; }
+.D.a-inicio:not(.wide) .a-inicio-boton .dsp { font-size: 1.5em; white-space: nowrap; }
+.D.a-inicio:not(.wide) .a-inicio-boton { font-size: 16px; }
+
+/* Celular: logo grande y anclado justo encima de los personajes (su cabeza queda a ~60vw sobre la base del cartel). */
+.D.a-inicio:not(.wide) .a-inicio-caja { position: relative; }
+.D.a-inicio:not(.wide) .a-inicio-logo { position: absolute; z-index: 3; left: 50%; translate: -50% 0; bottom: min(calc(150px + 62vw), calc(100% - 300px)); margin: 0; }
+.D.a-inicio:not(.wide) .a-logo { --logo: min(44vw, 200px); }
+.D.a-inicio .a-inicio-pie { position: relative; z-index: 5; }
+/* Teléfonos bajos (≤ 700 px de alto): logo más chico para no tapar las caras. */
+@media (max-height: 700px) {
+  .D.a-inicio:not(.wide) .a-logo { --logo: min(33vw, 160px); }
+  .D.a-inicio:not(.wide) .a-inicio-logo { bottom: min(calc(150px + 69vw), calc(100% - 228px)); }
 }

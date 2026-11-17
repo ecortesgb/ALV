@@ -1,7 +1,7 @@
 // ALV 2.0: una sola app. La entrada decide por la sesión; después manda la ruta.
 // El papel del aparato lo da la ruta: #/tv/código es la Pantalla, #/sala/código un celular.
-import { lazy, Suspense, useEffect } from "react";
-import { Carga, CompletarRegistro, Entrada, SoloMayores } from "../pantallas/Acceso";
+import { lazy, Suspense, useCallback, useEffect, useState } from "react";
+import { Acceso, Carga, CompletarRegistro, Inicio, SoloMayores } from "../pantallas/Acceso";
 import { Ajustes, Admin } from "../pantallas/Ajustes";
 import { Catalogo, FichaJuego } from "../pantallas/Catalogo";
 import { Hub, Jugar } from "../pantallas/Hub";
@@ -22,11 +22,15 @@ export function App() {
   const { fase, invitado } = useSesion();
   useEffect(() => { void refrescarSesion(); }, []);
   useEffect(instalarClics, []);
+  // Pantalla de inicio en cada carga o recarga, salvo al entrar por el QR de una sala o de la Pantalla.
+  const [inicio, setInicio] = useState(() => ruta !== "sala" && ruta !== "tv");
+  const terminarInicio = useCallback(() => setInicio(false), []);
 
   if (ruta === "ds") return <Suspense fallback={null}><PaginaDS /></Suspense>;
   // Sin sesión se entra o se crea cuenta aquí mismo: la dirección (por ejemplo la del QR) no cambia y al entrar se sigue a la sala.
-  const pantalla = fase === "cargando" ? <Carga />
-    : fase === "fuera" ? <Entrada directo={ruta === "sala" || ruta === "tv"} />
+  const pantalla = inicio ? <Inicio fase={fase} alTerminar={terminarInicio} />
+    : fase === "cargando" ? <Carga />
+    : fase === "fuera" ? <Acceso />
     : fase === "registro" ? <CompletarRegistro />
     : fase === "menor" ? <SoloMayores />
     : ruta === "jugar" ? <Jugar />
@@ -42,5 +46,5 @@ export function App() {
     : ruta === "ajustes" ? <Ajustes />
     : ruta === "admin" ? <Admin />
     : <Hub />;
-  return <>{pantalla}{fase === "dentro" && <SincroCapsulas />}{fase === "dentro" && invitado && ruta !== "tv" && ruta !== "editor" && <span className="a-prueba" aria-label="Estás en una entrada de prueba">Prueba</span>}<Avisos /></>;
+  return <>{pantalla}{fase === "dentro" && <SincroCapsulas />}{!inicio && fase === "dentro" && invitado && ruta !== "tv" && ruta !== "editor" && <span className="a-prueba" aria-label="Estás en una entrada de prueba">Prueba</span>}<Avisos /></>;
 }

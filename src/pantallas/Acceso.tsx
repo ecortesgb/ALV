@@ -1,12 +1,13 @@
 // Pantalla de carga, acceso y registro. ALV es solo para mayores de 18 (D1): la fecha la valida el servidor.
-import { useEffect, useState, type FormEvent } from "react";
-import { Boton, Onomatopeya, Panel, Pestanas } from "../ds";
+import { useEffect, useState, type CSSProperties, type FormEvent } from "react";
+import { Boton, Panel, Pestanas } from "../ds";
 import { cargarCapsulasNube, entrar, entrarInvitado, esNickInvitado, guardarRegistro, nickValido, passValida, registrar, salir, type Genero } from "../servicios/cuenta";
 import { hayNube } from "../servicios/cliente";
-import { entrarDemo, refrescarSesion, useSesion } from "../app/sesion";
+import { entrarDemo, refrescarSesion, useSesion, type Fase } from "../app/sesion";
 import { ir } from "../app/rutas";
 import { sonar } from "../app/sonido";
-import { Campo, Elenco, Marco } from "./comun";
+import { Campo, Marco } from "./comun";
+import { LogoALV } from "./Logo";
 
 const hoy = () => new Date();
 /** Edad cumplida a partir de AAAA-MM-DD. */
@@ -18,53 +19,60 @@ export function edadDe(nacimiento: string, ref = hoy()): number {
 }
 const GENEROS: [Genero, string][] = [["mujer", "Mujer"], ["hombre", "Hombre"], ["otro", "Otro"]];
 
+/** Logo de las pantallas de acceso: el mismo de la portada, sin ruleta, con una línea de contexto debajo. */
 function Logo({ sub }: { sub?: string }) {
   return (
-    <div className="a-logo">
-      <Onomatopeya texto="ALV" color="var(--amarillo)" tamano="5.2em" giro={-6} />
+    <div className="a-logo-acceso">
+      <LogoALV tamano="medio" ruleta={false} />
       {sub && <span className="dsp ol a-t3">{sub}</span>}
     </div>
   );
 }
 
-/** Carga: se ve mientras se lee la sesión y al abrir ALV. Sin bloques grises: el logo, la ciudad y una barra que corre. */
+const ARTE_INICIO = { "--arte-g": `url(${import.meta.env.BASE_URL}arte/cartel-inicio-1920.webp)`, "--arte-c": `url(${import.meta.env.BASE_URL}arte/cartel-inicio-1100.webp)` } as CSSProperties;
+/** Tiempo mínimo de la barra antes de «Presiona para iniciar» (la ruleta sigue girando mientras). */
+const CARGA_MS = 3000;
+
+/**
+ * Pantalla de inicio (carga y portada en una): cartel ilustrado con figuras fijas personalizadas (imagen, no 3D en vivo)
+ * y el logo con su ruleta de títulos. Mientras `listo` es falso corre la barra; después aparece «Presiona para iniciar».
+ * Es un solo componente para que la ruleta no se reinicie al pasar de cargar a la portada.
+ */
+function PantallaInicio({ listo, texto, onIniciar }: { listo: boolean; texto: string; onIniciar?: () => void }) {
+  return (
+    <Marco clase="a-inicio" fondo={<div className="d-bg a-fondo-inicio" aria-hidden="true" style={ARTE_INICIO} />}>
+      <div className="a-inicio-caja">
+        <div className="a-inicio-logo"><LogoALV /></div>
+        <div className="a-inicio-hueco" aria-hidden="true" />
+        <div className="a-inicio-lluvia" aria-hidden="true" />
+        <div className="a-inicio-pie">
+          {listo && onIniciar
+            ? <Boton color="amarillo" principal className="a-inicio-boton" texto="Presiona para iniciar" sub="Un juego para jugar con tus amigos" icono="play" onClick={() => { sonar("clic"); onIniciar(); }} />
+            : <><div className="a-barra a-inicio-barra" aria-hidden="true"><i /></div><p className="a-inicio-estado" role="status">{texto}</p></>}
+          <small className="a-inicio-legal">© 2026 ALV · Solo para mayores de 18</small>
+        </div>
+      </div>
+    </Marco>
+  );
+}
+
+/** Carga: mientras se lee la sesión (con sesión ya abierta pasa directo al HUB). */
 export function Carga({ texto = "Entrando…" }: { texto?: string }) {
-  return (
-    <Marco clase="a-centro">
-      <Logo sub="Amigos, locuras y verdades" />
-      <div className="a-barra" aria-hidden="true"><i /></div>
-      <p className="a-suave a-pulso" role="status">{texto}</p>
-    </Marco>
-  );
+  return <PantallaInicio listo={false} texto={texto} />;
 }
 
-/** Portada: primera vista para quien no tiene sesión. Un toque lleva a Acceso. */
-export function Portada({ onIniciar }: { onIniciar: () => void }) {
-  return (
-    <Marco clase="a-centro a-portada">
-      <div className="a-portada-arte" aria-hidden="true">
-        <Elenco gente={[{ id: "portada-1" }, { id: "portada-2" }, { id: "portada-3" }]} foco="portada-2" />
-      </div>
-      <div className="a-portada-txt">
-        <Logo />
-        <p className="a-suave">Un videojuego de minijuegos para jugar con tus amigos, en pareja o todos juntos.</p>
-      </div>
-      <Boton color="amarillo" principal texto="PRESIONA PARA INICIAR" icono="play" onClick={() => { sonar("clic"); onIniciar(); }} />
-    </Marco>
-  );
-}
-
-/** Entrada sin sesión: carga breve, portada y luego Acceso. Si la dirección es de una sala o de la Pantalla (QR), salta la portada. */
-export function Entrada({ directo }: { directo: boolean }) {
-  const [paso, setPaso] = useState<"carga" | "portada" | "acceso">(directo ? "acceso" : "carga");
-  useEffect(() => {
-    if (directo) { setPaso("acceso"); return; }
-    const t = setTimeout(() => setPaso(p => (p === "carga" ? "portada" : p)), 1600);
-    return () => clearTimeout(t);
-  }, [directo]);
-  if (paso === "carga") return <Carga texto="Cargando…" />;
-  if (paso === "portada") return <Portada onIniciar={() => setPaso("acceso")} />;
-  return <Acceso />;
+/**
+ * Inicio: se ve en CADA carga o recarga de ALV (App la quita al terminar). Primero la barra (mínimo CARGA_MS y hasta
+ * saber si hay sesión); luego «Presiona para iniciar»: con sesión lleva al HUB, sin sesión a crear cuenta o entrar.
+ */
+export function Inicio({ fase, alTerminar }: { fase: Fase; alTerminar: () => void }) {
+  const [tiempo, setTiempo] = useState(false), [acceso, setAcceso] = useState(false);
+  useEffect(() => { const t = setTimeout(() => setTiempo(true), CARGA_MS); return () => clearTimeout(t); }, []);
+  // Entró o creó cuenta desde Acceso: se quita el inicio y manda la ruta (Acceso ya lleva a Personalizar si es nueva).
+  useEffect(() => { if (acceso && fase !== "fuera" && fase !== "cargando") alTerminar(); }, [acceso, fase, alTerminar]);
+  if (acceso && fase === "fuera") return <Acceso />;
+  const iniciar = () => { if (fase === "fuera") setAcceso(true); else { ir("inicio"); alTerminar(); } };
+  return <PantallaInicio listo={tiempo && fase !== "cargando"} texto={fase === "cargando" ? "Entrando…" : "Cargando…"} onIniciar={iniciar} />;
 }
 
 /** Cuenta nueva: a personalizar, salvo que ya tenga figura guardada en la nube. Si no se pudo leer, va al HUB. */

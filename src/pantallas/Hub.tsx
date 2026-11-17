@@ -7,6 +7,7 @@ import { ir } from "../app/rutas";
 import { useSesion } from "../app/sesion";
 import { enlace, type SalaV } from "../servicios/enlace";
 import { Campo, Cabecera, Elenco, Marco, Retrato, aviso, useAncho } from "./comun";
+import { LogoALV } from "./Logo";
 
 export function Hub() {
   const s = useSesion();
@@ -22,7 +23,7 @@ export function Hub() {
           onPerfil={() => ir("perfil")} onAjustes={() => ir("ajustes")} />
         <div className="a-hub-cuerpo">
           <div className="a-escenario">
-            <LogoALV />
+            <LogoALV tamano="medio" unaVez />
             <Elenco gente={[{ id: s.uid, figura: f }]} modo="hub" />
           </div>
           <nav className="a-menu" aria-label="Menú principal">
@@ -47,16 +48,6 @@ function FondoHub() {
       <div className="a-fh-luna" />
       {[[12, 18, 0], [34, 9, 1.2], [58, 22, 2.1], [71, 7, .6], [88, 30, 1.7], [22, 36, 2.6], [47, 4, 3.1]].map(([x, y, d], i) =>
         <i key={i} className="a-fh-brillo" style={{ left: `${x}%`, top: `${y}%`, animationDelay: `${d}s` }} />)}
-    </div>
-  );
-}
-
-/** Logotipo ALV: letras gruesas con relieve, contorno de tinta y el nombre completo abajo. */
-function LogoALV() {
-  return (
-    <div className="a-logo" role="img" aria-label="ALV, Amigos Legendarios Verdaderos">
-      <span className="a-logo-letras" aria-hidden="true">ALV</span>
-      <span className="a-logo-sub" aria-hidden="true">Amigos Legendarios Verdaderos</span>
     </div>
   );
 }
