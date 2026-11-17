@@ -6,7 +6,7 @@ import { figuraActiva, useCapsulas } from "../app/figura3d";
 import { ir } from "../app/rutas";
 import { useSesion } from "../app/sesion";
 import { enlace, type SalaV } from "../servicios/enlace";
-import { Campo, Cabecera, Elenco, Marco, Retrato, aviso, useAncho } from "./comun";
+import { Campo, Cabecera, Elenco, Marco, Retrato, aviso, urlArte, useAncho } from "./comun";
 import { LogoALV } from "./Logo";
 
 export function Hub() {
@@ -41,7 +41,7 @@ export function Hub() {
 
 /** Fondo ilustrado del HUB: la ciudad pintada (imagen) y encima, en CSS, la luna y los destellos.
  *  La luna y los destellos van aparte para que no se recorten en celular (la imagen se recorta por los lados). */
-const ARTE = { "--arte-g": `url(${import.meta.env.BASE_URL}arte/ciudad-noche-1920.webp)`, "--arte-c": `url(${import.meta.env.BASE_URL}arte/ciudad-noche-1100.webp)` } as CSSProperties;
+const ARTE = { "--arte-g": urlArte("ciudad-noche-1920.webp"), "--arte-c": urlArte("ciudad-noche-1100.webp") } as CSSProperties;
 function FondoHub() {
   return (
     <div className="d-bg a-fondo-hub" aria-hidden="true" style={ARTE}>

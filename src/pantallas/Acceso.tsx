@@ -6,7 +6,7 @@ import { hayNube } from "../servicios/cliente";
 import { entrarDemo, refrescarSesion, useSesion, type Fase } from "../app/sesion";
 import { ir } from "../app/rutas";
 import { sonar } from "../app/sonido";
-import { Campo, Marco } from "./comun";
+import { Campo, Marco, urlArte } from "./comun";
 import { LogoALV } from "./Logo";
 
 const hoy = () => new Date();
@@ -29,7 +29,7 @@ function Logo({ sub }: { sub?: string }) {
   );
 }
 
-const ARTE_INICIO = { "--arte-g": `url(${import.meta.env.BASE_URL}arte/cartel-inicio-1920.webp)`, "--arte-c": `url(${import.meta.env.BASE_URL}arte/cartel-inicio-1100.webp)` } as CSSProperties;
+const ARTE_INICIO = { "--arte-g": urlArte("cartel-inicio-1920.webp"), "--arte-c": urlArte("cartel-inicio-1100.webp") } as CSSProperties;
 /** Tiempo mínimo de la barra antes de «Presiona para iniciar» (la ruleta sigue girando mientras). */
 const CARGA_MS = 3000;
 

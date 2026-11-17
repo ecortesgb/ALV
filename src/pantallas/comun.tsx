@@ -43,6 +43,12 @@ export function Cabecera({ titulo, icono, derecha, alVolver }: { titulo: string;
 let avisoActual: { texto: string; n: number } | null = null, n = 0;
 const oyentes = new Set<() => void>();
 const avisar = () => oyentes.forEach(f => f());
+/**
+ * `url("…")` absoluta para una imagen de public/arte. Absoluta a propósito: el sitio publicado usa base «./» y una url
+ * relativa dentro de una variable de CSS se resuelve desde la carpeta del CSS (assets/), donde no está la imagen.
+ */
+export const urlArte = (nombre: string) => `url("${new URL(`${import.meta.env.BASE_URL}arte/${nombre}`, document.baseURI).href}")`;
+
 export function aviso(texto: string) {
   const mio = ++n;
   avisoActual = { texto, n: mio }; avisar();
