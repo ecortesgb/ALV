@@ -2,14 +2,16 @@
 import { useEffect, useState, useSyncExternalStore, type ReactNode } from "react";
 import type { FiguraV2 } from "../content/personaje";
 import { FondoCiudad, Icono, RaizDS, type IconoId } from "../ds";
-import { Escena3D, FotoFigura, semillaDe, type EnEscena, type Momento } from "../app/figura3d";
+import { Escena3D, FotoFigura, apodoDe, semillaDe, type EnEscena, type Momento } from "../app/figura3d";
 import { atras } from "../app/rutas";
 
 /** ¿Pantalla ancha (laptop o TV)? */
+// Celular girado (horizontal, desde 600 px de ancho) usa el mismo diseño que la computadora.
+const consultaAncho = (min: number) => `(min-width:${min}px), (orientation: landscape) and (min-width:600px)`;
 export function useAncho(min = 900): boolean {
-  const [a, setA] = useState(() => matchMedia(`(min-width:${min}px)`).matches);
+  const [a, setA] = useState(() => matchMedia(consultaAncho(min)).matches);
   useEffect(() => {
-    const m = matchMedia(`(min-width:${min}px)`), f = () => setA(m.matches);
+    const m = matchMedia(consultaAncho(min)), f = () => setA(m.matches);
     m.addEventListener("change", f);
     return () => m.removeEventListener("change", f);
   }, [min]);
@@ -88,6 +90,13 @@ export function Avisos() {
 
 // ---------- Figuras ----------
 /** Retrato circular de un jugador: cabeza y hombros de su figura 3D (sin figura, una fija al azar por su id). */
+/** Nombre del jugador con el apodo de su figura encima (si lo tiene). */
+export function NombreJugador({ nombre, figura, clase = "dsp" }: { nombre: string; figura?: FiguraV2 | null; clase?: string }) {
+  const apodo = apodoDe(figura);
+  if (!apodo) return <span className={clase}>{nombre}</span>;
+  return <span className="a-nom"><small className="a-apodo">{apodo}</small><span className={clase}>{nombre}</span></span>;
+}
+
 export function Retrato({ id, figura, nombre, size = 44 }: { id: string; figura?: FiguraV2 | null; nombre?: string; size?: number }) {
   return <FotoFigura figura={figura ?? undefined} semilla={figura ? undefined : semillaDe(id)} size={size} nombre={nombre} redondo />;
 }

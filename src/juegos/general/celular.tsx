@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { CARTAS_PODER } from "../../content/catalogo";
 import { MAX_PISTA } from "../../engine/partida";
 import { Boton, Chip, Escaner, Panel } from "../../ds";
-import { Retrato } from "../../pantallas/comun";
+import { NombreJugador, Retrato } from "../../pantallas/comun";
 import type { Miembro } from "../../servicios/enlace";
 import { desenlace, instruccion, nombreDe, type Publico } from "./texto";
 
@@ -17,7 +17,7 @@ function Elegir({ gente, miembros, sin, alElegir }: { gente: Publico["jugadores"
       {gente.filter(j => j.id !== sin).map(j => (
         <button key={j.id} type="button" className="d-pnl a-persona" onClick={() => alElegir(j.id)}>
           <Retrato id={j.id} figura={miembros.find(m => m.id === j.id)?.figura} nombre={j.nombre} size={56} />
-          <span className="dsp">{j.nombre}</span>
+          <NombreJugador nombre={j.nombre} figura={miembros.find(m => m.id === j.id)?.figura} />
         </button>
       ))}
     </div>

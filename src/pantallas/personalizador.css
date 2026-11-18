@@ -1,0 +1,260 @@
+/* Personalizador: muro de espacios y libro de cómic. Estilo Cine Cómic Nocturno: tinta gruesa, tramado de puntos,
+   sombras duras, Bangers para los rótulos y Barlow para lo demás. */
+.D.p-taller { --p-tinta: var(--tinta, #0a1030); --p-papel: #f4efe1; --p-amarillo: var(--amarillo, #ffd23f); }
+.D.p-taller .a-scroll { padding: 12px 16px 24px; overflow-x: hidden; }
+.p-sfx { font-family: var(--letra-sfx, Bangers, Impact, sans-serif); font-style: normal; letter-spacing: .03em; }
+
+/* ---------- Muro de espacios ---------- */
+.p-muro-caja { width: 100%; max-width: 62em; margin-inline: auto; display: flex; flex-direction: column; gap: 14px; }
+.D.wide .p-muro-caja { padding-top: clamp(8px, 7vh, 80px); }
+.p-muro-titulo { margin: 4px 0 0; align-self: center; font: 400 clamp(26px, 6vw, 40px)/1 var(--letra-sfx, Bangers, Impact, sans-serif); letter-spacing: .04em;
+  color: var(--p-amarillo); text-shadow: 3px 3px 0 var(--p-tinta), -1px -1px 0 var(--p-tinta), 1px -1px 0 var(--p-tinta), -1px 1px 0 var(--p-tinta); transform: rotate(-2deg); }
+.p-muro { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: clamp(10px, 3vw, 32px); padding: 18px clamp(0px, 3vw, 40px) 8px;
+  transition: transform .8s cubic-bezier(.5, 0, .2, 1); }
+.p-fase-acercando .p-muro { transform: scale(1.5); }
+.p-ranura { position: relative; isolation: isolate; display: flex; flex-direction: column; align-items: center; gap: 10px; transition: opacity .5s, filter .5s; }
+.p-ranura.atenuada { opacity: .2; filter: blur(2px); }
+
+.p-carta { position: relative; width: 100%; max-width: 230px; aspect-ratio: 5 / 7; display: flex; flex-direction: column; align-items: center; padding: 0 0 10px;
+  cursor: pointer; color: #fff; border: 3px solid var(--p-tinta); border-radius: 8px; box-shadow: 5px 6px 0 var(--p-tinta); overflow: hidden;
+  background: radial-gradient(circle at 1px 1px, rgba(255, 255, 255, .13) 1.2px, transparent 1.7px) 0 0 / 8px 8px,
+    radial-gradient(ellipse at 50% 55%, #3d7be6, #1d3aa8 55%, #12205f); transition: transform .18s, box-shadow .18s; }
+.p-carta:hover, .p-carta:focus-visible { transform: translateY(-4px) rotate(-1deg); box-shadow: 7px 9px 0 var(--p-tinta); }
+.p-carta::after { content: ""; position: absolute; inset: auto 0 0; height: 10px; background: repeating-linear-gradient(-45deg, #c91a09 0 8px, var(--p-amarillo) 8px 16px); border-top: 2.5px solid var(--p-tinta); }
+.p-carta-tira { width: 100%; padding: 6px 4px 5px; font: 400 clamp(14px, 3.4vw, 20px)/1 var(--letra-sfx, Bangers, sans-serif); letter-spacing: .05em; text-align: center;
+  color: var(--p-tinta); background: var(--p-amarillo); border-bottom: 2.5px solid var(--p-tinta); }
+.p-carta-arte { flex: 1; width: 100%; display: grid; place-items: center; min-height: 0; padding: 6px; overflow: hidden; }
+/* La foto cabe en el alto que queda: nunca tapa el nombre. */
+.p-carta-arte .av-3d { height: 100% !important; width: auto !important; max-width: 92%; aspect-ratio: 2 / 3; }
+.p-silueta { height: 82%; max-height: 190px; fill: #9fd0ff; filter: drop-shadow(0 0 8px rgba(140, 210, 255, .9)) drop-shadow(0 0 22px rgba(80, 160, 255, .6)); }
+.p-carta-nombre { max-width: 92%; margin-bottom: 8px; padding: 3px 10px; font: 700 clamp(11px, 2.8vw, 14px)/1.1 var(--letra-cuerpo, sans-serif); color: var(--p-tinta);
+  background: #fff; border: 2px solid var(--p-tinta); border-radius: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.p-carta-sello { position: absolute; top: 34px; right: -6px; padding: 3px 10px; font: 400 clamp(11px, 2.6vw, 15px)/1 var(--letra-sfx, Bangers, sans-serif); letter-spacing: .05em;
+  color: #fff; background: #c91a09; border: 2px solid var(--p-tinta); transform: rotate(8deg); }
+.p-usar { padding: 6px 12px; font: italic 800 clamp(11px, 2.8vw, 14px)/1 var(--letra-display, sans-serif); text-transform: uppercase; color: #fff; cursor: pointer;
+  background: #1b2766; border: 2px solid var(--p-tinta); border-radius: 5px; box-shadow: 2px 3px 0 var(--p-tinta); }
+
+/* Rayos detrás de la carta elegida y destello */
+.p-carta-rayos { position: absolute; z-index: -1; left: 50%; top: 42%; width: 190%; aspect-ratio: 1; translate: -50% -50%; border-radius: 50%; opacity: 0; pointer-events: none;
+  background: repeating-conic-gradient(rgba(255, 230, 120, .85) 0 6deg, transparent 6deg 18deg);
+  -webkit-mask: radial-gradient(closest-side, #000 25%, transparent); mask: radial-gradient(closest-side, #000 25%, transparent); }
+.p-ranura.elegida .p-carta-rayos { opacity: 1; transition: opacity .25s; animation: pRayos 5s linear infinite; }
+.p-ranura.elegida .p-carta { animation: pBrilla .8s ease-out both; }
+@keyframes pRayos { to { rotate: 1turn; } }
+@keyframes pBrilla { 0% { filter: none; } 35% { filter: brightness(1.7) saturate(1.3); box-shadow: 0 0 0 4px #fff, 0 0 40px 12px rgba(255, 220, 90, .9); } 100% { filter: brightness(1.15); box-shadow: 0 0 0 3px var(--p-amarillo), 0 0 30px 8px rgba(255, 220, 90, .7); } }
+
+/* ---------- Libro ---------- */
+.p-libro-caja[hidden] { display: block !important; position: fixed; left: -200vw; top: 0; width: 900px; height: 600px; visibility: hidden; }
+.p-libro { width: 100%; max-width: 76em; margin-inline: auto; display: flex; flex-direction: column; gap: 10px; }
+.p-libro.abriendo { animation: pLibroEntra .45s cubic-bezier(.2, .9, .3, 1.1) both; }
+@keyframes pLibroEntra { from { opacity: 0; transform: scale(.88); } }
+.p-libro-barra { display: flex; justify-content: flex-end; align-items: center; gap: 10px; }
+.p-atras-barra { margin-right: auto; }
+.D.wide .p-atras-barra { display: none; }
+.D:not(.wide) .p-libro-barra { position: sticky; top: 0; z-index: 6; }
+.p-modo { display: inline-flex; padding: 3px; gap: 3px; background: var(--p-tinta); border: 2px solid var(--p-tinta); border-radius: 999px; box-shadow: 3px 3px 0 rgba(0, 0, 0, .35); }
+.p-modo button { min-width: 96px; padding: 7px 14px; font: italic 800 15px/1 var(--letra-display, sans-serif); text-transform: uppercase; color: #c8d3ff; cursor: pointer;
+  background: transparent; border: 0; border-radius: 999px; }
+.p-modo button.on { color: var(--p-tinta); background: var(--p-amarillo); box-shadow: inset 0 -3px 0 rgba(0, 0, 0, .2); }
+
+/* Tapas del libro con lomo al centro */
+.p-hojas { position: relative; display: grid; gap: 0; padding: 10px; border: 3px solid var(--p-tinta); border-radius: 10px; box-shadow: 8px 9px 0 var(--p-tinta);
+  background: linear-gradient(90deg, #8e1206, #c91a09 6%, #c91a09 94%, #8e1206); }
+.D.wide .p-hojas { grid-template-columns: 1fr 1fr; height: max(300px, calc(100dvh - 92px)); }
+.D.wide .p-hojas::after { content: ""; position: absolute; z-index: 3; top: 10px; bottom: 10px; left: 50%; width: 34px; translate: -50% 0; pointer-events: none;
+  background: linear-gradient(90deg, transparent, rgba(0, 0, 0, .35) 45%, rgba(0, 0, 0, .45) 50%, rgba(0, 0, 0, .35) 55%, transparent); }
+.p-pag { position: relative; min-width: 0; min-height: 0; border: 2.5px solid var(--p-tinta); }
+
+/* Página izquierda: escenario nocturno con la figura */
+.p-pag-izq { display: flex; flex-direction: column; gap: 8px; padding: 12px; overflow: hidden;
+  background: radial-gradient(ellipse at 50% 62%, rgba(110, 185, 255, .45), transparent 58%),
+    radial-gradient(circle at 1px 1px, rgba(255, 255, 255, .1) 1.2px, transparent 1.6px) 0 0 / 9px 9px, linear-gradient(170deg, #2a3f96, #121a4d 75%); }
+.p-pag-etiqueta { align-self: flex-start; max-width: 100%; padding: 4px 12px 3px; font: 400 clamp(17px, 2.2vw, 22px)/1 var(--letra-sfx, Bangers, sans-serif); letter-spacing: .04em;
+  color: var(--p-tinta); background: #fff; border: 2.5px solid var(--p-tinta); box-shadow: 3px 3px 0 var(--p-tinta); transform: rotate(-1.5deg);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.p-pag-izq .figura-viva { flex: 1; min-height: 0; }
+.D:not(.wide) .p-pag-izq { height: 52dvh; min-height: 330px; }
+.p-mandos { display: flex; justify-content: center; gap: 8px; }
+.p-mandos button { width: 44px; height: 44px; font: 900 21px/1 var(--letra-cuerpo, sans-serif); color: var(--p-tinta); cursor: pointer;
+  background: linear-gradient(180deg, #fff09a, #ffd23f 55%, #e39a00); border: 2.5px solid var(--p-tinta); border-radius: 8px; box-shadow: 0 4px 0 var(--p-tinta); }
+.p-mandos button:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--p-tinta); }
+.p-pista { text-align: center; font: italic 600 12px/1.2 var(--letra-display, sans-serif); color: #b9c6ff; }
+
+/* Página derecha: papel con viñetas */
+.p-pag-der { z-index: 2; perspective: 2000px; perspective-origin: 0 50%;
+  background: radial-gradient(circle at 1px 1px, rgba(10, 16, 48, .08) 1px, transparent 1.4px) 0 0 / 7px 7px, var(--p-papel); color: var(--p-tinta); }
+.D:not(.wide) .p-pag-der { min-height: 60dvh; }
+.p-cara { display: flex; flex-direction: column; height: 100%; }
+.p-cara-cab { display: flex; align-items: center; gap: 10px; padding: 10px 12px 6px; }
+.p-atras { flex: none; width: 42px; height: 42px; display: grid; place-items: center; cursor: pointer; color: var(--p-tinta);
+  background: var(--p-amarillo); border: 2.5px solid var(--p-tinta); border-radius: 7px; box-shadow: 0 4px 0 var(--p-tinta); }
+.p-atras:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--p-tinta); }
+.p-atras svg { width: 22px; height: 22px; }
+.p-cara-titulo { margin: 0; padding: 4px 14px 3px; font: 400 clamp(22px, 3vw, 30px)/1 var(--letra-sfx, Bangers, sans-serif); letter-spacing: .04em; color: #fff;
+  background: var(--p-tinta); transform: rotate(-1.5deg); box-shadow: 3px 3px 0 #c91a09; outline: none; }
+.p-cara-cuerpo { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 6px 12px 14px; }
+.p-pronto { margin: 18px auto; max-width: 26em; padding: 12px 16px; font: 600 15px/1.35 var(--letra-cuerpo, sans-serif); background: #fff8c7; border: 2.5px solid var(--p-tinta); box-shadow: 4px 4px 0 var(--p-tinta); }
+
+/* Viñetas: en blanco y negro; la que se señala, a color con borde amarillo */
+.p-vinetas { display: grid; gap: 10px; }
+.p-vinetas-indice, .p-vinetas-basico { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.p-vinetas-completo { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.D:not(.wide) .p-vinetas-completo { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.p-vineta { position: relative; display: block; aspect-ratio: 16 / 10; padding: 0; cursor: pointer; overflow: hidden; background: #fff;
+  border: 3px solid var(--p-tinta); transition: transform .15s; }
+.p-vineta.ancha { grid-column: span 2; aspect-ratio: 32 / 10; }
+.p-vineta:nth-child(odd) { transform: rotate(-.6deg); }
+.p-vineta:nth-child(even) { transform: rotate(.5deg); }
+.p-vineta-arte { position: absolute; inset: 0; display: grid; place-items: center; filter: grayscale(1) contrast(1.15) brightness(1.05); transition: filter .2s;
+  background: radial-gradient(circle, #fff 30%, #d9dce6); }
+.p-vineta-arte::after { content: ""; position: absolute; inset: 0; pointer-events: none; mix-blend-mode: multiply;
+  background: radial-gradient(circle at 1px 1px, rgba(10, 16, 48, .28) 1.1px, transparent 1.6px) 0 0 / 6px 6px; }
+.p-vineta-arte img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
+.p-vineta-arte.tira { display: flex; justify-content: center; }
+.p-vineta-arte.tira img { position: relative; inset: auto; width: auto; height: 100%; flex: 0 1 25%; min-width: 0; }
+.p-vineta-arte svg { width: 70%; height: 80%; }
+.p-vineta-cap { position: absolute; left: 6px; bottom: 6px; max-width: calc(100% - 12px); padding: 3px 8px 2px; font: 400 clamp(14px, 1.8vw, 19px)/1 var(--letra-sfx, Bangers, sans-serif);
+  letter-spacing: .04em; text-transform: uppercase; color: var(--p-tinta); background: #fff; border: 2px solid var(--p-tinta); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.p-vineta:hover, .p-vineta:focus-visible { z-index: 1; transform: scale(1.03) rotate(0deg); outline: none; box-shadow: 0 0 0 4px var(--p-amarillo), 0 0 0 7px var(--p-tinta); }
+.p-vineta:hover .p-vineta-arte, .p-vineta:focus-visible .p-vineta-arte { filter: none; background: radial-gradient(circle, #fff7c2 20%, #ffd23f); }
+.p-vineta:hover .p-vineta-cap, .p-vineta:focus-visible .p-vineta-cap { background: var(--p-amarillo); }
+.p-vineta:active { transform: scale(.98); }
+
+/* Cuadrícula de piezas: la elegida con borde amarillo */
+.p-rejilla { display: grid; grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: 9px; }
+.p-pieza { position: relative; display: flex; flex-direction: column; align-items: stretch; padding: 0; cursor: pointer; overflow: hidden;
+  background: #e9ecf5; border: 2.5px solid var(--p-tinta); border-radius: 4px; }
+.p-pieza img { width: 100%; aspect-ratio: 1; display: block; filter: grayscale(1) contrast(1.1); transition: filter .2s;
+  background: radial-gradient(circle at 1px 1px, rgba(10, 16, 48, .13) 1.1px, transparent 1.5px) 0 0 / 7px 7px; }
+.p-pieza span { padding: 3px 4px 4px; font: 700 11px/1.1 var(--letra-cuerpo, sans-serif); color: var(--p-tinta); background: #fff;
+  border-top: 2px solid var(--p-tinta); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.p-pieza:hover img, .p-pieza:focus-visible img, .p-pieza.on img { filter: none; }
+.p-pieza.on { outline: 4px solid var(--p-amarillo); outline-offset: -1px; box-shadow: 0 0 0 6px var(--p-tinta); z-index: 1; }
+
+/* Hoja que da vuelta (dura lo mismo que DURA en Libro.tsx) */
+.p-hoja { position: absolute; inset: -2.5px; z-index: 4; transform-origin: 0 50%; transform-style: preserve-3d; pointer-events: none; }
+.p-hoja.ida { animation: pHojaIda .62s cubic-bezier(.45, .05, .35, 1) both; }
+.p-hoja.vuelta { animation: pHojaIda .62s cubic-bezier(.45, .05, .35, 1) reverse both; }
+.p-hoja-frente, .p-hoja-reverso { position: absolute; inset: 0; backface-visibility: hidden; -webkit-backface-visibility: hidden; border: 2.5px solid var(--p-tinta);
+  background: radial-gradient(circle at 1px 1px, rgba(10, 16, 48, .08) 1px, transparent 1.4px) 0 0 / 7px 7px, var(--p-papel); overflow: hidden; }
+.p-hoja-frente::after { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, rgba(0, 0, 0, .25), transparent 40%); opacity: 0; animation: pSombra .62s ease-in both; }
+.p-hoja.vuelta .p-hoja-frente::after { animation-direction: reverse; }
+.p-hoja-reverso { transform: rotateY(180deg); background: linear-gradient(270deg, rgba(0, 0, 0, .18), transparent 30%), var(--p-papel); }
+@keyframes pHojaIda { from { transform: rotateY(0deg); } to { transform: rotateY(-180deg); } }
+@keyframes pSombra { to { opacity: 1; } }
+
+/* Tapa que se abre al llegar desde el muro */
+.p-tapa { position: absolute; inset: -2.5px; z-index: 5; display: flex; flex-direction: column; align-items: center; transform-origin: 0 50%; backface-visibility: hidden;
+  border: 3px solid var(--p-tinta); color: #fff; animation: pTapa .7s .05s cubic-bezier(.5, 0, .3, 1) both;
+  background: radial-gradient(circle at 1px 1px, rgba(255, 255, 255, .13) 1.2px, transparent 1.7px) 0 0 / 8px 8px, radial-gradient(ellipse at 50% 55%, #3d7be6, #1d3aa8 55%, #12205f); }
+.p-tapa .p-carta-arte .av-3d { width: 46% !important; }
+@keyframes pTapa { from { transform: rotateY(0deg); } to { transform: rotateY(-180deg); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .p-muro, .p-carta, .p-vineta, .p-vineta-arte, .p-pieza img { transition: none; }
+  .p-ranura.elegida .p-carta-rayos, .p-ranura.elegida .p-carta, .p-libro.abriendo, .p-tapa { animation: none; }
+  .p-tapa { display: none; }
+}
+
+/* ---------- Páginas de sección: bloques de piezas, colores y opciones ---------- */
+.p-bloque { margin-bottom: 16px; }
+.p-bloque-titulo { display: inline-block; margin: 0 0 8px; padding: 2px 10px 1px; font: 400 17px/1.1 var(--letra-sfx, Bangers, sans-serif); letter-spacing: .05em;
+  text-transform: uppercase; color: var(--p-tinta); background: var(--p-amarillo); border: 2px solid var(--p-tinta); transform: rotate(-1deg); }
+.p-colores { display: flex; flex-wrap: wrap; gap: 8px; }
+.p-color { position: relative; width: 34px; height: 34px; padding: 0; cursor: pointer; border: 2.5px solid var(--p-tinta); border-radius: 50%;
+  box-shadow: inset 0 -4px 0 rgba(0, 0, 0, .18), 2px 2px 0 var(--p-tinta); transition: transform .12s; }
+.p-color:hover { transform: scale(1.1); }
+.p-color.on { box-shadow: 0 0 0 3px var(--p-amarillo), 0 0 0 5.5px var(--p-tinta); transform: scale(1.08); }
+.p-color.on::after { content: "✓"; position: absolute; inset: 0; display: grid; place-items: center; font: 900 16px/1 var(--letra-cuerpo, sans-serif); color: #fff;
+  text-shadow: 0 0 2px #000, 0 0 2px #000; }
+.p-color-texto { width: auto; height: 34px; display: inline-flex; align-items: center; gap: 6px; padding: 0 12px 0 4px; border-radius: 999px; background: #fff;
+  font: 700 13px/1 var(--letra-cuerpo, sans-serif); color: var(--p-tinta); }
+.p-color-texto i { width: 24px; height: 24px; border-radius: 50%; border: 2px solid var(--p-tinta); }
+.p-color-texto.on::after { content: none; }
+.p-color-texto.on { background: var(--p-amarillo); }
+.p-opciones { display: flex; flex-wrap: wrap; gap: 8px; }
+.p-opcion { padding: 8px 14px; font: italic 800 15px/1 var(--letra-display, sans-serif); text-transform: uppercase; color: var(--p-tinta); cursor: pointer;
+  background: #fff; border: 2.5px solid var(--p-tinta); border-radius: 5px; box-shadow: 2px 3px 0 var(--p-tinta); }
+.p-opcion.on { background: var(--p-amarillo); }
+.p-nota { margin: 6px 0 14px; padding: 8px 12px; font: 600 13px/1.35 var(--letra-cuerpo, sans-serif); background: #fff8c7; border: 2px solid var(--p-tinta); box-shadow: 3px 3px 0 var(--p-tinta); }
+
+/* Lados: tres viñetas (ambas, izquierda, derecha); la elegida a color con borde amarillo */
+.p-lados { display: grid; grid-template-columns: 1.3fr 1fr 1fr; gap: 8px; margin-bottom: 16px; }
+.p-lado { position: relative; aspect-ratio: 5 / 4; padding: 0; overflow: hidden; cursor: pointer; background: #fff; border: 3px solid var(--p-tinta); }
+.p-lado-arte { position: absolute; inset: 0; filter: grayscale(1) contrast(1.15); background: radial-gradient(circle, #fff 30%, #d9dce6); }
+.p-lado-arte::after { content: ""; position: absolute; inset: 0; mix-blend-mode: multiply; background: radial-gradient(circle at 1px 1px, rgba(10, 16, 48, .28) 1.1px, transparent 1.6px) 0 0 / 6px 6px; }
+.p-lado-arte img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
+/* Izquierda/derecha: se ve solo esa mitad de la miniatura (la izquierda de la figura queda a la derecha de la imagen). */
+.p-lado.izq .p-lado-arte img { clip-path: inset(0 0 0 50%); }
+.p-lado.der .p-lado-arte img { clip-path: inset(0 50% 0 0); }
+.p-lado-cap { position: absolute; left: 4px; bottom: 4px; max-width: calc(100% - 8px); padding: 2px 6px 1px; font: 400 clamp(12px, 1.5vw, 15px)/1 var(--letra-sfx, Bangers, sans-serif);
+  letter-spacing: .04em; text-transform: uppercase; color: var(--p-tinta); background: #fff; border: 2px solid var(--p-tinta); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.p-lado.on { box-shadow: 0 0 0 3px var(--p-amarillo), 0 0 0 6px var(--p-tinta); z-index: 1; }
+.p-lado.on .p-lado-arte, .p-lado:hover .p-lado-arte { filter: none; background: radial-gradient(circle, #fff7c2 20%, #ffd23f); }
+.p-lado.on .p-lado-cap { background: var(--p-amarillo); }
+@media (prefers-reduced-motion: reduce) { .p-color { transition: none; } }
+
+/* ---------- Etapa 4: dado, guardado, objetos, momentos, apodo y aleatorio ---------- */
+.p-dado { float: right; display: inline-flex; align-items: center; gap: 6px; margin: 0 0 8px 8px; padding: 6px 12px 6px 8px; cursor: pointer;
+  font: italic 800 14px/1 var(--letra-display, sans-serif); text-transform: uppercase; color: var(--p-tinta); background: #fff;
+  border: 2.5px solid var(--p-tinta); border-radius: 6px; box-shadow: 2px 3px 0 var(--p-tinta); }
+.p-dado svg { width: 20px; height: 20px; fill: #fff; stroke: var(--p-tinta); stroke-width: 2; }
+.p-dado svg circle { fill: var(--p-tinta); stroke: none; }
+.p-dado:active { transform: translateY(2px) rotate(-8deg); box-shadow: 1px 1px 0 var(--p-tinta); }
+.p-bloque { clear: none; }
+.p-guardado { font: italic 700 13px/1 var(--letra-display, sans-serif); color: #9ff0b0; animation: pGuardado .3s ease-out both; }
+@keyframes pGuardado { from { opacity: 0; transform: translateY(4px); } }
+
+.p-momentos { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 9px; margin-bottom: 16px; }
+.p-momento { min-height: 64px; padding: 8px; cursor: pointer; color: var(--p-tinta); background: #fff; border: 3px solid var(--p-tinta);
+  background-image: radial-gradient(circle at 1px 1px, rgba(10, 16, 48, .16) 1.1px, transparent 1.6px); background-size: 6px 6px; }
+.p-momento:nth-child(odd) { transform: rotate(-.6deg); }
+.p-momento:nth-child(even) { transform: rotate(.5deg); }
+.p-momento .p-sfx { font-size: 19px; line-height: 1.05; }
+.p-momento:hover, .p-momento.on { background-color: var(--p-amarillo); }
+.p-momento.on { box-shadow: 0 0 0 3px var(--p-amarillo), 0 0 0 6px var(--p-tinta); position: relative; z-index: 1; }
+
+.p-apodo { display: flex; flex-direction: column; align-items: flex-start; }
+.p-apodo input { width: 100%; max-width: 22em; padding: 10px 12px; font: 700 18px/1.2 var(--letra-cuerpo, sans-serif); color: var(--p-tinta); background: #fff;
+  border: 3px solid var(--p-tinta); border-radius: 6px; box-shadow: 3px 3px 0 var(--p-tinta); }
+.p-apodo input:focus { outline: 3px solid var(--p-amarillo); outline-offset: 2px; }
+.p-ficha { display: inline-flex; flex-direction: column; gap: 2px; margin: 4px 0 14px; padding: 10px 18px 10px 14px; color: #fff; background: #1b2766;
+  border: 3px solid var(--p-tinta); box-shadow: 4px 4px 0 var(--p-tinta); transform: rotate(-1deg); }
+.p-ficha-apodo { font-size: 26px; line-height: 1; color: var(--p-amarillo); }
+.p-ficha-nombre { font: 700 14px/1.1 var(--letra-cuerpo, sans-serif); color: #c8d3ff; }
+
+.p-sorpresa { display: flex; flex-direction: column; align-items: center; gap: 4px; width: 100%; max-width: 26em; margin: 10px auto 12px; padding: 18px 16px; cursor: pointer;
+  color: var(--p-tinta); background: linear-gradient(180deg, #fff09a, #ffd23f 55%, #e39a00); border: 3px solid var(--p-tinta); border-radius: 10px; box-shadow: 0 6px 0 var(--p-tinta); }
+.p-sorpresa .p-sfx { font-size: 34px; line-height: 1; }
+.p-sorpresa small { font: 700 13px/1 var(--letra-cuerpo, sans-serif); }
+.p-sorpresa:active:not(:disabled) { transform: translateY(4px); box-shadow: 0 2px 0 var(--p-tinta); }
+.p-sorpresa:disabled { opacity: .7; cursor: progress; }
+.p-deshacer { display: block; margin: 0 auto 12px; }
+.p-opcion:disabled { opacity: .45; cursor: default; }
+
+/* Celular vertical: carrusel. Una carta grande al centro y las vecinas asomando; se desliza con el dedo y deja ver el
+   fondo de noche arriba y abajo. «Jugar con esta» va como píldora debajo de su carta. */
+.D:not(.wide) .p-muro-caja { min-height: calc(100dvh - 60px); }
+.D:not(.wide) .p-muro { display: flex; grid-template-columns: none; gap: 16px; margin: auto -16px; padding: 22px 19vw 10px; overflow-x: auto;
+  scroll-snap-type: x mandatory; scrollbar-width: none; overscroll-behavior-x: contain; }
+.D:not(.wide) .p-muro::-webkit-scrollbar { display: none; }
+.D:not(.wide) .p-ranura { flex: 0 0 62vw; max-width: 260px; scroll-snap-align: center; }
+.D:not(.wide) .p-carta { max-width: none; }
+/* En el carrusel no se escala el carrusel (perdería su posición): crece solo la carta elegida. */
+.D:not(.wide).p-fase-acercando .p-muro { transform: none; }
+.D:not(.wide) .p-ranura { transition: opacity .5s, filter .5s, transform .8s cubic-bezier(.5, 0, .2, 1); }
+.D:not(.wide).p-fase-acercando .p-ranura.elegida { transform: scale(1.14); }
+.p-puntos { display: flex; justify-content: center; gap: 8px; }
+.p-puntos i { width: 9px; height: 9px; border-radius: 50%; background: rgba(255, 255, 255, .35); border: 1.5px solid var(--p-tinta); transition: background .2s, transform .2s; }
+.p-puntos i.on { background: var(--p-amarillo); transform: scale(1.25); }
+.D.wide .p-puntos { display: none; }
+
+/* Fondo de noche del HUB también en el personalizador (sus reglas en alv.css solo aplican dentro de .a-hub). */
+.D.p-taller .a-fondo-hub { background: #241a6b var(--arte-g) center bottom / cover no-repeat; }
+.D.p-taller:not(.wide) .a-fondo-hub { background-image: var(--arte-c); background-position: 42% bottom; }
+.D.p-taller .a-fondo-hub::after { background-image: linear-gradient(180deg, rgba(20, 14, 70, .15), transparent 30%, transparent 62%, rgba(10, 14, 48, .55)); background-size: auto; }
+.D.p-taller:not(.wide) .a-fh-luna { right: 7%; top: 15%; width: 54px; }
+
+/* Celular girado (diseño de computadora con poca altura): las cartas y el libro caben sin desplazar. */
+.D.wide .p-carta { width: min(100%, calc((100dvh - 210px) * 5 / 7)); min-width: 130px; }
+.D.wide .p-ranura { justify-content: flex-start; }

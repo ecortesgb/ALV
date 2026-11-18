@@ -1,0 +1,847 @@
+{
+ "version": 1,
+ "generado": "2026-11-18",
+ "tonos": [
+  {
+   "id": "amarillo",
+   "nombre": "Amarillo clásico",
+   "hex": "#f2cd37"
+  },
+  {
+   "id": "marfil",
+   "nombre": "Marfil",
+   "hex": "#f6d7b3"
+  },
+  {
+   "id": "durazno",
+   "nombre": "Durazno",
+   "hex": "#d09168"
+  },
+  {
+   "id": "arena",
+   "nombre": "Arena",
+   "hex": "#cca373"
+  },
+  {
+   "id": "canela",
+   "nombre": "Canela",
+   "hex": "#aa7d55"
+  },
+  {
+   "id": "cafe-medio",
+   "nombre": "Café medio",
+   "hex": "#755945"
+  },
+  {
+   "id": "cafe-rojizo",
+   "nombre": "Café rojizo",
+   "hex": "#582a12"
+  },
+  {
+   "id": "cafe-oscuro",
+   "nombre": "Café oscuro",
+   "hex": "#352100"
+  }
+ ],
+ "paleta": [
+  "#f4f4f4",
+  "#a0a5a9",
+  "#6c6e68",
+  "#1b2a34",
+  "#f2cd37",
+  "#c91a09",
+  "#720e0f",
+  "#fe8a18",
+  "#4b9f4a",
+  "#237841",
+  "#184632",
+  "#5a93db",
+  "#0055bf",
+  "#0a3463",
+  "#923978",
+  "#81007b",
+  "#e3b341",
+  "#6b4a2b",
+  "#958a73",
+  "#e4cd9e"
+ ],
+ "coloresPelo": [
+  "#1b2a34",
+  "#352100",
+  "#582a12",
+  "#7a4b25",
+  "#d1561d",
+  "#e4cd9e",
+  "#a0a5a9",
+  "#f4f4f4"
+ ],
+ "paquetes": [
+  {
+   "id": "arana",
+   "nombre": "Arácnido",
+   "espera": "columpio",
+   "victoria": "telarana-arriba",
+   "derrota": "cabeza-baja",
+   "punto": "lanzar-telarana"
+  },
+  {
+   "id": "trueno",
+   "nombre": "Trueno",
+   "espera": "chispas-manos",
+   "victoria": "rayo-al-cielo",
+   "derrota": "pisoton",
+   "punto": "rayo-corto"
+  },
+  {
+   "id": "magia",
+   "nombre": "Magia",
+   "espera": "flotar-runas",
+   "victoria": "circulo-magico",
+   "derrota": "brazos-caidos",
+   "punto": "destello"
+  },
+  {
+   "id": "fuego",
+   "nombre": "Fuego",
+   "espera": "flama-manos",
+   "victoria": "explosion-fuego",
+   "derrota": "humo",
+   "punto": "bola-fuego"
+  },
+  {
+   "id": "hielo",
+   "nombre": "Hielo",
+   "espera": "copos",
+   "victoria": "tormenta-hielo",
+   "derrota": "congelado",
+   "punto": "rafaga-hielo"
+  },
+  {
+   "id": "velocidad",
+   "nombre": "Velocidad",
+   "espera": "trote",
+   "victoria": "vuelta-rapida",
+   "derrota": "mareo",
+   "punto": "estela"
+  },
+  {
+   "id": "vuelo",
+   "nombre": "Vuelo",
+   "espera": "flotar",
+   "victoria": "despegue",
+   "derrota": "aterrizaje-forzoso",
+   "punto": "giro-aire"
+  },
+  {
+   "id": "laser",
+   "nombre": "Rayos oculares",
+   "espera": "ojos-brillan",
+   "victoria": "rayos-al-cielo",
+   "derrota": "cabeza-baja",
+   "punto": "rayo-ojos"
+  },
+  {
+   "id": "fuerza",
+   "nombre": "Súper fuerza",
+   "espera": "flexionar",
+   "victoria": "golpe-suelo",
+   "derrota": "pisoton",
+   "punto": "puno-arriba"
+  },
+  {
+   "id": "escudo",
+   "nombre": "Campo de fuerza",
+   "espera": "burbuja",
+   "victoria": "onda-escudo",
+   "derrota": "burbuja-rota",
+   "punto": "destello"
+  },
+  {
+   "id": "sigilo",
+   "nombre": "Sigilo",
+   "espera": "parpadeo",
+   "victoria": "aparecer",
+   "derrota": "desvanecer",
+   "punto": "teletransporte"
+  }
+ ],
+ "secciones": {
+  "pelo": [
+   {
+    "id": null,
+    "nombre": "Sin pelo",
+    "mini": "sin-pelo"
+   },
+   {
+    "id": "HAIR_001",
+    "nombre": "Corto clásico",
+    "mini": "hair-001"
+   },
+   {
+    "id": "HAIR_002",
+    "nombre": "Corto despeinado",
+    "mini": "hair-002"
+   },
+   {
+    "id": "HAIR_003",
+    "nombre": "Despeinado con raya",
+    "mini": "hair-003"
+   },
+   {
+    "id": "HAIR_004",
+    "nombre": "Despeinado",
+    "mini": "hair-004"
+   },
+   {
+    "id": "HAIR_005",
+    "nombre": "Despeinado en capas",
+    "mini": "hair-005"
+   },
+   {
+    "id": "HAIR_006",
+    "nombre": "Peinado hacia atrás",
+    "mini": "hair-006"
+   },
+   {
+    "id": "HAIR_007",
+    "nombre": "Corto de lado",
+    "mini": "hair-007"
+   },
+   {
+    "id": "HAIR_008",
+    "nombre": "Corto ondulado",
+    "mini": "hair-008"
+   },
+   {
+    "id": "HAIR_009",
+    "nombre": "Corte de tazón",
+    "mini": "hair-009"
+   },
+   {
+    "id": "HAIR_010",
+    "nombre": "Rockero con patillas",
+    "mini": "hair-010"
+   },
+   {
+    "id": "HAIR_011",
+    "nombre": "Media melena con raya",
+    "mini": "hair-011"
+   },
+   {
+    "id": "HAIR_012",
+    "nombre": "Melena al hombro",
+    "mini": "hair-012"
+   },
+   {
+    "id": "HAIR_013",
+    "nombre": "Bob ancho",
+    "mini": "hair-013"
+   },
+   {
+    "id": "HAIR_014",
+    "nombre": "Largo ondulado",
+    "mini": "hair-014"
+   },
+   {
+    "id": "HAIR_015",
+    "nombre": "Largo con mechón",
+    "mini": "hair-015"
+   },
+   {
+    "id": "HAIR_016",
+    "nombre": "Largo con trenza",
+    "mini": "hair-016"
+   },
+   {
+    "id": "HAIR_017",
+    "nombre": "Largo con diadema",
+    "mini": "hair-017"
+   },
+   {
+    "id": "HAIR_018",
+    "nombre": "Coleta con flequillo",
+    "mini": "hair-018"
+   },
+   {
+    "id": "HAIR_019",
+    "nombre": "Coleta con flequillo largo",
+    "mini": "hair-019"
+   },
+   {
+    "id": "HAIR_020",
+    "nombre": "Coleta corta",
+    "mini": "hair-020"
+   },
+   {
+    "id": "HAIR_021",
+    "nombre": "Coletas",
+    "mini": "hair-021"
+   },
+   {
+    "id": "HAIR_022",
+    "nombre": "Melena de lado",
+    "mini": "hair-022"
+   }
+  ],
+  "casco": [
+   {
+    "id": null,
+    "nombre": "Sin casco",
+    "mini": "sin-casco"
+   },
+   {
+    "id": "HELM_001",
+    "nombre": "Gorra de policía",
+    "mini": "helm-001",
+    "color": "#0a3463"
+   },
+   {
+    "id": "HELM_002",
+    "nombre": "Gorra con visera",
+    "mini": "helm-002",
+    "color": "#6c6e68"
+   },
+   {
+    "id": "HELM_003",
+    "nombre": "Casco de obra",
+    "mini": "helm-003",
+    "color": "#f2cd37"
+   },
+   {
+    "id": "HELM_004",
+    "nombre": "Gorro de chef",
+    "mini": "helm-004",
+    "color": "#f4f4f4"
+   },
+   {
+    "id": "HELM_005",
+    "nombre": "Sombrero de mago",
+    "mini": "helm-005",
+    "color": "#0a3463"
+   },
+   {
+    "id": "HELM_006",
+    "nombre": "Sombrero de copa",
+    "mini": "helm-006",
+    "color": "#1b2a34"
+   },
+   {
+    "id": "HELM_007",
+    "nombre": "Capucha",
+    "mini": "helm-007",
+    "color": "#237841"
+   },
+   {
+    "id": "HELM_008",
+    "nombre": "Bandana",
+    "mini": "helm-008",
+    "color": "#c91a09"
+   },
+   {
+    "id": "HELM_009",
+    "nombre": "Casco de castillo",
+    "mini": "helm-009",
+    "color": "#a0a5a9"
+   },
+   {
+    "id": "HELM_010",
+    "nombre": "Casco con cubrenuca",
+    "mini": "helm-010",
+    "color": "#a0a5a9"
+   },
+   {
+    "id": "HELM_011",
+    "nombre": "Casco vikingo",
+    "mini": "helm-011",
+    "color": "#a0a5a9"
+   },
+   {
+    "id": "HELM_012",
+    "nombre": "Máscara de Batman",
+    "mini": "helm-012",
+    "color": "#1b2a34"
+   },
+   {
+    "id": "HELM_013",
+    "nombre": "Casco espacial",
+    "mini": "helm-013",
+    "color": "#f4f4f4"
+   },
+   {
+    "id": "HELM_014",
+    "nombre": "Casco de explorador",
+    "mini": "helm-014",
+    "color": "#958a73"
+   },
+   {
+    "id": "HELM_015",
+    "nombre": "Casco alado",
+    "mini": "helm-015",
+    "color": "#0055bf"
+   }
+  ],
+  "rostro": [
+   {
+    "id": "FACE_001",
+    "nombre": "Sonrisa",
+    "mini": "face-001"
+   },
+   {
+    "id": "FACE_002",
+    "nombre": "Sonrisa grande",
+    "mini": "face-002"
+   },
+   {
+    "id": "FACE_003",
+    "nombre": "Serio",
+    "mini": "face-003"
+   },
+   {
+    "id": "FACE_004",
+    "nombre": "Determinado",
+    "mini": "face-004"
+   },
+   {
+    "id": "FACE_005",
+    "nombre": "Enojado",
+    "mini": "face-005"
+   },
+   {
+    "id": "FACE_006",
+    "nombre": "Sorpresa",
+    "mini": "face-006"
+   },
+   {
+    "id": "FACE_007",
+    "nombre": "Guiño",
+    "mini": "face-007"
+   },
+   {
+    "id": "FACE_008",
+    "nombre": "Preocupado",
+    "mini": "face-008"
+   },
+   {
+    "id": "FACE_009",
+    "nombre": "Carcajada",
+    "mini": "face-009"
+   },
+   {
+    "id": "FACE_010",
+    "nombre": "Sonrisa (pestañas)",
+    "mini": "face-010"
+   },
+   {
+    "id": "FACE_011",
+    "nombre": "Segura (pestañas)",
+    "mini": "face-011"
+   }
+  ],
+  "mascara": [
+   {
+    "id": "FACE_012",
+    "nombre": "Máscara araña",
+    "mini": "face-012"
+   },
+   {
+    "id": "FACE_013",
+    "nombre": "Máscara pantera",
+    "mini": "face-013"
+   },
+   {
+    "id": "FACE_014",
+    "nombre": "Capucha del Capitán",
+    "mini": "face-014"
+   },
+   {
+    "id": "FACE_015",
+    "nombre": "Careta de Iron Man",
+    "mini": "face-015"
+   }
+  ],
+  "detalle": [
+   {
+    "id": null,
+    "nombre": "Nada",
+    "mini": "sin-detalle"
+   },
+   {
+    "id": "DETAIL_001",
+    "nombre": "Lentes redondos",
+    "mini": "detail-001",
+    "ocupa": "ojos"
+   },
+   {
+    "id": "DETAIL_002",
+    "nombre": "Lentes cuadrados",
+    "mini": "detail-002",
+    "ocupa": "ojos"
+   },
+   {
+    "id": "DETAIL_003",
+    "nombre": "Lentes de sol",
+    "mini": "detail-003",
+    "ocupa": "ojos"
+   },
+   {
+    "id": "DETAIL_004",
+    "nombre": "Cicatriz de rayo",
+    "mini": "detail-004",
+    "ocupa": null
+   },
+   {
+    "id": "DETAIL_005",
+    "nombre": "Barba",
+    "mini": "detail-005",
+    "ocupa": "barba"
+   },
+   {
+    "id": "DETAIL_006",
+    "nombre": "Candado",
+    "mini": "detail-006",
+    "ocupa": "barba"
+   },
+   {
+    "id": "DETAIL_007",
+    "nombre": "Bigote",
+    "mini": "detail-007",
+    "ocupa": "barba"
+   },
+   {
+    "id": "DETAIL_008",
+    "nombre": "Pecas",
+    "mini": "detail-008",
+    "ocupa": null
+   },
+   {
+    "id": "DETAIL_009",
+    "nombre": "Mejillas",
+    "mini": "detail-009",
+    "ocupa": null
+   },
+   {
+    "id": "DETAIL_010",
+    "nombre": "Parche",
+    "mini": "detail-010",
+    "ocupa": "ojos"
+   }
+  ],
+  "cuello": [
+   {
+    "id": null,
+    "nombre": "Nada",
+    "mini": "sin-cuello"
+   },
+   {
+    "id": "NECK_001",
+    "nombre": "Tanques de aire",
+    "mini": "neck-001"
+   },
+   {
+    "id": "NECK_002",
+    "nombre": "Mochila",
+    "mini": "neck-002"
+   },
+   {
+    "id": "NECK_003",
+    "nombre": "Carcaj de flechas",
+    "mini": "neck-003"
+   },
+   {
+    "id": "NECK_004",
+    "nombre": "Armadura",
+    "mini": "neck-004"
+   },
+   {
+    "id": "NECK_005",
+    "nombre": "Chaleco",
+    "mini": "neck-005"
+   },
+   {
+    "id": "NECK_006",
+    "nombre": "Chaleco antibalas",
+    "mini": "neck-006"
+   },
+   {
+    "id": "NECK_007",
+    "nombre": "Barba larga",
+    "mini": "neck-007"
+   },
+   {
+    "id": "NECK_008",
+    "nombre": "Funda de espada",
+    "mini": "neck-008"
+   },
+   {
+    "id": "NECK_009",
+    "nombre": "Morral",
+    "mini": "neck-009"
+   },
+   {
+    "id": "NECK_010",
+    "nombre": "Tanque de buceo",
+    "mini": "neck-010"
+   }
+  ],
+  "capa": [
+   {
+    "id": null,
+    "nombre": "Sin capa",
+    "mini": "sin-capa"
+   },
+   {
+    "id": "CAPE_001",
+    "nombre": "Capa de tela",
+    "mini": "cape-001"
+   }
+  ],
+  "torso": [
+   {
+    "id": null,
+    "nombre": "Liso",
+    "mini": "torso-liso"
+   },
+   {
+    "id": "PRINT_001",
+    "nombre": "Capitán (estrella)",
+    "mini": "print-001",
+    "mangas": "larga"
+   },
+   {
+    "id": "PRINT_002",
+    "nombre": "Armadura reactor",
+    "mini": "print-002",
+    "mangas": "larga"
+   },
+   {
+    "id": "PRINT_003",
+    "nombre": "Armadura nórdica",
+    "mini": "print-003",
+    "mangas": "larga"
+   },
+   {
+    "id": "PRINT_004",
+    "nombre": "Traje araña",
+    "mini": "print-004",
+    "mangas": "larga"
+   },
+   {
+    "id": "PRINT_005",
+    "nombre": "Músculos",
+    "mini": "print-005",
+    "mangas": "sin"
+   },
+   {
+    "id": "PRINT_006",
+    "nombre": "Traje táctico",
+    "mini": "print-006",
+    "mangas": "larga"
+   },
+   {
+    "id": "PRINT_007",
+    "nombre": "Traje pantera",
+    "mini": "print-007",
+    "mangas": "larga"
+   },
+   {
+    "id": "PRINT_008",
+    "nombre": "Túnica hechicero",
+    "mini": "print-008",
+    "mangas": "larga"
+   },
+   {
+    "id": "PRINT_009",
+    "nombre": "Uniforme Hogwarts",
+    "mini": "print-009",
+    "mangas": "larga"
+   },
+   {
+    "id": "PRINT_010",
+    "nombre": "Suéter con letra",
+    "mini": "print-010",
+    "mangas": "larga"
+   },
+   {
+    "id": "PRINT_011",
+    "nombre": "Túnica de estrellas",
+    "mini": "print-011",
+    "mangas": "larga"
+   },
+   {
+    "id": "PRINT_012",
+    "nombre": "Camisa y corbata",
+    "mini": "print-012",
+    "mangas": "larga"
+   },
+   {
+    "id": "PRINT_013",
+    "nombre": "Bata de laboratorio",
+    "mini": "print-013",
+    "mangas": "larga"
+   },
+   {
+    "id": "PRINT_014",
+    "nombre": "Filipina de chef",
+    "mini": "print-014",
+    "mangas": "larga"
+   },
+   {
+    "id": "PRINT_015",
+    "nombre": "Policía",
+    "mini": "print-015",
+    "mangas": "larga"
+   },
+   {
+    "id": "PRINT_016",
+    "nombre": "Bombero",
+    "mini": "print-016",
+    "mangas": "larga"
+   },
+   {
+    "id": "PRINT_017",
+    "nombre": "Chaleco de obra",
+    "mini": "print-017",
+    "mangas": "larga"
+   },
+   {
+    "id": "PRINT_018",
+    "nombre": "Pirata",
+    "mini": "print-018",
+    "mangas": "larga"
+   },
+   {
+    "id": "PRINT_019",
+    "nombre": "Jersey de fútbol",
+    "mini": "print-019",
+    "mangas": "corta"
+   },
+   {
+    "id": "PRINT_020",
+    "nombre": "Sudadera",
+    "mini": "print-020",
+    "mangas": "larga"
+   },
+   {
+    "id": "PRINT_021",
+    "nombre": "Emblema de murciélago",
+    "mini": "print-021",
+    "mangas": "larga"
+   },
+   {
+    "id": "PRINT_022",
+    "nombre": "Escudo con S",
+    "mini": "print-022",
+    "mangas": "larga"
+   },
+   {
+    "id": "PRINT_023",
+    "nombre": "Armadura dorada",
+    "mini": "print-023",
+    "mangas": "larga"
+   }
+  ],
+  "objeto": [
+   {
+    "id": null,
+    "nombre": "Nada",
+    "mini": "sin-objeto"
+   },
+   {
+    "id": "ACC_001",
+    "nombre": "Varita",
+    "mini": "acc-001",
+    "color": "#582a12"
+   },
+   {
+    "id": "ACC_002",
+    "nombre": "Espada",
+    "mini": "acc-002",
+    "color": "#a0a5a9"
+   },
+   {
+    "id": "ACC_003",
+    "nombre": "Escudo redondo",
+    "mini": "acc-003",
+    "color": "#a0a5a9"
+   },
+   {
+    "id": "ACC_004",
+    "nombre": "Escudo del Capitán",
+    "mini": "acc-004",
+    "color": "#c8102e"
+   },
+   {
+    "id": "ACC_005",
+    "nombre": "Escudo triangular",
+    "mini": "acc-005",
+    "color": "#a0a5a9"
+   },
+   {
+    "id": "ACC_006",
+    "nombre": "Escudo ovalado",
+    "mini": "acc-006",
+    "color": "#a0a5a9"
+   },
+   {
+    "id": "ACC_007",
+    "nombre": "Lanza o bastón",
+    "mini": "acc-007",
+    "color": "#582a12"
+   },
+   {
+    "id": "ACC_008",
+    "nombre": "Mazo",
+    "mini": "acc-008",
+    "color": "#6c6e68"
+   },
+   {
+    "id": "ACC_009",
+    "nombre": "Escoba",
+    "mini": "acc-009",
+    "color": "#582a12"
+   },
+   {
+    "id": "ACC_010",
+    "nombre": "Taza",
+    "mini": "acc-010",
+    "color": "#f4f4f4"
+   },
+   {
+    "id": "ACC_011",
+    "nombre": "Sartén",
+    "mini": "acc-011",
+    "color": "#1b2a34"
+   },
+   {
+    "id": "ACC_012",
+    "nombre": "Radio",
+    "mini": "acc-012",
+    "color": "#1b2a34"
+   }
+  ],
+  "piernas": [
+   {
+    "tipo": "normal",
+    "nombre": "Piernas",
+    "mini": "piernas-normal"
+   },
+   {
+    "tipo": "cortas",
+    "nombre": "Piernas cortas",
+    "mini": "piernas-cortas"
+   }
+  ],
+  "botas": [
+   {
+    "botas": false,
+    "nombre": "Sin botas",
+    "mini": "sin-botas"
+   },
+   {
+    "botas": true,
+    "nombre": "Botas",
+    "mini": "con-botas"
+   }
+  ]
+ }
+}

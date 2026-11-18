@@ -15,7 +15,7 @@ import { control, iniciarPartida, jugada, useMotor } from "../roles/pantalla/mot
 import { useSala } from "../roles/sala";
 import { Filas, NIVELES, Reglas, candado } from "./Catalogo";
 import { Capsulas } from "./Personalizar";
-import { Cabecera, Elenco, Marco, Retrato, Vacio, aviso, confirmar } from "./comun";
+import { Cabecera, Elenco, Marco, NombreJugador, Retrato, Vacio, aviso, confirmar } from "./comun";
 
 /** Mantiene la pantalla encendida mientras `activo` (la Pantalla y el celular que hace de Pantalla). */
 export function useDespierta(activo: boolean) {
@@ -77,11 +77,11 @@ export function Podio({ v, miembros, yo }: { v: Publico; miembros: Miembro[]; yo
         {m.slice(0, 3).map(j => (
           <li key={j.id} className={`l${j.lugar}`}>
             <Retrato id={j.id} figura={miembros.find(x => x.id === j.id)?.figura} nombre={j.nombre} size={j.lugar === 1 ? 92 : 72} />
-            <b className="dsp ol">{j.lugar}</b><span className="dsp">{j.nombre}</span><small>{j.puntos} pts</small>
+            <b className="dsp ol">{j.lugar}</b><NombreJugador nombre={j.nombre} figura={miembros.find(x => x.id === j.id)?.figura} /><small>{j.puntos} pts</small>
           </li>
         ))}
       </ol>
-      {m.length > 3 && <ul className="a-tabla">{m.slice(3).map(j => <li key={j.id} className={j.id === yo ? "yo" : ""}><b>{j.lugar}</b><span>{j.nombre}</span><small>{j.puntos} pts</small></li>)}</ul>}
+      {m.length > 3 && <ul className="a-tabla">{m.slice(3).map(j => <li key={j.id} className={j.id === yo ? "yo" : ""}><b>{j.lugar}</b><NombreJugador nombre={j.nombre} figura={miembros.find(x => x.id === j.id)?.figura} clase="" /><small>{j.puntos} pts</small></li>)}</ul>}
     </div>
   );
 }
@@ -169,7 +169,7 @@ export function Sala({ codigo }: { codigo: string }) {
           {estoy ? <div className={sinPantalla ? "a-espera-tv" : undefined} {...inerte(sinPantalla)}><HerramientaCelular v={v} mi={mi} miembros={s.miembros} mandar={async (t, d) => !sinPantalla && jugada(pid, t, d)} /></div>
             : <Panel className="a-herr"><span className="dsp ol a-t2">Juegas en la siguiente</span><p className="a-suave">Llegaste con la partida empezada. Mira la pantalla.</p></Panel>}
           <ul className="a-marcador" aria-label="Marcador">
-            {marcador(v).map(j => <li key={j.id} className={j.id === ses.uid ? "yo" : ""}><Retrato id={j.id} figura={s.miembros.find(m => m.id === j.id)?.figura} nombre={j.nombre} size={32} /><span>{j.nombre}</span>{(v.cartasEnMano[j.id] ?? 0) > 0 && <Chip texto={String(v.cartasEnMano[j.id])} icono="bolt" />}<b className="dsp">{j.puntos}</b></li>)}
+            {marcador(v).map(j => <li key={j.id} className={j.id === ses.uid ? "yo" : ""}><Retrato id={j.id} figura={s.miembros.find(m => m.id === j.id)?.figura} nombre={j.nombre} size={32} /><NombreJugador nombre={j.nombre} figura={s.miembros.find(m => m.id === j.id)?.figura} clase="" />{(v.cartasEnMano[j.id] ?? 0) > 0 && <Chip texto={String(v.cartasEnMano[j.id])} icono="bolt" />}<b className="dsp">{j.puntos}</b></li>)}
           </ul>
           {soyAnfitrion && <button type="button" className="a-plano" disabled={sinPantalla} onClick={() => void confirmar({ titulo: "¿Terminar la partida?", texto: "Se reparten los puntos como van.", si: "Terminar", peligro: true }).then(ok => { if (ok) void control(pid, "terminar"); })}>Terminar partida</button>}
         </div>
@@ -197,7 +197,7 @@ export function Sala({ codigo }: { codigo: string }) {
           <Panel className="a-pila" como="section">
             <div className="a-entre"><span className="dsp ol a-t2">{s.miembros.length} en la sala</span><Chip texto={sala.modo === "tv" ? "Con pantalla" : "Sin pantalla"} icono="eye" /></div>
             <div className="a-elenco"><Elenco gente={s.miembros} foco={ses.uid} /></div>
-            <ul className="a-gente">{s.miembros.map(m => <li key={m.id}><span className="dsp">{m.nombre}</span>{m.anfitrion && <Chip texto="Anfitrión" icono="star" />}<Chip texto={m.listo ? "Listo" : "Esperando"} seleccionado={m.listo} /></li>)}</ul>
+            <ul className="a-gente">{s.miembros.map(m => <li key={m.id}><NombreJugador nombre={m.nombre} figura={m.figura} />{m.anfitrion && <Chip texto="Anfitrión" icono="star" />}<Chip texto={m.listo ? "Listo" : "Esperando"} seleccionado={m.listo} /></li>)}</ul>
             <Capsulas />
             <Boton color={yo?.listo ? "azul" : "verde"} texto={yo?.listo ? "Ya no estoy listo" : "¡Listo!"} icono="star" onClick={() => void enlace.marcarListo(sala, !yo?.listo).then(s.refrescar)} />
             <button type="button" className="a-plano" onClick={() => { void navigator.clipboard?.writeText(enlaceSala(sala.codigo)).then(() => aviso("Enlace copiado")); }}>Copiar enlace para invitar</button>

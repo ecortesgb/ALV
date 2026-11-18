@@ -4,6 +4,13 @@
 //      Sin figura, `semilla` (número) da una figura al azar que siempre sale igual (para quien aún no arma la suya).
 //   {origen:"alv", tipo:"momento", id, cual:"punto"|"victoria"|"derrota"|"espera"}  → la figura hace ese momento
 //   {origen:"alv", tipo:"foto", pid, figura | semilla, ancho, alto}  → responde {tipo:"foto", pid, url} (imagen de la figura)
+//   {origen:"alv", tipo:"miniatura", pid, figura, zona, ancho, alto}  → igual que foto, encuadrada en una zona (miniaturas de piezas)
+// Modo editor (escena.html?modo=editor, el personalizador): una sola figura sobre su base, que se gira arrastrando,
+// se acerca con la rueda o pellizcando, parpadea y sonríe sola. Mensajes extra:
+//   {tipo:"enfocar", zona}   → la cámara va a esa zona (ver ZONAS) y la figura voltea hacia donde se ve mejor
+//   {tipo:"girar", cuanto}   → gira la figura (radianes)        {tipo:"acercar", cuanto} → >1 acerca, <1 aleja
+//   {tipo:"soltar", pid, figura} → {tipo:"soltar", pid, figura} sin traje de personaje · {tipo:"azar", pid, semilla?} → figura al azar
+//   {tipo:"gesto", cual:"parpadeo"|"sonrisa"}                   {tipo:"probar", cual}  → hace ese momento (nombre de nucleo/momentos.js)
 // Responde {origen:"minifig", tipo:"listo"} cuando la biblioteca y la geometría cargaron.
 (function () {
   "use strict";
@@ -12,6 +19,25 @@
   const camera = new THREE.PerspectiveCamera(30, 1, 0.3, 60);
   const reloj = new THREE.Clock();
   const enviar = m => { try { if (window.parent !== window) window.parent.postMessage(Object.assign({ origen: "minifig" }, m), location.origin); } catch (e) { /* nada */ } };
+
+  // Piezas extra sobre la figura (cuello, cinturón, color del objeto). Copia de js/15-creador-comic.js, que la escena
+  // no carga: sin esto el HUB, la sala y la TV no dibujaban mochilas, chalecos, barbas largas ni cinturones.
+  const build0 = build;
+  build = function (c) {
+    const fig = build0(c), J = fig.userData.j;
+    if (c.cuello && c.cuello !== "ninguno") {
+      const m = mallaLD(c.cuello.slice(3), plast(c.cuelloColor || "#6c6e68", { roughness: 0.4 }), "cuello");
+      if (m) {
+        const g = grupoLD(J.torso, ldM(0, 0, 0)); g.add(m);
+        // Piezas que se montan entre cabeza y torso (barba larga): giran con la cabeza. attach() conserva la posición.
+        const pz = (BIB.piezas || []).find(p => p.clave === c.cuello);
+        if (pz && pz.conexion && pz.conexion.monta_en === "entre_cabeza_y_torso" && J.head) { fig.updateMatrixWorld(true); J.head.attach(g); }
+      }
+    }
+    if (c.cinturon && c.piernasTipo !== "cortas") { const m = mallaLD("27145", plast(c.cinturon), "piernas"); if (m) grupoLD(J.legsG, ldM(0, 32, 0)).add(m); }
+    if (c.accColor && J.handR) J.handR.traverse(o => { if (o.isMesh && !o.userData.decal && o.userData.part === "mano") { const ms = Array.isArray(o.material) ? o.material : [o.material]; o.material = ms.length === 1 ? plast(c.accColor) : ms.map((m, i) => (i === 0 ? plast(c.accColor) : m)); } });
+    return fig;
+  };
 
   // Luz de estudio parecida a la del taller (03-escena.js), sin sombras ni efectos pesados para el celular.
   (function () {
@@ -79,7 +105,8 @@
 
   // Pedestal del HUB: base con luz y aro dorado; la figura se para encima (y = 0).
   let pedestal = null;
-  if (MODO === "hub") {
+  const EDITOR = MODO === "editor";
+  if (MODO === "hub" || EDITOR) {
     pedestal = new THREE.Group();
     const tm = c => new THREE.MeshToonMaterial({ color: new THREE.Color(c).convertSRGBToLinear(), gradientMap: tonos });
     const base = new THREE.Mesh(new THREE.CylinderGeometry(1.05, 1.18, 0.34, 48), tm(0x24306b)); base.position.y = -0.17; pedestal.add(base);
@@ -117,9 +144,13 @@
     const plano = desdeFigura(f);
     const obj = caricatura(build(plano));
     const sombra = new THREE.Mesh(sombraGeo, sombraMat); sombra.rotation.x = -Math.PI / 2; sombra.position.y = 0.003; obj.add(sombra);
-    return { obj, momentos: plano._momentos || {} };
+    return { obj, momentos: plano._momentos || {}, plano };
   }
-  function quitar(id) { const x = figuras.get(id); if (!x) return; scene.remove(x.obj); dispose(x.obj); figuras.delete(id); }
+  function quitar(id) {
+    const x = figuras.get(id); if (!x) return;
+    if (x.cara) { x.cara.malla.material.map = x.cara.base; [x.cara.parpadeo, x.cara.sonrisa].forEach(t => t && t.dispose()); }
+    scene.remove(x.obj); dispose(x.obj); figuras.delete(id);
+  }
   function dispose(o) { o.traverse(m => { if (m.geometry && !m.userData.compartida && m.geometry !== sombraGeo) m.geometry.dispose(); const ms = Array.isArray(m.material) ? m.material : m.material ? [m.material] : []; ms.forEach(x => { if (x === sombraMat || x === contorno) return; ["map", "emissiveMap"].forEach(k => x[k] && x[k].dispose()); x.dispose(); }); }); }
 
   function ponerFiguras(lista) {
@@ -134,7 +165,9 @@
       let e = figuras.get(id);
       if (!e || e.huella !== h) {
         if (e) quitar(id);
-        try { const a = armar(fx); e = { id, obj: a.obj, momentos: a.momentos, huella: h, mom: a.momentos.espera || "respirar", t0: reloj.getElapsedTime() - Math.random() * 3 }; }
+        const t = reloj.getElapsedTime(), habia = !!e;
+        try { const a = armar(fx); e = { id, obj: a.obj, momentos: a.momentos, plano: a.plano, huella: h, mom: a.momentos.espera || "respirar", t0: t - Math.random() * 3,
+          pop: EDITOR && habia ? t : -9, parpadeo: t + 2 + Math.random() * 2, sonrisa: t + 7 + Math.random() * 4 }; }
         catch (err) { console.error("escena: no se pudo armar", id, err); return; }
         scene.add(e.obj); figuras.set(id, e);
       }
@@ -147,6 +180,7 @@
   // La del turno da un paso al frente.
   let paso = 1.55;
   function acomodar() {
+    if (EDITOR) { tamano(); orden.forEach(id => figuras.get(id).obj.position.set(0, 0, 0)); return; }
     encuadrar();
     const n = orden.length;
     orden.forEach((id, i) => {
@@ -154,9 +188,12 @@
       e.obj.position.set(x, 0, e.foco ? 0.6 : 0); e.obj.rotation.y = MODO === "hub" ? -0.32 : -x * 0.04; e.obj.scale.setScalar(e.foco ? 1.12 : 1);
     });
   }
-  function encuadrar() {
+  function tamano() {
     const r = lienzo.getBoundingClientRect(), w = Math.max(2, r.width), h = Math.max(2, r.height);
-    renderer.setSize(w, h, false); camera.aspect = w / h;
+    renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix();
+  }
+  function encuadrar() {
+    tamano();
     // Medidas reales de una figura armada: 2.6–2.75 de alto con pelo o casco, 1.6–1.9 de ancho con brazos y objeto.
     // HUB: cabe también el pedestal (de y = -0.34 a 0) y queda aire arriba para que la figura no se vea gigante.
     const n = Math.max(1, orden.length), alto = MODO === "hub" ? 4.5 : 3.3, minimo = n * 1.9 + 0.3;
@@ -176,26 +213,147 @@
     e.mom = m; e.t0 = reloj.getElapsedTime();
   }
 
-  // HUB: cada 7 s la figura saluda con el brazo derecho (sube suave, saluda 1.6 s y baja) y voltea un poco a la cámara.
-  function saludo(obj, t) {
-    const J = obj.userData.j; if (!J) return;
+  // HUB: cada 7 s la figura saluda (sube suave, saluda 1.6 s y baja) y voltea un poco a la cámara.
+  // Saluda con la mano libre: con un objeto en la mano (escudo, escoba…) el brazo arriba lo metía en la cabeza.
+  // armL lleva el objeto de la izquierda (accesorioIzq) y armR el de la derecha (accesorio); con las dos ocupadas solo voltea.
+  const libre = v => !v || v === "ninguno";
+  function saludo(e, t) {
+    const obj = e.obj, J = obj.userData.j, p = e.plano || {}; if (!J) return;
     const c = t % 7, sube = c < 0.35 ? c / 0.35 : c < 1.95 ? 1 : c < 2.3 ? 1 - (c - 1.95) / 0.35 : 0;
     const k = sube * sube * (3 - 2 * sube);
     if (k <= 0) return;
-    J.armL.rotation.x += (-2.6 + Math.sin(t * 9) * 0.25 - J.armL.rotation.x) * k;
-    J.wristL.rotation.y += (Math.sin(t * 9) * 0.6 - J.wristL.rotation.y) * k;
-    J.head.rotation.y += (0.25 - J.head.rotation.y) * k;
+    const lado = libre(p.accesorioIzq) ? "L" : libre(p.accesorio) ? "R" : null;
+    if (lado) {
+      const brazo = J["arm" + lado], muneca = J["wrist" + lado];
+      brazo.rotation.x += (-2.6 + Math.sin(t * 9) * 0.25 - brazo.rotation.x) * k;
+      muneca.rotation.y += (Math.sin(t * 9) * 0.6 - muneca.rotation.y) * k;
+    }
+    J.head.rotation.y += ((lado === "R" ? -0.25 : 0.25) - J.head.rotation.y) * k;
   }
 
+  // ---------- Modo editor ----------
+  // Zonas de la figura (unidades de la escena; pies en y = 0, lo más alto de un casco ≈ 2.75).
+  // y: centro de la vista · alto: cuánto cabe de alto · giro: hacia dónde voltea la figura (0 = de frente).
+  // La pierna/brazo «derecho» es el de la figura (a la izquierda de la imagen).
+  const ZONAS = {
+    completa: { y: 1.3, alto: 3.3, giro: -0.35 },
+    pelo: { y: 2.22, alto: 1.65, giro: -0.5 },
+    casco: { y: 2.25, alto: 1.7, giro: -0.5 },
+    cabeza: { y: 2.08, alto: 1.25, giro: -0.15 },
+    cuello: { y: 1.62, alto: 1.75, giro: 2.45 },
+    torso: { y: 1.55, alto: 1.4, giro: -0.15 },
+    brazos: { y: 1.5, alto: 1.6, giro: -0.55 },
+    manos: { y: 1.2, alto: 1.1, giro: -0.45 },
+    capa: { y: 1.35, alto: 2.8, giro: Math.PI - 0.5 },
+    cadera: { y: 1.0, alto: 1.1, giro: -0.25 },
+    piernas: { y: 0.65, alto: 1.55, giro: -0.25 },
+    pierna_der: { y: 0.6, alto: 1.4, giro: -0.75 },
+    pierna_izq: { y: 0.6, alto: 1.4, giro: 0.75 },
+    botas: { y: 0.28, alto: 0.85, giro: -0.3 },
+    objeto: { y: 1.25, alto: 2.1, giro: -0.45 },
+  };
+  const cam = { zona: "completa", x: 0, y: ZONAS.completa.y, d: 8, giro: ZONAS.completa.giro, meta: ZONAS.completa.giro, vel: 0, zoom: 1 };
+  const ZOOM_MIN = 0.45, ZOOM_MAX = 1.9;
+  function distancia(z, zoom, camara) {
+    const tv = Math.tan(camara.fov * Math.PI / 360), th = tv * camara.aspect;
+    // Que quepa de alto, y que el ancho (≈ 0.75 del alto) también quepa en pantallas angostas.
+    return Math.max((z.alto / 2) / tv, (z.alto * 0.75 / 2) / th) * zoom;
+  }
+  // El giro más corto hacia el ángulo pedido (sin dar vueltas completas).
+  const cercano = (desde, a) => a + Math.round((desde - a) / (2 * Math.PI)) * 2 * Math.PI;
+  function enfocar(zona) {
+    const z = ZONAS[zona]; if (!z) return;
+    cam.zona = zona; cam.meta = cercano(cam.giro, z.giro); cam.vel = 0; cam.zoom = 1;
+  }
+  function moverCamara(dt) {
+    const z = ZONAS[cam.zona], k = 1 - Math.exp(-dt * 5.5);
+    if (!arrastre.activo) { cam.meta += cam.vel * dt; cam.vel *= Math.exp(-dt * 3.5); }
+    cam.giro += (cam.meta - cam.giro) * (arrastre.activo ? 1 - Math.exp(-dt * 18) : k);
+    cam.y += (z.y - cam.y) * k; cam.x += ((z.x || 0) - cam.x) * k;
+    cam.d += (distancia(z, cam.zoom, camera) - cam.d) * k;
+    camera.position.set(cam.x, cam.y + cam.d * 0.07, cam.d); camera.lookAt(cam.x, cam.y, 0);
+  }
+  // Arrastrar gira; dos dedos o la rueda acercan.
+  const arrastre = { activo: false, x: 0, t: 0, dedos: new Map(), dist: 0 };
+  if (EDITOR) {
+    const dedos = arrastre.dedos;
+    const separacion = () => { const [a, b] = [...dedos.values()]; return Math.hypot(a.x - b.x, a.y - b.y); };
+    lienzo.addEventListener("pointerdown", e => {
+      lienzo.setPointerCapture(e.pointerId); dedos.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (dedos.size === 1) { arrastre.activo = true; arrastre.x = e.clientX; arrastre.t = performance.now(); cam.vel = 0; }
+      else if (dedos.size === 2) { arrastre.activo = false; arrastre.dist = separacion(); }
+    });
+    lienzo.addEventListener("pointermove", e => {
+      if (!dedos.has(e.pointerId)) return;
+      dedos.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (dedos.size === 2) { const s = separacion(); if (arrastre.dist > 0) cam.zoom = Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, cam.zoom * arrastre.dist / s)); arrastre.dist = s; return; }
+      if (!arrastre.activo) return;
+      const ahora = performance.now(), dx = e.clientX - arrastre.x, dt = Math.max(1, ahora - arrastre.t) / 1000;
+      const giro = dx * 0.012; cam.meta += giro; cam.vel = cam.vel * 0.5 + (giro / dt) * 0.5;
+      arrastre.x = e.clientX; arrastre.t = ahora;
+    });
+    const soltar = e => {
+      dedos.delete(e.pointerId);
+      if (performance.now() - arrastre.t > 90) cam.vel = 0; // se detuvo antes de soltar: sin inercia
+      arrastre.activo = false; if (dedos.size < 2) arrastre.dist = 0;
+    };
+    lienzo.addEventListener("pointerup", soltar); lienzo.addEventListener("pointercancel", soltar);
+    lienzo.addEventListener("wheel", e => { e.preventDefault(); cam.zoom = Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, cam.zoom * Math.exp(e.deltaY * 0.0012))); }, { passive: false });
+  }
+
+  // Gestos de la cara: se cambia solo la imagen del rostro unos instantes (no se rearma la figura).
+  function caraDe(e) {
+    if (e.cara !== undefined) return e.cara;
+    let malla = null; e.obj.traverse(o => { if (!malla && o.isMesh && o.userData.part === "rostro") malla = o; });
+    e.cara = malla && malla.material.map ? { malla, base: malla.material.map, parpadeo: null, sonrisa: null, hasta: 0 } : null;
+    return e.cara;
+  }
+  function conImagen(base, lienzoCara) { const t = base.clone(); t.image = lienzoCara; t.needsUpdate = true; return t; }
+  function gesto(e, cual, t) {
+    const c = caraDe(e), id = String((e.plano && e.plano.rostro) || "");
+    if (!c || !id || id === "ninguno" || id.startsWith("mascara")) return;
+    if (cual === "parpadeo") {
+      if (id === "carcajada" || id === "guino") return; // ya tienen los ojos cerrados
+      if (!c.parpadeo) {
+        const img = c.base.image, cv = document.createElement("canvas"); cv.width = img.width; cv.height = img.height;
+        const g = cv.getContext("2d"), k = img.width / 512; g.drawImage(img, 0, 0); g.setTransform(k, 0, 0, k, 0, 0);
+        // Ojos en (208, 104) y (304, 104) del dibujo de 512×256 (drawFace en js/05-estampados.js)
+        [208, 304].forEach(x => {
+          g.clearRect(x - 23, 82, 46, 46);
+          g.strokeStyle = "#141414"; g.lineWidth = 7; g.lineCap = "round"; g.beginPath(); g.arc(x, 98, 14, Math.PI * 0.18, Math.PI * 0.82); g.stroke();
+        });
+        c.parpadeo = conImagen(c.base, cv);
+      }
+      c.malla.material.map = c.parpadeo; c.hasta = t + 0.13;
+    } else if (cual === "sonrisa") {
+      if (!c.sonrisa) c.sonrisa = conImagen(c.base, drawFace(id.endsWith("mujer") ? "sonrisa-mujer" : "sonrisa-grande", e.plano));
+      c.malla.material.map = c.sonrisa; c.hasta = t + 1.5;
+    }
+  }
+  function gestosSolos(e, t) {
+    const c = caraDe(e);
+    if (c && c.hasta && t > c.hasta) { c.malla.material.map = c.base; c.hasta = 0; }
+    if (t > e.parpadeo) { if (!(c && c.hasta)) gesto(e, "parpadeo", t); e.parpadeo = t + 2.4 + Math.random() * 3.2; }
+    if (t > e.sonrisa) { gesto(e, "sonrisa", t); e.sonrisa = t + 9 + Math.random() * 7; e.parpadeo = Math.max(e.parpadeo, t + 1.8); }
+  }
+
+  let antes = 0;
   function cuadro() {
     requestAnimationFrame(cuadro);
     if (!listo || document.hidden) return;
-    const t = reloj.getElapsedTime();
+    const t = reloj.getElapsedTime(), dt = Math.min(0.1, t - antes); antes = t;
+    if (EDITOR) moverCamara(dt);
     figuras.forEach(e => {
       const i = Momentos.info(e.mom);
       if (i && !i.bucle && t - e.t0 > i.dur + 0.4) { e.mom = e.momentos.espera || "respirar"; e.t0 = t; }
       window.MOM_T0 = e.t0; animar(e.obj, "mom:" + e.mom, t);
-      if (MODO === "hub" && !(i && !i.bucle)) saludo(e.obj, t);
+      if (MODO === "hub" && !(i && !i.bucle)) saludo(e, t);
+      if (EDITOR) {
+        e.obj.rotation.y = cam.giro;
+        // Al cambiar una pieza, la figura da un saltito.
+        const p = t - e.pop; e.obj.scale.setScalar(p < 0.45 ? 1 + Math.sin(p / 0.45 * Math.PI) * 0.07 * (1 - p / 0.45) : 1);
+        gestosSolos(e, t);
+      }
     });
     medirContorno(renderer);
     renderer.render(scene, camera);
@@ -203,7 +361,7 @@
 
   // Fotos: un dibujante aparte, con fondo transparente, sin tocar la escena viva.
   let fotografo = null;
-  function foto(f, ancho, alto) {
+  function foto(f, ancho, alto, zona) {
     ancho = Math.min(512, Math.max(64, ancho | 0 || 256)); alto = Math.min(640, Math.max(64, alto | 0 || 320));
     if (!fotografo) {
       const r = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true });
@@ -214,9 +372,11 @@
     }
     const { r, s, cam } = fotografo;
     r.setSize(ancho, alto, false); cam.aspect = ancho / alto;
-    const a = armar(f); window.MOM_T0 = 0; animar(a.obj, "quieto", 0); a.obj.rotation.y = -0.35; s.add(a.obj);
+    const a = armar(f), z = zona && ZONAS[zona]; window.MOM_T0 = 0; animar(a.obj, "quieto", 0); a.obj.rotation.y = z ? z.giro : -0.35; s.add(a.obj);
+    if (z) { cam.updateProjectionMatrix(); const d = distancia(z, 1, cam); cam.position.set(z.x || 0, z.y + d * 0.07, d); cam.lookAt(z.x || 0, z.y, 0); }
     // Cuadro de 3.2 de alto centrado en 1.38: de los pies (y=0) a lo más alto de un casco o peinado (≈2.75).
-    cam.position.set(0, 1.5, 7.55); cam.lookAt(0, 1.38, 0); cam.updateProjectionMatrix();
+    else cam.position.set(0, 1.5, 7.55), cam.lookAt(0, 1.38, 0);
+    cam.updateProjectionMatrix();
     medirContorno(r); r.render(s, cam); let url = r.domElement.toDataURL("image/webp", 0.85);
     if (!url.startsWith("data:image/webp")) url = r.domElement.toDataURL("image/png");
     s.remove(a.obj); dispose(a.obj);
@@ -226,7 +386,27 @@
   function atender(d) {
     if (d.tipo === "figuras" && Array.isArray(d.lista)) ponerFiguras(d.lista.slice(0, 12));
     else if (d.tipo === "momento") momento(d.id, d.cual);
-    else if (d.tipo === "foto") { let url = null; try { const fx = figuraDe(d); if (fx) url = foto(fx, d.ancho, d.alto); } catch (e) { console.error("escena: foto", e); } enviar({ tipo: "foto", pid: d.pid, url }); }
+    else if (d.tipo === "foto" || d.tipo === "miniatura") {
+      let url = null;
+      try { const fx = figuraDe(d); if (fx) url = foto(fx, d.ancho, d.alto, d.tipo === "miniatura" ? String(d.zona || "") : ""); } catch (e) { console.error("escena: foto", e); }
+      enviar({ tipo: d.tipo, pid: d.pid, url });
+    }
+    else if (d.tipo === "soltar" || d.tipo === "azar") {
+      // soltar: el traje de personaje que traiga la figura pasa a ser su ropa (se ve igual y ya se puede editar).
+      // azar: una figura nueva al azar (con `semilla` sale siempre la misma).
+      let figura = null;
+      try {
+        if (d.tipo === "azar") figura = MinifigCore.aleatorio(BIB, { semilla: Number.isFinite(d.semilla) ? Math.abs(Math.floor(d.semilla)) % 2147483647 : Date.now() % 2147483647 });
+        else if (valida(d.figura)) { const f = MinifigCore.migrar(d.figura, BIB); figura = f.traje && f.traje.id ? MinifigCore.soltarTraje(f, BIB).figura : f; }
+      } catch (e) { console.error("escena: " + d.tipo, e); }
+      enviar({ tipo: d.tipo, pid: d.pid, figura });
+    }
+    else if (!EDITOR) return;
+    else if (d.tipo === "enfocar") enfocar(String(d.zona));
+    else if (d.tipo === "girar" && Number.isFinite(d.cuanto)) { cam.meta += Math.max(-7, Math.min(7, d.cuanto)); cam.vel = 0; }
+    else if (d.tipo === "acercar" && Number.isFinite(d.cuanto) && d.cuanto > 0) cam.zoom = Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, cam.zoom / d.cuanto));
+    else if (d.tipo === "gesto") figuras.forEach(e => gesto(e, d.cual, reloj.getElapsedTime()));
+    else if (d.tipo === "probar" && Momentos.info(String(d.cual))) figuras.forEach(e => { e.mom = String(d.cual); e.t0 = reloj.getElapsedTime(); });
   }
   window.addEventListener("message", e => {
     if (e.origin !== location.origin || !e.data || e.data.origen !== "alv") return;

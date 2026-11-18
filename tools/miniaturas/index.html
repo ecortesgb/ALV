@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Miniaturas de piezas</title>
+<style>
+body{margin:0;padding:16px;background:#141a33;color:#fff;font:14px system-ui}
+#estado{font-size:18px;margin-bottom:12px}
+#rejilla{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:8px}
+figure{margin:0;background:#26305e;border-radius:8px;padding:4px;text-align:center}
+figure img{width:100%;aspect-ratio:1;display:block;background:repeating-conic-gradient(#2e3a70 0 25%,#26305e 0 50%) 0 0/16px 16px}
+figcaption{font-size:11px;opacity:.8}
+iframe{position:fixed;left:-500px;top:0;width:100px;height:100px;border:0}
+</style>
+</head>
+<body>
+<div id="estado">Cargando…</div>
+<div id="rejilla"></div>
+<iframe id="motor" src="/minifig/escena.html" title="motor"></iframe>
+<script src="/minifig/nucleo/minifig-core.js"></script>
+<script>
+// Arma una figura de muestra por pieza, le pide al motor la foto encuadrada en su zona y la guarda en
+// public/arte/piezas/<id>.webp. Al final escribe src/content/catalogo-figura.json (lo que lee el personalizador).
+(async function () {
+  const estado = document.getElementById("estado"), rejilla = document.getElementById("rejilla"), motor = document.getElementById("motor");
+  const C = MinifigCore;
+  const leer = async n => { const j = await (await fetch("/minifig/biblioteca/" + n)).json(); return Array.isArray(j) ? j : j.piezas || j.estampados || j; };
+  const piezas = await leer("piezas.json"), estampados = await leer("estampados.json");
+  const de = cat => piezas.concat(estampados).filter(p => p.categoria === cat);
+  const NOMBRES = { HAIR_022: "Melena de lado", HELM_015: "Casco alado" };
+  const nombre = p => NOMBRES[p.id] || p.nombre;
+  const COLOR_CASCO = { HELM_001: "#0a3463", HELM_003: "#f2cd37", HELM_004: "#f4f4f4", HELM_005: "#0a3463", HELM_006: "#1b2a34", HELM_007: "#237841",
+    HELM_008: "#c91a09", HELM_009: "#a0a5a9", HELM_010: "#a0a5a9", HELM_011: "#a0a5a9", HELM_012: "#1b2a34", HELM_013: "#f4f4f4", HELM_014: "#958a73", HELM_015: "#0055bf" };
+  const COLOR_CUELLO = "#6c6e68", COLOR_CAPA = "#c91a09";
+
+  const base = () => {
+    const f = C.nueva({ nombre: "Muestra" });
+    f.identidad.piel = "#f2cd37"; f.identidad.rostro = "FACE_001"; f.identidad.cabello = { id: "HAIR_001", color: "#582a12" };
+    f.ropa.torso.color = "#5a93db"; f.ropa.cadera.color = "#1b2a34"; f.ropa.piernas.color = "#1b2a34";
+    return f;
+  };
+  const con = cambio => { const f = base(); cambio(f); return f; };
+
+  // Secciones del catálogo: cada elemento lleva su miniatura (mini) y lo que hace falta para ponérselo.
+  const tareas = [], cat = {};
+  const agregar = (seccion, zona, item, figura) => {
+    (cat[seccion] = cat[seccion] || []).push(item);
+    tareas.push({ mini: item.mini, zona, figura, texto: item.nombre });
+  };
+  const mini = id => String(id).toLowerCase().replace(/_/g, "-");
+
+  agregar("pelo", "pelo", { id: null, nombre: "Sin pelo", mini: "sin-pelo" }, con(f => { f.identidad.cabello = null; }));
+  de("cabello").forEach(p => agregar("pelo", "pelo", { id: p.id, nombre: nombre(p), mini: mini(p.id) }, con(f => { f.identidad.cabello = { id: p.id, color: "#582a12" }; })));
+  agregar("casco", "casco", { id: null, nombre: "Sin casco", mini: "sin-casco" }, base());
+  de("casco").forEach(p => { const color = COLOR_CASCO[p.id] || "#6c6e68"; agregar("casco", "casco", { id: p.id, nombre: nombre(p), mini: mini(p.id), color }, con(f => { f.accesorios.cabeza = { id: p.id, color }; })); });
+  de("cara").filter(p => p.ocupa !== "cara").forEach(p => agregar("rostro", "cabeza", { id: p.id, nombre: nombre(p), mini: mini(p.id) }, con(f => { f.identidad.rostro = p.id; })));
+  de("cara").filter(p => p.ocupa === "cara").forEach(p => agregar("mascara", "cabeza", { id: p.id, nombre: nombre(p), mini: mini(p.id) }, con(f => { f.accesorios.cara = { id: p.id }; })));
+  agregar("detalle", "cabeza", { id: null, nombre: "Nada", mini: "sin-detalle" }, base());
+  de("detalle").forEach(p => agregar("detalle", "cabeza", { id: p.id, nombre: nombre(p), mini: mini(p.id), ocupa: p.ocupa || null }, con(f => { f.identidad.detalles = [p.id]; })));
+  agregar("cuello", "cuello", { id: null, nombre: "Nada", mini: "sin-cuello" }, base());
+  de("cuello").forEach(p => agregar("cuello", "cuello", { id: p.id, nombre: nombre(p), mini: mini(p.id) }, con(f => { f.accesorios.espalda = { id: p.id, color: COLOR_CUELLO }; })));
+  agregar("capa", "capa", { id: null, nombre: "Sin capa", mini: "sin-capa" }, base());
+  de("capa").forEach(p => agregar("capa", "capa", { id: p.id, nombre: nombre(p), mini: mini(p.id) }, con(f => { f.accesorios.espalda = { id: p.id, color: COLOR_CAPA }; })));
+  agregar("torso", "torso", { id: null, nombre: "Liso", mini: "torso-liso" }, con(f => { f.ropa.torso.color = "#c91a09"; }));
+  de("estampado-torso").forEach(p => agregar("torso", "torso", { id: p.id, nombre: nombre(p), mini: mini(p.id), mangas: p.mangas || "larga" }, con(f => { f.ropa.torso.color = "#c91a09"; f.ropa.torso.estampado = p.id; })));
+  agregar("objeto", "objeto", { id: null, nombre: "Nada", mini: "sin-objeto" }, base());
+  de("objeto").forEach(p => { const color = p.color_defecto || "#a0a5a9"; agregar("objeto", "objeto", { id: p.id, nombre: nombre(p), mini: mini(p.id), color }, con(f => { f.accesorios.mano_der = { id: p.id, color }; })); });
+  agregar("piernas", "piernas", { tipo: "normal", nombre: "Piernas", mini: "piernas-normal" }, base());
+  agregar("piernas", "piernas", { tipo: "cortas", nombre: "Piernas cortas", mini: "piernas-cortas" }, con(f => { f.ropa.piernas.tipo = "cortas"; }));
+  agregar("botas", "botas", { botas: false, nombre: "Sin botas", mini: "sin-botas" }, base());
+  agregar("botas", "botas", { botas: true, nombre: "Botas", mini: "con-botas" }, con(f => { f.ropa.piernas.botas = "#6b4a2b"; }));
+
+  // Motor
+  await new Promise(ok => addEventListener("message", function f(e) { if (e.data && e.data.origen === "minifig" && e.data.tipo === "listo") { removeEventListener("message", f); ok(); } }));
+  const pedir = (pid, t) => new Promise(ok => {
+    addEventListener("message", function f(e) { if (e.data && e.data.origen === "minifig" && e.data.pid === pid) { removeEventListener("message", f); ok(e.data.url); } });
+    motor.contentWindow.postMessage({ origen: "alv", tipo: "miniatura", pid, figura: t.figura, zona: t.zona, ancho: 192, alto: 192 }, location.origin);
+  });
+  let n = 0, bytes = 0;
+  for (const t of tareas) {
+    estado.textContent = `Pieza ${++n} de ${tareas.length}: ${t.texto}`;
+    const url = await pedir(t.mini, t);
+    if (!url || !url.startsWith("data:image/webp")) { estado.textContent = "Falló " + t.mini; return; }
+    const r = await fetch("/guardar?id=" + t.mini, { method: "POST", body: url });
+    if (!r.ok) { estado.textContent = "No se guardó " + t.mini; return; }
+    bytes += Math.round(url.length * 0.75);
+    const fig = document.createElement("figure"); fig.innerHTML = `<img src="${url}" alt=""><figcaption></figcaption>`; fig.lastChild.textContent = t.texto; rejilla.appendChild(fig);
+  }
+  const extra = { tonos: C.TONOS || null, paleta: C.PALETA || null, coloresPelo: C.COLORES_PELO || null,
+    paquetes: Object.entries(C.PAQUETES || {}).map(([id, p]) => ({ id, nombre: p.nombre, espera: p.espera, victoria: p.victoria, derrota: p.derrota, punto: p.punto })) };
+  await fetch("/catalogo", { method: "POST", body: JSON.stringify({ version: 1, generado: new Date().toISOString().slice(0, 10), ...extra, secciones: cat }) });
+  estado.textContent = `LISTO: ${tareas.length} miniaturas, ${Math.round(bytes / 1024)} KB`;
+})().catch(e => { document.getElementById("estado").textContent = "Error: " + e.message; console.error(e); });
+</script>
+</body>
+</html>

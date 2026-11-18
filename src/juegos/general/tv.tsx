@@ -1,7 +1,7 @@
 // Lo que dibuja la Pantalla (TV o laptop) durante la ronda. Recibe SOLO la vista pública:
 // nunca palabras, papeles ni votos antes de la revelación (la prueba de la frontera lo revisa).
 import { Cartel, Chip, Onomatopeya, RuedaSospechosos } from "../../ds";
-import { Retrato } from "../../pantallas/comun";
+import { NombreJugador, Retrato } from "../../pantallas/comun";
 import type { Miembro } from "../../servicios/enlace";
 import { desenlace, instruccion, nombreDe, nombreJuego, type Publico } from "./texto";
 
@@ -43,7 +43,7 @@ export function EscenaTv({ v, miembros }: { v: Publico; miembros: Miembro[] }) {
     <div className="a-tv-escena">
       <Cartel titulo={nombreJuego(v.juegoId)} sub={instruccion(v)} />
       <div className="a-tv-centro">
-        {turno && <div className="a-tv-turno"><Retrato id={turno} figura={figuraDe(miembros, turno)} nombre={nombreDe(v, turno)} size={132} /><span className="d-lbl">{nombreDe(v, turno)}</span></div>}
+        {turno && <div className="a-tv-turno"><Retrato id={turno} figura={figuraDe(miembros, turno)} nombre={nombreDe(v, turno)} size={132} /><span className="d-lbl"><NombreJugador nombre={nombreDe(v, turno)} figura={figuraDe(miembros, turno)} clase="" /></span></div>}
         <div className={"d-pnl a-tv-carta" + (revelada ? " es-res" : "")} key={revelada ? "r" : v.carta?.id}>
           {d ? <>
             <Onomatopeya texto={d.titular.startsWith("¡") ? "¡BOOM!" : "¡ZAS!"} color="var(--rosa-sfx)" tamano="2.4em" giro={-10} style={{ position: "absolute", top: "-.5em", left: "-.3em" }} />

@@ -10,6 +10,8 @@ export interface TarjetaJugadorProps {
   /** Foto de la figura 3D (cabeza). Viene de fuera: el Design System no dibuja figuras. */
   retrato: ReactNode;
   apodo: string;
+  /** Apodo de la figura en juego: va chico, arriba del nombre. */
+  alias?: string;
   nivel: number;
   /** Título por nivel («Leyenda de la fogata»). */
   titulo?: string;
@@ -22,13 +24,14 @@ export interface TarjetaJugadorProps {
 }
 
 /** Barra del jugador: retrato, apodo, nivel y barra de XP; a la derecha la XP para gastar y el engrane. */
-export function TarjetaJugador({ retrato, apodo, nivel, titulo, xp, xpParaGastar, numeros, onPerfil, onAjustes }: TarjetaJugadorProps) {
+export function TarjetaJugador({ retrato, apodo, alias, nivel, titulo, xp, xpParaGastar, numeros, onPerfil, onAjustes }: TarjetaJugadorProps) {
   const pct = xp.siguiente > 0 ? Math.max(0, Math.min(1, xp.actual / xp.siguiente)) : 1;
   const sig = ORDEN.filter(s => numeros?.[s] != null);
   const cuerpo = (
     <>
       <div className="d-ret">{retrato}</div>
       <div className="d-ji">
+        {alias && <span className="d-alias">{alias}</span>}
         <span className="dsp ol">{apodo}</span>
         <span className="dsp nv">Nivel {nivel}</span>
         {titulo && <span className="tit">{titulo}</span>}

@@ -1,15 +1,14 @@
 // Personalizar: tus 3 cápsulas (trajes guardados) y el editor completo de la figura 3D (Minifig Studio).
 // Tocar una cápsula la pone EN JUEGO al momento: se avisa al servidor sin esperar, y la sala la ve por tiempo real.
 import { useEffect, useRef } from "react";
-import { Boton, Chip, Etiqueta, Panel } from "../ds";
-import { EditorFigura, FotoFigura, N_CAPSULAS, escribirCapsulas, figuraActiva, huella, leerCapsulas, useCapsulas } from "../app/figura3d";
-import { atras, ir } from "../app/rutas";
+import { FotoFigura, N_CAPSULAS, escribirCapsulas, huella, leerCapsulas, useCapsulas } from "../app/figura3d";
+import { ir } from "../app/rutas";
 import { useSesion } from "../app/sesion";
 import { sonar } from "../app/sonido";
 import { hayNube } from "../servicios/cliente";
 import { cargarCapsulasNube, guardarCapsulasNube } from "../servicios/cuenta";
 import { enlace } from "../servicios/enlace";
-import { Cabecera, Elenco, Marco, aviso } from "./comun";
+import { aviso } from "./comun";
 
 /** Mantiene las cápsulas de la cuenta iguales aquí y en la nube. Al abrir manda la nube; después, cada cambio sube. */
 export function SincroCapsulas() {
@@ -66,37 +65,8 @@ export function Capsulas() {
   );
 }
 
-export function Personalizar() {
-  const { uid, nombre } = useSesion();
-  const f = figuraActiva(useCapsulas(uid));
-  return (
-    <Marco>
-      <div className="a-ancho a-pila">
-        <Cabecera titulo="Personalizar" icono="shirt" />
-        <div className="a-dos">
-          <Panel className="a-vitrina" como="section">
-            <Elenco gente={[{ id: uid, figura: f }]} foco={uid} />
-            <Chip texto={f ? nombre : "Figura de muestra"} icono="users" />
-          </Panel>
-          <Panel className="a-pila" como="section">
-            <Etiqueta texto="Tus cápsulas" icono="bag" />
-            <p className="a-suave">Cada cápsula guarda un traje completo. Toca una para jugar con ella; se cambia en la sala entre partidas.</p>
-            <Capsulas />
-            <Boton color="azul" texto={f ? "Editar mis figuras" : "Armar mi figura"} sub="Personaje, uno al azar o pieza por pieza" icono="shirt" onClick={() => ir("editor")} />
-          </Panel>
-        </div>
-      </div>
-    </Marco>
-  );
-}
+/** #/personalizar: el personalizador nuevo (muro de espacios y libro de cómic, src/pantallas/Personalizador.tsx). */
+export { Personalizador as Personalizar } from "./Personalizador";
 
-/** #/editor: Minifig Studio a pantalla completa. Lo que guarda llega solo a las cápsulas. */
-export function Editor() {
-  const { uid } = useSesion();
-  return (
-    <div className="a-editor">
-      <EditorFigura jugador={uid} alCambiar={() => { /* SincroCapsulas sube el cambio */ }} />
-      <button type="button" className="d-btn k-yel a-editor-listo" onClick={() => { sonar("clic"); atras(); }}><span className="dsp">Listo</span></button>
-    </div>
-  );
-}
+/** #/editor: el personalizador nuevo (libro de cómic, src/pantallas/Personalizador.tsx). */
+export { Personalizador as Editor } from "./Personalizador";

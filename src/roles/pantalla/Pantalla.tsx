@@ -9,7 +9,8 @@ import { enlaceSala } from "../../servicios/enlace";
 import { EscenaTv } from "../../juegos/general/tv";
 import { esPublico, marcador, nombreDe, nombreJuego } from "../../juegos/general/texto";
 import { Conexion, Podio, useDespierta, usePantalla, useQuedan } from "../../pantallas/Sala";
-import { Elenco, Retrato } from "../../pantallas/comun";
+import { Elenco, NombreJugador, Retrato } from "../../pantallas/comun";
+import { conApodo } from "../../app/figura3d";
 import { useSala } from "../sala";
 import { control, useMotor } from "./motor";
 
@@ -65,7 +66,7 @@ export function PantallaTv({ codigo }: { codigo: string }) {
       <main className="a-tv-main"><EscenaTv v={v} miembros={s.miembros} />{v.fase === "revelada" && v.ausentes?.length > 0 && <p className="a-tv-sub">Sin respuesta en esta ronda: {v.ausentes.map(j => nombreDe(v, j)).join(", ")}</p>}</main>
       <footer className="a-tv-pie">
         <ul className="a-tv-marcador" aria-label="Marcador">
-          {marcador(v).map(j => <li key={j.id}><Retrato id={j.id} figura={s.miembros.find(m => m.id === j.id)?.figura} nombre={j.nombre} size={44} /><span>{j.nombre}</span><b className="dsp">{j.puntos}</b></li>)}
+          {marcador(v).map(j => <li key={j.id}><Retrato id={j.id} figura={s.miembros.find(m => m.id === j.id)?.figura} nombre={j.nombre} size={44} /><NombreJugador nombre={j.nombre} figura={s.miembros.find(m => m.id === j.id)?.figura} clase="" /><b className="dsp">{j.puntos}</b></li>)}
         </ul>
         {esquina}
       </footer>
@@ -87,7 +88,7 @@ export function PantallaTv({ codigo }: { codigo: string }) {
       {final ? <Podio v={final} miembros={s.miembros} /> : (
         <div className="a-tv-elenco">
           {s.miembros.length ? <Elenco gente={s.miembros} /> : <span className="dsp ol a-tv-t2">Escanea el código para entrar</span>}
-          <div className="a-tv-esp">{s.miembros.map(m => <Chip key={m.id} texto={m.nombre} icono={m.anfitrion ? "star" : undefined} seleccionado={m.listo} />)}</div>
+          <div className="a-tv-esp">{s.miembros.map(m => <Chip key={m.id} texto={conApodo(m.nombre, m.figura)} icono={m.anfitrion ? "star" : undefined} seleccionado={m.listo} />)}</div>
         </div>
       )}
       <div className="d-pnl a-tv-entrar">

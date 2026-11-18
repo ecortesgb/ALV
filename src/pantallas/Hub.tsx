@@ -2,7 +2,7 @@
 import { useEffect, useState, type CSSProperties } from "react";
 import { Boton, Panel, TarjetaJugador } from "../ds";
 import { costoNivel, tituloPorNivel, xpParaNivel } from "../engine/economia";
-import { figuraActiva, useCapsulas } from "../app/figura3d";
+import { apodoDe, figuraActiva, useCapsulas } from "../app/figura3d";
 import { ir } from "../app/rutas";
 import { useSesion } from "../app/sesion";
 import { enlace, type SalaV } from "../servicios/enlace";
@@ -18,7 +18,7 @@ export function Hub() {
   return (
     <Marco clase="a-hub" fondo={<FondoHub />}>
       <div className="a-ancho a-hub-caja">
-        <TarjetaJugador retrato={<Retrato id={s.uid} figura={f} nombre={s.nombre} size={44} />} apodo={s.nombre} nivel={s.nivel} titulo={tituloPorNivel(s.nivel)}
+        <TarjetaJugador retrato={<Retrato id={s.uid} figura={f} nombre={s.nombre} size={44} />} apodo={s.nombre} alias={apodoDe(f) ?? undefined} nivel={s.nivel} titulo={tituloPorNivel(s.nivel)}
           xp={{ actual: s.acumulada - xpParaNivel(s.nivel), siguiente: costoNivel(s.nivel) }} xpParaGastar={ancho ? s.disponible : undefined}
           onPerfil={() => ir("perfil")} onAjustes={() => ir("ajustes")} />
         <div className="a-hub-cuerpo">
@@ -45,7 +45,7 @@ export function Hub() {
 /** Fondo ilustrado del HUB: la ciudad pintada (imagen) y encima, en CSS, la luna y los destellos.
  *  La luna y los destellos van aparte para que no se recorten en celular (la imagen se recorta por los lados). */
 const ARTE = { "--arte-g": urlArte("ciudad-noche-1920.webp"), "--arte-c": urlArte("ciudad-noche-1100.webp") } as CSSProperties;
-function FondoHub() {
+export function FondoHub() {
   return (
     <div className="d-bg a-fondo-hub" aria-hidden="true" style={ARTE}>
       <div className="a-fh-luna" />

@@ -512,3 +512,28 @@ button.a-logo:focus-visible { outline: 3px solid #ffd23f; outline-offset: 4px; b
   border: 2.5px solid #8fa9df; border-radius: 12px; appearance: none; -webkit-appearance: none; color-scheme: light; transition: border-color .15s, box-shadow .15s; }
 .D .a-fecha select:invalid { color: #5a6d9c; }
 .D .a-fecha select:focus { outline: none; border-color: #2f6cf0; box-shadow: 0 0 0 3px rgba(47,108,240,.25); }
+
+/* Apodo de la figura arriba del nombre del jugador (NombreJugador en comun.tsx; d-alias en TarjetaJugador) */
+.a-nom { display: inline-flex; flex-direction: column; align-items: inherit; min-width: 0; line-height: 1.05; }
+.a-nom > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.a-apodo, .D .d-alias { font: 400 .78em/1 var(--letra-sfx, Bangers, Impact, sans-serif); letter-spacing: .04em; color: var(--amarillo, #ffd23f);
+  text-shadow: 1px 1px 0 var(--tinta, #0a1030); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+.D .d-alias { display: block; font-size: 15px; margin-bottom: 1px; }
+
+/* Celular girado: diseño de computadora con poca altura. El HUB compacta el menú para que quepa junto a la figura. */
+@media (orientation: landscape) and (max-height: 540px) {
+  .D.wide .a-hub-cuerpo { gap: 20px; align-items: start; }
+  .D.wide.a-hub .a-menu { gap: 8px; padding-bottom: 4px; }
+  .D.wide.a-hub .a-menu .d-btn { padding: .35em .8em .35em .55em; }
+  .D.wide.a-hub .a-menu .d-btn:not(.d-play) small { display: none; }
+  .D.wide.a-hub .a-menu .d-btn:not(.d-play) .dsp { font-size: 17px; }
+  .D.wide.a-hub .a-menu .d-play { padding: .45em 1em; }
+  .D.wide.a-hub .a-menu .d-play .dsp { font-size: 2em; }
+  .D.wide.a-hub .a-menu .d-play .ic { font-size: 1.8em; }
+  .D.wide .a-escenario { min-height: 0; height: calc(100dvh - 130px); }
+  .D.wide.a-hub .a-hub-caja { gap: 8px; overflow: clip; } /* los rayos del pedestal no alargan la página */
+  .D.wide.a-hub .a-menu { gap: 6px; }
+  .D.wide.a-hub .a-menu .d-btn { padding: .28em .8em .28em .5em; }
+  .D.wide.a-hub .a-menu .d-btn:not(.d-play) .dsp { font-size: 16px; }
+  .D.wide.a-hub .a-menu .d-play .dsp { font-size: 1.7em; }
+}
