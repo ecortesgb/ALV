@@ -282,3 +282,21 @@ export function conservar(nueva: Figura, antes: Figura, partes: Iterable<Parte>)
     }
   });
 }
+
+// ---------- Piezas bloqueadas ----------
+/**
+ * Quita de la figura las piezas que el jugador no puede usar (`libre(id)` = false) y pone lo más parecido que sí es libre.
+ * Sirve para el dado y «¡Sorpréndeme!», que pueden sacar piezas raras.
+ */
+export function limpiarBloqueadas(f: Figura, libre: (id: string) => boolean): Figura {
+  return editar(f, g => {
+    if (g.identidad.cabello && !libre(g.identidad.cabello.id)) g.identidad.cabello = { ...g.identidad.cabello, id: "HAIR_001" };
+    if (g.identidad.rostro && !libre(g.identidad.rostro)) g.identidad.rostro = "FACE_001";
+    g.identidad.detalles = g.identidad.detalles.filter(libre);
+    for (const k of ["cabeza", "cara", "espalda", "mano_der", "mano_izq"] as const) if (g.accesorios[k] && !libre(g.accesorios[k]!.id)) g.accesorios[k] = null;
+    const extra = g.manual._cuelloExtra as Pz | undefined;
+    if (extra && !libre(extra.id)) delete g.manual._cuelloExtra;
+    if (g.ropa.torso.estampado && !libre(g.ropa.torso.estampado)) g.ropa.torso.estampado = null;
+    if (g.momentos.paquete && !libre("MOM_" + g.momentos.paquete)) g.momentos = { paquete: null, espera: MOMENTOS_NORMALES.espera, victoria: MOMENTOS_NORMALES.victoria, derrota: MOMENTOS_NORMALES.derrota, punto: MOMENTOS_NORMALES.punto };
+  });
+}

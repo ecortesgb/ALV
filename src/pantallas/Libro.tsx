@@ -7,6 +7,8 @@ import { FiguraViva, apodoDe, type MandoFigura, type ZonaFigura } from "../app/f
 import { sonar } from "../app/sonido";
 import type { FiguraV2 } from "../content/personaje";
 import { PaginaExtra } from "./Extras";
+import { PanelDesbloqueo } from "./Desbloqueo";
+import { usePiezas } from "../servicios/piezas";
 import { PaginaSeccion } from "./Secciones";
 
 const nada = () => {};
@@ -14,7 +16,7 @@ const sinMando = { current: null };
 
 export type ModoEditor = "basico" | "completo";
 export type Seccion = "pelo" | "casco" | "cabeza" | "cuello" | "torso" | "brazos" | "manos" | "capa" | "cadera" | "piernas" | "botas";
-export type Pagina = "indice" | "apariencia" | Seccion | "objetos" | "momentos" | "nombre" | "aleatorio" | "trajes";
+export type Pagina = "indice" | "apariencia" | Seccion | "objetos" | "momentos" | "nombre" | "aleatorio" | "trajes" | "retos";
 
 export const miniatura = (mini: string) => `${import.meta.env.BASE_URL}arte/piezas/${mini}.webp`;
 
@@ -33,7 +35,7 @@ export const APARIENCIA: { k: Seccion; nombre: string; basico?: string; zona: Zo
 ];
 export const enBasico = (k: Seccion) => !!APARIENCIA.find(a => a.k === k)?.basico;
 
-const TITULO: Record<Exclude<Pagina, Seccion>, string> = { indice: "Tu figura", apariencia: "Apariencia", objetos: "Objetos", momentos: "Momentos", nombre: "Nombre", aleatorio: "Aleatorio", trajes: "Trajes completos" };
+const TITULO: Record<Exclude<Pagina, Seccion>, string> = { indice: "Tu figura", apariencia: "Apariencia", objetos: "Objetos", momentos: "Momentos", nombre: "Nombre", aleatorio: "Aleatorio", trajes: "Trajes completos", retos: "Retos" };
 export function tituloDe(p: Pagina, modo: ModoEditor): string {
   const a = APARIENCIA.find(x => x.k === p);
   return a ? (modo === "basico" && a.basico ? a.basico : a.nombre) : TITULO[p as Exclude<Pagina, Seccion>];
@@ -65,6 +67,12 @@ const DibujoNombre = () => (
   <svg viewBox="0 0 120 90"><rect x="12" y="24" width="96" height="42" rx="6" fill="#fff" stroke="#0a1030" strokeWidth="3.5" transform="rotate(-4 60 45)" />
     <text x="60" y="56" textAnchor="middle" fontFamily="Bangers, Impact, sans-serif" fontSize="28" fill="#0a1030" transform="rotate(-4 60 45)">ABC</text></svg>
 );
+const DibujoReto = () => (
+  <svg viewBox="0 0 240 90"><g transform="rotate(-6 120 45)"><path d="M120 8l11 24 26 3-19 18 5 26-23-13-23 13 5-26-19-18 26-3z" fill="#ffd23f" stroke="#0a1030" strokeWidth="3.5" strokeLinejoin="round" />
+    <text x="120" y="86" textAnchor="middle" fontFamily="Bangers, Impact, sans-serif" fontSize="17" fill="#0a1030">¡GANA PIEZAS!</text></g>
+    <rect x="22" y="26" width="38" height="38" rx="6" fill="#fff" stroke="#0a1030" strokeWidth="3" transform="rotate(-10 41 45)" /><text x="41" y="53" textAnchor="middle" fontSize="20" transform="rotate(-10 41 45)">🔒</text>
+    <rect x="180" y="26" width="38" height="38" rx="6" fill="#fff" stroke="#0a1030" strokeWidth="3" transform="rotate(8 199 45)" /><text x="199" y="53" textAnchor="middle" fontSize="20" transform="rotate(8 199 45)">★</text></svg>
+);
 const DibujoDado = () => (
   <svg viewBox="0 0 120 90"><g transform="rotate(-12 60 45)"><rect x="32" y="17" width="56" height="56" rx="10" fill="#fff" stroke="#0a1030" strokeWidth="3.5" />
     {[[46, 31], [74, 31], [60, 45], [46, 59], [74, 59]].map(([x, y], i) => <circle key={i} cx={x} cy={y} r="5.5" fill="#0a1030" />)}</g></svg>
@@ -72,12 +80,13 @@ const DibujoDado = () => (
 
 // ---------- Contenido de cada página ----------
 
-type Props = { pag: Pagina; modo: ModoEditor; figura: FiguraV2; ir: (p: Pagina) => void; cambiar: (f: FiguraV2) => void; setZona: (z: ZonaFigura | null) => void; mando: { current: MandoFigura | null } };
-function Contenido({ pag, modo, figura, ir, cambiar, setZona, mando }: Props) {
+type Props = { pag: Pagina; modo: ModoEditor; figura: FiguraV2; ir: (p: Pagina) => void; cambiar: (f: FiguraV2) => void; setZona: (z: ZonaFigura | null) => void; mando: { current: MandoFigura | null }; capsula: number };
+function Contenido({ pag, modo, figura, ir, cambiar, setZona, mando, capsula }: Props) {
   if (pag === "indice") return (
     <div className="p-vinetas p-vinetas-indice">
       <Vineta ancha titulo="Apariencia" img={["hair-021", "face-009", "print-019", "con-botas"]} onClick={() => ir("apariencia")} />
       <Vineta ancha titulo="Trajes completos" img={["estilo-superheroe", "estilo-espacial", "estilo-medieval", "estilo-fiesta"]} onClick={() => ir("trajes")} />
+      <Vineta ancha titulo="Retos" dibujo={<DibujoReto />} onClick={() => ir("retos")} />
       <Vineta titulo="Objetos" img="acc-002" onClick={() => ir("objetos")} />
       <Vineta titulo="Momentos" dibujo={<DibujoMomentos />} onClick={() => ir("momentos")} />
       <Vineta titulo="Nombre" dibujo={<DibujoNombre />} onClick={() => ir("nombre")} />
@@ -93,7 +102,7 @@ function Contenido({ pag, modo, figura, ir, cambiar, setZona, mando }: Props) {
     );
   }
   if (APARIENCIA.some(a => a.k === pag)) return <PaginaSeccion k={pag as Seccion} modo={modo} figura={figura} cambiar={cambiar} setZona={setZona} />;
-  return <PaginaExtra pag={pag as "objetos" | "momentos" | "nombre" | "aleatorio" | "trajes"} figura={figura} cambiar={cambiar} mando={mando} />;
+  return <PaginaExtra pag={pag as "objetos" | "momentos" | "nombre" | "aleatorio" | "trajes" | "retos"} figura={figura} cambiar={cambiar} mando={mando} capsula={capsula} />;
 }
 
 // ---------- Hoja que da vuelta ----------
@@ -120,8 +129,8 @@ function Cara({ viva, alVolver, ...props }: Props & { viva: boolean; alVolver: (
 
 // ---------- Libro ----------
 
-export function Libro({ vez, etiqueta, figura, semilla, cambiar, soltado, guardado, modo, setModo, alCerrar, abriendo, tapa }: {
-  vez: number; etiqueta: string; figura: FiguraV2; semilla?: number; cambiar: (f: FiguraV2) => void;
+export function Libro({ vez, capsula, etiqueta, figura, semilla, cambiar, soltado, guardado, modo, setModo, alCerrar, abriendo, tapa }: {
+  vez: number; /** Espacio que se edita (1 a 3). */ capsula: number; etiqueta: string; figura: FiguraV2; semilla?: number; cambiar: (f: FiguraV2) => void;
   /** La figura sin su traje de personaje (se ve igual; no cuenta como cambio del jugador). */ soltado: (f: FiguraV2) => void;
   /** Texto del último guardado («Guardado»), o null. */ guardado: string | null;
   modo: ModoEditor; setModo: (m: ModoEditor) => void; alCerrar: () => void; abriendo: boolean; tapa: ReactNode;
@@ -170,15 +179,18 @@ export function Libro({ vez, etiqueta, figura, semilla, cambiar, soltado, guarda
     sonar("poder"); mando.current?.probar(lista[nPose.current++ % lista.length]!);
   };
   const apodo = apodoDe(figura);
+  const piezas = usePiezas();
   // Mientras la hoja de regreso viaja, abajo se sigue viendo la página que se deja.
   const base = hoja ? hoja.abajo : top;
   const zona = zonaLado ?? zonaDe(top);
   return (
     <div className={"p-libro" + (abriendo ? " abriendo" : "")}>
+      <PanelDesbloqueo alIrARetos={() => ir("retos")} />
       <div className="p-libro-barra">
         {/* En celular la página derecha queda abajo: este «Atrás» siempre está a la vista. */}
         <button type="button" className="p-atras p-atras-barra" onClick={volver} aria-label={top === "indice" ? "Cerrar el libro" : "Atrás"}><Icono id="back" /></button>
         {guardado && <span className="p-guardado" role="status">✓ {guardado}</span>}
+        {piezas.activo && <span className="p-xp" title={piezas.demo ? "XP de demostración" : "XP para gastar"}>★ {piezas.xp.toLocaleString("es-MX")} XP</span>}
         <div className="p-modo" role="radiogroup" aria-label="Modo del editor">
           {(["basico", "completo"] as const).map(m => (
             <button key={m} type="button" role="radio" aria-checked={modo === m} className={modo === m ? "on" : ""}
@@ -201,10 +213,10 @@ export function Libro({ vez, etiqueta, figura, semilla, cambiar, soltado, guarda
           <span className="p-pista">Arrastra para girar · pellizca o usa la rueda para acercar</span>
         </section>
         <section className="p-pag p-pag-der" aria-live="polite">
-          <Cara pag={base} modo={modo} figura={figura} ir={ir} cambiar={cambiar} setZona={setZonaLado} mando={mando} viva={!hoja || hoja.dir === "ida"} alVolver={volver} />
+          <Cara pag={base} modo={modo} figura={figura} ir={ir} cambiar={cambiar} setZona={setZonaLado} mando={mando} capsula={capsula} viva={!hoja || hoja.dir === "ida"} alVolver={volver} />
           {hoja && (
             <div key={hoja.n} className={"p-hoja " + hoja.dir} aria-hidden="true" {...{ inert: "" }}>
-              <div className="p-hoja-frente"><Cara pag={hoja.arriba} modo={modo} figura={figura} ir={nada} cambiar={nada} setZona={nada} mando={sinMando} viva={false} alVolver={nada} /></div>
+              <div className="p-hoja-frente"><Cara pag={hoja.arriba} modo={modo} figura={figura} ir={nada} cambiar={nada} setZona={nada} mando={sinMando} capsula={capsula} viva={false} alVolver={nada} /></div>
               <div className="p-hoja-reverso" />
             </div>
           )}

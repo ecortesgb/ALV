@@ -164,3 +164,15 @@ describe("trajes y candados", () => {
     expect(g.ropa.torso.estampado).toBeNull(); expect(g.identidad.rostro).toBe("FACE_005");
   });
 });
+
+import { limpiarBloqueadas, ponerObjeto } from "./editarFigura";
+describe("limpiar piezas bloqueadas", () => {
+  it("cambia o quita solo lo que no es libre", () => {
+    let f = ponerCascoSolo(ponerPelo(figuraNueva(), "HAIR_010"), "HELM_012", "#1b2a34");
+    f = ponerMomentos(ponerObjeto(f, "mano_der", { id: "ACC_010" }), { id: "fuego", espera: "a", victoria: "b", derrota: "c", punto: "d" });
+    const libres = new Set(["HAIR_001", "ACC_010", "FACE_001"]);
+    const g = limpiarBloqueadas(f, id => libres.has(id) || id.startsWith("X"));
+    expect(g.identidad.cabello?.id).toBe("HAIR_001"); expect(g.accesorios.cabeza).toBeNull();
+    expect(g.accesorios.mano_der?.id).toBe("ACC_010"); expect(g.momentos.paquete).toBeNull();
+  });
+});

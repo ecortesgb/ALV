@@ -1,7 +1,7 @@
 # ALV — Amigos Legendarios Verdaderos
 ## Documento Maestro del Producto
-**Versión:** 1.41  
-**Última actualización:** 17 de noviembre de 2026  
+**Versión:** 1.42  
+**Última actualización:** 18 de noviembre de 2026  
 **Estado:** Documento vivo de producto; decisiones y propuestas identificadas por separado.
 
 ---
@@ -515,6 +515,8 @@ Reglas propuestas:
 
 **DECISIÓN (v1.25, Elías, 15 de noviembre) — D3, un solo personalizador:** hay **un personalizador** con dos modos, **Simple** y **Avanzado**. Al cambiar de modo se conserva lo que se lleva armado (**continuidad de estado**). Los trajes **no son destructivos**: probar o cambiar piezas no borra la cápsula guardada hasta que se guarda. Sustituye el «editor rápido» y el «taller completo» como dos editores separados (21.3 y tanda 4 de 8.7, v1.20); el contenido del modo Simple es el del editor rápido aprobado y el del Avanzado, el del taller de Minifig Studio.
 **DECISIÓN (v1.41, Elías, 17 de noviembre) — D3, cómo se ve:** D3 se mantiene (un personalizador, dos modos, sin perder lo armado). Cambia la interfaz: el modo Avanzado **ya no es el taller de Minifig Studio** sino el **libro de cómic propio de ALV** (muro de 3 espacios → la carta brilla y se abre el libro; página izquierda con la figura viva que gira, se acerca a la parte que se edita, parpadea y sonríe; página derecha con viñetas que pasan de página). Los modos se llaman **Básico** (Simple) y **Completo** (Avanzado); el switch es uno para todo el editor, Básico por defecto en cuentas nuevas, y la preferencia viaja dentro de las figuras guardadas. Básico: Pelo, Cabeza, Accesorio, Torso completo y Piernas completas; Completo: además Casco, Brazos, Manos, Capa, Cadera y Botas, lados izquierdo y derecho, colores del dibujo del torso y máscaras. Minifig Studio queda solo como motor 3D invisible. Fuera de Apariencia: Objetos (una por mano), Momentos (paquetes), **Nombre = apodo de la figura** (va arriba del nombre del jugador en HUB, sala y TV; no cambia el nombre de la cuenta) y Aleatorio (con dado por sección). Mecánicas inspiradas en el editor de LEGO Marvel Super Heroes 2, con arte propio. Sigue con 3 espacios: ampliarlos toca la base (D-002).
+
+**DECISIÓN (v1.42, Elías, 17 de noviembre) — Piezas con rareza y retos en el personalizador:** cada sección tiene piezas comunes (libres) y otras bloqueadas por rareza: Rara (100 XP), Épica (250 XP) y Legendaria (500 XP); los paquetes de momentos también. Se desbloquean **con retos** (uno diario que rota y retos de combinación; si ya tenías el premio, +40 XP) **y también con XP** (gasto tipo «pieza»: baja la XP disponible, no el nivel). Lo desbloqueado se guarda **en la nube** (tablas nuevas, migración 033) y el servidor valida compras, retos y que una figura guardada no use piezas bloqueadas; las piezas que ya usan las figuras guardadas se regalan. La lista de rarezas, precios y retos vive en `src/content/rarezas.ts`. Esto toca la economía de XP (§12) solo para piezas del personalizador: la tienda de sobres sigue congelada (D-001). El **taller compartido** («me gusta», plantillas) queda para después. La 033 requiere autorización expresa para aplicarse (D-002).
 
 **DECISIÓN (v1.26, Elías, 15 de noviembre) — D3:** el modo Avanzado también está en celular. Sustituye la decisión 6 de la tanda 4 (v1.20), que lo dejaba solo en tablet o computadora.
 
@@ -1402,6 +1404,9 @@ Decisiones del usuario del 12 de noviembre de 2026:
 ## v1.6
 - Primeros logros (14.2), con ámbito de sesión o histórico (ver DECISIÓN v1.6 en 14.2).
 
+## v1.42
+- 18 nov 2026. Piezas con rareza (Rara, Épica, Legendaria), desbloqueo con retos y con XP, guardado en la nube (migración 033, sin aplicar). Taller compartido para después (sección 10).
+
 ## v1.41
 - 17 nov 2026. D3 (sección 10 y 25): el personalizador se rehízo como libro de cómic propio de ALV; el modo Avanzado (Completo) ya no es el taller de Minifig Studio. Apodo de figura visible arriba del nombre. Celular en horizontal usa el diseño de computadora. Sin migraciones ni cambios remotos.
 
@@ -1540,5 +1545,5 @@ Decisiones del usuario del 12 de noviembre de 2026:
 
 ---
 
-**Fin del Documento Maestro ALV v1.41**  
+**Fin del Documento Maestro ALV v1.42**  
 Este documento debe actualizarse de forma incremental y conservar la distinción entre decisiones aprobadas, propuestas, pendientes y descartadas.

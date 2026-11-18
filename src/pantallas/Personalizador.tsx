@@ -7,6 +7,7 @@ import { useSesion } from "../app/sesion";
 import { sonar } from "../app/sonido";
 import type { FiguraV2 } from "../content/personaje";
 import { enlace } from "../servicios/enlace";
+import { cargarPiezas } from "../servicios/piezas";
 import { Cabecera, Marco, aviso } from "./comun";
 import { FondoHub } from "./Hub";
 import { Libro, type ModoEditor } from "./Libro";
@@ -64,6 +65,8 @@ export function Personalizador() {
   const [abriendo, setAbriendo] = useState(false);
   const [figura, setFigura] = useState<FiguraV2>(NUEVA);
   const [vez, setVez] = useState(0);
+  // Piezas raras y retos: se leen al abrir el personalizador y al cambiar de cuenta.
+  useEffect(() => { void cargarPiezas(); }, [uid]);
   const [guardado, setGuardado] = useState<string | null>(null);
   const [origen, setOrigen] = useState("50% 50%");
   // Carrusel del celular: qué carta está al centro, y al entrar se centra la que está en juego.
@@ -160,7 +163,7 @@ export function Personalizador() {
       )}
       {/* El libro (y su motor 3D) se monta desde el principio, escondido, para que la figura ya esté lista al abrir. */}
       <div className="p-libro-caja" hidden={fase.cual !== "libro"}>
-        <Libro vez={vez} etiqueta={`Espacio ${i + 1}${c || figura.nombre !== "Mi figura" ? " · " + String(figura.nombre ?? "Mi figura") : ""}`} figura={figura} semilla={semillaDe(uid || "muestra")}
+        <Libro vez={vez} capsula={Math.max(1, i + 1)} etiqueta={`Espacio ${i + 1}${c || figura.nombre !== "Mi figura" ? " · " + String(figura.nombre ?? "Mi figura") : ""}`} figura={figura} semilla={semillaDe(uid || "muestra")}
           cambiar={cambiar} soltado={setFigura} guardado={guardado} modo={modo} setModo={setModo} abriendo={abriendo}
           alCerrar={() => { sonar("clic"); setFase({ cual: "muro" }); }}
           tapa={<><span className="p-carta-tira dsp">Espacio {i + 1}</span><span className="p-carta-arte">{c ? <FotoFigura figura={c.figura} size={120} nombre={c.nombre} /> : <Silueta />}</span></>} />

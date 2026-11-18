@@ -6,13 +6,16 @@ import type { ZonaFigura } from "../app/figura3d";
 import {
   alternarDetalle, capaDe, colorCadera, colorCasco, colorDeLado, colorEstampado, colorPelo, colorPiernas, colorTorso, completar, cuelloDe,
   ladosPersonalizados, pelaTapado, ponerBotas, ponerBrazos, ponerCapa, ponerCascoSolo, ponerCinturon, ponerCuello, ponerManos, ponerMascaraCompleta,
-  ponerPelo, ponerPiel, ponerRostro, ponerTorsoCompleto, quitarDetalles, tipoPiernas, type Figura, type Lado, type TrajeOriginal,
+  limpiarBloqueadas, ponerPelo, ponerPiel, ponerRostro, ponerTorsoCompleto, quitarDetalles, tipoPiernas, type Figura, type Lado, type TrajeOriginal,
 } from "../app/editarFigura";
 import { sonar } from "../app/sonido";
 import catalogo from "../content/catalogo-figura.json";
 import type { FiguraV2 } from "../content/personaje";
 import { miniatura, type ModoEditor, type Seccion } from "./Libro";
 import { aplicar, combinan, estilosDe, ordenarPorEstilo, sugerencias, type SeccionLook } from "./look";
+import { MarcaRareza, pedirDesbloqueo } from "./Desbloqueo";
+import { libre, piezasAhora, usePiezas } from "../servicios/piezas";
+import { rarezaDe } from "../content/rarezas";
 
 const PALETA = catalogo.paleta;
 const PELO = [...new Set([...catalogo.coloresPelo, ...catalogo.paleta])];
@@ -20,19 +23,25 @@ const OCUPA = new Map(catalogo.secciones.detalle.filter(d => d.id).map(d => [d.i
 const ocupa = (id: string) => OCUPA.get(id) ?? null;
 
 // ---------- Piezas ----------
-interface Item { clave: string; mini: string; nombre: string; on: boolean; elegir: () => void }
+interface Item { id: string | null; clave: string; mini: string; nombre: string; on: boolean; elegir: () => void }
+/** Cuadrícula de piezas. Las bloqueadas muestran candado y su rareza; al tocarlas se abre el panel para desbloquearlas. */
 function Piezas({ titulo, items }: { titulo?: string; items: Item[] }) {
+  const est = usePiezas();
   return (
     <section className="p-bloque">
       {titulo && <h3 className="p-bloque-titulo">{titulo}</h3>}
       <div className="p-rejilla">
-        {items.map(p => (
-          <button key={p.clave} type="button" className={"p-pieza" + (p.on ? " on" : "")} aria-pressed={p.on} title={p.nombre}
-            onClick={() => { sonar("encaje"); p.elegir(); }}>
-            <img src={miniatura(p.mini)} alt="" loading="lazy" draggable={false} />
-            <span>{p.nombre}</span>
-          </button>
-        ))}
+        {items.map(p => {
+          const r = est.activo ? rarezaDe(p.id) : "comun", bloq = !libre(p.id, est);
+          return (
+            <button key={p.clave} type="button" className={"p-pieza r-" + r + (p.on ? " on" : "") + (bloq ? " bloq" : "")} aria-pressed={p.on}
+              title={bloq ? `${p.nombre} (bloqueada)` : p.nombre} onClick={() => { if (bloq) { pedirDesbloqueo(p.id!); return; } sonar("encaje"); p.elegir(); }}>
+              <img src={miniatura(p.mini)} alt="" loading="lazy" draggable={false} />
+              <MarcaRareza r={r} bloqueada={bloq} />
+              <span>{p.nombre}</span>
+            </button>
+          );
+        })}
       </div>
     </section>
   );
@@ -103,7 +112,8 @@ function Lados({ lado, setLado, ambos, img, igualar }: { lado: Lado; setLado: (l
 
 /** «Combina con tu look»: piezas de otras secciones del mismo estilo. */
 function CombinaLook({ f, excluir, poner }: { f: Figura; excluir: SeccionLook[]; poner: (g: Figura) => void }) {
-  const lista = sugerencias(f, excluir);
+  usePiezas();
+  const lista = sugerencias(f, excluir, 8).filter(x => libre(x.item.id, piezasAhora())).slice(0, 4);
   if (!lista.length) return null;
   return (
     <section className="p-bloque p-look">
@@ -120,7 +130,7 @@ function CombinaLook({ f, excluir, poner }: { f: Figura; excluir: SeccionLook[];
   );
 }
 
-const item = (p: { id?: string | null; mini: string; nombre: string }, on: boolean, elegir: () => void): Item => ({ clave: p.mini, mini: p.mini, nombre: p.nombre, on, elegir });
+const item = (p: { id?: string | null; mini: string; nombre: string }, on: boolean, elegir: () => void): Item => ({ id: p.id ?? null, clave: p.mini, mini: p.mini, nombre: p.nombre, on, elegir });
 
 const GRUPOS: { titulo: string; ocupa: string | null; nada: string }[] = [
   { titulo: "Lentes y parche", ocupa: "ojos", nada: "Sin lentes" },
@@ -177,7 +187,7 @@ export function PaginaSeccion({ k, modo, figura, cambiar, setZona }: { k: Seccio
   const EXCLUIR: Partial<Record<Seccion, SeccionLook[]>> = { casco: ["casco", "mascara"], cuello: ["cuello", "capa"], torso: ["torso"], cabeza: ["detalle"] };
   const conLook = ["pelo", "casco", "cabeza", "cuello", "torso"].includes(k);
   return <>
-    <button type="button" className="p-dado" onClick={() => { sonar("clic"); poner(azarDe(k, f, completo)); }} aria-label="Esta parte al azar">
+    <button type="button" className="p-dado" onClick={() => { sonar("clic"); poner(limpiarBloqueadas(azarDe(k, f, completo), id => libre(id))); }} aria-label="Esta parte al azar">
       <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="4" /><circle cx="8" cy="8" r="1.6" /><circle cx="16" cy="16" r="1.6" /><circle cx="12" cy="12" r="1.6" /><circle cx="16" cy="8" r="1.6" /><circle cx="8" cy="16" r="1.6" /></svg>
       Al azar
     </button>

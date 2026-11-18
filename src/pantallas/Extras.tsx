@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import { FotoFigura, type MandoFigura } from "../app/figura3d";
 import {
-  LARGO_APODO, MOMENTOS_NORMALES, completar, conservar, limpiarApodo, ponerApodo, ponerMomentos, ponerObjeto, vestirCompleto, vestirSoloTraje,
+  LARGO_APODO, MOMENTOS_NORMALES, completar, conservar, limpiarApodo, limpiarBloqueadas, ponerApodo, ponerMomentos, ponerObjeto, vestirCompleto, vestirSoloTraje,
   type Figura, type Paquete, type Parte,
 } from "../app/editarFigura";
 import { useSesion } from "../app/sesion";
@@ -11,22 +11,29 @@ import catalogo from "../content/catalogo-figura.json";
 import type { FiguraV2 } from "../content/personaje";
 import { miniatura } from "./Libro";
 import { estilosDe } from "./look";
+import { MarcaRareza, infoPieza, pedirDesbloqueo } from "./Desbloqueo";
+import { aviso } from "./comun";
+import { bloqueadasEn, cumple } from "../app/retos";
+import { NOMBRE_RAREZA, PRECIO, RETOS, hoyMexico, rarezaDe, retoDelDia, type Reto } from "../content/rarezas";
+import { claveReto, desbloquear, libre, piezasAhora, reclamar, usePiezas } from "../servicios/piezas";
 
-type Pag = "objetos" | "momentos" | "nombre" | "aleatorio" | "trajes";
+type Pag = "objetos" | "momentos" | "nombre" | "aleatorio" | "trajes" | "retos";
 const PALETA = catalogo.paleta;
 
-export function PaginaExtra({ pag, figura, cambiar, mando }: { pag: Pag; figura: FiguraV2; cambiar: (f: FiguraV2) => void; mando: { current: MandoFigura | null } }) {
+export function PaginaExtra({ pag, figura, cambiar, mando, capsula }: { pag: Pag; figura: FiguraV2; cambiar: (f: FiguraV2) => void; mando: { current: MandoFigura | null }; capsula: number }) {
   const f = completar(figura);
   const poner = (g: Figura) => cambiar(g as unknown as FiguraV2);
   if (pag === "objetos") return <Objetos f={f} poner={poner} />;
   if (pag === "momentos") return <Momentos f={f} poner={poner} mando={mando} />;
   if (pag === "nombre") return <Nombre f={f} poner={poner} />;
   if (pag === "trajes") return <Trajes f={f} poner={poner} />;
+  if (pag === "retos") return <Retos f={f} capsula={capsula} />;
   return <Aleatorio f={f} poner={poner} mando={mando} />;
 }
 
 // ---------- Objetos: uno en cada mano ----------
 function Objetos({ f, poner }: { f: Figura; poner: (g: Figura) => void }) {
+  const est = usePiezas();
   const [mano, setMano] = useState<"mano_der" | "mano_izq">("mano_der");
   const actual = f.accesorios[mano];
   return <>
@@ -43,11 +50,12 @@ function Objetos({ f, poner }: { f: Figura; poner: (g: Figura) => void }) {
     <section className="p-bloque">
       <div className="p-rejilla">
         {catalogo.secciones.objeto.map(p => {
-          const on = (p.id ?? null) === (actual?.id ?? null);
+          const on = (p.id ?? null) === (actual?.id ?? null), r = est.activo ? rarezaDe(p.id) : "comun", bloq = !libre(p.id, est);
           return (
-            <button key={p.mini} type="button" className={"p-pieza" + (on ? " on" : "")} aria-pressed={on} title={p.nombre}
-              onClick={() => { sonar("clic"); poner(ponerObjeto(f, mano, p.id ? { id: p.id, color: (p as { color?: string }).color ?? "#a0a5a9" } : null)); }}>
+            <button key={p.mini} type="button" className={"p-pieza r-" + r + (on ? " on" : "") + (bloq ? " bloq" : "")} aria-pressed={on} title={p.nombre}
+              onClick={() => { if (bloq) { pedirDesbloqueo(p.id!); return; } sonar("encaje"); poner(ponerObjeto(f, mano, p.id ? { id: p.id, color: (p as { color?: string }).color ?? "#a0a5a9" } : null)); }}>
               <img src={miniatura(p.mini)} alt="" loading="lazy" draggable={false} />
+              <MarcaRareza r={r} bloqueada={bloq} />
               <span>{p.nombre}</span>
             </button>
           );
@@ -73,13 +81,15 @@ const PROBAR: [keyof Omit<Paquete, "id">, string][] = [["espera", "Esperar"], ["
 function Momentos({ f, poner, mando }: { f: Figura; poner: (g: Figura) => void; mando: { current: MandoFigura | null } }) {
   const opciones: (Paquete & { nombre: string })[] = [{ ...MOMENTOS_NORMALES, nombre: "Normal" }, ...catalogo.paquetes];
   const actual = f.momentos.paquete ?? null;
+  const est = usePiezas();
   return <>
     <div className="p-momentos">
       {opciones.map(p => {
-        const on = p.id === actual;
+        const on = p.id === actual, id = p.id ? "MOM_" + p.id : null, r = est.activo ? rarezaDe(id) : "comun", bloq = !libre(id, est);
         return (
-          <button key={p.id ?? "normal"} type="button" className={"p-momento" + (on ? " on" : "")} aria-pressed={on}
-            onClick={() => { sonar("clic"); poner(ponerMomentos(f, p)); mando.current?.probar(p.victoria); }}>
+          <button key={p.id ?? "normal"} type="button" className={"p-momento r-" + r + (on ? " on" : "") + (bloq ? " bloq" : "")} aria-pressed={on}
+            onClick={() => { if (bloq) { pedirDesbloqueo(id!); mando.current?.probar(p.victoria); return; } sonar("clic"); poner(ponerMomentos(f, p)); mando.current?.probar(p.victoria); }}>
+            <MarcaRareza r={r} bloqueada={bloq} />
             <span className="p-sfx">{p.nombre}</span>
           </button>
         );
@@ -158,12 +168,24 @@ function Trajes({ f, poner }: { f: Figura; poner: (g: Figura) => void }) {
   const [elegido, setElegido] = useState<Traje | null>(null);
   const antes = useRef<Figura[]>([]);
   const [hay, setHay] = useState(0);
+  const [ocupado, setOcupado] = useState(false);
+  const est = usePiezas();
   if (!datos) return <p className="p-nota">Abriendo el armario…</p>;
   const lista = col === "estilos" ? datos.estilos : datos.trajes.filter(t => t.coleccion === col);
-  const vestir = (todo: boolean) => {
-    if (!elegido) return;
+  const resultado = (t: Traje, todo: boolean) => (todo ? vestirCompleto(f, t.figura) : vestirSoloTraje(f, t.figura));
+  const faltan = (t: Traje, todo: boolean) => (est.activo ? bloqueadasEn(resultado(t, todo), est.tengo) : []);
+  const vestir = async (todo: boolean) => {
+    if (!elegido || ocupado) return;
+    const f1 = faltan(elegido, todo);
+    if (f1.length) {
+      const total = f1.reduce((n, id) => n + PRECIO[rarezaDe(id)], 0);
+      if (piezasAhora().xp < total) { aviso(`Te faltan ${f1.length} piezas (${total} XP). Tienes ${piezasAhora().xp} XP.`); sonar("error"); return; }
+      setOcupado(true);
+      for (const id of f1) { const e = await desbloquear(id); if (e) { setOcupado(false); aviso(e); return; } }
+      setOcupado(false); sonar("fanfarria"); aviso(`Desbloqueaste ${f1.length} piezas.`);
+    }
     antes.current = [...antes.current.slice(-9), f]; setHay(antes.current.length);
-    sonar("exito"); poner(todo ? vestirCompleto(f, elegido.figura) : vestirSoloTraje(f, elegido.figura));
+    sonar("exito"); poner(resultado(elegido, todo));
   };
   return <>
     <div className="p-opciones p-colecciones" role="tablist" aria-label="Colección">
@@ -175,18 +197,30 @@ function Trajes({ f, poner }: { f: Figura; poner: (g: Figura) => void }) {
     {elegido && (
       <div className="p-vestir" role="group" aria-label={`Ponerte ${elegido.nombre}`}>
         <span className="p-sfx">{elegido.nombre}</span>
-        <button type="button" className="p-opcion on" onClick={() => vestir(false)}>Solo el traje<small>tu cara y tu pelo se quedan</small></button>
-        <button type="button" className="p-opcion" onClick={() => vestir(true)}>Personaje completo<small>todas sus piezas</small></button>
+        {([false, true] as const).map(todo => {
+          const fx = faltan(elegido, todo), total = fx.reduce((n, id) => n + PRECIO[rarezaDe(id)], 0);
+          return (
+            <button key={String(todo)} type="button" className={"p-opcion" + (todo ? "" : " on")} disabled={ocupado} onClick={() => void vestir(todo)}>
+              {todo ? "Personaje completo" : "Solo el traje"}
+              <small>{fx.length ? `🔒 ${fx.length} pieza${fx.length > 1 ? "s" : ""}: ${total} XP` : todo ? "todas sus piezas" : "tu cara y tu pelo se quedan"}</small>
+            </button>
+          );
+        })}
+        {faltan(elegido, true).length > 0 && <span className="p-vestir-faltan">Te faltan: {faltan(elegido, true).map(id => infoPieza(id).nombre).join(", ")}</span>}
       </div>
     )}
     <div className="p-rejilla p-rejilla-trajes">
-      {lista.map(t => (
-        <button key={t.id} type="button" className={"p-pieza" + (elegido?.id === t.id ? " on" : "")} aria-pressed={elegido?.id === t.id} title={t.nombre}
-          onClick={() => { sonar("clic"); setElegido(t); }}>
-          <img src={miniatura(t.mini)} alt="" loading="lazy" draggable={false} />
-          <span>{t.nombre}</span>
-        </button>
-      ))}
+      {lista.map(t => {
+        const n = faltan(t, true).length;
+        return (
+          <button key={t.id} type="button" className={"p-pieza" + (elegido?.id === t.id ? " on" : "") + (n ? " bloq-suave" : "")} aria-pressed={elegido?.id === t.id} title={t.nombre}
+            onClick={() => { sonar("clic"); setElegido(t); }}>
+            <img src={miniatura(t.mini)} alt="" loading="lazy" draggable={false} />
+            {n > 0 && <span className="p-rareza r-legendaria bloq" aria-label={`${n} piezas bloqueadas`}>🔒{n}</span>}
+            <span>{t.nombre}</span>
+          </button>
+        );
+      })}
     </div>
     <button type="button" className="p-opcion p-deshacer" onClick={() => { const g = antes.current.pop(); setHay(antes.current.length); if (g) { sonar("clic"); poner(g); } }} disabled={!hay}>
       Deshacer{hay ? ` (${hay})` : ""}
@@ -210,7 +244,7 @@ function Aleatorio({ f, poner, mando }: { f: Figura; poner: (g: Figura) => void;
     if (!g) return;
     antes.current = [...antes.current.slice(-9), f]; setHay(antes.current.length);
     // El apodo se conserva (la figura cambia, sigue siendo «tuya») y lo que tiene candado no se toca.
-    poner(conservar(vestirCompleto(f, completar(g)), f, candados));
+    poner(limpiarBloqueadas(conservar(vestirCompleto(f, completar(g)), f, candados), id => libre(id)));
   };
   const deshacer = () => {
     const g = antes.current.pop(); setHay(antes.current.length);
@@ -238,5 +272,50 @@ function Aleatorio({ f, poner, mando }: { f: Figura; poner: (g: Figura) => void;
       </div>
     </section>
     <p className="p-nota">Cada página de Apariencia tiene su dado «Al azar» para cambiar solo esa parte.</p>
+  </>;
+}
+
+// ---------- Retos: el del día y los de combinación; el premio es una pieza (o XP si ya la tenías) ----------
+function TarjetaReto({ r, f, capsula, hecho }: { r: Reto; f: Figura; capsula: number; hecho: boolean }) {
+  const [ocupado, setOcupado] = useState(false);
+  const ok = cumple(f, r.condicion), premio = infoPieza(r.premio), rar = rarezaDe(r.premio);
+  const tengo = !libre(r.premio) ? false : rar !== "comun";
+  const piezas = r.condicion.todas ?? [];
+  const pedir = async () => {
+    setOcupado(true);
+    const x = await reclamar(r.id, capsula);
+    setOcupado(false);
+    if (typeof x === "string") { aviso(x); sonar("error"); return; }
+    sonar("fanfarria"); aviso(x.pieza ? `¡Ganaste ${infoPieza(x.pieza).nombre}!` : `Ya la tenías: +${x.xp} XP`);
+  };
+  return (
+    <div className={"p-reto" + (hecho ? " hecho" : ok ? " listo" : "")}>
+      <div className={"p-reto-premio r-" + rar}>{premio.mini ? <img src={miniatura(premio.mini)} alt="" /> : <span className="p-sfx">¡POW!</span>}</div>
+      <div className="p-reto-texto">
+        <strong className="p-sfx">{r.nombre}</strong>
+        <span>{r.texto}</span>
+        {piezas.length > 0 && <small>{piezas.filter(id => [...(f.identidad.detalles ?? [])].includes(id) || JSON.stringify(f).includes(`"${id}"`)).length} de {piezas.length} piezas puestas</small>}
+        <small>Premio: {premio.nombre} · {NOMBRE_RAREZA[rar]}{tengo ? " (ya la tienes: +40 XP)" : ""}</small>
+      </div>
+      {hecho ? <span className="p-reto-sello p-sfx">¡Hecho!</span>
+        : <button type="button" className="p-opcion on" disabled={!ok || ocupado} onClick={() => void pedir()}>{ok ? "Reclamar" : "Aún no"}</button>}
+    </div>
+  );
+}
+
+function Retos({ f, capsula }: { f: Figura; capsula: number }) {
+  const est = usePiezas();
+  const hoy = hoyMexico(), diario = retoDelDia(hoy);
+  if (!est.activo) return <p className="p-nota">Los retos se activan cuando el sistema de piezas raras esté encendido en el servidor.</p>;
+  return <>
+    <p className="p-nota">Los retos revisan la figura de este espacio. Ármala en Apariencia y vuelve a reclamar.</p>
+    <section className="p-bloque">
+      <h3 className="p-bloque-titulo">Reto de hoy</h3>
+      <TarjetaReto r={diario} f={f} capsula={capsula} hecho={est.reclamados.has(claveReto(diario.id, "diario", hoy))} />
+    </section>
+    <section className="p-bloque">
+      <h3 className="p-bloque-titulo">Combinaciones</h3>
+      {RETOS.filter(r => r.tipo === "combinacion").map(r => <TarjetaReto key={r.id} r={r} f={f} capsula={capsula} hecho={est.reclamados.has(r.id)} />)}
+    </section>
   </>;
 }

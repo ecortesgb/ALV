@@ -312,3 +312,59 @@
 .p-cartacol-jugador { font: 700 13px/1.1 var(--letra-cuerpo, sans-serif); }
 .p-cartacol-dato { font: 600 11px/1.1 var(--letra-cuerpo, sans-serif); color: #4a5280; }
 @media (prefers-reduced-motion: reduce) { .p-cartacol-rayos { animation: none; } }
+
+/* ---------- Bloque C: rarezas, candados, desbloqueo y retos ---------- */
+.D.p-taller { --r-rara: #4a8df0; --r-epica: #9b5cff; --r-legendaria: #ffb800; }
+.p-pieza.r-rara { border-color: var(--r-rara); box-shadow: inset 0 0 0 2px var(--r-rara); }
+.p-pieza.r-epica { border-color: var(--r-epica); box-shadow: inset 0 0 0 2px var(--r-epica); }
+.p-pieza.r-legendaria { border-color: var(--r-legendaria); box-shadow: inset 0 0 0 2px var(--r-legendaria), 0 0 10px rgba(255, 184, 0, .55); }
+.p-pieza.on.r-rara, .p-pieza.on.r-epica, .p-pieza.on.r-legendaria { box-shadow: 0 0 0 6px var(--p-tinta); }
+/* Bloqueada: más oscura, con candado; se ve qué es para que den ganas de conseguirla. */
+.p-pieza.bloq img, .p-momento.bloq .p-sfx { filter: grayscale(1) brightness(.55) contrast(1.1); }
+.p-pieza.bloq span:last-child { background: #dfe3ee; color: #4a5280; }
+.p-pieza.bloq-suave img { filter: grayscale(.6) brightness(.8); }
+.p-rareza { position: absolute; top: 3px; right: 3px; z-index: 1; min-width: 22px; height: 22px; padding: 0 4px; display: grid; place-items: center;
+  font: 900 12px/1 var(--letra-cuerpo, sans-serif); color: #fff; border: 2px solid var(--p-tinta); border-radius: 999px; background: var(--r-rara); }
+.p-rareza.r-epica { background: var(--r-epica); }
+.p-rareza.r-legendaria { background: var(--r-legendaria); color: var(--p-tinta); }
+.p-rareza.bloq { font-size: 11px; }
+.p-momento { position: relative; }
+.p-momento.r-rara { border-color: var(--r-rara); } .p-momento.r-epica { border-color: var(--r-epica); } .p-momento.r-legendaria { border-color: var(--r-legendaria); }
+
+/* XP en la barra del libro */
+.p-xp { padding: 5px 11px; font: 400 16px/1 var(--letra-sfx, Bangers, sans-serif); letter-spacing: .04em; color: var(--p-tinta); background: var(--p-amarillo);
+  border: 2px solid var(--p-tinta); border-radius: 999px; box-shadow: 2px 2px 0 rgba(0, 0, 0, .35); white-space: nowrap; }
+
+/* Panel para desbloquear */
+.p-desbloqueo-fondo { position: fixed; inset: 0; z-index: 80; display: grid; place-items: center; padding: 16px; background: rgba(5, 8, 30, .72); animation: pGuardado .2s ease-out both; }
+.p-desbloqueo { position: relative; width: min(340px, 100%); display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 18px 16px 14px; text-align: center;
+  color: var(--p-tinta); background: radial-gradient(circle at 1px 1px, rgba(10, 16, 48, .08) 1px, transparent 1.4px) 0 0 / 7px 7px, var(--p-papel);
+  border: 4px solid var(--r-rara); border-radius: 12px; box-shadow: 0 0 0 3px var(--p-tinta), 8px 10px 0 var(--p-tinta); }
+.p-desbloqueo.r-epica { border-color: var(--r-epica); } .p-desbloqueo.r-legendaria { border-color: var(--r-legendaria); box-shadow: 0 0 0 3px var(--p-tinta), 8px 10px 0 var(--p-tinta), 0 0 40px rgba(255, 184, 0, .6); }
+.p-desbloqueo-rareza { position: absolute; top: -16px; padding: 4px 14px 3px; font-size: 18px; letter-spacing: .06em; color: #fff; background: var(--r-rara); border: 2.5px solid var(--p-tinta); transform: rotate(-3deg); }
+.r-epica .p-desbloqueo-rareza { background: var(--r-epica); } .r-legendaria .p-desbloqueo-rareza { background: var(--r-legendaria); color: var(--p-tinta); }
+.p-desbloqueo-arte { width: 140px; aspect-ratio: 1; display: grid; place-items: center; background: radial-gradient(circle, #fff7c2 20%, #ffd23f); border: 3px solid var(--p-tinta); border-radius: 8px; overflow: hidden; }
+.p-desbloqueo-arte img { width: 100%; height: 100%; object-fit: contain; }
+.p-desbloqueo-nombre { font: 400 24px/1.05 var(--letra-sfx, Bangers, sans-serif); letter-spacing: .03em; }
+.p-desbloqueo-saldo { margin: 0; font: 600 14px/1.3 var(--letra-cuerpo, sans-serif); }
+.p-desbloqueo .p-sorpresa { margin: 4px 0; padding: 10px 16px; }
+.p-desbloqueo .p-sorpresa .p-sfx { font-size: 26px; }
+.p-desbloqueo-retos { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 6px; font: 600 13px/1.2 var(--letra-cuerpo, sans-serif); }
+.p-desbloqueo-cerrar { margin-top: 4px; }
+.p-vestir-faltan { flex: 1 1 100%; font: 600 12px/1.3 var(--letra-cuerpo, sans-serif); color: #8e1206; }
+.p-vestir .p-opcion:disabled { opacity: .6; }
+
+/* Retos */
+.p-reto { display: grid; grid-template-columns: 64px 1fr auto; align-items: center; gap: 10px; margin-bottom: 10px; padding: 8px; background: #fff;
+  border: 3px solid var(--p-tinta); box-shadow: 3px 3px 0 var(--p-tinta); }
+.p-reto.listo { background: #fff8c7; box-shadow: 0 0 0 3px var(--p-amarillo), 3px 3px 0 var(--p-tinta); }
+.p-reto.hecho { opacity: .7; }
+.p-reto-premio { width: 64px; aspect-ratio: 1; display: grid; place-items: center; overflow: hidden; border: 3px solid var(--r-rara); border-radius: 6px; background: radial-gradient(circle, #fff7c2 20%, #ffd23f); }
+.p-reto-premio.r-epica { border-color: var(--r-epica); } .p-reto-premio.r-legendaria { border-color: var(--r-legendaria); }
+.p-reto-premio img { width: 100%; height: 100%; object-fit: contain; }
+.p-reto-texto { display: flex; flex-direction: column; gap: 2px; min-width: 0; font: 600 13px/1.25 var(--letra-cuerpo, sans-serif); }
+.p-reto-texto strong { font-size: 19px; line-height: 1; letter-spacing: .03em; }
+.p-reto-texto small { font-size: 11px; color: #4a5280; }
+.p-reto-sello { padding: 4px 10px; font-size: 16px; color: #fff; background: #237841; border: 2px solid var(--p-tinta); transform: rotate(-6deg); }
+.D:not(.wide) .p-reto { grid-template-columns: 56px 1fr; }
+.D:not(.wide) .p-reto > :last-child { grid-column: 1 / -1; justify-self: end; }
