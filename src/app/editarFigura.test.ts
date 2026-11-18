@@ -116,3 +116,51 @@ describe("apodo visible para los demás", () => {
     expect(apodoDe(ponerApodo(f, "") as never)).toBeNull();
   });
 });
+
+import { pelaTapado, ponerCascoSolo, ponerMascaraCompleta, ponerTorsoCompleto } from "./editarFigura";
+describe("cabeza y torso completo", () => {
+  it("casco y máscara se excluyen; ambos tapan el pelo", () => {
+    let f = ponerMascaraCompleta(figuraNueva(), "FACE_012", "#c8102e");
+    expect(f.accesorios.cara).toMatchObject({ id: "FACE_012", color: "#c8102e", tapaPelo: true });
+    expect(pelaTapado(f)).toBe(true);
+    f = ponerCascoSolo(f, "HELM_003", "#f2cd37");
+    expect(f.accesorios.cara).toBeNull();
+    expect(pelaTapado(f)).toBe(true);
+    expect(pelaTapado(ponerCascoSolo(f, null, "#000"))).toBe(false);
+  });
+  it("torso de personaje: colores originales, brazos y guantes que combinan", () => {
+    const f = ponerTorsoCompleto(ponerBrazos(figuraNueva(), "der", "#000000"), "PRINT_002",
+      { color: "#b3121b", colores: ["#e3b341", "#ffffff", "#6b4a2b"], brazos: "#b3121b", manos: "#e3b341" });
+    expect(f.ropa.torso).toMatchObject({ estampado: "PRINT_002", color: "#b3121b" });
+    expect(f.ropa.brazos).toBeNull(); expect(f.ropa.guantes).toBe("#e3b341");
+    expect(f.manual.brazo_der).toBeUndefined();
+  });
+  it("torso para pintar: brazos siguen al torso y manos a la piel", () => {
+    const f = ponerTorsoCompleto(ponerManos(figuraNueva(), "ambos", "#111111"), "PRINT_020");
+    expect(f.ropa.guantes).toBeNull(); expect(f.ropa.brazos).toBeNull();
+  });
+});
+
+import { conservar, vestirCompleto, vestirSoloTraje } from "./editarFigura";
+describe("trajes y candados", () => {
+  const traje = { ...figuraNueva(), nombre: "Héroe", identidad: { ...figuraNueva().identidad, piel: "#352100", rostro: "FACE_005" },
+    ropa: { ...figuraNueva().ropa, torso: { ...figuraNueva().ropa.torso, estampado: "PRINT_004", color: "#c8102e" } },
+    accesorios: { ...figuraNueva().accesorios, cara: { id: "FACE_012", color: "#c8102e" }, espalda: { id: "CAPE_001", color: "#c91a09" } } };
+  const mia = ponerApodo(ponerPelo(figuraNueva(), "HAIR_014"), "El Rayo");
+  it("personaje completo: todas sus piezas, pero mi apodo", () => {
+    const g = vestirCompleto(mia, traje);
+    expect(g.identidad.rostro).toBe("FACE_005"); expect(g.accesorios.cara?.id).toBe("FACE_012");
+    expect(g.nombre).toBe("El Rayo"); expect((g.extensiones.alv as { apodo: string }).apodo).toBe("El Rayo");
+  });
+  it("solo el traje: mi piel, rostro, pelo y cabeza; su ropa y capa", () => {
+    const g = vestirSoloTraje(mia, traje);
+    expect(g.identidad.cabello?.id).toBe("HAIR_014"); expect(g.identidad.piel).toBe(mia.identidad.piel);
+    expect(g.accesorios.cara).toBeNull(); expect(g.ropa.torso.estampado).toBe("PRINT_004"); expect(g.accesorios.espalda?.id).toBe("CAPE_001");
+  });
+  it("candados: lo anclado se queda, lo demás cambia", () => {
+    const nueva = vestirCompleto(mia, traje);
+    const g = conservar(nueva, mia, ["pelo", "torso"]);
+    expect(g.identidad.cabello?.id).toBe("HAIR_014"); expect(g.accesorios.cara).toBeNull();
+    expect(g.ropa.torso.estampado).toBeNull(); expect(g.identidad.rostro).toBe("FACE_005");
+  });
+});

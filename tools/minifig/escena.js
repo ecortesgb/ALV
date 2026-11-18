@@ -22,6 +22,7 @@
 
   // Piezas extra sobre la figura (cuello, cinturón, color del objeto). Copia de js/15-creador-comic.js, que la escena
   // no carga: sin esto el HUB, la sala y la TV no dibujaban mochilas, chalecos, barbas largas ni cinturones.
+  const ESPALDA_FUERA = { "ld-3838": -2, "ld-2524": -2, "ld-4498": -2, "ld-95348": -1.5, "ld-30091": -2 };
   const build0 = build;
   build = function (c) {
     const fig = build0(c), J = fig.userData.j;
@@ -31,6 +32,8 @@
       const m = mallaLD(c.cuello.slice(3), plast(c.cuelloColor || "#6c6e68", { roughness: 0.4 }), "cuello");
       if (m) {
         const g = grupoLD(J.torso, ldM(0, 0, 0)); g.add(m);
+        // Mochilas y tanques: un poco separados de la espalda (se veían hundidos en el torso).
+        if (ESPALDA_FUERA[c.cuello]) g.position.z += ESPALDA_FUERA[c.cuello] / LD;
         // Piezas que se montan entre cabeza y torso (barba larga): giran con la cabeza. attach() conserva la posición.
         const pz = (BIB.piezas || []).find(p => p.clave === c.cuello);
         if (pz && pz.conexion && pz.conexion.monta_en === "entre_cabeza_y_torso" && J.head) { fig.updateMatrixWorld(true); J.head.attach(g); }
@@ -172,8 +175,12 @@
   const deSemilla = n => (Number.isFinite(n) ? MinifigCore.aleatorio(BIB, { semilla: Math.abs(Math.floor(n)) % 2147483647 }) : null);
   const figuraDe = x => (valida(x.figura) ? x.figura : deSemilla(x.semilla));
 
+  // Cascos que son máscaras con huecos (Batman, el del Capitán): debajo va un rostro cuyos ojos caen en los huecos,
+  // sin lentes ni barba (otros rostros o detalles se asomaban desalineados).
+  const CASCO_MASCARA = new Set(["ld-55704", "ld-49556p02"]);
   function armar(f) {
     const plano = desdeFigura(f);
+    if (CASCO_MASCARA.has(plano.cabello)) { plano.rostro = "sonrisa"; plano.facial = []; }
     const obj = caricatura(build(plano));
     const sombra = new THREE.Mesh(sombraGeo, sombraMat); sombra.rotation.x = -Math.PI / 2; sombra.position.y = 0.003; obj.add(sombra);
     return { obj, momentos: plano._momentos || {}, plano };
@@ -202,6 +209,7 @@
           pop: EDITOR && habia ? t : -9, parpadeo: t + 2 + Math.random() * 2, sonrisa: t + 7 + Math.random() * 4 }; }
         catch (err) { console.error("escena: no se pudo armar", id, err); return; }
         scene.add(e.obj); figuras.set(id, e);
+        if (EDITOR && habia) polvo(reloj.getElapsedTime());
       }
       e.foco = !!x.foco; orden.push(id);
     });
@@ -245,11 +253,11 @@
     e.mom = m; e.t0 = reloj.getElapsedTime();
   }
 
-  // Objetos grandes en la mano: ese brazo no sube más allá del hombro en ningún momento (festejos, derrotas, esperas),
+  // Objetos en la mano: ese brazo no sube más allá del hombro en ningún momento (festejos, derrotas, esperas),
   // así la espada, el escudo o la escoba no atraviesan la cabeza. Festeja con el otro brazo y con el cuerpo.
   // armR lleva el objeto de la derecha (accesorio) y armL el de la izquierda (accesorioIzq). Varita y taza son chicas.
-  const CHICOS = new Set(["varita", "taza"]);
-  const grande = v => !!v && v !== "ninguno" && !CHICOS.has(v);
+  // Todos los objetos: también los chicos (taza, varita) se metían en la cabeza al subir el brazo.
+  const grande = v => !!v && v !== "ninguno";
   const TOPE_BRAZO = -0.85; // ≈ 50° hacia el frente: la hoja de la espada no llega a la cara
   function cuidarObjetos(obj, plano) {
     const J = obj.userData.j, p = plano || {}; if (!J) return;
@@ -285,6 +293,7 @@
     casco: { y: 2.25, alto: 1.7, giro: -0.5 },
     cabeza: { y: 2.08, alto: 1.25, giro: -0.15 },
     cuello: { y: 1.62, alto: 1.75, giro: 2.45 },
+    cuello_frente: { y: 1.7, alto: 1.6, giro: -0.45 },
     torso: { y: 1.55, alto: 1.4, giro: -0.15 },
     brazos: { y: 1.5, alto: 1.6, giro: -0.55 },
     manos: { y: 1.2, alto: 1.1, giro: -0.45 },
@@ -381,12 +390,40 @@
     if (t > e.sonrisa) { gesto(e, "sonrisa", t); e.sonrisa = t + 9 + Math.random() * 7; e.parpadeo = Math.max(e.parpadeo, t + 1.8); }
   }
 
+  // Polvo de cómic al cambiar una pieza (solo en el personalizador): puntitos blancos y amarillos que salen y se apagan.
+  const MENOS_MOVIMIENTO = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const texPolvo = (function () { const cv = document.createElement("canvas"); cv.width = cv.height = 64; const g = cv.getContext("2d");
+    g.fillStyle = "#0b0f24"; g.beginPath(); g.arc(32, 32, 30, 0, 7); g.fill(); g.fillStyle = "#ffffff"; g.beginPath(); g.arc(32, 32, 22, 0, 7); g.fill();
+    return new THREE.CanvasTexture(cv); })();
+  const polvos = [];
+  function polvo(t) {
+    if (MENOS_MOVIMIENTO) return;
+    const n = 16, pos = new Float32Array(n * 3), col = new Float32Array(n * 3), vel = [];
+    for (let i = 0; i < n; i++) {
+      const a = Math.random() * Math.PI * 2, y = 0.3 + Math.random() * 2.2;
+      pos.set([Math.cos(a) * 0.45, y, Math.sin(a) * 0.45 + 0.3], i * 3);
+      vel.push([Math.cos(a) * (0.9 + Math.random()), (Math.random() - 0.3) * 0.8, Math.sin(a) * 0.6]);
+      const c = Math.random() < 0.5 ? [1, 1, 1] : [1, 0.82, 0.25]; col.set(c, i * 3);
+    }
+    const geo = new THREE.BufferGeometry(); geo.setAttribute("position", new THREE.BufferAttribute(pos, 3)); geo.setAttribute("color", new THREE.BufferAttribute(col, 3));
+    const mat = new THREE.PointsMaterial({ size: 0.16, map: texPolvo, vertexColors: true, transparent: true, depthWrite: false, alphaTest: 0.05 });
+    const p = new THREE.Points(geo, mat); scene.add(p); polvos.push({ p, vel, t0: t });
+  }
+  function moverPolvo(t, dt) {
+    for (let i = polvos.length - 1; i >= 0; i--) {
+      const x = polvos[i], e = t - x.t0, pos = x.p.geometry.attributes.position;
+      if (e > 0.55) { scene.remove(x.p); x.p.geometry.dispose(); x.p.material.dispose(); polvos.splice(i, 1); continue; }
+      for (let k = 0; k < x.vel.length; k++) { pos.array[k * 3] += x.vel[k][0] * dt; pos.array[k * 3 + 1] += x.vel[k][1] * dt; pos.array[k * 3 + 2] += x.vel[k][2] * dt; }
+      pos.needsUpdate = true; x.p.material.opacity = 1 - e / 0.55; x.p.material.size = 0.16 + e * 0.25;
+    }
+  }
+
   let antes = 0;
   function cuadro() {
     requestAnimationFrame(cuadro);
     if (!listo || document.hidden) return;
     const t = reloj.getElapsedTime(), dt = Math.min(0.1, t - antes); antes = t;
-    if (EDITOR) moverCamara(dt);
+    if (EDITOR) { moverCamara(dt); moverPolvo(t, dt); }
     figuras.forEach(e => {
       const i = Momentos.info(e.mom);
       if (i && !i.bucle && t - e.t0 > i.dur + 0.4) { e.mom = e.momentos.espera || "respirar"; e.t0 = t; }

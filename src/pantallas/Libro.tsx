@@ -3,7 +3,7 @@
 // Básico/Completo. Las cuadrículas de piezas de cada sección llegan en la etapa 3 (Pelo ya funciona de muestra).
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Icono } from "../ds";
-import { FiguraViva, type MandoFigura, type ZonaFigura } from "../app/figura3d";
+import { FiguraViva, apodoDe, type MandoFigura, type ZonaFigura } from "../app/figura3d";
 import { sonar } from "../app/sonido";
 import type { FiguraV2 } from "../content/personaje";
 import { PaginaExtra } from "./Extras";
@@ -14,7 +14,7 @@ const sinMando = { current: null };
 
 export type ModoEditor = "basico" | "completo";
 export type Seccion = "pelo" | "casco" | "cabeza" | "cuello" | "torso" | "brazos" | "manos" | "capa" | "cadera" | "piernas" | "botas";
-export type Pagina = "indice" | "apariencia" | Seccion | "objetos" | "momentos" | "nombre" | "aleatorio";
+export type Pagina = "indice" | "apariencia" | Seccion | "objetos" | "momentos" | "nombre" | "aleatorio" | "trajes";
 
 export const miniatura = (mini: string) => `${import.meta.env.BASE_URL}arte/piezas/${mini}.webp`;
 
@@ -23,18 +23,17 @@ export const APARIENCIA: { k: Seccion; nombre: string; basico?: string; zona: Zo
   { k: "pelo", nombre: "Pelo", basico: "Pelo", zona: "pelo", img: "hair-012" },
   { k: "casco", nombre: "Casco", zona: "casco", img: "helm-011" },
   { k: "cabeza", nombre: "Cabeza", basico: "Cabeza", zona: "cabeza", img: "face-007" },
-  { k: "cuello", nombre: "Cuello", basico: "Accesorio", zona: "cuello", img: "neck-002" },
+  { k: "cuello", nombre: "Cuello y capa", basico: "Accesorio", zona: "cuello_frente", img: "neck-002" },
   { k: "torso", nombre: "Torso", basico: "Torso completo", zona: "torso", img: "print-010" },
   { k: "brazos", nombre: "Brazos", zona: "brazos", img: "print-019" },
   { k: "manos", nombre: "Manos", zona: "manos", img: "sin-objeto" },
-  { k: "capa", nombre: "Capa", zona: "capa", img: "cape-001" },
   { k: "cadera", nombre: "Cadera", zona: "cadera", img: "piernas-normal" },
   { k: "piernas", nombre: "Piernas", basico: "Piernas completas", zona: "piernas", img: "piernas-cortas" },
   { k: "botas", nombre: "Botas", zona: "botas", img: "con-botas" },
 ];
 export const enBasico = (k: Seccion) => !!APARIENCIA.find(a => a.k === k)?.basico;
 
-const TITULO: Record<Exclude<Pagina, Seccion>, string> = { indice: "Tu figura", apariencia: "Apariencia", objetos: "Objetos", momentos: "Momentos", nombre: "Nombre", aleatorio: "Aleatorio" };
+const TITULO: Record<Exclude<Pagina, Seccion>, string> = { indice: "Tu figura", apariencia: "Apariencia", objetos: "Objetos", momentos: "Momentos", nombre: "Nombre", aleatorio: "Aleatorio", trajes: "Trajes completos" };
 export function tituloDe(p: Pagina, modo: ModoEditor): string {
   const a = APARIENCIA.find(x => x.k === p);
   return a ? (modo === "basico" && a.basico ? a.basico : a.nombre) : TITULO[p as Exclude<Pagina, Seccion>];
@@ -78,6 +77,7 @@ function Contenido({ pag, modo, figura, ir, cambiar, setZona, mando }: Props) {
   if (pag === "indice") return (
     <div className="p-vinetas p-vinetas-indice">
       <Vineta ancha titulo="Apariencia" img={["hair-021", "face-009", "print-019", "con-botas"]} onClick={() => ir("apariencia")} />
+      <Vineta ancha titulo="Trajes completos" img={["estilo-superheroe", "estilo-espacial", "estilo-medieval", "estilo-fiesta"]} onClick={() => ir("trajes")} />
       <Vineta titulo="Objetos" img="acc-002" onClick={() => ir("objetos")} />
       <Vineta titulo="Momentos" dibujo={<DibujoMomentos />} onClick={() => ir("momentos")} />
       <Vineta titulo="Nombre" dibujo={<DibujoNombre />} onClick={() => ir("nombre")} />
@@ -93,7 +93,7 @@ function Contenido({ pag, modo, figura, ir, cambiar, setZona, mando }: Props) {
     );
   }
   if (APARIENCIA.some(a => a.k === pag)) return <PaginaSeccion k={pag as Seccion} modo={modo} figura={figura} cambiar={cambiar} setZona={setZona} />;
-  return <PaginaExtra pag={pag as "objetos" | "momentos" | "nombre" | "aleatorio"} figura={figura} cambiar={cambiar} mando={mando} />;
+  return <PaginaExtra pag={pag as "objetos" | "momentos" | "nombre" | "aleatorio" | "trajes"} figura={figura} cambiar={cambiar} mando={mando} />;
 }
 
 // ---------- Hoja que da vuelta ----------
@@ -162,6 +162,14 @@ export function Libro({ vez, etiqueta, figura, semilla, cambiar, soltado, guarda
     if (!sinMovimiento()) setHoja({ arriba: antes, abajo: top, dir: "vuelta", n: ++n.current });
     setPila(s => s.slice(0, -1));
   };
+  // Botón Pose: la figura hace sus momentos por turnos (ganar, anotar, esperar), según el estilo que lleva.
+  const nPose = useRef(0);
+  const pose = () => {
+    const m = (figura.momentos ?? {}) as { victoria?: string; punto?: string; espera?: string };
+    const lista = [m.victoria ?? "salto-puno", m.punto ?? "puno-arriba", m.espera ?? "respirar"];
+    sonar("poder"); mando.current?.probar(lista[nPose.current++ % lista.length]!);
+  };
+  const apodo = apodoDe(figura);
   // Mientras la hoja de regreso viaja, abajo se sigue viendo la página que se deja.
   const base = hoja ? hoja.abajo : top;
   const zona = zonaLado ?? zonaDe(top);
@@ -187,7 +195,9 @@ export function Libro({ vez, etiqueta, figura, semilla, cambiar, soltado, guarda
             <button type="button" onClick={() => mando.current?.acercar(0.8)} aria-label="Alejar">−</button>
             <button type="button" onClick={() => mando.current?.acercar(1.25)} aria-label="Acercar">+</button>
             <button type="button" onClick={() => mando.current?.girar(0.8)} aria-label="Girar a la derecha">⟳</button>
+            <button type="button" className="p-pose" onClick={pose} aria-label="Hacer una pose">¡Pose!</button>
           </div>
+          {apodo && <span className="p-placa p-sfx" aria-label={`Apodo: ${apodo}`}>{apodo}</span>}
           <span className="p-pista">Arrastra para girar · pellizca o usa la rueda para acercar</span>
         </section>
         <section className="p-pag p-pag-der" aria-live="polite">

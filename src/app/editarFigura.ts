@@ -215,3 +215,70 @@ export const ponerApodo = (f: Figura, nombre: string) => editar(f, g => {
   if (apodo) alv.apodo = apodo; else delete alv.apodo;
   g.extensiones = { ...g.extensiones, alv };
 });
+
+// ---------- Cascos y máscaras (una sola cosa en la cabeza) ----------
+/** Casco o gorro: quita la máscara de cara si había. */
+export const ponerCascoSolo = (f: Figura, id: string | null, color: string) =>
+  editar(f, g => { g.accesorios.cabeza = id ? { id, color: g.accesorios.cabeza?.id === id ? g.accesorios.cabeza.color ?? color : color } : null; g.accesorios.cara = null; });
+/** Máscara de cara completa (araña, pantera…): pinta la cabeza de su color, tapa el pelo y quita el casco. */
+export const ponerMascaraCompleta = (f: Figura, id: string | null, color: string) =>
+  editar(f, g => { g.accesorios.cara = id ? { id, color, tapaPelo: true } as Pz : null; if (id) g.accesorios.cabeza = null; });
+/** ¿Algo en la cabeza tapa el pelo? (casco o máscara que lo tapa) */
+export const pelaTapado = (f: Figura) => !!f.accesorios.cabeza || !!(f.accesorios.cara as (Pz & { tapaPelo?: boolean }) | null)?.tapaPelo;
+
+// ---------- Torso completo (torso, brazos y manos que hacen juego) ----------
+export interface TrajeOriginal { color: string; colores: string[]; brazos: string; manos: string }
+const AMARILLO_PIEL = "#f2cd37"; // en los personajes de la biblioteca, brazos o manos amarillos = piel descubierta
+/**
+ * Elige el torso y le pone brazos y manos que combinan. Con `original` (estampado de personaje) usa sus colores tal cual;
+ * sin él (torsos para pintar) los brazos siguen al torso y las manos a la piel. Quita los ajustes de un solo brazo o mano.
+ */
+export function ponerTorsoCompleto(f: Figura, estampado: string | null, original?: TrajeOriginal) {
+  return editar(f, g => {
+    g.ropa.torso.estampado = estampado;
+    ["brazo_izq", "brazo_der", "mano_izq", "mano_der"].forEach(k => colorManual(g, k, null));
+    if (original) {
+      g.ropa.torso.color = original.color; g.ropa.torso.colores = original.colores.slice(0, 3);
+      const piel = original.brazos.toLowerCase() === AMARILLO_PIEL;
+      g.ropa.mangas = piel ? "sin" : "larga"; g.ropa.brazos = piel || original.brazos.toLowerCase() === original.color.toLowerCase() ? null : original.brazos;
+      g.ropa.guantes = original.manos.toLowerCase() === AMARILLO_PIEL ? null : original.manos;
+    } else { g.ropa.brazos = null; g.ropa.mangas = null; g.ropa.guantes = null; }
+  });
+}
+
+// ---------- Trajes completos (personajes de la biblioteca y estilos de ALV) ----------
+/** El personaje completo: todas sus piezas. Se conservan el apodo y lo guardado en extensiones (modo, apodo). */
+export function vestirCompleto(f: Figura, traje: FiguraV2 | Figura): Figura {
+  const g = completar(traje);
+  g.nombre = f.nombre; g.extensiones = structuredClone(f.extensiones);
+  return g;
+}
+/** Solo el traje: ropa, capa, objetos y momentos del personaje; tu piel, rostro, pelo y lo que llevas en la cabeza se quedan. */
+export function vestirSoloTraje(f: Figura, traje: FiguraV2 | Figura): Figura {
+  const g = vestirCompleto(f, traje);
+  g.identidad = structuredClone(f.identidad);
+  g.accesorios.cabeza = f.accesorios.cabeza ? { ...f.accesorios.cabeza } : null;
+  g.accesorios.cara = f.accesorios.cara ? { ...f.accesorios.cara } : null;
+  delete g.manual.cabeza;
+  return g;
+}
+
+// ---------- Aleatorio con candados ----------
+export type Parte = "pelo" | "cabeza" | "cuello" | "torso" | "piernas" | "objetos" | "momentos";
+const MANUAL_DE: Partial<Record<Parte, string[]>> = { cuello: ["_cuelloExtra"], torso: ["torso", "brazo_der", "brazo_izq", "mano_der", "mano_izq"], piernas: ["cadera", "piernas", "pierna_der", "pierna_izq"], cabeza: ["cabeza"] };
+/** Copia de `antes` a `nueva` las partes con candado: «¡Sorpréndeme!» cambia todo lo demás. */
+export function conservar(nueva: Figura, antes: Figura, partes: Iterable<Parte>): Figura {
+  return editar(nueva, g => {
+    const a = completar(antes as unknown as FiguraV2);
+    for (const p of partes) {
+      if (p === "pelo") { g.identidad.cabello = structuredClone(a.identidad.cabello); g.accesorios.cabeza = structuredClone(a.accesorios.cabeza); g.accesorios.cara = structuredClone(a.accesorios.cara); }
+      if (p === "cabeza") { g.identidad.piel = a.identidad.piel; g.identidad.rostro = a.identidad.rostro; g.identidad.detalles = a.identidad.detalles.slice(); g.identidad.cabeza = a.identidad.cabeza; }
+      if (p === "cuello") g.accesorios.espalda = structuredClone(a.accesorios.espalda);
+      if (p === "torso") { g.ropa.torso = structuredClone(a.ropa.torso); g.ropa.mangas = a.ropa.mangas; g.ropa.brazos = a.ropa.brazos; g.ropa.guantes = a.ropa.guantes; }
+      if (p === "piernas") { g.ropa.cadera = structuredClone(a.ropa.cadera); g.ropa.piernas = structuredClone(a.ropa.piernas); }
+      if (p === "objetos") { g.accesorios.mano_der = structuredClone(a.accesorios.mano_der); g.accesorios.mano_izq = structuredClone(a.accesorios.mano_izq); }
+      if (p === "momentos") g.momentos = structuredClone(a.momentos);
+      for (const k of MANUAL_DE[p] ?? []) { if (a.manual[k]) g.manual[k] = structuredClone(a.manual[k]); else delete g.manual[k]; }
+    }
+  });
+}

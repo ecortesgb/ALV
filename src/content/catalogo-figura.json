@@ -293,91 +293,139 @@
     "id": "HELM_001",
     "nombre": "Gorra de policía",
     "mini": "helm-001",
-    "color": "#0a3463"
+    "color": "#0a3463",
+    "tags": [
+     "trabajo"
+    ]
    },
    {
     "id": "HELM_002",
     "nombre": "Gorra con visera",
     "mini": "helm-002",
-    "color": "#6c6e68"
+    "color": "#6c6e68",
+    "tags": [
+     "ciudad"
+    ]
    },
    {
     "id": "HELM_003",
     "nombre": "Casco de obra",
     "mini": "helm-003",
-    "color": "#f2cd37"
+    "color": "#f2cd37",
+    "tags": [
+     "trabajo"
+    ]
    },
    {
     "id": "HELM_004",
     "nombre": "Gorro de chef",
     "mini": "helm-004",
-    "color": "#f4f4f4"
+    "color": "#f4f4f4",
+    "tags": [
+     "trabajo"
+    ]
    },
    {
     "id": "HELM_005",
     "nombre": "Sombrero de mago",
     "mini": "helm-005",
-    "color": "#0a3463"
+    "color": "#0a3463",
+    "tags": [
+     "magia"
+    ]
    },
    {
     "id": "HELM_006",
     "nombre": "Sombrero de copa",
     "mini": "helm-006",
-    "color": "#1b2a34"
+    "color": "#1b2a34",
+    "tags": [
+     "fiesta"
+    ]
    },
    {
     "id": "HELM_007",
     "nombre": "Capucha",
     "mini": "helm-007",
-    "color": "#237841"
+    "color": "#237841",
+    "tags": [
+     "magia",
+     "aventura"
+    ]
    },
    {
     "id": "HELM_008",
     "nombre": "Bandana",
     "mini": "helm-008",
-    "color": "#c91a09"
+    "color": "#c91a09",
+    "tags": [
+     "ciudad"
+    ]
    },
    {
     "id": "HELM_009",
     "nombre": "Casco de castillo",
     "mini": "helm-009",
-    "color": "#a0a5a9"
+    "color": "#a0a5a9",
+    "tags": [
+     "medieval"
+    ]
    },
    {
     "id": "HELM_010",
     "nombre": "Casco con cubrenuca",
     "mini": "helm-010",
-    "color": "#a0a5a9"
+    "color": "#a0a5a9",
+    "tags": [
+     "medieval"
+    ]
    },
    {
     "id": "HELM_011",
     "nombre": "Casco vikingo",
     "mini": "helm-011",
-    "color": "#a0a5a9"
+    "color": "#a0a5a9",
+    "tags": [
+     "medieval"
+    ]
    },
    {
     "id": "HELM_012",
     "nombre": "Máscara de Batman",
     "mini": "helm-012",
-    "color": "#1b2a34"
+    "color": "#1b2a34",
+    "fijo": true,
+    "tags": [
+     "heroe"
+    ]
    },
    {
     "id": "HELM_013",
     "nombre": "Casco espacial",
     "mini": "helm-013",
-    "color": "#f4f4f4"
+    "color": "#f4f4f4",
+    "tags": [
+     "espacio"
+    ]
    },
    {
     "id": "HELM_014",
     "nombre": "Casco de explorador",
     "mini": "helm-014",
-    "color": "#958a73"
+    "color": "#958a73",
+    "tags": [
+     "aventura"
+    ]
    },
    {
     "id": "HELM_015",
     "nombre": "Casco alado",
     "mini": "helm-015",
-    "color": "#0055bf"
+    "color": "#19325a",
+    "fijo": true,
+    "tags": [
+     "heroe"
+    ]
    }
   ],
   "rostro": [
@@ -441,22 +489,42 @@
    {
     "id": "FACE_012",
     "nombre": "Máscara araña",
-    "mini": "face-012"
+    "mini": "face-012",
+    "color": "#c8102e",
+    "fijo": true,
+    "tags": [
+     "heroe"
+    ]
    },
    {
     "id": "FACE_013",
     "nombre": "Máscara pantera",
-    "mini": "face-013"
+    "mini": "face-013",
+    "color": "#1b2a34",
+    "fijo": true,
+    "tags": [
+     "heroe"
+    ]
    },
    {
     "id": "FACE_014",
     "nombre": "Capucha del Capitán",
-    "mini": "face-014"
+    "mini": "face-014",
+    "color": "#1d3f8f",
+    "fijo": true,
+    "tags": [
+     "heroe"
+    ]
    },
    {
     "id": "FACE_015",
     "nombre": "Careta de Iron Man",
-    "mini": "face-015"
+    "mini": "face-015",
+    "color": "#b3121b",
+    "fijo": true,
+    "tags": [
+     "heroe"
+    ]
    }
   ],
   "detalle": [
@@ -469,61 +537,93 @@
     "id": "DETAIL_001",
     "nombre": "Lentes redondos",
     "mini": "detail-001",
-    "ocupa": "ojos"
+    "ocupa": "ojos",
+    "tags": [
+     "magia"
+    ]
    },
    {
     "id": "DETAIL_002",
     "nombre": "Lentes cuadrados",
     "mini": "detail-002",
-    "ocupa": "ojos"
+    "ocupa": "ojos",
+    "tags": [
+     "espacio"
+    ]
    },
    {
     "id": "DETAIL_003",
     "nombre": "Lentes de sol",
     "mini": "detail-003",
-    "ocupa": "ojos"
+    "ocupa": "ojos",
+    "tags": [
+     "ciudad",
+     "fiesta"
+    ]
    },
    {
     "id": "DETAIL_004",
     "nombre": "Cicatriz de rayo",
     "mini": "detail-004",
-    "ocupa": null
+    "ocupa": null,
+    "tags": [
+     "heroe",
+     "magia"
+    ]
    },
    {
     "id": "DETAIL_005",
     "nombre": "Barba",
     "mini": "detail-005",
-    "ocupa": "barba"
+    "ocupa": "barba",
+    "tags": [
+     "medieval"
+    ]
    },
    {
     "id": "DETAIL_006",
     "nombre": "Candado",
     "mini": "detail-006",
-    "ocupa": "barba"
+    "ocupa": "barba",
+    "tags": [
+     "aventura"
+    ]
    },
    {
     "id": "DETAIL_007",
     "nombre": "Bigote",
     "mini": "detail-007",
-    "ocupa": "barba"
+    "ocupa": "barba",
+    "tags": [
+     "fiesta"
+    ]
    },
    {
     "id": "DETAIL_008",
     "nombre": "Pecas",
     "mini": "detail-008",
-    "ocupa": null
+    "ocupa": "mejillas",
+    "tags": [
+     "ciudad"
+    ]
    },
    {
     "id": "DETAIL_009",
     "nombre": "Mejillas",
     "mini": "detail-009",
-    "ocupa": null
+    "ocupa": "mejillas",
+    "tags": [
+     "ciudad"
+    ]
    },
    {
     "id": "DETAIL_010",
     "nombre": "Parche",
     "mini": "detail-010",
-    "ocupa": "ojos"
+    "ocupa": "ojos",
+    "tags": [
+     "aventura"
+    ]
    }
   ],
   "cuello": [
@@ -535,52 +635,94 @@
    {
     "id": "NECK_001",
     "nombre": "Tanques de aire",
-    "mini": "neck-001"
+    "mini": "neck-001",
+    "mira": "espalda",
+    "tags": [
+     "espacio"
+    ]
    },
    {
     "id": "NECK_002",
     "nombre": "Mochila",
-    "mini": "neck-002"
+    "mini": "neck-002",
+    "mira": "espalda",
+    "tags": [
+     "ciudad",
+     "aventura"
+    ]
    },
    {
     "id": "NECK_003",
     "nombre": "Carcaj de flechas",
-    "mini": "neck-003"
+    "mini": "neck-003",
+    "mira": "espalda",
+    "tags": [
+     "medieval"
+    ]
    },
    {
     "id": "NECK_004",
     "nombre": "Armadura",
-    "mini": "neck-004"
+    "mini": "neck-004",
+    "mira": "frente",
+    "tags": [
+     "medieval"
+    ]
    },
    {
     "id": "NECK_005",
     "nombre": "Chaleco",
-    "mini": "neck-005"
+    "mini": "neck-005",
+    "mira": "frente",
+    "tags": [
+     "trabajo"
+    ]
    },
    {
     "id": "NECK_006",
     "nombre": "Chaleco antibalas",
-    "mini": "neck-006"
+    "mini": "neck-006",
+    "mira": "frente",
+    "tags": [
+     "trabajo"
+    ]
    },
    {
     "id": "NECK_007",
     "nombre": "Barba larga",
-    "mini": "neck-007"
+    "mini": "neck-007",
+    "mira": "frente",
+    "tags": [
+     "magia"
+    ]
    },
    {
     "id": "NECK_008",
     "nombre": "Funda de espada",
-    "mini": "neck-008"
+    "mini": "neck-008",
+    "mira": "espalda",
+    "tags": [
+     "medieval"
+    ]
    },
    {
     "id": "NECK_009",
     "nombre": "Morral",
-    "mini": "neck-009"
+    "mini": "neck-009",
+    "mira": "frente",
+    "tags": [
+     "ciudad",
+     "aventura"
+    ]
    },
    {
     "id": "NECK_010",
     "nombre": "Tanque de buceo",
-    "mini": "neck-010"
+    "mini": "neck-010",
+    "mira": "espalda",
+    "tags": [
+     "espacio"
+    ]
    }
   ],
   "capa": [
@@ -592,7 +734,12 @@
    {
     "id": "CAPE_001",
     "nombre": "Capa de tela",
-    "mini": "cape-001"
+    "mini": "cape-001",
+    "tags": [
+     "heroe",
+     "medieval",
+     "magia"
+    ]
    }
   ],
   "torso": [
@@ -605,139 +752,401 @@
     "id": "PRINT_001",
     "nombre": "Capitán (estrella)",
     "mini": "print-001",
-    "mangas": "larga"
+    "mangas": "larga",
+    "original": {
+     "color": "#1d3f8f",
+     "colores": [
+      "#c8102e",
+      "#f4f4f4",
+      "#6b4a2b"
+     ],
+     "brazos": "#1d3f8f",
+     "manos": "#7a4b25"
+    },
+    "tags": [
+     "heroe"
+    ]
    },
    {
     "id": "PRINT_002",
     "nombre": "Armadura reactor",
     "mini": "print-002",
-    "mangas": "larga"
+    "mangas": "larga",
+    "original": {
+     "color": "#b3121b",
+     "colores": [
+      "#e3b341",
+      "#ffffff",
+      "#6b4a2b"
+     ],
+     "brazos": "#b3121b",
+     "manos": "#e3b341"
+    },
+    "tags": [
+     "heroe"
+    ]
    },
    {
     "id": "PRINT_003",
     "nombre": "Armadura nórdica",
     "mini": "print-003",
-    "mangas": "larga"
+    "mangas": "larga",
+    "original": {
+     "color": "#2f3338",
+     "colores": [
+      "#c9ced6",
+      "#5a3a22",
+      "#6b4a2b"
+     ],
+     "brazos": "#2f3338",
+     "manos": "#f2cd37"
+    },
+    "tags": [
+     "medieval"
+    ]
    },
    {
     "id": "PRINT_004",
     "nombre": "Traje araña",
     "mini": "print-004",
-    "mangas": "larga"
+    "mangas": "larga",
+    "original": {
+     "color": "#c8102e",
+     "colores": [
+      "#1d4fa8",
+      "#111111",
+      "#6b4a2b"
+     ],
+     "brazos": "#c8102e",
+     "manos": "#c8102e"
+    },
+    "tags": [
+     "heroe"
+    ]
    },
    {
     "id": "PRINT_005",
     "nombre": "Músculos",
     "mini": "print-005",
-    "mangas": "sin"
+    "mangas": "sin",
+    "original": {
+     "color": "#5d9b3a",
+     "colores": [
+      "#447a2a",
+      "#ffffff",
+      "#6b4a2b"
+     ],
+     "brazos": "#5d9b3a",
+     "manos": "#5d9b3a"
+    },
+    "tags": [
+     "heroe"
+    ]
    },
    {
     "id": "PRINT_006",
     "nombre": "Traje táctico",
     "mini": "print-006",
-    "mangas": "larga"
+    "mangas": "larga",
+    "original": {
+     "color": "#1b2a34",
+     "colores": [
+      "#d0141c",
+      "#8e949e",
+      "#6b4a2b"
+     ],
+     "brazos": "#1b2a34",
+     "manos": "#1b2a34"
+    },
+    "tags": [
+     "heroe"
+    ]
    },
    {
     "id": "PRINT_007",
     "nombre": "Traje pantera",
     "mini": "print-007",
-    "mangas": "larga"
+    "mangas": "larga",
+    "original": {
+     "color": "#1b2a34",
+     "colores": [
+      "#b9bfca",
+      "#9b5cff",
+      "#6b4a2b"
+     ],
+     "brazos": "#1b2a34",
+     "manos": "#1b2a34"
+    },
+    "tags": [
+     "heroe"
+    ]
    },
    {
     "id": "PRINT_008",
     "nombre": "Túnica hechicero",
     "mini": "print-008",
-    "mangas": "larga"
+    "mangas": "larga",
+    "original": {
+     "color": "#1f3d7a",
+     "colores": [
+      "#3a62b0",
+      "#6b4a2b",
+      "#e3b341"
+     ],
+     "brazos": "#1f3d7a",
+     "manos": "#f2cd37"
+    },
+    "tags": [
+     "magia"
+    ]
    },
    {
     "id": "PRINT_009",
     "nombre": "Uniforme Hogwarts",
     "mini": "print-009",
-    "mangas": "larga"
+    "mangas": "larga",
+    "original": {
+     "color": "#1b2a34",
+     "colores": [
+      "#9c1b1f",
+      "#e3b341",
+      "#7f838b"
+     ],
+     "brazos": "#1b2a34",
+     "manos": "#f2cd37"
+    },
+    "tags": [
+     "magia"
+    ]
    },
    {
     "id": "PRINT_010",
     "nombre": "Suéter con letra",
     "mini": "print-010",
-    "mangas": "larga"
+    "mangas": "larga",
+    "tags": [
+     "ciudad"
+    ]
    },
    {
     "id": "PRINT_011",
     "nombre": "Túnica de estrellas",
     "mini": "print-011",
-    "mangas": "larga"
+    "mangas": "larga",
+    "original": {
+     "color": "#4b2a7a",
+     "colores": [
+      "#e3b341",
+      "#c8c9cc",
+      "#6b4a2b"
+     ],
+     "brazos": "#4b2a7a",
+     "manos": "#f2cd37"
+    },
+    "tags": [
+     "magia"
+    ]
    },
    {
     "id": "PRINT_012",
     "nombre": "Camisa y corbata",
     "mini": "print-012",
-    "mangas": "larga"
+    "mangas": "larga",
+    "tags": [
+     "ciudad",
+     "fiesta"
+    ]
    },
    {
     "id": "PRINT_013",
     "nombre": "Bata de laboratorio",
     "mini": "print-013",
-    "mangas": "larga"
+    "mangas": "larga",
+    "original": {
+     "color": "#f4f4f4",
+     "colores": [
+      "#3a7bd5",
+      "#c8102e",
+      "#6b4a2b"
+     ],
+     "brazos": "#f4f4f4",
+     "manos": "#f2cd37"
+    },
+    "tags": [
+     "espacio",
+     "trabajo"
+    ]
    },
    {
     "id": "PRINT_014",
     "nombre": "Filipina de chef",
     "mini": "print-014",
-    "mangas": "larga"
+    "mangas": "larga",
+    "original": {
+     "color": "#f4f4f4",
+     "colores": [
+      "#9aa1ad",
+      "#ffffff",
+      "#6b4a2b"
+     ],
+     "brazos": "#f4f4f4",
+     "manos": "#f2cd37"
+    },
+    "tags": [
+     "trabajo"
+    ]
    },
    {
     "id": "PRINT_015",
     "nombre": "Policía",
     "mini": "print-015",
-    "mangas": "larga"
+    "mangas": "larga",
+    "original": {
+     "color": "#1b2b52",
+     "colores": [
+      "#111111",
+      "#e3b341",
+      "#6b4a2b"
+     ],
+     "brazos": "#1b2b52",
+     "manos": "#f2cd37"
+    },
+    "tags": [
+     "trabajo"
+    ]
    },
    {
     "id": "PRINT_016",
     "nombre": "Bombero",
     "mini": "print-016",
-    "mangas": "larga"
+    "mangas": "larga",
+    "original": {
+     "color": "#2a2a2a",
+     "colores": [
+      "#ffd21a",
+      "#d9dde3",
+      "#6b4a2b"
+     ],
+     "brazos": "#2a2a2a",
+     "manos": "#f2cd37"
+    },
+    "tags": [
+     "trabajo"
+    ]
    },
    {
     "id": "PRINT_017",
     "nombre": "Chaleco de obra",
     "mini": "print-017",
-    "mangas": "larga"
+    "mangas": "larga",
+    "original": {
+     "color": "#3a6fb5",
+     "colores": [
+      "#fe8a18",
+      "#d9dde3",
+      "#6b4a2b"
+     ],
+     "brazos": "#3a6fb5",
+     "manos": "#f2cd37"
+    },
+    "tags": [
+     "trabajo"
+    ]
    },
    {
     "id": "PRINT_018",
     "nombre": "Pirata",
     "mini": "print-018",
-    "mangas": "larga"
+    "mangas": "larga",
+    "original": {
+     "color": "#f1ece0",
+     "colores": [
+      "#582a12",
+      "#c91a09",
+      "#6b4a2b"
+     ],
+     "brazos": "#f1ece0",
+     "manos": "#f2cd37"
+    },
+    "tags": [
+     "aventura"
+    ]
    },
    {
     "id": "PRINT_019",
     "nombre": "Jersey de fútbol",
     "mini": "print-019",
-    "mangas": "corta"
+    "mangas": "corta",
+    "tags": [
+     "ciudad",
+     "fiesta"
+    ]
    },
    {
     "id": "PRINT_020",
     "nombre": "Sudadera",
     "mini": "print-020",
-    "mangas": "larga"
+    "mangas": "larga",
+    "tags": [
+     "ciudad"
+    ]
    },
    {
     "id": "PRINT_021",
     "nombre": "Emblema de murciélago",
     "mini": "print-021",
-    "mangas": "larga"
+    "mangas": "larga",
+    "original": {
+     "color": "#8e949e",
+     "colores": [
+      "#ffd21a",
+      "#1b2a34",
+      "#ffd21a"
+     ],
+     "brazos": "#8e949e",
+     "manos": "#1b2a34"
+    },
+    "tags": [
+     "heroe"
+    ]
    },
    {
     "id": "PRINT_022",
     "nombre": "Escudo con S",
     "mini": "print-022",
-    "mangas": "larga"
+    "mangas": "larga",
+    "original": {
+     "color": "#1d4fa8",
+     "colores": [
+      "#c91a09",
+      "#f2cd37",
+      "#6b4a2b"
+     ],
+     "brazos": "#1d4fa8",
+     "manos": "#f2cd37"
+    },
+    "tags": [
+     "heroe"
+    ]
    },
    {
     "id": "PRINT_023",
     "nombre": "Armadura dorada",
     "mini": "print-023",
-    "mangas": "larga"
+    "mangas": "larga",
+    "original": {
+     "color": "#c91a09",
+     "colores": [
+      "#e3b341",
+      "#ffffff",
+      "#6b4a2b"
+     ],
+     "brazos": "#f2cd37",
+     "manos": "#f2cd37"
+    },
+    "tags": [
+     "heroe"
+    ]
    }
   ],
   "objeto": [
@@ -750,73 +1159,114 @@
     "id": "ACC_001",
     "nombre": "Varita",
     "mini": "acc-001",
-    "color": "#582a12"
+    "color": "#582a12",
+    "tags": [
+     "magia"
+    ]
    },
    {
     "id": "ACC_002",
     "nombre": "Espada",
     "mini": "acc-002",
-    "color": "#a0a5a9"
+    "color": "#a0a5a9",
+    "tags": [
+     "medieval",
+     "aventura"
+    ]
    },
    {
     "id": "ACC_003",
     "nombre": "Escudo redondo",
     "mini": "acc-003",
-    "color": "#a0a5a9"
+    "color": "#a0a5a9",
+    "tags": [
+     "medieval"
+    ]
    },
    {
     "id": "ACC_004",
     "nombre": "Escudo del Capitán",
     "mini": "acc-004",
-    "color": "#c8102e"
+    "color": "#c8102e",
+    "tags": [
+     "heroe"
+    ]
    },
    {
     "id": "ACC_005",
     "nombre": "Escudo triangular",
     "mini": "acc-005",
-    "color": "#a0a5a9"
+    "color": "#a0a5a9",
+    "tags": [
+     "medieval"
+    ]
    },
    {
     "id": "ACC_006",
     "nombre": "Escudo ovalado",
     "mini": "acc-006",
-    "color": "#a0a5a9"
+    "color": "#a0a5a9",
+    "tags": [
+     "medieval"
+    ]
    },
    {
     "id": "ACC_007",
     "nombre": "Lanza o bastón",
     "mini": "acc-007",
-    "color": "#582a12"
+    "color": "#582a12",
+    "tags": [
+     "medieval",
+     "aventura"
+    ]
    },
    {
     "id": "ACC_008",
     "nombre": "Mazo",
     "mini": "acc-008",
-    "color": "#6c6e68"
+    "color": "#6c6e68",
+    "tags": [
+     "medieval"
+    ]
    },
    {
     "id": "ACC_009",
     "nombre": "Escoba",
     "mini": "acc-009",
-    "color": "#582a12"
+    "color": "#582a12",
+    "tags": [
+     "magia"
+    ]
    },
    {
     "id": "ACC_010",
     "nombre": "Taza",
     "mini": "acc-010",
-    "color": "#f4f4f4"
+    "color": "#f4f4f4",
+    "tags": [
+     "trabajo",
+     "ciudad",
+     "fiesta"
+    ]
    },
    {
     "id": "ACC_011",
     "nombre": "Sartén",
     "mini": "acc-011",
-    "color": "#1b2a34"
+    "color": "#1b2a34",
+    "tags": [
+     "trabajo"
+    ]
    },
    {
     "id": "ACC_012",
     "nombre": "Radio",
     "mini": "acc-012",
-    "color": "#1b2a34"
+    "color": "#1b2a34",
+    "tags": [
+     "espacio",
+     "trabajo"
+    ]
    }
   ],
   "piernas": [

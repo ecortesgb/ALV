@@ -258,3 +258,57 @@
 /* Celular girado (diseño de computadora con poca altura): las cartas y el libro caben sin desplazar. */
 .D.wide .p-carta { width: min(100%, calc((100dvh - 210px) * 5 / 7)); min-width: 130px; }
 .D.wide .p-ranura { justify-content: flex-start; }
+
+/* Pelo tapado por un casco o máscara: aviso arriba y las piezas en gris (siguen tocables). */
+.p-aviso { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin: 0 0 14px; padding: 10px 12px; clear: both;
+  font: 700 14px/1.3 var(--letra-cuerpo, sans-serif); background: #fff8c7; border: 2.5px solid var(--p-tinta); box-shadow: 3px 3px 0 var(--p-tinta); }
+.p-tapado { opacity: .45; filter: grayscale(.7); transition: opacity .2s; }
+.p-tapado:hover, .p-tapado:focus-within { opacity: .8; }
+
+/* ---------- Bloque B: predictivo y adictivo ---------- */
+/* Colores que combinan: estrella amarilla en la esquina. */
+.p-color.sug::before { content: "★"; position: absolute; top: -8px; right: -7px; z-index: 1; font: 900 13px/1 var(--letra-cuerpo, sans-serif); color: var(--p-amarillo);
+  text-shadow: 0 0 2px var(--p-tinta), 0 0 2px var(--p-tinta), 0 0 2px var(--p-tinta); }
+.p-espejo { display: block; margin: -6px 0 14px; }
+
+/* Combina con tu look */
+.p-look { margin-top: 18px; padding-top: 12px; border-top: 3px dashed rgba(10, 16, 48, .25); clear: both; }
+.p-look-fila { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 9px; }
+.p-look-pieza span { white-space: normal; line-height: 1.15; }
+.p-look-pieza span b { display: block; font: 400 12px/1 var(--letra-sfx, Bangers, sans-serif); letter-spacing: .04em; color: #c91a09; }
+.p-look-pieza img { filter: none; }
+
+/* Trajes completos */
+.p-colecciones { margin-bottom: 12px; }
+.p-vestir { position: sticky; top: 0; z-index: 3; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 0 0 12px; padding: 10px;
+  background: var(--p-papel); border: 3px solid var(--p-tinta); box-shadow: 4px 4px 0 var(--p-tinta); }
+.p-vestir .p-sfx { flex: 1 1 100%; font-size: 22px; line-height: 1; }
+.p-vestir .p-opcion { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; }
+.p-vestir .p-opcion small { font: 600 11px/1.1 var(--letra-cuerpo, sans-serif); text-transform: none; font-style: normal; }
+.p-rejilla-trajes { grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); }
+.p-rejilla-trajes .p-pieza img { filter: none; }
+
+/* Candados */
+.p-candado span { font-style: normal; }
+
+/* Pose y placa con el apodo sobre el pedestal */
+.p-mandos .p-pose { width: auto; padding: 0 12px; font: 400 18px/1 var(--letra-sfx, Bangers, sans-serif); letter-spacing: .04em; color: #fff;
+  background: linear-gradient(180deg, #ff5a4d, #c91a09 60%, #8e1206); }
+.p-placa { position: absolute; left: 50%; bottom: 96px; translate: -50% 0; max-width: 70%; padding: 3px 14px 2px; font-size: clamp(15px, 2vw, 20px); letter-spacing: .05em;
+  color: var(--p-tinta); background: linear-gradient(180deg, #fff09a, #ffd23f); border: 2.5px solid var(--p-tinta); border-radius: 4px; box-shadow: 0 3px 0 var(--p-tinta);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; pointer-events: none; transform: rotate(-1.5deg); }
+
+/* Carta coleccionable */
+.p-cartacol { position: relative; isolation: isolate; width: 210px; margin: 6px auto 16px; padding: 0 0 12px; overflow: hidden; text-align: center; color: #fff;
+  border: 3px solid var(--p-tinta); border-radius: 10px; box-shadow: 6px 7px 0 var(--p-tinta);
+  background: radial-gradient(circle at 1px 1px, rgba(255, 255, 255, .13) 1.2px, transparent 1.7px) 0 0 / 8px 8px, radial-gradient(ellipse at 50% 40%, #3d7be6, #1d3aa8 55%, #12205f); }
+.p-cartacol-rayos { position: absolute; z-index: -1; left: 50%; top: 42%; width: 170%; aspect-ratio: 1; translate: -50% -50%; opacity: .55;
+  background: repeating-conic-gradient(rgba(255, 230, 120, .6) 0 6deg, transparent 6deg 18deg); -webkit-mask: radial-gradient(closest-side, #000 20%, transparent); mask: radial-gradient(closest-side, #000 20%, transparent);
+  animation: pRayos 9s linear infinite; }
+.p-cartacol-cinta { display: block; padding: 5px 4px 4px; font-size: 16px; letter-spacing: .06em; color: var(--p-tinta); background: var(--p-amarillo); border-bottom: 2.5px solid var(--p-tinta); }
+.p-cartacol-foto { display: grid; place-items: center; padding: 8px 0 2px; }
+.p-cartacol figcaption { display: flex; flex-direction: column; gap: 2px; margin: 0 10px; padding: 6px 8px; color: var(--p-tinta); background: #fff; border: 2px solid var(--p-tinta); }
+.p-cartacol-apodo { font-size: 22px; line-height: 1; }
+.p-cartacol-jugador { font: 700 13px/1.1 var(--letra-cuerpo, sans-serif); }
+.p-cartacol-dato { font: 600 11px/1.1 var(--letra-cuerpo, sans-serif); color: #4a5280; }
+@media (prefers-reduced-motion: reduce) { .p-cartacol-rayos { animation: none; } }

@@ -43,6 +43,8 @@ function tocar(notas: Nota[]) {
 const SONIDOS = {
   tic: [{ f: 1200, t: 0, d: 0.03, tipo: "triangle", v: 0.05 }],
   clic: [{ f: 520, a: 380, t: 0, d: 0.05, v: 0.04 }],
+  /** Pieza que encaja: doble chasquido corto de plástico. */
+  encaje: [{ f: 2400, a: 1200, t: 0, d: 0.022, tipo: "square", v: 0.035 }, { f: 1700, a: 700, t: 0.035, d: 0.03, tipo: "triangle", v: 0.05 }, { f: 180, a: 90, t: 0.035, d: 0.05, tipo: "sine", v: 0.06 }],
   exito: [{ f: 523, t: 0, d: 0.09 }, { f: 659, t: 0.08, d: 0.09 }, { f: 784, t: 0.16, d: 0.16 }],
   paso: [{ f: 330, a: 220, t: 0, d: 0.16, tipo: "triangle", v: 0.07 }],
   error: [{ f: 196, t: 0, d: 0.12, tipo: "sawtooth", v: 0.06 }, { f: 147, t: 0.12, d: 0.2, tipo: "sawtooth", v: 0.06 }],

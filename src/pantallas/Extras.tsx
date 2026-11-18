@@ -1,14 +1,18 @@
 // Páginas del libro fuera de Apariencia: Objetos, Momentos, Nombre (apodo de la figura) y Aleatorio.
 import { useEffect, useRef, useState } from "react";
-import type { MandoFigura } from "../app/figura3d";
-import { LARGO_APODO, MOMENTOS_NORMALES, completar, limpiarApodo, ponerApodo, ponerMomentos, ponerObjeto, type Figura, type Paquete } from "../app/editarFigura";
+import { FotoFigura, type MandoFigura } from "../app/figura3d";
+import {
+  LARGO_APODO, MOMENTOS_NORMALES, completar, conservar, limpiarApodo, ponerApodo, ponerMomentos, ponerObjeto, vestirCompleto, vestirSoloTraje,
+  type Figura, type Paquete, type Parte,
+} from "../app/editarFigura";
 import { useSesion } from "../app/sesion";
 import { sonar } from "../app/sonido";
 import catalogo from "../content/catalogo-figura.json";
 import type { FiguraV2 } from "../content/personaje";
 import { miniatura } from "./Libro";
+import { estilosDe } from "./look";
 
-type Pag = "objetos" | "momentos" | "nombre" | "aleatorio";
+type Pag = "objetos" | "momentos" | "nombre" | "aleatorio" | "trajes";
 const PALETA = catalogo.paleta;
 
 export function PaginaExtra({ pag, figura, cambiar, mando }: { pag: Pag; figura: FiguraV2; cambiar: (f: FiguraV2) => void; mando: { current: MandoFigura | null } }) {
@@ -17,6 +21,7 @@ export function PaginaExtra({ pag, figura, cambiar, mando }: { pag: Pag; figura:
   if (pag === "objetos") return <Objetos f={f} poner={poner} />;
   if (pag === "momentos") return <Momentos f={f} poner={poner} mando={mando} />;
   if (pag === "nombre") return <Nombre f={f} poner={poner} />;
+  if (pag === "trajes") return <Trajes f={f} poner={poner} />;
   return <Aleatorio f={f} poner={poner} mando={mando} />;
 }
 
@@ -112,11 +117,81 @@ function Nombre({ f, poner }: { f: Figura; poner: (g: Figura) => void }) {
         onChange={e => setTexto(limpiarApodo(e.target.value))}
         onKeyDown={e => { if (e.key === "Enter") (e.target as HTMLInputElement).blur(); }} />
     </label>
-    <div className="p-ficha" aria-label="Así se verá">
-      <span className="p-ficha-apodo p-sfx">{texto.trim() || "Mi figura"}</span>
-      <span className="p-ficha-nombre">{nombre || "Tu nombre"}</span>
-    </div>
+    <CartaColeccion f={f} apodo={texto.trim() || "Mi figura"} jugador={nombre || "Tu nombre"} />
     <p className="p-nota">El apodo va arriba de tu nombre y es solo de esta figura (cada espacio puede tener el suyo). Tu nombre de jugador no cambia.</p>
+  </>;
+}
+
+const NOMBRE_ESTILO: Record<string, string> = { heroe: "Superhéroe", medieval: "Medieval", magia: "Magia", espacio: "Espacial", trabajo: "Oficio", ciudad: "Ciudad", aventura: "Aventura", fiesta: "Fiesta" };
+/** Carta tipo videojuego: la figura, su apodo, el jugador, su estilo y sus momentos. */
+function CartaColeccion({ f, apodo, jugador }: { f: Figura; apodo: string; jugador: string }) {
+  const estilo = estilosDe(f)[0];
+  const mom = catalogo.paquetes.find(p => p.id === f.momentos.paquete)?.nombre ?? "Normal";
+  return (
+    <figure className="p-cartacol" aria-label={`Carta de ${apodo}`}>
+      <span className="p-cartacol-rayos" aria-hidden="true" />
+      <span className="p-cartacol-cinta p-sfx">{estilo ? NOMBRE_ESTILO[estilo] ?? estilo : "Original"}</span>
+      <span className="p-cartacol-foto"><FotoFigura figura={f as unknown as FiguraV2} size={130} nombre={apodo} /></span>
+      <figcaption>
+        <span className="p-cartacol-apodo p-sfx">{apodo}</span>
+        <span className="p-cartacol-jugador">{jugador}</span>
+        <span className="p-cartacol-dato">Momentos: {mom}</span>
+      </figcaption>
+    </figure>
+  );
+}
+
+// ---------- Trajes completos: personajes de la biblioteca y estilos de ALV ----------
+type Traje = { id: string; nombre: string; coleccion?: string; mini: string; figura: FiguraV2 };
+type DatosTrajes = { colecciones: { id: string; nombre: string }[]; estilos: Traje[]; trajes: Traje[] };
+let trajesCargados: DatosTrajes | null = null;
+function Trajes({ f, poner }: { f: Figura; poner: (g: Figura) => void }) {
+  const [datos, setDatos] = useState<DatosTrajes | null>(trajesCargados);
+  // Se cargan solo al abrir esta página (archivo aparte): el resto de la app no pesa más.
+  useEffect(() => {
+    if (datos) return;
+    let vivo = true;
+    void import("../content/trajes-figura.json").then(m => { trajesCargados = m.default as unknown as DatosTrajes; if (vivo) setDatos(trajesCargados); });
+    return () => { vivo = false; };
+  }, [datos]);
+  const [col, setCol] = useState("estilos");
+  const [elegido, setElegido] = useState<Traje | null>(null);
+  const antes = useRef<Figura[]>([]);
+  const [hay, setHay] = useState(0);
+  if (!datos) return <p className="p-nota">Abriendo el armario…</p>;
+  const lista = col === "estilos" ? datos.estilos : datos.trajes.filter(t => t.coleccion === col);
+  const vestir = (todo: boolean) => {
+    if (!elegido) return;
+    antes.current = [...antes.current.slice(-9), f]; setHay(antes.current.length);
+    sonar("exito"); poner(todo ? vestirCompleto(f, elegido.figura) : vestirSoloTraje(f, elegido.figura));
+  };
+  return <>
+    <div className="p-opciones p-colecciones" role="tablist" aria-label="Colección">
+      {datos.colecciones.map(c => (
+        <button key={c.id} type="button" role="tab" aria-selected={col === c.id} className={"p-opcion" + (col === c.id ? " on" : "")}
+          onClick={() => { sonar("clic"); setCol(c.id); setElegido(null); }}>{c.nombre}</button>
+      ))}
+    </div>
+    {elegido && (
+      <div className="p-vestir" role="group" aria-label={`Ponerte ${elegido.nombre}`}>
+        <span className="p-sfx">{elegido.nombre}</span>
+        <button type="button" className="p-opcion on" onClick={() => vestir(false)}>Solo el traje<small>tu cara y tu pelo se quedan</small></button>
+        <button type="button" className="p-opcion" onClick={() => vestir(true)}>Personaje completo<small>todas sus piezas</small></button>
+      </div>
+    )}
+    <div className="p-rejilla p-rejilla-trajes">
+      {lista.map(t => (
+        <button key={t.id} type="button" className={"p-pieza" + (elegido?.id === t.id ? " on" : "")} aria-pressed={elegido?.id === t.id} title={t.nombre}
+          onClick={() => { sonar("clic"); setElegido(t); }}>
+          <img src={miniatura(t.mini)} alt="" loading="lazy" draggable={false} />
+          <span>{t.nombre}</span>
+        </button>
+      ))}
+    </div>
+    <button type="button" className="p-opcion p-deshacer" onClick={() => { const g = antes.current.pop(); setHay(antes.current.length); if (g) { sonar("clic"); poner(g); } }} disabled={!hay}>
+      Deshacer{hay ? ` (${hay})` : ""}
+    </button>
+    <p className="p-nota">Después puedes retocar cualquier pieza en Apariencia (en Completo, todo).</p>
   </>;
 }
 
@@ -125,6 +200,8 @@ function Aleatorio({ f, poner, mando }: { f: Figura; poner: (g: Figura) => void;
   const antes = useRef<Figura[]>([]);
   const [hay, setHay] = useState(0);
   const [pensando, setPensando] = useState(false);
+  const [candados, setCandados] = useState<Set<Parte>>(() => new Set());
+  const PARTES: [Parte, string][] = [["pelo", "Pelo y casco"], ["cabeza", "Cara y piel"], ["torso", "Torso y brazos"], ["piernas", "Piernas"], ["cuello", "Cuello y capa"], ["objetos", "Objetos"], ["momentos", "Momentos"]];
   const sorprender = async () => {
     if (pensando) return;
     setPensando(true); sonar("exito");
@@ -132,8 +209,8 @@ function Aleatorio({ f, poner, mando }: { f: Figura; poner: (g: Figura) => void;
     setPensando(false);
     if (!g) return;
     antes.current = [...antes.current.slice(-9), f]; setHay(antes.current.length);
-    // El apodo se conserva: la figura cambia, sigue siendo «tuya».
-    poner(ponerApodo(completar(g), f.nombre));
+    // El apodo se conserva (la figura cambia, sigue siendo «tuya») y lo que tiene candado no se toca.
+    poner(conservar(vestirCompleto(f, completar(g)), f, candados));
   };
   const deshacer = () => {
     const g = antes.current.pop(); setHay(antes.current.length);
@@ -142,9 +219,24 @@ function Aleatorio({ f, poner, mando }: { f: Figura; poner: (g: Figura) => void;
   return <>
     <button type="button" className="p-sorpresa" onClick={sorprender} disabled={pensando}>
       <span className="p-sfx">¡Sorpréndeme!</span>
-      <small>Arma una figura completa al azar</small>
+      <small>{candados.size ? `Cambia todo menos ${candados.size === 1 ? "lo que tiene candado" : `las ${candados.size} partes con candado`}` : "Arma una figura completa al azar"}</small>
     </button>
     <button type="button" className="p-opcion p-deshacer" onClick={deshacer} disabled={!hay}>Deshacer{hay ? ` (${hay})` : ""}</button>
+    <section className="p-bloque">
+      <h3 className="p-bloque-titulo">Candados</h3>
+      <p className="p-nota">Pon candado a lo que te gusta: «¡Sorpréndeme!» cambia todo lo demás.</p>
+      <div className="p-opciones">
+        {PARTES.map(([k, n]) => {
+          const on = candados.has(k);
+          return (
+            <button key={k} type="button" aria-pressed={on} className={"p-opcion p-candado" + (on ? " on" : "")}
+              onClick={() => { sonar("clic"); setCandados(c => { const x = new Set(c); if (x.has(k)) x.delete(k); else x.add(k); return x; }); }}>
+              <span aria-hidden="true">{on ? "🔒" : "🔓"}</span> {n}
+            </button>
+          );
+        })}
+      </div>
+    </section>
     <p className="p-nota">Cada página de Apariencia tiene su dado «Al azar» para cambiar solo esa parte.</p>
   </>;
 }

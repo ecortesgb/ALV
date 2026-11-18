@@ -1,7 +1,7 @@
 // Genera las miniaturas de piezas del personalizador (se corre a mano, una vez, cuando cambian las piezas).
 // Uso: node tools/miniaturas/servidor.mjs   y abrir http://localhost:4190/gen/  (la página hace todo y avisa al terminar)
 // Sirve public/ en / y esta carpeta en /gen/. Solo acepta guardar en public/arte/piezas/*.webp y en
-// src/content/catalogo-figura.json. Solo escucha en 127.0.0.1.
+// src/content/catalogo-figura.json y src/content/trajes-figura.json. Solo escucha en 127.0.0.1.
 import { createServer } from "node:http";
 import { mkdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { dirname, extname, join, normalize, resolve } from "node:path";
@@ -12,6 +12,7 @@ const raiz = resolve(aqui, "..", "..");
 const publico = join(raiz, "public");
 const destino = join(publico, "arte", "piezas");
 const catalogo = join(raiz, "src", "content", "catalogo-figura.json");
+const trajes = join(raiz, "src", "content", "trajes-figura.json");
 const TIPOS = { ".html": "text/html; charset=utf-8", ".js": "text/javascript", ".json": "application/json", ".webp": "image/webp", ".png": "image/png", ".css": "text/css" };
 
 function dentro(base, ruta) { const p = normalize(join(base, ruta)); return p.startsWith(base) ? p : null; }
@@ -28,6 +29,11 @@ createServer(async (req, res) => {
       if (!m) { res.writeHead(400).end("imagen"); return; }
       mkdirSync(destino, { recursive: true });
       writeFileSync(join(destino, id + ".webp"), Buffer.from(m[1], "base64"));
+      res.writeHead(200).end("ok"); return;
+    }
+    if (req.method === "POST" && url.pathname === "/trajes") {
+      writeFileSync(trajes, JSON.stringify(JSON.parse(await leerCuerpo(req))) + "\n");
+      console.log("Trajes guardados en src/content/trajes-figura.json");
       res.writeHead(200).end("ok"); return;
     }
     if (req.method === "POST" && url.pathname === "/catalogo") {

@@ -24,8 +24,22 @@ iframe{position:fixed;left:-500px;top:0;width:100px;height:100px;border:0}
 (async function () {
   const estado = document.getElementById("estado"), rejilla = document.getElementById("rejilla"), motor = document.getElementById("motor");
   const C = MinifigCore;
-  const leer = async n => { const j = await (await fetch("/minifig/biblioteca/" + n)).json(); return Array.isArray(j) ? j : j.piezas || j.estampados || j; };
-  const piezas = await leer("piezas.json"), estampados = await leer("estampados.json");
+  const leer = async n => { const j = await (await fetch("/minifig/biblioteca/" + n)).json(); return Array.isArray(j) ? j : j.piezas || j.estampados || j.personajes || j; };
+  const piezas = await leer("piezas.json"), estampados = await leer("estampados.json"), personajes = await leer("personajes.json");
+  // Colores originales tomados de los personajes de la biblioteca: el primero que usa cada pieza.
+  const originalTorso = {}, originalCara = {}, originalCasco = {};
+  personajes.forEach(pj => { const S = pj.piezas || {}, t = S.torso || {};
+    if (t.estampado && !originalTorso[t.estampado]) originalTorso[t.estampado] = { color: t.color, colores: (t.colores || []).slice(0, 3), brazos: (S.brazos || {}).color || t.color, manos: (S.manos || {}).color || "#f2cd37" };
+    if (S.cara && !originalCara[S.cara.id] && S.cabeza) originalCara[S.cara.id] = S.cabeza.color;
+    if (S.cabello && !originalCasco[S.cabello.id]) originalCasco[S.cabello.id] = S.cabello.color; });
+  // Torsos para pintar a gusto (los demás son trajes con su estampado y colores originales).
+  const PINTABLES = new Set(["PRINT_010", "PRINT_012", "PRINT_019", "PRINT_020"]);
+  // Piezas de personaje: solo con su color original.
+  const CASCO_FIJO = new Set(["HELM_012", "HELM_015"]);
+  // Hacia dónde mira cada pieza de cuello (para girar la figura al elegirla).
+  const CUELLO_FRENTE = new Set(["NECK_004", "NECK_005", "NECK_006", "NECK_007", "NECK_009"]);
+  // Detalles que caen en el mismo lugar de la cara y no van juntos.
+  const OCUPA_EXTRA = { DETAIL_008: "mejillas", DETAIL_009: "mejillas" };
   const de = cat => piezas.concat(estampados).filter(p => p.categoria === cat);
   const NOMBRES = { HAIR_022: "Melena de lado", HELM_015: "Casco alado" };
   const nombre = p => NOMBRES[p.id] || p.nombre;
@@ -52,23 +66,78 @@ iframe{position:fixed;left:-500px;top:0;width:100px;height:100px;border:0}
   agregar("pelo", "pelo", { id: null, nombre: "Sin pelo", mini: "sin-pelo" }, con(f => { f.identidad.cabello = null; }));
   de("cabello").forEach(p => agregar("pelo", "pelo", { id: p.id, nombre: nombre(p), mini: mini(p.id) }, con(f => { f.identidad.cabello = { id: p.id, color: "#582a12" }; })));
   agregar("casco", "casco", { id: null, nombre: "Sin casco", mini: "sin-casco" }, base());
-  de("casco").forEach(p => { const color = COLOR_CASCO[p.id] || "#6c6e68"; agregar("casco", "casco", { id: p.id, nombre: nombre(p), mini: mini(p.id), color }, con(f => { f.accesorios.cabeza = { id: p.id, color }; })); });
+  de("casco").forEach(p => { const fijo = CASCO_FIJO.has(p.id), color = (fijo && originalCasco[p.id]) || COLOR_CASCO[p.id] || "#6c6e68";
+    agregar("casco", "casco", { id: p.id, nombre: nombre(p), mini: mini(p.id), color, ...(fijo ? { fijo: true } : {}) }, con(f => { f.accesorios.cabeza = { id: p.id, color }; })); });
   de("cara").filter(p => p.ocupa !== "cara").forEach(p => agregar("rostro", "cabeza", { id: p.id, nombre: nombre(p), mini: mini(p.id) }, con(f => { f.identidad.rostro = p.id; })));
-  de("cara").filter(p => p.ocupa === "cara").forEach(p => agregar("mascara", "cabeza", { id: p.id, nombre: nombre(p), mini: mini(p.id) }, con(f => { f.accesorios.cara = { id: p.id }; })));
+  de("cara").filter(p => p.ocupa === "cara").forEach(p => { const color = originalCara[p.id] || "#c91a09";
+    agregar("mascara", "casco", { id: p.id, nombre: nombre(p), mini: mini(p.id), color, fijo: true }, con(f => { f.accesorios.cara = { id: p.id, color, tapaPelo: true }; })); });
   agregar("detalle", "cabeza", { id: null, nombre: "Nada", mini: "sin-detalle" }, base());
-  de("detalle").forEach(p => agregar("detalle", "cabeza", { id: p.id, nombre: nombre(p), mini: mini(p.id), ocupa: p.ocupa || null }, con(f => { f.identidad.detalles = [p.id]; })));
+  de("detalle").forEach(p => agregar("detalle", "cabeza", { id: p.id, nombre: nombre(p), mini: mini(p.id), ocupa: OCUPA_EXTRA[p.id] || p.ocupa || null }, con(f => { f.identidad.detalles = [p.id]; })));
   agregar("cuello", "cuello", { id: null, nombre: "Nada", mini: "sin-cuello" }, base());
-  de("cuello").forEach(p => agregar("cuello", "cuello", { id: p.id, nombre: nombre(p), mini: mini(p.id) }, con(f => { f.accesorios.espalda = { id: p.id, color: COLOR_CUELLO }; })));
+  de("cuello").forEach(p => { const frente = CUELLO_FRENTE.has(p.id);
+    agregar("cuello", frente ? "cuello_frente" : "cuello", { id: p.id, nombre: nombre(p), mini: mini(p.id), mira: frente ? "frente" : "espalda" }, con(f => { f.accesorios.espalda = { id: p.id, color: COLOR_CUELLO }; })); });
   agregar("capa", "capa", { id: null, nombre: "Sin capa", mini: "sin-capa" }, base());
   de("capa").forEach(p => agregar("capa", "capa", { id: p.id, nombre: nombre(p), mini: mini(p.id) }, con(f => { f.accesorios.espalda = { id: p.id, color: COLOR_CAPA }; })));
   agregar("torso", "torso", { id: null, nombre: "Liso", mini: "torso-liso" }, con(f => { f.ropa.torso.color = "#c91a09"; }));
-  de("estampado-torso").forEach(p => agregar("torso", "torso", { id: p.id, nombre: nombre(p), mini: mini(p.id), mangas: p.mangas || "larga" }, con(f => { f.ropa.torso.color = "#c91a09"; f.ropa.torso.estampado = p.id; })));
+  de("estampado-torso").forEach(p => {
+    const o = PINTABLES.has(p.id) ? null : originalTorso[p.id];
+    agregar("torso", "torso", { id: p.id, nombre: nombre(p), mini: mini(p.id), mangas: p.mangas || "larga", ...(o ? { original: o } : {}) }, con(f => {
+      f.ropa.torso.estampado = p.id;
+      if (!o) { f.ropa.torso.color = "#c91a09"; return; }
+      f.ropa.torso.color = o.color; f.ropa.torso.colores = o.colores.slice();
+      if (o.brazos.toLowerCase() === "#f2cd37") f.ropa.mangas = "sin"; else if (o.brazos.toLowerCase() !== o.color.toLowerCase()) f.ropa.brazos = o.brazos;
+      if (o.manos.toLowerCase() !== "#f2cd37") f.ropa.guantes = o.manos;
+    })); });
   agregar("objeto", "objeto", { id: null, nombre: "Nada", mini: "sin-objeto" }, base());
   de("objeto").forEach(p => { const color = p.color_defecto || "#a0a5a9"; agregar("objeto", "objeto", { id: p.id, nombre: nombre(p), mini: mini(p.id), color }, con(f => { f.accesorios.mano_der = { id: p.id, color }; })); });
   agregar("piernas", "piernas", { tipo: "normal", nombre: "Piernas", mini: "piernas-normal" }, base());
   agregar("piernas", "piernas", { tipo: "cortas", nombre: "Piernas cortas", mini: "piernas-cortas" }, con(f => { f.ropa.piernas.tipo = "cortas"; }));
   agregar("botas", "botas", { botas: false, nombre: "Sin botas", mini: "sin-botas" }, base());
   agregar("botas", "botas", { botas: true, nombre: "Botas", mini: "con-botas" }, con(f => { f.ropa.piernas.botas = "#6b4a2b"; }));
+
+  // Etiquetas de estilo (para «Completa el look»): piezas que se ven bien juntas.
+  const ETIQ = {
+    heroe: "PRINT_001 PRINT_002 PRINT_004 PRINT_005 PRINT_006 PRINT_007 PRINT_021 PRINT_022 PRINT_023 FACE_012 FACE_013 FACE_014 FACE_015 HELM_012 HELM_015 CAPE_001 ACC_004 DETAIL_004",
+    medieval: "HELM_009 HELM_010 HELM_011 ACC_002 ACC_003 ACC_005 ACC_006 ACC_007 ACC_008 NECK_003 NECK_004 NECK_008 PRINT_003 CAPE_001 DETAIL_005",
+    magia: "HELM_005 HELM_007 ACC_001 ACC_009 PRINT_008 PRINT_009 PRINT_011 NECK_007 CAPE_001 DETAIL_001 DETAIL_004",
+    espacio: "HELM_013 NECK_001 NECK_010 ACC_012 PRINT_013 DETAIL_002",
+    trabajo: "HELM_001 HELM_003 HELM_004 PRINT_013 PRINT_014 PRINT_015 PRINT_016 PRINT_017 ACC_010 ACC_011 ACC_012 NECK_005 NECK_006",
+    ciudad: "HELM_002 HELM_008 PRINT_010 PRINT_012 PRINT_019 PRINT_020 NECK_002 NECK_009 ACC_010 DETAIL_003 DETAIL_008 DETAIL_009",
+    aventura: "HELM_014 HELM_007 NECK_002 NECK_009 PRINT_018 ACC_007 ACC_002 DETAIL_010 DETAIL_006",
+    fiesta: "HELM_006 ACC_010 DETAIL_003 DETAIL_007 PRINT_012 PRINT_019",
+  };
+  const tagsDe = {};
+  Object.entries(ETIQ).forEach(([t, ids]) => ids.split(" ").forEach(id => { (tagsDe[id] = tagsDe[id] || []).push(t); }));
+  Object.values(cat).forEach(lista => lista.forEach(it => { if (it.id && Object.hasOwn(tagsDe, it.id)) it.tags = tagsDe[it.id]; }));
+
+  // Trajes completos: cada personaje de la biblioteca copiado pieza por pieza, y estilos propios de ALV.
+  const bib = { piezas, estampados, personajes };
+  const NOMBRE_TRAJE = { "black-widow-black-jumpsuit-plain-legs-013391": "Viuda Negra (traje negro)", "captain-america-with-dark-blue-suit-helm-013390": "Capitán América (casco)",
+    "iron-man-mark-7-armor-red-panels-013393": "Iron Man Mark 7", "loki-pearl-titanium-outfit-013392": "Loki", "thor-tan-hair-black-armor-red-cape-012329": "Thor (capa roja)" };
+  const COLECCION = { marvel: "Marvel", dc: "DC", "harry-potter": "Magia", oficios: "Oficios" };
+  const trajes = [], estilos = [], tareasTraje = [];
+  personajes.forEach(pj => {
+    const figura = C.desdePersonaje(pj, bib, { modo: "copia" });
+    const col = Object.hasOwn(COLECCION, pj.coleccion) ? pj.coleccion : "marvel";
+    const t = { id: pj.id, nombre: (Object.hasOwn(NOMBRE_TRAJE, pj.id) && NOMBRE_TRAJE[pj.id]) || pj.nombre, coleccion: col, mini: ("traje-" + pj.id).slice(0, 40), figura };
+    trajes.push(t); tareasTraje.push({ mini: t.mini, zona: "completa", figura, texto: t.nombre });
+  });
+  const estilo = (id, nombre, cambio) => { const f = base(); f.nombre = nombre; cambio(f); estilos.push({ id, nombre, mini: "estilo-" + id, figura: f }); tareasTraje.push({ mini: "estilo-" + id, zona: "completa", figura: f, texto: nombre }); };
+  estilo("superheroe", "Superhéroe", f => { f.identidad.rostro = "FACE_004"; f.identidad.cabello = { id: "HAIR_006", color: "#1b2a34" }; f.ropa.torso.color = "#0055bf";
+    f.ropa.cadera = { id: null, color: "#0055bf", cinturon: { id: "BELT_001", color: "#f2cd37" } }; f.ropa.piernas = { tipo: "normal", id: null, color: "#0055bf", botas: "#c91a09" };
+    f.ropa.guantes = "#c91a09"; f.accesorios.espalda = { id: "CAPE_001", color: "#c91a09" }; f.momentos = { paquete: "fuerza", espera: "flexionar", victoria: "golpe-suelo", derrota: "pisoton", punto: "puno-arriba" }; });
+  estilo("civil", "Civil", f => { f.identidad.cabello = { id: "HAIR_002", color: "#582a12" }; f.ropa.torso = { id: null, color: "#6c6e68", estampado: "PRINT_020", colores: ["#f4f4f4", "#ffffff", "#6b4a2b"], texto: "", imagen: null };
+    f.ropa.cadera.color = "#0a3463"; f.ropa.piernas = { tipo: "normal", id: null, color: "#0a3463", botas: null }; f.accesorios.espalda = { id: "NECK_002", color: "#c91a09" }; });
+  estilo("espacial", "Espacial", f => { f.accesorios.cabeza = { id: "HELM_013", color: "#f4f4f4" }; f.ropa.torso.color = "#f4f4f4"; f.ropa.guantes = "#a0a5a9";
+    f.ropa.cadera.color = "#a0a5a9"; f.ropa.piernas = { tipo: "normal", id: null, color: "#f4f4f4", botas: "#6c6e68" }; f.accesorios.espalda = { id: "NECK_001", color: "#a0a5a9" };
+    f.accesorios.mano_der = { id: "ACC_012", color: "#1b2a34" }; f.momentos = { paquete: "vuelo", espera: "flotar", victoria: "despegue", derrota: "aterrizaje-forzoso", punto: "giro-aire" }; });
+  estilo("medieval", "Medieval", f => { f.identidad.rostro = "FACE_004"; f.accesorios.cabeza = { id: "HELM_009", color: "#a0a5a9" }; f.ropa.torso.color = "#a0a5a9"; f.ropa.brazos = "#6c6e68";
+    f.ropa.cadera.color = "#6c6e68"; f.ropa.piernas = { tipo: "normal", id: null, color: "#6c6e68", botas: "#582a12" }; f.accesorios.espalda = { id: "CAPE_001", color: "#0a3463" };
+    f.accesorios.mano_der = { id: "ACC_002", color: "#a0a5a9" }; f.accesorios.mano_izq = { id: "ACC_003", color: "#a0a5a9" }; });
+  estilo("fiesta", "Fiesta", f => { f.identidad.rostro = "FACE_009"; f.identidad.detalles = ["DETAIL_003"]; f.identidad.cabello = null; f.accesorios.cabeza = { id: "HELM_006", color: "#1b2a34" };
+    f.ropa.torso = { id: null, color: "#81007b", estampado: "PRINT_012", colores: ["#ffffff", "#f2cd37", "#6b4a2b"], texto: "", imagen: null };
+    f.ropa.cadera.color = "#1b2a34"; f.ropa.piernas = { tipo: "normal", id: null, color: "#1b2a34", botas: null }; f.accesorios.mano_der = { id: "ACC_010", color: "#f4f4f4" }; });
+  tareasTraje.forEach(t => tareas.push(t));
 
   // Motor
   await new Promise(ok => addEventListener("message", function f(e) { if (e.data && e.data.origen === "minifig" && e.data.tipo === "listo") { removeEventListener("message", f); ok(); } }));
@@ -89,6 +158,7 @@ iframe{position:fixed;left:-500px;top:0;width:100px;height:100px;border:0}
   const extra = { tonos: C.TONOS || null, paleta: C.PALETA || null, coloresPelo: C.COLORES_PELO || null,
     paquetes: Object.entries(C.PAQUETES || {}).map(([id, p]) => ({ id, nombre: p.nombre, espera: p.espera, victoria: p.victoria, derrota: p.derrota, punto: p.punto })) };
   await fetch("/catalogo", { method: "POST", body: JSON.stringify({ version: 1, generado: new Date().toISOString().slice(0, 10), ...extra, secciones: cat }) });
+  await fetch("/trajes", { method: "POST", body: JSON.stringify({ version: 1, colecciones: [["estilos", "Estilos ALV"], ["marvel", "Marvel"], ["dc", "DC"], ["harry-potter", "Magia"], ["oficios", "Oficios"]].map(([id, nombre]) => ({ id, nombre })), estilos, trajes }) });
   estado.textContent = `LISTO: ${tareas.length} miniaturas, ${Math.round(bytes / 1024)} KB`;
 })().catch(e => { document.getElementById("estado").textContent = "Error: " + e.message; console.error(e); });
 </script>

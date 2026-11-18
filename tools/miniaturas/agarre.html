@@ -28,6 +28,20 @@
     addEventListener("message", function f(e) { if (e.data && e.data.origen === "minifig" && e.data.pid === pid) { removeEventListener("message", f); ok(e.data.url); } });
     motor.contentWindow.postMessage({ origen: "alv", tipo: "miniatura", pid, figura, vista, pose, ancho: 320, alto: 320 }, location.origin);
   });
+  if (q.get("figuras")) { // figuras de prueba en JSON (?figuras=[{id, figura, vista}]) — para revisar cabezas, cuellos, etc.
+    for (const x of JSON.parse(q.get("figuras"))) {
+      const f = Object.assign(MinifigCore.nueva({ nombre: "x" }), {}); MinifigCore.nueva && Object.assign(f, JSON.parse(JSON.stringify(f)));
+      const g = (function mezclar(a, b) { for (const k in b) { if (b[k] && typeof b[k] === "object" && !Array.isArray(b[k]) && a[k] && typeof a[k] === "object") mezclar(a[k], b[k]); else a[k] = b[k]; } return a; })(f, x.figura || {});
+      const pid = ("dbg-" + x.id).toLowerCase().replace(/[^a-z0-9-]/g, "-").slice(0, 48);
+      estado.textContent = pid;
+      const url = await new Promise(ok => {
+        addEventListener("message", function h(e) { if (e.data && e.data.origen === "minifig" && e.data.pid === pid) { removeEventListener("message", h); ok(e.data.url); } });
+        motor.contentWindow.postMessage({ origen: "alv", tipo: "miniatura", pid, figura: g, vista: x.vista, pose: x.pose || null, ancho: 320, alto: 320 }, location.origin);
+      });
+      await fetch("/guardar?id=" + pid, { method: "POST", body: url });
+    }
+    estado.textContent = "LISTO"; return;
+  }
   if (q.get("momentos")) { // cada momento a mitad de su animación, con objetos en las dos manos
     const M = motor.contentWindow.Momentos, nombres = M.lista().map(x => typeof x === "string" ? x : x.id || x.nombre).filter(Boolean);
     const der = q.get("der") || "ACC_002", izq = q.get("izq") || "ACC_003";
