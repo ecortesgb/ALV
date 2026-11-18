@@ -25,6 +25,8 @@
   const build0 = build;
   build = function (c) {
     const fig = build0(c), J = fig.userData.j;
+    // Mano izquierda: los escudos miran hacia afuera del otro lado (giro al revés).
+    if (J.handL) J.handL.children.forEach(g => { const a = g.userData.agarre; if (a && a.espejo) g.rotation.y = -g.rotation.y; });
     if (c.cuello && c.cuello !== "ninguno") {
       const m = mallaLD(c.cuello.slice(3), plast(c.cuelloColor || "#6c6e68", { roughness: 0.4 }), "cuello");
       if (m) {
@@ -37,6 +39,36 @@
     if (c.cinturon && c.piernasTipo !== "cortas") { const m = mallaLD("27145", plast(c.cinturon), "piernas"); if (m) grupoLD(J.legsG, ldM(0, 32, 0)).add(m); }
     if (c.accColor && J.handR) J.handR.traverse(o => { if (o.isMesh && !o.userData.decal && o.userData.part === "mano") { const ms = Array.isArray(o.material) ? o.material : [o.material]; o.material = ms.length === 1 ? plast(c.accColor) : ms.map((m, i) => (i === 0 ? plast(c.accColor) : m)); } });
     return fig;
+  };
+
+  // Cómo se toma cada objeto (reemplaza COMO_SE_TOMA de js/07-construccion.js, que no se edita). Cada pieza LDraw trae su
+  // centro en otro lugar: la espada en la guarda, la taza en el vaso, la sartén en el sartén. Aquí se lleva la parte que se
+  // agarra (empuñadura, asa, mango) al centro del puño. Medidas en LDU sobre la malla de mallaLD (y hacia la punta):
+  //   giro: grados sobre la barra · voltear: media vuelta · rx: grados para acostar la pieza sobre la barra
+  //   y / z: cuánto se corre la pieza (+y hacia la punta) · espejo: en la mano izquierda el giro va al revés
+  const AGARRE = {
+    espada: { y: 11 },                                  // empuñadura de -22 a 0: su centro (-11) al puño
+    varita: { y: -8 },
+    lanza: {},
+    escoba: { y: 60 },
+    mazo: { voltear: true, y: 20 },
+    taza: { y: 12, z: 19 },                             // el asa (z≈-19, y≈-12) al puño
+    sarten: { rx: 90, y: -22, z: 2 },                   // el mango (z de -15 a -30) se acuesta sobre la barra
+    radio: { y: -30 },                                 // se toma del mango largo, no de la caja
+    "escudo-redondo": { giro: 90, espejo: true }, "escudo-capitan": { giro: 90, espejo: true },
+    "escudo-triangular": { giro: 90, espejo: true }, "escudo-ovalado": { giro: 90, espejo: true },
+  };
+  window.ponerObjetoEnMano = function (clave, color, mano) {
+    const id = LD_ACC[clave] || ((clave || "").startsWith("ld-") ? clave.slice(3) : null); if (!id || !mano) return;
+    const m = mallaLD(id, plast(color || COLOR_ACC[clave] || "#a0a5a9"), "mano"); if (!m) return;
+    const cfg = AGARRE[clave] || {};
+    const g = new THREE.Group(); g.rotation.order = "YXZ";
+    g.rotation.y = (cfg.giro || 0) * Math.PI / 180; g.userData.agarre = cfg; if (cfg.voltear) g.rotation.x = Math.PI;
+    const inner = new THREE.Group(); inner.position.set(0, (cfg.y || 0) / LD, (cfg.z || 0) / LD); g.add(inner);
+    if (cfg.rx) m.rotation.x = cfg.rx * Math.PI / 180;
+    inner.add(m);
+    if (clave === "escudo-capitan") inner.add(decalEscudo(dibujoEscudo()));
+    mano.add(g);
   };
 
   // Luz de estudio parecida a la del taller (03-escena.js), sin sombras ni efectos pesados para el celular.
@@ -213,6 +245,18 @@
     e.mom = m; e.t0 = reloj.getElapsedTime();
   }
 
+  // Objetos grandes en la mano: ese brazo no sube más allá del hombro en ningún momento (festejos, derrotas, esperas),
+  // así la espada, el escudo o la escoba no atraviesan la cabeza. Festeja con el otro brazo y con el cuerpo.
+  // armR lleva el objeto de la derecha (accesorio) y armL el de la izquierda (accesorioIzq). Varita y taza son chicas.
+  const CHICOS = new Set(["varita", "taza"]);
+  const grande = v => !!v && v !== "ninguno" && !CHICOS.has(v);
+  const TOPE_BRAZO = -0.85; // ≈ 50° hacia el frente: la hoja de la espada no llega a la cara
+  function cuidarObjetos(obj, plano) {
+    const J = obj.userData.j, p = plano || {}; if (!J) return;
+    if (grande(p.accesorio) && J.armR && J.armR.rotation.x < TOPE_BRAZO) J.armR.rotation.x = TOPE_BRAZO;
+    if (grande(p.accesorioIzq) && J.armL && J.armL.rotation.x < TOPE_BRAZO) J.armL.rotation.x = TOPE_BRAZO;
+  }
+
   // HUB: cada 7 s la figura saluda (sube suave, saluda 1.6 s y baja) y voltea un poco a la cámara.
   // Saluda con la mano libre: con un objeto en la mano (escudo, escoba…) el brazo arriba lo metía en la cabeza.
   // armL lleva el objeto de la izquierda (accesorioIzq) y armR el de la derecha (accesorio); con las dos ocupadas solo voltea.
@@ -348,6 +392,7 @@
       if (i && !i.bucle && t - e.t0 > i.dur + 0.4) { e.mom = e.momentos.espera || "respirar"; e.t0 = t; }
       window.MOM_T0 = e.t0; animar(e.obj, "mom:" + e.mom, t);
       if (MODO === "hub" && !(i && !i.bucle)) saludo(e, t);
+      cuidarObjetos(e.obj, e.plano);
       if (EDITOR) {
         e.obj.rotation.y = cam.giro;
         // Al cambiar una pieza, la figura da un saltito.
@@ -361,7 +406,7 @@
 
   // Fotos: un dibujante aparte, con fondo transparente, sin tocar la escena viva.
   let fotografo = null;
-  function foto(f, ancho, alto, zona) {
+  function foto(f, ancho, alto, zona, pose) {
     ancho = Math.min(512, Math.max(64, ancho | 0 || 256)); alto = Math.min(640, Math.max(64, alto | 0 || 320));
     if (!fotografo) {
       const r = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true });
@@ -372,8 +417,11 @@
     }
     const { r, s, cam } = fotografo;
     r.setSize(ancho, alto, false); cam.aspect = ancho / alto;
-    const a = armar(f), z = zona && ZONAS[zona]; window.MOM_T0 = 0; animar(a.obj, "quieto", 0); a.obj.rotation.y = z ? z.giro : -0.35; s.add(a.obj);
-    if (z) { cam.updateProjectionMatrix(); const d = distancia(z, 1, cam); cam.position.set(z.x || 0, z.y + d * 0.07, d); cam.lookAt(z.x || 0, z.y, 0); }
+    const a = armar(f), z = zona && (typeof zona === "object" ? zona : ZONAS[zona]); window.MOM_T0 = 0; animar(a.obj, pose && Momentos.info(pose.mom) ? "mom:" + pose.mom : "quieto", pose ? +pose.t || 0 : 0); cuidarObjetos(a.obj, a.plano); a.obj.rotation.y = z ? z.giro : -0.35; s.add(a.obj);
+    if (z && z.mano) { // vista de revisión: la cámara mira a esa mano
+      a.obj.updateMatrixWorld(true); const h = new THREE.Vector3(); a.obj.userData.j[z.mano === "izq" ? "handL" : "handR"].getWorldPosition(h);
+      cam.updateProjectionMatrix(); const d = distancia(z, 1, cam); cam.position.set(h.x, h.y + d * 0.07, h.z + d); cam.lookAt(h.x, h.y, h.z);
+    } else if (z) { cam.updateProjectionMatrix(); const d = distancia(z, 1, cam); cam.position.set(z.x || 0, z.y + d * 0.07, d); cam.lookAt(z.x || 0, z.y, 0); }
     // Cuadro de 3.2 de alto centrado en 1.38: de los pies (y=0) a lo más alto de un casco o peinado (≈2.75).
     else cam.position.set(0, 1.5, 7.55), cam.lookAt(0, 1.38, 0);
     cam.updateProjectionMatrix();
@@ -388,7 +436,9 @@
     else if (d.tipo === "momento") momento(d.id, d.cual);
     else if (d.tipo === "foto" || d.tipo === "miniatura") {
       let url = null;
-      try { const fx = figuraDe(d); if (fx) url = foto(fx, d.ancho, d.alto, d.tipo === "miniatura" ? String(d.zona || "") : ""); } catch (e) { console.error("escena: foto", e); }
+      // `vista` {y, alto, giro, x}: encuadre a la medida (herramientas de revisión, p. ej. tools/miniaturas/agarre.html).
+      const v = d.vista && typeof d.vista === "object" ? { y: +d.vista.y || 1.3, alto: +d.vista.alto || 3.3, giro: +d.vista.giro || 0, x: +d.vista.x || 0, mano: d.vista.mano === "izq" ? "izq" : d.vista.mano === "der" ? "der" : null } : null;
+      try { const fx = figuraDe(d); if (fx) url = foto(fx, d.ancho, d.alto, d.tipo === "miniatura" ? (v || String(d.zona || "")) : "", d.pose && typeof d.pose === "object" ? d.pose : null); } catch (e) { console.error("escena: foto", e); }
       enviar({ tipo: d.tipo, pid: d.pid, url });
     }
     else if (d.tipo === "soltar" || d.tipo === "azar") {

@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Revisión de agarres</title>
+<style>body{margin:0;padding:16px;background:#141a33;color:#fff;font:14px system-ui}iframe{position:fixed;left:-500px;top:0;width:100px;height:100px;border:0}</style>
+</head>
+<body>
+<div id="estado">Cargando…</div>
+<iframe id="motor" src="/minifig/escena.html" title="motor"></iframe>
+<script src="/minifig/nucleo/minifig-core.js"></script>
+<script>
+// Revisión a mano (no es parte de la app): cada objeto en las dos manos, de frente y de cada lado, y opcionalmente
+// en un momento (?mom=salto-puno&t=0.6). Guarda dbg-*.webp en public/arte/piezas (borrarlas después).
+(async function () {
+  const q = new URLSearchParams(location.search), estado = document.getElementById("estado"), motor = document.getElementById("motor");
+  const solo = (q.get("obj") || "").split(",").filter(Boolean);
+  const pose = q.get("mom") ? { mom: q.get("mom"), t: +(q.get("t") || 0.6) } : null;
+  const vistas = (q.get("vistas") || "frente,der,izq").split(",");
+  const VISTA = { frente: { y: 1.25, alto: 1.7, giro: 0 }, der: { y: 1.2, alto: 1.4, giro: -1.25, x: 0 }, izq: { y: 1.2, alto: 1.4, giro: 1.25, x: 0 },
+    cuerpo: { y: 1.35, alto: 3.2, giro: -0.35 }, espalda: { y: 1.35, alto: 3.2, giro: 2.6 },
+    md: { alto: 1.5, giro: -0.6, mano: "der" }, mi: { alto: 1.5, giro: 0.6, mano: "izq" }, mdl: { alto: 1.5, giro: -1.5, mano: "der" }, mil: { alto: 1.5, giro: 1.5, mano: "izq" },
+    cerca: { alto: 0.9, giro: -0.6, mano: "der" }, cercal: { alto: 0.9, giro: -1.5, mano: "der" }, arriba: { alto: 0.9, giro: 0.4, mano: "der" } };
+  const OBJ = ["ACC_001", "ACC_002", "ACC_003", "ACC_004", "ACC_005", "ACC_006", "ACC_007", "ACC_008", "ACC_009", "ACC_010", "ACC_011", "ACC_012"].filter(x => !solo.length || solo.includes(x));
+  await new Promise(ok => addEventListener("message", function f(e) { if (e.data && e.data.origen === "minifig" && e.data.tipo === "listo") { removeEventListener("message", f); ok(); } }));
+  const sufijo = q.get("sufijo") ? "-" + q.get("sufijo") : "";
+  const pedir = (pid, figura, vista) => new Promise(ok => {
+    addEventListener("message", function f(e) { if (e.data && e.data.origen === "minifig" && e.data.pid === pid) { removeEventListener("message", f); ok(e.data.url); } });
+    motor.contentWindow.postMessage({ origen: "alv", tipo: "miniatura", pid, figura, vista, pose, ancho: 320, alto: 320 }, location.origin);
+  });
+  if (q.get("momentos")) { // cada momento a mitad de su animación, con objetos en las dos manos
+    const M = motor.contentWindow.Momentos, nombres = M.lista().map(x => typeof x === "string" ? x : x.id || x.nombre).filter(Boolean);
+    const der = q.get("der") || "ACC_002", izq = q.get("izq") || "ACC_003";
+    const f = MinifigCore.nueva({ nombre: "x" }); f.ropa.torso.color = "#5a93db";
+    f.accesorios.mano_der = { id: der }; f.accesorios.mano_izq = { id: izq };
+    for (const n of nombres) {
+      const i = M.info(n) || {}, t = q.get("t") ? +q.get("t") : i.bucle ? 1.1 : (i.dur || 1.5) * 0.5;
+      const pid = ("dbg-mom-" + n).toLowerCase().replace(/[^a-z0-9-]/g, "-").slice(0, 48);
+      estado.textContent = pid;
+      const url = await new Promise(ok => {
+        addEventListener("message", function h(e) { if (e.data && e.data.origen === "minifig" && e.data.pid === pid) { removeEventListener("message", h); ok(e.data.url); } });
+        motor.contentWindow.postMessage({ origen: "alv", tipo: "miniatura", pid, figura: f, vista: VISTA[q.get("vista") || "cuerpo"], pose: { mom: n, t }, ancho: 220, alto: 220 }, location.origin);
+      });
+      await fetch("/guardar?id=" + pid, { method: "POST", body: url });
+    }
+    estado.textContent = "LISTO " + nombres.length; return;
+  }
+  for (const id of OBJ) {
+    const f = MinifigCore.nueva({ nombre: "x" });
+    f.ropa.torso.color = "#5a93db"; f.identidad.cabello = { id: "HAIR_001", color: "#582a12" };
+    f.accesorios.mano_der = { id }; f.accesorios.mano_izq = { id };
+    for (const v of vistas) {
+      const nombre = ("dbg-" + id + "-" + v + sufijo).toLowerCase().replace(/_/g, "-");
+      estado.textContent = nombre;
+      const url = await pedir(nombre, f, VISTA[v]);
+      await fetch("/guardar?id=" + nombre, { method: "POST", body: url });
+    }
+  }
+  estado.textContent = "LISTO";
+})().catch(e => { document.getElementById("estado").textContent = "Error: " + e.message; });
+</script>
+</body>
+</html>

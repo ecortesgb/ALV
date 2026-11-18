@@ -22,7 +22,7 @@ createServer(async (req, res) => {
   try {
     if (req.method === "POST" && url.pathname === "/guardar") {
       const id = url.searchParams.get("id") ?? "";
-      if (!/^[a-z0-9-]{1,40}$/.test(id)) { res.writeHead(400).end("id"); return; }
+      if (!/^[a-z0-9-]{1,48}$/.test(id)) { res.writeHead(400).end("id"); return; }
       const datos = await leerCuerpo(req);
       const m = /^data:image\/webp;base64,([A-Za-z0-9+/=]+)$/.exec(datos);
       if (!m) { res.writeHead(400).end("imagen"); return; }
