@@ -1,6 +1,6 @@
 # ALV — Amigos Legendarios Verdaderos
 ## Documento Maestro del Producto
-**Versión:** 1.42  
+**Versión:** 1.43  
 **Última actualización:** 18 de noviembre de 2026  
 **Estado:** Documento vivo de producto; decisiones y propuestas identificadas por separado.
 
@@ -61,6 +61,12 @@ ALV debe permitir que un grupo se reúna, cree una sala, elija cómo competir, c
 ALV debe sentirse como un videojuego al que apetece entrar: divertido, social, irreverente, competitivo y con humor mexicano, pero con ejecución visual profesional y cuidada.
 
 El tono admite picardía y humor absurdo, sin convertir la experiencia en una plataforma de humillación, presión social, consumo excesivo de alcohol o retos peligrosos.
+
+### 1.3.1 Presentador — DECISIÓN (v1.43)
+
+**DECISIÓN (v1.43, Elías, 18 de noviembre):** ALV tiene un presentador que conduce el juego. Se llama **ALV-I.A.** y su apodo cariñoso es **«Don ALVur»**, que usa cuando se pone formal. Se presenta así: «Soy ALV-I.A., El Alburero: inteligencia artificial mexicana. Albur con respeto, juego con seriedad y risa con clase.»
+
+**PENDIENTE:** su figura, sus diálogos y en qué pantallas aparece (la referencia es el anfitrión con globo de diálogo de LEGO Party, `ALV_REFERENCIA_LEGO_PARTY.md` §14). No se construye hasta que Elías lo pida. Su humor sigue los límites de 1.3: albur con respeto, sin humillar a nadie.
 
 ## 1.4 Lenguaje de siglas
 
@@ -1339,6 +1345,7 @@ Requisitos:
 - Diseño final: 8 pantallas de alta fidelidad + prototipo HTML navegable, hecho en el paso 1.5 antes del paso 2 (D4, 23.2).
 - Menores de 18: mensaje de bloqueo hasta corregir la fecha. Intensidad: Temperatura (preguntas) y Voltaje (retos), 5 niveles cada uno, nivel general de la sala (v1.28; sustituye el termómetro de 4 niveles). Comodines en todos los juegos, de un solo uso; pasar solo con comodín. Cartas de trago obligatorias con la bebida que cada quien elija; tomar nunca da XP. Modo Avanzado también en celular (v1.26).
 - El lenguaje de la app usa siglas con ingenio.
+- Presentador: ALV-I.A., apodo «Don ALVur» cuando se pone formal; figura y diálogos pendientes (1.3.1; v1.43).
 - ALVerca, FBI y GPS son los escenarios activos.
 - Los cosméticos no otorgan ventajas competitivas.
 - El catálogo son los 14 clásicos de 16.8 y los 7 nuevos del capítulo 16. Se pueden agregar más juegos cuando el usuario lo pida.
@@ -1403,6 +1410,9 @@ Decisiones del usuario del 12 de noviembre de 2026:
 
 ## v1.6
 - Primeros logros (14.2), con ámbito de sesión o histórico (ver DECISIÓN v1.6 en 14.2).
+
+## v1.43
+- 18 nov 2026. Presentador ALV-I.A. («Don ALVur»), con su frase de presentación (1.3.1). Solo se registra: figura y diálogos pendientes. Sin cambios de código por esta versión.
 
 ## v1.42
 - 18 nov 2026. Piezas con rareza (Rara, Épica, Legendaria), desbloqueo con retos y con XP, guardado en la nube (migración 033, sin aplicar). Taller compartido para después (sección 10).
@@ -1545,5 +1555,5 @@ Decisiones del usuario del 12 de noviembre de 2026:
 
 ---
 
-**Fin del Documento Maestro ALV v1.42**  
+**Fin del Documento Maestro ALV v1.43**  
 Este documento debe actualizarse de forma incremental y conservar la distinción entre decisiones aprobadas, propuestas, pendientes y descartadas.

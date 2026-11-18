@@ -2,7 +2,7 @@
 // ALV (la ventana de arriba) manda mensajes; esta página solo dibuja. Mismo origen siempre.
 //   {origen:"alv", tipo:"figuras", lista:[{id, figura | semilla, foco?}]}  → arma o actualiza las figuras (en ese orden, de izq. a der.)
 //      Sin figura, `semilla` (número) da una figura al azar que siempre sale igual (para quien aún no arma la suya).
-//   {origen:"alv", tipo:"momento", id, cual:"punto"|"victoria"|"derrota"|"espera"}  → la figura hace ese momento
+//   {origen:"alv", tipo:"momento", id, cual:"punto"|"victoria"|"derrota"|"espera"|"saludar"|"bailar"}  → la figura hace ese momento
 //   {origen:"alv", tipo:"foto", pid, figura | semilla, ancho, alto}  → responde {tipo:"foto", pid, url} (imagen de la figura)
 //   {origen:"alv", tipo:"miniatura", pid, figura, zona, ancho, alto}  → igual que foto, encuadrada en una zona (miniaturas de piezas)
 // Modo editor (escena.html?modo=editor, el personalizador): una sola figura sobre su base, que se gira arrastrando,
@@ -11,6 +11,9 @@
 //   {tipo:"girar", cuanto}   → gira la figura (radianes)        {tipo:"acercar", cuanto} → >1 acerca, <1 aleja
 //   {tipo:"soltar", pid, figura} → {tipo:"soltar", pid, figura} sin traje de personaje · {tipo:"azar", pid, semilla?} → figura al azar
 //   {tipo:"gesto", cual:"parpadeo"|"sonrisa"}                   {tipo:"probar", cual}  → hace ese momento (nombre de nucleo/momentos.js)
+// Modo sala (escena.html?modo=sala, la sala de espera): una columna por lugar, cada una con su pedestal del color del jugador.
+//   En «figuras» cada figura trae `color` ("#rrggbb") y `columna` (0…), y el mensaje trae `columnas` (lugares, con vacíos).
+//   Los lugares sin figura muestran un pedestal apagado; ALV dibuja encima el «+» y el nombre.
 // Responde {origen:"minifig", tipo:"listo"} cuando la biblioteca y la geometría cargaron.
 (function () {
   "use strict";
@@ -153,6 +156,31 @@
     caricatura(base);
     scene.add(pedestal);
   }
+  // Sala: un pedestal por columna, con la tapa y la luz del color del jugador (se crean y se pintan en acomodar).
+  const SALA = MODO === "sala";
+  let columnas = 0;
+  const pedestales = [];
+  const brilloSala = SALA ? (function () { const cv = document.createElement("canvas"); cv.width = cv.height = 128; const g = cv.getContext("2d"), r = g.createRadialGradient(64, 64, 4, 64, 64, 64); r.addColorStop(0, "rgba(255,255,255,1)"); r.addColorStop(0.45, "rgba(255,255,255,.4)"); r.addColorStop(1, "rgba(255,255,255,0)"); g.fillStyle = r; g.fillRect(0, 0, 128, 128); return new THREE.CanvasTexture(cv); })() : null;
+  function pedestalSala() {
+    const p = new THREE.Group();
+    const base = new THREE.Mesh(new THREE.CylinderGeometry(0.66, 0.74, 0.3, 40), new THREE.MeshToonMaterial({ color: 0x24306b, gradientMap: tonos })); base.position.y = -0.15; p.add(base);
+    const tapa = new THREE.Mesh(new THREE.CylinderGeometry(0.62, 0.62, 0.02, 40), new THREE.MeshBasicMaterial({ color: 0x5aa6f0 })); p.add(tapa);
+    const aro = new THREE.Mesh(new THREE.TorusGeometry(0.645, 0.03, 8, 48), new THREE.MeshBasicMaterial({ color: 0xffd23f })); aro.rotation.x = Math.PI / 2; p.add(aro);
+    const halo = new THREE.Mesh(new THREE.PlaneGeometry(1.7, 1.7), new THREE.MeshBasicMaterial({ map: brilloSala, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, color: 0x88bbff }));
+    halo.rotation.x = -Math.PI / 2; halo.position.y = 0.015; p.add(halo);
+    caricatura(base);
+    p.userData = { base, tapa, aro, halo };
+    scene.add(p); return p;
+  }
+  const colorValido = c => (typeof c === "string" && /^#[0-9a-f]{6}$/i.test(c) ? c : null);
+  function pintarPedestal(p, color) {
+    const u = p.userData, c = colorValido(color);
+    const tono = new THREE.Color(c || "#4a5687").convertSRGBToLinear();
+    u.tapa.material.color.copy(tono);
+    u.halo.material.color.copy(tono); u.halo.material.opacity = c ? 1 : 0.25;
+    u.base.material.color.copy(new THREE.Color(c || "#24306b").convertSRGBToLinear().multiplyScalar(c ? 0.35 : 1));
+    u.aro.material.color.set(c ? 0xffd23f : 0x6d7398);
+  }
   const sombraGeo = new THREE.CircleGeometry(0.62, 40), sombraMat = new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.32, depthWrite: false });
 
   let listo = false;
@@ -192,7 +220,8 @@
   }
   function dispose(o) { o.traverse(m => { if (m.geometry && !m.userData.compartida && m.geometry !== sombraGeo) m.geometry.dispose(); const ms = Array.isArray(m.material) ? m.material : m.material ? [m.material] : []; ms.forEach(x => { if (x === sombraMat || x === contorno) return; ["map", "emissiveMap"].forEach(k => x[k] && x[k].dispose()); x.dispose(); }); }); }
 
-  function ponerFiguras(lista) {
+  function ponerFiguras(lista, cols) {
+    if (SALA) columnas = Math.max(0, Math.min(12, cols | 0));
     const ids = new Set(lista.map(x => String(x.id)));
     [...figuras.keys()].forEach(id => { if (!ids.has(id)) quitar(id); });
     orden = [];
@@ -212,6 +241,7 @@
         if (EDITOR && habia) polvo(reloj.getElapsedTime());
       }
       e.foco = !!x.foco; orden.push(id);
+      if (SALA) { e.columna = Number.isInteger(x.columna) && x.columna >= 0 ? x.columna : orden.length - 1; e.color = colorValido(x.color); }
     });
     acomodar();
   }
@@ -222,12 +252,22 @@
   function acomodar() {
     if (EDITOR) { tamano(); orden.forEach(id => figuras.get(id).obj.position.set(0, 0, 0)); return; }
     encuadrar();
+    if (SALA) { acomodarSala(); return; }
     const n = orden.length;
     orden.forEach((id, i) => {
       const e = figuras.get(id), x = (i - (n - 1) / 2) * paso;
       e.obj.position.set(x, 0, e.foco ? 0.6 : 0); e.obj.rotation.y = MODO === "hub" ? -0.32 : -x * 0.04; e.obj.scale.setScalar(e.foco ? 1.12 : 1);
     });
   }
+  function acomodarSala() {
+    const n = lugares(), x0 = i => (i - (n - 1) / 2) * paso;
+    while (pedestales.length < n) pedestales.push(pedestalSala());
+    pedestales.forEach((p, i) => { p.visible = i < n; if (i < n) p.position.set(x0(i), 0, 0); });
+    const color = new Map();
+    orden.forEach(id => { const e = figuras.get(id); e.obj.position.set(x0(e.columna), 0, 0); e.obj.rotation.y = -x0(e.columna) * 0.05; e.obj.scale.setScalar(1); color.set(e.columna, e.color); });
+    pedestales.forEach((p, i) => { if (i < n) pintarPedestal(p, color.get(i)); });
+  }
+  const lugares = () => Math.max(1, orden.length, columnas, ...orden.map(id => (figuras.get(id).columna | 0) + 1));
   function tamano() {
     const r = lienzo.getBoundingClientRect(), w = Math.max(2, r.width), h = Math.max(2, r.height);
     renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix();
@@ -236,20 +276,24 @@
     tamano();
     // Medidas reales de una figura armada: 2.6–2.75 de alto con pelo o casco, 1.6–1.9 de ancho con brazos y objeto.
     // HUB: cabe también el pedestal (de y = -0.34 a 0) y queda aire arriba para que la figura no se vea gigante.
-    const n = Math.max(1, orden.length), alto = MODO === "hub" ? 4.5 : 3.3, minimo = n * 1.9 + 0.3;
+    const n = SALA ? lugares() : Math.max(1, orden.length), alto = SALA ? 5.3 : MODO === "hub" ? 4.5 : 3.3, minimo = n * 1.9 + 0.3;
     const tv = Math.tan(camera.fov * Math.PI / 360), th = tv * camera.aspect;
     // Primero que quepa de alto; si así no caben a lo ancho, se aleja hasta que quepan.
     let d = (alto / 2) / tv;
     if (2 * d * th < minimo) d = (minimo / 2) / th;
     paso = (2 * d * th) / n;
     // Pantalla alta (celular vertical): sobra cielo; se mira más arriba para que los pies queden abajo, sobre el piso.
-    const centro = MODO === "hub" ? Math.max(1.55, d * tv * 0.92 - 0.4) : Math.max(1.4, d * tv * 0.88);
+    // Sala: queda aire abajo para el nombre y arriba para el «¡LISTO!».
+    const centro = SALA ? d * tv * 0.85 - 0.75 : MODO === "hub" ? Math.max(1.55, d * tv * 0.92 - 0.4) : Math.max(1.4, d * tv * 0.88);
     camera.position.set(0, centro + 0.15, d); camera.lookAt(0, centro, 0); camera.updateProjectionMatrix();
   }
 
   function momento(id, cual) {
     const e = figuras.get(String(id)); if (!e) return;
-    const m = e.momentos[cual] || (cual === "espera" ? "respirar" : null); if (!m || !Momentos.info(m)) return;
+    // Gestos del lobby: saludar (la mano libre, una vez) y bailar (vuelta rápida).
+    if (cual === "saludar") { e.saluda = reloj.getElapsedTime(); return; }
+    if (cual === "bailar") cual = "vuelta-rapida";
+    const m = e.momentos[cual] || (Momentos.info(cual) ? cual : null) || (cual === "espera" ? "respirar" : null); if (!m || !Momentos.info(m)) return;
     e.mom = m; e.t0 = reloj.getElapsedTime();
   }
 
@@ -429,6 +473,7 @@
       if (i && !i.bucle && t - e.t0 > i.dur + 0.4) { e.mom = e.momentos.espera || "respirar"; e.t0 = t; }
       window.MOM_T0 = e.t0; animar(e.obj, "mom:" + e.mom, t);
       if (MODO === "hub" && !(i && !i.bucle)) saludo(e, t);
+      else if (e.saluda != null) { const d = t - e.saluda; if (d < 2.3) saludo(e, d); else e.saluda = null; }
       cuidarObjetos(e.obj, e.plano);
       if (EDITOR) {
         e.obj.rotation.y = cam.giro;
@@ -469,7 +514,7 @@
   }
 
   function atender(d) {
-    if (d.tipo === "figuras" && Array.isArray(d.lista)) ponerFiguras(d.lista.slice(0, 12));
+    if (d.tipo === "figuras" && Array.isArray(d.lista)) ponerFiguras(d.lista.slice(0, 12), d.columnas);
     else if (d.tipo === "momento") momento(d.id, d.cual);
     else if (d.tipo === "foto" || d.tipo === "miniatura") {
       let url = null;

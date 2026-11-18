@@ -1,5 +1,5 @@
 // La frontera (Maestro §22.1): lo que dibuja la TV no usa vistaJugador, privado, respuestas, manos ni semilla.
-// Revisa cada juegos/<mecánica>/tv.tsx y todo roles/pantalla/ salvo motor.ts (el único que corre el motor).
+// Revisa cada juegos/<mecánica>/tv.tsx, todo roles/pantalla/ salvo motor.ts (el único que corre el motor) y pantallas/SalaEspera.tsx.
 // Y los componentes del Design System no hablan con la base.
 import { describe, expect, it } from "vitest";
 
@@ -19,6 +19,8 @@ export function violaciones(codigo: string): string[] {
 const tv = {
   ...import.meta.glob("../juegos/**/tv.tsx", { query: "?raw", import: "default", eager: true }),
   ...import.meta.glob(["./pantalla/**/*.{ts,tsx}", "!./pantalla/**/motor.ts", "!./pantalla/**/*.test.ts"], { query: "?raw", import: "default", eager: true }),
+  // La sala de espera con pedestales también se dibuja en la TV.
+  ...import.meta.glob("../pantallas/SalaEspera.tsx", { query: "?raw", import: "default", eager: true }),
 } as Record<string, string>;
 
 const ds = import.meta.glob(["../ds/**/*.{ts,tsx}", "!../ds/**/*.test.ts"], { query: "?raw", import: "default", eager: true }) as Record<string, string>;

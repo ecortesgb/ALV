@@ -83,3 +83,35 @@ export function vigilarPantalla(salaId: string, soyPantalla: boolean, alEstado: 
   });
   return () => { cerrado = true; clearInterval(reloj); void cliente?.removeChannel(canal); };
 }
+
+// ---------- El lobby único (fase de prueba, 8 personas) ----------
+// Sin tablas ni funciones nuevas: el aparato del anfitrión (su celular en la sala o la Pantalla) anuncia el código del
+// lobby abierto por un canal de difusión (`alv-lobby`, no se guarda). Quien abre ALV lo oye y entra con un toque.
+// Entrar sigue pasando por `unirse_evento` (cuenta, mayor de 18, sala abierta y con lugar): oír un código no da acceso.
+export const ANUNCIO_LOBBY_MS = 2500, OLVIDO_LOBBY_MS = 9000;
+const CODIGO_LOBBY = /^[A-Z0-9]{6}$/;
+
+/** Anuncia el lobby mientras esté abierto. Devuelve cómo dejar de anunciar. */
+export function anunciarLobby(codigo: string): () => void {
+  if (!cliente || !CODIGO_LOBBY.test(codigo)) return () => { /* nada */ };
+  let reloj: ReturnType<typeof setInterval> | undefined;
+  const canal = cliente.channel("alv-lobby");
+  const decir = () => { void canal.send({ type: "broadcast", event: "lobby", payload: { codigo } }); };
+  canal.subscribe(s => { clearInterval(reloj); if (s === "SUBSCRIBED") { decir(); reloj = setInterval(decir, ANUNCIO_LOBBY_MS); } });
+  return () => { clearInterval(reloj); void cliente?.removeChannel(canal); };
+}
+
+/** Escucha el anuncio: da el código mientras se oiga y null si pasa un rato sin oírlo. */
+export function buscarLobby(alCodigo: (codigo: string | null) => void): () => void {
+  if (!cliente) return () => { /* nada */ };
+  let ultimo: string | null = null, oido = 0;
+  const poner = (c: string | null) => { if (c !== ultimo) { ultimo = c; alCodigo(c); } };
+  const canal = cliente.channel("alv-lobby");
+  canal.on("broadcast", { event: "lobby" }, m => {
+    const c = String((m.payload as { codigo?: unknown } | undefined)?.codigo ?? "");
+    if (CODIGO_LOBBY.test(c)) { oido = Date.now(); poner(c); }
+  });
+  canal.subscribe();
+  const reloj = setInterval(() => { if (ultimo && Date.now() - oido > OLVIDO_LOBBY_MS) poner(null); }, 1000);
+  return () => { clearInterval(reloj); void cliente?.removeChannel(canal); };
+}

@@ -3,11 +3,16 @@
 // comparte la sala entre pestañas del mismo navegador, para probar TV + celulares sin cuentas.
 import type { FiguraV2 } from "../content/personaje";
 import { cliente, hayNube, uidActual } from "./cliente";
-import { escucharSala, vigilarPantalla, type EstadoRed, type PresenciaPantalla } from "./tiempoReal";
+import { anunciarLobby, buscarLobby, escucharSala, vigilarPantalla, type EstadoRed, type PresenciaPantalla } from "./tiempoReal";
 
 export type ModoSala = "tv" | "mesa";
 export interface SalaV { id: string; codigo: string; modo: ModoSala; anfitrionId: string }
-export interface Miembro { id: string; nombre: string; figura: FiguraV2 | null; anfitrion: boolean; listo: boolean }
+/** Gestos del lobby (migración 010). Chocar y empujar llevan a otro miembro y todavía no se usan. */
+export type Gesto = "saludar" | "bailar";
+export const GESTOS: readonly Gesto[] = ["saludar", "bailar"];
+export interface Miembro { id: string; nombre: string; figura: FiguraV2 | null; anfitrion: boolean; listo: boolean;
+  /** Último gesto y su contador: cuando sube el contador, la figura lo hace. */
+  gesto?: string | null; gestoN?: number }
 export interface PartidaPub { id: string; juego: string; version: number; estado: Record<string, unknown>; terminada: boolean }
 export type TipoFila = "contestar" | "carta" | "pista" | "control";
 export interface FilaAccion { id: string; jugador: string; tipo: TipoFila; datos: Record<string, unknown>; creada: string }
@@ -20,6 +25,7 @@ export interface Enlace {
   miSala(): Promise<SalaV | null>;
   miembros(sala: SalaV): Promise<Miembro[] | null>;
   marcarListo(sala: SalaV, listo: boolean): Promise<void>;
+  gesto(sala: SalaV, g: Gesto): Promise<void>;
   salir(sala: SalaV): Promise<void>;
   cerrar(sala: SalaV): Promise<void>;
   partida(sala: SalaV): Promise<PartidaPub | null>;
@@ -34,6 +40,10 @@ export interface Enlace {
   escuchar(sala: SalaV, alCambiar: () => void, alEstado?: (e: EstadoRed) => void): () => void;
   /** Dice si la Pantalla de la sala está conectada. Si `soyPantalla`, este aparato se anota como la Pantalla. */
   vigilarPantalla(sala: SalaV, soyPantalla: boolean, alEstado: (p: PresenciaPantalla) => void): () => void;
+  /** El anfitrión anuncia su lobby abierto para que los demás entren sin código. */
+  anunciarLobby(sala: SalaV): () => void;
+  /** Código del lobby abierto que se está anunciando (null si no hay). */
+  buscarLobby(alCodigo: (codigo: string | null) => void): () => void;
 }
 
 const CODIGO = /^[A-Z0-9]{6}$/;
@@ -79,7 +89,7 @@ const nube: Enlace = {
       const ev = await cliente!.from("eventos").select("anfitrion, cerrado").eq("id", sala.id).maybeSingle();
       if (ev.error) return [];
       if (!ev.data || ev.data.cerrado) return null;
-      const m = await cliente!.from("miembros_evento").select("jugador, unido, listo").eq("evento", sala.id).order("unido");
+      const m = await cliente!.from("miembros_evento").select("jugador, unido, listo, gesto, gesto_n").eq("evento", sala.id).order("unido");
       const ids = (m.data ?? []).map(x => x.jugador as string);
       if (m.error || !ids.length) return [];
       const [perf, figs] = await Promise.all([
@@ -91,11 +101,16 @@ const nube: Enlace = {
       return (m.data ?? []).map(x => ({
         id: x.jugador as string, nombre: nombre.get(x.jugador as string) ?? "Jugador", figura: figura.get(x.jugador as string) ?? null,
         anfitrion: x.jugador === ev.data!.anfitrion, listo: !!x.listo,
+        gesto: (x.gesto as string | null) ?? null, gestoN: Number(x.gesto_n ?? 0),
       }));
     } catch (e) { log("miembros", e); return []; }
   },
   async marcarListo(sala, listo) {
     try { const r = await cliente!.rpc("marcar_en_sala", { p_evento: sala.id, p_listo: listo, p_gesto: null, p_a: null }); if (r.error) log("marcarListo", r.error); } catch (e) { log("marcarListo", e); }
+  },
+  async gesto(sala, g) {
+    if (!GESTOS.includes(g)) return;
+    try { const r = await cliente!.rpc("marcar_en_sala", { p_evento: sala.id, p_listo: null, p_gesto: g, p_a: null }); if (r.error) log("gesto", r.error); } catch (e) { log("gesto", e); }
   },
   async salir(sala) { try { await cliente!.rpc("salir_evento", { p_evento: sala.id }); } catch (e) { log("salir", e); } },
   async cerrar(sala) { try { await cliente!.rpc("cerrar_evento", { p_evento: sala.id }); } catch (e) { log("cerrar", e); } },
@@ -164,11 +179,13 @@ const nube: Enlace = {
   },
   escuchar: (sala, alCambiar, alEstado) => escucharSala(sala.id, alCambiar, alEstado),
   vigilarPantalla: (sala, soyPantalla, alEstado) => vigilarPantalla(sala.id, soyPantalla, alEstado),
+  anunciarLobby: sala => anunciarLobby(sala.codigo),
+  buscarLobby,
 };
 
 // ---------- Respaldo local (sin servidor): la sala vive en este navegador y se comparte entre pestañas ----------
 interface PartidaLocal extends PartidaPub { privados: Record<string, Record<string, unknown>>; acciones: FilaAccion[] }
-interface SalaLocal { sala: SalaV; cerrada: boolean; miembros: { id: string; nombre: string; listo: boolean }[]; partidas: PartidaLocal[] }
+interface SalaLocal { sala: SalaV; cerrada: boolean; miembros: { id: string; nombre: string; listo: boolean; gesto?: string | null; gestoN?: number }[]; partidas: PartidaLocal[] }
 const CLAVE = "alv.demo.v1";
 const leer = (): Record<string, SalaLocal> => { try { return JSON.parse(localStorage.getItem(CLAVE) ?? "{}") as Record<string, SalaLocal>; } catch { return {}; } };
 const oyentes = new Set<() => void>();
@@ -211,6 +228,7 @@ const local: Enlace = {
     return s.miembros.map(m => ({ ...m, figura: null, anfitrion: m.id === s.sala.anfitrionId }));
   },
   async marcarListo(sala, listo) { cambiar(t => { const m = t[sala.codigo]?.miembros.find(x => x.id === yoLocal.id); if (m) m.listo = listo; }); },
+  async gesto(sala, g) { cambiar(t => { const m = t[sala.codigo]?.miembros.find(x => x.id === yoLocal.id); if (m && GESTOS.includes(g)) { m.gesto = g; m.gestoN = (m.gestoN ?? 0) + 1; } }); },
   async salir(sala) { cambiar(t => { const s = t[sala.codigo]; if (s) s.miembros = s.miembros.filter(m => m.id !== yoLocal.id); }); },
   async cerrar(sala) { cambiar(t => { const s = t[sala.codigo]; if (s) s.cerrada = true; }); },
   async partida(sala) {
@@ -241,6 +259,13 @@ const local: Enlace = {
   },
   /** Sin servidor no hay presencia: no se sabe y no se avisa. */
   vigilarPantalla: () => () => { /* nada */ },
+  /** Sin servidor el anuncio es la misma lista del navegador: el lobby abierto más reciente. */
+  anunciarLobby: () => () => { /* nada */ },
+  buscarLobby(alCodigo) {
+    const f = () => alCodigo(Object.values(leer()).reverse().find(s => !s.cerrada)?.sala.codigo ?? null);
+    oyentes.add(f); queueMicrotask(f);
+    return () => { oyentes.delete(f); };
+  },
 };
 
 export const enlace: Enlace = hayNube ? nube : local;

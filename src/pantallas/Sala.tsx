@@ -7,7 +7,7 @@ import { BarraAnfitrion, Boton, Chip, Etiqueta, Panel, Reloj } from "../ds";
 import { ir } from "../app/rutas";
 import { refrescarSesion, useSesion } from "../app/sesion";
 import { sonar } from "../app/sonido";
-import { enlace, enlaceSala, type Miembro, type SalaV } from "../servicios/enlace";
+import { enlace, type Miembro, type SalaV } from "../servicios/enlace";
 import type { PresenciaPantalla } from "../servicios/tiempoReal";
 import { HerramientaCelular, type MiVista } from "../juegos/general/celular";
 import { esPublico, marcador, nombreJuego, quedan, type Publico } from "../juegos/general/texto";
@@ -15,7 +15,8 @@ import { control, iniciarPartida, jugada, useMotor } from "../roles/pantalla/mot
 import { useSala } from "../roles/sala";
 import { Filas, NIVELES, Reglas, candado } from "./Catalogo";
 import { Capsulas } from "./Personalizar";
-import { Cabecera, Elenco, Marco, NombreJugador, Retrato, Vacio, aviso, confirmar } from "./comun";
+import { Cabecera, Marco, NombreJugador, Retrato, Vacio, aviso, confirmar, useAncho } from "./comun";
+import { ContadorListos, Cupo, FilaSala, FondoLobby, Gestos, MiPedestal, Pedestales, TodosListos } from "./SalaEspera";
 
 /** Mantiene la pantalla encendida mientras `activo` (la Pantalla y el celular que hace de Pantalla). */
 export function useDespierta(activo: boolean) {
@@ -118,6 +119,14 @@ export function Sala({ codigo }: { codigo: string }) {
   const [iniciando, setIniciando] = useState(false), [xpReto, setXpReto] = useState(false), [verReglas, setVerReglas] = useState(false);
   const terminada = !!s.partida?.terminada;
   useEffect(() => { if (terminada) { sonar("exito"); void refrescarSesion(); } }, [terminada, s.partida?.id]);
+  // Lobby: cada quien marca «¡Listo!» y el anfitrión inicia la partida cuando quiera (Elías, 18 nov).
+  const ancho = useAncho();
+  const listoYo = !!s.miembros.find(m => m.id === ses.uid)?.listo;
+  // El anfitrión anuncia su lobby mientras esté abierto: quien abre ALV entra sin código.
+  useEffect(() => { if (!s.sala || !soyAnfitrion) return; return enlace.anunciarLobby(s.sala); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [s.sala?.id, soyAnfitrion]);
+  // Al empezar una partida, cada quien se quita el «listo» para la siguiente espera.
+  const enJuego = !!s.partida && !s.partida.terminada;
+  useEffect(() => { if (enJuego && listoYo && s.sala) void enlace.marcarListo(s.sala, false).then(s.refrescar); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [enJuego, s.partida?.id, listoYo]);
   const nRuleta = v?.ruleta?.n ?? 0;
   useEffect(() => { if (v?.ruleta && nRuleta > 0) aviso(`Ruleta: ${v.jugadores.find(j => j.id === v.ruleta!.jugador)?.nombre ?? ""} · ${v.ruleta.texto}`); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [nRuleta]);
 
@@ -188,19 +197,30 @@ export function Sala({ codigo }: { codigo: string }) {
     setIniciando(false);
     if (!ok) aviso("No se pudo iniciar. Intenta otra vez."); else { sonar("exito"); s.refrescar(); }
   };
+  const listo = (
+    <Boton className="a-sala-boton" color={yo?.listo ? "azul" : "verde"} principal={!yo?.listo} texto={yo?.listo ? "Ya no estoy listo" : "¡Listo!"} icono="star" onClick={() => void enlace.marcarListo(sala, !yo?.listo).then(s.refrescar)} />
+  );
+  const gesto = (g: Parameters<typeof enlace.gesto>[1]) => void enlace.gesto(sala, g).then(s.refrescar);
+  const outfit = (
+    <div className="a-pila a-sala-outfit">
+      <div className="a-entre"><span className="dsp ol a-t3">Tu outfit</span><button type="button" className="a-plano" onClick={() => ir("personalizar")}>Cambiar outfit</button></div>
+      <Capsulas />
+    </div>
+  );
   return (
-    <Marco>
+    <Marco clase="a-sala" fondo={<FondoLobby />}>
       <div className="a-ancho a-pila">
-        <Cabecera titulo={`Sala ${sala.codigo}`} icono="users" alVolver={() => void salir()} derecha={<Conexion red={s.red} />} />
+        <Cabecera titulo="Lobby" icono="users" alVolver={() => void salir()} derecha={<><ContadorListos miembros={s.miembros} /><Conexion red={s.red} /></>} />
+        <TodosListos miembros={s.miembros} texto={soyAnfitrion ? "Elige el juego y toca «Iniciar»" : "El anfitrión prepara la partida"} />
         {final && <Panel className="a-pila a-entra" como="section"><Etiqueta texto={`Resultados · ${nombreJuego(final.juegoId)}`} icono="trophy" /><Podio v={final} miembros={s.miembros} yo={ses.uid} /></Panel>}
+        {ancho ? <Pedestales miembros={s.miembros} yo={ses.uid} /> : <MiPedestal miembros={s.miembros} yo={ses.uid} />}
         <div className="a-dos">
           <Panel className="a-pila" como="section">
-            <div className="a-entre"><span className="dsp ol a-t2">{s.miembros.length} en la sala</span><Chip texto={sala.modo === "tv" ? "Con pantalla" : "Sin pantalla"} icono="eye" /></div>
-            <div className="a-elenco"><Elenco gente={s.miembros} foco={ses.uid} /></div>
-            <ul className="a-gente">{s.miembros.map(m => <li key={m.id}><NombreJugador nombre={m.nombre} figura={m.figura} />{m.anfitrion && <Chip texto="Anfitrión" icono="star" />}<Chip texto={m.listo ? "Listo" : "Esperando"} seleccionado={m.listo} /></li>)}</ul>
-            <Capsulas />
-            <Boton color={yo?.listo ? "azul" : "verde"} texto={yo?.listo ? "Ya no estoy listo" : "¡Listo!"} icono="star" onClick={() => void enlace.marcarListo(sala, !yo?.listo).then(s.refrescar)} />
-            <button type="button" className="a-plano" onClick={() => { void navigator.clipboard?.writeText(enlaceSala(sala.codigo)).then(() => aviso("Enlace copiado")); }}>Copiar enlace para invitar</button>
+            {ancho ? <div className="a-entre"><Cupo miembros={s.miembros} /><Chip texto={sala.modo === "tv" ? "Con pantalla" : "Sin pantalla"} icono="eye" /></div>
+              : <>{listo}<div className="a-entre"><Cupo miembros={s.miembros} /><Chip texto={sala.modo === "tv" ? "Con pantalla" : "Sin pantalla"} icono="eye" /></div><FilaSala miembros={s.miembros} yo={ses.uid} /></>}
+            {ancho && listo}
+            <Gestos alGesto={gesto} />
+            {outfit}
           </Panel>
           {soyAnfitrion ? (
             <Panel className="a-pila" como="section">
@@ -213,7 +233,7 @@ export function Sala({ codigo }: { codigo: string }) {
               {sala.modo === "tv" && <p className="a-nota">Abre ALV en la laptop o TV con tu cuenta y elige «Volver a mi sala»: ahí se proyecta la partida.</p>}
               <Boton color="amarillo" principal texto={final ? "Otra partida" : "Iniciar"} sub={motivo ?? `${def.nombre} · ${rondas} rondas`} icono="play" desactivado={!!motivo} cargando={iniciando} onClick={() => void iniciar()} />
             </Panel>
-          ) : <Panel className="a-pila a-centro-txt" como="section"><span className="dsp ol a-t2">Esperando al anfitrión</span><p className="a-suave">{s.miembros.find(m => m.anfitrion)?.nombre ?? "El anfitrión"} elige el juego. Mientras, cambia tu cápsula o marca «Listo».</p></Panel>}
+          ) : <Panel className="a-pila a-centro-txt" como="section"><span className="dsp ol a-t2">Esperando al anfitrión</span><p className="a-suave">{s.miembros.find(m => m.anfitrion)?.nombre ?? "El anfitrión"} elige el juego e inicia la partida. Mientras, cambia tu outfit, saluda o baila.</p></Panel>}
         </div>
       </div>
     </Marco>
