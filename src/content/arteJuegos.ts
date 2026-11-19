@@ -19,9 +19,19 @@ export const ARTE_TIPOS: Record<"individual" | "parejas" | "equipos" | "sexos", 
   individual: "tipos/individual.webp", parejas: "tipos/parejas.webp", equipos: "tipos/equipos.webp", sexos: "tipos/sexos.webp",
 };
 
-/** Escenario → archivo dentro de `public/arte/`. */
+/** Escenario → archivo dentro de `public/arte/` (tarjeta del configurador). */
 export const ARTE_ESCENARIOS: Record<string, string> = {
   ciudad: "ciudad-noche-1100.webp",
+  alverca: "escenario-alberca-1100.webp",
+  fogata: "escenario-patio-fogata-1100.webp",
+  parque: "escenario-cancha-1100.webp",
+};
+
+/** Escenario → nombre base del fondo de pantalla (`-1920.webp` y `-1100.webp`). Sin imagen = ciudad según la hora. */
+export const FONDO_ESCENARIO: Record<string, string> = {
+  alverca: "escenario-alberca",
+  fogata: "escenario-patio-fogata",
+  parque: "escenario-cancha",
 };
 
 export const EMOJI_JUEGO: Record<string, string> = {

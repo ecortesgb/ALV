@@ -1,5 +1,5 @@
 // Hub: todo sale de aquí. Arriba quién eres; al centro tu figura; el menú con Jugar como acción principal.
-import { useEffect, useState, type CSSProperties } from "react";
+import { useEffect, useState } from "react";
 import { Boton, Panel, TarjetaJugador } from "../ds";
 import { costoNivel, tituloPorNivel, xpParaNivel } from "../engine/economia";
 import { apodoDe, figuraActiva, useCapsulas } from "../app/figura3d";
@@ -7,7 +7,8 @@ import { ir } from "../app/rutas";
 import { useSesion } from "../app/sesion";
 import { useLobby, usePuedeAbrir } from "../app/lobby";
 import { enlace, type SalaV } from "../servicios/enlace";
-import { Campo, Cabecera, Elenco, Marco, Retrato, aviso, urlArte, useAncho } from "./comun";
+import { Campo, Cabecera, Elenco, Marco, Retrato, aviso, useAncho } from "./comun";
+import { FondoALV } from "./Fondos";
 import { LogoALV } from "./Logo";
 
 export function Hub() {
@@ -46,18 +47,8 @@ export function Hub() {
   );
 }
 
-/** Fondo ilustrado del HUB: la ciudad pintada (imagen) y encima, en CSS, la luna y los destellos.
- *  La luna y los destellos van aparte para que no se recorten en celular (la imagen se recorta por los lados). */
-const ARTE = { "--arte-g": urlArte("ciudad-noche-1920.webp"), "--arte-c": urlArte("ciudad-noche-1100.webp") } as CSSProperties;
-export function FondoHub() {
-  return (
-    <div className="d-bg a-fondo-hub" aria-hidden="true" style={ARTE}>
-      <div className="a-fh-luna" />
-      {[[12, 18, 0], [34, 9, 1.2], [58, 22, 2.1], [71, 7, .6], [88, 30, 1.7], [22, 36, 2.6], [47, 4, 3.1]].map(([x, y, d], i) =>
-        <i key={i} className="a-fh-brillo" style={{ left: `${x}%`, top: `${y}%`, animationDelay: `${d}s` }} />)}
-    </div>
-  );
-}
+/** Fondo del HUB (y del taller): la ciudad según la hora. */
+export const FondoHub = FondoALV;
 
 /** Jugar: el lobby único. Entrar si está abierto; el anfitrión lo abre. El código queda como respaldo. */
 export function Jugar() {

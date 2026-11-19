@@ -1,7 +1,8 @@
 // La Pantalla (#/tv/código): la laptop o TV que todos ven. No juega: corre el motor y dibuja lo público.
 // Sin QR (Elías, 18 nov): quien abre ALV entra al lobby único con «¡Jugar!». Tiene controles de respaldo para quien tiene el control.
 import { useEffect, useState } from "react";
-import { Boton, Cartel, Etiqueta, FondoCiudad, Onomatopeya, RaizDS, Reloj } from "../../ds";
+import { Boton, Cartel, Etiqueta, Onomatopeya, RaizDS, Reloj } from "../../ds";
+import { FondoALV, FondoEscenario } from "../../pantallas/Fondos";
 import { ir } from "../../app/rutas";
 import { useSesion } from "../../app/sesion";
 import { enlace } from "../../servicios/enlace";
@@ -10,7 +11,7 @@ import { esPublico, marcador, nombreDe, nombreJuego } from "../../juegos/general
 import { Conexion, useDespierta, usePantalla, useQuedan } from "../../pantallas/Sala";
 import { Posiciones, esFinalDeJuego } from "../../juegos/general/Copas";
 import { NombreJugador, Retrato, confirmar } from "../../pantallas/comun";
-import { ContadorListos, Cupo, FondoLobby, Pedestales, TodosListos } from "../../pantallas/SalaEspera";
+import { ContadorListos, Cupo, Pedestales, TodosListos } from "../../pantallas/SalaEspera";
 import { useSala } from "../sala";
 import { control, useMotor } from "./motor";
 
@@ -36,7 +37,7 @@ export function PantallaTv({ codigo }: { codigo: string }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [nRuleta]);
 
-  const marco = (hijos: React.ReactNode, fondo: React.ReactNode = <FondoCiudad />) => <RaizDS ancho className="alv a-tv">{fondo}{hijos}</RaizDS>;
+  const marco = (hijos: React.ReactNode, fondo: React.ReactNode = <FondoALV />) => <RaizDS ancho className="alv a-tv">{fondo}{hijos}</RaizDS>;
   if (s.error || s.cerrada) return marco(<div className="a-tv-msj"><span className="dsp ol a-tv-t1">{s.cerrada ? "La sala se cerró" : "No se pudo abrir la pantalla"}</span><p className="a-tv-sub">{s.error}</p><Boton color="amarillo" texto="Ir al inicio" icono="back" onClick={() => ir("inicio")} /></div>);
   if (!s.sala) return marco(<div className="a-tv-msj"><p className="a-tv-sub a-pulso" role="status">Abriendo la sala {codigo}…</p></div>);
   const pid = s.partida?.id ?? "";
@@ -68,7 +69,7 @@ export function PantallaTv({ codigo }: { codigo: string }) {
             : <button type="button" onClick={() => void control(pid, "siguiente")}>{ultima ? "Resultados" : "Siguiente"}</button>}
         </div>
       )}
-    </>);
+    </>, <FondoEscenario escenario={v.escenario} />);
   }
 
   return marco(<>
@@ -83,5 +84,5 @@ export function PantallaTv({ codigo }: { codigo: string }) {
       )}
       <TodosListos miembros={s.miembros} />
     </main>
-  </>, <FondoLobby />);
+  </>);
 }

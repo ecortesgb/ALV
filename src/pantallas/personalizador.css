@@ -249,11 +249,7 @@
 .p-puntos i.on { background: var(--p-amarillo); transform: scale(1.25); }
 .D.wide .p-puntos { display: none; }
 
-/* Fondo de noche del HUB también en el personalizador (sus reglas en alv.css solo aplican dentro de .a-hub). */
-.D.p-taller .a-fondo-hub { background: #241a6b var(--arte-g) center bottom / cover no-repeat; }
-.D.p-taller:not(.wide) .a-fondo-hub { background-image: var(--arte-c); background-position: 42% bottom; }
-.D.p-taller .a-fondo-hub::after { background-image: linear-gradient(180deg, rgba(20, 14, 70, .15), transparent 30%, transparent 62%, rgba(10, 14, 48, .55)); background-size: auto; }
-.D.p-taller:not(.wide) .a-fh-luna { right: 7%; top: 15%; width: 54px; }
+/* El fondo del taller es la ciudad según la hora (FondoALV, estilos «Fondos pintados» en alv.css). */
 
 /* Celular girado (diseño de computadora con poca altura): las cartas y el libro caben sin desplazar. */
 .D.wide .p-carta { width: min(100%, calc((100dvh - 210px) * 5 / 7)); min-width: 130px; }

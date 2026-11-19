@@ -15,7 +15,8 @@ import { PodioJuego, esFinalDeJuego } from "../juegos/general/Copas";
 import { useSala } from "../roles/sala";
 import { Capsulas } from "./Personalizar";
 import { Cabecera, Marco, NombreJugador, Retrato, Vacio, aviso, confirmar, useAncho } from "./comun";
-import { ContadorListos, Cupo, FilaSala, FondoLobby, Gestos, MiPedestal, Pedestales, TodosListos } from "./SalaEspera";
+import { ContadorListos, Cupo, FilaSala, Gestos, MiPedestal, Pedestales, TodosListos } from "./SalaEspera";
+import { FondoEscenario } from "./Fondos";
 
 /** Mantiene la pantalla encendida mientras `activo` (la Pantalla y el celular que hace de Pantalla). */
 export function useDespierta(activo: boolean) {
@@ -130,7 +131,7 @@ export function Sala({ codigo }: { codigo: string }) {
     // Ceremonia de copas de la noche: sin ronda, sin barra del anfitrión ni marcador; al final se cierra la sala.
     const copas = v.juegoId === "copas";
     return (
-      <Marco clase="a-partida" fijo={soyAnfitrion && !copas ? (
+      <Marco clase="a-partida" fondo={<FondoEscenario escenario={v.escenario} />} fijo={soyAnfitrion && !copas ? (
         <div className={"a-barra" + (sinPantalla ? " a-sin-pantalla" : "")} {...inerte(sinPantalla)}>
           <BarraAnfitrion pausada={v.pausada}
             momento={v.fase === "revelada" && !sinPantalla ? { texto: ultima ? "Ver resultados" : "Siguiente ronda", icono: "skip", onClick: () => void control(pid, "siguiente") } : undefined}
@@ -191,7 +192,7 @@ export function Sala({ codigo }: { codigo: string }) {
     </div>
   );
   return (
-    <Marco clase="a-sala" fondo={<FondoLobby />}>
+    <Marco clase="a-sala">
       <div className="a-ancho a-pila">
         <Cabecera titulo="Lobby" icono="users" alVolver={() => void salir()} derecha={<><ContadorListos miembros={s.miembros} /><Conexion red={s.red} /></>} />
         <TodosListos miembros={s.miembros} texto={soyAnfitrion ? "Toca «Armar partida»" : "El anfitrión prepara la partida"} />

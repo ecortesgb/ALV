@@ -1,7 +1,8 @@
 // Piezas comunes de las pantallas de ALV 2.0: marco con ciudad, cabecera, avisos, confirmación y figuras.
 import { useEffect, useState, useSyncExternalStore, type ReactNode } from "react";
 import type { FiguraV2 } from "../content/personaje";
-import { FondoCiudad, Icono, RaizDS, type IconoId } from "../ds";
+import { Icono, RaizDS, type IconoId } from "../ds";
+import { FondoALV } from "./Fondos";
 import { Escena3D, FotoFigura, apodoDe, semillaDe, type EnEscena, type Momento } from "../app/figura3d";
 import { atras } from "../app/rutas";
 
@@ -18,12 +19,12 @@ export function useAncho(min = 900): boolean {
   return a;
 }
 
-/** Marco de toda pantalla: tokens del Design System, ciudad de noche y zona que se desliza. */
+/** Marco de toda pantalla: tokens del Design System, ciudad según la hora (o el fondo que se pase) y zona que se desliza. */
 export function Marco({ children, clase = "", fijo, fondo }: { children: ReactNode; clase?: string; fijo?: ReactNode; fondo?: ReactNode }) {
   const ancho = useAncho();
   return (
     <RaizDS ancho={ancho} className={`alv ${clase}`.trim()}>
-      {fondo ?? <FondoCiudad />}
+      {fondo ?? <FondoALV />}
       <div className="a-scroll">{children}</div>
       {fijo}
     </RaizDS>

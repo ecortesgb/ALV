@@ -23,6 +23,7 @@ import { useSala } from "../roles/sala";
 import { FILAS, NIVELES, Reglas, candado, colorDe, duracion, gente } from "./Catalogo";
 import { CartaEscenario, CartaJuego, CartaTipo, srcArte } from "./TarjetasConfig";
 import { Marco, NombreJugador, Retrato, Vacio, aviso, confirmar } from "./comun";
+import { FondoEscenario } from "./Fondos";
 import "./configurar.css";
 
 export interface MiembroConfig { id: string; nombre: string; figura?: FiguraV2 | null }
@@ -94,10 +95,12 @@ function ArteJuego({ id, className = "" }: { id: string; className?: string }) {
     : <span className={"cfg-sinarte " + className} style={{ "--tc": colorDe(id) } as CSSProperties}><span aria-hidden="true">{EMOJI_JUEGO[id] ?? "🎲"}</span></span>;
 }
 
-export function ConfigurarPartida({ miembros, alIniciar, alCancelar, iniciando, inicial, alEntregarCopas }: {
+export function ConfigurarPartida({ miembros, alIniciar, alCancelar, iniciando, inicial, alEntregarCopas, alFondo }: {
   miembros: MiembroConfig[];
   /** «Terminar la noche»: entrega las copas de todos los juegos jugados (solo el anfitrión). */
   alEntregarCopas?: () => void;
+  /** Fondo de la página: en la sección «Escenario» el del escenario elegido (null = Ciudad ALV); fuera de ella, undefined. */
+  alFondo?: (escenario: EscenarioId | null | undefined) => void;
   alIniciar: (c: PartidaConfigurada) => void;
   alCancelar?: () => void;
   iniciando?: boolean;
@@ -122,6 +125,8 @@ export function ConfigurarPartida({ miembros, alIniciar, alCancelar, iniciando, 
   const [tema, setTema] = useState<string | null>(inicial?.opciones.impostor?.tema ?? null);
   const [escenario, setEscenario] = useState<EscenarioId | undefined>(inicial?.opciones.escenario);
   const [filtro, setFiltro] = useState("todos");
+  // En la sección «Escenario» la página toma el fondo del escenario elegido.
+  useEffect(() => { alFondo?.(sec === "escenario" ? escenario ?? null : undefined); }, [sec, escenario, alFondo]);
   // Temporizador por turno (herramienta opcional, 6A.11 C6). null: sin tiempo.
   const [temporizador, setTemporizador] = useState<number | null>(inicial?.opciones.temporizador ?? null);
   const conTemporizador = JUEGOS_CON_TEMPORIZADOR.includes(juego);
@@ -401,6 +406,7 @@ export function PaginaConfigurar({ codigo }: { codigo: string }) {
   const ses = useSesion();
   const s = useSala(codigo, ses.uid);
   const [iniciando, setIniciando] = useState(false);
+  const [fondoEsc, setFondoEsc] = useState<EscenarioId | null | undefined>(undefined);
   const soyAnfitrion = !!s.sala && s.sala.anfitrionId === ses.uid;
   const enCurso = !!s.partida && !s.partida.terminada;
   useEffect(() => { if (enCurso && !iniciando) ir("sala", codigo); }, [enCurso, iniciando, codigo]);
@@ -426,9 +432,9 @@ export function PaginaConfigurar({ codigo }: { codigo: string }) {
     ir("sala", codigo);
   };
   return (
-    <Marco clase="cfg-pagina">
+    <Marco clase="cfg-pagina" fondo={fondoEsc !== undefined ? <FondoEscenario escenario={fondoEsc} /> : undefined}>
       {soyAnfitrion
-        ? <ConfigurarPartida miembros={s.miembros} iniciando={iniciando} alIniciar={c => void iniciar(c)} alCancelar={() => ir("sala", codigo)} alEntregarCopas={() => void copas()} />
+        ? <ConfigurarPartida miembros={s.miembros} iniciando={iniciando} alIniciar={c => void iniciar(c)} alCancelar={() => ir("sala", codigo)} alEntregarCopas={() => void copas()} alFondo={setFondoEsc} />
         : <Vacio titulo="El anfitrión está configurando" texto="En cuanto toque «Iniciar», empieza la partida."><Boton color="amarillo" texto="Volver a la sala" icono="back" onClick={() => ir("sala", codigo)} /></Vacio>}
     </Marco>
   );
