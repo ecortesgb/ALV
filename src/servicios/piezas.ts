@@ -18,8 +18,10 @@ export interface EstadoPiezas {
   /** Retos ya reclamados: "id" (combinación) o "id@AAAA-MM-DD" (diario). */ reclamados: Set<string>;
   /** XP para gastar (en demostración, la de mentira). */ xp: number;
   demo: boolean;
+  /** Piezas que la base todavía bloquea (activas en piezas_figura); null = usar la lista de rarezas.ts (demostración). */
+  bloqueables: Set<string> | null;
 }
-let estado: EstadoPiezas = { activo: false, tengo: new Set(), reclamados: new Set(), xp: 0, demo: !hayNube };
+let estado: EstadoPiezas = { activo: false, tengo: new Set(), reclamados: new Set(), xp: 0, demo: !hayNube, bloqueables: null };
 const oyentes = new Set<() => void>();
 const fijar = (e: Partial<EstadoPiezas>) => { estado = { ...estado, ...e }; oyentes.forEach(f => f()); };
 export const usePiezas = () => useSyncExternalStore(f => { oyentes.add(f); return () => oyentes.delete(f); }, () => estado);
@@ -44,13 +46,17 @@ export async function cargarPiezas(): Promise<void> {
     return;
   }
   try {
-    const [p, r] = await Promise.all([
+    const [p, r, b] = await Promise.all([
       cliente!.from("piezas_jugador").select("pieza"),
       cliente!.from("retos_jugador").select("reto, dia"),
+      cliente!.from("piezas_figura").select("id").eq("activo", true),
     ]);
-    if (p.error || r.error) { fijar({ activo: false, demo: false, xp: s.disponible }); return; } // sin la 033: todo libre
+    if (p.error || r.error || b.error) { fijar({ activo: false, demo: false, xp: s.disponible }); return; } // sin la 033: todo libre
+    // Con la 037 ninguna pieza queda activa: el sistema se apaga y todo es libre (Maestro v1.50). Cuando Elías reactive
+    // piezas de su catálogo, solo esas vuelven a pedir desbloqueo.
+    const bloqueables = new Set((b.data ?? []).map(x => String(x.id)));
     fijar({
-      activo: true, demo: false, xp: s.disponible,
+      activo: bloqueables.size > 0, demo: false, xp: s.disponible, bloqueables,
       tengo: new Set((p.data ?? []).map(x => String(x.pieza))),
       reclamados: new Set((r.data ?? []).map(x => (String(x.dia) === "2000-01-01" ? String(x.reto) : `${x.reto}@${x.dia}`))),
     });
@@ -58,7 +64,8 @@ export async function cargarPiezas(): Promise<void> {
 }
 
 /** ¿Esta pieza se puede usar ya? */
-export const libre = (id: string | null | undefined, e: EstadoPiezas = estado) => !e.activo || !id || rarezaDe(id) === "comun" || e.tengo.has(id);
+export const libre = (id: string | null | undefined, e: EstadoPiezas = estado) =>
+  !e.activo || !id || (e.bloqueables ? !e.bloqueables.has(id) : rarezaDe(id) === "comun") || e.tengo.has(id);
 
 /** Desbloquea con XP. Devuelve null si salió bien o el motivo para mostrar. */
 export async function desbloquear(id: string): Promise<string | null> {

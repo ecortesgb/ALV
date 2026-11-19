@@ -271,3 +271,7 @@
   .t-pestana { font-size: 11px; letter-spacing: -.01em; padding-left: 0; padding-right: 0; }
   .t-pestana .t-punto { top: 3px; right: 3px; width: 8px; height: 8px; }
 }
+
+/* Piezas libres por ahora (037, Maestro v1.50) */
+.t-aviso-libres { margin: 6px auto 0; max-width: 34em; padding: 8px 12px; text-align: center; font: 600 14px/1.3 var(--letra-cuerpo, sans-serif); color: #fff;
+  background: rgba(10, 16, 48, .72); border: 2px solid var(--amarillo, #ffd23f); border-radius: 8px; }

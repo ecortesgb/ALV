@@ -71,14 +71,17 @@ export function Tienda() {
 // ---------- Sobres ----------
 function Sobres({ alAbrir }: { alAbrir: (s: Sobre, a: Apertura) => void }) {
   const t = useTienda(), p = usePiezas();
-  const [i, setI] = useState(4);
+  // Con las piezas libres (037, Maestro v1.50) los sobres de piezas no tienen qué dar: solo se venden los de comodines.
+  const lista = p.activo ? SOBRES : SOBRES.filter(x => x.piezas === 0);
+  const [i0, setI] = useState(4);
+  const i = Math.min(i0, lista.length - 1);
   const [probs, setProbs] = useState(false);
   const [ocupado, setOcupado] = useState(false);
-  const s = SOBRES[i]!;
+  const s = lista[i]!;
   const disponible = sobreDisponible(s, p.tengo);
   const alcanza = t.monedas >= s.precio;
   const falta = faltanParaGarantia(t.racha);
-  const mover = (d: number) => { sonar("tic"); setProbs(false); setI(x => (x + d + SOBRES.length) % SOBRES.length); };
+  const mover = (d: number) => { sonar("tic"); setProbs(false); setI(x => (Math.min(x, lista.length - 1) + d + lista.length) % lista.length); };
 
   // Deslizar el sobre para cambiar.
   const toque = useRef<number | null>(null);
@@ -162,8 +165,9 @@ function Sobres({ alAbrir }: { alAbrir: (s: Sobre, a: Apertura) => void }) {
         </button>
       </div>
 
+      {!p.activo && <p className="t-aviso-libres">Por ahora todas las piezas son libres: úsalas en el personalizador. Los sobres de piezas regresan después.</p>}
       <div className="t-tira" role="tablist" aria-label="Sobres">
-        {SOBRES.map((x, k) => (
+        {lista.map((x, k) => (
           <button key={x.id} type="button" role="tab" aria-selected={k === i} className={"t-tira-s" + (k === i ? " t-on" : "")}
             style={{ ["--c" as string]: x.color }} onClick={() => { sonar("tic"); setProbs(false); setI(k); }}>
             <img src={srcArte("tienda/" + x.arte)} alt="" draggable={false} />

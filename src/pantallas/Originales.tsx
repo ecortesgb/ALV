@@ -10,7 +10,7 @@ import { sonar } from "../app/sonido";
 import type { FiguraV2 } from "../content/personaje";
 import { PRECIO, rarezaDe } from "../content/rarezas";
 import { SAGAS, listo, versionesListas, type Grupo, type Personaje, type Saga, type Version } from "../content/sagas";
-import { desbloquear, piezasAhora, usePiezas } from "../servicios/piezas";
+import { desbloquear, libre, piezasAhora, usePiezas } from "../servicios/piezas";
 import { aviso } from "./comun";
 import { infoPieza } from "./Desbloqueo";
 import { miniatura, type Cambiar, type Pagina } from "./Libro";
@@ -135,7 +135,7 @@ function FichaPersonaje({ pj, color, t, donde, figura, cambiar }: { pj: Personaj
   const v = pj.versiones.find(x => x.id === vid) ?? lista[0];
   const traje = v?.traje ? t.get(v.traje) : undefined;
   const f = completar(figura);
-  const faltan = (g: Figura) => (est.activo ? bloqueadasEn(g, est.tengo) : []);
+  const faltan = (g: Figura) => (est.activo ? bloqueadasEn(g, est.tengo).filter(id => !libre(id, est)) : []);
   /** Pone el resultado; si trae piezas bloqueadas (con nube), primero las desbloquea con XP. */
   const poner = async (g: Figura) => {
     if (ocupado) return;
