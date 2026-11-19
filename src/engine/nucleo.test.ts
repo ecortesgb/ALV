@@ -69,13 +69,14 @@ describe("equivalencia del arranque en cada juego con motor (semilla 4242, 4 jug
 describe("armarArranque da la misma configuración que antes daba iniciarPartida", () => {
   it("límites de rondas e intensidad, parejas y banderas", () => {
     const m = [{ id: A, nombre: "Ana" }, { id: B, nombre: "Beto" }, { id: C, nombre: "Caro" }, { id: D, nombre: "Dani" }];
-    const a = nucleo.armarArranque(m, "impostor", 99, 3, 5)!;
-    const def = JUEGOS.find(j => j.id === "impostor")!;
+    // El impostor ya no sirve aquí: desde v1.44 arranca con eliminación (lo prueba impostor.test.ts).
+    const a = nucleo.armarArranque(m, "mas-probable", 99, 3, 5)!;
+    const def = JUEGOS.find(j => j.id === "mas-probable")!;
     expect(a).toEqual({
-      semilla: 5, juego: "impostor", rondas: 20,
+      semilla: 5, juego: "mas-probable", rondas: 20,
       cfg: { jugadores: nucleo.conParejas(m), lugar: "cualquiera", intensidad: Math.max(def.intensidadMin, Math.min(def.intensidadMax, 3)), dificultad: 2, adulto: true, drunk: true, turno: "orden" },
     });
-    expect(nucleo.armarArranque(m, "impostor", 1, 1, 5)!.rondas).toBe(3);
+    expect(nucleo.armarArranque(m, "mas-probable", 1, 1, 5)!.rondas).toBe(3);
     expect(nucleo.armarArranque(m, "no-existe", 5, 1, 5)).toBeNull();
     expect(nucleo.armarArranque(m.slice(0, 1), "impostor", 5, 1, 5)).toBeNull();
   });

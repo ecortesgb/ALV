@@ -6,8 +6,8 @@ export interface Reglas { objetivo: string; puntos: string[]; gana: string }
 
 export const REGLAS: Record<Motor, Reglas> = {
   "turnos-cartas": {
-    objetivo: "En tu turno sale una carta de Verdad o de Reto. Cúmplela o pásala.",
-    puntos: ["Verdad cumplida: +1 punto", "Reto cumplido: +2 puntos (y cuenta como reto para tu XP)", "Pasar: 0, sin castigo"],
+    objetivo: "Una herramienta elige quién pregunta y quién responde. Quien responde elige Verdad (solo una vez) o Reto; quien pregunta la saca de ALV o la dice en voz alta y califica.",
+    puntos: ["Verdad cumplida: +1 punto", "Reto cumplido: +2 puntos (y cuenta como reto para tu XP)", "Tomar en vez de cumplir: +1 punto", "Pasar con comodín: 0"],
     gana: "Quien junte más puntos al terminar las rondas.",
   },
   botella: {

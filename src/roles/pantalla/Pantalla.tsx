@@ -7,8 +7,9 @@ import { useSesion } from "../../app/sesion";
 import { enlace } from "../../servicios/enlace";
 import { EscenaTv } from "../../juegos/general/tv";
 import { esPublico, marcador, nombreDe, nombreJuego } from "../../juegos/general/texto";
-import { Conexion, Podio, useDespierta, usePantalla, useQuedan } from "../../pantallas/Sala";
-import { NombreJugador, Retrato } from "../../pantallas/comun";
+import { Conexion, useDespierta, usePantalla, useQuedan } from "../../pantallas/Sala";
+import { Posiciones, esFinalDeJuego } from "../../juegos/general/Copas";
+import { NombreJugador, Retrato, confirmar } from "../../pantallas/comun";
 import { ContadorListos, Cupo, FondoLobby, Pedestales, TodosListos } from "../../pantallas/SalaEspera";
 import { useSala } from "../sala";
 import { control, useMotor } from "./motor";
@@ -41,22 +42,26 @@ export function PantallaTv({ codigo }: { codigo: string }) {
   const pid = s.partida?.id ?? "";
 
   if (v) {
-    const ultima = v.ronda >= v.totalRondas;
+    const ultima = esFinalDeJuego(v);
+    // Ceremonia de copas: sin ronda, marcador ni controles de partida; quien tiene el control puede cerrar la sala.
+    const copas = v.juegoId === "copas";
+    const cerrar = async () => { if (s.sala && await confirmar({ titulo: "¿Cerrar la sala?", texto: "Todos salen y la sesión termina.", si: "Cerrar sala", peligro: true })) { await enlace.cerrar(s.sala); ir("inicio"); } };
     return marco(<>
       <header className="a-tv-top">
-        <Etiqueta texto={`Ronda ${v.ronda} de ${v.totalRondas}`} icono="star" grande />
+        {!copas && <Etiqueta texto={v.impostor ? `Vuelta ${v.ronda}` : `Ronda ${v.ronda} de ${v.totalRondas}`} icono="star" grande />}
         <Conexion red={s.red} />
         {v.reloj && v.fase === "contestando" && <Reloj segundos={quedanS} total={v.reloj.total} pausado={v.pausada} style={{ width: "6.5em", height: "6.5em" }} />}
       </header>
       <main className="a-tv-main"><EscenaTv v={v} miembros={s.miembros} />{v.fase === "revelada" && v.ausentes?.length > 0 && <p className="a-tv-sub">Sin respuesta en esta ronda: {v.ausentes.map(j => nombreDe(v, j)).join(", ")}</p>}</main>
-      <footer className="a-tv-pie">
+      {!copas && <footer className="a-tv-pie">
         <ul className="a-tv-marcador" aria-label="Marcador">
           {marcador(v).map(j => <li key={j.id}><Retrato id={j.id} figura={s.miembros.find(m => m.id === j.id)?.figura} nombre={j.nombre} size={44} /><NombreJugador nombre={j.nombre} figura={s.miembros.find(m => m.id === j.id)?.figura} clase="" /><b className="dsp">{j.puntos}</b></li>)}
         </ul>
-      </footer>
+      </footer>}
       {v.pausada && <div className="a-tv-velo"><Onomatopeya texto="PAUSA" color="var(--amarillo)" tamano="7em" giro={-6} /></div>}
       {ruleta && <div className="a-tv-velo" onClick={() => setRuleta(null)}><div className="d-pnl a-tv-ruleta"><Etiqueta texto="Ruleta de castigos" icono="wheel" grande /><span className="dsp ol a-tv-t1">{ruleta.quien}</span><span className="a-tv-sub">{ruleta.texto}</span></div></div>}
-      {tengoControl && (
+      {tengoControl && copas && <div className="a-tv-respaldo" aria-label="Controles de respaldo"><button type="button" onClick={() => void cerrar()}>Cerrar sala</button></div>}
+      {tengoControl && !copas && (
         <div className="a-tv-respaldo" aria-label="Controles de respaldo">
           <button type="button" onClick={() => void control(pid, v.pausada ? "reanudar" : "pausar")}>{v.pausada ? "Seguir" : "Pausar"}</button>
           {v.fase === "contestando" ? <button type="button" onClick={() => void control(pid, "saltar")}>Saltar</button>
@@ -70,7 +75,7 @@ export function PantallaTv({ codigo }: { codigo: string }) {
     <header className="a-tv-top"><Cartel titulo={final ? `Resultados · ${nombreJuego(final.juegoId)}` : "Lobby ALV"} sub={final ? "Marquen «¡Listo!» para la siguiente" : "Abre ALV en tu celular y toca «¡Jugar!»"} /><Conexion red={s.red} />
       <span className="a-tv-cupo"><Cupo miembros={s.miembros} /></span><ContadorListos miembros={s.miembros} className="a-tv-contador" /></header>
     <main className="a-tv-main a-tv-lobby">
-      {final ? <Podio v={final} miembros={s.miembros} /> : (
+      {final ? <Posiciones v={final} miembros={s.miembros} grande /> : (
         <div className="a-tv-elenco">
           <Pedestales miembros={s.miembros} />
           {!s.miembros.length && <span className="dsp ol a-tv-t2">Abre ALV y toca «¡Jugar!» para entrar</span>}

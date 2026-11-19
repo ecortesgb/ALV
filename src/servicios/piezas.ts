@@ -102,3 +102,25 @@ export async function reclamar(id: string, capsula: number): Promise<{ pieza: st
   fijar({ tengo: fila.pieza ? new Set([...estado.tengo, fila.pieza]) : estado.tengo, reclamados: new Set([...estado.reclamados, clave]), xp: sesionAhora().disponible });
   return fila;
 }
+
+/**
+ * Premios por nivel (migración 035, Maestro 6A.11 C1): pide al servidor las piezas de premio de su nivel que todavía no
+ * tiene y las devuelve. Sin la 035 aplicada devuelve [] (no se inventa nada). En demostración regala los premios entre
+ * `antes` y `ahora`.
+ */
+export async function reclamarPremiosNivel(antes: number, ahora: number): Promise<string[]> {
+  const { premiosEntre } = await import("../content/premiosNivel");
+  if (!hayNube) {
+    const uid = sesionAhora().uid, d = leerDemo(uid);
+    const nuevas = premiosEntre(antes, ahora).map(p => p.pieza).filter(p => !d.tengo.includes(p));
+    if (nuevas.length) { escribirDemo(uid, { ...d, tengo: [...d.tengo, ...nuevas] }); fijar({ tengo: new Set([...d.tengo, ...nuevas]) }); }
+    return nuevas;
+  }
+  try {
+    const { data, error } = await cliente!.rpc("reclamar_premios_nivel");
+    if (error) return []; // sin la 035: todavía no hay premios por nivel
+    const nuevas = ((data ?? []) as { pieza: string }[]).map(x => String(x.pieza));
+    if (nuevas.length) await cargarPiezas();
+    return nuevas;
+  } catch (e) { console.error("reclamarPremiosNivel", e); return []; }
+}

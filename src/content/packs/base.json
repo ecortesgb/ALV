@@ -4253,6 +4253,64 @@
     "Beso francés",
     "Pétalos de rosa"
    ]
+  },
+  {
+   "id": "com",
+   "nombre": "Comida",
+   "adulto": false,
+   "escenario": null,
+   "soloConfig": true,
+   "palabras": [
+    "Tacos al pastor",
+    "Pozole",
+    "Chilaquiles",
+    "Sushi",
+    "Pizza",
+    "Hamburguesa",
+    "Tamales",
+    "Enchiladas",
+    "Mole",
+    "Ceviche",
+    "Hot dog",
+    "Elote",
+    "Churros",
+    "Guacamole",
+    "Quesadilla",
+    "Paella",
+    "Ramen",
+    "Pan de muerto",
+    "Flan",
+    "Esquites"
+   ]
+  },
+  {
+   "id": "ani",
+   "nombre": "Animales",
+   "adulto": false,
+   "escenario": null,
+   "soloConfig": true,
+   "palabras": [
+    "Ajolote",
+    "Jirafa",
+    "Pingüino",
+    "Tiburón",
+    "Pulpo",
+    "Camaleón",
+    "Koala",
+    "Flamingo",
+    "Murciélago",
+    "Tortuga",
+    "Canguro",
+    "Mapache",
+    "Delfín",
+    "Águila",
+    "Cocodrilo",
+    "Perezoso",
+    "Hipopótamo",
+    "Lobo",
+    "Colibrí",
+    "Cebra"
+   ]
   }
  ]
 }

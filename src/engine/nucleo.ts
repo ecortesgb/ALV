@@ -4,9 +4,9 @@
 // Las reglas no se cambian aquí: siguen en partida.ts y vistas.ts. Este archivo solo traduce filas guardadas a
 // acciones, reconstruye la partida, arma lo que se publica y calcula las señales del reloj lógico.
 import { CONTENIDO } from "../content";
-import { JUEGOS } from "../content/catalogo";
-import { aplicar, crearPartida, type Accion, type EstadoPartida } from "./partida";
-import type { Configuracion } from "./types";
+import { ESCENARIOS, JUEGOS } from "../content/catalogo";
+import { aplicar, conEliminacion, conVerdadReto, crearPartida, etapaImpostor, etapaVR, HERRAMIENTAS_VR, maxImpostores, type Accion, type EstadoPartida, type HerramientaVR } from "./partida";
+import type { Configuracion, Jugador, OpcionesPartida } from "./types";
 import { vistaJugador, vistaPublica } from "./vistas";
 
 /** Misma forma que la fila de `servicios/enlace.ts` (se repite aquí para no depender de servicios). */
@@ -17,24 +17,77 @@ export interface Arranque { semilla: number; juego: string; rondas: number; cfg:
 export const SUSPENSO_MS = 2000;
 /** P-03: sin respuesta de alguien, a los 20 s el anfitrión elige esperar o seguir sin él. «Esperar» rearma el mismo intervalo. */
 export const ESPERA_MS = 20000;
-export const CONTROL_SIMPLE = new Set(["pausar", "reanudar", "saltar", "seguir-sin", "esperar", "revelar", "siguiente", "terminar", "ruleta"]);
+export const CONTROL_SIMPLE = new Set(["pausar", "reanudar", "saltar", "seguir-sin", "esperar", "revelar", "siguiente", "terminar", "ruleta", "tiempo"]);
 
 /** Parejas por orden de llegada (1 con 2, 3 con 4…). Solo si son pares. */
 export function conParejas(miembros: { id: string; nombre: string }[]) {
   return miembros.map((m, i) => ({ id: m.id, nombre: m.nombre, ...(miembros.length % 2 === 0 ? { parejaDe: miembros[i % 2 === 0 ? i + 1 : i - 1]!.id } : {}) }));
 }
 
+/** Juegos donde el temporizador por turno funciona hoy. */
+export const JUEGOS_CON_TEMPORIZADOR = ["impostor", "verdad-reto"];
+
+/** Nombres de los grupos de cada tipo de partida. */
+export const GRUPOS_EQUIPOS = [{ id: "a", nombre: "Equipo A" }, { id: "b", nombre: "Equipo B" }, { id: "c", nombre: "Equipo C" }, { id: "d", nombre: "Equipo D" }] as const;
+export const GRUPOS_SEXOS = [{ id: "ellas", nombre: "Ellas" }, { id: "ellos", nombre: "Ellos" }] as const;
+
+/**
+ * Grupos de la partida según el tipo. Parejas: por orden de llegada (1 con 2, 3 con 4…), pide número par.
+ * Equipos y guerra de sexos: cada jugador con su grupo en `grupos`; pide al menos dos grupos con gente.
+ * Devuelve null si no se puede armar.
+ */
+export function armarGrupos(jugadores: Jugador[], op: OpcionesPartida): { jugadores: Jugador[]; equipos?: { id: string; nombre: string }[] } | null {
+  const tipo = op.modalidad ?? "individual";
+  if (tipo === "individual") return { jugadores };
+  if (tipo === "parejas") {
+    if (jugadores.length < 4 || jugadores.length % 2 !== 0) return null;
+    const equipos: { id: string; nombre: string }[] = [];
+    const con = jugadores.map((j, i) => ({ ...j, equipo: `p${Math.floor(i / 2) + 1}` }));
+    for (let i = 0; i < jugadores.length; i += 2) equipos.push({ id: `p${i / 2 + 1}`, nombre: `${jugadores[i]!.nombre} y ${jugadores[i + 1]!.nombre}` });
+    return { jugadores: con, equipos };
+  }
+  const posibles: readonly { id: string; nombre: string }[] = tipo === "sexos" ? GRUPOS_SEXOS : GRUPOS_EQUIPOS;
+  const de = (id: string) => op.grupos?.[id];
+  if (jugadores.some(j => !posibles.some(g => g.id === de(j.id)))) return null;
+  const usados = posibles.filter(g => jugadores.some(j => de(j.id) === g.id));
+  if (usados.length < 2) return null;
+  return { jugadores: jugadores.map(j => ({ ...j, equipo: de(j.id)! })), equipos: usados.map(g => ({ ...g })) };
+}
+
 /**
  * Configuración y arranque de una partida. La semilla la pone quien llama (el navegador hoy, el servidor después).
- * Devuelve null si el juego no corre en el motor o faltan jugadores.
+ * `op` trae lo del configurador (tipo de partida, escenario, instrumento y opciones del juego). El impostor siempre
+ * arranca con eliminación (Maestro v1.44); el modo clásico solo queda para reconstruir partidas guardadas antes.
+ * Devuelve null si el juego no corre en el motor, faltan jugadores o los grupos no se pueden armar.
  */
-export function armarArranque(miembros: { id: string; nombre: string }[], juego: string, rondas: number, intensidad: 1 | 2 | 3 | 4, semilla: number): Arranque | null {
+export function armarArranque(miembros: { id: string; nombre: string }[], juego: string, rondas: number, intensidad: 1 | 2 | 3 | 4, semilla: number, op: OpcionesPartida = {}): Arranque | null {
   const def = JUEGOS.find(j => j.id === juego);
   if (!def?.motor || miembros.length < def.minJugadores) return null;
+  const grupos = armarGrupos(conParejas(miembros), op);
+  if (!grupos) return null;
+  const escenario = op.escenario ? ESCENARIOS.find(x => x.id === op.escenario && x.activo) : undefined;
   const cfg: Configuracion = {
-    jugadores: conParejas(miembros), lugar: "cualquiera", intensidad: Math.max(def.intensidadMin, Math.min(def.intensidadMax, intensidad)) as 1 | 2 | 3 | 4,
-    dificultad: 2, adulto: intensidad >= 3 || !!def.adulto, drunk: intensidad >= 2, turno: "orden",
+    jugadores: grupos.jugadores, lugar: escenario?.lugar ?? "cualquiera", intensidad: Math.max(def.intensidadMin, Math.min(def.intensidadMax, intensidad)) as 1 | 2 | 3 | 4,
+    dificultad: 2, adulto: intensidad >= 3 || !!def.adulto, drunk: intensidad >= 2, turno: op.turno === "ruleta" ? "ruleta" : "orden",
+    ...(escenario ? { escenario: escenario.id } : {}),
+    ...(op.modalidad && op.modalidad !== "individual" ? { modalidad: op.modalidad, equipos: grupos.equipos } : {}),
+    ...(op.explicar ? { explicar: true } : {}),
+    // Temporizador por turno: solo en los juegos que tienen turnos con tiempo (6A.11 C6), entre 10 y 180 s.
+    ...(op.temporizador && JUEGOS_CON_TEMPORIZADOR.includes(juego) ? { temporizador: Math.round(Math.min(180, Math.max(10, op.temporizador))) } : {}),
   };
+  if (juego === "verdad-reto") {
+    // Verdad o reto siempre arranca con elección y herramienta (Maestro 6A.6 B); el modo anterior queda para partidas guardadas.
+    const h = HERRAMIENTAS_VR.includes(op.herramienta as HerramientaVR) ? (op.herramienta as HerramientaVR) : "orden";
+    cfg.verdadReto = { herramienta: h };
+  }
+  if (def.motor === "rol-secreto") {
+    cfg.impostor = {
+      cantidad: Math.min(Math.max(1, Math.floor(op.impostor?.cantidad ?? 1)), maxImpostores(miembros.length)),
+      tema: typeof op.impostor?.tema === "string" ? op.impostor.tema.slice(0, 40) : null,
+    };
+    // Se juega hasta atrapar a los impostores: una vuelta por jugador alcanza (cada vuelta sale uno, salvo empate).
+    return { semilla, juego, rondas: Math.max(3, miembros.length), cfg };
+  }
   return { semilla, juego, rondas: Math.max(3, Math.min(20, rondas)), cfg };
 }
 
@@ -69,8 +122,12 @@ export function reconstruir(filas: FilaAccion[], anfitrion: string): EstadoParti
 }
 
 /** Lo que se publica: la vista pública (con el reloj) y, por jugador, solo lo suyo. */
-export function paraPublicar(e: EstadoPartida, relojFin: number | null, esperaFin: number | null = null) {
-  const publico = { ...vistaPublica(e), reloj: relojFin && e.segundos ? { fin: relojFin, total: e.segundos } : null, espera: esperaFin ? { fin: esperaFin } : null };
+export function paraPublicar(e: EstadoPartida, relojFin: number | null, esperaFin: number | null = null, turnoFin: number | null = null) {
+  const publico = {
+    ...vistaPublica(e), reloj: relojFin && e.segundos ? { fin: relojFin, total: e.segundos } : null, espera: esperaFin ? { fin: esperaFin } : null,
+    // Temporizador por turno: solo existe si el anfitrión lo eligió (así las partidas sin él publican lo mismo que antes).
+    ...(turnoFin && e.cfg.temporizador ? { turnoReloj: { fin: turnoFin, total: e.cfg.temporizador } } : {}),
+  };
   const privados: Record<string, unknown> = {};
   for (const j of e.cfg.jugadores) { const v = vistaJugador(e, j.id); privados[j.id] = { mio: v.mio ?? null, miRespuesta: v.miRespuesta ?? null, miMano: v.miMano }; }
   return { publico, privados };
@@ -93,8 +150,21 @@ export function relojLogico(e: EstadoPartida) {
     listos,
     hayEspera,
     claveEspera: `${e.ronda}-${e.cambios}-${e.esperas ?? 0}`,
+    // Temporizador por turno (6A.11 C6): si hay clave, corre el tiempo del turno; si cambia, se rearma. Solo aparece con temporizador.
+    ...(claveTurno(e) ? { claveTurno: claveTurno(e)! } : {}),
   };
 }
+
+/** Clave del turno que corre con temporizador (quién habla en El impostor, o la etapa en Verdad o reto). null: no corre tiempo. */
+export function claveTurno(e: EstadoPartida): string | null {
+  if (!e.cfg.temporizador || e.fase !== "contestando" || e.pausada) return null;
+  if (conEliminacion(e) && etapaImpostor(e) === "pistas" && e.turnoDe) return `${e.ronda}-i-${e.turnoDe}-${e.esperas ?? 0}`;
+  if (conVerdadReto(e) && etapaVR(e) !== "listo") return `${e.ronda}-vr-${etapaVR(e)}-${e.cambios}`;
+  return null;
+}
+
+/** Id del aviso «se acabó el tiempo»: el mismo en cada aparato para que no cuente dos veces. */
+export const idTiempo = (partida: string, clave: string) => `tiempo-${partida.slice(0, 18)}-${clave}`.slice(0, 60);
 
 /** Id de la revelación automática: el mismo en cada aparato, así una repetida no cuenta dos veces. */
 export const idAutoRevelar = (partida: string, e: EstadoPartida) => `auto-rev-${partida.slice(0, 18)}-${e.ronda}-${e.cambios}`;

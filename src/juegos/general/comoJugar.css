@@ -1,0 +1,71 @@
+/* «Cómo jugar» (ComoJugar.tsx): pantalla completa azul con aros, cinta rosa con el juego, ilustración grande,
+   lámina de texto y barra con anterior, puntos y siguiente. */
+.D .cj { position: fixed; inset: 0; z-index: 40; display: grid; grid-template-rows: auto minmax(0, 1fr) auto auto; gap: 12px;
+  padding: max(14px, env(safe-area-inset-top)) 16px max(14px, env(safe-area-inset-bottom));
+  background:
+    repeating-radial-gradient(circle at 70% 55%, rgba(255, 255, 255, .07) 0 36px, transparent 36px 72px),
+    linear-gradient(160deg, #3ac4f2, #1d86e6 55%, #1a5fd0);
+  animation: cjEntra .35s ease-out backwards; touch-action: pan-y; user-select: none; }
+@keyframes cjEntra { from { opacity: 0; scale: 1.04; } }
+.D .cj-cab { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.D .cj-cinta { min-width: 0; padding: .2em .9em .2em .6em; margin-left: -16px; font-size: clamp(1.5em, 4.4vw, 2.8em); line-height: 1; color: #fff; text-transform: uppercase;
+  background: linear-gradient(180deg, #ff4fa8, #e0287f); border: 3px solid var(--tinta); border-left: 0; border-radius: 0 10px 10px 0; box-shadow: 0 6px 0 #8a0f4a, 0 6px 0 3px var(--tinta);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; transform: skewX(var(--inclinacion)); transform-origin: left; }
+.D .cj-cuenta { margin-left: auto; flex: none; padding: .25em .7em; border-radius: var(--radio-pildora); background: rgba(6, 10, 32, .85); color: #fff; font-size: 1.05em; }
+.D .cj-omitir { flex: none; display: inline-flex; align-items: center; gap: 6px; padding: 9px 14px; border-radius: 10px; border: 3px solid var(--tinta); cursor: pointer;
+  background: #fff; color: var(--tinta); font: var(--etiqueta); text-transform: uppercase; box-shadow: 0 4px 0 var(--tinta); }
+
+.D .cj-cuerpo { min-height: 0; display: grid; gap: 14px; grid-template-rows: minmax(0, 1fr) auto; }
+.D.wide .cj-cuerpo, .D .cj-tv .cj-cuerpo { grid-template-rows: none; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); align-items: center; gap: 3vw; }
+.D .cj-ilus { position: relative; min-height: 0; height: 100%; max-height: 62vh; border-radius: 18px; border: 5px solid #fff; overflow: hidden; background: var(--tc); box-shadow: 0 8px 0 rgba(10, 16, 48, .55); }
+.D .cj-ilus img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.D .cj-sinarte { display: grid; place-items: center; width: 100%; height: 100%;
+  background: radial-gradient(circle at 50% 45%, rgba(255, 255, 255, .5), transparent 45%), repeating-conic-gradient(from 0deg, var(--tc) 0 15deg, color-mix(in srgb, var(--tc) 70%, #fff) 15deg 30deg); }
+.D .cj-sinarte span { font-size: min(8em, 30vw); line-height: 1; animation: cjFlota 3s ease-in-out infinite; }
+@keyframes cjFlota { 50% { translate: 0 -10px; rotate: -3deg; } }
+.D .cj-insignia { position: absolute; right: 12px; bottom: 12px; display: grid; place-items: center; width: 3.2em; height: 3.2em; font-size: 1.6em; border-radius: 50%;
+  background: #fff; border: 4px solid var(--tinta); box-shadow: 0 5px 0 var(--tinta); animation: cjInsignia .45s cubic-bezier(.2, 1.7, .4, 1) backwards; }
+@keyframes cjInsignia { from { scale: 0; rotate: -30deg; } }
+.D .cj-texto { display: grid; gap: 8px; align-content: center; text-align: left; color: #fff; animation: cjLamina .35s ease-out backwards; }
+@keyframes cjLamina { from { opacity: 0; translate: calc(var(--dir, 1) * 40px) 0; } }
+.D.wide .cj-texto, .D .cj-tv .cj-texto { text-align: right; justify-items: end; }
+.D .cj-como { font-size: clamp(1.6em, 4.5vw, 3.4em); line-height: .95; text-transform: uppercase; text-shadow: 0 4px 0 rgba(10, 16, 48, .5); }
+.D .cj-titulo { font-size: clamp(1.2em, 3vw, 2em); line-height: 1; color: var(--amarillo); text-transform: uppercase; }
+.D .cj-texto p { margin: 0; max-width: 30em; font: 700 clamp(16px, 2.1vw, 26px)/1.35 var(--letra-cuerpo); text-shadow: 0 2px 0 rgba(10, 16, 48, .45); text-wrap: balance; }
+
+/* Barra de abajo: anterior, puntos y siguiente (o el tiempo en la TV) */
+.D .cj-barra { display: flex; align-items: center; gap: 12px; padding: 8px 10px; border-radius: 22px; background: rgba(255, 255, 255, .28); box-shadow: inset 0 0 0 2px rgba(255, 255, 255, .35); }
+.D .cj-puntos { flex: 1; display: flex; justify-content: center; gap: 10px; }
+.D .cj-puntos button { width: 18px; height: 18px; padding: 0; border-radius: 50%; border: 3px solid var(--tinta); background: rgba(255, 255, 255, .55); cursor: pointer; transition: width .25s, background .2s; }
+.D .cj-puntos button.visto { background: #fff; }
+.D .cj-puntos button.on { width: 42px; border-radius: 9px; background: var(--amarillo); }
+.D .cj-flecha { flex: none; display: grid; place-items: center; min-width: 58px; height: 58px; padding: 0 14px; border-radius: 14px; border: 3px solid var(--tinta); cursor: pointer;
+  font: 900 2.2em/1 var(--letra-cuerpo); color: var(--tinta); background: #fff; box-shadow: 0 5px 0 var(--tinta); transition: translate .1s; }
+.D .cj-flecha:active { translate: 0 3px; box-shadow: 0 2px 0 var(--tinta); }
+.D .cj-flecha:disabled { opacity: .35; cursor: default; }
+.D .cj-flecha.sig { background: var(--amarillo); animation: cjEmpuja 1.4s ease-in-out infinite; }
+.D .cj-flecha.final { background: linear-gradient(180deg, #6ee36b, #2fb84a); color: #fff; }
+.D .cj-flecha.final .dsp { font-size: .62em; text-shadow: 0 2px 0 var(--tinta); }
+@keyframes cjEmpuja { 50% { translate: 4px 0; } }
+.D .cj-tiempo { position: relative; flex: none; width: 9em; height: 12px; border-radius: 6px; overflow: hidden; background: rgba(6, 10, 32, .4); }
+.D .cj-tiempo::after { content: ""; position: absolute; inset: 0; background: var(--amarillo); transform-origin: left; animation: cjTiempo var(--seg) linear forwards; }
+@keyframes cjTiempo { from { scale: 0 1; } to { scale: 1 1; } }
+.D .cj-nota { margin: 0; text-align: center; font: 700 1em/1.2 var(--letra-cuerpo); color: #eaf6ff; }
+
+/* TV: más grande y con aire */
+.D .cj-tv { padding: 2.2em 3em 1.6em; gap: 1em; font-size: 1.1em; }
+.D .cj-tv .cj-cinta { margin-left: -3em; padding-left: 1.6em; }
+.D .cj-tv .cj-ilus { max-height: 64vh; }
+.D .cj-tv .cj-como { font-size: 3.2em; }
+.D .cj-tv .cj-titulo { font-size: 1.9em; }
+.D .cj-tv .cj-texto p { font-size: 1.35em; max-width: 18em; }
+.D .cj-tv .cj-cinta { font-size: 2.4em; }
+.D .cj-tv .cj-cuenta { font-size: 1.2em; }
+.D .cj-tv .cj-insignia { font-size: 2.2em; }
+
+@media (prefers-reduced-motion: reduce) {
+  .D .cj, .D .cj-texto, .D .cj-insignia, .D .cj-sinarte span, .D .cj-flecha.sig { animation: none !important; }
+  .D .cj-tiempo::after { animation-duration: var(--seg); }
+}
+/* Las ilustraciones traen su nombre dibujado abajo: al recortar, que se vea el título. */
+.D .cj-ilus img { object-position: center bottom; }

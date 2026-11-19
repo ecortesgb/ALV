@@ -1,7 +1,8 @@
 // Qué puede ver cada interfaz. La Pantalla (TV) y el Anfitrión reciben la vista pública;
 // cada celular recibe además solo lo suyo. En producción el servidor arma estas vistas
 // y la base de datos (RLS) impide leer lo privado de otro; esto define exactamente qué sale.
-import { quienesContestan, type EstadoPartida } from "./partida";
+import { conEliminacion, conVerdadReto, etapaImpostor, etapaVR, seleccionVR, porGrupos, puntosPorEquipo, quienesContestan, type EstadoPartida } from "./partida";
+import type { EscenarioId, Modalidad } from "./types";
 
 export interface VistaPublica {
   version: number;
@@ -39,6 +40,21 @@ export interface VistaPublica {
   esperas: number;
   /** Al revelar una votación (El impostor, ¿Quién es más probable?): quién votó a quién. Antes, nada. */
   votosDe?: Record<string, string>;
+  /** Escenario elegido (fondo y ambientación). Falta en partidas sin escenario. */
+  escenario?: EscenarioId;
+  /** Tipo de partida y sus grupos con puntos (solo parejas, equipos o guerra de sexos). */
+  modalidad?: Modalidad;
+  grupos?: { id: string; nombre: string; jugadores: string[]; puntos: number }[];
+  /** El impostor con eliminación: cuántos impostores hay, quiénes ya salieron, en qué etapa va la vuelta y el orden para hablar. */
+  impostor?: { total: number; eliminados: string[]; etapa: "pistas" | "votar"; orden: string[] };
+  /** El anfitrión pidió explicar las reglas («Cómo jugar») antes de la primera ronda. */
+  explicar?: boolean;
+  /** Verdad o reto nuevo: quién pregunta y quién responde, en qué etapa va, qué se eligió y quién ya usó su Verdad.
+   * Lo que sacó cada quien con los dados o las cartas de póker va en `seleccion` (es público). */
+  verdadReto?: {
+    herramienta: string; pregunta: string; responde: string; etapa: "elegir" | "fuente" | "calificar" | "listo";
+    eleccion?: "verdad" | "reto"; fuente?: "app" | "voz"; verdadUsada: string[];
+  };
 }
 
 export function vistaPublica(e: EstadoPartida): VistaPublica {
@@ -70,6 +86,19 @@ export function vistaPublica(e: EstadoPartida): VistaPublica {
     esperas: e.esperas ?? 0,
     votosDe: e.fase !== "contestando" && (e.motor === "rol-secreto" || e.motor === "senalar") && !(e.revelado as { saltada?: boolean } | undefined)?.saltada
       ? Object.fromEntries(Object.entries(e.respuestas).map(([j, v]) => [j, String(v)])) : undefined,
+    ...(e.cfg.escenario ? { escenario: e.cfg.escenario } : {}),
+    ...(e.cfg.modalidad ? { modalidad: e.cfg.modalidad } : {}),
+    ...(e.cfg.explicar ? { explicar: true } : {}),
+    ...(conVerdadReto(e) ? { verdadReto: {
+      herramienta: seleccionVR(e).herramienta, pregunta: seleccionVR(e).pregunta, responde: seleccionVR(e).responde, etapa: etapaVR(e),
+      ...(e.vr?.eleccion ? { eleccion: e.vr.eleccion } : {}), ...(e.vr?.fuente ? { fuente: e.vr.fuente } : {}), verdadUsada: [...(e.verdadUsada ?? [])],
+    } } : {}),
+    ...(porGrupos(e) ? { grupos: puntosPorEquipo(e).map(g => ({ ...g, nombre: e.cfg.equipos?.find(x => x.id === g.equipo)?.nombre ?? g.equipo, id: g.equipo })).map(({ equipo: _, ...g }) => g) } : {}),
+    ...(conEliminacion(e) ? { impostor: {
+      // Cuántos impostores hay es público (lo eligió el anfitrión, ya ajustado al número de jugadores); quiénes, no.
+      total: Object.values(e.privado).filter(p => (p as { rol?: string }).rol === "impostor").length,
+      eliminados: [...(e.eliminados ?? [])], etapa: etapaImpostor(e), orden: [...((e.seleccion?.orden ?? []) as string[])],
+    } } : {}),
   };
 }
 

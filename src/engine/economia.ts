@@ -13,7 +13,7 @@ export const XP = {
   premioCeremonia: 30,
   cerrarEvento: 50,
   topeDiario: 600,
-  minRondasParaContar: 5,
+  minRondasParaContar: 1, // migración 034 (2026-11-18): la XP nunca es 0 con al menos una ronda
 } as const;
 
 /** XP extra que el administrador da a un participante por algo fuera del juego. Por entrega. */

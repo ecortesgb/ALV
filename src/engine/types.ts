@@ -38,6 +38,34 @@ export interface TemaImpostor {
   adulto: boolean;
   escenario: EscenarioId | null;
   palabras: string[];
+  /** Tema agregado para el configurador (Maestro v1.44): el modo clásico no lo sortea, así las partidas guardadas se reconstruyen igual. */
+  soloConfig?: boolean;
+}
+
+/** Tipo de partida: solo cambia cómo se suman los puntos y quién gana (una persona, una pareja o un equipo). */
+export type Modalidad = "individual" | "parejas" | "equipos" | "sexos";
+
+/** Opciones de El impostor (Maestro v1.44): cuántos impostores y de qué tema son las palabras. */
+export interface OpcionesImpostor {
+  cantidad: number;
+  /** Id del tema, «escenario» (el tema del escenario elegido) o null (al azar). */
+  tema: string | null;
+}
+
+/** Lo que devuelve el configurador de partida, además del juego, las rondas y el nivel. */
+export interface OpcionesPartida {
+  modalidad?: Modalidad;
+  /** Equipos y guerra de sexos: id del jugador → id de su grupo. Las parejas se arman por orden de llegada. */
+  grupos?: Record<string, string>;
+  escenario?: EscenarioId;
+  turno?: "orden" | "ruleta";
+  /** Verdad o reto: herramienta que decide quién pregunta y quién responde (orden, ruleta, reloj, dados o póker). */
+  herramienta?: string;
+  /** Temporizador (herramienta opcional, Maestro 6A.11 C6): segundos por turno. Sin él no hay tiempo por turno. */
+  temporizador?: number;
+  impostor?: OpcionesImpostor;
+  /** «Cómo jugar»: explicar las reglas antes de la primera ronda. */
+  explicar?: boolean;
 }
 
 export interface Lugar {
@@ -113,4 +141,16 @@ export interface Configuracion {
   drunk: boolean;
   /** Herramienta para elegir de quién es el turno en los juegos de cartas por turno: en orden o con ruleta. */
   turno?: "orden" | "ruleta";
+  /** Tipo de partida. Sin él (o «individual») gana una persona. */
+  modalidad?: Modalidad;
+  /** Nombre de cada grupo (`Jugador.equipo`) en parejas, equipos o guerra de sexos. */
+  equipos?: { id: string; nombre: string }[];
+  /** El impostor con eliminación por voto (Maestro v1.44). Sin esto corre el modo clásico de rondas sueltas. */
+  impostor?: OpcionesImpostor;
+  /** «Cómo jugar» antes de la primera ronda (Maestro v1.44). */
+  explicar?: boolean;
+  /** Verdad o reto con elección, una sola Verdad, tomar y herramienta (Maestro 6A.6 B). Sin esto corre el modo anterior. */
+  verdadReto?: { herramienta: "orden" | "ruleta" | "reloj" | "dados" | "poker" };
+  /** Temporizador por turno, en segundos (Maestro 6A.11 C6). */
+  temporizador?: number;
 }

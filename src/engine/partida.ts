@@ -56,6 +56,12 @@ export interface EstadoPartida {
   ausentes?: string[];
   /** Cuántas veces el anfitrión eligió «Esperar» en esta ronda (rearma el aviso de espera). */
   esperas?: number;
+  /** El impostor con eliminación (cfg.impostor): quienes ya salieron por votación, en orden. */
+  eliminados?: string[];
+  /** Verdad o reto nuevo (cfg.verdadReto): lo que se eligió en la ronda (verdad o reto, y si la pregunta la da la app o se dice en voz alta). */
+  vr?: { eleccion?: "verdad" | "reto"; fuente?: "app" | "voz" };
+  /** Verdad o reto nuevo: quienes ya usaron su única Verdad. */
+  verdadUsada?: string[];
   accionesVistas: string[];
   bitacora: EventoMotor[];
 }
@@ -79,7 +85,9 @@ export type Accion =
   | { id: string; tipo: "pista"; jugador: string; texto: string }
   | { id: string; tipo: "xp-reto"; jugador: string; xp: number }
   | { id: string; tipo: "ruleta" }
-  | { id: string; tipo: "pasar-control"; jugador: string };
+  | { id: string; tipo: "pasar-control"; jugador: string }
+  /** Se acabó el tiempo del turno (temporizador): el turno pasa al siguiente. Lo manda quien corre el motor. */
+  | { id: string; tipo: "tiempo" };
 
 export const MAX_PISTA = 40;
 
@@ -95,7 +103,7 @@ export interface Contenido { cartas: Carta[]; temas: TemaImpostor[] }
 // ---------- Mecánicas ----------
 
 interface Preparacion { carta?: EstadoPartida["carta"]; privado: Record<string, unknown>; turnoDe?: string; seleccion?: Record<string, unknown> }
-interface Puntuacion { puntos: Record<string, number>; retos?: Record<string, number>; revelado: unknown }
+interface Puntuacion { puntos: Record<string, number>; retos?: Record<string, number>; revelado: unknown; eliminados?: string[] }
 
 interface Mecanica {
   preparar(e: EstadoPartida, c: Contenido): Preparacion;
@@ -125,6 +133,90 @@ function sacarCarta(e: EstadoPartida, c: Contenido, mazos: string[]): Carta | un
 export function normalizar(t: string): string {
   return t.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/\s+/g, " ").trim();
 }
+
+// ---------- Verdad o reto con herramientas (Maestro 6A.6 B y 6A.11 C4, C9, C13) ----------
+// Una herramienta (en orden, ruleta, reloj, dados o cartas de póker) decide quién pregunta y quién responde.
+// Quien responde elige Verdad o Reto (Verdad solo una vez por jugador). Quien pregunta decide si la app da la carta
+// o la dice en voz alta, y después califica: cumplió o tomó. Con un comodín, quien responde pasa sin tomar.
+
+export type HerramientaVR = "orden" | "ruleta" | "reloj" | "dados" | "poker";
+export const HERRAMIENTAS_VR: HerramientaVR[] = ["orden", "ruleta", "reloj", "dados", "poker"];
+/** Puntos de cada resultado. «Tomar» da 1 punto, menos que cumplir un reto (decisión de Elías, Maestro 6A.11 C4). */
+export const VR_PUNTOS = { verdad: 1, reto: 2, tomar: 1 } as const;
+export const conVerdadReto = (e: Pick<EstadoPartida, "motor" | "cfg">) => e.motor === "turnos-cartas" && !!e.cfg.verdadReto;
+export interface SeleccionVR {
+  herramienta: HerramientaVR; pregunta: string; responde: string;
+  /** Dados: lo que sacó cada quien. */ dados?: Record<string, number>;
+  /** Póker: carta de cada quien (valor 2 a 14, palo 0 a 3). */ cartas?: Record<string, { v: number; p: number }>;
+}
+export const seleccionVR = (e: EstadoPartida) => e.seleccion as unknown as SeleccionVR;
+/** Etapa de la ronda: elegir (quien responde), fuente (quien pregunta), calificar (quien pregunta) o listo (pasó con comodín). */
+export function etapaVR(e: EstadoPartida): "elegir" | "fuente" | "calificar" | "listo" {
+  const s = seleccionVR(e);
+  if (e.respuestas[s.responde] === "paso" || e.respuestas[s.responde] === "tiempo") return "listo";
+  if (!e.vr?.eleccion) return "elegir";
+  if (!e.vr.fuente) return "fuente";
+  return "calificar";
+}
+
+/** Carta de la app para lo que se eligió (respeta nivel, lugar y demás filtros). */
+function cartaVR(e: EstadoPartida, c: Contenido, tipo: "verdad" | "reto", cambios: number): EstadoPartida["carta"] {
+  const s = seleccionVR(e);
+  const carta = sacarCarta({ ...e, cambios }, c, [tipo]);
+  const para = e.cfg.jugadores.find(j => j.id === s.responde), otro = e.cfg.jugadores.find(j => j.id === s.pregunta);
+  return carta ? { id: carta.id, texto: personalizar(carta.texto, e, para, otro), tipo } : undefined;
+}
+
+const verdadRetoNuevo: Mecanica = {
+  preparar(e) {
+    const azar = azarDeRonda(e), js = ids(e), n = js.length;
+    const herramienta = e.cfg.verdadReto?.herramienta ?? "orden";
+    let pregunta: string, responde: string;
+    const extra: Partial<SeleccionVR> = {};
+    if (herramienta === "orden") {
+      const k = (e.ronda - 1) % n;
+      responde = js[k]!; pregunta = js[(k - 1 + n) % n]!;
+    } else if (herramienta === "ruleta") {
+      responde = azar.elegir(js); pregunta = azar.elegir(js.filter(j => j !== responde));
+    } else if (herramienta === "reloj") {
+      // Manecilla chica: quién pregunta. Manecilla grande: quién responde. Pueden caer en vecinos.
+      [pregunta, responde] = azar.mezclar(js) as [string, string];
+    } else if (herramienta === "dados") {
+      // Cada quien tira un dado: el más alto pregunta y el más bajo responde (empates: los desempata el azar).
+      const dados: Record<string, number> = {}, desempate: Record<string, number> = {};
+      for (const j of js) { dados[j] = azar.entero(6) + 1; desempate[j] = azar.siguiente(); }
+      const orden = [...js].sort((a, b) => dados[b]! - dados[a]! || desempate[b]! - desempate[a]!);
+      pregunta = orden[0]!; responde = orden[n - 1]!; extra.dados = dados;
+    } else {
+      // Póker: una carta a cada quien de una baraja; la más alta pregunta y la más baja responde (el palo desempata).
+      const baraja = azar.mezclar(Array.from({ length: 52 }, (_, i) => ({ v: 2 + Math.floor(i / 4), p: i % 4 })));
+      const cartas: Record<string, { v: number; p: number }> = {};
+      js.forEach((j, i) => { cartas[j] = baraja[i]!; });
+      const valor = (j: string) => cartas[j]!.v * 4 + cartas[j]!.p;
+      const orden = [...js].sort((a, b) => valor(b) - valor(a));
+      pregunta = orden[0]!; responde = orden[n - 1]!; extra.cartas = cartas;
+    }
+    const seleccion: SeleccionVR = { herramienta, pregunta, responde, ...extra };
+    return { privado: {}, turnoDe: responde, seleccion: seleccion as unknown as Record<string, unknown> };
+  },
+  quienes(e) {
+    const s = seleccionVR(e), et = etapaVR(e);
+    return et === "fuente" || et === "calificar" ? [s.pregunta] : [s.responde];
+  },
+  valida: (e, _j, v) => etapaVR(e) === "calificar" && (v === "cumplio" || v === "tomo"),
+  puntuar(e) {
+    const s = seleccionVR(e);
+    const propia = e.respuestas[s.responde];
+    const resultado = propia === "paso" || propia === "tiempo" ? propia : (e.respuestas[s.pregunta] as "cumplio" | "tomo" | undefined) ?? "paso";
+    const esReto = e.vr?.eleccion === "reto";
+    const p = resultado === "cumplio" ? (esReto ? VR_PUNTOS.reto : VR_PUNTOS.verdad) : resultado === "tomo" ? VR_PUNTOS.tomar : 0;
+    return {
+      puntos: { [s.responde]: p },
+      retos: { [s.responde]: resultado === "cumplio" && esReto ? 1 : 0 },
+      revelado: { jugador: s.responde, pregunta: s.pregunta, eleccion: e.vr?.eleccion ?? null, resultado, cumplio: resultado === "cumplio" },
+    };
+  },
+};
 
 /** Verdad o reto: el jugador en turno cumple (+1 verdad, +2 reto) o pasa (0, sin castigo). */
 const turnosCartas: Mecanica = {
@@ -192,12 +284,97 @@ const votacion: Mecanica = {
   },
 };
 
-/** El impostor: todos ven la palabra menos uno. Votan a quién creen impostor. */
-const rolSecreto: Mecanica = {
+// ---------- El impostor con eliminación (Maestro v1.44) ----------
+// Una vuelta = cada quien que sigue en juego dice o escribe su palabra en orden; luego todos votan.
+// El más votado sale (empate: nadie sale). Si atrapan a todos los impostores, ganan los civiles; si los
+// impostores igualan a los civiles (o se acaban las vueltas), ganan los impostores. La palabra no cambia
+// entre vueltas y solo se revela al final.
+
+/** ¿Esta partida es El impostor con eliminación? */
+export const conEliminacion = (e: Pick<EstadoPartida, "motor" | "cfg">) => e.motor === "rol-secreto" && !!e.cfg.impostor;
+/** Máximo de impostores para `n` jugadores: siempre menos que los civiles. */
+export const maxImpostores = (n: number) => Math.max(1, Math.floor((n - 1) / 2));
+/** Quienes siguen en juego. */
+export const vivos = (e: EstadoPartida) => ids(e).filter(j => !(e.eliminados ?? []).includes(j));
+const ordenVuelta = (e: EstadoPartida) => ((e.seleccion?.orden ?? []) as string[]);
+/** «pistas» mientras alguien del orden no ha dicho su palabra; luego «votar». */
+export const etapaImpostor = (e: EstadoPartida): "pistas" | "votar" => (ordenVuelta(e).some(j => !(j in (e.pistas ?? {}))) ? "pistas" : "votar");
+const siguienteEnHablar = (e: EstadoPartida, pistas: Record<string, string>) => ordenVuelta(e).find(j => !(j in pistas));
+const esImpostor = (e: EstadoPartida, j: string) => (e.privado[j] as { rol?: string } | undefined)?.rol === "impostor";
+
+/** Elige el tema según las opciones: uno fijo, el del escenario o al azar entre los permitidos. */
+function temaElegido(e: EstadoPartida, c: Contenido, azar: ReturnType<typeof crearAzar>): TemaImpostor {
+  const permitido = (t: TemaImpostor) => !t.adulto || e.cfg.adulto;
+  const pedido = e.cfg.impostor?.tema;
+  const fijo = pedido === "escenario" ? c.temas.find(t => t.escenario === e.cfg.escenario && permitido(t)) : c.temas.find(t => t.id === pedido && permitido(t));
+  if (fijo) return fijo;
+  const pool = c.temas.filter(t => permitido(t) && (t.escenario === null || t.escenario === e.cfg.escenario));
+  return azar.elegir(pool.length ? pool : c.temas.filter(t => !t.adulto));
+}
+
+const impostorEliminacion: Mecanica = {
   preparar(e, c) {
     const azar = azarDeRonda(e);
-    const temas = c.temas.filter(t => (!t.adulto || e.cfg.adulto) && (t.escenario === null || t.escenario === e.cfg.escenario));
-    const tema = azar.elegir(temas.length ? temas : c.temas.filter(t => !t.adulto));
+    let privado = e.privado, carta = e.carta;
+    if (e.ronda === 1 || Object.keys(privado).length === 0) {
+      // El secreto se reparte una sola vez: misma palabra y mismos impostores toda la partida.
+      const tema = temaElegido(e, c, azar);
+      const palabra = azar.elegir(tema.palabras);
+      const cuantos = Math.min(Math.max(1, Math.floor(e.cfg.impostor?.cantidad ?? 1)), maxImpostores(ids(e).length));
+      const impostores = azar.mezclar(ids(e)).slice(0, cuantos);
+      privado = {};
+      for (const j of ids(e)) {
+        privado[j] = impostores.includes(j)
+          ? { rol: "impostor", tema: tema.nombre, companeros: impostores.filter(x => x !== j) }
+          : { rol: "civil", tema: tema.nombre, palabra };
+      }
+      carta = { id: `tema-${tema.id}`, texto: tema.nombre };
+    }
+    // Orden de la vuelta: empieza alguien al azar y sigue el orden de la sala, solo quienes siguen en juego.
+    const quedan = vivos(e);
+    const inicio = quedan.length ? azar.entero(quedan.length) : 0;
+    const orden = [...quedan.slice(inicio), ...quedan.slice(0, inicio)];
+    return { privado, carta, turnoDe: orden[0], seleccion: { orden } };
+  },
+  quienes: e => (etapaImpostor(e) === "pistas" ? (e.turnoDe ? [e.turnoDe] : []) : vivos(e)),
+  valida: (e, j, v) => etapaImpostor(e) === "votar" && typeof v === "string" && v !== j && vivos(e).includes(v),
+  puntuar(e) {
+    const quedan = vivos(e);
+    const votos: Record<string, number> = {};
+    for (const j of quedan) { const v = e.respuestas[j] as string | undefined; if (v) votos[v] = (votos[v] ?? 0) + 1; }
+    const max = Math.max(0, ...Object.values(votos));
+    const masVotados = Object.keys(votos).filter(k => votos[k] === max);
+    const eliminado = max > 0 && masVotados.length === 1 ? masVotados[0]! : null; // empate: nadie sale
+    const eliminados = eliminado ? [...(e.eliminados ?? []), eliminado] : [...(e.eliminados ?? [])];
+    const siguen = ids(e).filter(j => !eliminados.includes(j));
+    const impostoresVivos = siguen.filter(j => esImpostor(e, j)).length;
+    const civilesVivos = siguen.length - impostoresVivos;
+    const fin = impostoresVivos === 0 ? "civiles" : impostoresVivos >= civilesVivos || e.ronda >= e.totalRondas ? "impostores" : null;
+    const puntos: Record<string, number> = {};
+    for (const j of quedan) {
+      const voto = e.respuestas[j] as string | undefined;
+      let p = 0;
+      if (esImpostor(e, j)) { if (j !== eliminado) p += 1; } // sobrevivir a la votación
+      else if (voto && esImpostor(e, voto)) p += 1; // votar por un impostor
+      puntos[j] = p;
+    }
+    if (fin) for (const j of ids(e)) if ((fin === "impostores") === esImpostor(e, j)) puntos[j] = (puntos[j] ?? 0) + (fin === "impostores" ? 3 : 2);
+    const civil = ids(e).find(j => !esImpostor(e, j));
+    const final = fin ? { palabra: (e.privado[civil ?? ""] as { palabra?: string } | undefined)?.palabra ?? "", impostores: ids(e).filter(j => esImpostor(e, j)) } : {};
+    return {
+      puntos, eliminados,
+      revelado: { votos, eliminado, eraImpostor: eliminado ? esImpostor(e, eliminado) : false, empate: masVotados.length > 1, quedan: impostoresVivos, fin, ...final },
+    };
+  },
+};
+
+/** El impostor: todos ven la palabra menos uno. Votan a quién creen impostor. */
+const rolSecretoClasico: Mecanica = {
+  preparar(e, c) {
+    const azar = azarDeRonda(e);
+    const clasicos = c.temas.filter(t => !t.soloConfig);
+    const temas = clasicos.filter(t => (!t.adulto || e.cfg.adulto) && (t.escenario === null || t.escenario === e.cfg.escenario));
+    const tema = azar.elegir(temas.length ? temas : clasicos.filter(t => !t.adulto));
     const palabra = azar.elegir(tema.palabras);
     const impostor = azar.elegir(ids(e));
     const privado: Record<string, unknown> = {};
@@ -399,18 +576,20 @@ const competencia: Mecanica = {
 };
 
 const MECANICAS: Record<Motor, Mecanica> = {
-  "turnos-cartas": turnosCartas, votacion, "rol-secreto": rolSecreto, pareja,
+  "turnos-cartas": turnosCartas, votacion, "rol-secreto": rolSecretoClasico, pareja,
   botella, ruleta, dados, conteo, confesion, senalar, competencia,
 };
+/** La mecánica que corre esta partida (El impostor tiene dos: clásico y con eliminación). */
+const mecanica = (e: EstadoPartida): Mecanica => (conEliminacion(e) ? impostorEliminacion : conVerdadReto(e) ? verdadRetoNuevo : MECANICAS[e.motor]);
 
 /** Quién debe contestar en la ronda actual. */
-export const quienesContestan = (e: EstadoPartida): string[] => MECANICAS[e.motor].quienes(e);
+export const quienesContestan = (e: EstadoPartida): string[] => mecanica(e).quienes(e);
 
 // ---------- Máquina de estados ----------
 
 function prepararRonda(e: EstadoPartida, c: Contenido): EstadoPartida {
-  const p = MECANICAS[e.motor].preparar(e, c);
-  return { ...e, fase: "contestando", carta: p.carta, privado: p.privado, turnoDe: p.turnoDe, seleccion: p.seleccion, respuestas: {}, revelado: undefined, pistas: {}, ausentes: undefined, esperas: 0 };
+  const p = mecanica(e).preparar(e, c);
+  return { ...e, fase: "contestando", carta: p.carta, privado: p.privado, turnoDe: p.turnoDe, seleccion: p.seleccion, respuestas: {}, revelado: undefined, pistas: {}, ausentes: undefined, esperas: 0, vr: undefined };
 }
 
 /** Da una carta de poder si hay lugar en la mano. */
@@ -438,7 +617,7 @@ export function crearPartida(juego: DefinicionJuego, cfg: Configuracion, semilla
 
 /** Pasa la ronda a «revelada». Los `ausentes` (si hay) no contestaron: no puntúan ni ganan retos esa ronda. */
 function revelarRonda(e: EstadoPartida, ausentes: string[]): EstadoPartida {
-  const p = MECANICAS[e.motor].puntuar(e);
+  const p = mecanica(e).puntuar(e);
   const puntos = { ...e.puntos }, retos = { ...e.retos };
   for (const [j, v] of Object.entries(p.puntos)) if (!ausentes.includes(j)) puntos[j] = (puntos[j] ?? 0) + v;
   let manos = e.manos;
@@ -450,18 +629,33 @@ function revelarRonda(e: EstadoPartida, ausentes: string[]): EstadoPartida {
     // Cada 3 retos cumplidos se gana una carta de poder.
     if (v > 0 && Math.floor(retos[j]! / RETOS_POR_CARTA) > Math.floor(antes / RETOS_POR_CARTA)) manos = conCarta(manos, j, azar.elegir(IDS_PODER));
   }
-  return { ...e, fase: "revelada", puntos, retos, manos, revelado: p.revelado, ...(ausentes.length ? { ausentes } : {}), bitacora: registrar(e, "revelada", undefined, ausentes.length ? { ...(p.revelado as object), ausentes } : p.revelado) };
+  return { ...e, fase: "revelada", puntos, retos, manos, revelado: p.revelado, ...(p.eliminados ? { eliminados: p.eliminados } : {}), ...(ausentes.length ? { ausentes } : {}), bitacora: registrar(e, "revelada", undefined, ausentes.length ? { ...(p.revelado as object), ausentes } : p.revelado) };
 }
 
 /** Aplica una acción. Si es repetida o no es válida en este momento, devuelve el mismo estado sin cambios. */
 export function aplicar(e: EstadoPartida, a: Accion, contenido: Contenido): EstadoPartida {
   if (e.accionesVistas.includes(a.id) || e.fase === "terminada") return e;
-  const m = MECANICAS[e.motor];
+  const m = mecanica(e);
   const visto = [...e.accionesVistas, a.id];
   const sube = (n: EstadoPartida): EstadoPartida => ({ ...n, version: e.version + 1, accionesVistas: visto });
 
   switch (a.tipo) {
     case "contestar": {
+      // Verdad o reto nuevo: las dos primeras etapas (elegir y fuente) se mandan como «contestar» y no son la respuesta final.
+      if (conVerdadReto(e) && !e.pausada && e.fase === "contestando") {
+        const et = etapaVR(e), s = seleccionVR(e), v = (a.valor ?? {}) as { elige?: unknown; fuente?: unknown };
+        if (et === "elegir") {
+          if (a.jugador !== s.responde || (v.elige !== "verdad" && v.elige !== "reto")) return e;
+          if (v.elige === "verdad" && (e.verdadUsada ?? []).includes(a.jugador)) return e; // solo una Verdad por jugador
+          const verdadUsada = v.elige === "verdad" ? [...(e.verdadUsada ?? []), a.jugador] : e.verdadUsada;
+          return sube({ ...e, vr: { eleccion: v.elige }, ...(verdadUsada ? { verdadUsada } : {}), bitacora: registrar(e, "elige", a.jugador, { opcion: v.elige }) });
+        }
+        if (et === "fuente") {
+          if (a.jugador !== s.pregunta || (v.fuente !== "app" && v.fuente !== "voz")) return e;
+          const carta = v.fuente === "app" ? cartaVR(e, contenido, e.vr!.eleccion!, e.cambios) : undefined;
+          return sube({ ...e, vr: { ...e.vr, fuente: v.fuente }, carta, bitacora: registrar(e, "fuente", a.jugador, { fuente: v.fuente }) });
+        }
+      }
       if (e.pausada) return e;
       if (e.fase !== "contestando" || !m.quienes(e).includes(a.jugador) || a.jugador in e.respuestas) return e;
       if (!m.valida(e, a.jugador, a.valor)) return e;
@@ -483,7 +677,8 @@ export function aplicar(e: EstadoPartida, a: Accion, contenido: Contenido): Esta
     }
     case "siguiente": {
       if (e.fase !== "revelada") return e;
-      if (e.ronda >= e.totalRondas) return sube({ ...e, fase: "terminada", bitacora: registrar(e, "terminada") });
+      const acaba = conEliminacion(e) ? !!(e.revelado as { fin?: unknown } | undefined)?.fin || e.ronda >= e.totalRondas : e.ronda >= e.totalRondas;
+      if (acaba) return sube({ ...e, fase: "terminada", bitacora: registrar(e, "terminada") });
       const n = prepararRonda({ ...e, ronda: e.ronda + 1, cambios: 0 }, contenido);
       return sube({ ...n, bitacora: registrar(e, "ronda", undefined, { ronda: e.ronda + 1 }) });
     }
@@ -499,11 +694,23 @@ export function aplicar(e: EstadoPartida, a: Accion, contenido: Contenido): Esta
       return e.pausada ? sube({ ...e, pausada: false, bitacora: registrar(e, "reanudada") }) : e;
     case "saltar": {
       if (e.fase !== "contestando") return e;
+      // El impostor con eliminación: saltar en la vuelta de palabras salta solo a quien le toca hablar.
+      if (conEliminacion(e) && etapaImpostor(e) === "pistas" && e.turnoDe) {
+        const pistas = { ...(e.pistas ?? {}), [e.turnoDe]: "…" };
+        return sube({ ...e, pistas, turnoDe: siguienteEnHablar(e, pistas), bitacora: registrar(e, "turno-saltado", e.turnoDe) });
+      }
       return sube({ ...e, fase: "revelada", revelado: { saltada: true }, bitacora: registrar(e, "saltada") });
     }
     case "pista": {
       const texto = typeof a.texto === "string" ? a.texto.replace(/\s+/g, " ").trim().slice(0, MAX_PISTA) : "";
       if (e.motor !== "rol-secreto" || e.fase !== "contestando" || !ids(e).includes(a.jugador) || !texto) return e;
+      if (e.pausada && conEliminacion(e)) return e;
+      if (conEliminacion(e)) {
+        // Solo habla quien tiene el turno; al terminar pasa al siguiente y, cuando todos hablaron, se vota.
+        if (etapaImpostor(e) !== "pistas" || a.jugador !== e.turnoDe) return e;
+        const pistas = { ...(e.pistas ?? {}), [a.jugador]: texto };
+        return sube({ ...e, pistas, turnoDe: siguienteEnHablar(e, pistas), bitacora: registrar(e, "pista", a.jugador) });
+      }
       return sube({ ...e, pistas: { ...(e.pistas ?? {}), [a.jugador]: texto }, bitacora: registrar(e, "pista", a.jugador) });
     }
     case "xp-reto": {
@@ -521,6 +728,22 @@ export function aplicar(e: EstadoPartida, a: Accion, contenido: Contenido): Esta
       const texto = personalizar(azar.elegir(pool).texto, e, j, otros.length ? azar.elegir(otros) : undefined);
       return sube({ ...e, ruletaExtra: { jugador: j.id, texto, n }, bitacora: registrar(e, "ruleta", j.id) });
     }
+    case "tiempo": {
+      // Temporizador: se acabó el tiempo del turno. El impostor salta a quien no dijo su palabra; en Verdad o reto,
+      // si nadie decidió la fuente sale la carta de ALV, y si quien responde no eligió o no cumplió, pierde el turno (0).
+      if (!e.cfg.temporizador || e.fase !== "contestando" || e.pausada) return e;
+      if (conEliminacion(e) && etapaImpostor(e) === "pistas" && e.turnoDe) {
+        const pistas = { ...(e.pistas ?? {}), [e.turnoDe]: "…" };
+        return sube({ ...e, pistas, turnoDe: siguienteEnHablar(e, pistas), bitacora: registrar(e, "tiempo", e.turnoDe) });
+      }
+      if (conVerdadReto(e)) {
+        const et = etapaVR(e), s = seleccionVR(e);
+        if (et === "listo") return e;
+        if (et === "fuente") return sube({ ...e, vr: { ...e.vr, fuente: "app" }, carta: cartaVR(e, contenido, e.vr!.eleccion!, e.cambios), bitacora: registrar(e, "tiempo", s.pregunta) });
+        return sube({ ...e, respuestas: { ...e.respuestas, [s.responde]: "tiempo" }, bitacora: registrar(e, "tiempo", s.responde) });
+      }
+      return e;
+    }
     case "pasar-control": {
       if (!ids(e).includes(a.jugador) || a.jugador === e.control) return e;
       return sube({ ...e, control: a.jugador, bitacora: registrar(e, "control", a.jugador) });
@@ -536,7 +759,13 @@ export function aplicar(e: EstadoPartida, a: Accion, contenido: Contenido): Esta
       const manos = { ...e.manos, [a.jugador]: mano.filter((_, k) => k !== i) };
       let n: EstadoPartida = { ...e, manos, cartaUsada: { jugador: a.jugador, carta: a.carta, ronda: e.ronda }, bitacora: registrar(e, "carta-usada", a.jugador, { carta: a.carta }) };
       if (a.carta === "escudo" || a.carta === "turno") n = { ...n, respuestas: { ...n.respuestas, [a.jugador]: "paso" } };
-      if (a.carta === "cambio") n = prepararRonda({ ...n, cambios: e.cambios + 1 }, contenido);
+      if (a.carta === "cambio") {
+        // Verdad o reto nuevo: cambia solo la carta que dio la app (si la pregunta se dice en voz alta, no hay carta que cambiar).
+        if (conVerdadReto(e)) {
+          if (!e.carta || !e.vr?.eleccion) return e;
+          n = { ...n, cambios: e.cambios + 1, carta: cartaVR(e, contenido, e.vr.eleccion, e.cambios + 1) };
+        } else n = prepararRonda({ ...n, cambios: e.cambios + 1 }, contenido);
+      }
       return sube(n);
     }
   }
@@ -556,13 +785,20 @@ export function puntosPorEquipo(e: EstadoPartida): { equipo: string; puntos: num
   return [...mapa].map(([equipo, t]) => ({ equipo, ...t })).sort((a, b) => b.puntos - a.puntos || a.equipo.localeCompare(b.equipo));
 }
 
+/** ¿La partida se gana por grupo (parejas, equipos o guerra de sexos)? */
+export const porGrupos = (e: Pick<EstadoPartida, "cfg">) => !!e.cfg.modalidad && e.cfg.modalidad !== "individual" && e.cfg.jugadores.some(j => j.equipo);
+
 export function resultados(e: EstadoPartida) {
   const rondasJugadas = e.bitacora.filter(b => b.tipo === "revelada").length;
-  const orden = [...e.cfg.jugadores].sort((x, y) => (e.puntos[y.id] ?? 0) - (e.puntos[x.id] ?? 0));
+  // En parejas, equipos o guerra de sexos el lugar sale de los puntos del grupo: gana el grupo entero.
+  const delGrupo = porGrupos(e) ? new Map(puntosPorEquipo(e).flatMap(g => g.jugadores.map(j => [j, g.puntos] as const))) : null;
+  const valor = (id: string) => delGrupo?.get(id) ?? e.puntos[id] ?? 0;
+  const orden = [...e.cfg.jugadores].sort((x, y) => valor(y.id) - valor(x.id));
   let lugar = 0, previo: number | null = null;
   return orden.map((j, i) => {
     const p = e.puntos[j.id] ?? 0;
-    if (p !== previo) { lugar = i + 1; previo = p; }
+    const v = valor(j.id);
+    if (v !== previo) { lugar = i + 1; previo = v; }
     const xp = xpDePartida({ rondas: rondasJugadas, retosCumplidos: e.retos[j.id] ?? 0, lugar }, e.cfg.jugadores.length);
     // rondas y retos van al servidor, que vuelve a calcular la XP con la misma fórmula.
     return { jugador: j.id, nombre: j.nombre, puntos: p, lugar, xp, rondas: rondasJugadas, retos: e.retos[j.id] ?? 0 };

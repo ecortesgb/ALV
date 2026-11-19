@@ -652,3 +652,6 @@ button.a-logo:focus-visible { outline: 3px solid #ffd23f; outline-offset: 4px; b
 .D .a-tv-lobby .a-sala-todos { justify-self: center; font-size: 1.3em; }
 .D .a-tv-lobby .a-podio { width: 100%; font-size: 1.25em; }
 @media (prefers-reduced-motion: reduce) { .D .a-fl-pared, .D .a-fl-haz, .D .a-sala-todos { animation: none !important; } }
+
+/* ---------- Lobby: posiciones del último juego en la TV ---------- */
+.D .a-tv-lobby > .pos { align-self: center; justify-self: center; align-content: center; width: min(60em, 100%); grid-template-columns: repeat(2, minmax(0, 1fr)); font-size: 1.1em; }

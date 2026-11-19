@@ -29,6 +29,8 @@ export interface Enlace {
   salir(sala: SalaV): Promise<void>;
   cerrar(sala: SalaV): Promise<void>;
   partida(sala: SalaV): Promise<PartidaPub | null>;
+  /** Lo público de los juegos terminados de la sala, del más viejo al más nuevo (para las copas de la noche). */
+  historial(sala: SalaV): Promise<Record<string, unknown>[]>;
   secreto(partida: string): Promise<Record<string, unknown> | null>;
   crearPartida(sala: SalaV, juego: string): Promise<string | null>;
   enviar(partida: string, id: string, tipo: TipoFila, datos: Record<string, unknown>): Promise<boolean>;
@@ -121,6 +123,13 @@ const nube: Enlace = {
       if (error || !p) return null;
       return { id: p.id, juego: p.juego, version: p.version, estado: (p.estado_publico ?? {}) as Record<string, unknown>, terminada: !!p.terminada };
     } catch (e) { log("partida", e); return null; }
+  },
+  async historial(sala) {
+    try {
+      const { data, error } = await cliente!.from("partidas").select("estado_publico").eq("evento", sala.id).not("terminada", "is", null).order("creada", { ascending: true }).limit(200);
+      if (error) { log("historial", error); return []; }
+      return (data ?? []).map(p => (p.estado_publico ?? {}) as Record<string, unknown>);
+    } catch (e) { log("historial", e); return []; }
   },
   async secreto(partida) {
     try {
@@ -236,9 +245,10 @@ const local: Enlace = {
     return p ? { id: p.id, juego: p.juego, version: p.version, estado: p.estado, terminada: p.terminada } : null;
   },
   async secreto(partida) { return porPartida(leer(), partida)?.privados[yoLocal.id] ?? null; },
+  async historial(sala) { return (leer()[sala.codigo]?.partidas ?? []).filter(p => p.terminada).map(p => p.estado); },
   async crearPartida(sala, juego) {
     const id = "partida-" + Date.now().toString(36) + azarCodigo();
-    cambiar(t => { const s = t[sala.codigo]; if (!s) return; s.partidas.forEach(p => { p.terminada = true; }); s.partidas = [...s.partidas.slice(-2), { id, juego, version: 1, estado: {}, terminada: false, privados: {}, acciones: [] }]; });
+    cambiar(t => { const s = t[sala.codigo]; if (!s) return; s.partidas.forEach(p => { p.terminada = true; }); s.partidas = [...s.partidas.slice(-30), { id, juego, version: 1, estado: {}, terminada: false, privados: {}, acciones: [] }]; });
     return id;
   },
   async enviar(partida, id, tipo, datos) {

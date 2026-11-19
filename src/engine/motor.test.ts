@@ -114,9 +114,10 @@ describe("E · progresión y economía", () => {
     expect(nivelPorXp(1619)).toBe(9);
     expect(nivelPorXp(1620)).toBe(10);
   });
-  it("partida típica de 8 rondas da 52 XP; menos de 5 rondas no cuenta", () => {
+  it("partida típica de 8 rondas da 52 XP; con una ronda ya da XP y sin rondas no (034)", () => {
     expect(xpDePartida({ rondas: 8, retosCumplidos: 3, lugar: 2 }, 4) + 0).toBe(20 + 16 + 9 + 10);
-    expect(xpDePartida({ rondas: 4, retosCumplidos: 3, lugar: 1 }, 4)).toBe(0);
+    expect(xpDePartida({ rondas: 1, retosCumplidos: 0, lugar: 1 }, 4)).toBe(37); // igual que el servidor
+    expect(xpDePartida({ rondas: 0, retosCumplidos: 0, lugar: 1 }, 4)).toBe(0);
     expect(xpDePartida({ rondas: 8, retosCumplidos: 0, lugar: 2 }, 2)).toBe(36); // con 2 no hay 2.º lugar
   });
   it("ejemplo de Ana: cartas solo con XP del evento; al cerrar, lo que sobra es para accesorios", () => {

@@ -1,0 +1,92 @@
+/* Verdad o reto: celular (vr-cel), TV (vr-tv) y herramientas (vr-herr). Tokens de .D; color del jugador en --pj. */
+
+.D .vr-pn { flex: none; padding: .14em .4em; font-size: .85em; line-height: 1; border-radius: 7px; border: 2px solid var(--tinta); background: var(--pj, #4a5687); color: var(--pj-texto, #fff); }
+.D .vr-persona { display: inline-flex; align-items: center; gap: 6px; min-width: 0; max-width: 100%; padding: 3px 12px 3px 3px; border-radius: var(--radio-pildora);
+  background: color-mix(in srgb, var(--pj, var(--panel)) 30%, var(--panel-oscuro)); box-shadow: inset 0 0 0 2px var(--pj, var(--tinta)); }
+.D .vr-persona > span:last-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 700 15px/1.1 var(--letra-cuerpo); }
+.D .vr-sello { justify-self: start; display: inline-block; padding: .15em .7em; font-size: 1.4em; color: #fff; text-transform: uppercase; border: 3px solid var(--tinta); border-radius: 8px;
+  transform: skewX(var(--inclinacion)); box-shadow: 0 4px 0 var(--tinta); background: #6b5cff; }
+.D .vr-sello.verdad, .D .vr-tv-carta.verdad .vr-sello { background: linear-gradient(180deg, #ff4fa8, #e0287f); }
+.D .vr-sello.reto, .D .vr-tv-carta.reto .vr-sello { background: linear-gradient(180deg, #ff9a3d, #e8661a); }
+
+/* ---------- Celular ---------- */
+.D .vr-cel { gap: 12px; }
+.D .vr-duelo { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: end; gap: 6px; }
+.D .vr-duelo > div { display: grid; gap: 4px; min-width: 0; }
+.D .vr-flecha { font-size: 1.6em; color: var(--amarillo); padding-bottom: 6px; }
+.D .vr-dos { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.D .vr-opcion { position: relative; display: grid; justify-items: center; gap: 4px; padding: 16px 8px 12px; min-height: 150px; text-align: center; cursor: pointer; color: #fff;
+  border: 4px solid var(--tinta); border-radius: 16px; box-shadow: 0 6px 0 var(--tinta); transition: translate .1s, box-shadow .1s; background: var(--panel); }
+.D .vr-opcion:active { translate: 0 4px; box-shadow: 0 2px 0 var(--tinta); }
+.D .vr-opcion:disabled { filter: grayscale(.8) brightness(.6); cursor: not-allowed; }
+.D .vr-opcion b { font-size: 1.7em; line-height: 1; text-transform: uppercase; }
+.D .vr-opcion small { font: 700 12px/1.25 var(--letra-cuerpo); opacity: .92; }
+.D .vr-op-ico { font-size: 2.4em; line-height: 1; filter: drop-shadow(0 3px 0 rgba(10, 16, 48, .5)); }
+.D .vr-opcion.verdad { background: linear-gradient(160deg, #ff6fbf, #d61f78); }
+.D .vr-opcion.reto { background: linear-gradient(160deg, #ffb057, #e45d12); }
+.D .vr-opcion.app { background: linear-gradient(160deg, #5aa2ff, #2453c4); }
+.D .vr-opcion.voz { background: linear-gradient(160deg, #a77bff, #5d1fc0); }
+.D .vr-opcion.cumplio { background: linear-gradient(160deg, #6ee36b, #1f9a3a); }
+.D .vr-opcion.tomo { background: linear-gradient(160deg, #46d6e6, #157f9c); }
+.D .vr-opcion.app b, .D .vr-opcion.voz b { font-size: 1.25em; }
+.D .vr-elegir, .D .vr-fuente, .D .vr-calificar { display: grid; gap: 10px; }
+.D .vr-carta { margin: 0; padding: 14px 16px; border-radius: 14px; background: #fff; color: var(--tinta); border: 3px solid var(--tinta); box-shadow: 0 5px 0 var(--tinta); font: 700 18px/1.35 var(--letra-cuerpo); text-wrap: balance; }
+.D .vr-carta.voz { background: #efe6ff; }
+.D .vr-espera, .D .vr-res { display: grid; gap: 8px; justify-items: start; }
+.D .vr-comodines { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.D .vr-comodin { padding: 8px 14px; border-radius: var(--radio-pildora); border: 3px solid var(--tinta); background: var(--amarillo); color: var(--tinta); font: var(--etiqueta); text-transform: uppercase; cursor: pointer; box-shadow: 0 3px 0 var(--tinta); }
+
+/* ---------- Herramientas ---------- */
+.D .vr-herr { display: grid; justify-items: center; gap: 8px; padding: 10px; border-radius: 14px; background: rgba(6, 10, 32, .45); box-shadow: inset 0 0 0 2px rgba(255, 255, 255, .12); }
+.D .vr-herr-t { font-size: 1em; text-transform: uppercase; color: var(--amarillo); letter-spacing: .05em; }
+.D .vr-tiros { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin: 0; padding: 0; list-style: none; }
+.D .vr-tiros li { display: grid; justify-items: center; gap: 2px; min-width: 3.6em; padding: 6px 6px 4px; border-radius: 12px; background: color-mix(in srgb, var(--pj) 30%, var(--panel-oscuro)); box-shadow: inset 0 0 0 2px var(--pj);
+  animation: vrTiro .5s cubic-bezier(.2, 1.5, .4, 1) backwards; animation-delay: calc(var(--i) * 90ms); }
+@keyframes vrTiro { from { translate: 0 -30px; rotate: -25deg; opacity: 0; } }
+.D .vr-tiros li small { max-width: 6em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 700 11px/1.2 var(--letra-cuerpo); }
+.D .vr-tiros li > b { font-size: .7em; padding: .1em .4em; border-radius: 6px; background: var(--amarillo); color: var(--tinta); }
+.D .vr-tiros li.responde > b { background: var(--rojo-fbi); color: #fff; }
+.D .vr-tiros li.pregunta, .D .vr-tiros li.responde { box-shadow: inset 0 0 0 2px var(--pj), 0 0 0 3px var(--amarillo); }
+.D .vr-dado { font-size: 2.6em; line-height: 1; color: #fff; text-shadow: 0 3px 0 var(--tinta); }
+.D .vr-naipe { display: grid; place-items: center; width: 2.4em; height: 3.3em; border-radius: 8px; background: #fff; color: var(--tinta); border: 2px solid var(--tinta); font: 900 1em/1 var(--letra-cuerpo); box-shadow: 0 3px 0 var(--tinta); }
+.D .vr-naipe b { font-size: 1.25em; }
+.D .vr-naipe.rojo { color: #d61f2a; }
+.D .vr-circulo { width: min(15em, 70vw); height: auto; overflow: visible; }
+.D .vr-esfera { fill: #fff8e1; stroke: var(--tinta); stroke-width: 3; }
+.D .vr-circulo.ruleta .vr-esfera { fill: #222a5c; }
+.D .vr-silla { stroke: var(--tinta); stroke-width: 1.5; }
+.D .vr-circulo .pregunta .vr-silla, .D .vr-circulo .responde .vr-silla { stroke: var(--amarillo); stroke-width: 2.5; }
+.D .vr-silla-t { font: 900 6px/1 var(--letra-cuerpo); fill: #fff; paint-order: stroke; stroke: var(--tinta); stroke-width: 1.2; }
+.D .vr-mano { stroke: var(--tinta); stroke-linecap: round; transform-origin: 50px 50px; transform: rotate(var(--a)); animation: vrGira 2.2s cubic-bezier(.15, .7, .2, 1) backwards; }
+.D .vr-mano.chica { stroke-width: 4; stroke: #e8343a; }
+.D .vr-mano.grande { stroke-width: 2.6; stroke: #2f7cf0; }
+.D .vr-circulo.ruleta .vr-mano { stroke: var(--amarillo); stroke-width: 3.5; }
+@keyframes vrGira { from { transform: rotate(0deg); } }
+.D .vr-centro { fill: var(--tinta); }
+.D .vr-leyenda { margin: 0; display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 14px; font: 600 13px/1.3 var(--letra-cuerpo); color: #fff; }
+.D .vr-herr.chica .vr-circulo { width: min(9em, 45vw); }
+.D .vr-herr.chica .vr-dado { font-size: 2em; }
+
+/* ---------- TV ---------- */
+.D .vr-tv { position: relative; width: 100%; max-width: 76em; display: grid; gap: .8em; justify-items: center; }
+.D .vr-tv-centro { width: 100%; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.6fr) minmax(0, 1fr); align-items: center; gap: 1.2em; }
+.D .vr-tv-lado { display: grid; justify-items: center; gap: .4em; padding: .8em; border-radius: 18px; border: 3px solid var(--tinta);
+  background: radial-gradient(120% 70% at 50% 0%, color-mix(in srgb, var(--pj) 65%, transparent), transparent 70%), linear-gradient(180deg, color-mix(in srgb, var(--pj-oscuro) 70%, var(--noche)), var(--noche)); box-shadow: 0 6px 0 var(--tinta); }
+.D .vr-tv-lado.responde { box-shadow: 0 6px 0 var(--tinta), 0 0 0 4px var(--amarillo), 0 0 36px color-mix(in srgb, var(--amarillo) 50%, transparent); }
+.D .vr-tv-rol { font-size: 1.4em; text-transform: uppercase; color: var(--amarillo); }
+.D .vr-tv-nom { display: flex; align-items: center; gap: .4em; font-size: 1.2em; }
+.D .vr-tv-medio { display: grid; gap: .8em; }
+.D .vr-tv-carta { display: grid; gap: .5em; padding: .9em 1.1em; border-radius: 16px; background: #fff; color: var(--tinta); border: 4px solid var(--tinta); box-shadow: 0 6px 0 var(--tinta); animation: vrCarta .4s cubic-bezier(.2, 1.4, .4, 1) backwards; }
+@keyframes vrCarta { from { scale: .8; opacity: 0; rotate: -3deg; } }
+.D .vr-tv-carta p { margin: 0; font: 700 1.4em/1.3 var(--letra-cuerpo); text-wrap: balance; }
+.D .vr-tv-espera { opacity: .7; }
+.D .vr-tv-res { margin: 0; font-size: 1.6em; color: var(--amarillo); }
+.D .vr-tv .vr-herr { font-size: 1.1em; }
+
+@media (prefers-reduced-motion: reduce) { .D .vr-tiros li, .D .vr-mano, .D .vr-tv-carta { animation: none !important; } }
+.D .vr-tv .vr-circulo { width: min(10em, 30vh); }
+.D .vr-tv .vr-dado { font-size: 2.2em; }
+/* Herramienta y reloj del turno, lado a lado */
+.D .vr-arriba { display: flex; align-items: center; justify-content: center; gap: 12px; }
+.D .vr-arriba > .vr-herr { flex: 1; min-width: 0; }
+.D .rt { flex: none; }

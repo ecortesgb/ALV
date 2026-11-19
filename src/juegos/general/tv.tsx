@@ -4,6 +4,10 @@ import { Cartel, Chip, Onomatopeya, RuedaSospechosos } from "../../ds";
 import { NombreJugador, Retrato } from "../../pantallas/comun";
 import type { Miembro } from "../../servicios/enlace";
 import { desenlace, instruccion, nombreDe, nombreJuego, type Publico } from "./texto";
+import { TvImpostor } from "../impostor/tv";
+import { TvVerdadReto } from "../verdadReto/tv";
+import { ComoJugar, tocaExplicar } from "./ComoJugar";
+import { CeremoniaCopas, PodioJuego, esFinalDeJuego } from "./Copas";
 
 const figuraDe = (ms: Miembro[], id: string) => ms.find(m => m.id === id)?.figura;
 
@@ -18,10 +22,19 @@ function Esperando({ v }: { v: Publico }) {
 }
 
 export function EscenaTv({ v, miembros }: { v: Publico; miembros: Miembro[] }) {
+  // «Cómo jugar» encima de la escena hasta que la partida arranca.
+  // Copas de la noche: la ceremonia ocupa toda la escena.
+  if (v.juegoId === "copas") return <CeremoniaCopas v={v} miembros={miembros} modo="tv" />;
+  return <>{tocaExplicar(v) && <ComoJugar v={v} modo="tv" />}<Escena v={v} miembros={miembros} />{esFinalDeJuego(v) && <PodioJuego v={v} miembros={miembros} modo="tv" />}</>;
+}
+
+function Escena({ v, miembros }: { v: Publico; miembros: Miembro[] }) {
   const revelada = v.fase === "revelada";
   const d = revelada ? desenlace(v) : null;
   const r = (v.revelado ?? {}) as { votos?: Record<string, number>; impostor?: string };
 
+  if (v.motor === "rol-secreto" && v.impostor) return <TvImpostor v={v} miembros={miembros} />;
+  if (v.motor === "turnos-cartas" && v.verdadReto) return <TvVerdadReto v={v} miembros={miembros} />;
   if (v.motor === "rol-secreto") {
     const personas = v.jugadores.map(j => ({
       id: j.id, nombre: j.nombre, figura: <Retrato id={j.id} figura={figuraDe(miembros, j.id)} nombre={j.nombre} size={96} />,

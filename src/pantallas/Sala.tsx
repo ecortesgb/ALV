@@ -2,18 +2,17 @@
 // El papel es del aparato: aquí siempre se juega. A quien tiene el control le sale además la barra del anfitrión.
 // Sin pantalla (modo mesa), el celular del anfitrión también corre el motor y se queda encendido.
 import { useEffect, useState } from "react";
-import { JUEGOS } from "../content/catalogo";
 import { BarraAnfitrion, Boton, Chip, Etiqueta, Panel, Reloj } from "../ds";
 import { ir } from "../app/rutas";
 import { refrescarSesion, useSesion } from "../app/sesion";
 import { sonar } from "../app/sonido";
-import { enlace, type Miembro, type SalaV } from "../servicios/enlace";
+import { enlace, type SalaV } from "../servicios/enlace";
 import type { PresenciaPantalla } from "../servicios/tiempoReal";
 import { HerramientaCelular, type MiVista } from "../juegos/general/celular";
 import { esPublico, marcador, nombreJuego, quedan, type Publico } from "../juegos/general/texto";
-import { control, iniciarPartida, jugada, useMotor } from "../roles/pantalla/motor";
+import { control, entregarCopas, jugada, useMotor } from "../roles/pantalla/motor";
+import { PodioJuego, esFinalDeJuego } from "../juegos/general/Copas";
 import { useSala } from "../roles/sala";
-import { Filas, NIVELES, Reglas, candado } from "./Catalogo";
 import { Capsulas } from "./Personalizar";
 import { Cabecera, Marco, NombreJugador, Retrato, Vacio, aviso, confirmar, useAncho } from "./comun";
 import { ContadorListos, Cupo, FilaSala, FondoLobby, Gestos, MiPedestal, Pedestales, TodosListos } from "./SalaEspera";
@@ -69,24 +68,6 @@ export function Conexion({ red }: { red: string }) {
   return <span className="a-red" role="status">{red === "respaldo" ? "Reconectando…" : "Conectando…"}</span>;
 }
 
-/** Podio de una partida terminada, con lo público. */
-export function Podio({ v, miembros, yo }: { v: Publico; miembros: Miembro[]; yo?: string }) {
-  const m = marcador(v);
-  return (
-    <div className="a-podio">
-      <ol className="a-podio-3">
-        {m.slice(0, 3).map(j => (
-          <li key={j.id} className={`l${j.lugar}`}>
-            <Retrato id={j.id} figura={miembros.find(x => x.id === j.id)?.figura} nombre={j.nombre} size={j.lugar === 1 ? 92 : 72} />
-            <b className="dsp ol">{j.lugar}</b><NombreJugador nombre={j.nombre} figura={miembros.find(x => x.id === j.id)?.figura} /><small>{j.puntos} pts</small>
-          </li>
-        ))}
-      </ol>
-      {m.length > 3 && <ul className="a-tabla">{m.slice(3).map(j => <li key={j.id} className={j.id === yo ? "yo" : ""}><b>{j.lugar}</b><NombreJugador nombre={j.nombre} figura={miembros.find(x => x.id === j.id)?.figura} clase="" /><small>{j.puntos} pts</small></li>)}</ul>}
-    </div>
-  );
-}
-
 function XpReto({ v, alDar, cerrar }: { v: Publico; alDar: (jugador: string, xp: number) => void; cerrar: () => void }) {
   const [quien, setQuien] = useState(v.jugadores[0]?.id ?? "");
   return (
@@ -115,8 +96,7 @@ export function Sala({ codigo }: { codigo: string }) {
   const sinPantalla = pantalla === "ausente";
   const quedanS = useQuedan(v);
   const esperaVencida = useVencida(v?.fase === "contestando" && !v.pausada ? v.espera?.fin : null);
-  const [juego, setJuego] = useState("impostor"), [rondas, setRondas] = useState(8), [nivel, setNivel] = useState<1 | 2 | 3 | 4>(2);
-  const [iniciando, setIniciando] = useState(false), [xpReto, setXpReto] = useState(false), [verReglas, setVerReglas] = useState(false);
+  const [copando, setCopando] = useState(false), [xpReto, setXpReto] = useState(false);
   const terminada = !!s.partida?.terminada;
   useEffect(() => { if (terminada) { sonar("exito"); void refrescarSesion(); } }, [terminada, s.partida?.id]);
   // Lobby: cada quien marca «¡Listo!» y el anfitrión inicia la partida cuando quiera (Elías, 18 nov).
@@ -146,9 +126,11 @@ export function Sala({ codigo }: { codigo: string }) {
     const estoy = v.jugadores.some(j => j.id === ses.uid);
     const sec = (s.secreto ?? {}) as { mio?: unknown; miRespuesta?: unknown; miMano?: string[] };
     const mi: MiVista = { yo: ses.uid, mio: sec.mio ?? null, miRespuesta: sec.miRespuesta ?? null, miMano: sec.miMano ?? [] };
-    const ultima = v.ronda >= v.totalRondas;
+    const ultima = esFinalDeJuego(v);
+    // Ceremonia de copas de la noche: sin ronda, sin barra del anfitrión ni marcador; al final se cierra la sala.
+    const copas = v.juegoId === "copas";
     return (
-      <Marco clase="a-partida" fijo={soyAnfitrion ? (
+      <Marco clase="a-partida" fijo={soyAnfitrion && !copas ? (
         <div className={"a-barra" + (sinPantalla ? " a-sin-pantalla" : "")} {...inerte(sinPantalla)}>
           <BarraAnfitrion pausada={v.pausada}
             momento={v.fase === "revelada" && !sinPantalla ? { texto: ultima ? "Ver resultados" : "Siguiente ronda", icono: "skip", onClick: () => void control(pid, "siguiente") } : undefined}
@@ -157,9 +139,9 @@ export function Sala({ codigo }: { codigo: string }) {
             onRuleta={() => void control(pid, "ruleta")} onXpReto={() => setXpReto(true)} />
         </div>
       ) : undefined}>
-        <div className={"a-ancho a-angosto a-pila" + (soyAnfitrion ? " con-barra" : "")}>
+        <div className={"a-ancho a-angosto a-pila" + (soyAnfitrion && !copas ? " con-barra" : "")}>
           <header className="a-cab">
-            <Etiqueta texto={`Ronda ${v.ronda} de ${v.totalRondas}`} icono="star" />
+            {!copas && <Etiqueta texto={v.impostor ? `Vuelta ${v.ronda}` : `Ronda ${v.ronda} de ${v.totalRondas}`} icono="star" />}
             <span className="dsp ol a-t3 a-crece">{nombreJuego(v.juegoId)}</span>
             {v.reloj && v.fase === "contestando" && <Reloj segundos={quedanS} total={v.reloj.total} pausado={v.pausada} style={{ width: 56, height: 56 }} />}
             <Conexion red={s.red} />
@@ -177,10 +159,11 @@ export function Sala({ codigo }: { codigo: string }) {
           {v.fase === "revelada" && v.ausentes?.includes(ses.uid) && <div className="a-aviso-tv" role="status"><span className="dsp ol a-t3">La ronda se cerró sin tu respuesta</span><p>No sumaste puntos en esta ronda. Sigues en la partida y juegas la siguiente.</p></div>}
           {estoy ? <div className={sinPantalla ? "a-espera-tv" : undefined} {...inerte(sinPantalla)}><HerramientaCelular v={v} mi={mi} miembros={s.miembros} mandar={async (t, d) => !sinPantalla && jugada(pid, t, d)} /></div>
             : <Panel className="a-herr"><span className="dsp ol a-t2">Juegas en la siguiente</span><p className="a-suave">Llegaste con la partida empezada. Mira la pantalla.</p></Panel>}
-          <ul className="a-marcador" aria-label="Marcador">
+          {!copas && <ul className="a-marcador" aria-label="Marcador">
             {marcador(v).map(j => <li key={j.id} className={j.id === ses.uid ? "yo" : ""}><Retrato id={j.id} figura={s.miembros.find(m => m.id === j.id)?.figura} nombre={j.nombre} size={32} /><NombreJugador nombre={j.nombre} figura={s.miembros.find(m => m.id === j.id)?.figura} clase="" />{(v.cartasEnMano[j.id] ?? 0) > 0 && <Chip texto={String(v.cartasEnMano[j.id])} icono="bolt" />}<b className="dsp">{j.puntos}</b></li>)}
-          </ul>
-          {soyAnfitrion && <button type="button" className="a-plano" disabled={sinPantalla} onClick={() => void confirmar({ titulo: "¿Terminar la partida?", texto: "Se reparten los puntos como van.", si: "Terminar", peligro: true }).then(ok => { if (ok) void control(pid, "terminar"); })}>Terminar partida</button>}
+          </ul>}
+          {copas && <Boton color={soyAnfitrion ? "rojo" : "amarillo"} texto={soyAnfitrion ? "Cerrar sala" : "Salir de la sala"} icono="back" onClick={() => void salir()} />}
+          {soyAnfitrion && !copas && <button type="button" className="a-plano" disabled={sinPantalla} onClick={() => void confirmar({ titulo: "¿Terminar la partida?", texto: "Se reparten los puntos como van.", si: "Terminar", peligro: true }).then(ok => { if (ok) void control(pid, "terminar"); })}>Terminar partida</button>}
         </div>
         {xpReto && <XpReto v={v} cerrar={() => setXpReto(false)} alDar={(j, x) => { void enlace.darXp(sala, j, x).then(ok => { if (ok) { void control(pid, "xp-reto", { jugador: j, xp: x }); aviso(`+${x} XP para ${v.jugadores.find(p => p.id === j)?.nombre ?? ""}`); } else aviso("No se pudo dar la XP."); }); }} />}
       </Marco>
@@ -189,13 +172,13 @@ export function Sala({ codigo }: { codigo: string }) {
 
   // ---------- Espera (antes de la primera partida o entre partidas) ----------
   const yo = s.miembros.find(m => m.id === ses.uid);
-  const def = JUEGOS.find(j => j.id === juego)!;
-  const motivo = candado(def, s.miembros.length, nivel);
-  const iniciar = async () => {
-    setIniciando(true);
-    const ok = await iniciarPartida(sala, s.miembros, juego, rondas, nivel);
-    setIniciando(false);
-    if (!ok) aviso("No se pudo iniciar. Intenta otra vez."); else { sonar("exito"); s.refrescar(); }
+  // El anfitrión arma la partida en #/configurar (tipo, juego, opciones, escenario) y desde ahí la inicia.
+  const copasNoche = async () => {
+    if (!(await confirmar({ titulo: "¿Entregar las copas?", texto: "Se suman los puntos de todos los juegos de la noche y se anuncian los ganadores.", si: "Entregar copas" }))) return;
+    setCopando(true);
+    const ok = await entregarCopas(sala, s.miembros);
+    setCopando(false);
+    if (!ok) aviso("No se pudieron entregar las copas. Intenta otra vez."); else { sonar("exito"); s.refrescar(); }
   };
   const listo = (
     <Boton className="a-sala-boton" color={yo?.listo ? "azul" : "verde"} principal={!yo?.listo} texto={yo?.listo ? "Ya no estoy listo" : "¡Listo!"} icono="star" onClick={() => void enlace.marcarListo(sala, !yo?.listo).then(s.refrescar)} />
@@ -211,8 +194,8 @@ export function Sala({ codigo }: { codigo: string }) {
     <Marco clase="a-sala" fondo={<FondoLobby />}>
       <div className="a-ancho a-pila">
         <Cabecera titulo="Lobby" icono="users" alVolver={() => void salir()} derecha={<><ContadorListos miembros={s.miembros} /><Conexion red={s.red} /></>} />
-        <TodosListos miembros={s.miembros} texto={soyAnfitrion ? "Elige el juego y toca «Iniciar»" : "El anfitrión prepara la partida"} />
-        {final && <Panel className="a-pila a-entra" como="section"><Etiqueta texto={`Resultados · ${nombreJuego(final.juegoId)}`} icono="trophy" /><Podio v={final} miembros={s.miembros} yo={ses.uid} /></Panel>}
+        <TodosListos miembros={s.miembros} texto={soyAnfitrion ? "Toca «Armar partida»" : "El anfitrión prepara la partida"} />
+        {final && <Panel className="a-pila a-entra" como="section"><Etiqueta texto={`Resultados · ${nombreJuego(final.juegoId)}`} icono="trophy" /><PodioJuego v={final} miembros={s.miembros} modo="celular" /></Panel>}
         {ancho ? <Pedestales miembros={s.miembros} yo={ses.uid} /> : <MiPedestal miembros={s.miembros} yo={ses.uid} />}
         <div className="a-dos">
           <Panel className="a-pila" como="section">
@@ -224,14 +207,11 @@ export function Sala({ codigo }: { codigo: string }) {
           </Panel>
           {soyAnfitrion ? (
             <Panel className="a-pila" como="section">
-              <Etiqueta texto="Tú eliges el juego" icono="star" />
-              <Filas jugadores={s.miembros.length} nivel={nivel} elegido={juego} alElegir={id => { setJuego(id); setVerReglas(false); }} />
-              <div className="a-entre"><span className="dsp ol a-t2">{def.nombre}</span><button type="button" className="a-plano" onClick={() => setVerReglas(x => !x)}>{verReglas ? "Ocultar reglas" : "Ver reglas"}</button></div>
-              {verReglas && <Reglas id={juego} />}
-              <div className="a-campo"><span>¿Hasta dónde quieren llegar?</span><div className="a-fila a-envuelve">{([1, 2, 3, 4] as const).map(n => <Chip key={n} texto={NIVELES[n]} seleccionado={nivel === n} onClick={() => setNivel(n)} />)}</div></div>
-              <div className="a-campo"><span>Rondas</span><div className="a-fila a-envuelve">{[5, 8, 12].map(n => <Chip key={n} texto={String(n)} seleccionado={rondas === n} onClick={() => setRondas(n)} />)}</div></div>
+              <Etiqueta texto="Tú armas la partida" icono="star" />
+              <p className="a-suave">Eliges el tipo de partida, el juego, sus opciones y el escenario. Al final tocas «¡Iniciar!».</p>
               {sala.modo === "tv" && <p className="a-nota">Abre ALV en la laptop o TV con tu cuenta y elige «Volver a mi sala»: ahí se proyecta la partida.</p>}
-              <Boton color="amarillo" principal texto={final ? "Otra partida" : "Iniciar"} sub={motivo ?? `${def.nombre} · ${rondas} rondas`} icono="play" desactivado={!!motivo} cargando={iniciando} onClick={() => void iniciar()} />
+              <Boton color="amarillo" principal texto={final ? "Otra partida" : "Armar partida"} sub={`${s.miembros.length} en el lobby`} icono="play" onClick={() => ir("configurar", sala.codigo)} />
+              <Boton color="morado" texto="Entregar copas" sub="Cierra la noche con los ganadores" icono="trophy" cargando={copando} onClick={() => void copasNoche()} />
             </Panel>
           ) : <Panel className="a-pila a-centro-txt" como="section"><span className="dsp ol a-t2">Esperando al anfitrión</span><p className="a-suave">{s.miembros.find(m => m.anfitrion)?.nombre ?? "El anfitrión"} elige el juego e inicia la partida. Mientras, cambia tu outfit, saluda o baila.</p></Panel>}
         </div>

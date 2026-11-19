@@ -1,0 +1,180 @@
+/* Configurar partida (ConfigurarPartida.tsx, TarjetasConfig.tsx). Estilo menú de juego de fiesta.
+   Tokens de .D. Prefijos: cfg- (pantalla), tc- (tarjetas), cp- (piezas chicas: personas, equipos, números). */
+
+/* ---------- Pantalla completa: cabecera, cuerpo que se desliza y pie fijo ---------- */
+.D.cfg-pagina .a-scroll { padding: 0; overflow: hidden; }
+.D .cfg { flex: 1; min-height: 0; height: 100%; display: grid; grid-template-rows: auto minmax(0, 1fr) auto; }
+.D .cfg-cab { position: relative; display: flex; align-items: center; gap: 12px; padding: max(12px, env(safe-area-inset-top)) 16px 8px; }
+.D .cfg-volver { flex: none; display: grid; place-items: center; width: 46px; height: 46px; border-radius: 10px; border: 3px solid var(--tinta); cursor: pointer;
+  background: linear-gradient(180deg, #ff9a3d, #e8661a); color: #fff; box-shadow: 0 4px 0 var(--tinta); }
+.D .cfg-volver svg { width: 22px; height: 22px; }
+/* Nombre de la sección en una cinta inclinada (como el título de un modo en un juego de fiesta) */
+.D .cfg-titulo { margin: 0; flex: 1; min-width: 0; padding: .18em .8em .2em .6em; font-size: clamp(1.5em, 4.2vw, 2.6em); line-height: 1; color: #fff; text-transform: uppercase;
+  background: linear-gradient(180deg, #ff4fa8, #e0287f); border: 3px solid var(--tinta); border-radius: 8px; box-shadow: 0 6px 0 #8a0f4a, 0 6px 0 3px var(--tinta);
+  transform: skewX(var(--inclinacion)); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; animation: cfgTitulo .4s cubic-bezier(.2, 1.4, .4, 1) backwards; }
+@keyframes cfgTitulo { from { translate: -40px 0; opacity: 0; } }
+.D.wide .cfg-titulo { flex: 0 1 auto; }
+.D .cfg-avance { display: flex; gap: 6px; margin: 0 0 0 auto; padding: 0; list-style: none; }
+.D .cfg-avance li { width: 12px; height: 12px; border-radius: 50%; border: 2px solid var(--tinta); background: rgba(255, 255, 255, .25); }
+.D .cfg-avance li.hecho { background: var(--verde-claro); }
+.D .cfg-avance li.on { background: var(--amarillo); scale: 1.25; }
+.D .cfg-cuerpo { min-height: 0; overflow-y: auto; overflow-x: hidden; padding: 10px 16px 16px; animation: cfgEntra .35s ease-out backwards; }
+@keyframes cfgEntra { from { opacity: 0; translate: 30px 0; } }
+.D .cfg-pie { display: flex; justify-content: flex-end; align-items: center; gap: 12px; padding: 10px 16px max(12px, env(safe-area-inset-bottom));
+  background: linear-gradient(transparent, color-mix(in srgb, var(--noche) 92%, transparent) 35%); }
+.D .cfg-pie .d-btn small { max-width: 18em; white-space: normal; }
+.D .cfg-pie-info { margin: 0 auto 0 0; min-width: 0; font: 600 15px/1.3 var(--letra-cuerpo); color: #fff; }
+.D .cfg-pie-info b { color: var(--amarillo); font-size: 1.15em; text-transform: uppercase; margin-right: .25em; }
+.D .cfg-ancho { max-width: 60em; margin-inline: auto; }
+
+/* ---------- Tipo de partida: las 4 ilustraciones en una sola pantalla ---------- */
+.D .cfg-tipos { height: 100%; min-height: 0; display: grid; gap: 12px; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: repeat(2, minmax(0, 1fr)); }
+.D.wide .cfg-tipos { grid-template-columns: repeat(4, minmax(0, 1fr)); grid-template-rows: minmax(0, 1fr); gap: 20px; max-width: 72em; margin-inline: auto; }
+.D .tc-tipo { --brillo: var(--amarillo); width: 100%; height: auto; max-height: 100%; aspect-ratio: 480 / 850; align-self: center; justify-self: center; min-height: 0; padding: 0; border: 4px solid #1b2554; border-radius: 16px; background: #10183f; overflow: hidden; }
+.D.wide .tc-tipo { height: auto; max-height: 100%; aspect-ratio: 480 / 850; justify-self: center; width: 100%; align-self: center; }
+.D .tc-tipo img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center 30%; transition: scale .4s, filter .3s; }
+.D .tc-tipo-candado { position: absolute; inset: 8px 8px auto; z-index: 2; display: flex; align-items: center; justify-content: center; gap: 5px; padding: 5px; border-radius: 8px;
+  font: var(--chip); text-transform: uppercase; color: var(--amarillo); background: rgba(6, 10, 32, .88); }
+.D .tc-tipo-candado svg { width: 13px; height: 13px; }
+.D .tc-tipo.on { border-color: var(--amarillo); box-shadow: 0 0 0 3px #fff7c2, 0 0 28px 6px color-mix(in srgb, var(--amarillo) 75%, transparent), 0 8px 0 var(--tinta); translate: 0 -6px; animation: tcLatido 1.6s ease-in-out infinite; }
+@keyframes tcLatido { 50% { box-shadow: 0 0 0 3px #fff7c2, 0 0 44px 12px color-mix(in srgb, var(--amarillo) 85%, transparent), 0 8px 0 var(--tinta); } }
+.D .cfg-tipos:has(.tc-tipo.on) .tc-tipo:not(.on) img { filter: brightness(.6) saturate(.8); }
+.D .tc-tipo.on img { scale: 1.04; }
+.D .tc-check { position: absolute; top: 8px; right: 8px; z-index: 2; display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; font: 900 20px/1 var(--letra-cuerpo);
+  color: var(--tinta); background: var(--amarillo); border: 3px solid var(--tinta); animation: tcCheck .35s cubic-bezier(.2, 1.8, .4, 1) backwards; }
+@keyframes tcCheck { from { scale: 0; } }
+
+/* ---------- Tarjetas que se inclinan (juegos y escenarios) ---------- */
+.D .tc { --rx: 0deg; --ry: 0deg; --bx: 50%; position: relative; display: grid; padding: 0; text-align: left; color: var(--texto); cursor: pointer; border: 3px solid var(--tinta); border-radius: 14px; overflow: hidden;
+  background: var(--panel-oscuro); box-shadow: 0 6px 0 var(--tinta); transform: perspective(700px) rotateX(var(--rx)) rotateY(var(--ry)); transform-style: preserve-3d;
+  transition: transform .18s ease-out, box-shadow .2s, translate .2s; animation: tcEntra .45s cubic-bezier(.2, 1.3, .4, 1) backwards; animation-delay: calc(var(--i, 0) * 45ms); }
+@keyframes tcEntra { from { opacity: 0; translate: 0 18px; scale: .92; } }
+.D .tc:not(.tc-tipo):hover { translate: 0 -4px; }
+.D .tc:not(.tc-tipo).on { translate: 0 -6px; box-shadow: 0 6px 0 var(--tinta), 0 0 0 4px var(--amarillo), 0 0 34px color-mix(in srgb, var(--amarillo) 55%, transparent); }
+.D .tc.bloq { filter: saturate(.35) brightness(.75); }
+.D .tc:disabled { cursor: not-allowed; }
+.D .tc-brillo { position: absolute; inset: 0; pointer-events: none; background: radial-gradient(circle at var(--bx) 0%, rgba(255, 255, 255, .35), transparent 55%); opacity: 0; transition: opacity .2s; mix-blend-mode: overlay; }
+.D .tc:hover .tc-brillo, .D .tc.on .tc-brillo { opacity: 1; }
+.D .tc-arte { position: relative; display: block; aspect-ratio: 4 / 3; overflow: hidden; background: color-mix(in srgb, var(--tc, var(--panel)) 60%, var(--noche)); }
+.D .tc-arte img, .D .tc-rayos { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transition: scale .4s; }
+.D .tc:hover .tc-arte img, .D .tc.on .tc-arte img { scale: 1.06; }
+.D .tc-emoji { position: absolute; left: 50%; top: 46%; translate: -50% -50%; font-size: 3.4em; line-height: 1; filter: drop-shadow(0 4px 0 rgba(10, 16, 48, .55)); transition: scale .3s cubic-bezier(.2, 1.6, .4, 1); }
+.D .tc:hover .tc-emoji, .D .tc.on .tc-emoji { scale: 1.18; }
+.D .tc-sigla { position: absolute; left: 8px; top: 8px; padding: .1em .45em; font-size: .9em; background: var(--tinta); color: var(--amarillo); border-radius: 6px; transform: skewX(var(--inclinacion)); }
+.D .tc-candado { position: absolute; inset: auto 0 0; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 6px; font: var(--chip); text-transform: uppercase; background: rgba(10, 16, 48, .85); color: var(--amarillo); }
+.D .tc-candado svg { width: 14px; height: 14px; }
+.D .tc-pie { display: grid; gap: 4px; padding: 8px 10px 10px; background: linear-gradient(180deg, color-mix(in srgb, var(--tc, var(--panel)) 25%, var(--panel-oscuro)), var(--panel-oscuro)); }
+.D .tc-nombre { font-size: 1.1em; line-height: 1; }
+.D .tc-datos { display: flex; gap: 10px; font: var(--chip); color: var(--texto-suave); }
+.D .tc-datos span { display: inline-flex; align-items: center; gap: 3px; }
+.D .tc-datos svg { width: 13px; height: 13px; }
+.D .tc-texto { font: var(--cuerpo-chico); color: var(--texto-suave); }
+
+/* ---------- Elegir juego: destacado grande arriba y carrusel abajo ---------- */
+.D .cfg-juego { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; max-width: 76em; margin-inline: auto; }
+.D .cfg-destacado { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; padding: 12px; border-radius: 18px; border: 3px solid var(--tinta); box-shadow: 0 6px 0 var(--tinta);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--tc) 45%, #3a2a9a), #2a1f7a 70%); animation: cfgEntra .35s ease-out backwards; }
+.D.wide .cfg-destacado { grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); align-items: center; gap: 22px; padding: 16px; }
+.D .cfg-destacado-arte { width: 100%; aspect-ratio: 4 / 3; max-height: 34vh; object-fit: cover; border-radius: 12px; border: 3px solid #fff; box-shadow: 0 6px 0 var(--tinta); }
+.D.wide .cfg-destacado-arte { max-height: 36vh; }
+.D .cfg-sinarte { display: grid; place-items: center; overflow: hidden; background: radial-gradient(circle at 50% 45%, rgba(255, 255, 255, .45), transparent 45%), repeating-conic-gradient(from 0deg, var(--tc) 0 15deg, color-mix(in srgb, var(--tc) 70%, #fff) 15deg 30deg); }
+.D .cfg-sinarte span { font-size: min(6em, 22vw); line-height: 1; filter: drop-shadow(0 6px 0 rgba(10, 16, 48, .4)); animation: cfgFlota 3s ease-in-out infinite; }
+@keyframes cfgFlota { 50% { translate: 0 -8px; rotate: -3deg; } }
+.D .cfg-destacado-info { display: grid; gap: 8px; align-content: start; }
+.D .cfg-etq { font-size: 1em; color: var(--amarillo); text-transform: uppercase; }
+.D .cfg-destacado-nombre { font-size: clamp(1.7em, 4.5vw, 2.9em); line-height: .95; text-transform: uppercase; }
+.D .cfg-pastilla { display: inline-flex; align-items: center; gap: 5px; padding: 5px 12px; border-radius: var(--radio-pildora); background: rgba(6, 10, 32, .82); color: #fff; font: 800 13px/1 var(--letra-cuerpo); }
+.D .cfg-pastilla svg { width: 15px; height: 15px; }
+.D .cfg-desc { margin: 0; font: 600 16px/1.35 var(--letra-cuerpo); color: #fff; }
+.D .cfg-reglas-btn { justify-self: start; padding-left: 0; color: #fff; }
+.D .cfg-carrusel { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(10.5em, 12.5em); gap: 12px; overflow-x: auto; overscroll-behavior-x: contain; padding: 10px 4px 14px; scroll-snap-type: x mandatory; scrollbar-width: thin; }
+.D .cfg-carrusel > .tc { scroll-snap-align: start; }
+
+/* Filtros de categoría (pestañas) */
+.D .tc-filtros { display: flex; gap: 6px; overflow-x: auto; padding: 2px 2px 4px; scrollbar-width: none; }
+.D .tc-filtros::-webkit-scrollbar { display: none; }
+.D .tc-filtro { flex: none; padding: 8px 16px; border: 3px solid var(--tinta); border-radius: 10px; background: #4b3fb8; color: #fff; font: var(--etiqueta); text-transform: uppercase; cursor: pointer;
+  box-shadow: 0 3px 0 var(--tinta), inset 0 -4px 0 var(--f, var(--panel)); transform: skewX(var(--inclinacion)); }
+.D .tc-filtro.on { background: linear-gradient(180deg, #ff4fa8, #e0287f); box-shadow: 0 3px 0 var(--tinta); }
+
+/* ---------- Opciones o instrumento: ilustración a un lado, opciones al otro ---------- */
+.D .cfg-opciones { display: grid; gap: 16px; max-width: 72em; margin-inline: auto; }
+.D.wide .cfg-opciones { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; gap: 28px; }
+.D .cfg-opciones-arte { position: relative; border-radius: 16px; border: 4px solid #fff; overflow: hidden; box-shadow: 0 8px 0 var(--tinta); }
+.D .cfg-opciones-img { display: block; width: 100%; aspect-ratio: 4 / 3; max-height: 30vh; object-fit: cover; }
+.D.wide .cfg-opciones-img { max-height: none; }
+.D .cfg-cinta { position: absolute; left: -6px; top: 12px; padding: .2em .9em .2em .7em; font-size: 1.5em; color: #fff; text-transform: uppercase; background: linear-gradient(180deg, #ff4fa8, #e0287f);
+  border: 3px solid var(--tinta); border-radius: 0 8px 8px 0; box-shadow: 0 4px 0 var(--tinta); transform: skewX(var(--inclinacion)); }
+.D .cfg-sub { font-size: 1.5em; text-transform: uppercase; }
+.D .cfg-temas { display: grid; gap: 8px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 9em), 1fr)); }
+.D .cfg-temas.grandes { grid-template-columns: 1fr; }
+.D .cfg-tema { display: flex; align-items: center; gap: 10px; padding: 10px 12px; text-align: left; border: 3px solid var(--tinta); border-radius: 12px; cursor: pointer; color: var(--tinta);
+  background: #eef2fb; font: 800 15px/1.1 var(--letra-cuerpo); box-shadow: 0 4px 0 var(--tinta); transition: translate .15s; }
+.D .cfg-tema > span:first-child { font-size: 1.5em; }
+.D .cfg-tema b { display: block; font-size: 1.15em; text-transform: uppercase; }
+.D .cfg-tema small { display: block; font: 600 13px/1.25 var(--letra-cuerpo); color: #3b4a72; }
+.D .cfg-tema.on { background: var(--amarillo); translate: 0 -3px; box-shadow: 0 4px 0 var(--tinta), 0 0 0 3px #fff; }
+.D .cp-num { width: 64px; height: 64px; display: grid; place-items: center; font-size: 2.2em; color: var(--texto); background: var(--panel-oscuro); border: 3px solid var(--tinta); border-radius: var(--radio-tarjeta); box-shadow: 0 4px 0 var(--tinta); cursor: pointer; }
+.D .cp-num.on { background: var(--rojo-fbi); box-shadow: 0 4px 0 var(--tinta), 0 0 0 3px var(--amarillo); }
+.D .cp-num:disabled { opacity: .35; cursor: not-allowed; }
+
+/* ---------- Escenarios ---------- */
+.D .cfg-escs { display: grid; gap: 14px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 15em), 1fr)); max-width: 76em; margin-inline: auto; }
+.D .tc-esc .tc-arte { aspect-ratio: 16 / 9; }
+
+/* ---------- Resumen: tablero con marco de bloques dorados ---------- */
+.D .cfg-resumen { display: grid; gap: 12px; max-width: 70em; margin-inline: auto; }
+.D .cfg-tablero { position: relative; display: grid; gap: 12px; grid-template-columns: repeat(2, minmax(0, 1fr)); padding: 22px 14px 14px; border-radius: 18px;
+  background: linear-gradient(180deg, #16204f, #0d1538); border: 6px solid #d9a52b; box-shadow: inset 0 0 0 3px var(--tinta), 0 0 0 3px var(--tinta), 0 10px 0 var(--tinta), 0 0 40px rgba(255, 200, 61, .25); }
+.D.wide .cfg-tablero { grid-template-columns: repeat(4, minmax(0, 1fr)); padding: 28px 20px 20px; gap: 16px; }
+/* Tachas de bloque sobre el marco */
+.D .cfg-tachas { position: absolute; inset: -6px -6px auto; height: 14px; pointer-events: none;
+  background: radial-gradient(circle at 50% 60%, #ffe08a 0 4px, #c08a17 5px, transparent 6px) 10px 0 / 28px 14px repeat-x; }
+.D .cfg-casilla { position: relative; display: grid; align-content: start; gap: 4px; padding: 10px; text-align: left; color: #fff; cursor: pointer; border-radius: 12px;
+  border: 3px solid #3d5bc4; background: linear-gradient(180deg, #23307a, #182259); box-shadow: 0 4px 0 var(--tinta); transition: translate .15s, border-color .15s; }
+button.cfg-casilla:hover { translate: 0 -3px; border-color: var(--amarillo); }
+.D .cfg-casilla.ancha { grid-column: span 2; }
+.D .cfg-casilla-t { font-size: .95em; text-transform: uppercase; color: #8fd8ff; letter-spacing: .04em; }
+.D .cfg-casilla-img { display: block; height: 7.5em; border-radius: 8px; overflow: hidden; border: 2px solid var(--amarillo); background: #0b1236; }
+.D .cfg-casilla-img img, .D .cfg-casilla-img .cfg-sinarte { width: 100%; height: 100%; object-fit: cover; object-position: center 25%; }
+.D .cfg-casilla-emoji { display: grid; place-items: center; height: 100%; font-size: 3em; }
+.D .cfg-casilla b { font-size: 1.2em; line-height: 1.05; }
+.D .cfg-casilla small { font: 600 12px/1.25 var(--letra-cuerpo); color: #c6d3ff; }
+.D .cfg-cambiar { position: absolute; top: 8px; right: 8px; display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px; border-radius: var(--radio-pildora); font: var(--chip); text-transform: uppercase; color: var(--tinta); background: var(--amarillo); }
+.D .cfg-cambiar svg { width: 12px; height: 12px; }
+.D .cfg-reglas, .D .cfg-gente { cursor: default; grid-column: 1 / -1; }
+.D.wide .cfg-reglas { grid-column: span 3; }
+.D .cfg-reglas-opc { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.D .cfg-reglas-opc button { display: flex; align-items: center; justify-content: center; gap: 6px; padding: 10px; border-radius: 10px; border: 3px solid var(--tinta); cursor: pointer;
+  background: #eef2fb; color: var(--tinta); font: var(--etiqueta); text-transform: uppercase; box-shadow: 0 3px 0 var(--tinta); }
+.D .cfg-reglas-opc button.on { background: var(--amarillo); }
+.D .cfg-reglas-opc span { font-size: 1.3em; }
+
+/* ---------- Piezas chicas: personas con su color, equipos y bandos ---------- */
+.D .cp-persona { display: inline-flex; align-items: center; gap: 6px; min-width: 0; max-width: 100%; padding: 3px 12px 3px 3px; border-radius: var(--radio-pildora);
+  background: color-mix(in srgb, var(--pj, var(--panel)) 30%, var(--panel-oscuro)); box-shadow: inset 0 0 0 2px var(--pj, var(--tinta)); }
+.D .cp-persona > span:last-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 700 15px/1.1 var(--letra-cuerpo); }
+.D .cp-pn { flex: none; font-size: .8em; padding: .2em .4em; border-radius: 7px; background: var(--pj); color: var(--pj-texto); border: 2px solid var(--tinta); }
+.D .cp-bandos, .D .cp-jugadores { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.D .cp-bandos li { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+.D.wide .cp-bandos { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 28px; }
+.D .cp-jugadores { display: flex; flex-wrap: wrap; gap: 6px; }
+.D .cp-equipos { display: grid; gap: 10px; grid-template-columns: repeat(var(--cols, 2), minmax(0, 1fr)); }
+.D .cp-equipo { display: grid; align-content: start; gap: 6px; padding: 10px; border-radius: var(--radio-tarjeta); background: color-mix(in srgb, var(--tinta) 45%, transparent); border: 2px dashed var(--borde-luz); min-height: 90px; }
+.D .cp-equipo > .dsp { font-size: var(--t3); color: var(--amarillo); }
+.D .cp-mover { all: unset; cursor: pointer; display: block; max-width: 100%; border-radius: var(--radio-pildora); }
+.D .cp-mover:focus-visible { outline: 3px solid var(--amarillo); outline-offset: 2px; }
+@media (max-width: 520px) { .D .cp-equipos { grid-template-columns: repeat(min(var(--cols, 2), 2), minmax(0, 1fr)); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .D .tc, .D .cfg-titulo, .D .cfg-cuerpo, .D .cfg-destacado, .D .tc-tipo.on, .D .tc-check, .D .cfg-sinarte span { animation: none !important; transform: none; }
+}
+/* Las ilustraciones de juego traen su nombre dibujado abajo: al recortar, se sacrifica el cielo de arriba. */
+.D .cfg-destacado-arte, .D .cfg-opciones-img, .D .cfg-casilla-img img { object-position: center bottom; }
+/* Temporizador por turno */
+.D .cfg-tiempo { padding: 10px 16px; border-radius: 12px; border: 3px solid var(--tinta); background: #eef2fb; color: var(--tinta); font: var(--etiqueta); text-transform: uppercase; cursor: pointer; box-shadow: 0 3px 0 var(--tinta); }
+.D .cfg-tiempo.on { background: var(--amarillo); translate: 0 -2px; }
+/* Entregar copas (fin de la noche) */
+.D .cfg-copas { flex: none; display: inline-flex; align-items: center; gap: 6px; padding: 9px 14px; border-radius: 10px; border: 3px solid var(--tinta); cursor: pointer;
+  background: linear-gradient(180deg, #fff09a, #ffc83d); color: var(--tinta); font: var(--etiqueta); text-transform: uppercase; box-shadow: 0 4px 0 var(--tinta); }
+@media (max-width: 520px) { .D .cfg-copas { padding: 8px 10px; font-size: 13px; } }

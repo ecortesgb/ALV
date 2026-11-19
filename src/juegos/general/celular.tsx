@@ -7,6 +7,10 @@ import { Boton, Chip, Escaner, Panel } from "../../ds";
 import { NombreJugador, Retrato } from "../../pantallas/comun";
 import type { Miembro } from "../../servicios/enlace";
 import { desenlace, instruccion, nombreDe, type Publico } from "./texto";
+import { CelularImpostor } from "../impostor/celular";
+import { CelularVerdadReto } from "../verdadReto/celular";
+import { ComoJugar, tocaExplicar } from "./ComoJugar";
+import { CeremoniaCopas, PodioJuego, esFinalDeJuego } from "./Copas";
 
 export interface MiVista { yo: string; mio: unknown; miRespuesta: unknown; miMano: string[] }
 type Mandar = (tipo: "contestar" | "carta" | "pista", datos: Record<string, unknown>) => Promise<boolean>;
@@ -24,7 +28,20 @@ function Elegir({ gente, miembros, sin, alElegir }: { gente: Publico["jugadores"
   );
 }
 
-export function HerramientaCelular({ v, mi, miembros, mandar }: { v: Publico; mi: MiVista; miembros: Miembro[]; mandar: Mandar }) {
+export function HerramientaCelular(p: { v: Publico; mi: MiVista; miembros: Miembro[]; mandar: Mandar }) {
+  // «Cómo jugar» antes de la primera ronda, si el anfitrión lo pidió. Cada quien lo cierra en su celular.
+  const [visto, setVisto] = useState(false);
+  const reglas = !visto && tocaExplicar(p.v) && <ComoJugar v={p.v} modo="celular" alCerrar={() => setVisto(true)} />;
+  if (p.v.juegoId === "copas") return <CeremoniaCopas v={p.v} miembros={p.miembros} modo="celular" />;
+  // Al final del juego, su podio abajo del resultado.
+  const podio = esFinalDeJuego(p.v) && <PodioJuego v={p.v} miembros={p.miembros} modo="celular" />;
+  // El impostor con eliminación (Maestro v1.44) tiene su propia pantalla.
+  if (p.v.motor === "rol-secreto" && p.v.impostor) return <>{reglas}<CelularImpostor {...p} />{podio}</>;
+  if (p.v.motor === "turnos-cartas" && p.v.verdadReto) return <>{reglas}<CelularVerdadReto {...p} />{podio}</>;
+  return <>{reglas}<HerramientaGeneral {...p} />{podio}</>;
+}
+
+function HerramientaGeneral({ v, mi, miembros, mandar }: { v: Publico; mi: MiVista; miembros: Miembro[]; mandar: Mandar }) {
   const yo = mi.yo;
   const meToca = v.esperados.includes(yo);
   const recibido = v.contestaron.includes(yo);

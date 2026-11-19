@@ -4,6 +4,8 @@ import { lazy, Suspense, useCallback, useEffect, useState } from "react";
 import { Acceso, Carga, CompletarRegistro, Inicio, SoloMayores } from "../pantallas/Acceso";
 import { Ajustes, Admin } from "../pantallas/Ajustes";
 import { Catalogo, FichaJuego } from "../pantallas/Catalogo";
+import { PaginaConfigurar } from "../pantallas/ConfigurarPartida";
+import { Recompensas } from "../pantallas/Recompensas";
 import { Hub, Jugar } from "../pantallas/Hub";
 import { Editor, Personalizar, SincroCapsulas } from "../pantallas/Personalizar";
 import { Sala } from "../pantallas/Sala";
@@ -23,7 +25,7 @@ export function App() {
   useEffect(() => { void refrescarSesion(); }, []);
   useEffect(instalarClics, []);
   // Pantalla de inicio en cada carga o recarga, salvo al entrar por el QR de una sala o de la Pantalla.
-  const [inicio, setInicio] = useState(() => ruta !== "sala" && ruta !== "tv");
+  const [inicio, setInicio] = useState(() => ruta !== "sala" && ruta !== "tv" && ruta !== "configurar");
   const terminarInicio = useCallback(() => setInicio(false), []);
 
   if (ruta === "ds") return <Suspense fallback={null}><PaginaDS /></Suspense>;
@@ -38,6 +40,7 @@ export function App() {
     : ruta === "juego" && arg ? <FichaJuego id={arg} />
     : ruta === "sala" && arg ? <Sala key={arg} codigo={arg} />
     : ruta === "tv" && arg ? <PantallaTv key={arg} codigo={arg} />
+    : ruta === "configurar" && arg ? <PaginaConfigurar key={arg} codigo={arg} />
     : ruta === "personalizar" ? <Personalizar />
     : ruta === "editor" ? <Editor />
     : ruta === "ranking" ? <Ranking />
@@ -46,5 +49,5 @@ export function App() {
     : ruta === "ajustes" ? <Ajustes />
     : ruta === "admin" ? <Admin />
     : <Hub />;
-  return <>{pantalla}{fase === "dentro" && <SincroCapsulas />}{!inicio && fase === "dentro" && invitado && ruta !== "tv" && ruta !== "editor" && <span className="a-prueba" aria-label="Estás en una entrada de prueba">Prueba</span>}<Avisos /></>;
+  return <>{pantalla}{fase === "dentro" && <SincroCapsulas />}{fase === "dentro" && <Recompensas />}{!inicio && fase === "dentro" && invitado && ruta !== "tv" && ruta !== "editor" && <span className="a-prueba" aria-label="Estás en una entrada de prueba">Prueba</span>}<Avisos /></>;
 }

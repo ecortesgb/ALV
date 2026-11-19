@@ -1,6 +1,6 @@
 # ALV — Amigos Legendarios Verdaderos
 ## Documento Maestro del Producto
-**Versión:** 1.43  
+**Versión:** 1.47  
 **Última actualización:** 18 de noviembre de 2026  
 **Estado:** Documento vivo de producto; decisiones y propuestas identificadas por separado.
 
@@ -136,8 +136,8 @@ Puede:
 
 **DECISIÓN (v1.25, Elías, 15 de noviembre) — D1, acceso solo para mayores de 18:** ALV es exclusivo para mayores de 18. **No hay modelo familiar.** Cartas y juegos llevan etiquetas de intensidad **tranquila / adulta / Drunk**. Sustituye la parte de edad de la decisión v1.12 de abajo (menores con cuenta y contenido familiar), la decisión 7 de 22.1 (la sala deja de ser familiar) y la etiqueta «familiar» de 13 (tanda 4, decisión 4) y 22.1. Sigue vigente que todo jugador necesita cuenta, también en el juego local.
 **DECISIÓN (v1.26, Elías, 15 de noviembre) — D1, cómo se aplica:** la edad se comprueba con la fecha de nacimiento. Hoy no hay ningún menor y no debe haberlo: si la fecha da menos de 18 años, la app muestra un **mensaje de bloqueo por minoría de edad** y no deja seguir hasta que se corrija la fecha de nacimiento. La intensidad funciona como un **termómetro** de cuatro niveles (Tranquilo, Picante, Sin filtro, Salvaje) que sube o baja de uno en uno.
-\1
-\1
+~~**PENDIENTE (D1):** cómo encajan las etiquetas tranquila / adulta / Drunk dentro del termómetro (por ejemplo, si «adulta» equivale a los niveles altos y Drunk sigue como interruptor aparte).~~ **Resuelto en v1.28** (Temperatura + Voltaje, abajo). Texto recuperado en v1.45: se había perdido por un reemplazo fallido.
+~~**PROPUESTA (v1.27) — Temperatura + Voltaje:** motor de intensidad transversal con dos ejes independientes de 5 niveles (Temperatura para preguntas: Frío, Fresco, Tibio, Caliente, Extremo; Voltaje para retos: Bajo voltaje, Voltaje medio, Alto voltaje, Sobrecarga, Máxima tensión), modos Preguntas / Retos / Preguntas y retos / Aleatorio, factor sorpresa «¿Voy a tener suerte?», presets Relax, Picante y Caos, límites privados por jugador con consentimiento de contacto, freno anónimo y biblioteca ampliada. Si se aprueba, sustituye el termómetro de 4 niveles de v1.26 y el interruptor Adulto, y resuelve el pendiente de arriba. Página con demo y 10 decisiones abiertas: https://claude.ai/artifact/Px5uFp3qVawD8Xo3DRKEfU (fuente `alv2\intensidad.html`). No se implementa hasta que Elías la apruebe.~~ **Aprobada con cambios en v1.28** (abajo). Texto recuperado en v1.45.
 **DECISIÓN (v1.28, Elías, 15 de noviembre) — Temperatura + Voltaje:**
 1. Se aprueban los **dos ejes independientes de 5 niveles**, Temperatura (preguntas) y Voltaje (retos). Sustituyen el termómetro de 4 niveles de v1.26 y el interruptor Adulto, y resuelven el pendiente de D1.
 2. El nivel es **general para toda la sala** y lo pone el anfitrión, después de que el grupo lo decide por mayoría fuera de la app. **No hay límites individuales por jugador.**
@@ -145,7 +145,7 @@ Puede:
 4. **Las cartas de trago no se pueden omitir.** El texto dice «trago» o «shot», nunca exige alcohol, y cada quien elige qué tomar (agua, refresco, lo que quiera). Tomar nunca da XP.
 5. Comodines: se aprueba **Cambio de pregunta o reto**, y **¿Voy a tener suerte?** pasa a ser un comodín cuyo resultado puede ser mejor o peor para quien lo usa.
 6. **Más contenido:** se crean más preguntas y retos, y el contenido se ampliará con otras fuentes, para que haya variedad en cada nivel, categoría y combinación y **no se repita ninguna carta en toda la jornada de juego prevista**.
-\1
+~~**PENDIENTE (v1.28):** (a) consentimiento para retos de contacto: el brief de Elías pide que nunca haya contacto sin consentimiento explícito; con pasar solo con comodín, la propuesta es que cada jugador diga una vez si acepta retos de contacto y que esos retos solo salgan entre quienes aceptaron; (b) duración de la jornada prevista (define cuántas cartas hacen falta); (c) si siguen los eventos sorpresa automáticos además del comodín; (d) si los niveles altos dan más puntos; (e) el freno anónimo de la propuesta se descarta con el nivel general, salvo que Elías lo pida; (f) «otras fuentes»: se adaptan ideas, no se copian textos de juegos comerciales.~~ **Resuelto en v1.29** (abajo). Texto recuperado en v1.45.
 **DECISIÓN (v1.29, Elías, 15 de noviembre) — resuelve los pendientes de v1.28:**
 - (a) **Consentimiento:** los retos de contacto piden consentimiento explícito. Además, **siempre hay una alternativa** al reto: tomar agua, cumplir un castigo o responder otra pregunta. No se fuerza a nadie a nada. Pasar sin hacer nada sigue costando un comodín.
 - (b) **Primera jornada de prueba:** de sábado 12:00 a domingo 17:00 (29 horas). Para entonces tiene que haber juegos y contenido suficientes para que no se repita nada en toda la jornada.
@@ -214,6 +214,8 @@ Modalidades contempladas:
 
 **PENDIENTE:** definir reglas para número impar de participantes, tamaño de equipos, asignación automática, cambios de equipo y opciones inclusivas. No asumir que todos los minijuegos admiten todas las modalidades.
 
+**ACTUALIZADO (v1.45):** las modalidades quedan en cuatro (Individual, Parejas, Equipos y ALVersus) y cada juego declara las suyas: ver 6A.2. Resuelto en v1.46 (6A.11 C10).
+
 La compatibilidad entre modalidad y minijuego debe establecerse en una matriz.
 
 ---
@@ -226,6 +228,8 @@ El configurador contempla cuatro dimensiones distintas:
 Quién compite contra quién: individual, parejas, equipos, etc.
 
 ## 6.2 Herramienta
+**ACTUALIZADO (v1.45):** definición y lista vigentes en 6A.3 (la botella pasa a ser el Reloj; votar es forma de participación). Lista original:
+
 Recurso de interacción:
 - Dados.
 - Botella.
@@ -248,6 +252,244 @@ Ejemplos de combinaciones:
 - Parejas + cartas + verdad o reto + fogata.
 
 **PENDIENTE:** construir una matriz de compatibilidad que impida combinaciones sin sentido.
+
+**DECISIÓN (v1.44, Elías, 18 de noviembre) — Configurar partida:** después de que todos dan «¡Listo!» en el lobby, solo el anfitrión configura la partida en pasos: (1) **tipo de partida**: individual, parejas, equipos o guerra de sexos; solo cambia cómo se suman los puntos y quién gana (una persona, una pareja o un equipo); (2) **juego**, del catálogo, con el nivel; (3) **instrumento** según el juego (solo los que aplican), o las **opciones del juego** si no usa instrumento (El impostor: cuántos impostores y categoría de las palabras); (4) **escenario** (ALVerca, FBI, GPS o sin escenario), que cambia el fondo y el tipo de preguntas, retos o palabras; (5) «Iniciar». Hecho en `src/pantallas/ConfigurarPartida.tsx` y `src/content/configurar.ts`.
+- Cómo quedó (hecho, sin aprobar en detalle): parejas por orden de llegada y con número par; equipos A a D, repartidos alternados y el anfitrión los mueve tocando a cada quien; en guerra de sexos el anfitrión marca «Ellas» o «Ellos» a cada quien (no se lee el género de la cuenta). El lugar de cada quien en el resultado sale de los puntos de su grupo. Instrumentos que hoy elige el motor: solo cartas o ruleta en Verdad o reto; los demás juegos tienen uno fijo. El escenario fija el lugar real y sus reglas de seguridad (ALVerca → Alberca). La música por escenario no está hecha.
+- **PENDIENTE (Elías):** el ejemplo de ALVerca «aguantar la respiración bajo el agua 10 s» choca con las reglas de seguridad: en la alberca «Aguantar la respiración» nunca se permite (`LUGARES` en `src/content/catalogo.ts`). No se agregó esa carta; decide si la regla de seguridad cambia.
+
+---
+
+# 6A. Estructura común de los minijuegos — DECISIÓN (v1.45)
+
+**DECISIÓN (v1.45, Elías, 18 de noviembre):** todos los minijuegos siguen una misma estructura de lobby, modalidades, herramientas, comodines y recompensas. Este capítulo la ordena para definir después cada juego sin volver a discutir lo general. No cambia código, motor ni base. Donde una regla choca con algo decidido antes o con lo ya construido, se marca con su número de choque (C1, C2…) y se resuelve con Elías en 6A.9. Mientras no se resuelva, no se cambia lo que ya funciona.
+
+Cuatro reglas que evitan problemas cuando haya más juegos:
+
+| Regla | Qué evita |
+|---|---|
+| Cada juego declara sus modalidades compatibles. | Que aparezcan combinaciones imposibles. |
+| Cada juego declara sus herramientas compatibles. | Que se elija una herramienta que no funciona con ese juego. |
+| Las herramientas no alteran las reglas competitivas. | Que un dado o una ruleta cambien la mecánica de forma injusta. |
+| Los comodines tienen efectos propios y controlados. | Que alguien modifique un resultado sin reglas claras. |
+
+## 6A.1 Lobby y orden de selección
+
+**DECISIÓN (v1.45):**
+- Mínimo **2** jugadores para iniciar y máximo **8** por ahora.
+- Orden: (1) entran los jugadores al lobby; (2) se elige la **modalidad**; (3) se elige el **minijuego**; (4) se habilitan solo las **herramientas** compatibles con ese juego; (5) se configuran sus **opciones**; (6) comienza la partida.
+- Modalidad y juego van ligados: al elegir una modalidad solo aparecen los juegos que la admiten. También vale el orden inverso (primero el juego y después solo sus modalidades). Lo importante es que nunca se pueda armar una combinación incompatible.
+
+Estado de lo construido: el lobby de 2 a 8 está publicado (7c1cc2b). El configurador (v1.44, sin publicar) sigue el orden tipo → juego → herramienta u opciones → escenario → resumen, pero **todavía no filtra juegos por modalidad**: hoy se puede elegir cualquier juego con cualquier tipo (choque C5). El escenario no está en este orden (C8).
+
+## 6A.2 Modalidades competitivas
+
+**DECISIÓN (v1.45):** hay cuatro modalidades.
+
+| Modalidad | Quién gana | Cómo se suman los puntos |
+|---|---|---|
+| Individual | Una persona | Cada quien para sí. |
+| Parejas | Una pareja | Los dos integrantes acumulan juntos. |
+| Equipos | Un equipo | Los integrantes colaboran y acumulan juntos. |
+| ALVersus (guerra de sexos) | Un bando | Ellas contra ellos; cada bando acumula junto. |
+
+- No todos los juegos admiten las cuatro. **Cada juego declara las que permite** y no se fuerzan modalidades que su mecánica no aguanta.
+- Sustituye la lista de seis modalidades de 5 (C10).
+- Siguen **PENDIENTES** de 5: número impar de jugadores, tamaño de equipos, asignación automática y cambios de equipo.
+
+Estado de lo construido (v1.44, sin publicar): las cuatro existen en el configurador y en el motor (`armarGrupos`, lugar por grupo en `resultados`). Parejas por orden de llegada con número par; equipos A a D que el anfitrión mueve; en ALVersus el anfitrión marca Ellas o Ellos a cada quien.
+
+## 6A.3 Herramientas
+
+**DECISIÓN (v1.45):** las herramientas son la forma de elegir participantes, decidir turnos, establecer quién pregunta y quién responde o hace la actividad, escribir o controlar el tiempo. **No cambian la intención del juego ni dan ventaja competitiva por sí mismas. No son comodines.**
+- Cada juego tiene su **lista de herramientas permitidas**: una obligatoria o varias para elegir. No aparecen herramientas que no tengan sentido para su mecánica.
+- La regla concreta de cada herramienta (por ejemplo, si el dado más alto pregunta) se fija en cada juego.
+
+| Herramienta | Qué decide | Ejemplo | Estado en el código |
+|---|---|---|---|
+| Dados | Quién pregunta y quién responde | Verdad o reto: cada quien tira; el más alto pregunta y el más bajo responde o hace el reto. | Solo existen en Dados HOT (acción, zona y tiempo). |
+| Cartas de póker | Quién pregunta y quién responde | Se reparte una carta a cada quien; la más alta pregunta y la más baja responde. | No existe. |
+| Reloj | Selección circular | Verdad o reto: la manecilla corta señala quién pregunta y la larga quién responde. Sustituye a la botella y puede caer en cualquiera, también en dos personas sentadas juntas. | Existe como juego aparte, «El reloj» (C9). |
+| Ruleta | Participantes, turnos u otro elemento al azar compatible con el juego | Verdad o reto: elige a quién le toca. | Turno con ruleta en Verdad o reto; «Ruleta de castigos» del anfitrión (C9). |
+| Pizarrón | Escribir respuestas o palabras que después se muestran en la pantalla | El impostor: cada quien escribe su palabra y la TV la muestra según la ronda. | Hecho en El impostor (v1.44). |
+| Temporizador | Tiempo para contestar o completar la actividad | El impostor: quien no responde a tiempo pierde su turno y sigue el siguiente, respetando las reglas que ya tiene (C6). | Reloj en los juegos de conteo (30 o 60 s); El impostor no tiene tiempo por turno. |
+
+La lista de 6.2 incluía Botella, Micrófono, Votaciones y Tablero. La botella queda sustituida por el Reloj. Votar es una forma de participación (17.1 B), no una herramienta. Micrófono y Tablero quedan **PENDIENTES** hasta que un juego los necesite.
+
+## 6A.4 Comodines y cartas especiales
+
+**DECISIÓN (v1.45):** los comodines son un **sistema aparte** de las herramientas.
+- Se consiguen en la **tienda con monedas**, de dos formas: sobres con comodines al azar o compra de un comodín específico (C1, C3).
+- Cada comodín tiene **reglas de uso, momento en que se activa y compatibilidad por minijuego** (C3).
+- Sus efectos se aplican **antes de cerrar y consolidar el resultado de la ronda**, para que el marcador no quede inconsistente.
+- No se cierra todavía una lista definitiva ni se inventan efectos.
+
+| Comodín | Estado | De dónde sale |
+|---|---|---|
+| Pasar turno | Definido: el jugador no responde la pregunta o no hace el reto y el turno pasa a otro según las reglas del juego. | Catálogo («Pasa turno»); v1.28: pasar solo con comodín. |
+| Cambio de pregunta o reto | Definido. | v1.28. |
+| ¿Voy a tener suerte? | Aprobado; su efecto exacto sigue pendiente («puede ser mejor o peor»). | v1.28. |
+| Escudo, Salvavidas, Relevo, Doble castigo, Cambio de mesero | Existen en el código con un efecto descrito en el catálogo; falta confirmar si siguen. | `CARTAS_PODER` en `catalogo.ts` (D2, v1.25). |
+| Duplicar puntos | Idea pendiente. | v1.45. |
+| Protegerse de ciertas penalizaciones | Idea pendiente (se parece a Escudo y Salvavidas). | v1.45. |
+| Modificar el resultado de una ronda | Idea pendiente. | v1.45. |
+| Alterar condiciones que el juego permita | Idea pendiente. | v1.45. |
+
+## 6A.5 Recompensas: tres sistemas independientes
+
+**DECISIÓN (v1.45):**
+
+| Sistema | Quién lo recibe | Para qué sirve | Puede bajar |
+|---|---|---|---|
+| **XP** | Todos por jugar; los ganadores, una bonificación extra. | Subir de nivel. | No (12.1 A). |
+| **Monedas** | Todos por participar; los ganadores, monedas extra. | Comprar artículos y comodines en la tienda. | Solo al comprar. |
+| **Puntos competitivos** | Según el resultado de cada juego. | Decidir quién gana la ronda y la posición en la sesión o torneo. | Sí: una ronda puede dar puntos negativos. |
+
+- No se confunden los tres. Perder una ronda no quita XP ni monedas por sí mismo: las recompensas dependen de las reglas de cada juego.
+- No se confunde la puntuación de una ronda con el acumulado de la sesión: los puntos de cada ronda se suman al marcador de la sesión.
+- Los valores todavía no se definen; no hay cantidades definitivas.
+- Resuelve el pendiente de 18 («si dentro de una partida se pueden perder puntos de ronda»): **sí**, los puntos competitivos de una ronda pueden ser negativos. La XP sigue sin descontarse (12.4).
+
+Estado de lo construido: la XP se calcula en `economia.ts` (terminar la partida, rondas jugadas, retos cumplidos y lugar) y se acredita en el servidor. **Las monedas no existen todavía.** El motor suma puntos por ronda y nunca da negativos. El ranking «Sesión» ordena por XP (C2). Una partida de menos de 5 rondas no da XP (C7).
+
+## 6A.6 Minijuegos ya definidos
+
+### A. El impostor
+- **Modalidad: solo Individual.** Cada jugador tiene su propio rol y su propio resultado; no se juega por parejas, equipos ni ALVersus (C5).
+- **Herramientas:** pizarrón (obligatorio: cada quien escribe su palabra y la TV la muestra) y temporizador (opcional, sin cambiar las reglas existentes; C6).
+- **Mecánica:** la de 16.2 (v1.44, con eliminación por voto y varios impostores). No se reemplaza ni se simplifica. Información privada por rol en el celular, palabras por turnos, votación y revelación según esas reglas. Puntos aprobados en 16.2 (c).
+- Estado: construido (v1.44, sin publicar). Falta conectarlo a la sala.
+
+### B. Verdad o reto
+- **Modalidad: Individual.**
+- El jugador en turno **elige** Verdad o Reto. Verdad es una pregunta que debe contestar; Reto, una actividad que debe hacer.
+- **Cada jugador puede elegir Verdad solo una vez; en su segunda participación debe elegir Reto.** Se controla por jugador, no para toda la mesa.
+- Si cumple la pregunta o el reto, recibe la recompensa que corresponde. Si no lo cumple, no obtiene los puntos de esa participación (C4).
+- Puede usar comodines compatibles, como Pasar turno, si tiene uno.
+- **Herramientas posibles:** dados, cartas de póker, reloj y ruleta. Deciden quién pregunta y quién responde o hace el reto; no cambian el objetivo del juego.
+- Estado (v1.46, sin publicar): **construido** con las reglas de 6A.6 B y 6A.11 C4, C9 y C13. Herramientas: en orden, reloj, dados, cartas de póker y ruleta (deciden quién pregunta y quién responde). Quien responde elige; quien pregunta decide si ALV da la carta o la dice en voz alta, y califica «cumplió» o «tomó»; con Escudo o Pasa turno se pasa sin tomar y Cambio cambia la carta de ALV. Puntos: Verdad +1, Reto +2, tomar +1 (**DECISIÓN**, Elías aprobó 1 punto el 18 de noviembre), pasar con comodín 0. Las partidas guardadas antes siguen con el modo anterior.
+
+### C. Trivia ALV
+- **Modalidades: Individual, Parejas, Equipos y ALVersus.**
+- **Categorías iniciales:** cultura general, películas, series, celebridades, música, deportes, videojuegos e historia y geografía. Los jugadores eligen los temas antes de empezar.
+- La pantalla muestra la pregunta, los celulares responden, se valida la respuesta y se acumulan puntos individuales o por grupo según la modalidad. Al final se decide la persona o el grupo ganador.
+- **Team Battle:** los equipos compiten y acumulan puntos juntos (C12).
+- Estado: aprobado como juego nuevo desde v1.12; **sin construir** y sin contenido. Ya tiene ilustración.
+
+### D. Misión secreta
+- **No es un minijuego que el anfitrión elige en el lobby.** Es la primera actividad de la reunión y se activa cuando los jugadores entran al lobby.
+- Cada jugador recibe una misión distinta y privada. Todos la ejecutan al mismo tiempo mientras llegan los demás, se acomodan y empieza la convivencia. Se puede intentar descubrir la misión de otro.
+- Termina cuando empieza oficialmente la sesión de minijuegos.
+- Estado: **sin construir.** Antecedentes: la sigla GTA ya dice «Misiones secretas» (1.4) y `economia.ts` tiene un valor de XP sin usar para «misión validada».
+
+## 6A.7 Compatibilidad por juego
+
+I = Individual, P = Parejas, E = Equipos, AV = ALVersus. «Por definir» quiere decir que el juego todavía no declara sus modalidades ni sus herramientas.
+
+| Juego | Modalidades | Herramientas | Estado |
+|---|---|---|---|
+| El impostor | I | Pizarrón (obligatorio), temporizador | Definido y construido |
+| Verdad o reto | I | Dados, cartas de póker, reloj, ruleta | Definido; construido antes de esta definición |
+| Trivia ALV | I, P, E, AV | Por definir (pantalla y celular) | Definido sin construir |
+| Misión secreta | No aplica (actividad de inicio) | No aplica | Definido sin construir |
+| ¿Cuánto conoces a tu pareja? | Por definir; hoy exige parejas | Pizarrón (hoy escriben su respuesta) | Construido |
+| Dados HOT | Por definir; hoy exige parejas y contenido adulto | Dados | Construido |
+| Dibuja y Adivina | Por definir; 16.3 propone parejas, equipos y todos contra todos | Pizarrón | Sin construir |
+| Ronda de bienvenida, Lista relámpago | Por definir | Temporizador | Construidos |
+| Mímica, Palabra prohibida | Por definir | Temporizador | Construidos |
+| Yo nunca | Por definir | Por definir | Construido |
+| ¿Quién es más probable? | Por definir | Por definir | Construido |
+| ¿Qué prefieres? | Por definir | Por definir | Construido |
+| Reto del lugar | Por definir | Por definir | Construido |
+| El reloj | Ver C9 | Reloj | Construido como juego |
+| Ruleta de castigos | Ver C9 | Ruleta | Herramienta desde v1.12; el motor lo sigue tratando como juego |
+| No te rías, Dos verdades y una mentira, Respuesta infiltrada, Memoria fotográfica, Emoji secreto, Karaoke relámpago | Por definir | Por definir | Sin construir |
+
+## 6A.8 Plantilla para definir cada minijuego
+
+Cada juego nuevo, o cada juego por definir de 6A.7, se describe con estos campos (resuelve el pendiente de plantilla de 18):
+1. Modalidades que admite.
+2. Herramientas: la obligatoria y las opcionales, y qué decide cada una en ese juego.
+3. Opciones que configura el anfitrión.
+4. Fases de la ronda (17.3) y qué ve la TV y qué ve cada celular en cada fase.
+5. Puntos competitivos por acción, incluidos negativos, empates y desempate.
+6. XP y monedas que da (cuando haya valores).
+7. Comodines compatibles y en qué momento se pueden usar.
+8. Fin de la partida: número de rondas o condición de fin.
+9. Jugador que no responde o se desconecta (P-03, 21.4).
+10. Seguridad y lugar (reglas de `LUGARES`, consentimiento, cartas de trago).
+11. Contenido que necesita (mazo, categorías, niveles).
+
+## 6A.9 Choques y dudas para confirmar con Elías
+
+**Resueltos en v1.46:** ver 6A.11. Se conservan aquí como historial.
+
+Ninguno se resuelve solo. Hasta que Elías decida, se conserva lo que ya funciona.
+
+- **C1 · Monedas o XP en la tienda.** 6A.5 dice que la tienda cobra en monedas y los comodines se compran con monedas. Antes: v1.33 y v1.34 (13.1) dejaron monedas contra XP para después de la prueba con jugadores, con la tienda cobrando en XP; v1.27 puso precios en XP; v1.42 desbloquea piezas raras con XP (construido, migración 033 aplicada). Por decidir: ¿las piezas raras pasan a monedas? ¿La XP deja de gastarse? Si deja de gastarse, la «XP disponible» de 12.1 B ya no tiene uso.
+- **C2 · Qué ordena el podio de la sesión.** 6A.5 dice que lo ordenan los puntos competitivos. Antes, 12.1 C, 14.1 y 18 dicen que lo ordena la XP de la sesión, y el ranking «Sesión» de la app ordena por XP.
+- **C3 · Comodines por juego y cómo se consiguen.** v1.26 (13.4) dice que todos los comodines sirven en todos los juegos; 6A.4 pide compatibilidad por juego. Además, hoy el motor regala un comodín cada 3 retos cumplidos y el anfitrión puede dar uno; 6A.4 dice que se consiguen en la tienda. ¿Se quitan esas dos vías?
+- **C4 · No cumplir en Verdad o reto.** v1.28 dice que sin comodín se cumple el reto o se responde la pregunta, y v1.29 que siempre hay una alternativa (tomar agua, cumplir un castigo u otra pregunta). 6A.6 B dice que quien no cumple solo pierde los puntos. ¿Se puede no cumplir sin comodín y solo quedarse sin puntos? Hoy la app tiene «No lo cumplí» con 0 puntos (hallazgo abierto).
+- **C5 · El impostor con otras modalidades.** 6A.6 A lo deja solo individual. El configurador de v1.44 permite elegirlo con Parejas, Equipos o ALVersus. Se corrige en la siguiente etapa de código.
+- **C6 · Temporizador en El impostor.** 6A.3 dice que quien no responde a tiempo pierde su turno. Hoy no hay tiempo por turno: a los 20 s el anfitrión elige esperar o seguir sin el jugador (P-03, 21.4), y en la vuelta de palabras el anfitrión puede saltar al que no habla. ¿Se agrega un tiempo por turno que salte solo, o se deja el control del anfitrión?
+- **C7 · XP mínima.** `economia.ts` no da XP en partidas de menos de 5 rondas. El impostor con eliminación suele terminar en 2 a 4 vueltas, así que casi nunca daría XP, y 6A.5 dice que todos reciben XP por jugar.
+- **C8 · Escenario.** El orden de 6A.1 no lo menciona. v1.44 lo puso como paso del configurador y v1.14 (21.3, decisión 4) lo elegía una vez al abrir la sala. ¿Sigue siendo un paso del configurador?
+- **C9 · El reloj y la Ruleta de castigos.** En 6A.3 son herramientas. En el catálogo, «El reloj» es un juego (16.8) y «Ruleta de castigos» pasó a herramienta en v1.12, aunque el motor y el configurador la siguen mostrando como juego. ¿El reloj deja de ser juego y queda solo como herramienta de Verdad o reto y otros juegos?
+- **C10 · Modalidades de 5.** Se interpreta «Todos contra todos» como Individual. «Equipos mixtos» y «Guerra de géneros» quedan dentro de Equipos y ALVersus. ¿Correcto?
+- **C11 · Nombre.** El texto de esta definición dice «ALV (Aventuras con Amigos)». v1.3 quitó «Aventuras con Amigos» como nombre principal y v1.12 dejó «Amigos Legendarios Verdaderos». ¿Vuelve, o es una variante más con A, L y V?
+- **C12 · Team Battle de Trivia.** ¿Es la modalidad Equipos con otro nombre o una variante distinta (por ejemplo, equipos que se roban la pregunta)?
+- **C13 · Quién pone la pregunta en Verdad o reto.** Las herramientas deciden quién pregunta. Hoy la pregunta o el reto salen de las cartas de ALV. ¿El que pregunta inventa la pregunta, la lee de una carta o elige entre cartas?
+- **C14 · Escritura de la modalidad.** El texto dice «AL versus»; la ilustración y la app dicen «ALVersus». ¿Cuál se usa?
+
+## 6A.10 Lo que falta para cerrar la estructura
+
+- Definir con la plantilla de 6A.8 los 17 juegos marcados «Por definir» en 6A.7.
+- Valores de XP, monedas y puntos por juego.
+- Cómo se ganan y se gastan las monedas, y su lugar en la barra superior.
+- Efecto exacto de cada comodín, su momento de uso y su compatibilidad por juego.
+- Misión secreta: banco de misiones, cómo se valida que alguien la cumplió, qué pasa si otro la descubre, recompensa y qué pasa con quien llega tarde.
+- Trivia ALV: forma de responder (opciones o texto), tiempo por pregunta, puntos, desempate y banco de preguntas por categoría.
+- Reglas concretas de dados y cartas de póker (empates en la tirada o en la carta).
+
+
+## 6A.11 Decisiones sobre los choques — DECISIÓN (v1.46)
+
+**DECISIÓN (v1.46, Elías, 18 de noviembre):** resuelve C1 a C14 de 6A.9. Con esto se cierran por ahora las modalidades; los juegos que ya están completos deben quedar funcionales con ellas.
+
+- **C1 · Tienda y XP.** Las **monedas** compran en la tienda: sobres, piezas, accesorios y outfits completos, normales y especiales. La **XP solo sube de nivel**, y cada nivel puede desbloquear cosas del personalizador. Sustituye la tienda en XP de 13.1 (v1.27, v1.33 y v1.34) y deja sin uso la «XP disponible» de 12.1 B. El desbloqueo de piezas raras con XP de v1.42 (construido, migración 033 aplicada) tiene que pasar a monedas o a nivel: **PENDIENTE de código y migración**, con autorización por paso (D-002).
+  - **Hecho en v1.47 (sin publicar):** pantalla de recompensas. Cuando la XP de la cuenta sube estando en la sala, sale tu figura, «+N XP», la barra del nivel que se llena (vuelve a empezar al subir), el próximo premio con candado, «¡Subiste a nivel N!» y una tarjeta por cada pieza nueva («¡Genial!» o «Ponérmelo», que abre el personalizador). Los premios por nivel los da el servidor con `reclamar_premios_nivel()` (migración 035, **escrita, no aplicada**); sin ella la pantalla sale igual, sin premios. **PROPUESTA:** qué pieza da cada nivel (`src/content/premiosNivel.ts`: 2 pelo rockero, 3 momento velocidad, 4 cuello, 5 casco, 6 torso, 7 accesorio, 8 pelo, 10 momento fuego, 12 torso, 15 casco, 20 torso). Las monedas siguen sin construir.
+- **C2 · Podio y copas.** El podio lo deciden los **puntos**. Hay un podio al final de cada juego. Al final de la copa (todas las rondas, al cerrar el lobby) se anuncian los ganadores **por categoría**, uno por cada una según la suma de puntos que hicieron jugando juntos: 1.º, 2.º y 3.º individual, equipo ganador, pareja ganadora y bando ganador de ALVersus. Cada ganador recibe su trofeo: copa individual, copa parejas, copa equipos y copa ALVersus. Sustituye el podio por XP de sesión de 12.1 C, 14.1 y 18. **Hecho en v1.46 (sin publicar):** podio al final de cada juego (TV: lista de puntos y un bloque del color de cada jugador, más alto según su lugar, con corona al primero, y banda del grupo ganador; celular: tabla de posiciones) y ceremonia de copas que el anfitrión entrega desde el configurador («🏆 Entregar copas»): suma todos los juegos terminados de la sala; en la TV sale una copa a la vez (bronce, plata, oro, parejas, equipos, ALVersus) y al final todas con los puntos de la noche; en el celular, la lista. Reglas usadas: las parejas y los equipos se reconocen por sus integrantes (suman los juegos que jugaron juntos); el bando de ALVersus es el mismo aunque cambien sus integrantes; si una categoría no se jugó, no hay copa; los empates comparten copa. Referencias visuales de Elías: podio con bloques de color y tabla «Standings / Final results». ~~**PENDIENTE:** pantalla de recompensas.~~ **Hecho en v1.47 (sin publicar):** pantalla de recompensas al terminar cada partida (ver C1 y C7).
+- **C3 · Comodines.** Se consiguen **al ganar partidas**, o con monedas en **sobres** o como **comodines fijos** comprados directo. Cada comodín tiene compatibilidad por juego (6A.4), lo que sustituye la matriz «todos con todos» de v1.26 (13.4). La regla actual del motor (un comodín cada 3 retos cumplidos) cambia a «al ganar partidas»: **PENDIENTE de código**, junto con cuántos se ganan.
+- **C4 · Verdad o reto.** (Construido en v1.46; ver 6A.6 B.) Las únicas opciones son **responder, hacer el reto o tomar**. Quien toma también gana puntos, quizá menos. Con un comodín puede pasar sin tomar. Sustituye, solo en Verdad o reto, el punto 3 de v1.28 y las alternativas de v1.29 (a). Sigue vigente que «tomar» nunca exige alcohol: cada quien elige qué tomar, y tomar no da XP (v1.28). ~~**PENDIENTE:** cuántos puntos da tomar.~~ **DECISIÓN (v1.46, Elías):** tomar da 1 punto.
+- **C5 · El impostor.** Solo individual. Si se elige otra modalidad, el juego no aparece para elegir. **Hecho en v1.46** (6A.12).
+- **C6 · Temporizador.** Es una herramienta opcional. Si se elige, cada turno tiene un tiempo según el juego; al acabarse, el turno pasa al siguiente. Sin temporizador sigue P-03 (21.4): a los 20 s el anfitrión elige esperar o seguir. **Hecho en v1.46** para El impostor y Verdad o reto: el anfitrión elige sin tiempo, 20, 30, 60 o 90 s por turno. En El impostor, a quien no dice su palabra a tiempo se le salta. En Verdad o reto, si quien responde no elige o no cumple a tiempo pierde el turno (0 puntos), y si quien pregunta no decide, sale la carta de ALV. En pausa el tiempo no corre y al reanudar vuelve a empezar. La TV y el celular muestran la cuenta regresiva.
+- **C7 · XP mínima.** La XP va de acuerdo con lo jugado y **nunca es 0**, aunque se juegue una sola ronda. Sustituye el mínimo de 5 rondas. **PENDIENTE:** la fórmula vive en el servidor (`privado.xp_de_partida`, migración 008); cambiarla necesita migración y autorización. **Hecho en v1.47 (aplicado en la base el 18 nov con autorización de Elías):** migración 034, en todos los juegos y en las dos rutas que dan XP (`xp_de_partida` de la sala y `registrar_partida` de un solo aparato): misma fórmula sin el corte de 5 rondas; 0 solo si no se jugó ninguna ronda. Una ronda da de 22 a 37 XP según el lugar. Siguen los topes de 600 XP al día y una partida por minuto en `registrar_partida`. `minRondasParaContar` = 1 en `economia.ts`.
+- **C8 · Escenario.** Va **después de las herramientas** (ya es así en el configurador).
+- **C9 · Reloj.** Es una **herramienta**, como la botella: la manecilla chica elige quién pregunta y la grande quién responde o hace el reto. «El reloj» deja de ser un juego del catálogo (el motor no se borra: queda como herramienta de Verdad o reto y de otros juegos). La Ruleta de castigos ya era herramienta desde v1.12.
+- **C10 · Modalidades por juego.** Cada tipo de partida habilita ciertos juegos; algunos solo se juegan en individual. Los **equipos mixtos** se permiten en ciertos juegos. Sustituye la lista de 5.
+- **C11 · Nombre.** Sigue el nombre principal de v1.12, «Amigos Legendarios Verdaderos», con sus variantes en la ruleta del logo. «Aventuras con Amigos» es una variante más.
+- **C12 · Team Battle.** Es la modalidad Equipos: poder jugar en equipos ciertos juegos, como Trivia ALV.
+- **C13 · La pregunta en Verdad o reto.** La puede poner la app o el que pregunta la dice en voz alta, y la app solo registra si respondió o cumplió. El participante decide si pide inspiración a la app (que le muestre una) o la inventa él.
+- **C14 · Escritura.** Se escribe **ALVersus**.
+
+## 6A.12 Modalidades por juego — DECISIÓN (v1.46) y PROPUESTA
+
+Lo definido por Elías es **DECISIÓN**. Lo marcado **PROPUESTA** es el valor con el que la app funciona mientras Elías no lo cambie; está en `src/content/configurar.ts` (`MODALIDADES_JUEGO`) y se cambia ahí sin tocar el motor. El configurador solo muestra los juegos que admiten la modalidad elegida.
+
+| Juego | Modalidades | Estado |
+|---|---|---|
+| El impostor | Individual | DECISIÓN |
+| Verdad o reto | Individual | DECISIÓN |
+| Trivia ALV | Individual, Parejas, Equipos, ALVersus | DECISIÓN (sin construir) |
+| ¿Cuánto conoces a tu pareja? | Parejas | PROPUESTA: el juego necesita parejas |
+| Dados HOT | Parejas | PROPUESTA: el juego necesita parejas |
+| ¿Quién es más probable? | Individual, Parejas, Equipos, ALVersus | PROPUESTA |
+| ¿Qué prefieres? | Individual, Parejas, Equipos, ALVersus | PROPUESTA |
+| Yo nunca | Individual, Parejas, Equipos, ALVersus | PROPUESTA |
+| Mímica y Palabra prohibida | Individual, Parejas, Equipos, ALVersus | PROPUESTA |
+| Ronda de bienvenida y Lista relámpago | Individual, Parejas, Equipos, ALVersus | PROPUESTA |
+| Reto del lugar | Individual, Parejas, Equipos, ALVersus | PROPUESTA |
+| El reloj | Ya no es juego (C9) | DECISIÓN: sale del configurador |
+| Ruleta de castigos | Herramienta (v1.12) | DECISIÓN: sale del configurador |
 
 ---
 
@@ -639,6 +881,7 @@ Ningún sobre da ventaja dentro de una partida. Las rarezas (común, épica, leg
 
 ## 13.1 Tienda e inventario
 
+**REEMPLAZADA (v1.46, 6A.11 C1):** la tienda cobra en monedas (sobres, piezas, accesorios y outfits); la XP solo sube de nivel y el nivel desbloquea cosas del personalizador.
 **DECISIÓN (v1.33, Elías, 16 de noviembre) — monedas y gemas:** vuelve la opción de **monedas** como moneda de la tienda. Las **gemas son la XP** que ya existe: lo que se muestra en la barra superior con el ícono de gema. **DECISIÓN (v1.34, Elías, 16 de noviembre):** la decisión entre monedas y XP, y los precios, se toma **después de la prueba con jugadores**. Hasta entonces la tienda cobra en XP (13.2).
 
 **DECISIÓN (v1.27, Elías, 15 de noviembre) — tienda inicial:** al principio la tienda tiene solo **sobres de accesorios** del personaje y **sobres de comodines**, cada uno en versión **básica** o **especial**, más una sección de **outfits y comodines básicos fijos** que se compran directo (por ejemplo «Saltar reto»). Los sobres de contenido (mazos) quedan para después. Los costos en XP no son oficiales; para empezar se usan valores de referencia: sobre de accesorios básico 60 XP (2 piezas) y especial 150 (3, una rara o mejor); sobre de comodines básico 50 (2 básicos) y especial 120 (3, uno especial); comodín básico suelto 40; outfit armado 100. Se fijan en el paso 12 de la Fase 6. Resuelve en parte el pendiente de la «Tienda de comodines» de 23.2 (sí se venden fuera de partida; falta decidir con qué XP).
@@ -697,6 +940,7 @@ Podrían modificar temporalmente reglas de una partida: pasar/saltar reto, repet
 Deben equilibrarse para que no sean pay-to-win. Los cosméticos no dan ventajas. La disponibilidad, límites, compatibilidad y balance de cartas funcionales siguen pendientes.
 
 **DECISIÓN (v1.25, Elías, 15 de noviembre) — D2, comodines como acciones del motor:** los comodines (las cartas de poder de `catalogo.ts`: escudo, salvavidas, relevo, doble castigo, cambio de pregunta, pasa turno, cambio de mesero) son **acciones del motor**, **consumibles** (se gastan al usarse) y tienen una **matriz de compatibilidad por juego** que dice cuáles se pueden usar en cada juego. Se agregan a las acciones nuevas del motor de 22.1, junto a `dar-carta`; usarlos lo valida la Pantalla con el motor y la TV solo ve cuántos tiene cada quien y el que se usó (21.4).
+**REEMPLAZADA (v1.46, 6A.11 C3):** la matriz «todos con todos» de abajo queda sustituida por la compatibilidad por juego de 6A.4.
 **DECISIÓN (v1.26, Elías, 15 de noviembre) — D2, matriz:** los comodines sirven en **todos los juegos**. Cada comodín se usa **una sola vez** y se gasta (desechable). La matriz de compatibilidad queda en «todos con todos»; si un juego llega a necesitar una excepción, se anota aquí.
 
 ---
@@ -784,6 +1028,9 @@ Contenido posible:
 
 ### El impostor
 Todos reciben una palabra o concepto, excepto uno. El impostor desconoce la palabra y debe disimular. El grupo conversa o responde por turnos para descubrirlo.
+
+**DECISIÓN (v1.44, Elías, 18 de noviembre) — El impostor con eliminación:** puede haber varios impostores (lo elige el anfitrión). Por vueltas: cada quien, en orden, dice su palabra en voz alta y la escribe en el pizarrón de su celular; la TV muestra solo los personajes con su color de jugador y la palabra de cada quien. Al final de la vuelta todos votan; el más votado queda eliminado y su personaje sale de escena. Si atraparon a todos los impostores, termina; si no, sigue otra vuelta con la misma palabra. En el celular, la minifigura va a un lado del lector de huella y abajo el pizarrón. Sustituye a las rondas sueltas (una palabra nueva por ronda), que solo quedan para reconstruir partidas guardadas antes.
+**DECISIÓN (v1.44, Elías aprobó los puntos, 18 de noviembre):** el punto (c) queda aprobado. **PROPUESTA (v1.44, el resto falta aprobarlo):** (a) empate en la votación: nadie sale; (b) los impostores ganan si igualan a los civiles en juego o si se acaban las vueltas (una por jugador); (c) puntos: votar por un impostor +1, impostor que sobrevive a una votación +1, al final +2 a cada civil si ganan los civiles o +3 a cada impostor si ganan ellos; (d) con varios impostores, cada uno sabe quién es su cómplice; (e) máximo de impostores: siempre menos que los civiles (con 4 jugadores, 1; con 5 o 6, 2; con 7 u 8, 3); (f) la palabra no se revela hasta el final; (g) quien sale ya no habla ni vota.
 
 ### Quién lo haría
 **DECISIÓN (v1.4):** es el mismo juego que el clásico «¿Quién es más probable?» (16.8). Queda como un solo juego.
@@ -903,6 +1150,7 @@ Conservar los juegos clásicos que ya estaban definidos en ALV. Su listado y reg
 
 **DECISIÓN (v1.12, Elías) — variantes:** en el catálogo, «Ronda de bienvenida» se presenta como variante de «Lista relámpago» y «Palabra prohibida» como variante de «Mímica», porque usan el mismo motor y el mismo mazo. «Ruleta de castigos» pasa a ser una herramienta (cobrar castigos y desempatar), no un juego del catálogo. En el motor no se borra nada.
 
+**ACTUALIZADO (v1.45):** Trivia ALV, Verdad o reto, El impostor y Misión secreta quedan definidos en 6A.6.
 **DECISIÓN (v1.12, Elías) — juegos nuevos:** se agregan **Trivia ALV** (juego nuevo, de preguntas de conocimiento) y **Dibuja y Adivina** (es el «Dibujar» de 16.3; necesita el pizarrón). **PENDIENTE:** reglas, puntuación y mazo de Trivia ALV.
 
 Con los de esta sección, el catálogo completo tiene 21 juegos: los 14 clásicos y 7 nuevos (No te rías, Dos verdades y una mentira, Respuesta infiltrada, Dibujar, Memoria fotográfica, Emoji secreto y Karaoke relámpago).
@@ -966,7 +1214,7 @@ Cada minijuego deberá describir, cuando aplique:
 
 **DECISIÓN (ajustada en v1.3):** todos los minijuegos deben poder producir ganancias de puntos. Ninguno descuenta XP (ver 12.4). No todos tienen que usar la misma fórmula.
 
-**PENDIENTE:** confirmar si dentro de una partida se pueden perder puntos de ronda, que no son XP, o si tampoco.
+~~**PENDIENTE:** confirmar si dentro de una partida se pueden perder puntos de ronda, que no son XP, o si tampoco.~~ **Resuelto en v1.45 (6A.5):** los puntos competitivos de una ronda pueden ser negativos; la XP no se descuenta.
 
 Principios:
 - La puntuación debe estar ligada a acciones verificables por las reglas del minijuego.
@@ -974,10 +1222,10 @@ Principios:
 - Las reglas deben explicarse antes de iniciar la ronda.
 - Evitar penalizaciones sorpresa.
 - Definir límites y tratamiento de empates.
-- La puntuación del podio se basa en la XP obtenida en la sesión.
+- La puntuación del podio se basa en la XP obtenida en la sesión. **REEMPLAZADA (v1.46, 6A.11 C2):** el podio lo deciden los puntos; hay podio al final de cada juego y copas por categoría al cerrar el lobby.
 - La XP acumulada histórica no se usa para determinar el podio de esa sesión.
 
-**PENDIENTE:** establecer una plantilla de puntuación para cada minijuego: acción, condición de éxito, puntos ganados, penalización, desempate, límite y tratamiento de abandono/desconexión.
+~~**PENDIENTE:** establecer una plantilla de puntuación para cada minijuego: acción, condición de éxito, puntos ganados, penalización, desempate, límite y tratamiento de abandono/desconexión.~~ **Resuelto en v1.45:** plantilla en 6A.8.
 
 ---
 
@@ -1411,6 +1659,18 @@ Decisiones del usuario del 12 de noviembre de 2026:
 ## v1.6
 - Primeros logros (14.2), con ámbito de sesión o histórico (ver DECISIÓN v1.6 en 14.2).
 
+## v1.47
+- 18 nov 2026. Pantalla de recompensas al terminar cada partida (6A.11 C1 y C7, referencias de Elías): XP ganada, barra de nivel, próximo premio y piezas nuevas al subir de nivel. Migración 034 (XP nunca 0, todos los juegos) aplicada con autorización de Elías; 035 (premios por nivel) escrita, no aplicada. Tabla de premios por nivel como PROPUESTA.
+
+## v1.46
+- 18 nov 2026. Elías resolvió los 14 choques de 6A.9 (6A.11): tienda en monedas y XP solo para nivel; podio por puntos al final de cada juego y copas por categoría al cerrar el lobby; comodines al ganar partidas o con monedas; Verdad o reto con responder, retar o tomar; temporizador como herramienta; XP nunca 0; reloj como herramienta; ALVersus. Modalidades por juego en 6A.12 (decisiones y propuestas); el configurador ya filtra los juegos por modalidad.
+
+## v1.45
+- 18 nov 2026. Estructura común de los minijuegos (capítulo 6A, definición de Elías): lobby de 2 a 8 y orden de selección, cuatro modalidades, herramientas separadas de los comodines, tres sistemas de recompensa (XP, monedas y puntos competitivos), El impostor, Verdad o reto, Trivia ALV y Misión secreta, matriz de compatibilidad por juego, plantilla para definir cada juego y 14 choques o dudas por confirmar (6A.9). Referencias en 5, 6.2, 13.1, 13.4, 16.8 y 18; resuelto el pendiente de puntos negativos de ronda. Se recuperó el texto de tres líneas de 3.2 que se habían perdido por reemplazos fallidos en v1.27 a v1.29. Sin cambios de código, motor ni base.
+
+## v1.44
+- 18 nov 2026. Elías aprobó los puntos de El impostor (16.2 c) y pidió el configurador con tarjetas e ilustraciones por juego y «Cómo jugar» con opción de omitir. Después pidió el configurador estilo menú de juego de fiesta (nombre de la sección arriba, elegir y continuar, sin números de paso), las 4 ilustraciones de tipo de partida que él mandó, un resumen editable antes de iniciar y «Cómo jugar» con siguiente u omitir; la guerra de sexos se muestra como «ALVersus» (así viene en su ilustración). Configurar partida en cinco pasos: tipo de partida, juego, instrumento u opciones, escenario e Iniciar (6.4). El impostor con eliminación por voto y varios impostores (16.2), con sus reglas de desempate y puntos como PROPUESTA. Hecho en código, sin publicar.
+
 ## v1.43
 - 18 nov 2026. Presentador ALV-I.A. («Don ALVur»), con su frase de presentación (1.3.1). Solo se registra: figura y diálogos pendientes. Sin cambios de código por esta versión.
 
@@ -1555,5 +1815,5 @@ Decisiones del usuario del 12 de noviembre de 2026:
 
 ---
 
-**Fin del Documento Maestro ALV v1.43**  
+**Fin del Documento Maestro ALV v1.47**  
 Este documento debe actualizarse de forma incremental y conservar la distinción entre decisiones aprobadas, propuestas, pendientes y descartadas.
