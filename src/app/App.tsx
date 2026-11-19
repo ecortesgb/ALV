@@ -10,6 +10,7 @@ import { Hub, Jugar } from "../pantallas/Hub";
 import { Editor, Personalizar, SincroCapsulas } from "../pantallas/Personalizar";
 import { Sala } from "../pantallas/Sala";
 import { Logros, Perfil, Ranking } from "../pantallas/Social";
+import { Tienda } from "../pantallas/Tienda";
 import { Avisos } from "../pantallas/comun";
 import { PantallaTv } from "../roles/pantalla/Pantalla";
 import { refrescarSesion, useSesion } from "./sesion";
@@ -45,6 +46,7 @@ export function App() {
     : ruta === "editor" ? <Editor />
     : ruta === "ranking" ? <Ranking />
     : ruta === "logros" ? <Logros />
+    : ruta === "tienda" ? <Tienda />
     : ruta === "perfil" ? <Perfil />
     : ruta === "ajustes" ? <Ajustes />
     : ruta === "admin" ? <Admin />

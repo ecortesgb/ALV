@@ -53,6 +53,16 @@ const SONIDOS = {
   poder: [{ f: 220, a: 1320, t: 0, d: 0.28, tipo: "sawtooth", v: 0.06 }, { f: 1320, t: 0.28, d: 0.18, v: 0.05 }],
   revelar: [{ f: 392, t: 0, d: 0.1, tipo: "triangle" }, { f: 494, t: 0.1, d: 0.1, tipo: "triangle" }, { f: 740, t: 0.2, d: 0.28, tipo: "triangle" }],
   fanfarria: [{ f: 523, t: 0, d: 0.12 }, { f: 523, t: 0.14, d: 0.12 }, { f: 523, t: 0.28, d: 0.12 }, { f: 659, t: 0.42, d: 0.2 }, { f: 587, t: 0.64, d: 0.12 }, { f: 784, t: 0.78, d: 0.5 }],
+  // ---- Tienda: apertura de sobres ----
+  /** Sacudida del sobre: golpe sordo con crujido. */
+  sacudir: [{ f: 140, a: 70, t: 0, d: 0.09, tipo: "sine", v: 0.09 }, { f: 3200, a: 1800, t: 0, d: 0.04, tipo: "square", v: 0.02 }, { f: 2600, a: 1500, t: 0.05, d: 0.04, tipo: "square", v: 0.02 }],
+  /** Rasgar el papel: barrido rasposo hacia abajo. */
+  rasgar: [{ f: 4200, a: 900, t: 0, d: 0.22, tipo: "sawtooth", v: 0.03 }, { f: 3100, a: 700, t: 0.04, d: 0.2, tipo: "square", v: 0.02 }, { f: 260, a: 120, t: 0.18, d: 0.12, tipo: "sine", v: 0.07 }],
+  /** Voltear una carta. */
+  voltear: [{ f: 600, a: 1500, t: 0, d: 0.08, tipo: "triangle", v: 0.05 }, { f: 1500, a: 2100, t: 0.07, d: 0.05, tipo: "sine", v: 0.03 }],
+  rara: [{ f: 659, t: 0, d: 0.1, tipo: "triangle" }, { f: 988, t: 0.09, d: 0.22, tipo: "triangle" }],
+  epica: [{ f: 523, t: 0, d: 0.1, tipo: "triangle" }, { f: 784, t: 0.09, d: 0.1, tipo: "triangle" }, { f: 1047, t: 0.18, d: 0.3, tipo: "triangle" }, { f: 220, a: 880, t: 0, d: 0.3, tipo: "sawtooth", v: 0.03 }],
+  legendaria: [{ f: 110, a: 55, t: 0, d: 0.5, tipo: "sine", v: 0.12 }, { f: 523, t: 0.1, d: 0.12 }, { f: 659, t: 0.22, d: 0.12 }, { f: 784, t: 0.34, d: 0.12 }, { f: 1047, t: 0.46, d: 0.5 }, { f: 1319, t: 0.46, d: 0.5, tipo: "triangle", v: 0.05 }],
 } satisfies Record<string, Nota[]>;
 
 export type Sonido = keyof typeof SONIDOS;

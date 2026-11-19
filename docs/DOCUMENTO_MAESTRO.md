@@ -1,6 +1,6 @@
 # ALV — Amigos Legendarios Verdaderos
 ## Documento Maestro del Producto
-**Versión:** 1.47  
+**Versión:** 1.49  
 **Última actualización:** 18 de noviembre de 2026  
 **Estado:** Documento vivo de producto; decisiones y propuestas identificadas por separado.
 
@@ -881,6 +881,10 @@ Ningún sobre da ventaja dentro de una partida. Las rarezas (común, épica, leg
 
 ## 13.1 Tienda e inventario
 
+**DECISIÓN (v1.48, Elías, 18 de noviembre) — tienda nueva, enfoque A:** se levanta D-001 y se construye la tienda con monedas que guarda y cobra el servidor, sobres que se tiran en el servidor y dan piezas bloqueadas de la 033 (lo común ya es libre), personajes (trajes), compra directa, colección con contador, ofertas diarias y comodines con inventario por cuenta. Los tres archivos congelados (`Tienda.tsx`, `servicios/tienda.ts`, `engine/inventario.ts`, tienda 2D que cobraba XP) se reemplazan. Se construye en 5 etapas; la 1 es solo visual en la demostración sin nube. Sin dinero real. Plan completo: `ALV_PLAN_TIENDA.md` (fuera del repo).
+**DECISIÓN (v1.49, Elías, 19 de noviembre):** aprobó tal cual la propuesta de abajo (decisiones 2 a 6 del plan). Comodines a la venta: solo **Pasa turno** y **Cambio de pregunta**; Escudo no se vende hasta confirmarlo (6A.4). Sobres de piezas sin repetidas. El desbloqueo directo de piezas pasa de XP a monedas (rara 80, épica 200, legendaria 400), y los retos ya cumplidos dan +15 monedas en lugar de +40 XP (etapa 3). El bono de monedas por lugar sigue la misma regla de podio que la XP (1 lugar con 2 o 3 jugadores, 2 con 4 o 5, 3 con 6 o más).
+~~**PROPUESTA (v1.48)**~~ **Aprobada en v1.49:** monedas 10 por jugar + 8/5/3 por lugar, tope 300 al día y regalo de bienvenida de 150; sobres Básico 50 (2 piezas), Accesorios 120 (3), Comodines 150 (3 comodines), Mixto 180 (2 piezas + 2 comodines) y Épico 200 (3 piezas, al menos 1 épica), con probabilidades a la vista; garantía de épica al 8.º sobre sin épica y de legendaria al 25.º; piezas sin repetidas (v1.20) y comodines repetibles hasta 9 por tipo; compra directa rara 80, épica 200, legendaria 400 monedas (sustituiría el desbloqueo con XP de la 033); ofertas: 3 al día. La tienda vieja de la 004 y 005 (`comprar_sobre`, cobra XP) se apaga quitando el permiso, sin borrar tablas.
+**Hecho en v1.48 y v1.49 (publicado el 19 de noviembre): etapas 1 y 2**: pestañas Sobres y Colección (Personajes, Accesorios y Ofertas dicen «¡Pronto!»), los 5 sobres con contenido posible, probabilidades y garantía a la vista, y la apertura (sacudir 3 veces, rasgar deslizando, luz del color de la mejor carta, cartas que se voltean una a una, «¡Nuevo!», «Ponérmelo» que pone la pieza en la figura en juego), con sonido y vibración. Con nube compra con la migración 036 (monedas y tirada en el servidor). Comodines a la venta: Pasa turno y Cambio de pregunta (Escudo se quitó en v1.49).
 **REEMPLAZADA (v1.46, 6A.11 C1):** la tienda cobra en monedas (sobres, piezas, accesorios y outfits); la XP solo sube de nivel y el nivel desbloquea cosas del personalizador.
 **DECISIÓN (v1.33, Elías, 16 de noviembre) — monedas y gemas:** vuelve la opción de **monedas** como moneda de la tienda. Las **gemas son la XP** que ya existe: lo que se muestra en la barra superior con el ícono de gema. **DECISIÓN (v1.34, Elías, 16 de noviembre):** la decisión entre monedas y XP, y los precios, se toma **después de la prueba con jugadores**. Hasta entonces la tienda cobra en XP (13.2).
 
@@ -1659,6 +1663,12 @@ Decisiones del usuario del 12 de noviembre de 2026:
 ## v1.6
 - Primeros logros (14.2), con ámbito de sesión o histórico (ver DECISIÓN v1.6 en 14.2).
 
+## v1.49
+- 19 nov 2026. Elías aprobó las decisiones 2 a 6 de la tienda (13.1): monedas, precios, probabilidades, garantía, piezas sin repetidas, desbloqueo directo con monedas y comodines a la venta (solo Pasa turno y Cambio de pregunta). Migración 036 (monedas, sobres en el servidor, comodines por cuenta, monedas por juego) aplicada el mismo día con autorización de Elías, tras prueba local y remota deshecha.
+
+## v1.48
+- 18 nov 2026. Elías aprobó el enfoque A de la tienda (13.1): se levanta D-001 y los archivos congelados se reemplazan. Monedas, precios, probabilidades, garantía y comodines a la venta quedan como PROPUESTA. Sin cambios de base.
+
 ## v1.47
 - 18 nov 2026. Pantalla de recompensas al terminar cada partida (6A.11 C1 y C7, referencias de Elías): XP ganada, barra de nivel, próximo premio y piezas nuevas al subir de nivel. Migración 034 (XP nunca 0, todos los juegos) aplicada con autorización de Elías; 035 (premios por nivel) escrita, no aplicada. Tabla de premios por nivel como PROPUESTA.
 
@@ -1711,7 +1721,7 @@ Decisiones del usuario del 12 de noviembre de 2026:
 
 ## v1.36
 - 16 nov 2026. Solo cambios de referencia por dos decisiones formales de Elías; no cambia ninguna decisión de producto.
-- **D-001, tienda experimental:** la tienda encontrada en el árbol de trabajo permanece congelada. No está autorizada para implementación; su evaluación queda pendiente para una etapa posterior. Se corrige en v1.35 la línea «Orden que sigue» (tienda como siguiente desarrollo) para que no contradiga esto. El resto de ese orden (Temperatura y Voltaje, personalizador) no se toca en esta versión.
+- **D-001, tienda experimental:** la tienda encontrada en el árbol de trabajo permanece congelada. No está autorizada para implementación; su evaluación queda pendiente para una etapa posterior. Se corrige en v1.35 la línea «Orden que sigue» (tienda como siguiente desarrollo) para que no contradiga esto. El resto de ese orden (Temperatura y Voltaje, personalizador) no se toca en esta versión. **Levantada en v1.48** (13.1): Elías aprobó la tienda nueva; los archivos congelados se reemplazan.
 - **D-002, permisos de migración:** queda prohibida la ejecución automática de migraciones sobre Supabase. Aplicar migraciones, eliminar tablas o columnas, modificar información existente y operaciones destructivas requieren autorización expresa de Elías. La migración 027 queda bloqueada hasta completar una auditoría de impacto y recuperación de datos. Se aclaran las menciones a la 027 en 22.1 (avance de la Fase 6) y en v1.30.
 - Corrección de versión: el encabezado decía 1.35 y el pie 1.34; ambos dicen ahora 1.36.
 
@@ -1815,5 +1825,5 @@ Decisiones del usuario del 12 de noviembre de 2026:
 
 ---
 
-**Fin del Documento Maestro ALV v1.47**  
+**Fin del Documento Maestro ALV v1.49**  
 Este documento debe actualizarse de forma incremental y conservar la distinción entre decisiones aprobadas, propuestas, pendientes y descartadas.

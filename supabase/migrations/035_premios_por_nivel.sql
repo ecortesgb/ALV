@@ -10,7 +10,7 @@
 alter table public.piezas_figura add column if not exists nivel smallint check (nivel between 2 and 100);
 
 alter table public.piezas_jugador drop constraint if exists piezas_jugador_origen_check;
-alter table public.piezas_jugador add constraint piezas_jugador_origen_check check (origen in ('xp', 'reto', 'regalo', 'nivel'));
+alter table public.piezas_jugador add constraint piezas_jugador_origen_check check (origen in ('xp', 'reto', 'regalo', 'sobre', 'monedas', 'nivel')); -- 'sobre' y 'monedas' de la 036
 
 -- generado: premios
 update public.piezas_figura p set nivel = v.nivel from (values

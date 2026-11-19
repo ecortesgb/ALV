@@ -75,6 +75,14 @@ export async function desbloquear(id: string): Promise<string | null> {
   return null;
 }
 
+/** Demostración sin nube: piezas ganadas en un sobre de la tienda quedan desbloqueadas en el personalizador. */
+export function agregarPiezasDemo(ids: string[]) {
+  if (!ids.length) return;
+  const uid = sesionAhora().uid, d = leerDemo(uid);
+  d.tengo = [...new Set([...d.tengo, ...ids])]; escribirDemo(uid, d);
+  if (estado.demo) fijar({ tengo: new Set(d.tengo) });
+}
+
 export const claveReto = (id: string, tipo: "diario" | "combinacion", dia = hoyMexico()) => (tipo === "diario" ? `${id}@${dia}` : id);
 
 /** Reclama un reto con la figura del espacio `capsula` (1 a 3). Devuelve lo ganado o el motivo. */
