@@ -4,7 +4,8 @@ import { useEffect, useState } from "react";
 import { CARTAS_PODER } from "../../content/catalogo";
 import { MAX_PISTA } from "../../engine/partida";
 import { Boton, Chip, Escaner, Panel } from "../../ds";
-import { NombreJugador, Retrato } from "../../pantallas/comun";
+import { ElegirEnAnillo } from "../../pantallas/Identidad";
+import { colorDe } from "../../app/colorJugador";
 import type { Miembro } from "../../servicios/enlace";
 import { desenlace, instruccion, nombreDe, type Publico } from "./texto";
 import { CelularImpostor } from "../impostor/celular";
@@ -15,17 +16,11 @@ import { CeremoniaCopas, PodioJuego, esFinalDeJuego } from "./Copas";
 export interface MiVista { yo: string; mio: unknown; miRespuesta: unknown; miMano: string[] }
 type Mandar = (tipo: "contestar" | "carta" | "pista", datos: Record<string, unknown>) => Promise<boolean>;
 
-function Elegir({ gente, miembros, sin, alElegir }: { gente: Publico["jugadores"]; miembros: Miembro[]; sin?: string; alElegir: (id: string) => void }) {
-  return (
-    <div className="a-rejilla-gente">
-      {gente.filter(j => j.id !== sin).map(j => (
-        <button key={j.id} type="button" className="d-pnl a-persona" onClick={() => alElegir(j.id)}>
-          <Retrato id={j.id} figura={miembros.find(m => m.id === j.id)?.figura} nombre={j.nombre} size={56} />
-          <NombreJugador nombre={j.nombre} figura={miembros.find(m => m.id === j.id)?.figura} />
-        </button>
-      ))}
-    </div>
-  );
+/** Elegir a alguien: burbujas en anillo con el color de cada quien; un toque marca y el botón confirma. */
+function Elegir({ gente, miembros, sin, alElegir, titulo = "¿A quién eliges?", confirmar = "Votar", clave }: { gente: Publico["jugadores"]; miembros: Miembro[]; sin?: string; alElegir: (id: string) => void; titulo?: string; confirmar?: string; clave?: string }) {
+  const ids = gente.map(j => j.id);
+  return <ElegirEnAnillo clave={clave} titulo={titulo} confirmar={confirmar} alElegir={alElegir}
+    gente={gente.filter(j => j.id !== sin).map(j => ({ id: j.id, nombre: j.nombre, figura: miembros.find(m => m.id === j.id)?.figura, color: colorDe(j.id, ids) }))} />;
 }
 
 export function HerramientaCelular(p: { v: Publico; mi: MiVista; miembros: Miembro[]; mandar: Mandar }) {
@@ -110,7 +105,7 @@ function HerramientaGeneral({ v, mi, miembros, mandar }: { v: Publico; mi: MiVis
               <button type="submit" className="d-btn k-blu a-chico" disabled={!pista.trim()}><span className="dsp">Ya dije</span></button>
             </form>
           )}
-          {yaEnvie ? espera : <><span className="a-kick">¿Quién es el impostor?</span><Elegir gente={v.jugadores} miembros={miembros} sin={yo} alElegir={id => void contestar(id)} /></>}
+          {yaEnvie ? espera : <><span className="a-kick">¿Quién es el impostor?</span><Elegir gente={v.jugadores} miembros={miembros} sin={yo} clave={clave} titulo="¿Quién es?" alElegir={id => void contestar(id)} /></>}
         </>
       );
       break;
@@ -145,10 +140,10 @@ function HerramientaGeneral({ v, mi, miembros, mandar }: { v: Publico; mi: MiVis
       );
       break;
     case "senalar":
-      cuerpo = yaEnvie ? <><span className="a-kick">Tu voto</span>{espera}</> : <><span className="a-kick">¿Quién es más probable que…?</span><p className="a-carta">{v.carta?.texto}</p><Elegir gente={v.jugadores} miembros={miembros} alElegir={id => void contestar(id)} /></>;
+      cuerpo = yaEnvie ? <><span className="a-kick">Tu voto</span>{espera}</> : <><span className="a-kick">¿Quién es más probable que…?</span><p className="a-carta">{v.carta?.texto}</p><Elegir gente={v.jugadores} miembros={miembros} clave={clave} titulo="¿Quién?" alElegir={id => void contestar(id)} /></>;
       break;
     case "competencia":
-      cuerpo = meToca && !yaEnvie ? <><span className="a-kick">{v.carta?.tipo || "Reto del lugar"}</span><p className="a-carta">{v.carta?.texto}</p><span className="a-kick">Marca quién ganó</span><Elegir gente={v.jugadores} miembros={miembros} alElegir={id => void contestar(id)} /></>
+      cuerpo = meToca && !yaEnvie ? <><span className="a-kick">{v.carta?.tipo || "Reto del lugar"}</span><p className="a-carta">{v.carta?.texto}</p><span className="a-kick">Marca quién ganó</span><Elegir gente={v.jugadores} miembros={miembros} clave={clave} titulo="¿Quién ganó?" confirmar="Ganó" alElegir={id => void contestar(id)} /></>
         : <><span className="a-kick">{v.carta?.tipo || "Reto del lugar"}</span><p className="a-carta">{v.carta?.texto}</p>{meToca ? espera : <p className="a-suave">El anfitrión marca quién ganó.</p>}</>;
       break;
   }

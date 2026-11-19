@@ -5,7 +5,8 @@ import { CARTAS_PODER } from "../../content/catalogo";
 import { VR_PUNTOS } from "../../engine/partida";
 import { Panel } from "../../ds";
 import { colorDe, varsColor } from "../../app/colorJugador";
-import { NombreJugador, Retrato } from "../../pantallas/comun";
+import { NombreJugador } from "../../pantallas/comun";
+import { Burbuja } from "../../pantallas/Identidad";
 import type { Miembro } from "../../servicios/enlace";
 import type { MiVista } from "../general/celular";
 import { desenlace, nombreDe, type Publico } from "../general/texto";
@@ -21,8 +22,7 @@ export function CelularVerdadReto({ v, mi, miembros, mandar }: { v: Publico; mi:
   const figura = (id: string) => miembros.find(m => m.id === id)?.figura;
   const Persona = ({ id, size = 40 }: { id: string; size?: number }) => (
     <span className="vr-persona" style={varsColor(colorDe(id, ids))}>
-      <span className="vr-pn dsp">{colorDe(id, ids)?.etiqueta}</span>
-      <Retrato id={id} figura={figura(id)} nombre={nombreDe(v, id)} size={size} />
+      <Burbuja p={{ id, nombre: nombreDe(v, id), figura: figura(id), color: colorDe(id, ids) }} tamano={size} seleccionada={id === vr.responde && size > 40} />
       <NombreJugador nombre={nombreDe(v, id)} figura={figura(id)} clase="" />
     </span>
   );

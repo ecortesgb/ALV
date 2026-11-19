@@ -6,7 +6,8 @@ import { MAX_PISTA } from "../../engine/partida";
 import { Boton, Escaner, Panel } from "../../ds";
 import { colorDe, varsColor } from "../../app/colorJugador";
 import { Escena3D, enEscena, type Momento } from "../../app/figura3d";
-import { NombreJugador, Retrato } from "../../pantallas/comun";
+import { NombreJugador } from "../../pantallas/comun";
+import { Burbuja, ElegirEnAnillo } from "../../pantallas/Identidad";
 import type { Miembro } from "../../servicios/enlace";
 import type { MiVista } from "../general/celular";
 import { desenlaceImpostor, nombreDe, type Publico } from "../general/texto";
@@ -101,7 +102,7 @@ export function CelularImpostor({ v, mi, miembros, mandar }: { v: Publico; mi: M
     ) : (
       <div className="im-pizarron espera" style={varsColor(color(v.turnoDe ?? ""))}>
         <span className="im-piz-t dsp">Le toca a</span>
-        <span className="im-turno"><Retrato id={v.turnoDe ?? ""} figura={figura(v.turnoDe ?? "")} nombre={nombreDe(v, v.turnoDe)} size={44} /><NombreJugador nombre={nombreDe(v, v.turnoDe)} figura={figura(v.turnoDe ?? "")} /></span>
+        <span className="im-turno"><Burbuja p={{ id: v.turnoDe ?? "", nombre: nombreDe(v, v.turnoDe), figura: figura(v.turnoDe ?? ""), color: color(v.turnoDe ?? "") }} tamano={48} seleccionada /><NombreJugador nombre={nombreDe(v, v.turnoDe)} figura={figura(v.turnoDe ?? "")} /></span>
         <small>{v.pistas[yo] ? `Tú dijiste «${v.pistas[yo]}»` : "Escucha bien y piensa la tuya."}</small>
       </div>
     );
@@ -112,17 +113,9 @@ export function CelularImpostor({ v, mi, miembros, mandar }: { v: Publico; mi: M
         <p className="a-nota">Faltan {vivos.filter(j => !v.contestaron.includes(j)).length} por votar.</p></Panel>
     ) : (
       <section className="im-votar a-entra" aria-label="Votar">
-        <span className="dsp ol a-t2">¿Quién es el impostor?</span>
-        <div className="im-sospechosos">
-          {vivos.filter(id => id !== yo).map(id => (
-            <button key={id} type="button" className="im-sospechoso" style={varsColor(color(id))} onClick={() => void votar(id)}>
-              <span className="im-pn dsp">{color(id)?.etiqueta}</span>
-              <Retrato id={id} figura={figura(id)} nombre={nombreDe(v, id)} size={64} />
-              <NombreJugador nombre={nombreDe(v, id)} figura={figura(id)} />
-              {v.pistas[id] && <small>«{v.pistas[id]}»</small>}
-            </button>
-          ))}
-        </div>
+        {/* Burbujas en anillo con la palabra de cada quien: un toque marca y «Votar» confirma. */}
+        <ElegirEnAnillo clave={clave} titulo="¿Quién es el impostor?" confirmar="Votar" alElegir={id => void votar(id)}
+          gente={vivos.filter(id => id !== yo).map(id => ({ id, nombre: nombreDe(v, id), figura: figura(id), color: color(id), nota: v.pistas[id] }))} />
       </section>
     );
   }

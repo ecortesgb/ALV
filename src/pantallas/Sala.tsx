@@ -14,7 +14,9 @@ import { control, entregarCopas, jugada, useMotor } from "../roles/pantalla/moto
 import { PodioJuego, esFinalDeJuego } from "../juegos/general/Copas";
 import { useSala } from "../roles/sala";
 import { Capsulas } from "./Personalizar";
-import { Cabecera, Marco, NombreJugador, Retrato, Vacio, aviso, confirmar, useAncho } from "./comun";
+import { Cabecera, Marco, NombreJugador, Vacio, aviso, confirmar, useAncho } from "./comun";
+import { Burbuja, TarjetaEsquina } from "./Identidad";
+import { colorDe } from "../app/colorJugador";
 import { ContadorListos, Cupo, FilaSala, Gestos, MiPedestal, Pedestales, TodosListos } from "./SalaEspera";
 import { FondoEscenario } from "./Fondos";
 
@@ -147,6 +149,13 @@ export function Sala({ codigo }: { codigo: string }) {
             {v.reloj && v.fase === "contestando" && <Reloj segundos={quedanS} total={v.reloj.total} pausado={v.pausada} style={{ width: 56, height: 56 }} />}
             <Conexion red={s.red} />
           </header>
+          {/* Tu tarjeta de esquina: tu color, tus puntos, tu lugar y tus comodines. */}
+          {estoy && !copas && (() => {
+            const ids = v.jugadores.map(j => j.id), m = marcador(v).find(j => j.id === ses.uid);
+            const cartas = v.cartasEnMano[ses.uid] ?? 0;
+            return <TarjetaEsquina className="a-mi-tarjeta" id={ses.uid} figura={s.miembros.find(x => x.id === ses.uid)?.figura} nombre={ses.nombre} color={colorDe(ses.uid, ids)} tamano={58}
+              datos={[{ icono: "🏆", valor: v.puntos[ses.uid] ?? 0, titulo: "puntos" }, ...(m ? [{ icono: "🏅", valor: `${m.lugar}.º`, titulo: "lugar" }] : []), ...(cartas > 0 ? [{ icono: "⚡", valor: cartas, titulo: "comodines" }] : [])]} />;
+          })()}
           {sinPantalla && <div className="a-aviso-tv" role="alert"><span className="dsp ol a-t3">La pantalla se desconectó</span><p>La partida espera. {soyAnfitrion ? "Abre la pantalla otra vez para seguir." : "Lo que ya enviaste se conserva."}</p></div>}
           {soyAnfitrion && !sinPantalla && esperaVencida && v.fase === "contestando" && (
             <Panel className="a-pila" como="section"><div role="alert" className="a-pila">
@@ -161,7 +170,7 @@ export function Sala({ codigo }: { codigo: string }) {
           {estoy ? <div className={sinPantalla ? "a-espera-tv" : undefined} {...inerte(sinPantalla)}><HerramientaCelular v={v} mi={mi} miembros={s.miembros} mandar={async (t, d) => !sinPantalla && jugada(pid, t, d)} /></div>
             : <Panel className="a-herr"><span className="dsp ol a-t2">Juegas en la siguiente</span><p className="a-suave">Llegaste con la partida empezada. Mira la pantalla.</p></Panel>}
           {!copas && <ul className="a-marcador" aria-label="Marcador">
-            {marcador(v).map(j => <li key={j.id} className={j.id === ses.uid ? "yo" : ""}><Retrato id={j.id} figura={s.miembros.find(m => m.id === j.id)?.figura} nombre={j.nombre} size={32} /><NombreJugador nombre={j.nombre} figura={s.miembros.find(m => m.id === j.id)?.figura} clase="" />{(v.cartasEnMano[j.id] ?? 0) > 0 && <Chip texto={String(v.cartasEnMano[j.id])} icono="bolt" />}<b className="dsp">{j.puntos}</b></li>)}
+            {marcador(v).map(j => <li key={j.id} className={j.id === ses.uid ? "yo" : ""}><Burbuja p={{ id: j.id, figura: s.miembros.find(m => m.id === j.id)?.figura, nombre: j.nombre, color: colorDe(j.id, v.jugadores.map(x => x.id)) }} tamano={34} /><NombreJugador nombre={j.nombre} figura={s.miembros.find(m => m.id === j.id)?.figura} clase="" />{(v.cartasEnMano[j.id] ?? 0) > 0 && <Chip texto={String(v.cartasEnMano[j.id])} icono="bolt" />}<b className="dsp">{j.puntos}</b></li>)}
           </ul>}
           {copas && <Boton color={soyAnfitrion ? "rojo" : "amarillo"} texto={soyAnfitrion ? "Cerrar sala" : "Salir de la sala"} icono="back" onClick={() => void salir()} />}
           {soyAnfitrion && !copas && <button type="button" className="a-plano" disabled={sinPantalla} onClick={() => void confirmar({ titulo: "¿Terminar la partida?", texto: "Se reparten los puntos como van.", si: "Terminar", peligro: true }).then(ok => { if (ok) void control(pid, "terminar"); })}>Terminar partida</button>}

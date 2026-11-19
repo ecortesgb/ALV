@@ -2,7 +2,8 @@
 // quién pregunta y quién responde con su color, qué se eligió, la carta (si la dio la app) y el resultado.
 import { Cartel, Onomatopeya } from "../../ds";
 import { colorDe, varsColor } from "../../app/colorJugador";
-import { NombreJugador, Retrato } from "../../pantallas/comun";
+import { NombreJugador } from "../../pantallas/comun";
+import { Burbuja } from "../../pantallas/Identidad";
 import type { Miembro } from "../../servicios/enlace";
 import { desenlace, instruccion, nombreDe, nombreJuego, type Publico } from "../general/texto";
 import { Herramienta } from "./herramienta";
@@ -19,8 +20,8 @@ export function TvVerdadReto({ v, miembros }: { v: Publico; miembros: Miembro[] 
   const Lado = ({ id, rol }: { id: string; rol: string }) => (
     <div className={"vr-tv-lado" + (id === vr.responde ? " responde" : "")} style={varsColor(colorDe(id, ids))}>
       <span className="vr-tv-rol dsp ol">{rol}</span>
-      <Retrato id={id} figura={figura(id)} nombre={nombreDe(v, id)} size={150} />
-      <span className="vr-tv-nom"><span className="vr-pn dsp">{colorDe(id, ids)?.etiqueta}</span><NombreJugador nombre={nombreDe(v, id)} figura={figura(id)} /></span>
+      <Burbuja p={{ id, nombre: nombreDe(v, id), figura: figura(id), color: colorDe(id, ids) }} tamano="6.5em" seleccionada={id === vr.responde} />
+      <span className="vr-tv-nom"><NombreJugador nombre={nombreDe(v, id)} figura={figura(id)} /></span>
     </div>
   );
   return (

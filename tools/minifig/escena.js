@@ -348,7 +348,11 @@
     pierna_izq: { y: 0.6, alto: 1.4, giro: 0.75 },
     botas: { y: 0.28, alto: 0.85, giro: -0.3 },
     objeto: { y: 1.25, alto: 2.1, giro: -0.45 },
+    // Retratos de ALV (tarjeta de esquina y burbujas): pecho, hombros y cabeza con lo más alto de un casco.
+    busto: { y: 2.16, alto: 1.85, giro: -0.22 },
   };
+  // Altura de la articulación de la cabeza en una figura de piernas normales (para centrar el busto).
+  const CABEZA_Y = 2.4;
   const cam = { zona: "completa", x: 0, y: ZONAS.completa.y, d: 8, giro: ZONAS.completa.giro, meta: ZONAS.completa.giro, vel: 0, zoom: 1 };
   const ZOOM_MIN = 0.45, ZOOM_MAX = 1.9;
   function distancia(z, zoom, camara) {
@@ -503,6 +507,10 @@
     if (z && z.mano) { // vista de revisión: la cámara mira a esa mano
       a.obj.updateMatrixWorld(true); const h = new THREE.Vector3(); a.obj.userData.j[z.mano === "izq" ? "handL" : "handR"].getWorldPosition(h);
       cam.updateProjectionMatrix(); const d = distancia(z, 1, cam); cam.position.set(h.x, h.y + d * 0.07, h.z + d); cam.lookAt(h.x, h.y, h.z);
+    } else if (z && zona === "busto") {
+      // Busto: el encuadre sigue a la cabeza (piernas cortas, figuras altas), no una altura fija.
+      a.obj.updateMatrixWorld(true); const h = new THREE.Vector3(); a.obj.userData.j.head.getWorldPosition(h);
+      const y = z.y + (h.y - CABEZA_Y); cam.updateProjectionMatrix(); const d = distancia(z, 1, cam); cam.position.set(0, y + d * 0.07, d); cam.lookAt(0, y, 0);
     } else if (z) { cam.updateProjectionMatrix(); const d = distancia(z, 1, cam); cam.position.set(z.x || 0, z.y + d * 0.07, d); cam.lookAt(z.x || 0, z.y, 0); }
     // Cuadro de 3.2 de alto centrado en 1.38: de los pies (y=0) a lo más alto de un casco o peinado (≈2.75).
     else cam.position.set(0, 1.5, 7.55), cam.lookAt(0, 1.38, 0);
@@ -520,8 +528,10 @@
       let url = null;
       // `vista` {y, alto, giro, x}: encuadre a la medida (herramientas de revisión, p. ej. tools/miniaturas/agarre.html).
       const v = d.vista && typeof d.vista === "object" ? { y: +d.vista.y || 1.3, alto: +d.vista.alto || 3.3, giro: +d.vista.giro || 0, x: +d.vista.x || 0, mano: d.vista.mano === "izq" ? "izq" : d.vista.mano === "der" ? "der" : null } : null;
-      try { const fx = figuraDe(d); if (fx) url = foto(fx, d.ancho, d.alto, d.tipo === "miniatura" ? (v || String(d.zona || "")) : "", d.pose && typeof d.pose === "object" ? d.pose : null); } catch (e) { console.error("escena: foto", e); }
-      enviar({ tipo: d.tipo, pid: d.pid, url });
+      // En «foto» solo se acepta el encuadre «busto» (retratos); «miniatura» acepta cualquier zona o `vista`.
+      const zf = d.tipo === "miniatura" ? (v || String(d.zona || "")) : d.zona === "busto" ? "busto" : "";
+      try { const fx = figuraDe(d); if (fx) url = foto(fx, d.ancho, d.alto, zf, d.pose && typeof d.pose === "object" ? d.pose : null); } catch (e) { console.error("escena: foto", e); }
+      enviar({ tipo: d.tipo, pid: d.pid, url, zona: zf || undefined });
     }
     else if (d.tipo === "soltar" || d.tipo === "azar") {
       // soltar: el traje de personaje que traiga la figura pasa a ser su ropa (se ve igual y ya se puede editar).

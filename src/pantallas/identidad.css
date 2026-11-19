@@ -1,0 +1,98 @@
+/* ---------- Identificadores de jugador (Identidad.tsx) ----------
+   Colores: --pj, --pj-claro, --pj-oscuro (varsColor). Sin color de jugador (HUB), dorado.
+   La foto «busto» es cuadrada: abajo el pecho, arriba lo más alto de un casco; la cabeza queda cerca del centro. */
+.D .ide-tarjeta, .D .ide-burbuja { --c: var(--pj, #ffcf2e); --cc: var(--pj-claro, #fff09a); --co: var(--pj-oscuro, #b37a00); }
+.D .ide-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.D .ide-cargando { position: absolute; left: 30%; right: 30%; bottom: 0; height: 60%; border-radius: 40% 40% 10% 10%; background: color-mix(in srgb, #fff 22%, transparent); animation: aPulso 1.2s ease-in-out infinite; }
+
+/* Tarjeta de esquina: el círculo y la placa al lado. --ide = diámetro del círculo. */
+.D .ide-tarjeta { position: relative; display: inline-flex; align-items: center; max-width: 100%; min-width: 0; margin: 0; padding: calc(var(--ide) * .5) 0 0; background: none; border: 0; color: #fff; font: inherit; text-align: left; }
+.D button.ide-tarjeta { cursor: pointer; }
+.D button.ide-tarjeta:focus-visible { outline: 3px solid var(--cc); outline-offset: 4px; border-radius: 999px; }
+.D .ide-circulo { position: relative; z-index: 2; flex: none; width: var(--ide); height: var(--ide); }
+.D .ide-disco { position: absolute; inset: 0; border-radius: 50%;
+  background: radial-gradient(circle at 50% 30%, color-mix(in srgb, var(--cc) 75%, #fff), var(--c) 52%, var(--co) 100%);
+  box-shadow: 0 0 0 calc(var(--ide) * .045) var(--tinta), 0 0 0 calc(var(--ide) * .085) var(--c), 0 0 0 calc(var(--ide) * .12) var(--tinta), 0 .3em .8em rgba(0, 0, 0, .55); }
+/* La foto se recorta abajo con la curva del círculo y arriba queda libre: la cabeza sale del borde. */
+.D .ide-busto { position: absolute; left: 0; right: 0; bottom: 0; height: 175%; overflow: hidden; border-radius: 0 0 50% 50% / 0 0 28.58% 28.58%; }
+.D .ide-busto img { position: absolute; left: 50%; bottom: 0; width: 165%; max-width: none; height: auto; translate: -50% 0; filter: drop-shadow(0 .06em .1em rgba(0, 0, 0, .45)); }
+.D .ide-arco { position: absolute; inset: calc(var(--ide) * -.17); border-radius: 50%; border: calc(var(--ide) * .05) solid transparent; border-right-color: var(--cc); border-bottom-color: var(--cc); rotate: -30deg; pointer-events: none; filter: drop-shadow(0 0 .25em color-mix(in srgb, var(--cc) 60%, transparent)); }
+.D .ide-tarjeta.der .ide-arco { border-right-color: transparent; border-left-color: var(--cc); rotate: 30deg; }
+.D .ide-pn { position: absolute; left: -6%; bottom: -6%; z-index: 3; padding: .12em .4em; font-size: max(11px, calc(var(--ide) * .17)); color: var(--pj-texto, #0a1030); background: var(--c); border: 2px solid var(--tinta); border-radius: 6px; }
+.D .ide-tarjeta.der .ide-pn { left: auto; right: -6%; }
+.D .ide-placa { position: relative; z-index: 1; display: flex; flex-direction: column; align-items: flex-start; gap: calc(var(--ide) * .05); min-width: 0;
+  margin-left: calc(var(--ide) * -.5); padding: calc(var(--ide) * .1) calc(var(--ide) * .32) calc(var(--ide) * .12) calc(var(--ide) * .5 + max(12px, var(--ide) * .3));
+  background: linear-gradient(90deg, color-mix(in srgb, var(--tinta) 92%, transparent), color-mix(in srgb, var(--tinta) 72%, transparent));
+  border-radius: 0 999px 999px 0; box-shadow: inset 0 calc(var(--ide) * -.045) 0 var(--c), 0 .2em .5em rgba(0, 0, 0, .35); }
+.D .ide-tarjeta.der { flex-direction: row-reverse; text-align: right; }
+.D .ide-tarjeta.der .ide-placa { align-items: flex-end; margin: 0 calc(var(--ide) * -.5) 0 0; padding-left: calc(var(--ide) * .32); padding-right: calc(var(--ide) * .5 + max(12px, var(--ide) * .3)); border-radius: 999px 0 0 999px;
+  background: linear-gradient(270deg, color-mix(in srgb, var(--tinta) 92%, transparent), color-mix(in srgb, var(--tinta) 72%, transparent)); }
+.D .ide-apodo { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 700 max(10px, calc(var(--ide) * .15))/1.1 "Barlow", sans-serif; color: var(--cc); letter-spacing: .02em; }
+.D .ide-nombre { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding-right: .1em; font-size: max(15px, calc(var(--ide) * .3)); -webkit-text-stroke: .08em var(--tinta); paint-order: stroke fill; text-shadow: 0 .07em 0 rgba(0, 0, 0, .5); }
+.D .ide-nivel { display: flex; align-items: center; gap: .4em; max-width: 100%; font-size: max(12px, calc(var(--ide) * .17)); }
+.D .ide-nivel em { font-style: italic; color: #fff; white-space: nowrap; }
+.D .ide-barra { position: relative; display: block; flex: none; width: calc(var(--ide) * 1.35); max-width: 60vw; height: max(8px, calc(var(--ide) * .11)); background: color-mix(in srgb, #fff 18%, transparent); border: 2px solid var(--tinta); border-radius: 99px; overflow: hidden; }
+.D .ide-barra i { position: absolute; inset: 0 auto 0 0; background: linear-gradient(180deg, #fff09a, var(--oro-xp, #ffc83d)); border-radius: 99px; }
+.D .ide-datos { display: flex; flex-wrap: wrap; gap: .25em .7em; font-size: max(13px, calc(var(--ide) * .22)); }
+.D .ide-tarjeta.der .ide-datos { justify-content: flex-end; }
+.D .ide-dato { display: inline-flex; align-items: center; gap: .25em; white-space: nowrap; }
+.D .ide-dato b { font-size: 1.1em; color: var(--oro-xp, #ffc83d); -webkit-text-stroke: .07em var(--tinta); paint-order: stroke fill; }
+.D .ide-ico { display: inline-grid; place-items: center; width: 1.1em; height: 1.1em; font-size: .95em; line-height: 1; }
+.D .ide-ico svg { width: 100%; height: 100%; }
+
+/* Burbuja: cabeza completa centrada. --b = diámetro (px, em o % del contenedor). */
+.D .ide-burbuja { position: relative; flex: none; display: inline-flex; flex-direction: column; align-items: center; width: var(--b); margin: 0; padding: 0; background: none; border: 0; color: #fff; font: inherit; transition: transform .18s cubic-bezier(.3, 1.6, .5, 1), filter .2s; }
+.D button.ide-burbuja { cursor: pointer; }
+.D button.ide-burbuja:disabled { cursor: default; }
+.D button.ide-burbuja:not(:disabled):hover { transform: scale(1.06); }
+.D .ide-b-circ { position: relative; display: block; width: 100%; aspect-ratio: 1; border-radius: 50%; overflow: hidden;
+  background: radial-gradient(circle at 50% 32%, color-mix(in srgb, var(--cc) 55%, #24357a), color-mix(in srgb, var(--c) 55%, #0a1030) 78%);
+  box-shadow: 0 0 0 3px var(--tinta), 0 0 0 6px var(--c), 0 0 0 8px var(--tinta), 0 .25em .6em rgba(0, 0, 0, .5); transition: box-shadow .2s; }
+.D .ide-b-img img { position: absolute; left: 50%; top: -42%; width: 185%; max-width: none; height: auto; translate: -50% 0; }
+.D .ide-b-img .ide-cargando { left: 28%; right: 28%; bottom: 8%; height: 70%; border-radius: 45%; }
+.D .ide-burbuja.sel { z-index: 2; transform: scale(1.2); }
+/* Fuera del anillo, la seleccionada aparta lo que tiene alrededor para no taparlo al crecer. */
+.D .ide-burbuja.sel:not(.ide-en-anillo) { margin: calc(var(--b) * .12); }
+.D .ide-burbuja.sel .ide-b-circ { box-shadow: 0 0 0 3px var(--tinta), 0 0 0 7px var(--cc), 0 0 0 9px var(--tinta), 0 0 1.1em .35em var(--cc); animation: ideBrillo 1.6s ease-in-out infinite; }
+@keyframes ideBrillo { 50% { box-shadow: 0 0 0 3px var(--tinta), 0 0 0 7px #fff, 0 0 0 9px var(--tinta), 0 0 1.6em .55em var(--cc); } }
+@media (prefers-reduced-motion: reduce) { .D .ide-burbuja.sel .ide-b-circ { animation: none; } .D .ide-burbuja { transition: none; } }
+.D .ide-burbuja.apagada { filter: grayscale(.85) brightness(.65); }
+.D .ide-b-pn { position: absolute; left: -4%; top: -4%; padding: .1em .35em; font-size: max(10px, .62em); color: var(--pj-texto, #0a1030); background: var(--c); border: 2px solid var(--tinta); border-radius: 6px; }
+.D .ide-b-ins { position: absolute; right: -6%; top: -6%; min-width: 1.6em; height: 1.6em; display: grid; place-items: center; padding: 0 .3em; font-size: max(11px, .7em); color: var(--tinta); background: linear-gradient(180deg, #fff09a, #ffd23f); border: 2px solid var(--tinta); border-radius: 99px; }
+.D .ide-b-nom { display: flex; flex-direction: column; align-items: center; max-width: 150%; margin-top: .55em; line-height: 1; text-align: center; }
+.D .ide-b-nom .dsp, .D .ide-b-nom small { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.D .ide-b-nom .dsp { font-size: 1em; -webkit-text-stroke: .08em var(--tinta); paint-order: stroke fill; text-shadow: 0 .06em 0 rgba(0, 0, 0, .5); }
+.D .ide-b-nom small { font: 700 .72em/1.15 "Barlow", sans-serif; color: var(--cc); }
+.D .ide-b-nom em { max-width: 9em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-top: .15em; font: italic 700 .78em/1.1 "Barlow", sans-serif; color: #fff09a; }
+
+.D .ide-fila { display: flex; flex-wrap: wrap; justify-content: center; align-items: flex-start; gap: .9em 1.1em; padding: .5em; }
+
+/* Anillo: burbujas alrededor de un centro. El tamaño sale del ancho del contenedor (container query). */
+.D .ide-anillo { position: relative; width: min(100%, var(--ancho)); aspect-ratio: 1; margin: 0 auto; container-type: inline-size; font-size: clamp(11px, 3.6cqi, 24px); }
+.D .ide-anillo-guia { position: absolute; border-radius: 50%; border: 3px dashed color-mix(in srgb, #fff 28%, transparent); pointer-events: none; }
+.D .ide-anillo-centro { position: absolute; display: grid; place-items: center; text-align: center; border-radius: 50%; }
+.D .ide-en-anillo { position: absolute; translate: -50% -50%; }
+.D .ide-en-anillo .ide-b-nom { position: absolute; top: calc(100% + .1em); left: 50%; translate: -50% 0; margin: 0; }
+
+/* HUB: la tarjeta arriba a la izquierda y el engrane a la derecha. */
+.D .ide-hub-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-width: 0; }
+.D .ide-hub-top .ide-tarjeta { flex: 0 1 auto; }
+.D .ide-titulo { font: 700 max(11px, calc(var(--ide) * .14))/1.1 "Barlow", sans-serif; color: color-mix(in srgb, #fff 75%, transparent); white-space: nowrap; }
+.D.a-hub .ide-hub-top { animation: aBaja .45s cubic-bezier(.2,.9,.3,1.1) backwards; }
+@media (prefers-reduced-motion: reduce) { .D.a-hub .ide-hub-top { animation: none; } }
+
+/* TV: marcador con tarjetas de esquina. */
+.D .a-tv-marcador:has(.ide-marc) { justify-content: center; gap: .3em 1.4em; }
+.D .a-tv-marcador li.ide-marc { padding: 0; background: none; border: 0; border-radius: 0; font: inherit; min-width: 0; }
+.D .a-tv-marcador li.ide-marc .ide-placa { max-width: 9em; }
+/* Celular: tu tarjeta arriba y burbujas en el marcador. */
+.D .a-mi-tarjeta { align-self: flex-start; }
+/* La regla vieja «.a-marcador li > span:not(.av)» estira los span: la burbuja no crece. */
+.D .a-marcador li > span.ide-burbuja.ide-burbuja { flex: none; overflow: visible; margin: 4px 4px 4px 2px; }
+
+/* Elegir en anillo: el anillo y abajo el botón que confirma. */
+.D .ide-elegir { display: flex; flex-direction: column; align-items: stretch; gap: 16px; }
+.D .ide-elegir .ide-anillo { margin-bottom: 1.4em; }
+.D .ide-centro-txt { white-space: normal; overflow-wrap: anywhere; display: flex; flex-direction: column; align-items: center; gap: .2em; max-width: 100%; font: 700 .9em/1.15 "Barlow", sans-serif; color: #fff; text-shadow: 0 1px 2px rgba(0, 0, 0, .7); }
+.D .ide-centro-txt b { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 1.35em; }
+.D .ide-centro-txt small { font-size: .8em; color: color-mix(in srgb, #fff 75%, transparent); }

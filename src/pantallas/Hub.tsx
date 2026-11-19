@@ -1,13 +1,14 @@
 // Hub: todo sale de aquí. Arriba quién eres; al centro tu figura; el menú con Jugar como acción principal.
 import { useEffect, useState } from "react";
-import { Boton, Panel, TarjetaJugador } from "../ds";
+import { Boton, Icono, Panel } from "../ds";
 import { costoNivel, tituloPorNivel, xpParaNivel } from "../engine/economia";
-import { apodoDe, figuraActiva, useCapsulas } from "../app/figura3d";
+import { figuraActiva, useCapsulas } from "../app/figura3d";
 import { ir } from "../app/rutas";
 import { useSesion } from "../app/sesion";
 import { useLobby, usePuedeAbrir } from "../app/lobby";
 import { enlace, type SalaV } from "../servicios/enlace";
-import { Campo, Cabecera, Elenco, Marco, Retrato, aviso, useAncho } from "./comun";
+import { Campo, Cabecera, Elenco, Marco, aviso, useAncho } from "./comun";
+import { TarjetaEsquina } from "./Identidad";
 import { FondoALV } from "./Fondos";
 import { LogoALV } from "./Logo";
 
@@ -23,9 +24,15 @@ export function Hub() {
   return (
     <Marco clase="a-hub" fondo={<FondoHub />}>
       <div className="a-ancho a-hub-caja">
-        <TarjetaJugador retrato={<Retrato id={s.uid} figura={f} nombre={s.nombre} size={44} />} apodo={s.nombre} alias={apodoDe(f) ?? undefined} nivel={s.nivel} titulo={tituloPorNivel(s.nivel)}
-          xp={{ actual: s.acumulada - xpParaNivel(s.nivel), siguiente: costoNivel(s.nivel) }} xpParaGastar={ancho ? s.disponible : undefined}
-          onPerfil={() => ir("perfil")} onAjustes={() => ir("ajustes")} />
+        {/* Tarjeta de esquina (Identidad.tsx): figura saliendo del círculo, nombre, nivel, XP y XP para gastar. */}
+        <div className="ide-hub-top">
+          <TarjetaEsquina id={s.uid} figura={f} nombre={s.nombre} tamano={ancho ? "clamp(84px, 6.4vw, 128px)" : 70} onClick={() => ir("perfil")}
+            barra={{ valor: s.acumulada - xpParaNivel(s.nivel), max: costoNivel(s.nivel), texto: `Nivel ${s.nivel}` }}
+            datos={[{ icono: <Icono id="star" />, valor: s.disponible.toLocaleString("es-MX"), titulo: "XP para gastar" }]}>
+            {ancho && <small className="ide-titulo">{tituloPorNivel(s.nivel)}</small>}
+          </TarjetaEsquina>
+          <button type="button" className="d-gear" onClick={() => ir("ajustes")} aria-label="Ajustes"><Icono id="gear" /></button>
+        </div>
         <div className="a-hub-cuerpo">
           <div className="a-escenario">
             <LogoALV tamano="medio" unaVez />

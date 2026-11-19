@@ -10,7 +10,9 @@ import { EscenaTv } from "../../juegos/general/tv";
 import { esPublico, marcador, nombreDe, nombreJuego } from "../../juegos/general/texto";
 import { Conexion, useDespierta, usePantalla, useQuedan } from "../../pantallas/Sala";
 import { Posiciones, esFinalDeJuego } from "../../juegos/general/Copas";
-import { NombreJugador, Retrato, confirmar } from "../../pantallas/comun";
+import { confirmar } from "../../pantallas/comun";
+import { TarjetaEsquina } from "../../pantallas/Identidad";
+import { colorDe } from "../../app/colorJugador";
 import { ContadorListos, Cupo, Pedestales, TodosListos } from "../../pantallas/SalaEspera";
 import { useSala } from "../sala";
 import { control, useMotor } from "./motor";
@@ -56,7 +58,9 @@ export function PantallaTv({ codigo }: { codigo: string }) {
       <main className="a-tv-main"><EscenaTv v={v} miembros={s.miembros} />{v.fase === "revelada" && v.ausentes?.length > 0 && <p className="a-tv-sub">Sin respuesta en esta ronda: {v.ausentes.map(j => nombreDe(v, j)).join(", ")}</p>}</main>
       {!copas && <footer className="a-tv-pie">
         <ul className="a-tv-marcador" aria-label="Marcador">
-          {marcador(v).map(j => <li key={j.id}><Retrato id={j.id} figura={s.miembros.find(m => m.id === j.id)?.figura} nombre={j.nombre} size={44} /><NombreJugador nombre={j.nombre} figura={s.miembros.find(m => m.id === j.id)?.figura} clase="" /><b className="dsp">{j.puntos}</b></li>)}
+          {/* Tarjetas de esquina (Identidad.tsx): color del jugador, figura saliendo del círculo y sus puntos. */}
+          {marcador(v).map(j => <li key={j.id} className="ide-marc"><TarjetaEsquina id={j.id} figura={s.miembros.find(m => m.id === j.id)?.figura} nombre={j.nombre} color={colorDe(j.id, v.jugadores.map(x => x.id))} tamano={v.jugadores.length > 5 ? "3em" : "3.5em"}
+            datos={[{ icono: "🏆", valor: j.puntos, titulo: "puntos" }, ...((v.cartasEnMano[j.id] ?? 0) > 0 ? [{ icono: "⚡", valor: v.cartasEnMano[j.id]!, titulo: "comodines" }] : [])]} /></li>)}
         </ul>
       </footer>}
       {v.pausada && <div className="a-tv-velo"><Onomatopeya texto="PAUSA" color="var(--amarillo)" tamano="7em" giro={-6} /></div>}
