@@ -10,7 +10,9 @@ import { enlace } from "../servicios/enlace";
 import { cargarPiezas } from "../servicios/piezas";
 import { Cabecera, Marco, aviso } from "./comun";
 import { FondoHub } from "./Hub";
-import { Libro, type ModoEditor } from "./Libro";
+import { Libro, type Cambiar, type ModoEditor } from "./Libro";
+import { cambiosEntre, pideAviso, type Cambio } from "../app/cambiosFigura";
+import { createPortal } from "react-dom";
 import "./personalizador.css";
 
 /** Figura de partida para un espacio vacío (misma forma que MinifigCore.nueva()). */
@@ -24,21 +26,22 @@ const NUEVA: FiguraV2 = {
   momentos: { paquete: null, espera: "respirar", victoria: "salto-puno", derrota: "cabeza-baja", punto: "puno-arriba" }, extensiones: {},
 };
 
-// ---------- Modo Básico / Completo (uno para todo el editor, por jugador) ----------
+// ---------- Modo Básico / Personaje original / Avanzado (uno para todo el editor, por jugador) ----------
 // Se recuerda en este dispositivo y además viaja dentro de cada figura guardada (extensiones.alv.editor), así que en
-// otro celular se abre igual sin tocar la base (decisión 1 del plan). Cuenta nueva: Básico.
+// otro celular se abre igual sin tocar la base. Cuenta nueva: Básico. Las figuras con el modo viejo «completo» se
+// leen como Avanzado.
 const claveModo = (uid: string) => "alv-modo-editor-" + (uid.replace(/[^a-zA-Z0-9_-]/g, "").slice(0, 64) || "local");
-const modoDe = (f: FiguraV2 | undefined): ModoEditor | null => {
-  const m = ((f?.extensiones as { alv?: { editor?: unknown } } | undefined)?.alv)?.editor;
-  return m === "completo" || m === "basico" ? m : null;
-};
+const MODOS_VALIDOS: ModoEditor[] = ["basico", "original", "avanzado"];
+export const leerModo = (m: unknown): ModoEditor | null =>
+  m === "completo" ? "avanzado" : MODOS_VALIDOS.includes(m as ModoEditor) ? (m as ModoEditor) : null;
+const modoDe = (f: FiguraV2 | undefined): ModoEditor | null => leerModo(((f?.extensiones as { alv?: { editor?: unknown } } | undefined)?.alv)?.editor);
 function conModo(f: FiguraV2, modo: ModoEditor): FiguraV2 {
   const ext = (f.extensiones ?? {}) as Record<string, unknown>;
   return { ...f, extensiones: { ...ext, alv: { ...((ext.alv as object | undefined) ?? {}), editor: modo } } };
 }
 function useModoEditor(uid: string, guardadas: (FiguraV2 | undefined)[]): [ModoEditor, (m: ModoEditor) => void] {
   const leer = (): ModoEditor => {
-    try { const m = localStorage.getItem(claveModo(uid)); if (m === "completo" || m === "basico") return m; } catch { /* sin almacenamiento */ }
+    try { const m = leerModo(localStorage.getItem(claveModo(uid))); if (m) return m; } catch { /* sin almacenamiento */ }
     return guardadas.map(modoDe).find(Boolean) ?? "basico";
   };
   const [modo, setModo] = useState<ModoEditor>(leer);
@@ -55,6 +58,33 @@ const Silueta = () => (
 
 type Fase = { cual: "muro" } | { cual: "acercando" | "libro"; i: number };
 const ACERCAR_MS = 820, ABRIR_MS = 760;
+const MAX_PASOS = 30;
+
+/** Aviso antes de reemplazar o quitar: dice qué se va y qué llega. */
+function Confirmar({ cambios, si, no }: { cambios: Cambio[]; si: (noPreguntar: boolean) => void; no: () => void }) {
+  const [nunca, setNunca] = useState(false);
+  const boton = useRef<HTMLButtonElement>(null);
+  useEffect(() => { boton.current?.focus(); const k = (e: KeyboardEvent) => { if (e.key === "Escape") no(); }; addEventListener("keydown", k); return () => removeEventListener("keydown", k); }, [no]);
+  const quita = cambios.every(c => c.despues == null);
+  return createPortal(
+    <div className="p-confirmar-fondo" onClick={no}>
+      <div className="p-confirmar" role="alertdialog" aria-modal="true" aria-labelledby="p-confirmar-t" onClick={e => e.stopPropagation()}>
+        <h2 id="p-confirmar-t" className="p-sfx">{quita ? "¿Lo quito?" : "¿Lo cambio?"}</h2>
+        <ul className="p-confirmar-lista">
+          {cambios.map(c => (
+            <li key={c.parte}><b>{c.parte}</b>
+              <span>{c.antes ? <s>{c.antes}</s> : <i>nada</i>} → {c.despues ?? <i>nada</i>}</span></li>
+          ))}
+        </ul>
+        <label className="p-confirmar-nunca"><input type="checkbox" checked={nunca} onChange={e => setNunca(e.target.checked)} /> No preguntar otra vez en esta visita</label>
+        <div className="p-confirmar-botones">
+          <button type="button" className="p-opcion" onClick={no}>No</button>
+          <button ref={boton} type="button" className="p-opcion on" onClick={() => si(nunca)}>{quita ? "Quitar" : "Cambiar"}</button>
+        </div>
+        <p className="p-nota">Si no te gusta, «Regresar» lo deshace.</p>
+      </div>
+    </div>, document.body);
+}
 const sinMovimiento = () => typeof matchMedia !== "undefined" && matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 export function Personalizador() {
@@ -68,6 +98,11 @@ export function Personalizador() {
   // Piezas raras y retos: se leen al abrir el personalizador y al cambiar de cuenta.
   useEffect(() => { void cargarPiezas(); }, [uid]);
   const [guardado, setGuardado] = useState<string | null>(null);
+  // «Regresar»: pasos anteriores de la figura de este espacio (se vacía al abrir otro espacio).
+  const [pasos, setPasos] = useState<FiguraV2[]>([]);
+  const ultimoPaso = useRef(0);
+  const [pendiente, setPendiente] = useState<{ f: FiguraV2; cambios: Cambio[] } | null>(null);
+  const noPreguntar = useRef(false);
   const [origen, setOrigen] = useState("50% 50%");
   // Carrusel del celular: qué carta está al centro, y al entrar se centra la que está en juego.
   const muroRef = useRef<HTMLDivElement>(null);
@@ -94,7 +129,7 @@ export function Personalizador() {
     const c = caps.slots[i];
     // El nombre de la cápsula manda: es el apodo de la figura.
     setFigura(c ? { ...c.figura, nombre: c.nombre || "Mi figura" } : NUEVA);
-    setVez(v => v + 1);
+    setVez(v => v + 1); setPasos([]); setPendiente(null);
     if (sinMovimiento()) { setFase({ cual: "libro", i }); return; }
     // La cámara se acerca a la carta elegida, esté en fila (computadora) o una debajo de otra (celular).
     const muro = muroRef.current, carta = muro?.querySelectorAll<HTMLElement>(".p-carta")[i];
@@ -121,7 +156,25 @@ export function Personalizador() {
     if (primera) void enlace.activarCapsula(k + 1);
     setGuardado(`Guardado en el espacio ${k + 1}`);
   };
-  const cambiar = (f: FiguraV2) => { setFigura(f); if (fase.cual === "libro") guardar(fase.i, f); };
+  const aplicar = (f: FiguraV2) => {
+    // Cambios seguidos muy rápidos (escribir el apodo, probar colores) cuentan como un solo paso.
+    const ahora = Date.now();
+    if (ahora - ultimoPaso.current > 700) setPasos(p => [...p.slice(-(MAX_PASOS - 1)), figura]);
+    ultimoPaso.current = ahora;
+    setFigura(f); if (fase.cual === "libro") guardar(fase.i, f);
+  };
+  /** Todo cambio pasa por aquí: si reemplaza o quita algo, primero se pregunta. */
+  const cambiar: Cambiar = (f, op) => {
+    const cs = cambiosEntre(figura, f);
+    if (!op?.sinAviso && !noPreguntar.current && pideAviso(cs)) { sonar("clic"); setPendiente({ f, cambios: cs }); return; }
+    aplicar(f);
+  };
+  const regresar = () => {
+    const antes = pasos[pasos.length - 1]; if (!antes) return;
+    setPasos(p => p.slice(0, -1)); ultimoPaso.current = 0;
+    setFigura(antes); if (fase.cual === "libro") guardar(fase.i, antes);
+    setGuardado("Regresé un paso");
+  };
 
   const usar = (i: number) => {
     const c = caps.slots[i];
@@ -165,9 +218,12 @@ export function Personalizador() {
       <div className="p-libro-caja" hidden={fase.cual !== "libro"}>
         <Libro vez={vez} capsula={Math.max(1, i + 1)} etiqueta={`Espacio ${i + 1}${c || figura.nombre !== "Mi figura" ? " · " + String(figura.nombre ?? "Mi figura") : ""}`} figura={figura} semilla={semillaDe(uid || "muestra")}
           cambiar={cambiar} soltado={setFigura} guardado={guardado} modo={modo} setModo={setModo} abriendo={abriendo}
+          regresar={pasos.length ? regresar : null} pasos={pasos.length}
           alCerrar={() => { sonar("clic"); setFase({ cual: "muro" }); }}
           tapa={<><span className="p-carta-tira dsp">Espacio {i + 1}</span><span className="p-carta-arte">{c ? <FotoFigura figura={c.figura} size={120} nombre={c.nombre} /> : <Silueta />}</span></>} />
       </div>
+      {pendiente && <Confirmar cambios={pendiente.cambios} no={() => { sonar("clic"); setPendiente(null); }}
+        si={nunca => { noPreguntar.current = nunca; const f = pendiente.f; setPendiente(null); aplicar(f); }} />}
     </Marco>
   );
 }

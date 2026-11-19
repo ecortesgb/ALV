@@ -1,34 +1,37 @@
-// Páginas del libro fuera de Apariencia: Objetos, Momentos, Nombre (apodo de la figura) y Aleatorio.
+// Páginas del libro fuera de Apariencia: Objetos, Momentos, Nombre (apodo de la figura), Aleatorio y Retos.
+// Los objetos de personaje (escudo del Capitán) están en «Piezas originales» de Avanzado.
 import { useEffect, useRef, useState } from "react";
 import { FotoFigura, type MandoFigura } from "../app/figura3d";
 import {
-  LARGO_APODO, MOMENTOS_NORMALES, completar, conservar, limpiarApodo, limpiarBloqueadas, ponerApodo, ponerMomentos, ponerObjeto, vestirCompleto, vestirSoloTraje,
+  LARGO_APODO, MOMENTOS_NORMALES, completar, conservar, limpiarApodo, limpiarBloqueadas, ponerApodo, ponerMomentos, ponerObjeto, vestirCompleto,
   type Figura, type Paquete, type Parte,
 } from "../app/editarFigura";
 import { useSesion } from "../app/sesion";
 import { sonar } from "../app/sonido";
 import catalogo from "../content/catalogo-figura.json";
 import type { FiguraV2 } from "../content/personaje";
-import { miniatura } from "./Libro";
+import { miniatura, type Cambiar } from "./Libro";
+import { esOriginal } from "../content/sagas";
 import { estilosDe } from "./look";
 import { MarcaRareza, infoPieza, pedirDesbloqueo } from "./Desbloqueo";
 import { aviso } from "./comun";
-import { bloqueadasEn, cumple } from "../app/retos";
-import { NOMBRE_RAREZA, PRECIO, RETOS, hoyMexico, rarezaDe, retoDelDia, type Reto } from "../content/rarezas";
-import { claveReto, desbloquear, libre, piezasAhora, reclamar, usePiezas } from "../servicios/piezas";
+import { cumple } from "../app/retos";
+import { NOMBRE_RAREZA, RETOS, hoyMexico, rarezaDe, retoDelDia, type Reto } from "../content/rarezas";
+import { claveReto, libre, reclamar, usePiezas } from "../servicios/piezas";
 
-type Pag = "objetos" | "momentos" | "nombre" | "aleatorio" | "trajes" | "retos";
+type Pag = "objetos" | "momentos" | "nombre" | "aleatorio" | "retos";
 const PALETA = catalogo.paleta;
 
-export function PaginaExtra({ pag, figura, cambiar, mando, capsula }: { pag: Pag; figura: FiguraV2; cambiar: (f: FiguraV2) => void; mando: { current: MandoFigura | null }; capsula: number }) {
+export function PaginaExtra({ pag, figura, cambiar, mando, capsula }: { pag: Pag; figura: FiguraV2; cambiar: Cambiar; mando: { current: MandoFigura | null }; capsula: number }) {
   const f = completar(figura);
   const poner = (g: Figura) => cambiar(g as unknown as FiguraV2);
+  // Aleatorio es a propósito: no pregunta (para eso tiene su deshacer y está «Regresar»).
+  const azar = (g: Figura) => cambiar(g as unknown as FiguraV2, { sinAviso: true });
   if (pag === "objetos") return <Objetos f={f} poner={poner} />;
   if (pag === "momentos") return <Momentos f={f} poner={poner} mando={mando} />;
   if (pag === "nombre") return <Nombre f={f} poner={poner} />;
-  if (pag === "trajes") return <Trajes f={f} poner={poner} />;
   if (pag === "retos") return <Retos f={f} capsula={capsula} />;
-  return <Aleatorio f={f} poner={poner} mando={mando} />;
+  return <Aleatorio f={f} poner={azar} mando={mando} />;
 }
 
 // ---------- Objetos: uno en cada mano ----------
@@ -49,7 +52,7 @@ function Objetos({ f, poner }: { f: Figura; poner: (g: Figura) => void }) {
     </section>
     <section className="p-bloque">
       <div className="p-rejilla">
-        {catalogo.secciones.objeto.map(p => {
+        {catalogo.secciones.objeto.filter(p => !esOriginal(p.id)).map(p => {
           const on = (p.id ?? null) === (actual?.id ?? null), r = est.activo ? rarezaDe(p.id) : "comun", bloq = !libre(p.id, est);
           return (
             <button key={p.mini} type="button" className={"p-pieza r-" + r + (on ? " on" : "") + (bloq ? " bloq" : "")} aria-pressed={on} title={p.nombre}
@@ -149,84 +152,6 @@ function CartaColeccion({ f, apodo, jugador }: { f: Figura; apodo: string; jugad
       </figcaption>
     </figure>
   );
-}
-
-// ---------- Trajes completos: personajes de la biblioteca y estilos de ALV ----------
-type Traje = { id: string; nombre: string; coleccion?: string; mini: string; figura: FiguraV2 };
-type DatosTrajes = { colecciones: { id: string; nombre: string }[]; estilos: Traje[]; trajes: Traje[] };
-let trajesCargados: DatosTrajes | null = null;
-function Trajes({ f, poner }: { f: Figura; poner: (g: Figura) => void }) {
-  const [datos, setDatos] = useState<DatosTrajes | null>(trajesCargados);
-  // Se cargan solo al abrir esta página (archivo aparte): el resto de la app no pesa más.
-  useEffect(() => {
-    if (datos) return;
-    let vivo = true;
-    void import("../content/trajes-figura.json").then(m => { trajesCargados = m.default as unknown as DatosTrajes; if (vivo) setDatos(trajesCargados); });
-    return () => { vivo = false; };
-  }, [datos]);
-  const [col, setCol] = useState("estilos");
-  const [elegido, setElegido] = useState<Traje | null>(null);
-  const antes = useRef<Figura[]>([]);
-  const [hay, setHay] = useState(0);
-  const [ocupado, setOcupado] = useState(false);
-  const est = usePiezas();
-  if (!datos) return <p className="p-nota">Abriendo el armario…</p>;
-  const lista = col === "estilos" ? datos.estilos : datos.trajes.filter(t => t.coleccion === col);
-  const resultado = (t: Traje, todo: boolean) => (todo ? vestirCompleto(f, t.figura) : vestirSoloTraje(f, t.figura));
-  const faltan = (t: Traje, todo: boolean) => (est.activo ? bloqueadasEn(resultado(t, todo), est.tengo) : []);
-  const vestir = async (todo: boolean) => {
-    if (!elegido || ocupado) return;
-    const f1 = faltan(elegido, todo);
-    if (f1.length) {
-      const total = f1.reduce((n, id) => n + PRECIO[rarezaDe(id)], 0);
-      if (piezasAhora().xp < total) { aviso(`Te faltan ${f1.length} piezas (${total} XP). Tienes ${piezasAhora().xp} XP.`); sonar("error"); return; }
-      setOcupado(true);
-      for (const id of f1) { const e = await desbloquear(id); if (e) { setOcupado(false); aviso(e); return; } }
-      setOcupado(false); sonar("fanfarria"); aviso(`Desbloqueaste ${f1.length} piezas.`);
-    }
-    antes.current = [...antes.current.slice(-9), f]; setHay(antes.current.length);
-    sonar("exito"); poner(resultado(elegido, todo));
-  };
-  return <>
-    <div className="p-opciones p-colecciones" role="tablist" aria-label="Colección">
-      {datos.colecciones.map(c => (
-        <button key={c.id} type="button" role="tab" aria-selected={col === c.id} className={"p-opcion" + (col === c.id ? " on" : "")}
-          onClick={() => { sonar("clic"); setCol(c.id); setElegido(null); }}>{c.nombre}</button>
-      ))}
-    </div>
-    {elegido && (
-      <div className="p-vestir" role="group" aria-label={`Ponerte ${elegido.nombre}`}>
-        <span className="p-sfx">{elegido.nombre}</span>
-        {([false, true] as const).map(todo => {
-          const fx = faltan(elegido, todo), total = fx.reduce((n, id) => n + PRECIO[rarezaDe(id)], 0);
-          return (
-            <button key={String(todo)} type="button" className={"p-opcion" + (todo ? "" : " on")} disabled={ocupado} onClick={() => void vestir(todo)}>
-              {todo ? "Personaje completo" : "Solo el traje"}
-              <small>{fx.length ? `🔒 ${fx.length} pieza${fx.length > 1 ? "s" : ""}: ${total} XP` : todo ? "todas sus piezas" : "tu cara y tu pelo se quedan"}</small>
-            </button>
-          );
-        })}
-        {faltan(elegido, true).length > 0 && <span className="p-vestir-faltan">Te faltan: {faltan(elegido, true).map(id => infoPieza(id).nombre).join(", ")}</span>}
-      </div>
-    )}
-    <div className="p-rejilla p-rejilla-trajes">
-      {lista.map(t => {
-        const n = faltan(t, true).length;
-        return (
-          <button key={t.id} type="button" className={"p-pieza" + (elegido?.id === t.id ? " on" : "") + (n ? " bloq-suave" : "")} aria-pressed={elegido?.id === t.id} title={t.nombre}
-            onClick={() => { sonar("clic"); setElegido(t); }}>
-            <img src={miniatura(t.mini)} alt="" loading="lazy" draggable={false} />
-            {n > 0 && <span className="p-rareza r-legendaria bloq" aria-label={`${n} piezas bloqueadas`}>🔒{n}</span>}
-            <span>{t.nombre}</span>
-          </button>
-        );
-      })}
-    </div>
-    <button type="button" className="p-opcion p-deshacer" onClick={() => { const g = antes.current.pop(); setHay(antes.current.length); if (g) { sonar("clic"); poner(g); } }} disabled={!hay}>
-      Deshacer{hay ? ` (${hay})` : ""}
-    </button>
-    <p className="p-nota">Después puedes retocar cualquier pieza en Apariencia (en Completo, todo).</p>
-  </>;
 }
 
 // ---------- Aleatorio: una figura nueva entera, con deshacer ----------

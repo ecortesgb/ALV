@@ -2298,6 +2298,1096 @@
      "522 Neckwear Cape, Straight Bottom, One Top Hole [Spongy Stretchable Fabric] (se usa la capa estándar 522 con su color)"
     ]
    }
+  },
+  {
+   "id": "wolverine",
+   "nombre": "Wolverine",
+   "coleccion": "marvel",
+   "piezas": {
+    "cabeza": {
+     "id": "HEAD_001",
+     "color": "#f2cd37"
+    },
+    "cara": {
+     "id": "FACE_005"
+    },
+    "detalles": [],
+    "cabello": {
+     "id": "HELM_019",
+     "color": "#f4d03f"
+    },
+    "cuello": null,
+    "torso": {
+     "id": "TORSO_001",
+     "color": "#f4d03f",
+     "estampado": "PRINT_024",
+     "colores": [
+      "#1d4fa8",
+      "#141414",
+      "#c8102e"
+     ],
+     "texto": "",
+     "imagen": null
+    },
+    "brazos": {
+     "derecho": "ARM_001",
+     "izquierdo": "ARM_002",
+     "color": "#1d4fa8"
+    },
+    "manos": {
+     "id": "HAND_001",
+     "color": "#1d4fa8"
+    },
+    "cadera": {
+     "id": "HIPS_001",
+     "color": "#1d4fa8",
+     "cinturon": null
+    },
+    "piernas": {
+     "id": "LEGS_001",
+     "color": "#f4d03f",
+     "botas": "#1d4fa8"
+    },
+    "capa": null,
+    "objeto": null
+   },
+   "extensiones": {
+    "alv": {
+     "equipo": "x-men",
+     "nivel": 4,
+     "poderes": [
+      "fuerza"
+     ],
+     "rasgos": [],
+     "reposo": "quieto"
+    }
+   },
+   "origen": {
+    "tipo": "catalogo-alv"
+   }
+  },
+  {
+   "id": "ciclope",
+   "nombre": "Cíclope",
+   "coleccion": "marvel",
+   "piezas": {
+    "cabeza": {
+     "id": "HEAD_001",
+     "color": "#f2cd37"
+    },
+    "cara": {
+     "id": "FACE_017"
+    },
+    "detalles": [],
+    "cabello": {
+     "id": "HAIR_001",
+     "color": "#582a12"
+    },
+    "cuello": null,
+    "torso": {
+     "id": "TORSO_001",
+     "color": "#1d4fa8",
+     "estampado": "PRINT_025",
+     "colores": [
+      "#f4d03f",
+      "#c8102e",
+      "#6b4a2b"
+     ],
+     "texto": "",
+     "imagen": null
+    },
+    "brazos": {
+     "derecho": "ARM_001",
+     "izquierdo": "ARM_002",
+     "color": "#1d4fa8"
+    },
+    "manos": {
+     "id": "HAND_001",
+     "color": "#f4d03f"
+    },
+    "cadera": {
+     "id": "HIPS_001",
+     "color": "#1d4fa8",
+     "cinturon": null
+    },
+    "piernas": {
+     "id": "LEGS_001",
+     "color": "#1d4fa8",
+     "botas": "#f4d03f"
+    },
+    "capa": null,
+    "objeto": null
+   },
+   "extensiones": {
+    "alv": {
+     "equipo": "x-men",
+     "nivel": 3,
+     "poderes": [
+      "laser"
+     ],
+     "rasgos": [],
+     "reposo": "quieto"
+    }
+   },
+   "origen": {
+    "tipo": "catalogo-alv"
+   }
+  },
+  {
+   "id": "gambito",
+   "nombre": "Gambito",
+   "coleccion": "marvel",
+   "piezas": {
+    "cabeza": {
+     "id": "HEAD_001",
+     "color": "#f2cd37"
+    },
+    "cara": {
+     "id": "FACE_007"
+    },
+    "detalles": [],
+    "cabello": {
+     "id": "HAIR_005",
+     "color": "#582a12"
+    },
+    "cuello": null,
+    "torso": {
+     "id": "TORSO_001",
+     "color": "#c2389a",
+     "estampado": "PRINT_026",
+     "colores": [
+      "#7a4b25",
+      "#1b2a34",
+      "#6b4a2b"
+     ],
+     "texto": "",
+     "imagen": null
+    },
+    "brazos": {
+     "derecho": "ARM_001",
+     "izquierdo": "ARM_002",
+     "color": "#7a4b25"
+    },
+    "manos": {
+     "id": "HAND_001",
+     "color": "#1b2a34"
+    },
+    "cadera": {
+     "id": "HIPS_001",
+     "color": "#1b2a34",
+     "cinturon": null
+    },
+    "piernas": {
+     "id": "LEGS_001",
+     "color": "#c2389a",
+     "botas": "#1b2a34"
+    },
+    "capa": null,
+    "objeto": {
+     "id": "ACC_007",
+     "color": "#6c6e68"
+    }
+   },
+   "extensiones": {
+    "alv": {
+     "equipo": "x-men",
+     "nivel": 3,
+     "poderes": [
+      "electricidad"
+     ],
+     "rasgos": [],
+     "reposo": "quieto"
+    }
+   },
+   "origen": {
+    "tipo": "catalogo-alv"
+   }
+  },
+  {
+   "id": "magneto",
+   "nombre": "Magneto",
+   "coleccion": "marvel",
+   "piezas": {
+    "cabeza": {
+     "id": "HEAD_001",
+     "color": "#f2cd37"
+    },
+    "cara": {
+     "id": "FACE_003"
+    },
+    "detalles": [],
+    "cabello": {
+     "id": "HELM_020",
+     "color": "#c8102e"
+    },
+    "cuello": null,
+    "torso": {
+     "id": "TORSO_001",
+     "color": "#c8102e",
+     "estampado": "PRINT_027",
+     "colores": [
+      "#5b2d82",
+      "#5b2d82",
+      "#6b4a2b"
+     ],
+     "texto": "",
+     "imagen": null
+    },
+    "brazos": {
+     "derecho": "ARM_001",
+     "izquierdo": "ARM_002",
+     "color": "#c8102e"
+    },
+    "manos": {
+     "id": "HAND_001",
+     "color": "#5b2d82"
+    },
+    "cadera": {
+     "id": "HIPS_001",
+     "color": "#c8102e",
+     "cinturon": null
+    },
+    "piernas": {
+     "id": "LEGS_001",
+     "color": "#c8102e",
+     "botas": "#5b2d82"
+    },
+    "capa": {
+     "id": "CAPE_001",
+     "color": "#5b2d82"
+    },
+    "objeto": null
+   },
+   "extensiones": {
+    "alv": {
+     "equipo": "x-men",
+     "nivel": 5,
+     "poderes": [
+      "telequinesis"
+     ],
+     "rasgos": [],
+     "reposo": "quieto"
+    }
+   },
+   "origen": {
+    "tipo": "catalogo-alv"
+   }
+  },
+  {
+   "id": "tormenta",
+   "nombre": "Tormenta",
+   "coleccion": "marvel",
+   "piezas": {
+    "cabeza": {
+     "id": "HEAD_001",
+     "color": "#7c503a"
+    },
+    "cara": {
+     "id": "FACE_011"
+    },
+    "detalles": [],
+    "cabello": {
+     "id": "HAIR_014",
+     "color": "#f4f4f4"
+    },
+    "cuello": null,
+    "torso": {
+     "id": "TORSO_001",
+     "color": "#1b1b1b",
+     "estampado": "PRINT_028",
+     "colores": [
+      "#c9ced6",
+      "#e3b341",
+      "#6b4a2b"
+     ],
+     "texto": "",
+     "imagen": null
+    },
+    "brazos": {
+     "derecho": "ARM_001",
+     "izquierdo": "ARM_002",
+     "color": "#1b1b1b"
+    },
+    "manos": {
+     "id": "HAND_001",
+     "color": "#1b1b1b"
+    },
+    "cadera": {
+     "id": "HIPS_001",
+     "color": "#1b1b1b",
+     "cinturon": null
+    },
+    "piernas": {
+     "id": "LEGS_001",
+     "color": "#1b1b1b",
+     "botas": "#1b1b1b"
+    },
+    "capa": {
+     "id": "CAPE_001",
+     "color": "#1b1b1b"
+    },
+    "objeto": null
+   },
+   "extensiones": {
+    "alv": {
+     "equipo": "x-men",
+     "nivel": 4,
+     "poderes": [
+      "electricidad"
+     ],
+     "rasgos": [],
+     "reposo": "quieto"
+    }
+   },
+   "origen": {
+    "tipo": "catalogo-alv"
+   }
+  },
+  {
+   "id": "flash",
+   "nombre": "Flash",
+   "coleccion": "dc",
+   "piezas": {
+    "cabeza": {
+     "id": "HEAD_001",
+     "color": "#c8102e"
+    },
+    "cara": {
+     "id": "FACE_016"
+    },
+    "detalles": [],
+    "cabello": null,
+    "cuello": null,
+    "torso": {
+     "id": "TORSO_001",
+     "color": "#c8102e",
+     "estampado": "PRINT_029",
+     "colores": [
+      "#f4d03f",
+      "#f4f4f4",
+      "#6b4a2b"
+     ],
+     "texto": "",
+     "imagen": null
+    },
+    "brazos": {
+     "derecho": "ARM_001",
+     "izquierdo": "ARM_002",
+     "color": "#c8102e"
+    },
+    "manos": {
+     "id": "HAND_001",
+     "color": "#c8102e"
+    },
+    "cadera": {
+     "id": "HIPS_001",
+     "color": "#c8102e",
+     "cinturon": null
+    },
+    "piernas": {
+     "id": "LEGS_001",
+     "color": "#c8102e",
+     "botas": "#f4d03f"
+    },
+    "capa": null,
+    "objeto": null
+   },
+   "extensiones": {
+    "alv": {
+     "equipo": "liga-justicia",
+     "nivel": 4,
+     "poderes": [
+      "velocidad"
+     ],
+     "rasgos": [],
+     "reposo": "quieto"
+    }
+   },
+   "origen": {
+    "tipo": "catalogo-alv"
+   }
+  },
+  {
+   "id": "joker",
+   "nombre": "Joker",
+   "coleccion": "dc",
+   "piezas": {
+    "cabeza": {
+     "id": "HEAD_001",
+     "color": "#f4f4f4"
+    },
+    "cara": {
+     "id": "FACE_018"
+    },
+    "detalles": [],
+    "cabello": {
+     "id": "HAIR_006",
+     "color": "#2e8b3a"
+    },
+    "cuello": null,
+    "torso": {
+     "id": "TORSO_001",
+     "color": "#5b2d82",
+     "estampado": "PRINT_030",
+     "colores": [
+      "#2e8b3a",
+      "#e07a1f",
+      "#2e8b3a"
+     ],
+     "texto": "",
+     "imagen": null
+    },
+    "brazos": {
+     "derecho": "ARM_001",
+     "izquierdo": "ARM_002",
+     "color": "#5b2d82"
+    },
+    "manos": {
+     "id": "HAND_001",
+     "color": "#f4f4f4"
+    },
+    "cadera": {
+     "id": "HIPS_001",
+     "color": "#5b2d82",
+     "cinturon": null
+    },
+    "piernas": {
+     "id": "LEGS_001",
+     "color": "#5b2d82",
+     "botas": "#1b1b1b"
+    },
+    "capa": null,
+    "objeto": null
+   },
+   "extensiones": {
+    "alv": {
+     "equipo": "villanos",
+     "nivel": 3,
+     "poderes": [
+      "magia"
+     ],
+     "rasgos": [],
+     "reposo": "quieto"
+    }
+   },
+   "origen": {
+    "tipo": "catalogo-alv"
+   }
+  },
+  {
+   "id": "the-batman",
+   "nombre": "The Batman",
+   "coleccion": "dc",
+   "piezas": {
+    "cabeza": {
+     "id": "HEAD_001",
+     "color": "#f2cd37"
+    },
+    "cara": {
+     "id": "FACE_003"
+    },
+    "detalles": [],
+    "cabello": {
+     "id": "HELM_018",
+     "color": "#1b2a34"
+    },
+    "cuello": null,
+    "torso": {
+     "id": "TORSO_001",
+     "color": "#3a3d42",
+     "estampado": "PRINT_037",
+     "colores": [
+      "#141414",
+      "#1b2a34",
+      "#5e4a35"
+     ],
+     "texto": "",
+     "imagen": null
+    },
+    "brazos": {
+     "derecho": "ARM_001",
+     "izquierdo": "ARM_002",
+     "color": "#3a3d42"
+    },
+    "manos": {
+     "id": "HAND_001",
+     "color": "#1b2a34"
+    },
+    "cadera": {
+     "id": "HIPS_001",
+     "color": "#1b2a34",
+     "cinturon": null
+    },
+    "piernas": {
+     "id": "LEGS_001",
+     "color": "#3a3d42",
+     "botas": "#1b2a34"
+    },
+    "capa": {
+     "id": "CAPE_001",
+     "color": "#1b2a34"
+    },
+    "objeto": null
+   },
+   "extensiones": {
+    "alv": {
+     "equipo": "liga-justicia",
+     "nivel": 6,
+     "poderes": [
+      "invisibilidad"
+     ],
+     "rasgos": [],
+     "reposo": "quieto"
+    }
+   },
+   "origen": {
+    "tipo": "catalogo-alv"
+   }
+  },
+  {
+   "id": "darth-vader",
+   "nombre": "Darth Vader",
+   "coleccion": "star-wars",
+   "piezas": {
+    "cabeza": {
+     "id": "HEAD_001",
+     "color": "#1b1b1b"
+    },
+    "cara": {
+     "id": "FACE_005"
+    },
+    "detalles": [],
+    "cabello": {
+     "id": "HELM_016",
+     "color": "#1b1b1b"
+    },
+    "cuello": null,
+    "torso": {
+     "id": "TORSO_001",
+     "color": "#1b1b1b",
+     "estampado": "PRINT_031",
+     "colores": [
+      "#7f838b",
+      "#c9ced6",
+      "#6b4a2b"
+     ],
+     "texto": "",
+     "imagen": null
+    },
+    "brazos": {
+     "derecho": "ARM_001",
+     "izquierdo": "ARM_002",
+     "color": "#1b1b1b"
+    },
+    "manos": {
+     "id": "HAND_001",
+     "color": "#1b1b1b"
+    },
+    "cadera": {
+     "id": "HIPS_001",
+     "color": "#1b1b1b",
+     "cinturon": null
+    },
+    "piernas": {
+     "id": "LEGS_001",
+     "color": "#1b1b1b",
+     "botas": "#1b1b1b"
+    },
+    "capa": {
+     "id": "CAPE_001",
+     "color": "#1b1b1b"
+    },
+    "objeto": {
+     "id": "ACC_013",
+     "color": "#e3241b"
+    }
+   },
+   "extensiones": {
+    "alv": {
+     "equipo": "imperio",
+     "nivel": 6,
+     "poderes": [
+      "telequinesis"
+     ],
+     "rasgos": [],
+     "reposo": "quieto"
+    }
+   },
+   "origen": {
+    "tipo": "catalogo-alv"
+   }
+  },
+  {
+   "id": "luke",
+   "nombre": "Luke Skywalker",
+   "coleccion": "star-wars",
+   "piezas": {
+    "cabeza": {
+     "id": "HEAD_001",
+     "color": "#f2cd37"
+    },
+    "cara": {
+     "id": "FACE_004"
+    },
+    "detalles": [],
+    "cabello": {
+     "id": "HAIR_003",
+     "color": "#c8a25f"
+    },
+    "cuello": null,
+    "torso": {
+     "id": "TORSO_001",
+     "color": "#e8dcc0",
+     "estampado": "PRINT_032",
+     "colores": [
+      "#d8c9a3",
+      "#7a4b25",
+      "#f4f4f4"
+     ],
+     "texto": "",
+     "imagen": null
+    },
+    "brazos": {
+     "derecho": "ARM_001",
+     "izquierdo": "ARM_002",
+     "color": "#e8dcc0"
+    },
+    "manos": {
+     "id": "HAND_001",
+     "color": "#f2cd37"
+    },
+    "cadera": {
+     "id": "HIPS_001",
+     "color": "#e8dcc0",
+     "cinturon": null
+    },
+    "piernas": {
+     "id": "LEGS_001",
+     "color": "#e8dcc0",
+     "botas": "#7a4b25"
+    },
+    "capa": null,
+    "objeto": {
+     "id": "ACC_013",
+     "color": "#1d6bff"
+    }
+   },
+   "extensiones": {
+    "alv": {
+     "equipo": "rebeldes",
+     "nivel": 4,
+     "poderes": [
+      "telequinesis"
+     ],
+     "rasgos": [],
+     "reposo": "quieto"
+    }
+   },
+   "origen": {
+    "tipo": "catalogo-alv"
+   }
+  },
+  {
+   "id": "yoda",
+   "nombre": "Yoda",
+   "coleccion": "star-wars",
+   "piezas": {
+    "cabeza": {
+     "id": "HEAD_003",
+     "color": "#a5ca18"
+    },
+    "cara": null,
+    "detalles": [],
+    "cabello": null,
+    "cuello": null,
+    "torso": {
+     "id": "TORSO_001",
+     "color": "#b49a73",
+     "estampado": "PRINT_032",
+     "colores": [
+      "#8a6a45",
+      "#5e4a35",
+      "#d8c9a3"
+     ],
+     "texto": "",
+     "imagen": null
+    },
+    "brazos": {
+     "derecho": "ARM_001",
+     "izquierdo": "ARM_002",
+     "color": "#b49a73"
+    },
+    "manos": {
+     "id": "HAND_001",
+     "color": "#a5ca18"
+    },
+    "cadera": {
+     "id": "LEGS_002",
+     "color": "#b49a73"
+    },
+    "piernas": {
+     "id": "LEGS_002",
+     "color": "#b49a73",
+     "botas": null
+    },
+    "capa": null,
+    "objeto": {
+     "id": "ACC_013",
+     "color": "#35d14a"
+    }
+   },
+   "extensiones": {
+    "alv": {
+     "equipo": "jedi",
+     "nivel": 6,
+     "poderes": [
+      "telequinesis"
+     ],
+     "rasgos": [],
+     "reposo": "quieto"
+    }
+   },
+   "origen": {
+    "tipo": "catalogo-alv"
+   }
+  },
+  {
+   "id": "mandalorian",
+   "nombre": "Mandalorian",
+   "coleccion": "star-wars",
+   "piezas": {
+    "cabeza": {
+     "id": "HEAD_001",
+     "color": "#f2cd37"
+    },
+    "cara": {
+     "id": "FACE_003"
+    },
+    "detalles": [],
+    "cabello": {
+     "id": "HELM_017",
+     "color": "#c9ced6"
+    },
+    "cuello": {
+     "id": "NECK_001",
+     "color": "#7f838b"
+    },
+    "torso": {
+     "id": "TORSO_001",
+     "color": "#5e5a52",
+     "estampado": "PRINT_033",
+     "colores": [
+      "#c9ced6",
+      "#7f838b",
+      "#5e4a35"
+     ],
+     "texto": "",
+     "imagen": null
+    },
+    "brazos": {
+     "derecho": "ARM_001",
+     "izquierdo": "ARM_002",
+     "color": "#5e5a52"
+    },
+    "manos": {
+     "id": "HAND_001",
+     "color": "#3a2a1e"
+    },
+    "cadera": {
+     "id": "HIPS_001",
+     "color": "#5e5a52",
+     "cinturon": null
+    },
+    "piernas": {
+     "id": "LEGS_001",
+     "color": "#5e5a52",
+     "botas": "#5e4a35"
+    },
+    "capa": null,
+    "objeto": null
+   },
+   "extensiones": {
+    "alv": {
+     "equipo": "mandalore",
+     "nivel": 5,
+     "poderes": [
+      "vuelo"
+     ],
+     "rasgos": [],
+     "reposo": "quieto"
+    }
+   },
+   "origen": {
+    "tipo": "catalogo-alv"
+   }
+  },
+  {
+   "id": "boba-fett",
+   "nombre": "Boba Fett",
+   "coleccion": "star-wars",
+   "piezas": {
+    "cabeza": {
+     "id": "HEAD_001",
+     "color": "#f2cd37"
+    },
+    "cara": {
+     "id": "FACE_003"
+    },
+    "detalles": [],
+    "cabello": {
+     "id": "HELM_017",
+     "color": "#4b6e3a"
+    },
+    "cuello": {
+     "id": "NECK_001",
+     "color": "#4b6e3a"
+    },
+    "torso": {
+     "id": "TORSO_001",
+     "color": "#7f838b",
+     "estampado": "PRINT_033",
+     "colores": [
+      "#4b6e3a",
+      "#c8102e",
+      "#5e4a35"
+     ],
+     "texto": "",
+     "imagen": null
+    },
+    "brazos": {
+     "derecho": "ARM_001",
+     "izquierdo": "ARM_002",
+     "color": "#7f838b"
+    },
+    "manos": {
+     "id": "HAND_001",
+     "color": "#1b1b1b"
+    },
+    "cadera": {
+     "id": "HIPS_001",
+     "color": "#7f838b",
+     "cinturon": null
+    },
+    "piernas": {
+     "id": "LEGS_001",
+     "color": "#7f838b",
+     "botas": "#3a2a1e"
+    },
+    "capa": null,
+    "objeto": null
+   },
+   "extensiones": {
+    "alv": {
+     "equipo": "cazarrecompensas",
+     "nivel": 5,
+     "poderes": [
+      "vuelo"
+     ],
+     "rasgos": [],
+     "reposo": "quieto"
+    }
+   },
+   "origen": {
+    "tipo": "catalogo-alv"
+   }
+  },
+  {
+   "id": "voldemort",
+   "nombre": "Voldemort",
+   "coleccion": "harry-potter",
+   "piezas": {
+    "cabeza": {
+     "id": "HEAD_001",
+     "color": "#e8e6e0"
+    },
+    "cara": {
+     "id": "FACE_019"
+    },
+    "detalles": [],
+    "cabello": null,
+    "cuello": null,
+    "torso": {
+     "id": "TORSO_001",
+     "color": "#1b1b1b",
+     "estampado": "PRINT_034",
+     "colores": [
+      "#2b2b31",
+      "#1b1b1b",
+      "#6b4a2b"
+     ],
+     "texto": "",
+     "imagen": null
+    },
+    "brazos": {
+     "derecho": "ARM_001",
+     "izquierdo": "ARM_002",
+     "color": "#1b1b1b"
+    },
+    "manos": {
+     "id": "HAND_001",
+     "color": "#e8e6e0"
+    },
+    "cadera": {
+     "id": "HIPS_001",
+     "color": "#1b1b1b",
+     "cinturon": null
+    },
+    "piernas": {
+     "id": "LEGS_001",
+     "color": "#1b1b1b",
+     "botas": null
+    },
+    "capa": {
+     "id": "CAPE_001",
+     "color": "#1b1b1b"
+    },
+    "objeto": {
+     "id": "ACC_001",
+     "color": "#e8e6e0"
+    }
+   },
+   "extensiones": {
+    "alv": {
+     "equipo": "mortifagos",
+     "nivel": 6,
+     "poderes": [
+      "magia"
+     ],
+     "rasgos": [],
+     "reposo": "quieto"
+    }
+   },
+   "origen": {
+    "tipo": "catalogo-alv"
+   }
+  },
+  {
+   "id": "iron-spider",
+   "nombre": "Spider-Man (Iron Spider)",
+   "coleccion": "marvel",
+   "piezas": {
+    "cabeza": {
+     "id": "HEAD_001",
+     "color": "#c8102e"
+    },
+    "cara": {
+     "id": "FACE_012"
+    },
+    "detalles": [],
+    "cabello": null,
+    "cuello": null,
+    "torso": {
+     "id": "TORSO_001",
+     "color": "#c8102e",
+     "estampado": "PRINT_035",
+     "colores": [
+      "#d4a017",
+      "#1b1b1b",
+      "#6b4a2b"
+     ],
+     "texto": "",
+     "imagen": null
+    },
+    "brazos": {
+     "derecho": "ARM_001",
+     "izquierdo": "ARM_002",
+     "color": "#c8102e"
+    },
+    "manos": {
+     "id": "HAND_001",
+     "color": "#d4a017"
+    },
+    "cadera": {
+     "id": "HIPS_001",
+     "color": "#c8102e",
+     "cinturon": null
+    },
+    "piernas": {
+     "id": "LEGS_001",
+     "color": "#c8102e",
+     "botas": "#d4a017"
+    },
+    "capa": null,
+    "objeto": null
+   },
+   "extensiones": {
+    "alv": {
+     "equipo": "vengadores",
+     "nivel": 4,
+     "poderes": [
+      "telarana"
+     ],
+     "rasgos": [],
+     "reposo": "quieto"
+    }
+   },
+   "origen": {
+    "tipo": "catalogo-alv"
+   }
+  },
+  {
+   "id": "spider-man-pelicula",
+   "nombre": "Spider-Man (película)",
+   "coleccion": "marvel",
+   "piezas": {
+    "cabeza": {
+     "id": "HEAD_001",
+     "color": "#b3121f"
+    },
+    "cara": {
+     "id": "FACE_012"
+    },
+    "detalles": [],
+    "cabello": null,
+    "cuello": null,
+    "torso": {
+     "id": "TORSO_001",
+     "color": "#b3121f",
+     "estampado": "PRINT_036",
+     "colores": [
+      "#1a3d8f",
+      "#141414",
+      "#6b4a2b"
+     ],
+     "texto": "",
+     "imagen": null
+    },
+    "brazos": {
+     "derecho": "ARM_001",
+     "izquierdo": "ARM_002",
+     "color": "#b3121f"
+    },
+    "manos": {
+     "id": "HAND_001",
+     "color": "#b3121f"
+    },
+    "cadera": {
+     "id": "HIPS_001",
+     "color": "#1a3d8f",
+     "cinturon": null
+    },
+    "piernas": {
+     "id": "LEGS_001",
+     "color": "#1a3d8f",
+     "botas": "#b3121f"
+    },
+    "capa": null,
+    "objeto": null
+   },
+   "extensiones": {
+    "alv": {
+     "equipo": "vengadores",
+     "nivel": 3,
+     "poderes": [
+      "telarana"
+     ],
+     "rasgos": [],
+     "reposo": "quieto"
+    }
+   },
+   "origen": {
+    "tipo": "catalogo-alv"
+   }
   }
  ]
 }

@@ -1,7 +1,9 @@
 // Piezas desbloqueadas y retos del personalizador (migración 033).
 // - Con nube y la 033 aplicada: lo dice el servidor (piezas_jugador, retos_jugador) y las compras/retos son funciones RPC.
 // - Con nube SIN la 033 (todavía no autorizada): el sistema queda apagado y todo está libre, como antes.
-// - Sin nube (demostración): se simula en este navegador con 1 000 XP de mentira, para poder ver y probar la interfaz.
+// - Sin nube (demostración): por ahora todo libre (D5 del plan de 3 modos, 2026-11-19: Elías dará el catálogo de qué va
+//   bloqueado). Con `LIBRE_EN_DEMO = false` vuelve la simulación con 1 000 XP de mentira.
+//   Con nube manda la base: la 033 sigue aplicada y su guardián rechaza figuras con piezas bloqueadas.
 import { useSyncExternalStore } from "react";
 import { leerCapsulas } from "../app/figura3d";
 import { refrescarSesion, sesionAhora } from "../app/sesion";
@@ -24,6 +26,7 @@ export const usePiezas = () => useSyncExternalStore(f => { oyentes.add(f); retur
 export const piezasAhora = () => estado;
 
 // ---------- Demostración (sin nube) ----------
+const LIBRE_EN_DEMO = true;
 const CLAVE_DEMO = (uid: string) => "alv-piezas-demo-" + (uid.replace(/[^a-zA-Z0-9_-]/g, "").slice(0, 64) || "local");
 type Demo = { tengo: string[]; reclamados: string[]; xp: number };
 function leerDemo(uid: string): Demo {
@@ -37,7 +40,7 @@ export async function cargarPiezas(): Promise<void> {
   const s = sesionAhora();
   if (!hayNube) {
     const d = leerDemo(s.uid);
-    fijar({ activo: true, demo: true, tengo: new Set(d.tengo), reclamados: new Set(d.reclamados), xp: d.xp });
+    fijar({ activo: !LIBRE_EN_DEMO, demo: true, tengo: new Set(d.tengo), reclamados: new Set(d.reclamados), xp: d.xp });
     return;
   }
   try {

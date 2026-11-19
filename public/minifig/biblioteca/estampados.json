@@ -531,6 +531,205 @@
    "archivo": null,
    "estilo": "fem",
    "mangas": "larga"
+  },
+  {
+   "id": "PRINT_024",
+   "categoria": "estampado-torso",
+   "clave": "wolverine",
+   "nombre": "Traje de garras",
+   "aplica_a": "TORSO_001",
+   "tipo": "dibujo",
+   "archivo": null,
+   "estilo": "neutro",
+   "mangas": "larga"
+  },
+  {
+   "id": "PRINT_025",
+   "categoria": "estampado-torso",
+   "clave": "ciclope",
+   "nombre": "Traje con X",
+   "aplica_a": "TORSO_001",
+   "tipo": "dibujo",
+   "archivo": null,
+   "estilo": "neutro",
+   "mangas": "larga"
+  },
+  {
+   "id": "PRINT_026",
+   "categoria": "estampado-torso",
+   "clave": "gambito",
+   "nombre": "Gabardina y peto",
+   "aplica_a": "TORSO_001",
+   "tipo": "dibujo",
+   "archivo": null,
+   "estilo": "neutro",
+   "mangas": "larga"
+  },
+  {
+   "id": "PRINT_027",
+   "categoria": "estampado-torso",
+   "clave": "magneto",
+   "nombre": "Armadura magnética",
+   "aplica_a": "TORSO_001",
+   "tipo": "dibujo",
+   "archivo": null,
+   "estilo": "neutro",
+   "mangas": "larga"
+  },
+  {
+   "id": "PRINT_028",
+   "categoria": "estampado-torso",
+   "clave": "tormenta",
+   "nombre": "Traje de tormenta",
+   "aplica_a": "TORSO_001",
+   "tipo": "dibujo",
+   "archivo": null,
+   "estilo": "neutro",
+   "mangas": "larga"
+  },
+  {
+   "id": "PRINT_029",
+   "categoria": "estampado-torso",
+   "clave": "flash",
+   "nombre": "Rayo en círculo",
+   "aplica_a": "TORSO_001",
+   "tipo": "dibujo",
+   "archivo": null,
+   "estilo": "neutro",
+   "mangas": "larga"
+  },
+  {
+   "id": "PRINT_030",
+   "categoria": "estampado-torso",
+   "clave": "joker",
+   "nombre": "Saco y chaleco",
+   "aplica_a": "TORSO_001",
+   "tipo": "dibujo",
+   "archivo": null,
+   "estilo": "neutro",
+   "mangas": "larga"
+  },
+  {
+   "id": "PRINT_031",
+   "categoria": "estampado-torso",
+   "clave": "vader",
+   "nombre": "Armadura con panel",
+   "aplica_a": "TORSO_001",
+   "tipo": "dibujo",
+   "archivo": null,
+   "estilo": "neutro",
+   "mangas": "larga"
+  },
+  {
+   "id": "PRINT_032",
+   "categoria": "estampado-torso",
+   "clave": "tunica-jedi",
+   "nombre": "Túnica cruzada",
+   "aplica_a": "TORSO_001",
+   "tipo": "dibujo",
+   "archivo": null,
+   "estilo": "neutro",
+   "mangas": "larga"
+  },
+  {
+   "id": "PRINT_033",
+   "categoria": "estampado-torso",
+   "clave": "armadura-mando",
+   "nombre": "Armadura de placas",
+   "aplica_a": "TORSO_001",
+   "tipo": "dibujo",
+   "archivo": null,
+   "estilo": "neutro",
+   "mangas": "larga"
+  },
+  {
+   "id": "PRINT_034",
+   "categoria": "estampado-torso",
+   "clave": "tunica-oscura",
+   "nombre": "Túnica oscura",
+   "aplica_a": "TORSO_001",
+   "tipo": "dibujo",
+   "archivo": null,
+   "estilo": "neutro",
+   "mangas": "larga"
+  },
+  {
+   "id": "PRINT_035",
+   "categoria": "estampado-torso",
+   "clave": "iron-spider",
+   "nombre": "Araña de hierro",
+   "aplica_a": "TORSO_001",
+   "tipo": "dibujo",
+   "archivo": null,
+   "estilo": "neutro",
+   "mangas": "larga"
+  },
+  {
+   "id": "PRINT_036",
+   "categoria": "estampado-torso",
+   "clave": "arana-pelicula",
+   "nombre": "Traje araña con relieve",
+   "aplica_a": "TORSO_001",
+   "tipo": "dibujo",
+   "archivo": null,
+   "estilo": "neutro",
+   "mangas": "larga"
+  },
+  {
+   "id": "PRINT_037",
+   "categoria": "estampado-torso",
+   "clave": "the-batman",
+   "nombre": "Murciélago grande",
+   "aplica_a": "TORSO_001",
+   "tipo": "dibujo",
+   "archivo": null,
+   "estilo": "neutro",
+   "mangas": "larga"
+  },
+  {
+   "id": "FACE_016",
+   "categoria": "cara",
+   "clave": "mascara-flash",
+   "nombre": "Máscara de rayo",
+   "aplica_a": "HEAD_001",
+   "tipo": "dibujo",
+   "archivo": null,
+   "ocupa": "cara",
+   "oculta": [
+    "rostro",
+    "detalles"
+   ],
+   "estilo": "neutro"
+  },
+  {
+   "id": "FACE_017",
+   "categoria": "cara",
+   "clave": "visor-ciclope",
+   "nombre": "Visor",
+   "aplica_a": "HEAD_001",
+   "tipo": "dibujo",
+   "archivo": null,
+   "estilo": "neutro"
+  },
+  {
+   "id": "FACE_018",
+   "categoria": "cara",
+   "clave": "cara-joker",
+   "nombre": "Sonrisa pintada",
+   "aplica_a": "HEAD_001",
+   "tipo": "dibujo",
+   "archivo": null,
+   "estilo": "neutro"
+  },
+  {
+   "id": "FACE_019",
+   "categoria": "cara",
+   "clave": "cara-voldemort",
+   "nombre": "Sin nariz",
+   "aplica_a": "HEAD_001",
+   "tipo": "dibujo",
+   "archivo": null,
+   "estilo": "neutro"
   }
  ]
 }

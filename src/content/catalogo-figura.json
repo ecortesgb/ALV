@@ -1,6 +1,6 @@
 {
  "version": 1,
- "generado": "2026-11-18",
+ "generado": "2026-11-19",
  "tonos": [
   {
    "id": "amarillo",
@@ -426,6 +426,40 @@
     "tags": [
      "heroe"
     ]
+   },
+   {
+    "id": "HELM_016",
+    "nombre": "Casco de Darth Vader",
+    "mini": "helm-016",
+    "color": "#1b1b1b",
+    "fijo": true
+   },
+   {
+    "id": "HELM_017",
+    "nombre": "Casco mandaloriano",
+    "mini": "helm-017",
+    "color": "#c9ced6",
+    "fijo": true
+   },
+   {
+    "id": "HELM_018",
+    "nombre": "Máscara de murciélago con orejas",
+    "mini": "helm-018",
+    "color": "#1b2a34",
+    "fijo": true
+   },
+   {
+    "id": "HELM_019",
+    "nombre": "Máscara de Wolverine",
+    "mini": "helm-019",
+    "color": "#f4d03f",
+    "fijo": true
+   },
+   {
+    "id": "HELM_020",
+    "nombre": "Casco con protección de mejillas",
+    "mini": "helm-020",
+    "color": "#c8102e"
    }
   ],
   "rostro": [
@@ -483,6 +517,21 @@
     "id": "FACE_011",
     "nombre": "Segura (pestañas)",
     "mini": "face-011"
+   },
+   {
+    "id": "FACE_017",
+    "nombre": "Visor",
+    "mini": "face-017"
+   },
+   {
+    "id": "FACE_018",
+    "nombre": "Sonrisa pintada",
+    "mini": "face-018"
+   },
+   {
+    "id": "FACE_019",
+    "nombre": "Sin nariz",
+    "mini": "face-019"
    }
   ],
   "mascara": [
@@ -525,6 +574,13 @@
     "tags": [
      "heroe"
     ]
+   },
+   {
+    "id": "FACE_016",
+    "nombre": "Máscara de rayo",
+    "mini": "face-016",
+    "color": "#c8102e",
+    "fijo": true
    }
   ],
   "detalle": [
@@ -1147,6 +1203,230 @@
     "tags": [
      "heroe"
     ]
+   },
+   {
+    "id": "PRINT_024",
+    "nombre": "Traje de garras",
+    "mini": "print-024",
+    "mangas": "larga",
+    "original": {
+     "color": "#f4d03f",
+     "colores": [
+      "#1d4fa8",
+      "#141414",
+      "#c8102e"
+     ],
+     "brazos": "#1d4fa8",
+     "manos": "#1d4fa8"
+    }
+   },
+   {
+    "id": "PRINT_025",
+    "nombre": "Traje con X",
+    "mini": "print-025",
+    "mangas": "larga",
+    "original": {
+     "color": "#1d4fa8",
+     "colores": [
+      "#f4d03f",
+      "#c8102e",
+      "#6b4a2b"
+     ],
+     "brazos": "#1d4fa8",
+     "manos": "#f4d03f"
+    }
+   },
+   {
+    "id": "PRINT_026",
+    "nombre": "Gabardina y peto",
+    "mini": "print-026",
+    "mangas": "larga",
+    "original": {
+     "color": "#c2389a",
+     "colores": [
+      "#7a4b25",
+      "#1b2a34",
+      "#6b4a2b"
+     ],
+     "brazos": "#7a4b25",
+     "manos": "#1b2a34"
+    }
+   },
+   {
+    "id": "PRINT_027",
+    "nombre": "Armadura magnética",
+    "mini": "print-027",
+    "mangas": "larga",
+    "original": {
+     "color": "#c8102e",
+     "colores": [
+      "#5b2d82",
+      "#5b2d82",
+      "#6b4a2b"
+     ],
+     "brazos": "#c8102e",
+     "manos": "#5b2d82"
+    }
+   },
+   {
+    "id": "PRINT_028",
+    "nombre": "Traje de tormenta",
+    "mini": "print-028",
+    "mangas": "larga",
+    "original": {
+     "color": "#1b1b1b",
+     "colores": [
+      "#c9ced6",
+      "#e3b341",
+      "#6b4a2b"
+     ],
+     "brazos": "#1b1b1b",
+     "manos": "#1b1b1b"
+    }
+   },
+   {
+    "id": "PRINT_029",
+    "nombre": "Rayo en círculo",
+    "mini": "print-029",
+    "mangas": "larga",
+    "original": {
+     "color": "#c8102e",
+     "colores": [
+      "#f4d03f",
+      "#f4f4f4",
+      "#6b4a2b"
+     ],
+     "brazos": "#c8102e",
+     "manos": "#c8102e"
+    }
+   },
+   {
+    "id": "PRINT_030",
+    "nombre": "Saco y chaleco",
+    "mini": "print-030",
+    "mangas": "larga",
+    "original": {
+     "color": "#5b2d82",
+     "colores": [
+      "#2e8b3a",
+      "#e07a1f",
+      "#2e8b3a"
+     ],
+     "brazos": "#5b2d82",
+     "manos": "#f4f4f4"
+    }
+   },
+   {
+    "id": "PRINT_031",
+    "nombre": "Armadura con panel",
+    "mini": "print-031",
+    "mangas": "larga",
+    "original": {
+     "color": "#1b1b1b",
+     "colores": [
+      "#7f838b",
+      "#c9ced6",
+      "#6b4a2b"
+     ],
+     "brazos": "#1b1b1b",
+     "manos": "#1b1b1b"
+    }
+   },
+   {
+    "id": "PRINT_032",
+    "nombre": "Túnica cruzada",
+    "mini": "print-032",
+    "mangas": "larga",
+    "original": {
+     "color": "#e8dcc0",
+     "colores": [
+      "#d8c9a3",
+      "#7a4b25",
+      "#f4f4f4"
+     ],
+     "brazos": "#e8dcc0",
+     "manos": "#f2cd37"
+    }
+   },
+   {
+    "id": "PRINT_033",
+    "nombre": "Armadura de placas",
+    "mini": "print-033",
+    "mangas": "larga",
+    "original": {
+     "color": "#5e5a52",
+     "colores": [
+      "#c9ced6",
+      "#7f838b",
+      "#5e4a35"
+     ],
+     "brazos": "#5e5a52",
+     "manos": "#3a2a1e"
+    }
+   },
+   {
+    "id": "PRINT_034",
+    "nombre": "Túnica oscura",
+    "mini": "print-034",
+    "mangas": "larga",
+    "original": {
+     "color": "#1b1b1b",
+     "colores": [
+      "#2b2b31",
+      "#1b1b1b",
+      "#6b4a2b"
+     ],
+     "brazos": "#1b1b1b",
+     "manos": "#e8e6e0"
+    }
+   },
+   {
+    "id": "PRINT_035",
+    "nombre": "Araña de hierro",
+    "mini": "print-035",
+    "mangas": "larga",
+    "original": {
+     "color": "#c8102e",
+     "colores": [
+      "#d4a017",
+      "#1b1b1b",
+      "#6b4a2b"
+     ],
+     "brazos": "#c8102e",
+     "manos": "#d4a017"
+    }
+   },
+   {
+    "id": "PRINT_036",
+    "nombre": "Traje araña con relieve",
+    "mini": "print-036",
+    "mangas": "larga",
+    "original": {
+     "color": "#b3121f",
+     "colores": [
+      "#1a3d8f",
+      "#141414",
+      "#6b4a2b"
+     ],
+     "brazos": "#b3121f",
+     "manos": "#b3121f"
+    }
+   },
+   {
+    "id": "PRINT_037",
+    "nombre": "Murciélago grande",
+    "mini": "print-037",
+    "mangas": "larga",
+    "original": {
+     "color": "#3a3d42",
+     "colores": [
+      "#141414",
+      "#1b2a34",
+      "#5e4a35"
+     ],
+     "brazos": "#3a3d42",
+     "manos": "#1b2a34"
+    }
    }
   ],
   "objeto": [
@@ -1267,6 +1547,12 @@
      "espacio",
      "trabajo"
     ]
+   },
+   {
+    "id": "ACC_013",
+    "nombre": "Sable de luz",
+    "mini": "acc-013",
+    "color": "#1d6bff"
    }
   ],
   "piernas": [

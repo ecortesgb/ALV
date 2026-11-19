@@ -30,9 +30,13 @@ function build(c){
  // ---- Capa 522
  if(c.capa){const g=grupoLD(torso,ldM(...ENSAMBLE.capa));const m=mallaLD("522",plast(c.capa,{clearcoat:.15,roughness:.6,side:THREE.DoubleSide}),"capa");g.add(m);J.cape=g}
  // ---- Cabeza 3626c (gira sobre el cuello) con cara ajustada a su contorno
- const head=grupoLD(torso,ldM(...ENSAMBLE.cabeza));J.head=head;J.headY=head.position.y;head.add(mallaLD(L.cabeza,M.piel,"piel"));
- if(c.rostro!=="ninguno"){const f=mk(cascaraCara(0.06),decalMat(drawFace(c.rostro,c)),"rostro",false);f.userData.decal=true;head.add(f)}
- const fc=drawFacial(c.facial||[],c);if(fc){const f=mk(cascaraCara(0.12),decalMat(fc),"facial",false);f.userData.decal=true;head.add(f)}
+ const head=grupoLD(torso,ldM(...ENSAMBLE.cabeza));J.head=head;J.headY=head.position.y;
+ // Cabezas modificadas (Yoda): LDraw las mide desde el cuello, no desde el stud; `ajuste_y_ldu` las baja a su lugar
+ // y `sin_cara` evita pintar un rostro encima (ya traen ojos impresos).
+ const pzCab=(typeof BIB!=="undefined"&&BIB.porClave&&BIB.porClave["cabeza:"+L.cabeza])||{};const ajY=((pzCab.conexion||{}).ajuste_y_ldu||0)/LD;
+ {const m=mallaLD(L.cabeza,M.piel,"piel");if(m){m.position.y-=ajY;head.add(m)}}
+ if(c.rostro!=="ninguno"&&!pzCab.sin_cara){const f=mk(cascaraCara(0.06),decalMat(drawFace(c.rostro,c)),"rostro",false);f.userData.decal=true;head.add(f)}
+ const fc=pzCab.sin_cara?null:drawFacial(c.facial||[],c);if(fc){const f=mk(cascaraCara(0.12),decalMat(fc),"facial",false);f.userData.decal=true;head.add(f)}
  // ---- Pelo, casco o sombrero: pieza LDraw en el mismo origen que la cabeza
  const hairG=new THREE.Group();head.add(hairG);J.hairG=hairG;J.sy=1;
  if((c.cabello||"").startsWith("ld-")){const m=mallaLD(c.cabello.slice(3),plast(c.pelo,{roughness:.36,clearcoat:.5}),"cabello");if(m)hairG.add(m)}

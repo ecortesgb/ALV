@@ -35,7 +35,7 @@ iframe{position:fixed;left:-500px;top:0;width:100px;height:100px;border:0}
   // Torsos para pintar a gusto (los demás son trajes con su estampado y colores originales).
   const PINTABLES = new Set(["PRINT_010", "PRINT_012", "PRINT_019", "PRINT_020"]);
   // Piezas de personaje: solo con su color original.
-  const CASCO_FIJO = new Set(["HELM_012", "HELM_015"]);
+  const CASCO_FIJO = new Set(["HELM_012", "HELM_015", "HELM_016", "HELM_017", "HELM_018", "HELM_019"]);
   // Hacia dónde mira cada pieza de cuello (para girar la figura al elegirla).
   const CUELLO_FRENTE = new Set(["NECK_004", "NECK_005", "NECK_006", "NECK_007", "NECK_009"]);
   // Detalles que caen en el mismo lugar de la cara y no van juntos.
@@ -44,7 +44,8 @@ iframe{position:fixed;left:-500px;top:0;width:100px;height:100px;border:0}
   const NOMBRES = { HAIR_022: "Melena de lado", HELM_015: "Casco alado" };
   const nombre = p => NOMBRES[p.id] || p.nombre;
   const COLOR_CASCO = { HELM_001: "#0a3463", HELM_003: "#f2cd37", HELM_004: "#f4f4f4", HELM_005: "#0a3463", HELM_006: "#1b2a34", HELM_007: "#237841",
-    HELM_008: "#c91a09", HELM_009: "#a0a5a9", HELM_010: "#a0a5a9", HELM_011: "#a0a5a9", HELM_012: "#1b2a34", HELM_013: "#f4f4f4", HELM_014: "#958a73", HELM_015: "#0055bf" };
+    HELM_008: "#c91a09", HELM_009: "#a0a5a9", HELM_010: "#a0a5a9", HELM_011: "#a0a5a9", HELM_012: "#1b2a34", HELM_013: "#f4f4f4", HELM_014: "#958a73", HELM_015: "#0055bf",
+    HELM_016: "#1b1b1b", HELM_017: "#c9ced6", HELM_018: "#1b2a34", HELM_019: "#f4d03f", HELM_020: "#c8102e" };
   const COLOR_CUELLO = "#6c6e68", COLOR_CAPA = "#c91a09";
 
   const base = () => {
@@ -114,7 +115,7 @@ iframe{position:fixed;left:-500px;top:0;width:100px;height:100px;border:0}
   const bib = { piezas, estampados, personajes };
   const NOMBRE_TRAJE = { "black-widow-black-jumpsuit-plain-legs-013391": "Viuda Negra (traje negro)", "captain-america-with-dark-blue-suit-helm-013390": "Capitán América (casco)",
     "iron-man-mark-7-armor-red-panels-013393": "Iron Man Mark 7", "loki-pearl-titanium-outfit-013392": "Loki", "thor-tan-hair-black-armor-red-cape-012329": "Thor (capa roja)" };
-  const COLECCION = { marvel: "Marvel", dc: "DC", "harry-potter": "Magia", oficios: "Oficios" };
+  const COLECCION = { marvel: "Marvel", dc: "DC", "harry-potter": "Magia", oficios: "Oficios", "star-wars": "Star Wars" };
   const trajes = [], estilos = [], tareasTraje = [];
   personajes.forEach(pj => {
     const figura = C.desdePersonaje(pj, bib, { modo: "copia" });
@@ -158,7 +159,7 @@ iframe{position:fixed;left:-500px;top:0;width:100px;height:100px;border:0}
   const extra = { tonos: C.TONOS || null, paleta: C.PALETA || null, coloresPelo: C.COLORES_PELO || null,
     paquetes: Object.entries(C.PAQUETES || {}).map(([id, p]) => ({ id, nombre: p.nombre, espera: p.espera, victoria: p.victoria, derrota: p.derrota, punto: p.punto })) };
   await fetch("/catalogo", { method: "POST", body: JSON.stringify({ version: 1, generado: new Date().toISOString().slice(0, 10), ...extra, secciones: cat }) });
-  await fetch("/trajes", { method: "POST", body: JSON.stringify({ version: 1, colecciones: [["estilos", "Estilos ALV"], ["marvel", "Marvel"], ["dc", "DC"], ["harry-potter", "Magia"], ["oficios", "Oficios"]].map(([id, nombre]) => ({ id, nombre })), estilos, trajes }) });
+  await fetch("/trajes", { method: "POST", body: JSON.stringify({ version: 1, colecciones: [["estilos", "Estilos ALV"], ["marvel", "Marvel"], ["dc", "DC"], ["harry-potter", "Magia"], ["star-wars", "Star Wars"], ["oficios", "Oficios"]].map(([id, nombre]) => ({ id, nombre })), estilos, trajes }) });
   estado.textContent = `LISTO: ${tareas.length} miniaturas, ${Math.round(bytes / 1024)} KB`;
 })().catch(e => { document.getElementById("estado").textContent = "Error: " + e.message; console.error(e); });
 </script>

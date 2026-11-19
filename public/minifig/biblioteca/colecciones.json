@@ -17,7 +17,14 @@
     "hulk",
     "black-widow",
     "black-panther",
-    "doctor-strange"
+    "doctor-strange",
+    "wolverine",
+    "ciclope",
+    "gambito",
+    "magneto",
+    "tormenta",
+    "iron-spider",
+    "spider-man-pelicula"
    ]
   },
   {
@@ -30,7 +37,10 @@
    "personajes": [
     "batman",
     "superman",
-    "mujer-maravilla"
+    "mujer-maravilla",
+    "flash",
+    "joker",
+    "the-batman"
    ]
   },
   {
@@ -48,7 +58,8 @@
     "severus-snape",
     "draco-malfoy",
     "luna-lovegood",
-    "cedric-diggory"
+    "cedric-diggory",
+    "voldemort"
    ]
   },
   {
@@ -83,6 +94,21 @@
     "iron-man-mark-7-armor-red-panels-013393",
     "loki-pearl-titanium-outfit-013392",
     "thor-tan-hair-black-armor-red-cape-012329"
+   ]
+  },
+  {
+   "id": "star-wars",
+   "nombre": "Star Wars",
+   "grupo": "Galaxia",
+   "apps": [
+    "alv"
+   ],
+   "personajes": [
+    "darth-vader",
+    "luke",
+    "yoda",
+    "mandalorian",
+    "boba-fett"
    ]
   }
  ]

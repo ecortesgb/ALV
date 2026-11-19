@@ -1404,6 +1404,161 @@
     "cabello"
    ],
    "estilo": "neutro"
+  },
+  {
+   "id": "HEAD_003",
+   "categoria": "cabeza",
+   "clave": "64804ps1",
+   "nombre": "Cabeza de Yoda",
+   "ldraw": "64804ps1",
+   "ldraw_nombre": "Minifig Head Yoda with Straight Ears with Eyes and LBG Hair Pattern",
+   "fuente": "ldraw-no-oficial",
+   "licencia": "CC BY 4.0 · LDraw.org",
+   "conexion": {
+    "monta_en": "cuello_torso",
+    "origen_ldu": [
+     0,
+     -24,
+     0
+    ],
+    "gira": "eje Y (cuello)",
+    "ajuste_y_ldu": 23.2
+   },
+   "color_defecto": "#a5ca18",
+   "sin_cara": true,
+   "estilo": "neutro"
+  },
+  {
+   "id": "HELM_016",
+   "categoria": "casco",
+   "clave": "ld-30368",
+   "nombre": "Casco de Darth Vader",
+   "ldraw": "30368",
+   "ldraw_nombre": "Minifig Helmet Darth Vader",
+   "fuente": "ldraw",
+   "licencia": "CC BY 4.0 · LDraw.org",
+   "conexion": {
+    "monta_en": "tope_cabeza",
+    "origen_ldu": [
+     0,
+     -24,
+     0
+    ]
+   },
+   "ocupa": "sobre_cabeza",
+   "oculta": [
+    "cabello"
+   ],
+   "estilo": "neutro"
+  },
+  {
+   "id": "HELM_017",
+   "categoria": "casco",
+   "clave": "ld-87610ps8",
+   "nombre": "Casco mandaloriano",
+   "ldraw": "87610ps8",
+   "ldraw_nombre": "Minifig Helmet Mandalorian with Black Visor Opening Pattern",
+   "fuente": "ldraw",
+   "licencia": "CC BY 4.0 · LDraw.org",
+   "conexion": {
+    "monta_en": "tope_cabeza",
+    "origen_ldu": [
+     0,
+     -24,
+     0
+    ]
+   },
+   "ocupa": "sobre_cabeza",
+   "oculta": [
+    "cabello"
+   ],
+   "estilo": "neutro"
+  },
+  {
+   "id": "HELM_018",
+   "categoria": "casco",
+   "clave": "ld-10113",
+   "nombre": "Máscara de murciélago con orejas",
+   "ldraw": "10113",
+   "ldraw_nombre": "Minifig Headdress Batman with Angular Ears",
+   "fuente": "ldraw",
+   "licencia": "CC BY 4.0 · LDraw.org",
+   "conexion": {
+    "monta_en": "tope_cabeza",
+    "origen_ldu": [
+     0,
+     -24,
+     0
+    ]
+   },
+   "ocupa": "sobre_cabeza",
+   "oculta": [
+    "cabello"
+   ],
+   "estilo": "neutro"
+  },
+  {
+   "id": "HELM_019",
+   "categoria": "casco",
+   "clave": "ld-17018p01",
+   "nombre": "Máscara de Wolverine",
+   "ldraw": "17018p01",
+   "ldraw_nombre": "Minifig Helmet Wolverine with Black Pattern",
+   "fuente": "ldraw",
+   "licencia": "CC BY 4.0 · LDraw.org",
+   "conexion": {
+    "monta_en": "tope_cabeza",
+    "origen_ldu": [
+     0,
+     -24,
+     0
+    ]
+   },
+   "ocupa": "sobre_cabeza",
+   "oculta": [
+    "cabello"
+   ],
+   "estilo": "neutro"
+  },
+  {
+   "id": "HELM_020",
+   "categoria": "casco",
+   "clave": "ld-60751",
+   "nombre": "Casco con protección de mejillas",
+   "ldraw": "60751",
+   "ldraw_nombre": "Minifig Helmet with Cheek Protection and Thin Bands",
+   "fuente": "ldraw",
+   "licencia": "CC BY 4.0 · LDraw.org",
+   "conexion": {
+    "monta_en": "tope_cabeza",
+    "origen_ldu": [
+     0,
+     -24,
+     0
+    ]
+   },
+   "ocupa": "sobre_cabeza",
+   "oculta": [
+    "cabello"
+   ],
+   "estilo": "neutro"
+  },
+  {
+   "id": "ACC_013",
+   "categoria": "objeto",
+   "clave": "ld-alv-sable",
+   "nombre": "Sable de luz",
+   "ldraw": "alv-sable",
+   "ldraw_nombre": "Minifig Lightsaber (64567a + 30374)",
+   "fuente": "ldraw",
+   "licencia": "CC BY 4.0 · LDraw.org",
+   "conexion": {
+    "monta_en": "agarre_mano",
+    "barra_mm": 3.18
+   },
+   "color_defecto": "#1d6bff",
+   "estampado": null,
+   "ocupa": "mano"
   }
  ]
 }

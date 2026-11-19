@@ -1,6 +1,7 @@
 // Libro de cómic del personalizador: página izquierda con la figura viva; página derecha con viñetas.
-// Elegir una viñeta pasa la página (animación de hoja); «Atrás» la regresa. Etapa 2: navegación, viñetas y switch
-// Básico/Completo. Las cuadrículas de piezas de cada sección llegan en la etapa 3 (Pelo ya funciona de muestra).
+// Elegir una viñeta pasa la página (animación de hoja); «Atrás» la regresa.
+// Tres modos sobre la misma figura (plan de 3 modos, 2026-11-19): la primera página son las 3 tarjetas (Básico,
+// Personaje original, Avanzado) y los separadores del canto cambian de modo en cualquier momento.
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Icono } from "../ds";
 import { FiguraViva, apodoDe, type MandoFigura, type ZonaFigura } from "../app/figura3d";
@@ -10,13 +11,19 @@ import { PaginaExtra } from "./Extras";
 import { PanelDesbloqueo } from "./Desbloqueo";
 import { usePiezas } from "../servicios/piezas";
 import { PaginaSeccion } from "./Secciones";
+import { PaginaModos, PasosBasico, Separadores } from "./Modos";
+import { PaginaOriginal, tituloOriginal, type PaginaCatalogo } from "./Originales";
 
 const nada = () => {};
 const sinMando = { current: null };
 
-export type ModoEditor = "basico" | "completo";
+export type ModoEditor = "basico" | "original" | "avanzado";
 export type Seccion = "pelo" | "casco" | "cabeza" | "cuello" | "torso" | "brazos" | "manos" | "capa" | "cadera" | "piernas" | "botas";
-export type Pagina = "indice" | "apariencia" | Seccion | "objetos" | "momentos" | "nombre" | "aleatorio" | "trajes" | "retos";
+export type Pagina = "modos" | "basico" | "avanzado" | "apariencia" | Seccion | "objetos" | "momentos" | "nombre" | "aleatorio" | "retos" | PaginaCatalogo;
+/** Cada cambio de la figura pasa por aquí. `sinAviso`: cambios al azar, que no preguntan. */
+export type Cambiar = (f: FiguraV2, op?: { sinAviso?: boolean }) => void;
+/** Página donde empieza cada modo. */
+export const RAIZ: Record<ModoEditor, Pagina> = { basico: "basico", original: "original", avanzado: "avanzado" };
 
 export const miniatura = (mini: string) => `${import.meta.env.BASE_URL}arte/piezas/${mini}.webp`;
 
@@ -33,12 +40,10 @@ export const APARIENCIA: { k: Seccion; nombre: string; basico?: string; zona: Zo
   { k: "piernas", nombre: "Piernas", basico: "Piernas completas", zona: "piernas", img: "piernas-cortas" },
   { k: "botas", nombre: "Botas", zona: "botas", img: "con-botas" },
 ];
-export const enBasico = (k: Seccion) => !!APARIENCIA.find(a => a.k === k)?.basico;
-
-const TITULO: Record<Exclude<Pagina, Seccion>, string> = { indice: "Tu figura", apariencia: "Apariencia", objetos: "Objetos", momentos: "Momentos", nombre: "Nombre", aleatorio: "Aleatorio", trajes: "Trajes completos", retos: "Retos" };
-export function tituloDe(p: Pagina, modo: ModoEditor): string {
+const TITULO: Record<string, string> = { modos: "¿Cómo la armas?", basico: "Básico", avanzado: "Avanzado", apariencia: "Piezas comunes", objetos: "Objetos", momentos: "Momentos", nombre: "Nombre", aleatorio: "Aleatorio", retos: "Retos" };
+export function tituloDe(p: Pagina): string {
   const a = APARIENCIA.find(x => x.k === p);
-  return a ? (modo === "basico" && a.basico ? a.basico : a.nombre) : TITULO[p as Exclude<Pagina, Seccion>];
+  return a ? a.nombre : TITULO[p] ?? tituloOriginal(p as PaginaCatalogo);
 }
 export function zonaDe(p: Pagina): ZonaFigura {
   const a = APARIENCIA.find(x => x.k === p);
@@ -47,7 +52,7 @@ export function zonaDe(p: Pagina): ZonaFigura {
 
 // ---------- Viñetas ----------
 
-function Vineta({ titulo, img, dibujo, ancha, alta, onClick }: { titulo: string; img?: string | string[]; dibujo?: ReactNode; ancha?: boolean; alta?: boolean; onClick: () => void }) {
+export function Vineta({ titulo, img, dibujo, ancha, alta, onClick }: { titulo: string; img?: string | string[]; dibujo?: ReactNode; ancha?: boolean; alta?: boolean; onClick: () => void }) {
   return (
     <button type="button" className={"p-vineta" + (ancha ? " ancha" : "") + (alta ? " alta" : "")} onClick={onClick}>
       <span className={"p-vineta-arte" + (Array.isArray(img) ? " tira" : "")} aria-hidden="true">
@@ -59,50 +64,47 @@ function Vineta({ titulo, img, dibujo, ancha, alta, onClick }: { titulo: string;
 }
 
 /** Dibujos propios para las viñetas sin pieza: momentos, nombre y aleatorio. */
-const DibujoMomentos = () => (
+export const DibujoMomentos = () => (
   <svg viewBox="0 0 120 90"><path d="M60 6l9 20 22-8-10 20 24 6-22 10 14 18-23-4-4 22-12-18-14 16-2-22-23 2 15-17-20-12 23-4-8-21 21 9z" fill="#ffd23f" stroke="#0a1030" strokeWidth="3.5" strokeLinejoin="round" />
     <text x="60" y="54" textAnchor="middle" fontFamily="Bangers, Impact, sans-serif" fontSize="22" fill="#c91a09" stroke="#0a1030" strokeWidth="1">¡POW!</text></svg>
 );
-const DibujoNombre = () => (
+export const DibujoNombre = () => (
   <svg viewBox="0 0 120 90"><rect x="12" y="24" width="96" height="42" rx="6" fill="#fff" stroke="#0a1030" strokeWidth="3.5" transform="rotate(-4 60 45)" />
     <text x="60" y="56" textAnchor="middle" fontFamily="Bangers, Impact, sans-serif" fontSize="28" fill="#0a1030" transform="rotate(-4 60 45)">ABC</text></svg>
 );
-const DibujoReto = () => (
+export const DibujoReto = () => (
   <svg viewBox="0 0 240 90"><g transform="rotate(-6 120 45)"><path d="M120 8l11 24 26 3-19 18 5 26-23-13-23 13 5-26-19-18 26-3z" fill="#ffd23f" stroke="#0a1030" strokeWidth="3.5" strokeLinejoin="round" />
     <text x="120" y="86" textAnchor="middle" fontFamily="Bangers, Impact, sans-serif" fontSize="17" fill="#0a1030">¡GANA PIEZAS!</text></g>
     <rect x="22" y="26" width="38" height="38" rx="6" fill="#fff" stroke="#0a1030" strokeWidth="3" transform="rotate(-10 41 45)" /><text x="41" y="53" textAnchor="middle" fontSize="20" transform="rotate(-10 41 45)">🔒</text>
     <rect x="180" y="26" width="38" height="38" rx="6" fill="#fff" stroke="#0a1030" strokeWidth="3" transform="rotate(8 199 45)" /><text x="199" y="53" textAnchor="middle" fontSize="20" transform="rotate(8 199 45)">★</text></svg>
 );
-const DibujoDado = () => (
+export const DibujoDado = () => (
   <svg viewBox="0 0 120 90"><g transform="rotate(-12 60 45)"><rect x="32" y="17" width="56" height="56" rx="10" fill="#fff" stroke="#0a1030" strokeWidth="3.5" />
     {[[46, 31], [74, 31], [60, 45], [46, 59], [74, 59]].map(([x, y], i) => <circle key={i} cx={x} cy={y} r="5.5" fill="#0a1030" />)}</g></svg>
 );
 
 // ---------- Contenido de cada página ----------
 
-type Props = { pag: Pagina; modo: ModoEditor; figura: FiguraV2; ir: (p: Pagina) => void; cambiar: (f: FiguraV2) => void; setZona: (z: ZonaFigura | null) => void; mando: { current: MandoFigura | null }; capsula: number };
-function Contenido({ pag, modo, figura, ir, cambiar, setZona, mando, capsula }: Props) {
-  if (pag === "indice") return (
+type Props = { pag: Pagina; modo: ModoEditor; figura: FiguraV2; ir: (p: Pagina) => void; elegirModo: (m: ModoEditor) => void; cambiar: Cambiar; setZona: (z: ZonaFigura | null) => void; mando: { current: MandoFigura | null }; capsula: number };
+function Contenido({ pag, modo, figura, ir, elegirModo, cambiar, setZona, mando, capsula }: Props) {
+  if (pag === "modos") return <PaginaModos modo={modo} elegir={elegirModo} ir={ir} />;
+  if (pag === "basico") return <PasosBasico figura={figura} cambiar={cambiar} setZona={setZona} />;
+  if (pag === "avanzado") return (
     <div className="p-vinetas p-vinetas-indice">
-      <Vineta ancha titulo="Apariencia" img={["hair-021", "face-009", "print-019", "con-botas"]} onClick={() => ir("apariencia")} />
-      <Vineta ancha titulo="Trajes completos" img={["estilo-superheroe", "estilo-espacial", "estilo-medieval", "estilo-fiesta"]} onClick={() => ir("trajes")} />
-      <Vineta ancha titulo="Retos" dibujo={<DibujoReto />} onClick={() => ir("retos")} />
+      <Vineta ancha alta titulo="Piezas comunes" img={["hair-021", "face-009", "print-019", "con-botas"]} onClick={() => ir("apariencia")} />
+      <Vineta ancha alta titulo="Piezas originales" img={["traje-batman", "traje-spider-man", "traje-capitan-america", "traje-harry-potter"]} onClick={() => ir("originales")} />
       <Vineta titulo="Objetos" img="acc-002" onClick={() => ir("objetos")} />
       <Vineta titulo="Momentos" dibujo={<DibujoMomentos />} onClick={() => ir("momentos")} />
-      <Vineta titulo="Nombre" dibujo={<DibujoNombre />} onClick={() => ir("nombre")} />
-      <Vineta titulo="Aleatorio" dibujo={<DibujoDado />} onClick={() => ir("aleatorio")} />
     </div>
   );
-  if (pag === "apariencia") {
-    const lista = APARIENCIA.filter(a => modo === "completo" || a.basico);
-    return (
-      <div className={"p-vinetas " + (modo === "basico" ? "p-vinetas-basico" : "p-vinetas-completo")}>
-        {lista.map((a, i) => <Vineta key={a.k} ancha={modo === "basico" && i === 0} titulo={modo === "basico" ? a.basico! : a.nombre} img={a.img} onClick={() => ir(a.k)} />)}
-      </div>
-    );
-  }
-  if (APARIENCIA.some(a => a.k === pag)) return <PaginaSeccion k={pag as Seccion} modo={modo} figura={figura} cambiar={cambiar} setZona={setZona} />;
-  return <PaginaExtra pag={pag as "objetos" | "momentos" | "nombre" | "aleatorio" | "trajes" | "retos"} figura={figura} cambiar={cambiar} mando={mando} capsula={capsula} />;
+  if (pag === "apariencia") return (
+    <div className="p-vinetas p-vinetas-completo">
+      {APARIENCIA.map(a => <Vineta key={a.k} titulo={a.nombre} img={a.img} onClick={() => ir(a.k)} />)}
+    </div>
+  );
+  if (APARIENCIA.some(a => a.k === pag)) return <PaginaSeccion k={pag as Seccion} modo="completo" figura={figura} cambiar={cambiar} setZona={setZona} />;
+  if (["objetos", "momentos", "nombre", "aleatorio", "retos"].includes(pag)) return <PaginaExtra pag={pag as "objetos" | "momentos" | "nombre" | "aleatorio" | "retos"} figura={figura} cambiar={cambiar} mando={mando} capsula={capsula} />;
+  return <PaginaOriginal pag={pag as PaginaCatalogo} figura={figura} cambiar={cambiar} ir={ir} />;
 }
 
 // ---------- Hoja que da vuelta ----------
@@ -113,14 +115,14 @@ const sinMovimiento = () => typeof matchMedia !== "undefined" && matchMedia("(pr
 
 /** Una cara de la página derecha: título de la sección y su contenido. */
 function Cara({ viva, alVolver, ...props }: Props & { viva: boolean; alVolver: () => void }) {
-  const { pag, modo } = props;
+  const { pag } = props;
   const h = useRef<HTMLHeadingElement>(null);
   useEffect(() => { if (viva) h.current?.focus({ preventScroll: true }); }, [viva, pag]);
   return (
     <div className="p-cara">
       <div className="p-cara-cab">
-        <button type="button" className="p-atras" onClick={alVolver} aria-label={pag === "indice" ? "Cerrar el libro" : "Atrás"} tabIndex={viva ? 0 : -1}><Icono id="back" /></button>
-        <h2 ref={h} tabIndex={-1} className="p-cara-titulo dsp">{tituloDe(pag, modo)}</h2>
+        <button type="button" className="p-atras" onClick={alVolver} aria-label={pag === "modos" ? "Cerrar el libro" : "Atrás"} tabIndex={viva ? 0 : -1}><Icono id="back" /></button>
+        <h2 ref={h} tabIndex={-1} className="p-cara-titulo dsp">{tituloDe(pag)}</h2>
       </div>
       <div className="p-cara-cuerpo"><Contenido {...props} /></div>
     </div>
@@ -129,13 +131,14 @@ function Cara({ viva, alVolver, ...props }: Props & { viva: boolean; alVolver: (
 
 // ---------- Libro ----------
 
-export function Libro({ vez, capsula, etiqueta, figura, semilla, cambiar, soltado, guardado, modo, setModo, alCerrar, abriendo, tapa }: {
-  vez: number; /** Espacio que se edita (1 a 3). */ capsula: number; etiqueta: string; figura: FiguraV2; semilla?: number; cambiar: (f: FiguraV2) => void;
+export function Libro({ vez, capsula, etiqueta, figura, semilla, cambiar, soltado, guardado, modo, setModo, alCerrar, abriendo, tapa, regresar, pasos }: {
+  vez: number; /** Espacio que se edita (1 a 3). */ capsula: number; etiqueta: string; figura: FiguraV2; semilla?: number; cambiar: Cambiar;
+  /** Deshace el último paso (null si no hay a dónde regresar). */ regresar: (() => void) | null; /** Pasos guardados para regresar. */ pasos: number;
   /** La figura sin su traje de personaje (se ve igual; no cuenta como cambio del jugador). */ soltado: (f: FiguraV2) => void;
   /** Texto del último guardado («Guardado»), o null. */ guardado: string | null;
   modo: ModoEditor; setModo: (m: ModoEditor) => void; alCerrar: () => void; abriendo: boolean; tapa: ReactNode;
 }) {
-  const [pila, setPila] = useState<Pagina[]>(["indice"]);
+  const [pila, setPila] = useState<Pagina[]>(["modos"]);
   const [hoja, setHoja] = useState<Hoja | null>(null);
   const mando = useRef<MandoFigura | null>(null);
   const [zonaLado, setZonaLado] = useState<ZonaFigura | null>(null);
@@ -151,17 +154,22 @@ export function Libro({ vez, capsula, etiqueta, figura, semilla, cambiar, soltad
   }, [tieneTraje, vez]);
   const top = pila[pila.length - 1]!;
   const n = useRef(0);
-  useEffect(() => { setPila(["indice"]); setHoja(null); }, [vez]);
+  useEffect(() => { setPila(["modos"]); setHoja(null); }, [vez]);
   useEffect(() => { if (!hoja) return; const t = setTimeout(() => setHoja(null), DURA); return () => clearTimeout(t); }, [hoja]);
-  // Al pasar a Básico, una sección que solo existe en Completo regresa a Apariencia (la figura no cambia).
-  useEffect(() => {
-    if (modo === "basico" && APARIENCIA.some(a => a.k === top) && !enBasico(top as Seccion)) setPila(p => p.slice(0, -1));
-  }, [modo, top]);
   const ir = (p: Pagina) => {
     if (hoja) return;
     sonar("clic");
     if (!sinMovimiento()) setHoja({ arriba: top, abajo: p, dir: "ida", n: ++n.current });
     setPila(s => [...s, p]);
+  };
+  /** Elegir un modo (tarjeta o separador): la hoja da vuelta hacia el inicio de ese modo. */
+  const elegirModo = (m: ModoEditor) => {
+    if (hoja) return;
+    sonar("clic"); setModo(m);
+    const destino = RAIZ[m];
+    if (top === destino) return;
+    if (!sinMovimiento()) setHoja({ arriba: top, abajo: destino, dir: "ida", n: ++n.current });
+    setPila(["modos", destino]);
   };
   const volver = () => {
     if (hoja) return;
@@ -188,15 +196,11 @@ export function Libro({ vez, capsula, etiqueta, figura, semilla, cambiar, soltad
       <PanelDesbloqueo alIrARetos={() => ir("retos")} />
       <div className="p-libro-barra">
         {/* En celular la página derecha queda abajo: este «Atrás» siempre está a la vista. */}
-        <button type="button" className="p-atras p-atras-barra" onClick={volver} aria-label={top === "indice" ? "Cerrar el libro" : "Atrás"}><Icono id="back" /></button>
+        <button type="button" className="p-atras p-atras-barra" onClick={volver} aria-label={top === "modos" ? "Cerrar el libro" : "Atrás"}><Icono id="back" /></button>
         {guardado && <span className="p-guardado" role="status">✓ {guardado}</span>}
         {piezas.activo && <span className="p-xp" title={piezas.demo ? "XP de demostración" : "XP para gastar"}>★ {piezas.xp.toLocaleString("es-MX")} XP</span>}
-        <div className="p-modo" role="radiogroup" aria-label="Modo del editor">
-          {(["basico", "completo"] as const).map(m => (
-            <button key={m} type="button" role="radio" aria-checked={modo === m} className={modo === m ? "on" : ""}
-              onClick={() => { if (modo !== m) { sonar("clic"); setModo(m); } }}>{m === "basico" ? "Básico" : "Completo"}</button>
-          ))}
-        </div>
+        <button type="button" className="p-regresar" onClick={() => { if (regresar) { sonar("clic"); regresar(); } }} disabled={!regresar}
+          aria-label={`Regresar al paso anterior${pasos ? ` (${pasos})` : ""}`} title="Deshace el último cambio">↶ Regresar{pasos ? <small>{pasos}</small> : null}</button>
       </div>
       <div className="p-hojas">
         <section className="p-pag p-pag-izq" aria-label="Tu figura">
@@ -213,10 +217,11 @@ export function Libro({ vez, capsula, etiqueta, figura, semilla, cambiar, soltad
           <span className="p-pista">Arrastra para girar · pellizca o usa la rueda para acercar</span>
         </section>
         <section className="p-pag p-pag-der" aria-live="polite">
-          <Cara pag={base} modo={modo} figura={figura} ir={ir} cambiar={cambiar} setZona={setZonaLado} mando={mando} capsula={capsula} viva={!hoja || hoja.dir === "ida"} alVolver={volver} />
+          <Separadores modo={top === "modos" ? null : modo} elegir={elegirModo} />
+          <Cara pag={base} modo={modo} figura={figura} ir={ir} elegirModo={elegirModo} cambiar={cambiar} setZona={setZonaLado} mando={mando} capsula={capsula} viva={!hoja || hoja.dir === "ida"} alVolver={volver} />
           {hoja && (
             <div key={hoja.n} className={"p-hoja " + hoja.dir} aria-hidden="true" {...{ inert: "" }}>
-              <div className="p-hoja-frente"><Cara pag={hoja.arriba} modo={modo} figura={figura} ir={nada} cambiar={nada} setZona={nada} mando={sinMando} capsula={capsula} viva={false} alVolver={nada} /></div>
+              <div className="p-hoja-frente"><Cara pag={hoja.arriba} modo={modo} figura={figura} ir={nada} elegirModo={nada} cambiar={nada} setZona={nada} mando={sinMando} capsula={capsula} viva={false} alVolver={nada} /></div>
               <div className="p-hoja-reverso" />
             </div>
           )}

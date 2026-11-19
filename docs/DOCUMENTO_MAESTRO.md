@@ -1,7 +1,7 @@
 # ALV — Amigos Legendarios Verdaderos
 ## Documento Maestro del Producto
-**Versión:** 1.49  
-**Última actualización:** 18 de noviembre de 2026  
+**Versión:** 1.50  
+**Última actualización:** 19 de noviembre de 2026  
 **Estado:** Documento vivo de producto; decisiones y propuestas identificadas por separado.
 
 ---
@@ -766,6 +766,8 @@ Reglas propuestas:
 
 **DECISIÓN (v1.42, Elías, 17 de noviembre) — Piezas con rareza y retos en el personalizador:** cada sección tiene piezas comunes (libres) y otras bloqueadas por rareza: Rara (100 XP), Épica (250 XP) y Legendaria (500 XP); los paquetes de momentos también. Se desbloquean **con retos** (uno diario que rota y retos de combinación; si ya tenías el premio, +40 XP) **y también con XP** (gasto tipo «pieza»: baja la XP disponible, no el nivel). Lo desbloqueado se guarda **en la nube** (tablas nuevas, migración 033) y el servidor valida compras, retos y que una figura guardada no use piezas bloqueadas; las piezas que ya usan las figuras guardadas se regalan. La lista de rarezas, precios y retos vive en `src/content/rarezas.ts`. Esto toca la economía de XP (§12) solo para piezas del personalizador: la tienda de sobres sigue congelada (D-001). El **taller compartido** («me gusta», plantillas) queda para después. La 033 requiere autorización expresa para aplicarse (D-002).
 
+**DECISIÓN (v1.50, Elías, 19 de noviembre) — D3, tres modos:** el switch Básico / Completo se reemplaza por **tres modos** sobre la misma figura del espacio: **Básico** (piel, rostro, pelo, ropa normal y piernas, en 5 pasos; todas las cabezas cambian de color, solo cambia el rostro), **Personaje original** (catálogo saga → grupo → personaje → versión; «Ponerme todo» o «Solo el traje») y **Avanzado** («Piezas comunes» sin piezas de personaje y «Piezas originales» por saga, con piezas sueltas de cada personaje). Al abrir un espacio el libro muestra las 3 tarjetas grandes (portadas de Elías) y unos separadores cambian de modo en cualquier página. Lo hecho en un modo se ve en los otros. Antes de **quitar** algo, de cambiar dos partes o más a la vez o de **reemplazar una pieza original** sale un aviso con lo que se va y lo que llega; los cambios simples no preguntan, y «Regresar» deshace el último paso (hasta 30). El libro de cómic (muro, libro, vuelta de página, figura viva) se mantiene. Sagas iniciales: Marvel (Avengers: Iron Man, Capitán América, Thor, Hulk, Spider-Man; X-Men: Wolverine, Cíclope, Gambito, Magneto, Tormenta), DC Comics (Batman, Superman, Wonder Woman, Flash, Joker), Star Wars (Darth Vader, Luke Skywalker, Yoda, Mandalorian, Boba Fett) y Harry Potter (Harry, Hermione, Ron, Voldemort, Snape); versiones: Spider-Man (clásico, Iron Spider, película), Batman (Dark Knight, The Batman), Iron Man (clásico, Mark 7), Capitán América (clásico, con casco), Thor (clásico, capa roja). Los demás personajes y los oficios no se muestran por ahora (siguen en la biblioteca). Sustituye en lo que choque a D3 v1.41 (switch Básico / Completo).
+**DECISIÓN (v1.50, Elías, 19 de noviembre) — piezas libres por ahora:** todas las piezas, trajes, personajes y accesorios van libres hasta que Elías entregue el catálogo de qué va bloqueado, libre, en sobres o en tienda. **PENDIENTE:** en la nube la 033 sigue aplicada y su guardián rechaza figuras con piezas bloqueadas; liberarlas de verdad requiere una migración nueva (037) con autorización. Mientras, solo la demostración tiene todo libre.
 **DECISIÓN (v1.26, Elías, 15 de noviembre) — D3:** el modo Avanzado también está en celular. Sustituye la decisión 6 de la tanda 4 (v1.20), que lo dejaba solo en tablet o computadora.
 
 Interacciones exploradas:
@@ -1267,6 +1269,7 @@ La frase de referencia que se había propuesto sobre LEGO y The LEGO Group no de
 
 **PENDIENTE:** las imágenes de las piezas siguen siendo las del armador anterior. Antes de cobrar por la app o difundirla fuera del grupo hay que redibujarlas como piezas originales (fase 2, Personajes).
 
+**PENDIENTE (v1.50):** el catálogo de personajes creció a 25 de Marvel, DC, Star Wars y Harry Potter, con piezas LDraw de esos personajes (casco de Darth Vader, casco mandaloriano, cabeza de Yoda, máscara de Wolverine) y portadas de las tarjetas con logotipos de terceros. Elías lo permite mientras la app no se publique ni venda; el riesgo de abajo sigue igual.
 **PENDIENTE (v1.11):** el modelo 3D nuevo usa geometría LDraw (figuras de LEGO) y colecciones de personajes de terceros (Marvel, Harry Potter). El repo y la app son públicos. Lo de arriba sigue aplicando: antes de cobrar o difundir fuera del grupo hace falta revisión jurídica o cambiar a personajes y piezas propias.
 
 ---
@@ -1663,6 +1666,9 @@ Decisiones del usuario del 12 de noviembre de 2026:
 ## v1.6
 - Primeros logros (14.2), con ámbito de sesión o histórico (ver DECISIÓN v1.6 en 14.2).
 
+## v1.50
+- 19 nov 2026. D3 con tres modos (Básico, Personaje original y Avanzado), catálogo por saga con 25 personajes y sus versiones, aviso antes de quitar o reemplazar y «Regresar» (sección 10). Todas las piezas libres por ahora; liberarlas en la nube queda PENDIENTE (037). Marcas: nota nueva en 19.1. Sin cambios de base.
+
 ## v1.49
 - 19 nov 2026. Elías aprobó las decisiones 2 a 6 de la tienda (13.1): monedas, precios, probabilidades, garantía, piezas sin repetidas, desbloqueo directo con monedas y comodines a la venta (solo Pasa turno y Cambio de pregunta). Migración 036 (monedas, sobres en el servidor, comodines por cuenta, monedas por juego) aplicada el mismo día con autorización de Elías, tras prueba local y remota deshecha.
 
@@ -1825,5 +1831,5 @@ Decisiones del usuario del 12 de noviembre de 2026:
 
 ---
 
-**Fin del Documento Maestro ALV v1.49**  
+**Fin del Documento Maestro ALV v1.50**  
 Este documento debe actualizarse de forma incremental y conservar la distinción entre decisiones aprobadas, propuestas, pendientes y descartadas.

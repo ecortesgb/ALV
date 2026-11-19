@@ -10,7 +10,7 @@ import { Icono } from "../ds";
 export const srcArte = (nombre: string) => new URL(`${import.meta.env.BASE_URL}arte/${nombre}`, document.baseURI).href;
 
 /** Inclina la tarjeta hacia donde está el dedo (variables --rx y --ry). Sin efecto con movimiento reducido (lo apaga el CSS). */
-function useInclina() {
+export function useInclina() {
   const ref = useRef<HTMLButtonElement>(null);
   const mover = (e: React.PointerEvent) => {
     const el = ref.current; if (!el) return;
@@ -23,7 +23,7 @@ function useInclina() {
   return { ref, onPointerMove: mover, onPointerLeave: salir };
 }
 
-function Rayos({ color }: { color: string }) {
+export function Rayos({ color }: { color: string }) {
   const puntas: string[] = [];
   for (let i = 0; i < 24; i += 2) {
     const a1 = Math.PI * 2 * i / 24, a2 = Math.PI * 2 * (i + 1) / 24;

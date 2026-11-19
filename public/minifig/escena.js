@@ -61,6 +61,7 @@
     taza: { y: 12, z: 19 },                             // el asa (z≈-19, y≈-12) al puño
     sarten: { rx: 90, y: -22, z: 2 },                   // el mango (z de -15 a -30) se acuesta sobre la barra
     radio: { y: -30 },                                 // se toma del mango largo, no de la caja
+    "ld-alv-sable": { y: 16 },                          // empuñadura de -36 a 4: su centro al puño; la hoja sube
     "escudo-redondo": { giro: 90, espejo: true }, "escudo-capitan": { giro: 90, espejo: true },
     "escudo-triangular": { giro: 90, espejo: true }, "escudo-ovalado": { giro: 90, espejo: true },
   };
@@ -205,7 +206,7 @@
 
   // Cascos que son máscaras con huecos (Batman, el del Capitán): debajo va un rostro cuyos ojos caen en los huecos,
   // sin lentes ni barba (otros rostros o detalles se asomaban desalineados).
-  const CASCO_MASCARA = new Set(["ld-55704", "ld-49556p02"]);
+  const CASCO_MASCARA = new Set(["ld-55704", "ld-49556p02", "ld-10113", "ld-17018p01"]);
   function armar(f) {
     const plano = desdeFigura(f);
     if (CASCO_MASCARA.has(plano.cabello)) { plano.rostro = "sonrisa"; plano.facial = []; }
