@@ -59,6 +59,16 @@ export async function entrarInvitado(apodo: string): Promise<string | null> {
 export type Genero = "hombre" | "mujer" | "otro";
 export interface Registro { nacimiento: string; genero: Genero }
 
+/** Género de cada quien en la sala (función 011: solo para quien está en esa sala abierta). Para armar ALVersus. */
+export async function generosSala(evento: string): Promise<Record<string, Genero>> {
+  if (!cliente) return {};
+  try {
+    const { data, error } = await cliente.rpc("generos_sala", { p_evento: evento });
+    if (error || !Array.isArray(data)) { if (error) console.error("generosSala", error); return {}; }
+    return Object.fromEntries((data as { jugador: string; genero: Genero }[]).map(r => [r.jugador, r.genero]));
+  } catch (e) { console.error("generosSala", e); return {}; }
+}
+
 /**
  * Guarda fecha de nacimiento (AAAA-MM-DD) y género de la cuenta abierta. La fecha se fija una sola vez;
  * el servidor valida todo y calcula si es mayor de 18. Devuelve ese dato, o null si no se pudo.

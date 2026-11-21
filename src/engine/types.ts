@@ -55,7 +55,7 @@ export interface OpcionesImpostor {
 /** Lo que devuelve el configurador de partida, además del juego, las rondas y el nivel. */
 export interface OpcionesPartida {
   modalidad?: Modalidad;
-  /** Equipos y guerra de sexos: id del jugador → id de su grupo. Las parejas se arman por orden de llegada. */
+  /** Equipos y guerra de sexos: id del jugador → id de su grupo. Parejas: p1, p2… si el anfitrión las eligió; sin esto, por orden de llegada. */
   grupos?: Record<string, string>;
   escenario?: EscenarioId;
   turno?: "orden" | "ruleta";

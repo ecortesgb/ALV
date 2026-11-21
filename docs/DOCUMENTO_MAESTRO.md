@@ -1,7 +1,7 @@
 # ALV — Amigos Legendarios Verdaderos
 ## Documento Maestro del Producto
-**Versión:** 1.50  
-**Última actualización:** 19 de noviembre de 2026  
+**Versión:** 1.51  
+**Última actualización:** 20 de noviembre de 2026  
 **Estado:** Documento vivo de producto; decisiones y propuestas identificadas por separado.
 
 ---
@@ -297,6 +297,8 @@ Estado de lo construido: el lobby de 2 a 8 está publicado (7c1cc2b). El configu
 - Siguen **PENDIENTES** de 5: número impar de jugadores, tamaño de equipos, asignación automática y cambios de equipo.
 
 Estado de lo construido (v1.44, sin publicar): las cuatro existen en el configurador y en el motor (`armarGrupos`, lugar por grupo en `resultados`). Parejas por orden de llegada con número par; equipos A a D que el anfitrión mueve; en ALVersus el anfitrión marca Ellas o Ellos a cada quien.
+
+**DECISIÓN (v1.51, Elías, 20 de noviembre) — género y armado de grupos:** el registro pide género con tres opciones: Mujer, Hombre y «Prefiero no decirlo» (se quitó «Otro»); «Prefiero no decirlo» se guarda como `otro`, sin migración. En ALVersus los bandos se acomodan solos: Mujer → Ellas, Hombre → Ellos, y quien prefirió no decirlo (o no tiene género) va al bando con menos gente, al azar si están parejos. Antes de iniciar, el anfitrión puede cambiar los bandos, los equipos y también las **parejas** (tocando a dos personas se intercambian); sin cambios, las parejas siguen por orden de llegada. Partidas guardadas sin parejas elegidas se reconstruyen igual que antes.
 
 ## 6A.3 Herramientas
 
@@ -1666,6 +1668,9 @@ Decisiones del usuario del 12 de noviembre de 2026:
 ## v1.6
 - Primeros logros (14.2), con ámbito de sesión o histórico (ver DECISIÓN v1.6 en 14.2).
 
+## v1.51
+- 20 nov 2026. Género con Mujer, Hombre y «Prefiero no decirlo» (guardado como `otro`); ALVersus se acomoda solo según el género y el anfitrión puede editar bandos, equipos y parejas antes de iniciar (6A, junto a las modalidades). Términos y Condiciones y Política de Privacidad con créditos de Elías Cortés (`src/content/terminos.ts`, copia en `docs/TERMINOS_Y_CONDICIONES.md`); las marcas de terceros se declaran de sus dueños, sin afiliación.
+
 ## v1.50
 - 19 nov 2026. D3 con tres modos (Básico, Personaje original y Avanzado), catálogo por saga con 25 personajes y sus versiones, aviso antes de quitar o reemplazar y «Regresar» (sección 10). Todas las piezas libres por ahora: migración 037 aplicada con autorización de Elías (piezas de la 033 inactivas, sobres de piezas pausados). Marcas: nota nueva en 19.1. Sin cambios de base.
 
@@ -1831,5 +1836,5 @@ Decisiones del usuario del 12 de noviembre de 2026:
 
 ---
 
-**Fin del Documento Maestro ALV v1.50**  
+**Fin del Documento Maestro ALV v1.51**  
 Este documento debe actualizarse de forma incremental y conservar la distinción entre decisiones aprobadas, propuestas, pendientes y descartadas.

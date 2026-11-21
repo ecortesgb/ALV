@@ -164,7 +164,7 @@ export function LogoALV({ tamano = "grande", ruleta = true, unaVez = false, clas
             <g key={ruleta ? r.n : 0} className="a-ruleta-col" style={{ transform: `translateY(${-paso * H}px)` }}>
               {lista.map((frase, i) => (
                 <text key={i} className={"a-ruleta-t" + (i === n ? " a-ruleta-ult" : "")} transform={`translate(0,${i * H})`} fontFamily="Bangers, Impact, sans-serif" fontSize={30} letterSpacing={1.5}
-                  fill="#ffd93a" stroke={TINTA} strokeWidth={6} strokeLinejoin="round" paintOrder="stroke" dy={10}>
+                  fill="#ffd93a" stroke={TINTA} strokeWidth={6} strokeLinejoin="round" paintOrder="stroke" dy={0}>
                   <textPath href={`#${id}-curva`} startOffset="50%" textAnchor="middle">{frase.toUpperCase()}</textPath>
                 </text>
               ))}

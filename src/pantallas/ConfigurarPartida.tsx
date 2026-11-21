@@ -14,6 +14,8 @@ import { maxImpostores } from "../engine/partida";
 import type { DefinicionJuego, EscenarioId, Modalidad, OpcionesPartida } from "../engine/types";
 import { Boton, Chip, Icono, Panel } from "../ds";
 import { colorJugador, varsColor } from "../app/colorJugador";
+import { bandosIniciales, intercambiar, parejasIniciales } from "../app/bandos";
+import { generosSala, type Genero } from "../servicios/cuenta";
 import { ir } from "../app/rutas";
 import { useSesion } from "../app/sesion";
 import { sonar } from "../app/sonido";
@@ -95,8 +97,10 @@ function ArteJuego({ id, className = "" }: { id: string; className?: string }) {
     : <span className={"cfg-sinarte " + className} style={{ "--tc": colorDe(id) } as CSSProperties}><span aria-hidden="true">{EMOJI_JUEGO[id] ?? "🎲"}</span></span>;
 }
 
-export function ConfigurarPartida({ miembros, alIniciar, alCancelar, iniciando, inicial, alEntregarCopas, alFondo }: {
+export function ConfigurarPartida({ miembros, alIniciar, alCancelar, iniciando, inicial, alEntregarCopas, alFondo, generos }: {
   miembros: MiembroConfig[];
+  /** Género de cada quien (para ALVersus). undefined mientras se lee; sin nube, {}. */
+  generos?: Record<string, Genero>;
   /** «Terminar la noche»: entrega las copas de todos los juegos jugados (solo el anfitrión). */
   alEntregarCopas?: () => void;
   /** Fondo de la página: en la sección «Escenario» el del escenario elegido (null = Ciudad ALV); fuera de ella, undefined. */
@@ -138,13 +142,18 @@ export function ConfigurarPartida({ miembros, alIniciar, alCancelar, iniciando, 
   const instrumentos = INSTRUMENTOS[juego] ?? [];
   const inst = instrumentos.find(i => i.id === instrumento) ?? instrumentos[0];
   const maxImp = maxImpostores(n);
-  const conGrupos = tipo === "equipos" || tipo === "sexos";
+  const conGrupos = tipo === "equipos" || tipo === "sexos" || tipo === "parejas";
+  // Parejas: la primera persona tocada espera a la segunda para intercambiarlas.
+  const [tocado, setTocado] = useState<string | null>(null);
 
-  // Al cambiar de tipo, grupos de arranque: equipos alternados; guerra de sexos, en blanco (cada quien se acomoda).
+  // Al cambiar de tipo, grupos de arranque (el anfitrión los puede cambiar antes de iniciar): equipos alternados;
+  // parejas por orden de llegada; ALVersus según el género de cada quien («Prefiero no decirlo» al bando con menos gente).
   useEffect(() => {
     if (tipo === "equipos") setGrupos(g => (ids.every(id => GRUPOS_EQUIPOS.some(x => x.id === g[id])) ? g : repartir(ids, cuantosEquipos)));
-    if (tipo === "sexos") setGrupos(g => Object.fromEntries(ids.filter(id => g[id] === "ellas" || g[id] === "ellos").map(id => [id, g[id]!])));
-  }, [tipo, ids]); // eslint-disable-line react-hooks/exhaustive-deps
+    if (tipo === "parejas") setGrupos(g => parejasIniciales(ids, g));
+    if (tipo === "sexos" && generos) setGrupos(g => bandosIniciales(ids, generos, g));
+    setTocado(null);
+  }, [tipo, ids, generos]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { if (impostores > maxImp) setImpostores(maxImp); }, [maxImp, impostores]);
   // Si el juego elegido no admite el tipo de partida, se cambia por el primero que sí (y vuelve a «Todos»).
   useEffect(() => {
@@ -172,7 +181,7 @@ export function ConfigurarPartida({ miembros, alIniciar, alCancelar, iniciando, 
   const k = orden.indexOf(sec);
   const falta = (s: Seccion): string | null => {
     if (s === "tipo") return candadoTipo(tipo, n);
-    if (s === "grupos") return gruposOk ? null : tipo === "sexos" ? "Toca Ellas o Ellos en cada quien" : "Cada equipo necesita gente";
+    if (s === "grupos") return gruposOk ? null : tipo === "sexos" ? (generos ? "Toca Ellas o Ellos en cada quien" : "Acomodando bandos…") : tipo === "parejas" ? "Cada pareja necesita dos" : "Cada equipo necesita gente";
     if (s === "juego") return j ? candado(j, n, nivel) : "Elige un juego";
     if (s === "escenario") return candadoEscenario(escenario, j);
     return null;
@@ -190,7 +199,7 @@ export function ConfigurarPartida({ miembros, alIniciar, alCancelar, iniciando, 
   const color = (id: string) => colorJugador(ids.indexOf(id));
 
   const TITULO: Record<Seccion, string> = {
-    tipo: "Tipo de partida", grupos: tipo === "sexos" ? "Ellas y ellos" : "Arma los equipos", juego: "Elige el juego",
+    tipo: "Tipo de partida", grupos: tipo === "sexos" ? "Ellas y ellos" : tipo === "parejas" ? "Arma las parejas" : "Arma los equipos", juego: "Elige el juego",
     opciones: esImpostor(j) ? "Opciones del juego" : "Herramienta", escenario: "Escenario", resumen: "¡Todo listo!",
   };
 
@@ -200,6 +209,29 @@ export function ConfigurarPartida({ miembros, alIniciar, alCancelar, iniciando, 
       <div className="cfg-tipos" role="radiogroup" aria-label="Tipo de partida">
         {MODALIDADES.map((m, i) => <CartaTipo key={m.id} id={m.id} indice={i} nombre={m.nombre} texto={m.gana} elegida={tipo === m.id} bloqueada={candadoTipo(m.id, n)} onClick={() => setTipo(m.id)} />)}
       </div>
+    );
+  } else if (sec === "grupos" && tipo === "parejas") {
+    const parejas = [...new Set(ids.map(id => grupos[id]).filter((g): g is string => !!g))].sort((x, y) => Number(x.slice(1)) - Number(y.slice(1)));
+    const tocar = (id: string) => {
+      if (!tocado) { setTocado(id); return; }
+      if (tocado !== id) setGrupos(g => intercambiar(g, tocado, id));
+      setTocado(null);
+    };
+    contenido = (
+      <Panel className="a-pila cfg-ancho">
+        <span className="a-kick">{tocado ? `Ahora toca a quien cambia de lugar con ${miembros.find(m => m.id === tocado)?.nombre ?? ""}` : "Toca a dos personas para cambiarlas de pareja"}</span>
+        <div className="cp-equipos" style={{ "--cols": 2 } as CSSProperties}>
+          {parejas.map((g, x) => (
+            <div key={g} className="cp-equipo"><span className="dsp ol">Pareja {x + 1}</span>
+              {miembros.filter(m => grupos[m.id] === g).map(m => (
+                <button key={m.id} type="button" className={"cp-mover" + (tocado === m.id ? " on" : "")} aria-pressed={tocado === m.id} onClick={() => tocar(m.id)}>
+                  <Persona m={m} c={color(m.id)} />
+                </button>
+              ))}
+            </div>
+          ))}
+        </div>
+      </Panel>
     );
   } else if (sec === "grupos") {
     contenido = tipo === "equipos" ? (
@@ -221,6 +253,7 @@ export function ConfigurarPartida({ miembros, alIniciar, alCancelar, iniciando, 
       </Panel>
     ) : (
       <Panel className="a-pila cfg-ancho"><span className="a-kick">¿De qué bando es cada quien?</span>
+        <p className="a-suave cp-nota">Ya los acomodamos según su registro; quien prefirió no decirlo va al bando con menos gente. Toca para cambiar.</p>
         <ul className="cp-bandos">{miembros.map(m => (
           <li key={m.id}><Persona m={m} c={color(m.id)} />
             <div className="a-fila">{GRUPOS_SEXOS.map(g => <Chip key={g.id} texto={g.nombre} seleccionado={grupos[m.id] === g.id} onClick={() => setGrupos(z => ({ ...z, [m.id]: g.id }))} />)}</div>
@@ -408,6 +441,10 @@ export function PaginaConfigurar({ codigo }: { codigo: string }) {
   const [iniciando, setIniciando] = useState(false);
   const [fondoEsc, setFondoEsc] = useState<EscenarioId | null | undefined>(undefined);
   const soyAnfitrion = !!s.sala && s.sala.anfitrionId === ses.uid;
+  const [generos, setGeneros] = useState<Record<string, Genero> | undefined>(undefined);
+  const salaId = s.sala?.id, cuantos = s.miembros.length;
+  // Se vuelve a leer si entra o sale alguien (para ALVersus).
+  useEffect(() => { if (salaId && soyAnfitrion) void generosSala(salaId).then(setGeneros); }, [salaId, soyAnfitrion, cuantos]);
   const enCurso = !!s.partida && !s.partida.terminada;
   useEffect(() => { if (enCurso && !iniciando) ir("sala", codigo); }, [enCurso, iniciando, codigo]);
   if (s.error) return <Marco clase="a-centro"><Vacio titulo="No se pudo abrir" texto={s.error}><Boton color="amarillo" texto="Volver" icono="back" onClick={() => ir("jugar")} /></Vacio></Marco>;
@@ -434,7 +471,7 @@ export function PaginaConfigurar({ codigo }: { codigo: string }) {
   return (
     <Marco clase="cfg-pagina" fondo={fondoEsc !== undefined ? <FondoEscenario escenario={fondoEsc} /> : undefined}>
       {soyAnfitrion
-        ? <ConfigurarPartida miembros={s.miembros} iniciando={iniciando} alIniciar={c => void iniciar(c)} alCancelar={() => ir("sala", codigo)} alEntregarCopas={() => void copas()} alFondo={setFondoEsc} />
+        ? <ConfigurarPartida miembros={s.miembros} generos={generos} iniciando={iniciando} alIniciar={c => void iniciar(c)} alCancelar={() => ir("sala", codigo)} alEntregarCopas={() => void copas()} alFondo={setFondoEsc} />
         : <Vacio titulo="El anfitrión está configurando" texto="En cuanto toque «Iniciar», empieza la partida."><Boton color="amarillo" texto="Volver a la sala" icono="back" onClick={() => ir("sala", codigo)} /></Vacio>}
     </Marco>
   );

@@ -164,6 +164,9 @@ button.cfg-casilla:hover { translate: 0 -3px; border-color: var(--amarillo); }
 .D .cp-equipo > .dsp { font-size: var(--t3); color: var(--amarillo); }
 .D .cp-mover { all: unset; cursor: pointer; display: block; max-width: 100%; border-radius: var(--radio-pildora); }
 .D .cp-mover:focus-visible { outline: 3px solid var(--amarillo); outline-offset: 2px; }
+.D .cp-mover.on { outline: 3px solid var(--amarillo); outline-offset: 2px; animation: aPulso 1s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) { .D .cp-mover.on { animation: none; } }
+.D .cp-nota { margin: 0; font: var(--cuerpo-chico); }
 @media (max-width: 520px) { .D .cp-equipos { grid-template-columns: repeat(min(var(--cols, 2), 2), minmax(0, 1fr)); } }
 
 @media (prefers-reduced-motion: reduce) {

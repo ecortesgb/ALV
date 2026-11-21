@@ -408,8 +408,16 @@ button.a-logo:focus-visible { outline: 3px solid #ffd23f; outline-offset: 4px; b
 .D .a-inicio-barra { position: static; width: min(320px, 70vw); height: 12px; padding: 0; border: 2.5px solid #0a1030; background: rgba(10,16,48,.7); box-shadow: 0 3px 0 #0a1030; }
 .D .a-inicio-barra i { background: linear-gradient(90deg, #ffb100, #ffe14a); box-shadow: 0 0 10px #ffd23f; }
 .D .a-inicio-estado { margin: 0; font: italic 800 15px/1 "Barlow Condensed", sans-serif; letter-spacing: .12em; text-transform: uppercase; color: #fff; text-shadow: 0 2px 0 #0a1030; animation: aPulso 1.2s ease-in-out infinite; }
-.D .a-inicio-boton { font-size: clamp(15px, 2.2vw, 22px); animation: aEntraBoton .5s cubic-bezier(.2,1.5,.4,1) backwards, dGlow 2.4s ease-in-out .5s infinite; }
+.D .a-inicio-boton { font-size: clamp(15px, 2.2vw, 22px); animation: aEntraBoton .5s cubic-bezier(.2,1.5,.4,1) backwards, aRespira 2.2s ease-in-out .5s infinite;
+  box-shadow: inset 0 .16em 0 rgba(255,255,255,.5), inset 0 -.22em 0 rgba(0,0,0,.22), 0 .3em 0 var(--ink), 0 .9em 1.4em rgba(0,0,0,.6); }
 .D .a-inicio-boton .dsp { font-size: 2.1em; }
+/* Subtítulo sobre el amarillo: tinta casi negra y más peso para que se lea. */
+.D.alv .a-inicio-boton small { color: #050a24; font: 800 15px/1.15 "Barlow", sans-serif; letter-spacing: .02em; opacity: 1; }
+/* «Respiración»: crece un poco y el brillo amarillo sube y baja; la sombra de abajo siempre fuerte. */
+@keyframes aRespira {
+  0%, 100% { scale: 1; box-shadow: inset 0 .16em 0 rgba(255,255,255,.5), inset 0 -.22em 0 rgba(0,0,0,.22), 0 .3em 0 var(--ink), 0 .9em 1.4em rgba(0,0,0,.6), 0 0 0 rgba(255,210,63,0); }
+  50% { scale: 1.05; box-shadow: inset 0 .16em 0 rgba(255,255,255,.5), inset 0 -.22em 0 rgba(0,0,0,.22), 0 .3em 0 var(--ink), 0 1.2em 1.8em rgba(0,0,0,.55), 0 0 1.8em rgba(255,210,63,.8); }
+}
 .D .a-inicio-legal { font: 600 11px/1 "Barlow", sans-serif; color: rgba(255,255,255,.65); letter-spacing: .04em; }
 .D .a-logo-acceso { display: flex; flex-direction: column; align-items: center; gap: 10px; }
 @keyframes aEntraBoton { from { opacity: 0; transform: skewX(-9deg) scale(.6); } }
@@ -464,7 +472,7 @@ button.a-logo:focus-visible { outline: 3px solid #ffd23f; outline-offset: 4px; b
 .D.a-acceso .a-fondo-acceso::before { content: ""; position: absolute; inset: -20px; background: var(--arte-g) center 70% / cover no-repeat; filter: blur(7px) brightness(.55) saturate(1.15); }
 .D.a-acceso:not(.wide) .a-fondo-acceso::before { background-image: var(--arte-c); }
 .D.a-acceso .a-fondo-acceso::after { background-size: auto; background-image: linear-gradient(180deg, rgba(20,50,140,.35), rgba(8,16,60,.55)); }
-.D.a-acceso .a-scroll { gap: 14px; padding-top: max(20px, env(safe-area-inset-top)); }
+.D.a-acceso .a-scroll { gap: 14px; padding-top: max(20px, env(safe-area-inset-top)); justify-content: safe center; } /* safe: si no cabe, empieza arriba (no corta el logo) */
 .D.a-acceso .a-acceso-logo { --logo: clamp(76px, 23vw, 118px); margin-bottom: -6px; }
 .D .a-volver { position: absolute; z-index: 6; left: max(14px, env(safe-area-inset-left)); top: max(14px, env(safe-area-inset-top)); width: 52px; height: 52px; display: grid; place-items: center; cursor: pointer;
   color: #0a1030; background: linear-gradient(180deg, #fff09a, #ffd23f 52%, #e39a00); border: 3px solid #0a1030; border-radius: 12px;
@@ -503,15 +511,82 @@ button.a-logo:focus-visible { outline: 3px solid #ffd23f; outline-offset: 4px; b
 @keyframes aEntraTarjeta { from { opacity: 0; transform: translateY(24px) scale(.97); } }
 @media (prefers-reduced-motion: reduce) { .D .a-tarjeta { animation: none; } }
 .D.a-acceso.wide .a-acceso-logo { margin-top: 18px; }
-/* Fecha de nacimiento: tres listas (día, mes, año) en una fila; en celular abren la rueda nativa. */
-.D .a-fecha { border: 0; padding: 0; margin: 0; min-width: 0; }
-.D .a-fecha legend { padding: 0; margin-bottom: 8px; }
-.D .a-fecha-fila { position: relative; display: grid; grid-template-columns: 1fr 1.6fr 1.15fr; gap: 8px; }
-.D .a-fecha select { min-width: 0; min-height: 52px; padding: 8px 26px 8px 12px; font: 600 16px/1.2 "Barlow", sans-serif; color: #0a1030; cursor: pointer;
-  background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%231f3a80' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") right 10px center / 12px no-repeat;
-  border: 2.5px solid #8fa9df; border-radius: 12px; appearance: none; -webkit-appearance: none; color-scheme: light; transition: border-color .15s, box-shadow .15s; }
-.D .a-fecha select:invalid { color: #5a6d9c; }
-.D .a-fecha select:focus { outline: none; border-color: #2f6cf0; box-shadow: 0 0 0 3px rgba(47,108,240,.25); }
+/* Fecha de nacimiento en un campo DD/MM/AAAA con calendario a la derecha (Acceso.tsx, FechaNacimiento). */
+.D .a-fecha { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.D .a-campo-btn.on { background: rgba(47,108,240,.16); }
+/* Rueda Día / Mes / Año (RuedaFecha.tsx). Filas de 40 px; se ven 5 y la del centro es la elegida. */
+.D .a-rueda { padding: 10px 10px 8px; background: linear-gradient(180deg, #fbfcff, #eef2fb); border: 2.5px solid #8fa9df; border-radius: 14px;
+  box-shadow: 0 6px 16px rgba(10,16,48,.18); animation: aRuedaEntra .2s ease-out; }
+.D .a-rueda-cols { position: relative; display: grid; grid-template-columns: .8fr 1fr 1.1fr; gap: 4px; }
+.D .a-rueda-banda { position: absolute; left: 0; right: 0; top: calc(26px + 30px + 80px); height: 40px; border: 2.5px solid #9aa6dc; border-radius: 10px;
+  background: rgba(205,214,245,.55); box-shadow: 0 2px 6px rgba(60,80,170,.2); pointer-events: none; }
+.D .a-rueda-col { display: flex; flex-direction: column; align-items: stretch; min-width: 0; }
+.D .a-rueda-et { height: 26px; text-align: center; font: 800 15px/26px "Barlow", sans-serif; letter-spacing: .04em; text-transform: uppercase; color: #3d4fb0; }
+.D .a-rueda-flecha { height: 30px; display: grid; place-items: center; padding: 0; background: none; border: 0; cursor: pointer; color: #5a68c0; }
+.D .a-rueda-flecha:hover { color: #2f3f9e; }
+.D .a-rueda-flecha svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; }
+.D .a-rueda-lista { position: relative; height: 200px; padding: 80px 0; box-sizing: border-box; overflow-y: auto; scroll-snap-type: y mandatory; overscroll-behavior: contain;
+  scrollbar-width: none; -webkit-mask-image: linear-gradient(180deg, transparent, #000 30%, #000 70%, transparent); mask-image: linear-gradient(180deg, transparent, #000 30%, #000 70%, transparent);
+  touch-action: pan-y; outline: none; border-radius: 8px; }
+.D .a-rueda-lista::-webkit-scrollbar { display: none; }
+.D .a-rueda-lista:focus-visible { box-shadow: inset 0 0 0 2px rgba(47,108,240,.5); }
+.D .a-rueda-lista > div { height: 40px; display: grid; place-items: center; scroll-snap-align: center; cursor: pointer; user-select: none;
+  font: 600 19px/1 "Barlow", sans-serif; color: #7a7f8f; font-variant-numeric: tabular-nums; transition: color .15s, font-size .15s; }
+.D .a-rueda-lista > div.on { color: #2a2d36; font: 800 24px/1 "Barlow", sans-serif; }
+.D .a-rueda-listo { display: block; width: 100%; margin-top: 8px; min-height: 40px; cursor: pointer; color: #fff; background: linear-gradient(180deg, #4f86f0, #2453c4);
+  border: 2.5px solid #0a1030; border-radius: 10px; font: italic 800 17px/1 "Barlow Condensed", sans-serif; letter-spacing: .04em; text-transform: uppercase; box-shadow: 0 3px 0 #0a1030; }
+.D .a-rueda-listo:active { transform: translateY(2px); box-shadow: 0 1px 0 #0a1030; }
+@keyframes aRuedaEntra { from { opacity: 0; transform: translateY(-6px); } }
+@media (prefers-reduced-motion: reduce) { .D .a-rueda { animation: none; } }
+.D .a-fecha-aviso { color: #b3261e; font: 700 14px/1.2 "Barlow", sans-serif; }
+.D .a-tarjeta .a-campo input[aria-invalid] { border-color: #d0453b; }
+/* Botón dentro del campo, a la derecha (ojo de la contraseña, calendario). */
+.D .a-tarjeta .a-campo-der input { padding-right: 52px; }
+.D .a-campo-btn { position: absolute; right: 4px; top: 50%; translate: 0 -50%; width: 44px; height: 44px; display: grid; place-items: center; padding: 0; cursor: pointer;
+  background: none; border: 0; border-radius: 10px; color: #1f3a80; }
+.D .a-campo-btn:hover { background: rgba(47,108,240,.1); }
+.D .a-campo-btn:focus-visible { outline: 3px solid rgba(47,108,240,.45); outline-offset: -3px; }
+.D .a-campo-btn svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+/* Género: cuatro píldoras en una fila; la elegida en azul claro. */
+.D .a-generos { display: grid; grid-template-columns: minmax(0, .9fr) minmax(0, 1fr) minmax(0, 1.5fr); gap: 8px; }
+.D .a-pildora { min-height: 44px; padding: 4px 6px; cursor: pointer; color: #0a1030; background: #fff; border: 2.5px solid #0a1030; border-radius: 999px;
+  font: 800 14px/1.05 "Barlow", sans-serif; box-shadow: 0 3px 0 #0a1030; transition: transform .1s, background .15s; }
+.D .a-pildora:last-child { font-size: 13.5px; }
+.D .a-pildora.on { background: linear-gradient(180deg, #c9e2ff, #8fc0ff); }
+.D .a-pildora:active { transform: translateY(2px); box-shadow: 0 1px 0 #0a1030; }
+.D .a-pildora:focus-visible { outline: 3px solid rgba(47,108,240,.5); outline-offset: 2px; }
+.D .a-enlace { display: inline; padding: 0; margin: 0; background: none; border: 0; cursor: pointer; font: inherit; color: #1d4fd1; text-decoration: underline; text-underline-offset: 2px; }
+.D .a-enlace:focus-visible { outline: 2px solid #2f6cf0; outline-offset: 2px; border-radius: 3px; }
+/* Términos y Privacidad (Acceso.tsx, Terminos): créditos arriba y el texto legal en la tarjeta clara. */
+.D .a-terminos { display: flex; flex-direction: column; gap: 10px; color: #1f2d55; font: 500 15px/1.45 "Barlow", sans-serif; }
+.D .a-terminos h2 { margin: 6px 0 0; font: italic 800 18px/1.1 "Barlow Condensed", sans-serif; color: #0a1030; letter-spacing: .02em; }
+.D .a-terminos p { margin: 0; }
+.D .a-creditos { display: flex; flex-direction: column; gap: 6px; padding: 12px 14px; text-align: center; border: 2.5px solid #0a1030; border-radius: 12px;
+  background: linear-gradient(180deg, #fff09a, #ffc81f); box-shadow: 0 3px 0 #0a1030; color: #0a1030; }
+.D .a-creditos-titulo { font: 400 26px/1 Bangers, Impact, sans-serif; letter-spacing: .04em; }
+.D .a-creditos p { font-weight: 600; }
+.D .a-creditos small { font: 800 13px/1.2 "Barlow", sans-serif; }
+.D .a-terminos-fecha { color: #3a4f86; font-size: 13px; }
+.D .a-tarjeta .a-check { line-height: 1.25; }
+.D .a-tarjeta .a-check input { accent-color: #1f3a80; }
+/* «¿Ya tienes cuenta? Inicia sesión» bajo el logo (Registrarse). */
+.D .a-bajo-logo { background: none; border: 0; padding: 4px 8px; min-height: 32px; margin-top: -10px; cursor: pointer; color: #fff; font: 600 15px/1.2 "Barlow", sans-serif; text-shadow: 0 2px 3px rgba(0,0,0,.7); }
+.D .a-bajo-logo b { text-decoration: underline; text-underline-offset: 3px; }
+.D .a-boton-registro .dsp { text-transform: uppercase; }
+/* Pantallas bajas (computadora, celular acostado): logo, campos y espacios más compactos para que Registrarse quepa sin desplazar. */
+@media (max-height: 900px) {
+  .D.a-acceso .a-scroll { gap: 8px; padding-top: 10px; padding-bottom: 12px; }
+  .D.a-acceso.wide .a-acceso-logo { --logo: 82px; margin-top: 0; }
+  .D.a-acceso .a-bajo-logo { margin-top: -8px; min-height: 26px; padding-block: 2px; }
+  .D.a-acceso .a-tarjeta-cuerpo { padding: 14px 16px 8px; }
+  .D.a-acceso .a-pila { gap: 10px; }
+  .D.a-acceso .a-tarjeta .a-campo input { min-height: 44px; }
+  .D.a-acceso .a-tarjeta .a-campo { gap: 4px; }
+  .D.a-acceso .a-tarjeta-tabs button { min-height: 40px; }
+  .D.a-acceso .a-tarjeta-pie { min-height: 34px; padding: 4px; }
+  .D.a-acceso .a-tarjeta .a-check { font-size: 14px; }
+  .D.a-acceso .a-pildora { min-height: 40px; }
+}
 
 /* Apodo de la figura arriba del nombre del jugador (NombreJugador en comun.tsx; d-alias en TarjetaJugador) */
 .a-nom { display: inline-flex; flex-direction: column; align-items: inherit; min-width: 0; line-height: 1.05; }

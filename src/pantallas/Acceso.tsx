@@ -1,5 +1,5 @@
 // Pantalla de carga, acceso y registro. ALV es solo para mayores de 18 (D1): la fecha la valida el servidor.
-import { useEffect, useMemo, useState, type CSSProperties, type FormEvent, type InputHTMLAttributes, type ReactNode } from "react";
+import { useEffect, useState, type CSSProperties, type FormEvent, type InputHTMLAttributes, type ReactNode } from "react";
 import { Boton, Icono } from "../ds";
 import { cargarCapsulasNube, entrar, entrarInvitado, esNickInvitado, guardarRegistro, nickValido, passValida, registrar, salir, type Genero } from "../servicios/cuenta";
 import { hayNube } from "../servicios/cliente";
@@ -8,16 +8,19 @@ import { ir } from "../app/rutas";
 import { sonar } from "../app/sonido";
 import { Marco, urlArte } from "./comun";
 import { LogoALV } from "./Logo";
+import { edadDe, fechaDeTexto, formatoFecha } from "../app/fecha";
+import { RuedaFecha } from "./RuedaFecha";
+import { CREDITOS, SECCIONES_TERMINOS, TERMINOS_ACTUALIZADOS } from "../content/terminos";
 
-const hoy = () => new Date();
-/** Edad cumplida a partir de AAAA-MM-DD. */
-export function edadDe(nacimiento: string, ref = hoy()): number {
-  const [a, m, d] = nacimiento.split("-").map(Number) as [number, number, number];
-  let e = ref.getFullYear() - a;
-  if (ref.getMonth() + 1 < m || (ref.getMonth() + 1 === m && ref.getDate() < d)) e--;
-  return e;
-}
-const GENEROS: [Genero, string][] = [["mujer", "Mujer"], ["hombre", "Hombre"], ["otro", "Otro"]];
+export { edadDe, fechaDeTexto, formatoFecha };
+
+/**
+ * Tres opciones: Mujer, Hombre y «Prefiero no decirlo», que se guarda como «otro» (el servidor acepta hombre, mujer u otro).
+ * En ALVersus quien prefirió no decirlo va al bando con menos gente y el anfitrión lo puede cambiar (app/bandos.ts).
+ */
+type GeneroUI = Genero | "nodice";
+const GENEROS: [GeneroUI, string][] = [["mujer", "Mujer"], ["hombre", "Hombre"], ["nodice", "Prefiero no decirlo"]];
+const generoServidor = (g: GeneroUI): Genero => (g === "nodice" ? "otro" : g);
 
 // ---------- Piezas de las pantallas de acceso (estilo tarjeta clara sobre la ciudad del cartel) ----------
 
@@ -31,25 +34,44 @@ function IconoCampo({ id }: { id: keyof typeof ICONO_CAMPO }) {
   return <svg className="a-campo-ic" viewBox="0 0 24 24" aria-hidden="true"><path d={ICONO_CAMPO[id]} /></svg>;
 }
 
-/** Campo con icono a la izquierda. `ver`: muestra la etiqueta arriba (para la fecha, que no tiene texto de ejemplo). */
-function CampoIcono({ etiqueta, icono, ver = false, ...props }: { etiqueta: string; icono: keyof typeof ICONO_CAMPO; ver?: boolean } & InputHTMLAttributes<HTMLInputElement>) {
+/** Campo con icono a la izquierda. `ver`: muestra la etiqueta arriba. `derecha`: botón dentro del campo (ojo, calendario). */
+function CampoIcono({ etiqueta, icono, ver = false, derecha, placeholder, ...props }: { etiqueta: string; icono: keyof typeof ICONO_CAMPO; ver?: boolean; derecha?: ReactNode } & InputHTMLAttributes<HTMLInputElement>) {
   return (
-    <label className={"a-campo a-campo-ic-caja" + (ver ? "" : " a-campo-oculto")}>
+    <label className={"a-campo a-campo-ic-caja" + (ver ? "" : " a-campo-oculto") + (derecha ? " a-campo-der" : "")}>
       <span>{etiqueta}</span>
-      <span className="a-campo-fila"><IconoCampo id={icono} /><input placeholder={ver ? undefined : etiqueta} {...props} /></span>
+      <span className="a-campo-fila"><IconoCampo id={icono} /><input placeholder={placeholder ?? (ver ? undefined : etiqueta)} {...props} />{derecha}</span>
     </label>
   );
+}
+
+/** Ojo para mostrar u ocultar la contraseña escrita. */
+function BotonOjo({ visible, alCambiar }: { visible: boolean; alCambiar: () => void }) {
+  return (
+    <button type="button" className="a-campo-btn" onClick={alCambiar} aria-pressed={visible} aria-label={visible ? "Ocultar contraseña" : "Mostrar contraseña"}>
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M2 12s3.8-7 10-7 10 7 10 7-3.8 7-10 7S2 12 2 12z" /><circle cx="12" cy="12" r="3" />
+        {!visible && <path d="M4 3.5l16.5 17" />}
+      </svg>
+    </button>
+  );
+}
+
+function CampoClave({ nueva, ...props }: { nueva: boolean } & InputHTMLAttributes<HTMLInputElement>) {
+  const [ver, setVer] = useState(false);
+  return <CampoIcono etiqueta="Contraseña" icono="candado" type={ver ? "text" : "password"} autoComplete={nueva ? "new-password" : "current-password"}
+    autoCapitalize="none" spellCheck={false} derecha={<BotonOjo visible={ver} alCambiar={() => setVer(v => !v)} />} {...props} />;
 }
 
 const ARTE_ACCESO = { "--arte-g": urlArte("cartel-inicio-1920.webp"), "--arte-c": urlArte("cartel-inicio-1100.webp") } as CSSProperties;
 function FondoAcceso() { return <div className="d-bg a-fondo-acceso" aria-hidden="true" style={ARTE_ACCESO} />; }
 
-/** Pantalla de acceso: botón de regresar (si hay a dónde), logo y la tarjeta. */
-function MarcoAcceso({ alVolver, children }: { alVolver?: () => void; children: ReactNode }) {
+/** Pantalla de acceso: botón de regresar (si hay a dónde), logo, lo que va bajo el logo y la tarjeta. */
+function MarcoAcceso({ alVolver, bajoLogo, children }: { alVolver?: () => void; bajoLogo?: ReactNode; children: ReactNode }) {
   return (
     <Marco clase="a-centro a-acceso" fondo={<FondoAcceso />}>
       {alVolver && <button type="button" className="a-volver" onClick={alVolver} aria-label="Regresar"><Icono id="back" /></button>}
       <LogoALV tamano="medio" ruleta={false} className="a-acceso-logo" />
+      {bajoLogo}
       {children}
     </Marco>
   );
@@ -121,55 +143,67 @@ async function irAPersonalizarSiNueva(): Promise<void> {
   if (nube && !nube.slots.some(Boolean)) ir("personalizar");
 }
 
-const MESES = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
-const diasDelMes = (anio: number, mes: number) => new Date(anio || 2000, mes, 0).getDate(); // mes 1–12; sin año, 29 de febrero vale
 
 /**
- * Fecha de nacimiento con tres listas (día, mes, año) en vez del calendario: en celular abren la rueda del teléfono.
- * Años desde el actual menos 18 hacia atrás. Solo cuando las tres están elegidas se entrega AAAA-MM-DD (si no, "").
+ * Fecha de nacimiento: se escribe DD/MM/AAAA (teclado de números en celular) o se elige con la rueda Día / Mes / Año
+ * que abre el calendario de la derecha. Solo con una fecha que existe se entrega AAAA-MM-DD (si no, ""); la edad la
+ * validan `edadDe` y el servidor.
  */
 export function FechaNacimiento({ valor, alCambiar }: { valor: string; alCambiar: (v: string) => void }) {
-  const [a0, m0, d0] = valor ? valor.split("-").map(Number) : [0, 0, 0];
-  const [dia, setDia] = useState(d0 || 0), [mes, setMes] = useState(m0 || 0), [anio, setAnio] = useState(a0 || 0);
-  const tope = hoy().getFullYear() - 18;
-  const anios = useMemo(() => Array.from({ length: tope - 1919 }, (_, i) => tope - i), [tope]);
-  const maxDia = mes ? diasDelMes(anio, mes) : 31;
-  const fijar = (d: number, m: number, a: number) => {
-    const dd = m && d > diasDelMes(a, m) ? diasDelMes(a, m) : d; // 31 de abril → 30
-    setDia(dd); setMes(m); setAnio(a);
-    alCambiar(dd && m && a ? `${a}-${String(m).padStart(2, "0")}-${String(dd).padStart(2, "0")}` : "");
-  };
+  const [texto, setTexto] = useState(() => (valor ? valor.split("-").reverse().join("/") : ""));
+  const [rueda, setRueda] = useState(false);
+  const escribir = (t: string) => { const f = formatoFecha(t); setTexto(f); alCambiar(fechaDeTexto(f)); };
+  const completa = texto.replace(/\D/g, "").length === 8, mala = completa && !fechaDeTexto(texto);
   return (
-    <fieldset className="a-campo a-fecha">
-      <legend>Fecha de nacimiento</legend>
-      <div className="a-fecha-fila">
-        <select aria-label="Día" value={dia || ""} onChange={e => fijar(Number(e.target.value), mes, anio)} required>
-          <option value="" disabled>Día</option>
-          {Array.from({ length: maxDia }, (_, i) => i + 1).map(d => <option key={d} value={d}>{d}</option>)}
-        </select>
-        <select aria-label="Mes" value={mes || ""} onChange={e => fijar(dia, Number(e.target.value), anio)} required>
-          <option value="" disabled>Mes</option>
-          {MESES.map((n, i) => <option key={n} value={i + 1}>{n}</option>)}
-        </select>
-        <select aria-label="Año" value={anio || ""} onChange={e => fijar(dia, mes, Number(e.target.value))} required>
-          <option value="" disabled>Año</option>
-          {anios.map(a => <option key={a} value={a}>{a}</option>)}
-        </select>
-      </div>
-    </fieldset>
+    <div className="a-fecha">
+      <CampoIcono etiqueta="Fecha de nacimiento" icono="calendario" ver placeholder="DD/MM/AAAA" inputMode="numeric" autoComplete="bday" maxLength={10}
+        value={texto} onChange={e => escribir(e.target.value)} aria-invalid={mala || undefined} required
+        derecha={
+          <button type="button" className={"a-campo-btn" + (rueda ? " on" : "")} onClick={() => setRueda(r => !r)} aria-expanded={rueda} aria-label={rueda ? "Cerrar la rueda de fecha" : "Elegir girando día, mes y año"}>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5.5h16v15H4zM4 9.5h16M8 3.5v4M16 3.5v4" /><path d="M7.5 13h2M11 13h2M14.5 13h2M7.5 16.5h2M11 16.5h2" /></svg>
+          </button>} />
+      {mala && <small className="a-fecha-aviso" role="alert">Esa fecha no existe. Usa DD/MM/AAAA.</small>}
+      {rueda && <RuedaFecha valor={fechaDeTexto(texto)} alCambiar={iso => escribir(iso.split("-").reverse().join(""))} alCerrar={() => setRueda(false)} />}
+    </div>
   );
 }
 
-function DatosEdad({ nac, setNac, genero, setGenero }: { nac: string; setNac: (v: string) => void; genero: Genero | ""; setGenero: (g: Genero) => void }) {
+function DatosEdad({ nac, setNac, genero, setGenero }: { nac: string; setNac: (v: string) => void; genero: GeneroUI | ""; setGenero: (g: GeneroUI) => void }) {
   return (
     <>
       <FechaNacimiento valor={nac} alCambiar={setNac} />
       <div className="a-campo"><span>Género (solo para armar equipos)</span>
-        <div className="a-fila" role="radiogroup" aria-label="Género">
-          {GENEROS.map(([g, t]) => <button key={g} type="button" role="radio" aria-checked={genero === g} className={"d-chip a-chip-g" + (genero === g ? " on" : "")} onClick={() => setGenero(g)}>{t}</button>)}
+        <div className="a-generos" role="radiogroup" aria-label="Género">
+          {GENEROS.map(([g, t]) => <button key={g} type="button" role="radio" aria-checked={genero === g} className={"a-pildora" + (genero === g ? " on" : "")} onClick={() => setGenero(g)}>{t}</button>)}
         </div>
       </div>
     </>
+  );
+}
+
+/** Términos y Condiciones y Política de Privacidad, con los créditos de Elías arriba. Fondo del cartel difuminado. */
+function Terminos({ alVolver }: { alVolver: () => void }) {
+  useEffect(() => { document.querySelector(".a-acceso .a-scroll")?.scrollTo({ top: 0 }); }, []);
+  return (
+    <MarcoAcceso alVolver={alVolver}>
+      <Tarjeta pestanas={[{ id: "terminos", texto: "Términos y Privacidad" }]} activa="terminos">
+        <article className="a-terminos">
+          <header className="a-creditos">
+            <span className="a-creditos-titulo">{CREDITOS.titulo}</span>
+            <p>{CREDITOS.texto}</p>
+            <small>{CREDITOS.derechos}</small>
+          </header>
+          {SECCIONES_TERMINOS.map(sec => (
+            <section key={sec.titulo}>
+              <h2>{sec.titulo}</h2>
+              {sec.parrafos.map(t => <p key={t}>{t}</p>)}
+            </section>
+          ))}
+          <p className="a-terminos-fecha">Actualizados el {TERMINOS_ACTUALIZADOS}.</p>
+          <Boton color="amarillo" className="a-tarjeta-boton" texto="Entendido" icono="back" onClick={alVolver} />
+        </article>
+      </Tarjeta>
+    </MarcoAcceso>
   );
 }
 
@@ -208,9 +242,9 @@ function Invitado({ volver }: { volver: () => void }) {
 /** Entrar o crear cuenta. `alVolver`: regresa a la pantalla de inicio (si se llegó desde ahí). */
 export function Acceso({ alVolver }: { alVolver?: () => void } = {}) {
   const [tab, setTab] = useState<"entrar" | "crear">("entrar");
-  const [invitado, setInvitado] = useState(false);
-  const [nick, setNick] = useState(""), [pass, setPass] = useState(""), [nac, setNac] = useState(""), [genero, setGenero] = useState<Genero | "">("");
-  const [acepto, setAcepto] = useState(false), [error, setError] = useState<string | null>(null), [ocupado, setOcupado] = useState(false);
+  const [invitado, setInvitado] = useState(false), [terminos, setTerminos] = useState(false);
+  const [nick, setNick] = useState(""), [pass, setPass] = useState(""), [nac, setNac] = useState(""), [genero, setGenero] = useState<GeneroUI | "">("");
+  const [acepto, setAcepto] = useState(false), [mayor, setMayor] = useState(false), [error, setError] = useState<string | null>(null), [ocupado, setOcupado] = useState(false);
 
   if (!hayNube) {
     return (
@@ -227,6 +261,9 @@ export function Acceso({ alVolver }: { alVolver?: () => void } = {}) {
   }
 
   if (invitado) return <Invitado volver={() => setInvitado(false)} />;
+  // Los términos se ven encima del formulario: al volver sigue lo que ya se había llenado.
+  if (terminos) return <Terminos alVolver={() => setTerminos(false)} />;
+  const verTerminos = (e: { preventDefault: () => void }) => { e.preventDefault(); setTerminos(true); };
 
   const enviar = async (e?: FormEvent) => {
     e?.preventDefault();
@@ -237,11 +274,12 @@ export function Acceso({ alVolver }: { alVolver?: () => void } = {}) {
     if (tab === "crear") {
       if (!nac || !genero) { setError("Falta tu fecha de nacimiento o tu género."); return; }
       if (edadDe(nac) < 18) { setError("ALV es solo para mayores de 18 años."); return; }
-      if (!acepto) { setError("Falta aceptar las reglas."); return; }
+      if (!acepto) { setError("Falta aceptar los Términos y Condiciones."); return; }
+      if (!mayor) { setError("Falta confirmar que eres mayor de 18 años."); return; }
     }
     setOcupado(true);
     const fallo = tab === "crear" ? await registrar(nick, pass) : await entrar(nick, pass);
-    if (!fallo && tab === "crear" && genero) await guardarRegistro(nac, genero);
+    if (!fallo && tab === "crear" && genero) await guardarRegistro(nac, generoServidor(genero));
     setOcupado(false);
     if (fallo) { setError(tab === "crear" ? "No se pudo crear. Puede que ese apodo ya exista." : "Apodo o contraseña incorrectos."); return; }
     if (tab === "crear") await irAPersonalizarSiNueva();
@@ -250,17 +288,18 @@ export function Acceso({ alVolver }: { alVolver?: () => void } = {}) {
 
   const cambiar = (t: "entrar" | "crear") => { setTab(t); setError(null); };
   return (
-    <MarcoAcceso alVolver={alVolver}>
+    <MarcoAcceso alVolver={alVolver} bajoLogo={tab === "crear" && <button type="button" className="a-bajo-logo" onClick={() => cambiar("entrar")}>¿Ya tienes cuenta? <b>Inicia sesión</b></button>}>
       <Tarjeta activa={tab} onCambio={t => cambiar(t as "entrar" | "crear")} pestanas={[{ id: "entrar", texto: "Iniciar sesión" }, { id: "crear", texto: "Registrarse" }]}>
         <form onSubmit={e => void enviar(e)} className="a-pila">
           <CampoIcono etiqueta="Usuario" icono="usuario" value={nick} onChange={e => setNick(e.target.value)} autoComplete="username" autoCapitalize="none" spellCheck={false} maxLength={20} required />
-          <CampoIcono etiqueta="Contraseña" icono="candado" type="password" value={pass} onChange={e => setPass(e.target.value)} autoComplete={tab === "crear" ? "new-password" : "current-password"} maxLength={72} required />
+          <CampoClave nueva={tab === "crear"} value={pass} onChange={e => setPass(e.target.value)} maxLength={72} required />
           {tab === "crear" && <>
             <DatosEdad nac={nac} setNac={setNac} genero={genero} setGenero={setGenero} />
-            <label className="a-check"><input type="checkbox" checked={acepto} onChange={e => setAcepto(e.target.checked)} /><span>Soy mayor de 18 y acepto jugar con respeto: nadie está obligado a tomar ni a cumplir un reto.</span></label>
+            <label className="a-check"><input type="checkbox" checked={acepto} onChange={e => setAcepto(e.target.checked)} /><span>Acepto los <button type="button" className="a-enlace" onClick={verTerminos}>Términos y Condiciones</button> y <button type="button" className="a-enlace" onClick={verTerminos}>Política de Privacidad</button></span></label>
+            <label className="a-check"><input type="checkbox" checked={mayor} onChange={e => setMayor(e.target.checked)} /><span>Confirmo que soy mayor de 18 años y jugaré con respeto.</span></label>
           </>}
           {error && <p className="a-error" role="alert">{error}</p>}
-          <Boton color="amarillo" className="a-tarjeta-boton" texto={tab === "crear" ? "Registrarme" : "Entrar"} icono="play" cargando={ocupado} onClick={() => void enviar()} />
+          <Boton color="amarillo" className={"a-tarjeta-boton" + (tab === "crear" ? " a-boton-registro" : "")} texto={tab === "crear" ? "Registrarme" : "Entrar"} icono="play" cargando={ocupado} onClick={() => void enviar()} />
           <button type="submit" hidden />
           {tab === "entrar" && <p className="a-nota">¿Olvidaste tu contraseña? Pídele a Elías que te ponga una nueva.</p>}
           <button type="button" className="a-tarjeta-pie" onClick={() => cambiar(tab === "crear" ? "entrar" : "crear")}>
@@ -275,11 +314,11 @@ export function Acceso({ alVolver }: { alVolver?: () => void } = {}) {
 
 /** La cuenta existe pero no tiene fecha de nacimiento: se pide antes de entrar. */
 export function CompletarRegistro() {
-  const [nac, setNac] = useState(""), [genero, setGenero] = useState<Genero | "">(""), [error, setError] = useState<string | null>(null), [ocupado, setOcupado] = useState(false);
+  const [nac, setNac] = useState(""), [genero, setGenero] = useState<GeneroUI | "">(""), [error, setError] = useState<string | null>(null), [ocupado, setOcupado] = useState(false);
   const guardar = async () => {
     if (!nac || !genero) { setError("Falta tu fecha de nacimiento o tu género."); return; }
     setOcupado(true);
-    const r = await guardarRegistro(nac, genero);
+    const r = await guardarRegistro(nac, generoServidor(genero));
     setOcupado(false);
     if (r === null) { setError("No se pudo guardar. Revisa la fecha."); return; }
     await refrescarSesion();

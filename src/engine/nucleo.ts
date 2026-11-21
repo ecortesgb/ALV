@@ -41,6 +41,18 @@ export function armarGrupos(jugadores: Jugador[], op: OpcionesPartida): { jugado
   if (tipo === "individual") return { jugadores };
   if (tipo === "parejas") {
     if (jugadores.length < 4 || jugadores.length % 2 !== 0) return null;
+    // Parejas que eligió el anfitrión (p1, p2…, dos por pareja). Sin ellas, por orden de llegada como siempre.
+    const elegidas = op.grupos && jugadores.every(j => /^p\d+$/.test(op.grupos![j.id] ?? "")) ? op.grupos : null;
+    if (elegidas) {
+      const ids = [...new Set(jugadores.map(j => elegidas[j.id]!))];
+      const de = (g: string) => jugadores.filter(j => elegidas[j.id] === g);
+      if (ids.some(g => de(g).length !== 2)) return null;
+      const orden = ids.sort((x, y) => Number(x.slice(1)) - Number(y.slice(1)));
+      return {
+        jugadores: jugadores.map(j => ({ ...j, equipo: elegidas[j.id]! })),
+        equipos: orden.map(g => ({ id: g, nombre: de(g).map(j => j.nombre).join(" y ") })),
+      };
+    }
     const equipos: { id: string; nombre: string }[] = [];
     const con = jugadores.map((j, i) => ({ ...j, equipo: `p${Math.floor(i / 2) + 1}` }));
     for (let i = 0; i < jugadores.length; i += 2) equipos.push({ id: `p${i / 2 + 1}`, nombre: `${jugadores[i]!.nombre} y ${jugadores[i + 1]!.nombre}` });
