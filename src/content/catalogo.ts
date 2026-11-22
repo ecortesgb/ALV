@@ -1,6 +1,19 @@
 // Catálogo de la plataforma: escenarios, lugares, secciones, mecánicas, juegos, siglas y cartas de poder.
 // Solo datos. Agregar o cambiar algo aquí no toca el motor.
-import type { DefinicionJuego, Escenario, Lugar, MecanicaId, SeccionId } from "../engine/types";
+import type { DefinicionJuego, Eje, Escenario, Lugar, MecanicaId, NivelEje, SeccionId } from "../engine/types";
+
+/** Temperatura + Voltaje (Maestro v1.52): qué eje mide el nivel de cada mazo. Los mazos que no están aquí no tienen eje. */
+export const EJE_DE_MAZO: Record<string, Eje> = {
+  "verdad": "temperatura", "yo-nunca": "temperatura", "mas-probable": "temperatura", "que-prefieres": "temperatura", "conoces": "temperatura",
+  "reto": "voltaje", "reto-escenario": "voltaje",
+  // Castigos sin eje: son el precio de no cumplir y salen en cualquier nivel (si no, en Sobrecarga la ruleta se queda sin cartas).
+};
+
+/** Nombre de cada nivel por eje (Maestro v1.52). */
+export const NIVELES_EJE: Record<Eje, Record<NivelEje, string>> = {
+  temperatura: { 1: "Frío", 2: "Caliente", 3: "Extremo" },
+  voltaje: { 1: "Bajo voltaje", 2: "Alto voltaje", 3: "Sobrecarga" },
+};
 
 export const ESCENARIOS: Escenario[] = [
   { id: "alverca", nombre: "ALVerca", sigla: "ALV", lugar: "alberca", emoji: "🏊", color: "#22E1FF", activo: true,

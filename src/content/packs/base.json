@@ -14,7 +14,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": false,
-   "minJugadores": 2
+   "minJugadores": 2,
+   "nivel": 1
   },
   {
    "id": "verdad-002",
@@ -27,7 +28,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": false,
-   "minJugadores": 3
+   "minJugadores": 3,
+   "nivel": 1
   },
   {
    "id": "verdad-003",
@@ -40,7 +42,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": false,
-   "minJugadores": 2
+   "minJugadores": 2,
+   "nivel": 1
   },
   {
    "id": "verdad-004",
@@ -53,7 +56,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": false,
-   "minJugadores": 2
+   "minJugadores": 2,
+   "nivel": 1
   },
   {
    "id": "verdad-005",
@@ -66,7 +70,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": false,
-   "minJugadores": 2
+   "minJugadores": 2,
+   "nivel": 2
   },
   {
    "id": "verdad-006",
@@ -79,7 +84,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": false,
-   "minJugadores": 2
+   "minJugadores": 2,
+   "nivel": 1
   },
   {
    "id": "verdad-007",
@@ -92,7 +98,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": false,
-   "minJugadores": 2
+   "minJugadores": 2,
+   "nivel": 2
   },
   {
    "id": "verdad-008",
@@ -105,7 +112,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": false,
-   "minJugadores": 2
+   "minJugadores": 2,
+   "nivel": 1
   },
   {
    "id": "verdad-009",
@@ -118,7 +126,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": false,
-   "minJugadores": 2
+   "minJugadores": 2,
+   "nivel": 1
   },
   {
    "id": "verdad-010",
@@ -131,7 +140,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": false,
-   "minJugadores": 2
+   "minJugadores": 2,
+   "nivel": 2
   },
   {
    "id": "verdad-011",
@@ -144,7 +154,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": true,
-   "minJugadores": 2
+   "minJugadores": 2,
+   "nivel": 2
   },
   {
    "id": "verdad-012",
@@ -157,7 +168,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": false,
-   "minJugadores": 2
+   "minJugadores": 2,
+   "nivel": 2
   },
   {
    "id": "verdad-013",
@@ -170,7 +182,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": false,
-   "minJugadores": 2
+   "minJugadores": 2,
+   "nivel": 2
   },
   {
    "id": "verdad-014",
@@ -183,7 +196,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": false,
-   "minJugadores": 2
+   "minJugadores": 2,
+   "nivel": 2
   },
   {
    "id": "verdad-015",
@@ -196,7 +210,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": false,
-   "minJugadores": 3
+   "minJugadores": 3,
+   "nivel": 2
   },
   {
    "id": "verdad-016",
@@ -209,7 +224,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": true,
-   "minJugadores": 2
+   "minJugadores": 2,
+   "nivel": 3
   },
   {
    "id": "verdad-017",
@@ -222,7 +238,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": true,
-   "minJugadores": 2
+   "minJugadores": 2,
+   "nivel": 3
   },
   {
    "id": "verdad-018",
@@ -235,7 +252,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": true,
-   "minJugadores": 2
+   "minJugadores": 2,
+   "nivel": 3
   },
   {
    "id": "verdad-019",
@@ -248,7 +266,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": true,
-   "minJugadores": 2
+   "minJugadores": 2,
+   "nivel": 3
   },
   {
    "id": "verdad-020",
@@ -261,7 +280,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": false,
-   "minJugadores": 2
+   "minJugadores": 2,
+   "nivel": 1
   },
   {
    "id": "verdad-021",
@@ -274,7 +294,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": false,
-   "minJugadores": 2
+   "minJugadores": 2,
+   "nivel": 1
   },
   {
    "id": "verdad-022",
@@ -287,7 +308,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": false,
-   "minJugadores": 2
+   "minJugadores": 2,
+   "nivel": 2
   },
   {
    "id": "verdad-023",
@@ -300,7 +322,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": false,
-   "minJugadores": 2
+   "minJugadores": 2,
+   "nivel": 2
   },
   {
    "id": "verdad-024",
@@ -313,7 +336,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": true,
-   "minJugadores": 2
+   "minJugadores": 2,
+   "nivel": 3
   },
   {
    "id": "verdad-025",
@@ -326,7 +350,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": false,
-   "minJugadores": 2
+   "minJugadores": 2,
+   "nivel": 1
   },
   {
    "id": "verdad-026",
@@ -339,7 +364,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": false,
-   "minJugadores": 2
+   "minJugadores": 2,
+   "nivel": 1
   },
   {
    "id": "verdad-027",
@@ -352,7 +378,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": false,
-   "minJugadores": 2
+   "minJugadores": 2,
+   "nivel": 1
   },
   {
    "id": "verdad-028",
@@ -365,7 +392,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": true,
-   "minJugadores": 2
+   "minJugadores": 2,
+   "nivel": 2
   },
   {
    "id": "verdad-029",
@@ -378,7 +406,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": false,
-   "minJugadores": 2
+   "minJugadores": 2,
+   "nivel": 1
   },
   {
    "id": "verdad-030",
@@ -391,7 +420,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": false,
-   "minJugadores": 2
+   "minJugadores": 2,
+   "nivel": 2
   },
   {
    "id": "verdad-031",
@@ -404,7 +434,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": false,
-   "minJugadores": 2
+   "minJugadores": 2,
+   "nivel": 2
   },
   {
    "id": "verdad-032",
@@ -417,7 +448,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": true,
-   "minJugadores": 2
+   "minJugadores": 2,
+   "nivel": 3
   },
   {
    "id": "verdad-033",
@@ -430,7 +462,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": false,
-   "minJugadores": 2
+   "minJugadores": 2,
+   "nivel": 1
   },
   {
    "id": "verdad-034",
@@ -443,7 +476,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": false,
-   "minJugadores": 2
+   "minJugadores": 2,
+   "nivel": 2
   },
   {
    "id": "verdad-035",
@@ -456,7 +490,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": false,
-   "minJugadores": 2
+   "minJugadores": 2,
+   "nivel": 1
   },
   {
    "id": "verdad-036",
@@ -469,7 +504,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": false,
-   "minJugadores": 2
+   "minJugadores": 2,
+   "nivel": 2
   },
   {
    "id": "verdad-037",
@@ -482,7 +518,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": true,
-   "minJugadores": 2
+   "minJugadores": 2,
+   "nivel": 2
   },
   {
    "id": "reto-001",
@@ -495,7 +532,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": false,
-   "minJugadores": 3
+   "minJugadores": 3,
+   "nivel": 1
   },
   {
    "id": "reto-002",
@@ -508,7 +546,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": true,
-   "minJugadores": 2
+   "minJugadores": 2,
+   "nivel": 1
   },
   {
    "id": "reto-003",
@@ -521,7 +560,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": false,
-   "minJugadores": 2
+   "minJugadores": 2,
+   "nivel": 1
   },
   {
    "id": "reto-004",
@@ -534,7 +574,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": false,
-   "minJugadores": 2
+   "minJugadores": 2,
+   "nivel": 1
   },
   {
    "id": "reto-005",
@@ -547,7 +588,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": false,
-   "minJugadores": 2
+   "minJugadores": 2,
+   "nivel": 1
   },
   {
    "id": "reto-006",
@@ -560,7 +602,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": false,
-   "minJugadores": 2
+   "minJugadores": 2,
+   "nivel": 2
   },
   {
    "id": "reto-007",
@@ -573,7 +616,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": false,
-   "minJugadores": 2
+   "minJugadores": 2,
+   "nivel": 2
   },
   {
    "id": "reto-008",
@@ -586,7 +630,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": false,
-   "minJugadores": 3
+   "minJugadores": 3,
+   "nivel": 2
   },
   {
    "id": "reto-009",
@@ -599,7 +644,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": false,
-   "minJugadores": 2
+   "minJugadores": 2,
+   "nivel": 2
   },
   {
    "id": "reto-010",
@@ -612,7 +658,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": false,
-   "minJugadores": 2
+   "minJugadores": 2,
+   "nivel": 2
   },
   {
    "id": "reto-011",
@@ -625,7 +672,9 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": false,
-   "minJugadores": 3
+   "minJugadores": 3,
+   "nivel": 1,
+   "contacto": true
   },
   {
    "id": "reto-012",
@@ -638,7 +687,9 @@
    "drunk": true,
    "esfuerzo": "ninguno",
    "pidePareja": false,
-   "minJugadores": 3
+   "minJugadores": 3,
+   "nivel": 1,
+   "contacto": true
   },
   {
    "id": "reto-014",
@@ -651,7 +702,8 @@
    "drunk": false,
    "esfuerzo": "alto",
    "pidePareja": false,
-   "minJugadores": 2
+   "minJugadores": 2,
+   "nivel": 2
   },
   {
    "id": "reto-015",
@@ -664,7 +716,9 @@
    "drunk": false,
    "esfuerzo": "alto",
    "pidePareja": true,
-   "minJugadores": 2
+   "minJugadores": 2,
+   "nivel": 2,
+   "contacto": true
   },
   {
    "id": "reto-016",
@@ -677,7 +731,9 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": true,
-   "minJugadores": 2
+   "minJugadores": 2,
+   "nivel": 2,
+   "contacto": true
   },
   {
    "id": "reto-017",
@@ -690,7 +746,9 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": true,
-   "minJugadores": 2
+   "minJugadores": 2,
+   "nivel": 3,
+   "contacto": true
   },
   {
    "id": "reto-018",
@@ -703,7 +761,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": true,
-   "minJugadores": 2
+   "minJugadores": 2,
+   "nivel": 3
   },
   {
    "id": "reto-019",
@@ -716,7 +775,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": true,
-   "minJugadores": 2
+   "minJugadores": 2,
+   "nivel": 3
   },
   {
    "id": "reto-020",
@@ -729,7 +789,9 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": true,
-   "minJugadores": 2
+   "minJugadores": 2,
+   "nivel": 3,
+   "contacto": true
   },
   {
    "id": "reto-022",
@@ -742,7 +804,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": false,
-   "minJugadores": 2
+   "minJugadores": 2,
+   "nivel": 1
   },
   {
    "id": "reto-023",
@@ -755,7 +818,9 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": false,
-   "minJugadores": 3
+   "minJugadores": 3,
+   "nivel": 2,
+   "contacto": true
   },
   {
    "id": "reto-024",
@@ -768,7 +833,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": false,
-   "minJugadores": 2
+   "minJugadores": 2,
+   "nivel": 1
   },
   {
    "id": "reto-027",
@@ -781,7 +847,9 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": true,
-   "minJugadores": 2
+   "minJugadores": 2,
+   "nivel": 3,
+   "contacto": true
   },
   {
    "id": "reto-028",
@@ -794,7 +862,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": false,
-   "minJugadores": 2
+   "minJugadores": 2,
+   "nivel": 1
   },
   {
    "id": "reto-029",
@@ -807,7 +876,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": false,
-   "minJugadores": 2
+   "minJugadores": 2,
+   "nivel": 1
   },
   {
    "id": "reto-030",
@@ -820,7 +890,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": false,
-   "minJugadores": 3
+   "minJugadores": 3,
+   "nivel": 1
   },
   {
    "id": "reto-031",
@@ -833,7 +904,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": false,
-   "minJugadores": 2
+   "minJugadores": 2,
+   "nivel": 1
   },
   {
    "id": "reto-032",
@@ -846,7 +918,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": false,
-   "minJugadores": 2
+   "minJugadores": 2,
+   "nivel": 2
   },
   {
    "id": "reto-033",
@@ -859,7 +932,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": false,
-   "minJugadores": 2
+   "minJugadores": 2,
+   "nivel": 1
   },
   {
    "id": "reto-034",
@@ -872,7 +946,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": false,
-   "minJugadores": 2
+   "minJugadores": 2,
+   "nivel": 2
   },
   {
    "id": "reto-035",
@@ -885,7 +960,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": false,
-   "minJugadores": 2
+   "minJugadores": 2,
+   "nivel": 2
   },
   {
    "id": "reto-036",
@@ -898,7 +974,9 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": true,
-   "minJugadores": 2
+   "minJugadores": 2,
+   "nivel": 3,
+   "contacto": true
   },
   {
    "id": "reto-037",
@@ -911,7 +989,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": false,
-   "minJugadores": 2
+   "minJugadores": 2,
+   "nivel": 1
   },
   {
    "id": "reto-038",
@@ -924,7 +1003,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": false,
-   "minJugadores": 3
+   "minJugadores": 3,
+   "nivel": 1
   },
   {
    "id": "reto-039",
@@ -937,7 +1017,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": false,
-   "minJugadores": 2
+   "minJugadores": 2,
+   "nivel": 1
   },
   {
    "id": "reto-040",
@@ -950,7 +1031,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": false,
-   "minJugadores": 3
+   "minJugadores": 3,
+   "nivel": 2
   },
   {
    "id": "yo-nunca-001",
@@ -963,7 +1045,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": false,
-   "minJugadores": 3
+   "minJugadores": 3,
+   "nivel": 1
   },
   {
    "id": "yo-nunca-002",
@@ -976,7 +1059,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": false,
-   "minJugadores": 3
+   "minJugadores": 3,
+   "nivel": 1
   },
   {
    "id": "yo-nunca-003",
@@ -989,7 +1073,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": false,
-   "minJugadores": 3
+   "minJugadores": 3,
+   "nivel": 1
   },
   {
    "id": "yo-nunca-004",
@@ -1002,7 +1087,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": false,
-   "minJugadores": 3
+   "minJugadores": 3,
+   "nivel": 1
   },
   {
    "id": "yo-nunca-005",
@@ -1015,7 +1101,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": false,
-   "minJugadores": 3
+   "minJugadores": 3,
+   "nivel": 1
   },
   {
    "id": "yo-nunca-006",
@@ -1028,7 +1115,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": false,
-   "minJugadores": 3
+   "minJugadores": 3,
+   "nivel": 2
   },
   {
    "id": "yo-nunca-007",
@@ -1041,7 +1129,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": false,
-   "minJugadores": 3
+   "minJugadores": 3,
+   "nivel": 2
   },
   {
    "id": "yo-nunca-008",
@@ -1054,7 +1143,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": false,
-   "minJugadores": 3
+   "minJugadores": 3,
+   "nivel": 2
   },
   {
    "id": "yo-nunca-009",
@@ -1067,7 +1157,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": false,
-   "minJugadores": 3
+   "minJugadores": 3,
+   "nivel": 2
   },
   {
    "id": "yo-nunca-010",
@@ -1080,7 +1171,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": true,
-   "minJugadores": 3
+   "minJugadores": 3,
+   "nivel": 3
   },
   {
    "id": "yo-nunca-011",
@@ -1093,7 +1185,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": true,
-   "minJugadores": 3
+   "minJugadores": 3,
+   "nivel": 3
   },
   {
    "id": "yo-nunca-012",
@@ -1106,7 +1199,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": true,
-   "minJugadores": 3
+   "minJugadores": 3,
+   "nivel": 3
   },
   {
    "id": "yo-nunca-013",
@@ -1119,7 +1213,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": false,
-   "minJugadores": 3
+   "minJugadores": 3,
+   "nivel": 1
   },
   {
    "id": "yo-nunca-014",
@@ -1132,7 +1227,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": false,
-   "minJugadores": 3
+   "minJugadores": 3,
+   "nivel": 1
   },
   {
    "id": "yo-nunca-015",
@@ -1145,7 +1241,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": false,
-   "minJugadores": 3
+   "minJugadores": 3,
+   "nivel": 1
   },
   {
    "id": "yo-nunca-016",
@@ -1158,7 +1255,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": false,
-   "minJugadores": 3
+   "minJugadores": 3,
+   "nivel": 2
   },
   {
    "id": "yo-nunca-017",
@@ -1171,7 +1269,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": false,
-   "minJugadores": 3
+   "minJugadores": 3,
+   "nivel": 1
   },
   {
    "id": "yo-nunca-018",
@@ -1184,7 +1283,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": false,
-   "minJugadores": 3
+   "minJugadores": 3,
+   "nivel": 1
   },
   {
    "id": "yo-nunca-019",
@@ -1197,7 +1297,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": false,
-   "minJugadores": 3
+   "minJugadores": 3,
+   "nivel": 1
   },
   {
    "id": "yo-nunca-020",
@@ -1210,7 +1311,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": false,
-   "minJugadores": 3
+   "minJugadores": 3,
+   "nivel": 1
   },
   {
    "id": "yo-nunca-021",
@@ -1223,7 +1325,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": false,
-   "minJugadores": 3
+   "minJugadores": 3,
+   "nivel": 2
   },
   {
    "id": "yo-nunca-022",
@@ -1236,7 +1339,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": false,
-   "minJugadores": 3
+   "minJugadores": 3,
+   "nivel": 1
   },
   {
    "id": "yo-nunca-023",
@@ -1249,7 +1353,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": false,
-   "minJugadores": 3
+   "minJugadores": 3,
+   "nivel": 1
   },
   {
    "id": "yo-nunca-024",
@@ -1262,7 +1367,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": false,
-   "minJugadores": 3
+   "minJugadores": 3,
+   "nivel": 2
   },
   {
    "id": "mas-probable-001",
@@ -1275,7 +1381,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": false,
-   "minJugadores": 3
+   "minJugadores": 3,
+   "nivel": 1
   },
   {
    "id": "mas-probable-002",
@@ -1288,7 +1395,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": false,
-   "minJugadores": 3
+   "minJugadores": 3,
+   "nivel": 1
   },
   {
    "id": "mas-probable-003",
@@ -1301,7 +1409,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": false,
-   "minJugadores": 3
+   "minJugadores": 3,
+   "nivel": 1
   },
   {
    "id": "mas-probable-004",
@@ -1314,7 +1423,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": false,
-   "minJugadores": 3
+   "minJugadores": 3,
+   "nivel": 1
   },
   {
    "id": "mas-probable-005",
@@ -1327,7 +1437,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": false,
-   "minJugadores": 3
+   "minJugadores": 3,
+   "nivel": 1
   },
   {
    "id": "mas-probable-006",
@@ -1340,7 +1451,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": false,
-   "minJugadores": 3
+   "minJugadores": 3,
+   "nivel": 2
   },
   {
    "id": "mas-probable-007",
@@ -1353,7 +1465,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": false,
-   "minJugadores": 3
+   "minJugadores": 3,
+   "nivel": 2
   },
   {
    "id": "mas-probable-008",
@@ -1366,7 +1479,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": false,
-   "minJugadores": 3
+   "minJugadores": 3,
+   "nivel": 2
   },
   {
    "id": "mas-probable-009",
@@ -1379,7 +1493,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": true,
-   "minJugadores": 3
+   "minJugadores": 3,
+   "nivel": 3
   },
   {
    "id": "mas-probable-010",
@@ -1392,7 +1507,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": true,
-   "minJugadores": 3
+   "minJugadores": 3,
+   "nivel": 3
   },
   {
    "id": "mas-probable-011",
@@ -1405,7 +1521,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": false,
-   "minJugadores": 3
+   "minJugadores": 3,
+   "nivel": 1
   },
   {
    "id": "mas-probable-012",
@@ -1418,7 +1535,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": false,
-   "minJugadores": 3
+   "minJugadores": 3,
+   "nivel": 1
   },
   {
    "id": "mas-probable-013",
@@ -1431,7 +1549,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": false,
-   "minJugadores": 3
+   "minJugadores": 3,
+   "nivel": 1
   },
   {
    "id": "mas-probable-014",
@@ -1444,7 +1563,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": false,
-   "minJugadores": 3
+   "minJugadores": 3,
+   "nivel": 1
   },
   {
    "id": "mas-probable-015",
@@ -1457,7 +1577,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": false,
-   "minJugadores": 3
+   "minJugadores": 3,
+   "nivel": 1
   },
   {
    "id": "mas-probable-016",
@@ -1470,7 +1591,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": false,
-   "minJugadores": 3
+   "minJugadores": 3,
+   "nivel": 1
   },
   {
    "id": "mas-probable-017",
@@ -1483,7 +1605,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": false,
-   "minJugadores": 3
+   "minJugadores": 3,
+   "nivel": 1
   },
   {
    "id": "mas-probable-018",
@@ -1496,7 +1619,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": false,
-   "minJugadores": 3
+   "minJugadores": 3,
+   "nivel": 1
   },
   {
    "id": "mas-probable-019",
@@ -1509,7 +1633,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": false,
-   "minJugadores": 3
+   "minJugadores": 3,
+   "nivel": 1
   },
   {
    "id": "mas-probable-020",
@@ -1522,7 +1647,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": false,
-   "minJugadores": 3
+   "minJugadores": 3,
+   "nivel": 1
   },
   {
    "id": "mas-probable-021",
@@ -1535,7 +1661,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": false,
-   "minJugadores": 3
+   "minJugadores": 3,
+   "nivel": 1
   },
   {
    "id": "que-prefieres-001",
@@ -1549,6 +1676,7 @@
    "esfuerzo": "ninguno",
    "pidePareja": false,
    "minJugadores": 2,
+   "nivel": 1,
    "opcionB": "Ser blanco de todos los retos en un juego"
   },
   {
@@ -1563,6 +1691,7 @@
    "esfuerzo": "ninguno",
    "pidePareja": false,
    "minJugadores": 2,
+   "nivel": 1,
    "opcionB": "Que se acabe la cerveza"
   },
   {
@@ -1577,6 +1706,7 @@
    "esfuerzo": "ninguno",
    "pidePareja": false,
    "minJugadores": 2,
+   "nivel": 1,
    "opcionB": "Enseñar tu última búsqueda en Google"
   },
   {
@@ -1591,6 +1721,7 @@
    "esfuerzo": "ninguno",
    "pidePareja": false,
    "minJugadores": 2,
+   "nivel": 1,
    "opcionB": "Cantar sin música un minuto"
   },
   {
@@ -1605,6 +1736,7 @@
    "esfuerzo": "ninguno",
    "pidePareja": false,
    "minJugadores": 2,
+   "nivel": 2,
    "opcionB": "Que tu pareja los lea en silencio"
   },
   {
@@ -1619,6 +1751,7 @@
    "esfuerzo": "ninguno",
    "pidePareja": false,
    "minJugadores": 2,
+   "nivel": 2,
    "opcionB": "Que todos sepan tu peso"
   },
   {
@@ -1633,6 +1766,7 @@
    "esfuerzo": "ninguno",
    "pidePareja": true,
    "minJugadores": 2,
+   "nivel": 3,
    "opcionB": "Luces apagadas"
   },
   {
@@ -1647,6 +1781,7 @@
    "esfuerzo": "ninguno",
    "pidePareja": true,
    "minJugadores": 2,
+   "nivel": 3,
    "opcionB": "En el jacuzzi"
   },
   {
@@ -1661,6 +1796,7 @@
    "esfuerzo": "ninguno",
    "pidePareja": false,
    "minJugadores": 2,
+   "nivel": 1,
    "opcionB": "Alberca tibia y con dudas"
   },
   {
@@ -1675,6 +1811,7 @@
    "esfuerzo": "ninguno",
    "pidePareja": false,
    "minJugadores": 2,
+   "nivel": 1,
    "opcionB": "Nadar con goggles toda la tarde"
   },
   {
@@ -1689,6 +1826,7 @@
    "esfuerzo": "ninguno",
    "pidePareja": false,
    "minJugadores": 2,
+   "nivel": 1,
    "opcionB": "Bajar por la escalera bien lento"
   },
   {
@@ -1703,6 +1841,7 @@
    "esfuerzo": "ninguno",
    "pidePareja": false,
    "minJugadores": 2,
+   "nivel": 1,
    "opcionB": "Costilla"
   },
   {
@@ -1717,6 +1856,7 @@
    "esfuerzo": "ninguno",
    "pidePareja": false,
    "minJugadores": 2,
+   "nivel": 1,
    "opcionB": "Tortilla de harina"
   },
   {
@@ -1731,6 +1871,7 @@
    "esfuerzo": "ninguno",
    "pidePareja": false,
    "minJugadores": 2,
+   "nivel": 1,
    "opcionB": "Lavar todos los trastes"
   },
   {
@@ -1745,6 +1886,7 @@
    "esfuerzo": "ninguno",
    "pidePareja": false,
    "minJugadores": 2,
+   "nivel": 1,
    "opcionB": "Película romántica"
   },
   {
@@ -1759,6 +1901,7 @@
    "esfuerzo": "ninguno",
    "pidePareja": false,
    "minJugadores": 2,
+   "nivel": 1,
    "opcionB": "Juegos de mesa"
   },
   {
@@ -1773,6 +1916,7 @@
    "esfuerzo": "ninguno",
    "pidePareja": false,
    "minJugadores": 2,
+   "nivel": 1,
    "opcionB": "Elotes asados"
   },
   {
@@ -1787,6 +1931,7 @@
    "esfuerzo": "ninguno",
    "pidePareja": false,
    "minJugadores": 2,
+   "nivel": 1,
    "opcionB": "Cantar con guitarra"
   },
   {
@@ -1800,7 +1945,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": true,
-   "minJugadores": 2
+   "minJugadores": 2,
+   "nivel": 1
   },
   {
    "id": "conoces-002",
@@ -1813,7 +1959,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": true,
-   "minJugadores": 2
+   "minJugadores": 2,
+   "nivel": 1
   },
   {
    "id": "conoces-003",
@@ -1826,7 +1973,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": true,
-   "minJugadores": 2
+   "minJugadores": 2,
+   "nivel": 1
   },
   {
    "id": "conoces-004",
@@ -1839,7 +1987,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": true,
-   "minJugadores": 2
+   "minJugadores": 2,
+   "nivel": 1
   },
   {
    "id": "conoces-005",
@@ -1852,7 +2001,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": true,
-   "minJugadores": 2
+   "minJugadores": 2,
+   "nivel": 1
   },
   {
    "id": "conoces-006",
@@ -1865,7 +2015,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": true,
-   "minJugadores": 2
+   "minJugadores": 2,
+   "nivel": 1
   },
   {
    "id": "conoces-007",
@@ -1878,7 +2029,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": true,
-   "minJugadores": 2
+   "minJugadores": 2,
+   "nivel": 1
   },
   {
    "id": "conoces-008",
@@ -1891,7 +2043,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": true,
-   "minJugadores": 2
+   "minJugadores": 2,
+   "nivel": 2
   },
   {
    "id": "conoces-009",
@@ -1904,7 +2057,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": true,
-   "minJugadores": 2
+   "minJugadores": 2,
+   "nivel": 1
   },
   {
    "id": "conoces-010",
@@ -1917,7 +2071,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": true,
-   "minJugadores": 2
+   "minJugadores": 2,
+   "nivel": 1
   },
   {
    "id": "conoces-011",
@@ -1930,7 +2085,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": true,
-   "minJugadores": 2
+   "minJugadores": 2,
+   "nivel": 1
   },
   {
    "id": "conoces-012",
@@ -1943,7 +2099,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": true,
-   "minJugadores": 2
+   "minJugadores": 2,
+   "nivel": 2
   },
   {
    "id": "conoces-013",
@@ -1956,7 +2113,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": true,
-   "minJugadores": 2
+   "minJugadores": 2,
+   "nivel": 1
   },
   {
    "id": "conoces-014",
@@ -1969,7 +2127,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": true,
-   "minJugadores": 2
+   "minJugadores": 2,
+   "nivel": 1
   },
   {
    "id": "conoces-015",
@@ -1982,7 +2141,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": true,
-   "minJugadores": 2
+   "minJugadores": 2,
+   "nivel": 2
   },
   {
    "id": "conoces-016",
@@ -1995,7 +2155,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": true,
-   "minJugadores": 2
+   "minJugadores": 2,
+   "nivel": 2
   },
   {
    "id": "conoces-017",
@@ -2008,7 +2169,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": true,
-   "minJugadores": 2
+   "minJugadores": 2,
+   "nivel": 2
   },
   {
    "id": "conoces-018",
@@ -2021,7 +2183,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": true,
-   "minJugadores": 2
+   "minJugadores": 2,
+   "nivel": 3
   },
   {
    "id": "conoces-019",
@@ -2034,7 +2197,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": true,
-   "minJugadores": 2
+   "minJugadores": 2,
+   "nivel": 3
   },
   {
    "id": "conoces-020",
@@ -2047,7 +2211,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": true,
-   "minJugadores": 2
+   "minJugadores": 2,
+   "nivel": 3
   },
   {
    "id": "conoces-021",
@@ -2060,7 +2225,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": true,
-   "minJugadores": 2
+   "minJugadores": 2,
+   "nivel": 3
   },
   {
    "id": "palabra-001",
@@ -2074,6 +2240,7 @@
    "esfuerzo": "ninguno",
    "pidePareja": false,
    "minJugadores": 2,
+   "nivel": 1,
    "prohibidas": [
     "agua",
     "inflable",
@@ -2092,6 +2259,7 @@
    "esfuerzo": "ninguno",
    "pidePareja": false,
    "minJugadores": 2,
+   "nivel": 1,
    "prohibidas": [
     "saltar",
     "agua",
@@ -2110,6 +2278,7 @@
    "esfuerzo": "ninguno",
    "pidePareja": false,
    "minJugadores": 2,
+   "nivel": 1,
    "prohibidas": [
     "sol",
     "crema",
@@ -2128,6 +2297,7 @@
    "esfuerzo": "ninguno",
    "pidePareja": false,
    "minJugadores": 2,
+   "nivel": 1,
    "prohibidas": [
     "ahogar",
     "rescatar",
@@ -2146,6 +2316,7 @@
    "esfuerzo": "ninguno",
    "pidePareja": false,
    "minJugadores": 2,
+   "nivel": 1,
    "prohibidas": [
     "pies",
     "playa",
@@ -2164,6 +2335,7 @@
    "esfuerzo": "ninguno",
    "pidePareja": false,
    "minJugadores": 2,
+   "nivel": 1,
    "prohibidas": [
     "secar",
     "baño",
@@ -2182,6 +2354,7 @@
    "esfuerzo": "ninguno",
    "pidePareja": false,
    "minJugadores": 2,
+   "nivel": 1,
    "prohibidas": [
     "ojos",
     "nadar",
@@ -2200,6 +2373,7 @@
    "esfuerzo": "ninguno",
    "pidePareja": false,
    "minJugadores": 2,
+   "nivel": 1,
    "prohibidas": [
     "sol",
     "piel",
@@ -2218,6 +2392,7 @@
    "esfuerzo": "ninguno",
    "pidePareja": false,
    "minJugadores": 2,
+   "nivel": 1,
    "prohibidas": [
     "saltar",
     "clavado",
@@ -2236,6 +2411,7 @@
    "esfuerzo": "ninguno",
    "pidePareja": false,
    "minJugadores": 2,
+   "nivel": 1,
    "prohibidas": [
     "resbalar",
     "agua",
@@ -2254,6 +2430,7 @@
    "esfuerzo": "ninguno",
    "pidePareja": false,
    "minJugadores": 2,
+   "nivel": 1,
    "prohibidas": [
     "traje",
     "mujer",
@@ -2272,6 +2449,7 @@
    "esfuerzo": "ninguno",
    "pidePareja": false,
    "minJugadores": 2,
+   "nivel": 1,
    "prohibidas": [
     "alberca",
     "limpiar",
@@ -2290,6 +2468,7 @@
    "esfuerzo": "ninguno",
    "pidePareja": false,
    "minJugadores": 2,
+   "nivel": 1,
    "prohibidas": [
     "carne",
     "asar",
@@ -2308,6 +2487,7 @@
    "esfuerzo": "ninguno",
    "pidePareja": false,
    "minJugadores": 2,
+   "nivel": 1,
    "prohibidas": [
     "negro",
     "fuego",
@@ -2326,6 +2506,7 @@
    "esfuerzo": "ninguno",
    "pidePareja": false,
    "minJugadores": 2,
+   "nivel": 1,
    "prohibidas": [
     "aguacate",
     "salsa",
@@ -2344,6 +2525,7 @@
    "esfuerzo": "ninguno",
    "pidePareja": false,
    "minJugadores": 2,
+   "nivel": 1,
    "prohibidas": [
     "asar",
     "blanco",
@@ -2362,6 +2544,7 @@
    "esfuerzo": "ninguno",
    "pidePareja": false,
    "minJugadores": 2,
+   "nivel": 1,
    "prohibidas": [
     "rojo",
     "carne",
@@ -2380,6 +2563,7 @@
    "esfuerzo": "ninguno",
    "pidePareja": false,
    "minJugadores": 2,
+   "nivel": 1,
    "prohibidas": [
     "maíz",
     "taco",
@@ -2398,6 +2582,7 @@
    "esfuerzo": "ninguno",
    "pidePareja": false,
    "minJugadores": 2,
+   "nivel": 1,
    "prohibidas": [
     "frío",
     "cerveza",
@@ -2416,6 +2601,7 @@
    "esfuerzo": "ninguno",
    "pidePareja": false,
    "minJugadores": 2,
+   "nivel": 1,
    "prohibidas": [
     "carne",
     "agarrar",
@@ -2434,6 +2620,7 @@
    "esfuerzo": "ninguno",
    "pidePareja": false,
    "minJugadores": 2,
+   "nivel": 1,
    "prohibidas": [
     "picante",
     "chile",
@@ -2452,6 +2639,7 @@
    "esfuerzo": "ninguno",
    "pidePareja": false,
    "minJugadores": 2,
+   "nivel": 1,
    "prohibidas": [
     "maíz",
     "mantequilla",
@@ -2470,6 +2658,7 @@
    "esfuerzo": "ninguno",
    "pidePareja": false,
    "minJugadores": 2,
+   "nivel": 1,
    "prohibidas": [
     "cerveza",
     "chile",
@@ -2488,6 +2677,7 @@
    "esfuerzo": "ninguno",
    "pidePareja": false,
    "minJugadores": 2,
+   "nivel": 1,
    "prohibidas": [
     "asador",
     "carne",
@@ -2506,6 +2696,7 @@
    "esfuerzo": "ninguno",
    "pidePareja": false,
    "minJugadores": 2,
+   "nivel": 1,
    "prohibidas": [
     "dormir",
     "ropa",
@@ -2524,6 +2715,7 @@
    "esfuerzo": "ninguno",
    "pidePareja": false,
    "minJugadores": 2,
+   "nivel": 1,
    "prohibidas": [
     "cantar",
     "micrófono",
@@ -2542,6 +2734,7 @@
    "esfuerzo": "ninguno",
    "pidePareja": false,
    "minJugadores": 2,
+   "nivel": 1,
    "prohibidas": [
     "miedo",
     "sábana",
@@ -2560,6 +2753,7 @@
    "esfuerzo": "ninguno",
    "pidePareja": false,
    "minJugadores": 2,
+   "nivel": 1,
    "prohibidas": [
     "dormir",
     "noche",
@@ -2578,6 +2772,7 @@
    "esfuerzo": "ninguno",
    "pidePareja": false,
    "minJugadores": 2,
+   "nivel": 1,
    "prohibidas": [
     "dormir",
     "ruido",
@@ -2596,6 +2791,7 @@
    "esfuerzo": "ninguno",
    "pidePareja": false,
    "minJugadores": 2,
+   "nivel": 1,
    "prohibidas": [
     "resaca",
     "tomar",
@@ -2614,6 +2810,7 @@
    "esfuerzo": "ninguno",
    "pidePareja": false,
    "minJugadores": 2,
+   "nivel": 1,
    "prohibidas": [
     "secreto",
     "contar",
@@ -2632,6 +2829,7 @@
    "esfuerzo": "ninguno",
    "pidePareja": false,
    "minJugadores": 2,
+   "nivel": 1,
    "prohibidas": [
     "cartas",
     "frijol",
@@ -2650,6 +2848,7 @@
    "esfuerzo": "ninguno",
    "pidePareja": false,
    "minJugadores": 2,
+   "nivel": 1,
    "prohibidas": [
     "dulce",
     "fuego",
@@ -2668,6 +2867,7 @@
    "esfuerzo": "ninguno",
    "pidePareja": false,
    "minJugadores": 2,
+   "nivel": 1,
    "prohibidas": [
     "madera",
     "fuego",
@@ -2686,6 +2886,7 @@
    "esfuerzo": "ninguno",
    "pidePareja": false,
    "minJugadores": 2,
+   "nivel": 1,
    "prohibidas": [
     "cielo",
     "noche",
@@ -2704,6 +2905,7 @@
    "esfuerzo": "ninguno",
    "pidePareja": false,
    "minJugadores": 2,
+   "nivel": 1,
    "prohibidas": [
     "cuerdas",
     "música",
@@ -2722,6 +2924,7 @@
    "esfuerzo": "ninguno",
    "pidePareja": false,
    "minJugadores": 2,
+   "nivel": 1,
    "prohibidas": [
     "picar",
     "insecto",
@@ -2740,6 +2943,7 @@
    "esfuerzo": "ninguno",
    "pidePareja": false,
    "minJugadores": 2,
+   "nivel": 1,
    "prohibidas": [
     "luz",
     "pilas",
@@ -2758,6 +2962,7 @@
    "esfuerzo": "ninguno",
    "pidePareja": false,
    "minJugadores": 2,
+   "nivel": 1,
    "prohibidas": [
     "historia",
     "miedo",
@@ -2776,6 +2981,7 @@
    "esfuerzo": "ninguno",
    "pidePareja": false,
    "minJugadores": 2,
+   "nivel": 1,
    "prohibidas": [
     "frío",
     "tapar",
@@ -2794,6 +3000,7 @@
    "esfuerzo": "ninguno",
    "pidePareja": false,
    "minJugadores": 2,
+   "nivel": 1,
    "prohibidas": [
     "trompeta",
     "sombrero",
@@ -2812,6 +3019,7 @@
    "esfuerzo": "ninguno",
    "pidePareja": false,
    "minJugadores": 2,
+   "nivel": 1,
    "prohibidas": [
     "dulces",
     "palo",
@@ -2830,6 +3038,7 @@
    "esfuerzo": "ninguno",
    "pidePareja": false,
    "minJugadores": 2,
+   "nivel": 1,
    "prohibidas": [
     "agave",
     "shot",
@@ -2848,6 +3057,7 @@
    "esfuerzo": "ninguno",
    "pidePareja": false,
    "minJugadores": 2,
+   "nivel": 1,
    "prohibidas": [
     "foto",
     "celular",
@@ -2866,6 +3076,7 @@
    "esfuerzo": "ninguno",
    "pidePareja": false,
    "minJugadores": 2,
+   "nivel": 1,
    "prohibidas": [
     "novia",
     "casarse",
@@ -2884,6 +3095,7 @@
    "esfuerzo": "ninguno",
    "pidePareja": false,
    "minJugadores": 2,
+   "nivel": 1,
    "prohibidas": [
     "futbol",
     "copa",
@@ -2902,6 +3114,7 @@
    "esfuerzo": "ninguno",
    "pidePareja": false,
    "minJugadores": 2,
+   "nivel": 1,
    "prohibidas": [
     "drama",
     "actores",
@@ -2920,6 +3133,7 @@
    "esfuerzo": "ninguno",
    "pidePareja": false,
    "minJugadores": 2,
+   "nivel": 1,
    "prohibidas": [
     "coches",
     "calle",
@@ -2938,6 +3152,7 @@
    "esfuerzo": "ninguno",
    "pidePareja": false,
    "minJugadores": 2,
+   "nivel": 1,
    "prohibidas": [
     "vestido",
     "fiesta",
@@ -2956,6 +3171,7 @@
    "esfuerzo": "ninguno",
    "pidePareja": false,
    "minJugadores": 2,
+   "nivel": 1,
    "prohibidas": [
     "máscara",
     "ring",
@@ -2974,6 +3190,7 @@
    "esfuerzo": "ninguno",
    "pidePareja": false,
    "minJugadores": 2,
+   "nivel": 1,
    "prohibidas": [
     "boda",
     "fiesta",
@@ -2992,6 +3209,7 @@
    "esfuerzo": "ninguno",
    "pidePareja": false,
    "minJugadores": 2,
+   "nivel": 1,
    "prohibidas": [
     "mamá",
     "esposo",
@@ -3009,7 +3227,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": false,
-   "minJugadores": 2
+   "minJugadores": 2,
+   "nivel": 1
   },
   {
    "id": "castigo-002",
@@ -3022,7 +3241,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": false,
-   "minJugadores": 2
+   "minJugadores": 2,
+   "nivel": 1
   },
   {
    "id": "castigo-003",
@@ -3035,7 +3255,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": false,
-   "minJugadores": 2
+   "minJugadores": 2,
+   "nivel": 1
   },
   {
    "id": "castigo-004",
@@ -3048,7 +3269,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": false,
-   "minJugadores": 2
+   "minJugadores": 2,
+   "nivel": 1
   },
   {
    "id": "castigo-005",
@@ -3061,7 +3283,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": false,
-   "minJugadores": 2
+   "minJugadores": 2,
+   "nivel": 1
   },
   {
    "id": "castigo-006",
@@ -3074,7 +3297,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": false,
-   "minJugadores": 2
+   "minJugadores": 2,
+   "nivel": 1
   },
   {
    "id": "castigo-007",
@@ -3087,7 +3311,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": false,
-   "minJugadores": 2
+   "minJugadores": 2,
+   "nivel": 1
   },
   {
    "id": "castigo-008",
@@ -3100,7 +3325,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": false,
-   "minJugadores": 2
+   "minJugadores": 2,
+   "nivel": 1
   },
   {
    "id": "castigo-009",
@@ -3113,7 +3339,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": false,
-   "minJugadores": 2
+   "minJugadores": 2,
+   "nivel": 1
   },
   {
    "id": "castigo-010",
@@ -3126,7 +3353,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": false,
-   "minJugadores": 2
+   "minJugadores": 2,
+   "nivel": 2
   },
   {
    "id": "castigo-011",
@@ -3139,7 +3367,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": false,
-   "minJugadores": 2
+   "minJugadores": 2,
+   "nivel": 1
   },
   {
    "id": "castigo-013",
@@ -3152,7 +3381,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": false,
-   "minJugadores": 2
+   "minJugadores": 2,
+   "nivel": 1
   },
   {
    "id": "castigo-014",
@@ -3165,7 +3395,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": false,
-   "minJugadores": 2
+   "minJugadores": 2,
+   "nivel": 1
   },
   {
    "id": "castigo-015",
@@ -3178,7 +3409,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": false,
-   "minJugadores": 2
+   "minJugadores": 2,
+   "nivel": 1
   },
   {
    "id": "castigo-016",
@@ -3191,7 +3423,8 @@
    "drunk": true,
    "esfuerzo": "ninguno",
    "pidePareja": false,
-   "minJugadores": 2
+   "minJugadores": 2,
+   "nivel": 1
   },
   {
    "id": "castigo-017",
@@ -3204,7 +3437,8 @@
    "drunk": true,
    "esfuerzo": "ninguno",
    "pidePareja": false,
-   "minJugadores": 2
+   "minJugadores": 2,
+   "nivel": 1
   },
   {
    "id": "castigo-018",
@@ -3217,7 +3451,8 @@
    "drunk": true,
    "esfuerzo": "ninguno",
    "pidePareja": false,
-   "minJugadores": 2
+   "minJugadores": 2,
+   "nivel": 1
   },
   {
    "id": "castigo-019",
@@ -3230,7 +3465,8 @@
    "drunk": true,
    "esfuerzo": "ninguno",
    "pidePareja": false,
-   "minJugadores": 2
+   "minJugadores": 2,
+   "nivel": 1
   },
   {
    "id": "competencia-001",
@@ -3244,6 +3480,7 @@
    "esfuerzo": "ninguno",
    "pidePareja": false,
    "minJugadores": 2,
+   "nivel": 1,
    "descripcion": "Cada pareja cruza la alberca: uno nada de ida y el otro de regreso. Gana el mejor tiempo.",
    "formato": "par"
   },
@@ -3259,6 +3496,7 @@
    "esfuerzo": "alto",
    "pidePareja": false,
    "minJugadores": 2,
+   "nivel": 1,
    "descripcion": "Gana quien aguante más bajo el agua. Siempre con alguien sobrio vigilando.",
    "formato": "ind"
   },
@@ -3274,6 +3512,7 @@
    "esfuerzo": "ninguno",
    "pidePareja": false,
    "minJugadores": 2,
+   "nivel": 1,
    "descripcion": "Uno va sentado en el flotador y el otro lo empuja nadando hasta el otro lado.",
    "formato": "par"
   },
@@ -3289,6 +3528,7 @@
    "esfuerzo": "ninguno",
    "pidePareja": false,
    "minJugadores": 2,
+   "nivel": 1,
    "descripcion": "Se lanzan 10 monedas o tapas al fondo. Gana quien saque más en 30 segundos.",
    "formato": "ind"
   },
@@ -3304,6 +3544,7 @@
    "esfuerzo": "alto",
    "pidePareja": false,
    "minJugadores": 2,
+   "nivel": 1,
    "descripcion": "Uno sobre los hombros del otro, en la parte baja. Gana la última pareja en pie.",
    "formato": "par"
   },
@@ -3319,6 +3560,7 @@
    "esfuerzo": "ninguno",
    "pidePareja": false,
    "minJugadores": 2,
+   "nivel": 1,
    "descripcion": "Cada pareja prepara el mejor taco con lo que haya. Los demás califican.",
    "formato": "par"
   },
@@ -3334,6 +3576,7 @@
    "esfuerzo": "ninguno",
    "pidePareja": false,
    "minJugadores": 2,
+   "nivel": 1,
    "descripcion": "Con los ojos cerrados, adivina 5 salsas o bebidas. Gana quien acierte más.",
    "formato": "ind"
   },
@@ -3349,6 +3592,7 @@
    "esfuerzo": "ninguno",
    "pidePareja": false,
    "minJugadores": 2,
+   "nivel": 1,
    "descripcion": "Gana la pareja que arme la torre de vasos más alta en un minuto.",
    "formato": "par"
   },
@@ -3364,6 +3608,7 @@
    "esfuerzo": "ninguno",
    "pidePareja": false,
    "minJugadores": 2,
+   "nivel": 1,
    "descripcion": "Lanza una tortilla como frisbee. Gana la que llegue más lejos.",
    "formato": "ind"
   },
@@ -3379,6 +3624,7 @@
    "esfuerzo": "ninguno",
    "pidePareja": false,
    "minJugadores": 2,
+   "nivel": 1,
    "descripcion": "Gana la pareja que prepare el mejor guacamole en 5 minutos.",
    "formato": "par"
   },
@@ -3394,6 +3640,7 @@
    "esfuerzo": "ninguno",
    "pidePareja": false,
    "minJugadores": 2,
+   "nivel": 1,
    "descripcion": "Chiles de menor a mayor picor. Gana quien llegue más lejos sin tomar agua. Nadie está obligado.",
    "formato": "ind"
   },
@@ -3409,6 +3656,7 @@
    "esfuerzo": "ninguno",
    "pidePareja": false,
    "minJugadores": 2,
+   "nivel": 1,
    "descripcion": "Cada pareja canta la canción que eligen los rivales. Gana el aplausómetro.",
    "formato": "par"
   },
@@ -3424,6 +3672,7 @@
    "esfuerzo": "ninguno",
    "pidePareja": false,
    "minJugadores": 2,
+   "nivel": 1,
    "descripcion": "Una ronda de lotería con apuestas de oro. Gana quien llene primero.",
    "formato": "ind"
   },
@@ -3439,6 +3688,7 @@
    "esfuerzo": "ninguno",
    "pidePareja": false,
    "minJugadores": 2,
+   "nivel": 1,
    "descripcion": "Bailen la canción que elija el DJ. Gana la pareja más aplaudida.",
    "formato": "par"
   },
@@ -3454,6 +3704,7 @@
    "esfuerzo": "ninguno",
    "pidePareja": false,
    "minJugadores": 2,
+   "nivel": 1,
    "descripcion": "Desfile con lo que encuentres en tu maleta. El grupo vota.",
    "formato": "ind"
   },
@@ -3469,6 +3720,7 @@
    "esfuerzo": "ninguno",
    "pidePareja": false,
    "minJugadores": 2,
+   "nivel": 1,
    "descripcion": "Un chiste o anécdota de un minuto. Gana quien haga reír más.",
    "formato": "ind"
   },
@@ -3484,6 +3736,7 @@
    "esfuerzo": "ninguno",
    "pidePareja": false,
    "minJugadores": 2,
+   "nivel": 1,
    "descripcion": "Historias de miedo de 2 minutos. Votación al final.",
    "formato": "ind"
   },
@@ -3499,6 +3752,7 @@
    "esfuerzo": "ninguno",
    "pidePareja": false,
    "minJugadores": 2,
+   "nivel": 1,
    "descripcion": "Gana el bombón más dorado sin quemarse.",
    "formato": "ind"
   },
@@ -3514,6 +3768,7 @@
    "esfuerzo": "ninguno",
    "pidePareja": false,
    "minJugadores": 2,
+   "nivel": 1,
    "descripcion": "Inventen una constelación con nombre e historia. Gana la más creativa.",
    "formato": "par"
   },
@@ -3529,6 +3784,7 @@
    "esfuerzo": "ninguno",
    "pidePareja": false,
    "minJugadores": 2,
+   "nivel": 1,
    "descripcion": "Compongan 4 versos sobre el fin de semana y cántenlos.",
    "formato": "par"
   },
@@ -3544,6 +3800,7 @@
    "esfuerzo": "ninguno",
    "pidePareja": false,
    "minJugadores": 2,
+   "nivel": 1,
    "descripcion": "Nadie habla. Quien hable o se ría queda fuera. Gana el último.",
    "formato": "ind"
   },
@@ -3559,6 +3816,7 @@
    "esfuerzo": "ninguno",
    "pidePareja": false,
    "minJugadores": 2,
+   "nivel": 1,
    "descripcion": "Torneo de eliminación directa. Gana quien quede invicto.",
    "formato": "ind"
   },
@@ -3574,6 +3832,7 @@
    "esfuerzo": "ninguno",
    "pidePareja": false,
    "minJugadores": 2,
+   "nivel": 1,
    "descripcion": "Lanza 5 pelotas o tapas a una cubeta desde 3 metros.",
    "formato": "ind"
   },
@@ -3589,6 +3848,7 @@
    "esfuerzo": "ninguno",
    "pidePareja": false,
    "minJugadores": 2,
+   "nivel": 1,
    "descripcion": "Espalda con espalda, sosteniendo un objeto sin manos. Gana la que aguante más.",
    "formato": "par"
   },
@@ -3603,7 +3863,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": false,
-   "minJugadores": 2
+   "minJugadores": 2,
+   "nivel": 1
   },
   {
    "id": "lista-002",
@@ -3616,7 +3877,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": false,
-   "minJugadores": 2
+   "minJugadores": 2,
+   "nivel": 1
   },
   {
    "id": "lista-003",
@@ -3629,7 +3891,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": false,
-   "minJugadores": 2
+   "minJugadores": 2,
+   "nivel": 1
   },
   {
    "id": "lista-004",
@@ -3642,7 +3905,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": false,
-   "minJugadores": 2
+   "minJugadores": 2,
+   "nivel": 1
   },
   {
    "id": "lista-005",
@@ -3655,7 +3919,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": false,
-   "minJugadores": 2
+   "minJugadores": 2,
+   "nivel": 1
   },
   {
    "id": "lista-006",
@@ -3668,7 +3933,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": false,
-   "minJugadores": 2
+   "minJugadores": 2,
+   "nivel": 1
   },
   {
    "id": "lista-007",
@@ -3681,7 +3947,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": false,
-   "minJugadores": 2
+   "minJugadores": 2,
+   "nivel": 1
   },
   {
    "id": "lista-008",
@@ -3694,7 +3961,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": false,
-   "minJugadores": 2
+   "minJugadores": 2,
+   "nivel": 1
   },
   {
    "id": "lista-009",
@@ -3707,7 +3975,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": false,
-   "minJugadores": 2
+   "minJugadores": 2,
+   "nivel": 1
   },
   {
    "id": "lista-010",
@@ -3720,7 +3989,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": false,
-   "minJugadores": 2
+   "minJugadores": 2,
+   "nivel": 1
   },
   {
    "id": "lista-011",
@@ -3733,7 +4003,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": false,
-   "minJugadores": 2
+   "minJugadores": 2,
+   "nivel": 1
   },
   {
    "id": "lista-012",
@@ -3746,7 +4017,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": false,
-   "minJugadores": 2
+   "minJugadores": 2,
+   "nivel": 1
   },
   {
    "id": "lista-013",
@@ -3759,7 +4031,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": false,
-   "minJugadores": 2
+   "minJugadores": 2,
+   "nivel": 1
   },
   {
    "id": "lista-014",
@@ -3772,7 +4045,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": false,
-   "minJugadores": 2
+   "minJugadores": 2,
+   "nivel": 1
   },
   {
    "id": "lista-015",
@@ -3785,7 +4059,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": false,
-   "minJugadores": 2
+   "minJugadores": 2,
+   "nivel": 1
   },
   {
    "id": "lista-016",
@@ -3798,7 +4073,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": false,
-   "minJugadores": 2
+   "minJugadores": 2,
+   "nivel": 1
   },
   {
    "id": "lista-017",
@@ -3811,7 +4087,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": false,
-   "minJugadores": 2
+   "minJugadores": 2,
+   "nivel": 1
   },
   {
    "id": "lista-018",
@@ -3824,7 +4101,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": false,
-   "minJugadores": 2
+   "minJugadores": 2,
+   "nivel": 1
   },
   {
    "id": "lista-019",
@@ -3837,7 +4115,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": false,
-   "minJugadores": 2
+   "minJugadores": 2,
+   "nivel": 1
   },
   {
    "id": "lista-020",
@@ -3850,7 +4129,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": false,
-   "minJugadores": 2
+   "minJugadores": 2,
+   "nivel": 1
   },
   {
    "id": "reto-escenario-001",
@@ -3863,7 +4143,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": true,
-   "minJugadores": 2
+   "minJugadores": 2,
+   "nivel": 1
   },
   {
    "id": "reto-escenario-002",
@@ -3876,7 +4157,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": false,
-   "minJugadores": 2
+   "minJugadores": 2,
+   "nivel": 1
   },
   {
    "id": "reto-escenario-003",
@@ -3889,7 +4171,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": false,
-   "minJugadores": 3
+   "minJugadores": 3,
+   "nivel": 1
   },
   {
    "id": "reto-escenario-004",
@@ -3902,7 +4185,9 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": true,
-   "minJugadores": 2
+   "minJugadores": 2,
+   "nivel": 2,
+   "contacto": true
   },
   {
    "id": "reto-escenario-005",
@@ -3915,7 +4200,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": false,
-   "minJugadores": 2
+   "minJugadores": 2,
+   "nivel": 1
   },
   {
    "id": "reto-escenario-006",
@@ -3928,7 +4214,9 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": true,
-   "minJugadores": 2
+   "minJugadores": 2,
+   "nivel": 2,
+   "contacto": true
   },
   {
    "id": "reto-escenario-007",
@@ -3941,7 +4229,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": false,
-   "minJugadores": 2
+   "minJugadores": 2,
+   "nivel": 1
   },
   {
    "id": "reto-escenario-008",
@@ -3954,7 +4243,9 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": true,
-   "minJugadores": 2
+   "minJugadores": 2,
+   "nivel": 2,
+   "contacto": true
   },
   {
    "id": "reto-escenario-009",
@@ -3967,7 +4258,9 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": true,
-   "minJugadores": 2
+   "minJugadores": 2,
+   "nivel": 2,
+   "contacto": true
   },
   {
    "id": "reto-escenario-010",
@@ -3980,7 +4273,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": false,
-   "minJugadores": 3
+   "minJugadores": 3,
+   "nivel": 1
   },
   {
    "id": "reto-escenario-011",
@@ -3993,7 +4287,8 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": true,
-   "minJugadores": 2
+   "minJugadores": 2,
+   "nivel": 1
   },
   {
    "id": "castigo-iva-001",
@@ -4006,7 +4301,4292 @@
    "drunk": false,
    "esfuerzo": "ninguno",
    "pidePareja": false,
-   "minJugadores": 3
+   "minJugadores": 3,
+   "nivel": 1
+  },
+  {
+   "id": "verdad-101",
+   "mazo": "verdad",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "¿Qué comida podrías comer diario sin cansarte?",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "soloEjes": true
+  },
+  {
+   "id": "verdad-102",
+   "mazo": "verdad",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Si mañana te dieran un mes libre pagado, ¿qué harías?",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "soloEjes": true
+  },
+  {
+   "id": "verdad-103",
+   "mazo": "verdad",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "¿Qué talento inútil tienes?",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "soloEjes": true
+  },
+  {
+   "id": "verdad-104",
+   "mazo": "verdad",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "¿Cuál fue tu apodo de niño o niña y quién te lo puso?",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "soloEjes": true
+  },
+  {
+   "id": "verdad-105",
+   "mazo": "verdad",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "¿Qué serie o película has visto más veces?",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "soloEjes": true
+  },
+  {
+   "id": "verdad-106",
+   "mazo": "verdad",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "¿Cuál es la peor moda que seguiste?",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "soloEjes": true
+  },
+  {
+   "id": "verdad-107",
+   "mazo": "verdad",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "¿Qué trabajo nunca harías, aunque te pagaran el doble?",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "soloEjes": true
+  },
+  {
+   "id": "verdad-108",
+   "mazo": "verdad",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "¿Cuál ha sido el mejor viaje de tu vida y qué lo hizo tan bueno?",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "soloEjes": true
+  },
+  {
+   "id": "verdad-109",
+   "mazo": "verdad",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "¿Qué es lo más raro que has comido?",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "soloEjes": true
+  },
+  {
+   "id": "verdad-110",
+   "mazo": "verdad",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Si fueras un personaje de caricatura, ¿cuál serías?",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "soloEjes": true
+  },
+  {
+   "id": "verdad-111",
+   "mazo": "verdad",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "¿Qué haces que te parece normal y a los demás no?",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "soloEjes": true
+  },
+  {
+   "id": "verdad-112",
+   "mazo": "verdad",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "¿Cuál es el regalo más feo que te han dado?",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "soloEjes": true
+  },
+  {
+   "id": "verdad-113",
+   "mazo": "verdad",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "¿Qué te da más flojera en la vida?",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "soloEjes": true
+  },
+  {
+   "id": "verdad-114",
+   "mazo": "verdad",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "¿Qué anécdota tuya cuentan siempre en tu familia?",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "soloEjes": true
+  },
+  {
+   "id": "verdad-115",
+   "mazo": "verdad",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "¿A qué famoso invitarías a esta fiesta y por qué?",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "soloEjes": true
+  },
+  {
+   "id": "verdad-116",
+   "mazo": "verdad",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "¿Qué opinión impopular tienes sobre la comida?",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "soloEjes": true
+  },
+  {
+   "id": "verdad-117",
+   "mazo": "verdad",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "¿Cuál fue tu primer trabajo y cuánto te pagaban?",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "soloEjes": true
+  },
+  {
+   "id": "verdad-118",
+   "mazo": "verdad",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "¿Qué es lo más valiente que has hecho?",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "soloEjes": true
+  },
+  {
+   "id": "verdad-119",
+   "mazo": "verdad",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "¿Qué canción te sabes completita aunque te dé pena?",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "soloEjes": true
+  },
+  {
+   "id": "verdad-120",
+   "mazo": "verdad",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Si te ganaras la lotería mañana, ¿qué es lo primero que harías?",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "soloEjes": true
+  },
+  {
+   "id": "verdad-121",
+   "mazo": "verdad",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "¿Quién de aquí tiene el mejor gusto en música? ¿Y el peor?",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "soloEjes": true
+  },
+  {
+   "id": "verdad-122",
+   "mazo": "verdad",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "¿Cuál es la peor excusa que has dado para faltar a algo?",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "soloEjes": true
+  },
+  {
+   "id": "verdad-123",
+   "mazo": "verdad",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "¿Qué es lo que más te ha costado aprender?",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "soloEjes": true
+  },
+  {
+   "id": "verdad-124",
+   "mazo": "verdad",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Describe a {alguien} con tres palabras.",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "soloEjes": true
+  },
+  {
+   "id": "verdad-125",
+   "mazo": "verdad",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "¿Qué es lo más espontáneo que has hecho?",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "soloEjes": true
+  },
+  {
+   "id": "verdad-126",
+   "mazo": "verdad",
+   "escenario": null,
+   "intensidad": 3,
+   "dificultad": 1,
+   "texto": "¿Qué haces cuando nadie te ve y te daría pena que se supiera?",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 2,
+   "soloEjes": true
+  },
+  {
+   "id": "verdad-127",
+   "mazo": "verdad",
+   "escenario": null,
+   "intensidad": 3,
+   "dificultad": 1,
+   "texto": "¿Cuál es el secreto que más te ha costado guardar?",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 2,
+   "soloEjes": true
+  },
+  {
+   "id": "verdad-128",
+   "mazo": "verdad",
+   "escenario": null,
+   "intensidad": 3,
+   "dificultad": 1,
+   "texto": "¿A quién de tu pasado le pedirías perdón?",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 2,
+   "soloEjes": true
+  },
+  {
+   "id": "verdad-129",
+   "mazo": "verdad",
+   "escenario": null,
+   "intensidad": 3,
+   "dificultad": 1,
+   "texto": "¿Alguna vez te hiciste pasar por otra persona? Cuenta.",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 2,
+   "soloEjes": true
+  },
+  {
+   "id": "verdad-130",
+   "mazo": "verdad",
+   "escenario": null,
+   "intensidad": 3,
+   "dificultad": 1,
+   "texto": "¿Qué es lo que más te avergüenza de tu adolescencia?",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 2,
+   "soloEjes": true
+  },
+  {
+   "id": "verdad-131",
+   "mazo": "verdad",
+   "escenario": null,
+   "intensidad": 3,
+   "dificultad": 1,
+   "texto": "¿Cuál fue tu peor cita?",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 2,
+   "soloEjes": true
+  },
+  {
+   "id": "verdad-132",
+   "mazo": "verdad",
+   "escenario": null,
+   "intensidad": 3,
+   "dificultad": 1,
+   "texto": "¿Te has quedado con algo que no era tuyo? ¿Qué fue?",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 2,
+   "soloEjes": true
+  },
+  {
+   "id": "verdad-133",
+   "mazo": "verdad",
+   "escenario": null,
+   "intensidad": 3,
+   "dificultad": 1,
+   "texto": "¿Qué es lo más celoso que has hecho?",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 2,
+   "soloEjes": true
+  },
+  {
+   "id": "verdad-134",
+   "mazo": "verdad",
+   "escenario": null,
+   "intensidad": 3,
+   "dificultad": 1,
+   "texto": "¿Alguna vez leíste un chat ajeno sin permiso?",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 2,
+   "soloEjes": true
+  },
+  {
+   "id": "verdad-135",
+   "mazo": "verdad",
+   "escenario": null,
+   "intensidad": 3,
+   "dificultad": 1,
+   "texto": "¿Qué mentira sigues sosteniendo hasta hoy?",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 2,
+   "soloEjes": true
+  },
+  {
+   "id": "verdad-136",
+   "mazo": "verdad",
+   "escenario": null,
+   "intensidad": 3,
+   "dificultad": 1,
+   "texto": "¿Cuál fue la ruptura que más te dolió?",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 2,
+   "soloEjes": true
+  },
+  {
+   "id": "verdad-137",
+   "mazo": "verdad",
+   "escenario": null,
+   "intensidad": 3,
+   "dificultad": 1,
+   "texto": "¿Has tenido un crush en alguien que no debías? Sin nombres si no quieres.",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 2,
+   "soloEjes": true
+  },
+  {
+   "id": "verdad-138",
+   "mazo": "verdad",
+   "escenario": null,
+   "intensidad": 3,
+   "dificultad": 1,
+   "texto": "¿Qué es lo que más te cuesta perdonarte?",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 2,
+   "soloEjes": true
+  },
+  {
+   "id": "verdad-139",
+   "mazo": "verdad",
+   "escenario": null,
+   "intensidad": 3,
+   "dificultad": 1,
+   "texto": "¿Qué piensas de ti que nunca le has dicho a nadie?",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 2,
+   "soloEjes": true
+  },
+  {
+   "id": "verdad-140",
+   "mazo": "verdad",
+   "escenario": null,
+   "intensidad": 3,
+   "dificultad": 1,
+   "texto": "¿Cuál ha sido tu momento más incómodo en una fiesta?",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 2,
+   "soloEjes": true
+  },
+  {
+   "id": "verdad-141",
+   "mazo": "verdad",
+   "escenario": null,
+   "intensidad": 3,
+   "dificultad": 1,
+   "texto": "¿A quién de aquí le prestarías tu celular desbloqueado y a quién no?",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 2,
+   "soloEjes": true
+  },
+  {
+   "id": "verdad-142",
+   "mazo": "verdad",
+   "escenario": null,
+   "intensidad": 3,
+   "dificultad": 1,
+   "texto": "¿Qué chisme sobre ti te gustaría desmentir?",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 2,
+   "soloEjes": true
+  },
+  {
+   "id": "verdad-143",
+   "mazo": "verdad",
+   "escenario": null,
+   "intensidad": 3,
+   "dificultad": 1,
+   "texto": "¿Cómo fue tu primer beso?",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 2,
+   "soloEjes": true
+  },
+  {
+   "id": "verdad-144",
+   "mazo": "verdad",
+   "escenario": null,
+   "intensidad": 3,
+   "dificultad": 1,
+   "texto": "¿Qué es lo más atrevido que has hecho para conquistar a alguien?",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 2,
+   "soloEjes": true
+  },
+  {
+   "id": "verdad-145",
+   "mazo": "verdad",
+   "escenario": null,
+   "intensidad": 3,
+   "dificultad": 1,
+   "texto": "¿Has tenido una relación a escondidas? ¿Por qué se escondían?",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 2,
+   "soloEjes": true
+  },
+  {
+   "id": "verdad-146",
+   "mazo": "verdad",
+   "escenario": null,
+   "intensidad": 3,
+   "dificultad": 1,
+   "texto": "¿Qué es lo que más te atrae de una persona, de verdad?",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 2,
+   "soloEjes": true
+  },
+  {
+   "id": "verdad-147",
+   "mazo": "verdad",
+   "escenario": null,
+   "intensidad": 3,
+   "dificultad": 1,
+   "texto": "¿Qué le criticas a {alguien} que nunca le has dicho? Dilo con cariño.",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 2,
+   "soloEjes": true
+  },
+  {
+   "id": "verdad-148",
+   "mazo": "verdad",
+   "escenario": null,
+   "intensidad": 3,
+   "dificultad": 1,
+   "texto": "¿Qué es lo más tonto que has hecho por celos?",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 2,
+   "soloEjes": true
+  },
+  {
+   "id": "verdad-149",
+   "mazo": "verdad",
+   "escenario": null,
+   "intensidad": 3,
+   "dificultad": 1,
+   "texto": "¿Has dicho «te amo» sin sentirlo?",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 2,
+   "soloEjes": true
+  },
+  {
+   "id": "verdad-150",
+   "mazo": "verdad",
+   "escenario": null,
+   "intensidad": 3,
+   "dificultad": 1,
+   "texto": "¿Qué aplicación borrarías antes de prestarle tu celular a tu mamá?",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 2,
+   "soloEjes": true
+  },
+  {
+   "id": "verdad-151",
+   "mazo": "verdad",
+   "escenario": null,
+   "intensidad": 4,
+   "dificultad": 1,
+   "texto": "¿Cuál es la fantasía que nunca le has contado a nadie?",
+   "adulto": true,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 3,
+   "soloEjes": true
+  },
+  {
+   "id": "verdad-152",
+   "mazo": "verdad",
+   "escenario": null,
+   "intensidad": 4,
+   "dificultad": 1,
+   "texto": "¿Qué es lo más atrevido que has hecho en la intimidad?",
+   "adulto": true,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 3,
+   "soloEjes": true
+  },
+  {
+   "id": "verdad-153",
+   "mazo": "verdad",
+   "escenario": null,
+   "intensidad": 4,
+   "dificultad": 1,
+   "texto": "¿Hay algún encuentro del que te arrepientas? ¿Qué aprendiste?",
+   "adulto": true,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 3,
+   "soloEjes": true
+  },
+  {
+   "id": "verdad-154",
+   "mazo": "verdad",
+   "escenario": null,
+   "intensidad": 4,
+   "dificultad": 1,
+   "texto": "¿Qué es lo más loco que has hecho en una noche de fiesta?",
+   "adulto": true,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 3,
+   "soloEjes": true
+  },
+  {
+   "id": "verdad-155",
+   "mazo": "verdad",
+   "escenario": null,
+   "intensidad": 4,
+   "dificultad": 1,
+   "texto": "¿Qué es lo que más te gusta que te hagan?",
+   "adulto": true,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 3,
+   "soloEjes": true
+  },
+  {
+   "id": "verdad-156",
+   "mazo": "verdad",
+   "escenario": null,
+   "intensidad": 4,
+   "dificultad": 1,
+   "texto": "¿Cómo fue tu primera vez?",
+   "adulto": true,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 3,
+   "soloEjes": true
+  },
+  {
+   "id": "verdad-157",
+   "mazo": "verdad",
+   "escenario": null,
+   "intensidad": 4,
+   "dificultad": 1,
+   "texto": "¿Te ha atraído alguien de este grupo? Sin nombres si no quieres.",
+   "adulto": true,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 3,
+   "soloEjes": true
+  },
+  {
+   "id": "verdad-158",
+   "mazo": "verdad",
+   "escenario": null,
+   "intensidad": 4,
+   "dificultad": 1,
+   "texto": "¿Qué es lo más prohibido que has deseado?",
+   "adulto": true,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 3,
+   "soloEjes": true
+  },
+  {
+   "id": "verdad-159",
+   "mazo": "verdad",
+   "escenario": null,
+   "intensidad": 4,
+   "dificultad": 1,
+   "texto": "¿Qué es lo que nunca harías en la cama?",
+   "adulto": true,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 3,
+   "soloEjes": true
+  },
+  {
+   "id": "verdad-160",
+   "mazo": "verdad",
+   "escenario": null,
+   "intensidad": 4,
+   "dificultad": 1,
+   "texto": "¿Cuál es tu mayor inseguridad en la intimidad?",
+   "adulto": true,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 3,
+   "soloEjes": true
+  },
+  {
+   "id": "verdad-161",
+   "mazo": "verdad",
+   "escenario": null,
+   "intensidad": 4,
+   "dificultad": 1,
+   "texto": "¿Qué mensaje o foto tuya te daría pánico que se publicara?",
+   "adulto": true,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 3,
+   "soloEjes": true
+  },
+  {
+   "id": "verdad-162",
+   "mazo": "verdad",
+   "escenario": null,
+   "intensidad": 4,
+   "dificultad": 1,
+   "texto": "¿Qué es lo peor que has hecho y nadie sabe?",
+   "adulto": true,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 3,
+   "soloEjes": true
+  },
+  {
+   "id": "verdad-163",
+   "mazo": "verdad",
+   "escenario": null,
+   "intensidad": 4,
+   "dificultad": 1,
+   "texto": "¿Has engañado o te han engañado? Cuenta lo que quieras.",
+   "adulto": true,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 3,
+   "soloEjes": true
+  },
+  {
+   "id": "verdad-164",
+   "mazo": "verdad",
+   "escenario": null,
+   "intensidad": 4,
+   "dificultad": 1,
+   "texto": "¿Qué es lo más atrevido que has mandado por mensaje?",
+   "adulto": true,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 3,
+   "soloEjes": true
+  },
+  {
+   "id": "verdad-165",
+   "mazo": "verdad",
+   "escenario": null,
+   "intensidad": 4,
+   "dificultad": 1,
+   "texto": "Del 1 al 10, ¿qué tan aventurero o aventurera eres en la intimidad? Justifica.",
+   "adulto": true,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 3,
+   "soloEjes": true
+  },
+  {
+   "id": "verdad-166",
+   "mazo": "verdad",
+   "escenario": null,
+   "intensidad": 4,
+   "dificultad": 1,
+   "texto": "¿Qué le pedirías a {pareja} que hiciera esta noche?",
+   "adulto": true,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": true,
+   "minJugadores": 2,
+   "nivel": 3,
+   "soloEjes": true
+  },
+  {
+   "id": "verdad-167",
+   "mazo": "verdad",
+   "escenario": null,
+   "intensidad": 4,
+   "dificultad": 1,
+   "texto": "¿Qué es lo que más te gustó de su primera noche juntos?",
+   "adulto": true,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": true,
+   "minJugadores": 2,
+   "nivel": 3,
+   "soloEjes": true
+  },
+  {
+   "id": "verdad-168",
+   "mazo": "verdad",
+   "escenario": null,
+   "intensidad": 4,
+   "dificultad": 1,
+   "texto": "¿Qué disfraz o idea te gustaría probar con {pareja}?",
+   "adulto": true,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": true,
+   "minJugadores": 2,
+   "nivel": 3,
+   "soloEjes": true
+  },
+  {
+   "id": "verdad-169",
+   "mazo": "verdad",
+   "escenario": null,
+   "intensidad": 4,
+   "dificultad": 1,
+   "texto": "¿Cuál es el lugar más raro donde te han besado?",
+   "adulto": true,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 3,
+   "soloEjes": true
+  },
+  {
+   "id": "verdad-170",
+   "mazo": "verdad",
+   "escenario": null,
+   "intensidad": 4,
+   "dificultad": 1,
+   "texto": "¿Qué es lo que más te avergüenza de tu historial amoroso?",
+   "adulto": true,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 3,
+   "soloEjes": true
+  },
+  {
+   "id": "verdad-171",
+   "mazo": "verdad",
+   "escenario": null,
+   "intensidad": 4,
+   "dificultad": 1,
+   "texto": "¿A cuántas personas has besado este año? Aproximado vale.",
+   "adulto": true,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 3,
+   "soloEjes": true
+  },
+  {
+   "id": "verdad-172",
+   "mazo": "verdad",
+   "escenario": null,
+   "intensidad": 4,
+   "dificultad": 1,
+   "texto": "¿Qué es lo más vergonzoso que te ha pasado en la intimidad?",
+   "adulto": true,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 3,
+   "soloEjes": true
+  },
+  {
+   "id": "verdad-173",
+   "mazo": "verdad",
+   "escenario": null,
+   "intensidad": 4,
+   "dificultad": 1,
+   "texto": "¿Qué secreto tuyo cambiaría lo que este grupo piensa de ti?",
+   "adulto": true,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 3,
+   "soloEjes": true
+  },
+  {
+   "id": "verdad-174",
+   "mazo": "verdad",
+   "escenario": null,
+   "intensidad": 4,
+   "dificultad": 1,
+   "texto": "¿Te has enamorado de alguien que tenía pareja?",
+   "adulto": true,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 3,
+   "soloEjes": true
+  },
+  {
+   "id": "verdad-175",
+   "mazo": "verdad",
+   "escenario": null,
+   "intensidad": 4,
+   "dificultad": 1,
+   "texto": "¿Qué nunca le has dicho a {pareja} y quieres decirle hoy?",
+   "adulto": true,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": true,
+   "minJugadores": 2,
+   "nivel": 3,
+   "soloEjes": true
+  },
+  {
+   "id": "reto-101",
+   "mazo": "reto",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Habla como robot hasta tu siguiente turno.",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "soloEjes": true
+  },
+  {
+   "id": "reto-102",
+   "mazo": "reto",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Imita a un famoso hasta que alguien adivine quién es.",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "soloEjes": true
+  },
+  {
+   "id": "reto-103",
+   "mazo": "reto",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Cuenta tu día como si fuera el tráiler de una película.",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "soloEjes": true
+  },
+  {
+   "id": "reto-104",
+   "mazo": "reto",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Haz la mejor cara de sorpresa para una foto del grupo.",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "soloEjes": true
+  },
+  {
+   "id": "reto-105",
+   "mazo": "reto",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Inventa con {alguien} un saludo secreto sin tocarse y enséñenlo.",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "soloEjes": true
+  },
+  {
+   "id": "reto-106",
+   "mazo": "reto",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Narra lo que hace {alguien} como documental de animales durante 30 segundos.",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "soloEjes": true
+  },
+  {
+   "id": "reto-107",
+   "mazo": "reto",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Di el abecedario al revés lo más rápido que puedas.",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "soloEjes": true
+  },
+  {
+   "id": "reto-108",
+   "mazo": "reto",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Contesta cantando todo lo que te digan hasta tu siguiente turno.",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "soloEjes": true
+  },
+  {
+   "id": "reto-109",
+   "mazo": "reto",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Actúa con {alguien} una escena de telenovela de 20 segundos.",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "soloEjes": true
+  },
+  {
+   "id": "reto-110",
+   "mazo": "reto",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Haz un comercial de 20 segundos de algo que tengas a la mano.",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "soloEjes": true
+  },
+  {
+   "id": "reto-111",
+   "mazo": "reto",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Dile cinco cumplidos distintos a quien tengas a tu derecha.",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "soloEjes": true
+  },
+  {
+   "id": "reto-112",
+   "mazo": "reto",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Cuenta del 1 al 20 saltándote los múltiplos de 3. Si te equivocas, empiezas otra vez.",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "soloEjes": true
+  },
+  {
+   "id": "reto-113",
+   "mazo": "reto",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Dibuja a {alguien} en 30 segundos y enséñalo.",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "soloEjes": true
+  },
+  {
+   "id": "reto-114",
+   "mazo": "reto",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Imita a un perro que ve llegar a su dueño.",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "soloEjes": true
+  },
+  {
+   "id": "reto-115",
+   "mazo": "reto",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Habla con el acento que elija el grupo durante una ronda.",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 3,
+   "nivel": 1,
+   "soloEjes": true
+  },
+  {
+   "id": "reto-116",
+   "mazo": "reto",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Ponle un apodo nuevo a cada persona del grupo.",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "soloEjes": true
+  },
+  {
+   "id": "reto-117",
+   "mazo": "reto",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Haz una pasarela de 15 segundos como modelo profesional.",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "soloEjes": true
+  },
+  {
+   "id": "reto-118",
+   "mazo": "reto",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Responde solo con preguntas hasta tu siguiente turno.",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "soloEjes": true
+  },
+  {
+   "id": "reto-119",
+   "mazo": "reto",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Tararea una canción hasta que el grupo adivine cuál es.",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "soloEjes": true
+  },
+  {
+   "id": "reto-120",
+   "mazo": "reto",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Cuenta una anécdota de 30 segundos sin decir «este» ni «o sea».",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "soloEjes": true
+  },
+  {
+   "id": "reto-121",
+   "mazo": "reto",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Haz un poema de cuatro versos sobre la comida de hoy.",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "soloEjes": true
+  },
+  {
+   "id": "reto-122",
+   "mazo": "reto",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Párate en un pie 30 segundos con los ojos cerrados.",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "bajo",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "soloEjes": true
+  },
+  {
+   "id": "reto-123",
+   "mazo": "reto",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Haz el sonido de cinco animales y que adivinen el orden.",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "soloEjes": true
+  },
+  {
+   "id": "reto-124",
+   "mazo": "reto",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Saluda a todos como presentador o presentadora de programa matutino.",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "soloEjes": true
+  },
+  {
+   "id": "reto-125",
+   "mazo": "reto",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Imita a alguien del grupo pidiendo en un restaurante.",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "soloEjes": true
+  },
+  {
+   "id": "reto-126",
+   "mazo": "reto",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Haz un brindis de 20 segundos para {alguien} y tomen un trago de lo que tengan.",
+   "adulto": false,
+   "drunk": true,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "soloEjes": true
+  },
+  {
+   "id": "reto-127",
+   "mazo": "reto",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Piedra, papel o tijera con {alguien}: quien pierda toma un trago de lo que tenga.",
+   "adulto": false,
+   "drunk": true,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "soloEjes": true
+  },
+  {
+   "id": "reto-128",
+   "mazo": "reto",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Cuenta tu peor cruda en 30 segundos y al terminar toma un trago de lo que tengas.",
+   "adulto": false,
+   "drunk": true,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "soloEjes": true
+  },
+  {
+   "id": "reto-129",
+   "mazo": "reto",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Durante dos minutos, toma un trago de lo que tengas cada vez que digas «güey».",
+   "adulto": false,
+   "drunk": true,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "soloEjes": true
+  },
+  {
+   "id": "reto-130",
+   "mazo": "reto",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Prepárale una bebida a {alguien}, con o sin alcohol, y descríbela como bartender famoso.",
+   "adulto": false,
+   "drunk": true,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "soloEjes": true
+  },
+  {
+   "id": "reto-131",
+   "mazo": "reto",
+   "escenario": null,
+   "intensidad": 3,
+   "dificultad": 1,
+   "texto": "Deja que el grupo elija tu foto de perfil por una hora.",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 2,
+   "soloEjes": true
+  },
+  {
+   "id": "reto-132",
+   "mazo": "reto",
+   "escenario": null,
+   "intensidad": 3,
+   "dificultad": 1,
+   "texto": "Manda un audio a tu chat familiar diciendo «los quiero mucho» con voz de telenovela.",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 2,
+   "soloEjes": true
+  },
+  {
+   "id": "reto-133",
+   "mazo": "reto",
+   "escenario": null,
+   "intensidad": 3,
+   "dificultad": 1,
+   "texto": "Deja que {alguien} escriba tu estado de WhatsApp. Tú lo apruebas antes de subirlo.",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 2,
+   "soloEjes": true
+  },
+  {
+   "id": "reto-134",
+   "mazo": "reto",
+   "escenario": null,
+   "intensidad": 3,
+   "dificultad": 1,
+   "texto": "Baila 20 segundos sin música en medio del grupo.",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 2,
+   "soloEjes": true
+  },
+  {
+   "id": "reto-135",
+   "mazo": "reto",
+   "escenario": null,
+   "intensidad": 3,
+   "dificultad": 1,
+   "texto": "Llama a alguien y dile que le extrañas, sin explicar por qué. Tú eliges a quién.",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 2,
+   "soloEjes": true
+  },
+  {
+   "id": "reto-136",
+   "mazo": "reto",
+   "escenario": null,
+   "intensidad": 3,
+   "dificultad": 1,
+   "texto": "Deja que el grupo vea tu último chat por 10 segundos. Tú eliges cuál.",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 2,
+   "soloEjes": true
+  },
+  {
+   "id": "reto-137",
+   "mazo": "reto",
+   "escenario": null,
+   "intensidad": 3,
+   "dificultad": 1,
+   "texto": "Improvisa un rap de cuatro versos sobre {alguien}.",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 2,
+   "soloEjes": true
+  },
+  {
+   "id": "reto-138",
+   "mazo": "reto",
+   "escenario": null,
+   "intensidad": 3,
+   "dificultad": 1,
+   "texto": "Cuenta la anécdota más vergonzosa de tu semana.",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 2,
+   "soloEjes": true
+  },
+  {
+   "id": "reto-139",
+   "mazo": "reto",
+   "escenario": null,
+   "intensidad": 3,
+   "dificultad": 1,
+   "texto": "Deja que {alguien} lea en voz alta tu última búsqueda.",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 2,
+   "soloEjes": true
+  },
+  {
+   "id": "reto-140",
+   "mazo": "reto",
+   "escenario": null,
+   "intensidad": 3,
+   "dificultad": 1,
+   "texto": "Haz una declaración de amor exagerada a un objeto de la mesa.",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 2,
+   "soloEjes": true
+  },
+  {
+   "id": "reto-141",
+   "mazo": "reto",
+   "escenario": null,
+   "intensidad": 3,
+   "dificultad": 1,
+   "texto": "Imita a {alguien} bailando; el grupo califica del 1 al 10.",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 2,
+   "soloEjes": true
+  },
+  {
+   "id": "reto-142",
+   "mazo": "reto",
+   "escenario": null,
+   "intensidad": 3,
+   "dificultad": 1,
+   "texto": "Aguanta 30 segundos en plancha mientras el grupo te echa porras.",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "alto",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 2,
+   "soloEjes": true
+  },
+  {
+   "id": "reto-143",
+   "mazo": "reto",
+   "escenario": null,
+   "intensidad": 3,
+   "dificultad": 1,
+   "texto": "Deja que el grupo te peine o te maquille como quiera.",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 2,
+   "contacto": true,
+   "soloEjes": true
+  },
+  {
+   "id": "reto-144",
+   "mazo": "reto",
+   "escenario": null,
+   "intensidad": 3,
+   "dificultad": 1,
+   "texto": "Ponte una prenda de alguien del grupo hasta tu siguiente turno, si te la presta.",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 2,
+   "soloEjes": true
+  },
+  {
+   "id": "reto-145",
+   "mazo": "reto",
+   "escenario": null,
+   "intensidad": 3,
+   "dificultad": 1,
+   "texto": "Canta a todo pulmón el coro que elija el grupo.",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 2,
+   "soloEjes": true
+  },
+  {
+   "id": "reto-146",
+   "mazo": "reto",
+   "escenario": null,
+   "intensidad": 3,
+   "dificultad": 1,
+   "texto": "Imita a tu crush de la secundaria. Sin nombres.",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 2,
+   "soloEjes": true
+  },
+  {
+   "id": "reto-147",
+   "mazo": "reto",
+   "escenario": null,
+   "intensidad": 3,
+   "dificultad": 1,
+   "texto": "Di quién de aquí crees que miente más y por qué.",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 2,
+   "soloEjes": true
+  },
+  {
+   "id": "reto-148",
+   "mazo": "reto",
+   "escenario": null,
+   "intensidad": 3,
+   "dificultad": 1,
+   "texto": "Cuenta tu peor rechazo con lujo de detalle.",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 2,
+   "soloEjes": true
+  },
+  {
+   "id": "reto-149",
+   "mazo": "reto",
+   "escenario": null,
+   "intensidad": 3,
+   "dificultad": 1,
+   "texto": "Lee en voz alta el último mensaje de tu mamá o tu papá.",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 2,
+   "soloEjes": true
+  },
+  {
+   "id": "reto-150",
+   "mazo": "reto",
+   "escenario": null,
+   "intensidad": 3,
+   "dificultad": 1,
+   "texto": "Acomoda al grupo para una foto en la pose que tú elijas.",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 3,
+   "nivel": 2,
+   "soloEjes": true
+  },
+  {
+   "id": "reto-151",
+   "mazo": "reto",
+   "escenario": null,
+   "intensidad": 3,
+   "dificultad": 1,
+   "texto": "Haz que todo el grupo cante una canción contigo.",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 3,
+   "nivel": 2,
+   "soloEjes": true
+  },
+  {
+   "id": "reto-152",
+   "mazo": "reto",
+   "escenario": null,
+   "intensidad": 3,
+   "dificultad": 1,
+   "texto": "Baila 30 segundos el baile de moda que te pida el grupo.",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 2,
+   "soloEjes": true
+  },
+  {
+   "id": "reto-153",
+   "mazo": "reto",
+   "escenario": null,
+   "intensidad": 3,
+   "dificultad": 1,
+   "texto": "Dale un masaje de hombros de 30 segundos a {alguien}.",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 2,
+   "contacto": true,
+   "soloEjes": true
+  },
+  {
+   "id": "reto-154",
+   "mazo": "reto",
+   "escenario": null,
+   "intensidad": 3,
+   "dificultad": 1,
+   "texto": "Baila una canción completa con {pareja}, bien pegados.",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": true,
+   "minJugadores": 2,
+   "nivel": 2,
+   "contacto": true,
+   "soloEjes": true
+  },
+  {
+   "id": "reto-155",
+   "mazo": "reto",
+   "escenario": null,
+   "intensidad": 3,
+   "dificultad": 1,
+   "texto": "Deja que {pareja} te dé un beso donde quiera de la cara.",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": true,
+   "minJugadores": 2,
+   "nivel": 2,
+   "contacto": true,
+   "soloEjes": true
+  },
+  {
+   "id": "reto-156",
+   "mazo": "reto",
+   "escenario": null,
+   "intensidad": 3,
+   "dificultad": 1,
+   "texto": "Bebe de tu vaso con los brazos entrelazados con {pareja}.",
+   "adulto": false,
+   "drunk": true,
+   "esfuerzo": "ninguno",
+   "pidePareja": true,
+   "minJugadores": 2,
+   "nivel": 2,
+   "contacto": true,
+   "soloEjes": true
+  },
+  {
+   "id": "reto-157",
+   "mazo": "reto",
+   "escenario": null,
+   "intensidad": 4,
+   "dificultad": 1,
+   "texto": "Quítate una prenda hasta el siguiente juego. Los accesorios no cuentan.",
+   "adulto": true,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 3,
+   "soloEjes": true
+  },
+  {
+   "id": "reto-158",
+   "mazo": "reto",
+   "escenario": null,
+   "intensidad": 4,
+   "dificultad": 1,
+   "texto": "Baila sensual 30 segundos para el grupo, sin tocar a nadie.",
+   "adulto": true,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 3,
+   "soloEjes": true
+  },
+  {
+   "id": "reto-159",
+   "mazo": "reto",
+   "escenario": null,
+   "intensidad": 4,
+   "dificultad": 1,
+   "texto": "Dale a {pareja} un beso de 20 segundos.",
+   "adulto": true,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": true,
+   "minJugadores": 2,
+   "nivel": 3,
+   "contacto": true,
+   "soloEjes": true
+  },
+  {
+   "id": "reto-160",
+   "mazo": "reto",
+   "escenario": null,
+   "intensidad": 4,
+   "dificultad": 1,
+   "texto": "Susúrrale a {pareja} lo que más te gusta de su cuerpo.",
+   "adulto": true,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": true,
+   "minJugadores": 2,
+   "nivel": 3,
+   "contacto": true,
+   "soloEjes": true
+  },
+  {
+   "id": "reto-161",
+   "mazo": "reto",
+   "escenario": null,
+   "intensidad": 4,
+   "dificultad": 1,
+   "texto": "Lee en voz alta el mensaje más atrevido que hayas mandado. Si no tienes, invéntalo.",
+   "adulto": true,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 3,
+   "soloEjes": true
+  },
+  {
+   "id": "reto-162",
+   "mazo": "reto",
+   "escenario": null,
+   "intensidad": 4,
+   "dificultad": 1,
+   "texto": "Deja que {pareja} te dibuje algo con pluma donde quiera, menos en la cara.",
+   "adulto": true,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": true,
+   "minJugadores": 2,
+   "nivel": 3,
+   "contacto": true,
+   "soloEjes": true
+  },
+  {
+   "id": "reto-163",
+   "mazo": "reto",
+   "escenario": null,
+   "intensidad": 4,
+   "dificultad": 1,
+   "texto": "Hagan la pose más sensual para una foto que solo ustedes guardan.",
+   "adulto": true,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": true,
+   "minJugadores": 2,
+   "nivel": 3,
+   "contacto": true,
+   "soloEjes": true
+  },
+  {
+   "id": "reto-164",
+   "mazo": "reto",
+   "escenario": null,
+   "intensidad": 4,
+   "dificultad": 1,
+   "texto": "Cuenta tu fantasía en tres frases.",
+   "adulto": true,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 3,
+   "soloEjes": true
+  },
+  {
+   "id": "reto-165",
+   "mazo": "reto",
+   "escenario": null,
+   "intensidad": 4,
+   "dificultad": 1,
+   "texto": "Siéntate en las piernas de {pareja} y dale de beber de tu vaso.",
+   "adulto": true,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": true,
+   "minJugadores": 2,
+   "nivel": 3,
+   "contacto": true,
+   "soloEjes": true
+  },
+  {
+   "id": "reto-166",
+   "mazo": "reto",
+   "escenario": null,
+   "intensidad": 4,
+   "dificultad": 1,
+   "texto": "Hazle a {pareja} un baile de 30 segundos en su silla.",
+   "adulto": true,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": true,
+   "minJugadores": 2,
+   "nivel": 3,
+   "contacto": true,
+   "soloEjes": true
+  },
+  {
+   "id": "reto-167",
+   "mazo": "reto",
+   "escenario": null,
+   "intensidad": 4,
+   "dificultad": 1,
+   "texto": "El grupo elige una prenda tuya que te quitas hasta tu siguiente turno.",
+   "adulto": true,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 3,
+   "soloEjes": true
+  },
+  {
+   "id": "reto-168",
+   "mazo": "reto",
+   "escenario": null,
+   "intensidad": 4,
+   "dificultad": 1,
+   "texto": "Con los ojos vendados, adivina quién te toma la mano. Solo participa quien quiera.",
+   "adulto": true,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 3,
+   "nivel": 3,
+   "contacto": true,
+   "soloEjes": true
+  },
+  {
+   "id": "reto-169",
+   "mazo": "reto",
+   "escenario": null,
+   "intensidad": 4,
+   "dificultad": 1,
+   "texto": "Dale a {pareja} tres besos donde elija el grupo, dentro de lo que ustedes acepten.",
+   "adulto": true,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": true,
+   "minJugadores": 2,
+   "nivel": 3,
+   "contacto": true,
+   "soloEjes": true
+  },
+  {
+   "id": "reto-170",
+   "mazo": "reto",
+   "escenario": null,
+   "intensidad": 4,
+   "dificultad": 1,
+   "texto": "Llama con voz seductora durante 30 segundos a alguien que esté aquí.",
+   "adulto": true,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 3,
+   "soloEjes": true
+  },
+  {
+   "id": "reto-171",
+   "mazo": "reto",
+   "escenario": null,
+   "intensidad": 4,
+   "dificultad": 1,
+   "texto": "Gatea hasta {pareja} y dile al oído algo que solo pueda escuchar.",
+   "adulto": true,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": true,
+   "minJugadores": 2,
+   "nivel": 3,
+   "contacto": true,
+   "soloEjes": true
+  },
+  {
+   "id": "reto-172",
+   "mazo": "reto",
+   "escenario": null,
+   "intensidad": 4,
+   "dificultad": 1,
+   "texto": "Intercambia una prenda con {pareja} hasta el siguiente juego.",
+   "adulto": true,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": true,
+   "minJugadores": 2,
+   "nivel": 3,
+   "soloEjes": true
+  },
+  {
+   "id": "reto-173",
+   "mazo": "reto",
+   "escenario": null,
+   "intensidad": 4,
+   "dificultad": 1,
+   "texto": "Describe tu noche ideal con lujo de detalle, sin decir con quién.",
+   "adulto": true,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 3,
+   "soloEjes": true
+  },
+  {
+   "id": "reto-174",
+   "mazo": "reto",
+   "escenario": null,
+   "intensidad": 4,
+   "dificultad": 1,
+   "texto": "Haz una sesión de fotos de 20 segundos como portada de revista atrevida.",
+   "adulto": true,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 3,
+   "soloEjes": true
+  },
+  {
+   "id": "reto-175",
+   "mazo": "reto",
+   "escenario": null,
+   "intensidad": 4,
+   "dificultad": 1,
+   "texto": "Deja que {pareja} invente un reto para ti; tú decides si lo haces o tomas la alternativa.",
+   "adulto": true,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": true,
+   "minJugadores": 2,
+   "nivel": 3,
+   "soloEjes": true
+  },
+  {
+   "id": "reto-176",
+   "mazo": "reto",
+   "escenario": null,
+   "intensidad": 4,
+   "dificultad": 1,
+   "texto": "Enséñale al grupo tu última foto en el espejo.",
+   "adulto": true,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 3,
+   "soloEjes": true
+  },
+  {
+   "id": "reto-177",
+   "mazo": "reto",
+   "escenario": null,
+   "intensidad": 4,
+   "dificultad": 1,
+   "texto": "Dale a {pareja} un beso de película, con inclinación incluida.",
+   "adulto": true,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": true,
+   "minJugadores": 2,
+   "nivel": 3,
+   "contacto": true,
+   "soloEjes": true
+  },
+  {
+   "id": "reto-178",
+   "mazo": "reto",
+   "escenario": null,
+   "intensidad": 4,
+   "dificultad": 1,
+   "texto": "Imita tu cara en el momento más romántico. Sí, esa.",
+   "adulto": true,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 3,
+   "soloEjes": true
+  },
+  {
+   "id": "reto-179",
+   "mazo": "reto",
+   "escenario": null,
+   "intensidad": 4,
+   "dificultad": 1,
+   "texto": "Pon tu canción más sensual y baila el coro.",
+   "adulto": true,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 3,
+   "soloEjes": true
+  },
+  {
+   "id": "reto-180",
+   "mazo": "reto",
+   "escenario": null,
+   "intensidad": 4,
+   "dificultad": 1,
+   "texto": "Dile a {pareja} al oído qué harían si estuvieran solos. Luego cuéntale al grupo un resumen.",
+   "adulto": true,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": true,
+   "minJugadores": 2,
+   "nivel": 3,
+   "contacto": true,
+   "soloEjes": true
+  },
+  {
+   "id": "reto-181",
+   "mazo": "reto",
+   "escenario": null,
+   "intensidad": 4,
+   "dificultad": 1,
+   "texto": "Quítale a {pareja} un accesorio o un calcetín con los dientes.",
+   "adulto": true,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": true,
+   "minJugadores": 2,
+   "nivel": 3,
+   "contacto": true,
+   "soloEjes": true
+  },
+  {
+   "id": "reto-182",
+   "mazo": "reto",
+   "escenario": null,
+   "intensidad": 4,
+   "dificultad": 1,
+   "texto": "Dale de beber a {pareja} de tu vaso sin usar las manos.",
+   "adulto": true,
+   "drunk": true,
+   "esfuerzo": "ninguno",
+   "pidePareja": true,
+   "minJugadores": 2,
+   "nivel": 3,
+   "contacto": true,
+   "soloEjes": true
+  },
+  {
+   "id": "yo-nunca-101",
+   "mazo": "yo-nunca",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Yo nunca he cantado a todo volumen en la regadera",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "soloEjes": true
+  },
+  {
+   "id": "yo-nunca-102",
+   "mazo": "yo-nunca",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Yo nunca he fingido que me sé una canción",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "soloEjes": true
+  },
+  {
+   "id": "yo-nunca-103",
+   "mazo": "yo-nunca",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Yo nunca me he caído en público",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "soloEjes": true
+  },
+  {
+   "id": "yo-nunca-104",
+   "mazo": "yo-nunca",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Yo nunca he olvidado el nombre de alguien a media plática",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "soloEjes": true
+  },
+  {
+   "id": "yo-nunca-105",
+   "mazo": "yo-nunca",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Yo nunca he comido algo que se cayó al piso",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "soloEjes": true
+  },
+  {
+   "id": "yo-nunca-106",
+   "mazo": "yo-nunca",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Yo nunca he llorado con una película animada",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "soloEjes": true
+  },
+  {
+   "id": "yo-nunca-107",
+   "mazo": "yo-nunca",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Yo nunca me he perdido en mi propia ciudad",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "soloEjes": true
+  },
+  {
+   "id": "yo-nunca-108",
+   "mazo": "yo-nunca",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Yo nunca he mentido sobre mi edad",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "soloEjes": true
+  },
+  {
+   "id": "yo-nunca-109",
+   "mazo": "yo-nunca",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Yo nunca he ido a una fiesta sin invitación",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "soloEjes": true
+  },
+  {
+   "id": "yo-nunca-110",
+   "mazo": "yo-nunca",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Yo nunca he dormido más de 14 horas seguidas",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "soloEjes": true
+  },
+  {
+   "id": "yo-nunca-111",
+   "mazo": "yo-nunca",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Yo nunca he hablado solo en voz alta en la calle",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "soloEjes": true
+  },
+  {
+   "id": "yo-nunca-112",
+   "mazo": "yo-nunca",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Yo nunca he regalado algo que me regalaron",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "soloEjes": true
+  },
+  {
+   "id": "yo-nunca-113",
+   "mazo": "yo-nunca",
+   "escenario": null,
+   "intensidad": 3,
+   "dificultad": 1,
+   "texto": "Yo nunca he besado a alguien de este grupo",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 2,
+   "soloEjes": true
+  },
+  {
+   "id": "yo-nunca-114",
+   "mazo": "yo-nunca",
+   "escenario": null,
+   "intensidad": 3,
+   "dificultad": 1,
+   "texto": "Yo nunca he mentido para salirme de una cita",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 2,
+   "soloEjes": true
+  },
+  {
+   "id": "yo-nunca-115",
+   "mazo": "yo-nunca",
+   "escenario": null,
+   "intensidad": 3,
+   "dificultad": 1,
+   "texto": "Yo nunca he terminado con alguien por mensaje",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 2,
+   "soloEjes": true
+  },
+  {
+   "id": "yo-nunca-116",
+   "mazo": "yo-nunca",
+   "escenario": null,
+   "intensidad": 3,
+   "dificultad": 1,
+   "texto": "Yo nunca he regresado con un ex",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 2,
+   "soloEjes": true
+  },
+  {
+   "id": "yo-nunca-117",
+   "mazo": "yo-nunca",
+   "escenario": null,
+   "intensidad": 3,
+   "dificultad": 1,
+   "texto": "Yo nunca he borrado un mensaje antes de que lo leyeran",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 2,
+   "soloEjes": true
+  },
+  {
+   "id": "yo-nunca-118",
+   "mazo": "yo-nunca",
+   "escenario": null,
+   "intensidad": 3,
+   "dificultad": 1,
+   "texto": "Yo nunca he fingido estar enfermo para faltar al trabajo",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 2,
+   "soloEjes": true
+  },
+  {
+   "id": "yo-nunca-119",
+   "mazo": "yo-nunca",
+   "escenario": null,
+   "intensidad": 3,
+   "dificultad": 1,
+   "texto": "Yo nunca he tenido un crush en mi jefe o jefa",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 2,
+   "soloEjes": true
+  },
+  {
+   "id": "yo-nunca-120",
+   "mazo": "yo-nunca",
+   "escenario": null,
+   "intensidad": 3,
+   "dificultad": 1,
+   "texto": "Yo nunca he besado a dos personas la misma noche",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 2,
+   "soloEjes": true
+  },
+  {
+   "id": "yo-nunca-121",
+   "mazo": "yo-nunca",
+   "escenario": null,
+   "intensidad": 3,
+   "dificultad": 1,
+   "texto": "Yo nunca he mentido en este juego",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 2,
+   "soloEjes": true
+  },
+  {
+   "id": "yo-nunca-122",
+   "mazo": "yo-nunca",
+   "escenario": null,
+   "intensidad": 3,
+   "dificultad": 1,
+   "texto": "Yo nunca he ligado en una app",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 2,
+   "soloEjes": true
+  },
+  {
+   "id": "yo-nunca-123",
+   "mazo": "yo-nunca",
+   "escenario": null,
+   "intensidad": 3,
+   "dificultad": 1,
+   "texto": "Yo nunca he investigado a alguien antes de una cita",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 2,
+   "soloEjes": true
+  },
+  {
+   "id": "yo-nunca-124",
+   "mazo": "yo-nunca",
+   "escenario": null,
+   "intensidad": 3,
+   "dificultad": 1,
+   "texto": "Yo nunca he leído un chat ajeno sin permiso",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 2,
+   "soloEjes": true
+  },
+  {
+   "id": "yo-nunca-125",
+   "mazo": "yo-nunca",
+   "escenario": null,
+   "intensidad": 4,
+   "dificultad": 1,
+   "texto": "Yo nunca lo he hecho en un lugar público",
+   "adulto": true,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 3,
+   "soloEjes": true
+  },
+  {
+   "id": "yo-nunca-126",
+   "mazo": "yo-nunca",
+   "escenario": null,
+   "intensidad": 4,
+   "dificultad": 1,
+   "texto": "Yo nunca he tenido una aventura de una noche",
+   "adulto": true,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 3,
+   "soloEjes": true
+  },
+  {
+   "id": "yo-nunca-127",
+   "mazo": "yo-nunca",
+   "escenario": null,
+   "intensidad": 4,
+   "dificultad": 1,
+   "texto": "Yo nunca me han cachado en plena acción",
+   "adulto": true,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 3,
+   "soloEjes": true
+  },
+  {
+   "id": "yo-nunca-128",
+   "mazo": "yo-nunca",
+   "escenario": null,
+   "intensidad": 4,
+   "dificultad": 1,
+   "texto": "Yo nunca he soñado algo subido de tono con alguien conocido",
+   "adulto": true,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 3,
+   "soloEjes": true
+  },
+  {
+   "id": "yo-nunca-129",
+   "mazo": "yo-nunca",
+   "escenario": null,
+   "intensidad": 4,
+   "dificultad": 1,
+   "texto": "Yo nunca he usado disfraz en la intimidad",
+   "adulto": true,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 3,
+   "soloEjes": true
+  },
+  {
+   "id": "yo-nunca-130",
+   "mazo": "yo-nunca",
+   "escenario": null,
+   "intensidad": 4,
+   "dificultad": 1,
+   "texto": "Yo nunca he mandado un mensaje atrevido a la persona equivocada",
+   "adulto": true,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 3,
+   "soloEjes": true
+  },
+  {
+   "id": "yo-nunca-131",
+   "mazo": "yo-nunca",
+   "escenario": null,
+   "intensidad": 4,
+   "dificultad": 1,
+   "texto": "Yo nunca he pensado en serio en un trío",
+   "adulto": true,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 3,
+   "soloEjes": true
+  },
+  {
+   "id": "yo-nunca-132",
+   "mazo": "yo-nunca",
+   "escenario": null,
+   "intensidad": 4,
+   "dificultad": 1,
+   "texto": "Yo nunca he tenido algo con alguien mucho mayor que yo",
+   "adulto": true,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 3,
+   "soloEjes": true
+  },
+  {
+   "id": "yo-nunca-133",
+   "mazo": "yo-nunca",
+   "escenario": null,
+   "intensidad": 4,
+   "dificultad": 1,
+   "texto": "Yo nunca he tenido algo con un amigo o amiga sin ser pareja",
+   "adulto": true,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 3,
+   "soloEjes": true
+  },
+  {
+   "id": "yo-nunca-134",
+   "mazo": "yo-nunca",
+   "escenario": null,
+   "intensidad": 4,
+   "dificultad": 1,
+   "texto": "Yo nunca he dicho el nombre equivocado en un momento íntimo",
+   "adulto": true,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 3,
+   "soloEjes": true
+  },
+  {
+   "id": "yo-nunca-135",
+   "mazo": "yo-nunca",
+   "escenario": null,
+   "intensidad": 4,
+   "dificultad": 1,
+   "texto": "Yo nunca he estado con alguien que tenía pareja",
+   "adulto": true,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 3,
+   "soloEjes": true
+  },
+  {
+   "id": "yo-nunca-136",
+   "mazo": "yo-nunca",
+   "escenario": null,
+   "intensidad": 4,
+   "dificultad": 1,
+   "texto": "Yo nunca he hecho algo atrevido en un viaje",
+   "adulto": true,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 3,
+   "soloEjes": true
+  },
+  {
+   "id": "mas-probable-101",
+   "mazo": "mas-probable",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "¿Quién es más probable que cante karaoke primero?",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "soloEjes": true
+  },
+  {
+   "id": "mas-probable-102",
+   "mazo": "mas-probable",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "¿Quién es más probable que olvide la cartera?",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "soloEjes": true
+  },
+  {
+   "id": "mas-probable-103",
+   "mazo": "mas-probable",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "¿Quién es más probable que se pierda aunque traiga GPS?",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "soloEjes": true
+  },
+  {
+   "id": "mas-probable-104",
+   "mazo": "mas-probable",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "¿Quién es más probable que adopte una mascota sin avisar?",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "soloEjes": true
+  },
+  {
+   "id": "mas-probable-105",
+   "mazo": "mas-probable",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "¿Quién es más probable que gane un reality?",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "soloEjes": true
+  },
+  {
+   "id": "mas-probable-106",
+   "mazo": "mas-probable",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "¿Quién es más probable que se coma lo último sin preguntar?",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "soloEjes": true
+  },
+  {
+   "id": "mas-probable-107",
+   "mazo": "mas-probable",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "¿Quién es más probable que se ría en un momento serio?",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "soloEjes": true
+  },
+  {
+   "id": "mas-probable-108",
+   "mazo": "mas-probable",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "¿Quién es más probable que llegue tarde mañana?",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "soloEjes": true
+  },
+  {
+   "id": "mas-probable-109",
+   "mazo": "mas-probable",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "¿Quién es más probable que se haga famoso en redes?",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "soloEjes": true
+  },
+  {
+   "id": "mas-probable-110",
+   "mazo": "mas-probable",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "¿Quién es más probable que organice el siguiente viaje?",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "soloEjes": true
+  },
+  {
+   "id": "mas-probable-111",
+   "mazo": "mas-probable",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "¿Quién es más probable que olvide el cumpleaños de su pareja?",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "soloEjes": true
+  },
+  {
+   "id": "mas-probable-112",
+   "mazo": "mas-probable",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "¿Quién es más probable que se duerma junto a la fogata?",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "soloEjes": true
+  },
+  {
+   "id": "mas-probable-113",
+   "mazo": "mas-probable",
+   "escenario": null,
+   "intensidad": 3,
+   "dificultad": 1,
+   "texto": "¿Quién es más probable que le escriba a su ex esta noche?",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 2,
+   "soloEjes": true
+  },
+  {
+   "id": "mas-probable-114",
+   "mazo": "mas-probable",
+   "escenario": null,
+   "intensidad": 3,
+   "dificultad": 1,
+   "texto": "¿Quién es más probable que tenga más secretos?",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 2,
+   "soloEjes": true
+  },
+  {
+   "id": "mas-probable-115",
+   "mazo": "mas-probable",
+   "escenario": null,
+   "intensidad": 3,
+   "dificultad": 1,
+   "texto": "¿Quién es más probable que mienta en este juego?",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 2,
+   "soloEjes": true
+  },
+  {
+   "id": "mas-probable-116",
+   "mazo": "mas-probable",
+   "escenario": null,
+   "intensidad": 3,
+   "dificultad": 1,
+   "texto": "¿Quién es más probable que se enamore en un viaje?",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 2,
+   "soloEjes": true
+  },
+  {
+   "id": "mas-probable-117",
+   "mazo": "mas-probable",
+   "escenario": null,
+   "intensidad": 3,
+   "dificultad": 1,
+   "texto": "¿Quién es más probable que termine bailando en la mesa?",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 2,
+   "soloEjes": true
+  },
+  {
+   "id": "mas-probable-118",
+   "mazo": "mas-probable",
+   "escenario": null,
+   "intensidad": 3,
+   "dificultad": 1,
+   "texto": "¿Quién es más probable que cuente un secreto ajeno?",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 2,
+   "soloEjes": true
+  },
+  {
+   "id": "mas-probable-119",
+   "mazo": "mas-probable",
+   "escenario": null,
+   "intensidad": 3,
+   "dificultad": 1,
+   "texto": "¿Quién es más probable que tenga una cuenta falsa en redes?",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 2,
+   "soloEjes": true
+  },
+  {
+   "id": "mas-probable-120",
+   "mazo": "mas-probable",
+   "escenario": null,
+   "intensidad": 3,
+   "dificultad": 1,
+   "texto": "¿Quién es más probable que haya llorado por alguien que no lo merecía?",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 2,
+   "soloEjes": true
+  },
+  {
+   "id": "mas-probable-121",
+   "mazo": "mas-probable",
+   "escenario": null,
+   "intensidad": 3,
+   "dificultad": 1,
+   "texto": "¿Quién es más probable que regrese con su ex?",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 2,
+   "soloEjes": true
+  },
+  {
+   "id": "mas-probable-122",
+   "mazo": "mas-probable",
+   "escenario": null,
+   "intensidad": 3,
+   "dificultad": 1,
+   "texto": "¿Quién es más probable que tenga un crush en alguien de este grupo?",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 2,
+   "soloEjes": true
+  },
+  {
+   "id": "mas-probable-123",
+   "mazo": "mas-probable",
+   "escenario": null,
+   "intensidad": 3,
+   "dificultad": 1,
+   "texto": "¿Quién es más probable que se case en Las Vegas?",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 2,
+   "soloEjes": true
+  },
+  {
+   "id": "mas-probable-124",
+   "mazo": "mas-probable",
+   "escenario": null,
+   "intensidad": 3,
+   "dificultad": 1,
+   "texto": "¿Quién es más probable que se ponga celoso o celosa hoy?",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 2,
+   "soloEjes": true
+  },
+  {
+   "id": "mas-probable-125",
+   "mazo": "mas-probable",
+   "escenario": null,
+   "intensidad": 4,
+   "dificultad": 1,
+   "texto": "¿Quién es más probable que haya tenido la noche más loca?",
+   "adulto": true,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 3,
+   "soloEjes": true
+  },
+  {
+   "id": "mas-probable-126",
+   "mazo": "mas-probable",
+   "escenario": null,
+   "intensidad": 4,
+   "dificultad": 1,
+   "texto": "¿Quién es más probable que tenga la fantasía más rara?",
+   "adulto": true,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 3,
+   "soloEjes": true
+  },
+  {
+   "id": "mas-probable-127",
+   "mazo": "mas-probable",
+   "escenario": null,
+   "intensidad": 4,
+   "dificultad": 1,
+   "texto": "¿Quién es más probable que haya mandado fotos atrevidas?",
+   "adulto": true,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 3,
+   "soloEjes": true
+  },
+  {
+   "id": "mas-probable-128",
+   "mazo": "mas-probable",
+   "escenario": null,
+   "intensidad": 4,
+   "dificultad": 1,
+   "texto": "¿Quién es más probable que sea lo más intenso en la intimidad?",
+   "adulto": true,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 3,
+   "soloEjes": true
+  },
+  {
+   "id": "mas-probable-129",
+   "mazo": "mas-probable",
+   "escenario": null,
+   "intensidad": 4,
+   "dificultad": 1,
+   "texto": "¿Quién es más probable que cuente sin querer algo de su vida íntima esta noche?",
+   "adulto": true,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 3,
+   "soloEjes": true
+  },
+  {
+   "id": "mas-probable-130",
+   "mazo": "mas-probable",
+   "escenario": null,
+   "intensidad": 4,
+   "dificultad": 1,
+   "texto": "¿Quién es más probable que haya tenido una aventura de una noche este año?",
+   "adulto": true,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 3,
+   "soloEjes": true
+  },
+  {
+   "id": "mas-probable-131",
+   "mazo": "mas-probable",
+   "escenario": null,
+   "intensidad": 4,
+   "dificultad": 1,
+   "texto": "¿Quién es más probable que tenga un tatuaje escondido?",
+   "adulto": true,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 3,
+   "soloEjes": true
+  },
+  {
+   "id": "mas-probable-132",
+   "mazo": "mas-probable",
+   "escenario": null,
+   "intensidad": 4,
+   "dificultad": 1,
+   "texto": "¿Quién es más probable que haya hecho algo atrevido en un viaje?",
+   "adulto": true,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 3,
+   "soloEjes": true
+  },
+  {
+   "id": "mas-probable-133",
+   "mazo": "mas-probable",
+   "escenario": null,
+   "intensidad": 4,
+   "dificultad": 1,
+   "texto": "¿Quién es más probable que acepte cualquier reto de Sobrecarga?",
+   "adulto": true,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 3,
+   "soloEjes": true
+  },
+  {
+   "id": "mas-probable-134",
+   "mazo": "mas-probable",
+   "escenario": null,
+   "intensidad": 4,
+   "dificultad": 1,
+   "texto": "¿Quién es más probable que haya ligado en una boda?",
+   "adulto": true,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 3,
+   "soloEjes": true
+  },
+  {
+   "id": "mas-probable-135",
+   "mazo": "mas-probable",
+   "escenario": null,
+   "intensidad": 4,
+   "dificultad": 1,
+   "texto": "¿Quién es más probable que tenga la historia más vergonzosa en la intimidad?",
+   "adulto": true,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 3,
+   "soloEjes": true
+  },
+  {
+   "id": "mas-probable-136",
+   "mazo": "mas-probable",
+   "escenario": null,
+   "intensidad": 4,
+   "dificultad": 1,
+   "texto": "¿Quién es más probable que haya besado a un desconocido en una fiesta?",
+   "adulto": true,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 3,
+   "soloEjes": true
+  },
+  {
+   "id": "que-prefieres-101",
+   "mazo": "que-prefieres",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Viajar al pasado",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "soloEjes": true,
+   "opcionB": "Viajar al futuro"
+  },
+  {
+   "id": "que-prefieres-102",
+   "mazo": "que-prefieres",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Playa",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "soloEjes": true,
+   "opcionB": "Montaña"
+  },
+  {
+   "id": "que-prefieres-103",
+   "mazo": "que-prefieres",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Un día sin celular",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "soloEjes": true,
+   "opcionB": "Un mes sin música"
+  },
+  {
+   "id": "que-prefieres-104",
+   "mazo": "que-prefieres",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Tacos para siempre",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "soloEjes": true,
+   "opcionB": "Pizza para siempre"
+  },
+  {
+   "id": "que-prefieres-105",
+   "mazo": "que-prefieres",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Ser invisible",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "soloEjes": true,
+   "opcionB": "Volar"
+  },
+  {
+   "id": "que-prefieres-106",
+   "mazo": "que-prefieres",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Cocinar perfecto",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "soloEjes": true,
+   "opcionB": "Bailar perfecto"
+  },
+  {
+   "id": "que-prefieres-107",
+   "mazo": "que-prefieres",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Madrugar siempre",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "soloEjes": true,
+   "opcionB": "Desvelarte siempre"
+  },
+  {
+   "id": "que-prefieres-108",
+   "mazo": "que-prefieres",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Vivir en la ciudad",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "soloEjes": true,
+   "opcionB": "Vivir en el campo"
+  },
+  {
+   "id": "que-prefieres-109",
+   "mazo": "que-prefieres",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Perros",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "soloEjes": true,
+   "opcionB": "Gatos"
+  },
+  {
+   "id": "que-prefieres-110",
+   "mazo": "que-prefieres",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Un año de vacaciones",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "soloEjes": true,
+   "opcionB": "Un millón de pesos"
+  },
+  {
+   "id": "que-prefieres-111",
+   "mazo": "que-prefieres",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Hablar con los animales",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "soloEjes": true,
+   "opcionB": "Hablar todos los idiomas"
+  },
+  {
+   "id": "que-prefieres-112",
+   "mazo": "que-prefieres",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Cantar todo lo que dices",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "soloEjes": true,
+   "opcionB": "Bailar cada vez que caminas"
+  },
+  {
+   "id": "que-prefieres-113",
+   "mazo": "que-prefieres",
+   "escenario": null,
+   "intensidad": 3,
+   "dificultad": 1,
+   "texto": "Que tu ex lea tus chats",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 2,
+   "soloEjes": true,
+   "opcionB": "Que tu jefe vea tu galería"
+  },
+  {
+   "id": "que-prefieres-114",
+   "mazo": "que-prefieres",
+   "escenario": null,
+   "intensidad": 3,
+   "dificultad": 1,
+   "texto": "Confesar tu peor mentira",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 2,
+   "soloEjes": true,
+   "opcionB": "Contar tu peor cita"
+  },
+  {
+   "id": "que-prefieres-115",
+   "mazo": "que-prefieres",
+   "escenario": null,
+   "intensidad": 3,
+   "dificultad": 1,
+   "texto": "Que vean tu historial de búsqueda",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 2,
+   "soloEjes": true,
+   "opcionB": "Que vean tu saldo"
+  },
+  {
+   "id": "que-prefieres-116",
+   "mazo": "que-prefieres",
+   "escenario": null,
+   "intensidad": 3,
+   "dificultad": 1,
+   "texto": "Alguien muy guapo y aburrido",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 2,
+   "soloEjes": true,
+   "opcionB": "Alguien normal y muy divertido"
+  },
+  {
+   "id": "que-prefieres-117",
+   "mazo": "que-prefieres",
+   "escenario": null,
+   "intensidad": 3,
+   "dificultad": 1,
+   "texto": "Leer la mente de tu pareja",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 2,
+   "soloEjes": true,
+   "opcionB": "Que tu pareja lea la tuya"
+  },
+  {
+   "id": "que-prefieres-118",
+   "mazo": "que-prefieres",
+   "escenario": null,
+   "intensidad": 3,
+   "dificultad": 1,
+   "texto": "Una cita a ciegas",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 2,
+   "soloEjes": true,
+   "opcionB": "Una cita que organice el grupo"
+  },
+  {
+   "id": "que-prefieres-119",
+   "mazo": "que-prefieres",
+   "escenario": null,
+   "intensidad": 3,
+   "dificultad": 1,
+   "texto": "Perdonar una mentira",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 2,
+   "soloEjes": true,
+   "opcionB": "Perdonar un olvido"
+  },
+  {
+   "id": "que-prefieres-120",
+   "mazo": "que-prefieres",
+   "escenario": null,
+   "intensidad": 3,
+   "dificultad": 1,
+   "texto": "Que te cachen cantando",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 2,
+   "soloEjes": true,
+   "opcionB": "Que te cachen bailando"
+  },
+  {
+   "id": "que-prefieres-121",
+   "mazo": "que-prefieres",
+   "escenario": null,
+   "intensidad": 3,
+   "dificultad": 1,
+   "texto": "Saber qué piensa el grupo de ti",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 2,
+   "soloEjes": true,
+   "opcionB": "No saberlo nunca"
+  },
+  {
+   "id": "que-prefieres-122",
+   "mazo": "que-prefieres",
+   "escenario": null,
+   "intensidad": 3,
+   "dificultad": 1,
+   "texto": "Volver con tu primer amor",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 2,
+   "soloEjes": true,
+   "opcionB": "Conocer a alguien nuevo"
+  },
+  {
+   "id": "que-prefieres-123",
+   "mazo": "que-prefieres",
+   "escenario": null,
+   "intensidad": 3,
+   "dificultad": 1,
+   "texto": "Pelear por mensaje",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 2,
+   "soloEjes": true,
+   "opcionB": "Pelear en persona"
+  },
+  {
+   "id": "que-prefieres-124",
+   "mazo": "que-prefieres",
+   "escenario": null,
+   "intensidad": 3,
+   "dificultad": 1,
+   "texto": "Prestar tu celular desbloqueado una hora",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 2,
+   "soloEjes": true,
+   "opcionB": "Prestar tu cartera una hora"
+  },
+  {
+   "id": "que-prefieres-125",
+   "mazo": "que-prefieres",
+   "escenario": null,
+   "intensidad": 4,
+   "dificultad": 1,
+   "texto": "Una noche romántica",
+   "adulto": true,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 3,
+   "soloEjes": true,
+   "opcionB": "Una noche salvaje"
+  },
+  {
+   "id": "que-prefieres-126",
+   "mazo": "que-prefieres",
+   "escenario": null,
+   "intensidad": 4,
+   "dificultad": 1,
+   "texto": "En la playa",
+   "adulto": true,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 3,
+   "soloEjes": true,
+   "opcionB": "En un hotel de lujo"
+  },
+  {
+   "id": "que-prefieres-127",
+   "mazo": "que-prefieres",
+   "escenario": null,
+   "intensidad": 4,
+   "dificultad": 1,
+   "texto": "Mandar",
+   "adulto": true,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 3,
+   "soloEjes": true,
+   "opcionB": "Que te manden"
+  },
+  {
+   "id": "que-prefieres-128",
+   "mazo": "que-prefieres",
+   "escenario": null,
+   "intensidad": 4,
+   "dificultad": 1,
+   "texto": "Disfraz",
+   "adulto": true,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 3,
+   "soloEjes": true,
+   "opcionB": "Lencería"
+  },
+  {
+   "id": "que-prefieres-129",
+   "mazo": "que-prefieres",
+   "escenario": null,
+   "intensidad": 4,
+   "dificultad": 1,
+   "texto": "Contar tu fantasía",
+   "adulto": true,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 3,
+   "soloEjes": true,
+   "opcionB": "Cumplir la de tu pareja"
+  },
+  {
+   "id": "que-prefieres-130",
+   "mazo": "que-prefieres",
+   "escenario": null,
+   "intensidad": 4,
+   "dificultad": 1,
+   "texto": "En la mañana",
+   "adulto": true,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 3,
+   "soloEjes": true,
+   "opcionB": "En la noche"
+  },
+  {
+   "id": "que-prefieres-131",
+   "mazo": "que-prefieres",
+   "escenario": null,
+   "intensidad": 4,
+   "dificultad": 1,
+   "texto": "Besos en el cuello",
+   "adulto": true,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 3,
+   "soloEjes": true,
+   "opcionB": "Besos en la espalda"
+  },
+  {
+   "id": "que-prefieres-132",
+   "mazo": "que-prefieres",
+   "escenario": null,
+   "intensidad": 4,
+   "dificultad": 1,
+   "texto": "Que te escriban algo atrevido",
+   "adulto": true,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 3,
+   "soloEjes": true,
+   "opcionB": "Que te lo digan al oído"
+  },
+  {
+   "id": "que-prefieres-133",
+   "mazo": "que-prefieres",
+   "escenario": null,
+   "intensidad": 4,
+   "dificultad": 1,
+   "texto": "Un fin de semana encerrados",
+   "adulto": true,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 3,
+   "soloEjes": true,
+   "opcionB": "Un viaje sin plan"
+  },
+  {
+   "id": "que-prefieres-134",
+   "mazo": "que-prefieres",
+   "escenario": null,
+   "intensidad": 4,
+   "dificultad": 1,
+   "texto": "En silencio",
+   "adulto": true,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 3,
+   "soloEjes": true,
+   "opcionB": "Sin importar quién oiga"
+  },
+  {
+   "id": "que-prefieres-135",
+   "mazo": "que-prefieres",
+   "escenario": null,
+   "intensidad": 4,
+   "dificultad": 1,
+   "texto": "Probar algo nuevo",
+   "adulto": true,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 3,
+   "soloEjes": true,
+   "opcionB": "Perfeccionar lo de siempre"
+  },
+  {
+   "id": "que-prefieres-136",
+   "mazo": "que-prefieres",
+   "escenario": null,
+   "intensidad": 4,
+   "dificultad": 1,
+   "texto": "Una sorpresa atrevida",
+   "adulto": true,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 3,
+   "soloEjes": true,
+   "opcionB": "Una cita perfecta"
+  },
+  {
+   "id": "castigo-101",
+   "mazo": "castigo",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Habla en susurros hasta tu siguiente turno.",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "soloEjes": true
+  },
+  {
+   "id": "castigo-102",
+   "mazo": "castigo",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Deja que alguien te ponga un apodo por una ronda.",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "soloEjes": true
+  },
+  {
+   "id": "castigo-103",
+   "mazo": "castigo",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Haz 10 sentadillas.",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "bajo",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "soloEjes": true
+  },
+  {
+   "id": "castigo-104",
+   "mazo": "castigo",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Sírvele agua a todos.",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "soloEjes": true
+  },
+  {
+   "id": "castigo-105",
+   "mazo": "castigo",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Cuenta tu chiste más malo.",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "soloEjes": true
+  },
+  {
+   "id": "castigo-106",
+   "mazo": "castigo",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "El grupo elige la siguiente canción y tú la cantas.",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "soloEjes": true
+  },
+  {
+   "id": "castigo-107",
+   "mazo": "castigo",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Ponte una prenda al revés hasta el siguiente juego.",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "soloEjes": true
+  },
+  {
+   "id": "castigo-108",
+   "mazo": "castigo",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Sé mesero o mesera la próxima ronda.",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "soloEjes": true
+  },
+  {
+   "id": "castigo-109",
+   "mazo": "castigo",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Di algo bonito de cada persona del grupo.",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "soloEjes": true
+  },
+  {
+   "id": "castigo-110",
+   "mazo": "castigo",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Imita a una gallina durante 10 segundos.",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "soloEjes": true
+  },
+  {
+   "id": "castigo-111",
+   "mazo": "castigo",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Toma un trago de lo que tengas en la mano.",
+   "adulto": false,
+   "drunk": true,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "soloEjes": true
+  },
+  {
+   "id": "castigo-112",
+   "mazo": "castigo",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Brinda con quien te hizo la pregunta y tomen los dos.",
+   "adulto": false,
+   "drunk": true,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "soloEjes": true
+  },
+  {
+   "id": "castigo-113",
+   "mazo": "castigo",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Tira un dado: con 1 o 2, un trago; con 3 o 4, dos; con 5 o 6, eliges quién toma contigo. Agua o refresco cuentan.",
+   "adulto": false,
+   "drunk": true,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "soloEjes": true
+  },
+  {
+   "id": "castigo-114",
+   "mazo": "castigo",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Toma un trago de lo que tengas sin usar las manos (popote vale).",
+   "adulto": false,
+   "drunk": true,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "soloEjes": true
+  },
+  {
+   "id": "castigo-115",
+   "mazo": "castigo",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "El grupo elige de qué bebida tomas un trago, de lo que haya. El agua cuenta.",
+   "adulto": false,
+   "drunk": true,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "soloEjes": true
+  },
+  {
+   "id": "castigo-116",
+   "mazo": "castigo",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Toma un trago de lo que tengas y di «salud» en otro idioma.",
+   "adulto": false,
+   "drunk": true,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "soloEjes": true
+  },
+  {
+   "id": "castigo-117",
+   "mazo": "castigo",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Prepárale una bebida, con o sin alcohol, a quien te retó.",
+   "adulto": false,
+   "drunk": true,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "soloEjes": true
   }
  ],
  "impostor": [

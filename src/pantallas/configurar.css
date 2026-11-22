@@ -3,7 +3,7 @@
 
 /* ---------- Pantalla completa: cabecera, cuerpo que se desliza y pie fijo ---------- */
 .D.cfg-pagina .a-scroll { padding: 0; overflow: hidden; }
-.D .cfg { flex: 1; min-height: 0; height: 100%; display: grid; grid-template-rows: auto minmax(0, 1fr) auto; }
+.D .cfg { flex: 1; min-height: 0; height: 100%; display: grid; grid-template-rows: auto minmax(0, 1fr) auto; grid-template-columns: minmax(0, 1fr); }
 .D .cfg-cab { position: relative; display: flex; align-items: center; gap: 12px; padding: max(12px, env(safe-area-inset-top)) 16px 8px; }
 .D .cfg-volver { flex: none; display: grid; place-items: center; width: 46px; height: 46px; border-radius: 10px; border: 3px solid var(--tinta); cursor: pointer;
   background: linear-gradient(180deg, #ff9a3d, #e8661a); color: #fff; box-shadow: 0 4px 0 var(--tinta); }
@@ -143,7 +143,8 @@ button.cfg-casilla:hover { translate: 0 -3px; border-color: var(--amarillo); }
 .D .cfg-cambiar { position: absolute; top: 8px; right: 8px; display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px; border-radius: var(--radio-pildora); font: var(--chip); text-transform: uppercase; color: var(--tinta); background: var(--amarillo); }
 .D .cfg-cambiar svg { width: 12px; height: 12px; }
 .D .cfg-reglas, .D .cfg-gente { cursor: default; grid-column: 1 / -1; }
-.D.wide .cfg-reglas { grid-column: span 3; }
+.D.wide .cfg-reglas { grid-column: span 2; }
+.D .cfg-tablero { grid-auto-flow: row dense; } /* con la casilla «Nivel» (Temperatura + Voltaje) no quedan huecos */
 .D .cfg-reglas-opc { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .D .cfg-reglas-opc button { display: flex; align-items: center; justify-content: center; gap: 6px; padding: 10px; border-radius: 10px; border: 3px solid var(--tinta); cursor: pointer;
   background: #eef2fb; color: var(--tinta); font: var(--etiqueta); text-transform: uppercase; box-shadow: 0 3px 0 var(--tinta); }

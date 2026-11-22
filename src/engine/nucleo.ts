@@ -6,7 +6,8 @@
 import { CONTENIDO } from "../content";
 import { ESCENARIOS, JUEGOS } from "../content/catalogo";
 import { aplicar, conEliminacion, conVerdadReto, crearPartida, etapaImpostor, etapaVR, HERRAMIENTAS_VR, maxImpostores, type Accion, type EstadoPartida, type HerramientaVR } from "./partida";
-import type { Configuracion, Jugador, OpcionesPartida } from "./types";
+import { adultoPorEjes } from "./filtros";
+import type { Configuracion, EjesPartida, Jugador, NivelEje, OpcionesPartida } from "./types";
 import { vistaJugador, vistaPublica } from "./vistas";
 
 /** Misma forma que la fila de `servicios/enlace.ts` (se repite aquí para no depender de servicios). */
@@ -23,6 +24,16 @@ export const CONTROL_SIMPLE = new Set(["pausar", "reanudar", "saltar", "seguir-s
 export function conParejas(miembros: { id: string; nombre: string }[]) {
   return miembros.map((m, i) => ({ id: m.id, nombre: m.nombre, ...(miembros.length % 2 === 0 ? { parejaDe: miembros[i % 2 === 0 ? i + 1 : i - 1]!.id } : {}) }));
 }
+
+/** Nivel 1 a 3 válido (lo que llega del navegador no es confiable). */
+const nivelEje = (x: unknown): NivelEje => (x === 2 || x === 3 ? x : 1);
+/** Temperatura + Voltaje del configurador, ya revisados. */
+export function ejesDe(op: OpcionesPartida): (EjesPartida & { drunk: boolean }) | null {
+  if (!op.ejes || typeof op.ejes !== "object") return null;
+  return { temperatura: nivelEje(op.ejes.temperatura), voltaje: nivelEje(op.ejes.voltaje), drunk: op.ejes.drunk === true };
+}
+/** Equivalente en la escala vieja de 4 niveles (solo para el rango de cada juego): 1 → 1, 2 → 3, 3 → 4. */
+export const intensidadVieja = (e: EjesPartida) => ([1, 1, 3, 4] as const)[Math.max(e.temperatura, e.voltaje)]!;
 
 /** Juegos donde el temporizador por turno funciona hoy. */
 export const JUEGOS_CON_TEMPORIZADOR = ["impostor", "verdad-reto"];
@@ -78,9 +89,14 @@ export function armarArranque(miembros: { id: string; nombre: string }[], juego:
   const grupos = armarGrupos(conParejas(miembros), op);
   if (!grupos) return null;
   const escenario = op.escenario ? ESCENARIOS.find(x => x.id === op.escenario && x.activo) : undefined;
+  // Temperatura + Voltaje (Maestro v1.52): con ejes, el nivel viejo se calcula de ellos, Drunk es su propio interruptor
+  // y lo adulto se abre con Extremo o Sobrecarga. Sin ejes, todo como antes (partidas guardadas iguales).
+  const ejes = ejesDe(op);
+  const viejo = ejes ? intensidadVieja(ejes) : intensidad;
   const cfg: Configuracion = {
-    jugadores: grupos.jugadores, lugar: escenario?.lugar ?? "cualquiera", intensidad: Math.max(def.intensidadMin, Math.min(def.intensidadMax, intensidad)) as 1 | 2 | 3 | 4,
-    dificultad: 2, adulto: intensidad >= 3 || !!def.adulto, drunk: intensidad >= 2, turno: op.turno === "ruleta" ? "ruleta" : "orden",
+    jugadores: grupos.jugadores, lugar: escenario?.lugar ?? "cualquiera", intensidad: Math.max(def.intensidadMin, Math.min(def.intensidadMax, viejo)) as 1 | 2 | 3 | 4,
+    dificultad: 2, adulto: ejes ? adultoPorEjes(ejes) || !!def.adulto : intensidad >= 3 || !!def.adulto, drunk: ejes ? ejes.drunk : intensidad >= 2, turno: op.turno === "ruleta" ? "ruleta" : "orden",
+    ...(ejes ? { ejes: { temperatura: ejes.temperatura, voltaje: ejes.voltaje } } : {}),
     ...(escenario ? { escenario: escenario.id } : {}),
     ...(op.modalidad && op.modalidad !== "individual" ? { modalidad: op.modalidad, equipos: grupos.equipos } : {}),
     ...(op.explicar ? { explicar: true } : {}),

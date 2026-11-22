@@ -6,10 +6,11 @@
 // `PaginaConfigurar` (#/configurar/código) la envuelve: arranca la partida en la sala y regresa a ella.
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { CONTENIDO } from "../content";
-import { ESCENARIOS, JUEGOS } from "../content/catalogo";
+import { EJE_DE_MAZO, ESCENARIOS, JUEGOS, NIVELES_EJE } from "../content/catalogo";
 import { ARTE_ESCENARIOS, ARTE_JUEGOS, ARTE_TIPOS, EMOJI_JUEGO } from "../content/arteJuegos";
 import { INSTRUMENTOS, MODALIDADES, MODALIDADES_JUEGO, admite } from "../content/configurar";
-import { GRUPOS_EQUIPOS, GRUPOS_SEXOS, JUEGOS_CON_TEMPORIZADOR, armarGrupos, conParejas } from "../engine/nucleo";
+import { GRUPOS_EQUIPOS, GRUPOS_SEXOS, JUEGOS_CON_TEMPORIZADOR, armarArranque, armarGrupos, conParejas, intensidadVieja } from "../engine/nucleo";
+import { adultoPorEjes, cartasPermitidas } from "../engine/filtros";
 import { maxImpostores } from "../engine/partida";
 import type { DefinicionJuego, EscenarioId, Modalidad, OpcionesPartida } from "../engine/types";
 import { Boton, Chip, Icono, Panel } from "../ds";
@@ -22,7 +23,8 @@ import { sonar } from "../app/sonido";
 import type { FiguraV2 } from "../content/personaje";
 import { entregarCopas, iniciarPartida } from "../roles/pantalla/motor";
 import { useSala } from "../roles/sala";
-import { FILAS, NIVELES, Reglas, candado, colorDe, duracion, gente } from "./Catalogo";
+import { FILAS, Reglas, candado, colorDe, duracion, gente } from "./Catalogo";
+import { SeccionIntensidad, ejesDeJuego, nivelMinimo, type ValorIntensidad } from "./Intensidad";
 import { CartaEscenario, CartaJuego, CartaTipo, srcArte } from "./TarjetasConfig";
 import { Marco, NombreJugador, Retrato, Vacio, aviso, confirmar } from "./comun";
 import { FondoEscenario } from "./Fondos";
@@ -34,11 +36,37 @@ export interface MiembroConfig { id: string; nombre: string; figura?: FiguraV2 |
 export interface PartidaConfigurada {
   juego: string;
   rondas: number;
-  nivel: 1 | 2 | 3 | 4;
+  /** Temperatura, Voltaje y Drunk (Maestro v1.52). */
+  ejes: ValorIntensidad;
   opciones: OpcionesPartida;
 }
 
-type Seccion = "tipo" | "grupos" | "juego" | "opciones" | "escenario" | "resumen";
+type Seccion = "tipo" | "grupos" | "juego" | "intensidad" | "opciones" | "escenario" | "resumen";
+
+/** Nivel con que arranca el configurador (hasta que existan las reglas de la casa). */
+export const EJES_INICIALES: ValorIntensidad = { temperatura: 1, voltaje: 1, drunk: false };
+
+/** Candado del juego sin contar el nivel (el nivel se revisa en su sección). */
+const candadoJuego = (j: DefinicionJuego, n: number) => candado(j, n, 4);
+
+/** Si el juego pide más nivel del elegido (Dados HOT solo en Sobrecarga), la razón; si no, null. */
+export function faltaNivel(juego: string, ejes: ValorIntensidad): string | null {
+  const j = defJuego(juego);
+  for (const eje of ejesDeJuego(juego)) {
+    const min = nivelMinimo(juego, eje);
+    if (ejes[eje] < min) return `${j?.nombre ?? "Este juego"} pide ${NIVELES_EJE[eje][min]}`;
+  }
+  return null;
+}
+
+/** Cuántas preguntas y retos hay para esta configuración (los mismos filtros del motor). */
+export function cuentaCartas(miembros: { id: string; nombre: string }[], juego: string, rondas: number, opciones: OpcionesPartida) {
+  const a = armarArranque(miembros, juego, rondas, 1, 1, opciones);
+  const mazos = (defJuego(juego)?.mazo ?? "").split("+").filter(Boolean);
+  if (!a || mazos.length === 0) return undefined;
+  const de = (eje: string) => cartasPermitidas(a.cfg, CONTENIDO.cartas, mazos.filter(m => EJE_DE_MAZO[m] === eje)).length;
+  return { preguntas: de("temperatura"), retos: de("voltaje") };
+}
 
 const defJuego = (id: string) => JUEGOS.find(j => j.id === id);
 const esImpostor = (j?: DefinicionJuego) => j?.motor === "rol-secreto";
@@ -58,9 +86,9 @@ export function candadoEscenario(esc: EscenarioId | undefined, j?: DefinicionJue
   return lugar && !j.lugares.includes(lugar) ? "No en este lugar" : null;
 }
 
-/** Temas que puede elegir El impostor con este nivel (los de adulto, desde Sin filtro). */
-export function temasImpostor(nivel: number) {
-  return CONTENIDO.temas.filter(t => t.escenario === null && (!t.adulto || nivel >= 3)).map(t => ({ id: t.id, nombre: t.nombre }));
+/** Temas que puede elegir El impostor (los de adulto, con Extremo o Sobrecarga). */
+export function temasImpostor(adulto: boolean) {
+  return CONTENIDO.temas.filter(t => t.escenario === null && (!t.adulto || adulto)).map(t => ({ id: t.id, nombre: t.nombre }));
 }
 
 /** Revisa la configuración completa. Devuelve la razón por la que no se puede iniciar, o null. */
@@ -72,8 +100,10 @@ export function motivoConfig(c: PartidaConfigurada, miembros: { id: string; nomb
   const t = candadoTipo(tipo, miembros.length);
   if (t) return `${MODALIDADES.find(m => m.id === tipo)!.nombre}: ${t.toLowerCase()}`;
   if (!armarGrupos(conParejas(miembros), c.opciones)) return tipo === "sexos" ? "Falta decir de qué bando es cada quien" : "Revisa los equipos";
-  const cj = candado(j, miembros.length, c.nivel);
+  const cj = candadoJuego(j, miembros.length);
   if (cj) return `${j.nombre}: ${cj.toLowerCase()}`;
+  const cn = faltaNivel(c.juego, c.ejes);
+  if (cn) return cn;
   const ce = candadoEscenario(c.opciones.escenario, j);
   if (ce) return `${j.nombre} no se juega en ${ESCENARIOS.find(e => e.id === c.opciones.escenario)?.nombre ?? "ese escenario"}`;
   return null;
@@ -122,7 +152,8 @@ export function ConfigurarPartida({ miembros, alIniciar, alCancelar, iniciando, 
   const [cuantosEquipos, setCuantosEquipos] = useState(2);
   const [grupos, setGrupos] = useState<Record<string, string>>(inicial?.opciones.grupos ?? {});
   const [juego, setJuego] = useState(inicial?.juego ?? "impostor");
-  const [nivel, setNivel] = useState<1 | 2 | 3 | 4>(inicial?.nivel ?? 2);
+  const [ejes, setEjes] = useState<ValorIntensidad>(inicial?.ejes ?? EJES_INICIALES);
+  const adulto = adultoPorEjes(ejes);
   const [rondas, setRondas] = useState(inicial?.rondas ?? 8);
   const [instrumento, setInstrumento] = useState<string | undefined>(undefined);
   const [impostores, setImpostores] = useState(inicial?.opciones.impostor?.cantidad ?? 1);
@@ -172,17 +203,20 @@ export function ConfigurarPartida({ miembros, alIniciar, alCancelar, iniciando, 
     ...(esImpostor(j) ? { impostor: { cantidad: Math.min(impostores, maxImp), tema } } : {}),
     ...(explicarFinal ? { explicar: true } : {}),
     ...(temporizador && conTemporizador ? { temporizador } : {}),
+    ejes,
   };
-  const config: PartidaConfigurada = { juego, rondas, nivel, opciones };
+  const config: PartidaConfigurada = { juego, rondas, ejes, opciones };
+  const cuenta = useMemo(() => cuentaCartas(miembros, juego, rondas, opciones), [miembros, juego, rondas, JSON.stringify(opciones)]); // eslint-disable-line react-hooks/exhaustive-deps
   const motivo = motivoConfig(config, miembros);
   const gruposOk = !!armarGrupos(conParejas(miembros), opciones);
 
-  const orden: Seccion[] = ["tipo", ...(conGrupos ? ["grupos" as const] : []), "juego", "opciones", "escenario", "resumen"];
+  const orden: Seccion[] = ["tipo", ...(conGrupos ? ["grupos" as const] : []), "juego", "intensidad", "opciones", "escenario", "resumen"];
   const k = orden.indexOf(sec);
   const falta = (s: Seccion): string | null => {
     if (s === "tipo") return candadoTipo(tipo, n);
     if (s === "grupos") return gruposOk ? null : tipo === "sexos" ? (generos ? "Toca Ellas o Ellos en cada quien" : "Acomodando bandos…") : tipo === "parejas" ? "Cada pareja necesita dos" : "Cada equipo necesita gente";
-    if (s === "juego") return j ? candado(j, n, nivel) : "Elige un juego";
+    if (s === "juego") return j ? candadoJuego(j, n) : "Elige un juego";
+    if (s === "intensidad") return faltaNivel(juego, ejes);
     if (s === "escenario") return candadoEscenario(escenario, j);
     return null;
   };
@@ -200,7 +234,7 @@ export function ConfigurarPartida({ miembros, alIniciar, alCancelar, iniciando, 
 
   const TITULO: Record<Seccion, string> = {
     tipo: "Tipo de partida", grupos: tipo === "sexos" ? "Ellas y ellos" : tipo === "parejas" ? "Arma las parejas" : "Arma los equipos", juego: "Elige el juego",
-    opciones: esImpostor(j) ? "Opciones del juego" : "Herramienta", escenario: "Escenario", resumen: "¡Todo listo!",
+    intensidad: "Intensidad", opciones: esImpostor(j) ? "Opciones del juego" : "Herramienta", escenario: "Escenario", resumen: "¡Todo listo!",
   };
 
   let contenido: ReactNode;
@@ -274,7 +308,6 @@ export function ConfigurarPartida({ miembros, alIniciar, alCancelar, iniciando, 
               <span className="dsp ol cfg-destacado-nombre">{j.nombre}</span>
               <div className="a-fila a-envuelve"><span className="cfg-pastilla"><Icono id="users" />{gente(j)}</span><span className="cfg-pastilla"><Icono id="clock" />{duracion(j)}</span>{j.sigla && <span className="cfg-pastilla dsp">{j.sigla}</span>}</div>
               <p className="cfg-desc">{j.descripcion}</p>
-              <div className="a-fila a-envuelve" role="group" aria-label="Nivel">{([1, 2, 3, 4] as const).map(x => <Chip key={x} texto={NIVELES[x]} seleccionado={nivel === x} onClick={() => setNivel(x)} />)}</div>
               <button type="button" className="a-plano cfg-reglas-btn" onClick={() => setVerReglas(v => !v)}>{verReglas ? "Ocultar reglas" : "Ver reglas"}</button>
               {verReglas && <Reglas id={j.id} />}
             </div>
@@ -290,11 +323,13 @@ export function ConfigurarPartida({ miembros, alIniciar, alCancelar, iniciando, 
             const d = defJuego(id);
             if (!d) return null;
             return <CartaJuego key={id} id={id} nombre={d.nombre} sigla={d.sigla ?? "ALV"} color={colorDe(id)} jugadores={gente(d)} duracion={duracion(d)} indice={x}
-              elegida={juego === id} bloqueada={candado(d, n, nivel)} onClick={() => { setJuego(id); setInstrumento(undefined); setExplicar(null); }} />;
+              elegida={juego === id} bloqueada={candadoJuego(d, n)} onClick={() => { setJuego(id); setInstrumento(undefined); setExplicar(null); }} />;
           })}
         </div>
       </div>
     );
+  } else if (sec === "intensidad") {
+    contenido = <SeccionIntensidad juego={juego} valor={ejes} alCambiar={setEjes} cuenta={cuenta} />;
   } else if (sec === "opciones") {
     contenido = (
       <div className="cfg-opciones">
@@ -312,7 +347,7 @@ export function ConfigurarPartida({ miembros, alIniciar, alCancelar, iniciando, 
             </section>
             <section className="a-pila"><span className="cfg-sub dsp ol">Categoría de las palabras</span>
               <div className="cfg-temas">
-                {[{ id: null as string | null, nombre: "Al azar", ico: "🎲" }, { id: "escenario", nombre: "Del escenario", ico: "🏝️" }, ...temasImpostor(nivel).map(t => ({ ...t, ico: EMOJI_TEMA[t.id] ?? "🎭" }))].map(t => (
+                {[{ id: null as string | null, nombre: "Al azar", ico: "🎲" }, { id: "escenario", nombre: "Del escenario", ico: "🏝️" }, ...temasImpostor(adulto).map(t => ({ ...t, ico: EMOJI_TEMA[t.id] ?? "🎭" }))].map(t => (
                   <button key={t.id ?? "azar"} type="button" className={"cfg-tema" + (tema === t.id ? " on" : "")} aria-pressed={tema === t.id} onClick={() => setTema(t.id)}><span aria-hidden="true">{t.ico}</span>{t.nombre}</button>
                 ))}
               </div>
@@ -352,7 +387,7 @@ export function ConfigurarPartida({ miembros, alIniciar, alCancelar, iniciando, 
     contenido = (
       <div className="cfg-escs">
         <CartaEscenario id="ciudad" nombre="Ciudad ALV" texto="Sin escenario: cartas de cualquier lugar." emoji="🌃" color="#5fb4ff" elegida={!escenario} onClick={() => setEscenario(undefined)} />
-        {ESCENARIOS.filter(e => e.activo && (!e.adulto || nivel >= 3)).map(e => (
+        {ESCENARIOS.filter(e => e.activo && (!e.adulto || adulto)).map(e => (
           <CartaEscenario key={e.id} id={e.id} nombre={e.nombre} texto={e.ambientacion} emoji={e.emoji} color={e.color} elegida={escenario === e.id} bloqueada={candadoEscenario(e.id, j)} onClick={() => setEscenario(e.id)} />
         ))}
       </div>
@@ -365,9 +400,12 @@ export function ConfigurarPartida({ miembros, alIniciar, alCancelar, iniciando, 
         <div className="cfg-tablero">
           <span className="cfg-tachas" aria-hidden="true" />
           <Casilla titulo="Tipo" valor={m.nombre} detalle={conGrupos ? (gruposOk ? "Equipos listos" : "Falta armar equipos") : m.gana} img={srcArte(ARTE_TIPOS[tipo])} alTocar={() => editar("tipo")} />
-          <Casilla titulo="Juego" valor={j?.nombre ?? "—"} detalle={`Nivel ${NIVELES[nivel]}`} arte={<ArteJuego id={juego} />} alTocar={() => editar("juego")} ancha />
+          <Casilla titulo="Juego" valor={j?.nombre ?? "—"} detalle={j ? `${gente(j)} jugadores` : undefined} arte={<ArteJuego id={juego} />} alTocar={() => editar("juego")} ancha />
+          <Casilla titulo="Nivel" valor={ejesDeJuego(juego).map(x => NIVELES_EJE[x][ejes[x]]).join(" · ") || "Sin nivel"}
+            detalle={(ejes.drunk ? "Drunk encendido" : "Drunk apagado") + (cuenta && ejesDeJuego(juego).length ? ` · ${[ejesDeJuego(juego).includes("temperatura") ? `${cuenta.preguntas} preguntas` : "", ejesDeJuego(juego).includes("voltaje") ? `${cuenta.retos} retos` : ""].filter(Boolean).join(" y ")}` : "")}
+            emoji={ejes.temperatura === 3 || ejes.voltaje === 3 ? "🔥" : ejes.drunk ? "🍹" : "🌡️"} alTocar={() => editar("intensidad")} />
           <Casilla titulo={esImpostor(j) ? "Opciones" : "Herramienta"} valor={esImpostor(j) ? `${Math.min(impostores, maxImp)} ${Math.min(impostores, maxImp) === 1 ? "impostor" : "impostores"}` : inst?.nombre ?? "—"}
-            detalle={esImpostor(j) ? (tema === null ? "Palabras al azar" : tema === "escenario" ? "Palabras del escenario" : temasImpostor(nivel).find(t => t.id === tema)?.nombre ?? "") + (temporizador && conTemporizador ? ` · ⏱ ${temporizador} s` : "") : `${rondas} rondas${temporizador && conTemporizador ? ` · ⏱ ${temporizador} s` : ""}`}
+            detalle={esImpostor(j) ? (tema === null ? "Palabras al azar" : tema === "escenario" ? "Palabras del escenario" : temasImpostor(adulto).find(t => t.id === tema)?.nombre ?? "") + (temporizador && conTemporizador ? ` · ⏱ ${temporizador} s` : "") : `${rondas} rondas${temporizador && conTemporizador ? ` · ⏱ ${temporizador} s` : ""}`}
             emoji={esImpostor(j) ? "🕵️" : "🃏"} alTocar={() => editar("opciones")} />
           <Casilla titulo="Escenario" valor={esc ? esc.nombre : "Ciudad ALV"} detalle={esc ? esc.ambientacion : "Sin escenario"} img={ARTE_ESCENARIOS[escenario ?? "ciudad"] ? srcArte(ARTE_ESCENARIOS[escenario ?? "ciudad"]!) : undefined} emoji={esc?.emoji} alTocar={() => editar("escenario")} />
           <div className="cfg-casilla cfg-reglas">
@@ -452,7 +490,7 @@ export function PaginaConfigurar({ codigo }: { codigo: string }) {
   const sala = s.sala;
   const iniciar = async (c: PartidaConfigurada) => {
     setIniciando(true);
-    const ok = await iniciarPartida(sala, s.miembros, c.juego, c.rondas, c.nivel, c.opciones);
+    const ok = await iniciarPartida(sala, s.miembros, c.juego, c.rondas, intensidadVieja(c.ejes), c.opciones);
     setIniciando(false);
     if (!ok) { aviso("No se pudo iniciar. Intenta otra vez."); return; }
     sonar("exito");

@@ -3,6 +3,9 @@
 export type Intensidad = 1 | 2 | 3 | 4; // Tranquilo · Picante · Sin filtro · Salvaje
 export type Dificultad = 1 | 2 | 3 | 4; // Fácil · Media · Difícil · Experto
 export type Esfuerzo = "ninguno" | "bajo" | "alto";
+/** Temperatura + Voltaje (Maestro v1.52): dos ejes de 3 niveles. Temperatura para preguntas, Voltaje para retos. */
+export type Eje = "temperatura" | "voltaje";
+export type NivelEje = 1 | 2 | 3; // Temperatura: Frío · Caliente · Extremo. Voltaje: Bajo voltaje · Alto voltaje · Sobrecarga
 
 export type EscenarioId =
   | "alverca" | "fogata" | "parque" // activos
@@ -26,6 +29,12 @@ export interface Carta {
   esfuerzo: Esfuerzo;
   pidePareja: boolean;
   minJugadores: number;
+  /** Nivel 1 a 3 en el eje de su mazo (`EJE_DE_MAZO`). Los mazos sin eje (palabras, listas…) van en 1. */
+  nivel: NivelEje;
+  /** Tiene contacto físico con otra persona (consentimiento en los Términos; siempre se puede decir que no). */
+  contacto?: boolean;
+  /** Carta nueva de Temperatura + Voltaje: el filtro de 4 niveles la ignora, así las partidas guardadas salen igual. */
+  soloEjes?: boolean;
   opcionB?: string;
   prohibidas?: string[];
   descripcion?: string;
@@ -66,7 +75,12 @@ export interface OpcionesPartida {
   impostor?: OpcionesImpostor;
   /** «Cómo jugar»: explicar las reglas antes de la primera ronda. */
   explicar?: boolean;
+  /** Temperatura + Voltaje (Maestro v1.52): nivel general de la partida y el interruptor Drunk. */
+  ejes?: EjesPartida & { drunk: boolean };
 }
+
+/** Nivel general de la partida en cada eje (Maestro v1.52). */
+export interface EjesPartida { temperatura: NivelEje; voltaje: NivelEje }
 
 export interface Lugar {
   id: LugarId;
@@ -153,4 +167,6 @@ export interface Configuracion {
   verdadReto?: { herramienta: "orden" | "ruleta" | "reloj" | "dados" | "poker" };
   /** Temporizador por turno, en segundos (Maestro 6A.11 C6). */
   temporizador?: number;
+  /** Temperatura + Voltaje (Maestro v1.52): con esto se filtra por eje y nivel 1 a 3. Sin esto, el filtro de 4 niveles de siempre. */
+  ejes?: EjesPartida;
 }

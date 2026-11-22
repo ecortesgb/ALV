@@ -1,7 +1,7 @@
 # ALV — Amigos Legendarios Verdaderos
 ## Documento Maestro del Producto
-**Versión:** 1.51  
-**Última actualización:** 20 de noviembre de 2026  
+**Versión:** 1.53  
+**Última actualización:** 21 de noviembre de 2026  
 **Estado:** Documento vivo de producto; decisiones y propuestas identificadas por separado.
 
 ---
@@ -154,6 +154,22 @@ Puede:
 - (e) **Puntos:** todos los niveles dan el mismo puntaje. El anfitrión puede dar un premio de XP adicional (la XP por reto en vivo de 22.1).
 - (f) **Fuentes del contenido nuevo:** ideas propias y anécdotas personales de los amigos que participan en la prueba.
 **PENDIENTE (v1.29):** (1) la fecha exacta del sábado de prueba; (2) las anécdotas de los amigos son datos personales y el repo es público: no pueden ir en `src/content`. Propuesta: guardarlas en la base, visibles solo para el grupo que juega y cargadas por el administrador; esto cambia, solo para ese contenido, la decisión 2 de 22.1 (textos en el código); (3) cómo se juntan las anécdotas (formulario dentro de ALV para que cada amigo mande las suyas y el administrador las apruebe, o una lista que Elías pasa).
+**DECISIÓN (v1.52, Elías, 21 de noviembre) — Temperatura + Voltaje en 3 niveles:** cambia el punto 1 de v1.28 (5 niveles por eje queda REEMPLAZADO). Plan y borrador en `juegos-fiesta\ALV_PLAN_TEMPERATURA_VOLTAJE.md` y `ALV_BORRADOR_CARTAS.md` (fuera del repo).
+- **Temperatura (preguntas):** 1 Frío: rompehielos, gustos, preferencias, personalidad, experiencias, anécdotas, opiniones y situaciones divertidas. 2 Caliente: confesiones, secretos, relaciones, situaciones incómodas, preguntas íntimas, atrevidas y comprometedoras. 3 Extremo: preguntas muy personales, provocadoras y de máxima exposición voluntaria.
+- **Voltaje (retos):** 1 Bajo voltaje: imitaciones, actuaciones, desafíos sencillos, retos divertidos, de interacción y creatividad. 2 Alto voltaje: exposición, improvisación, participación grupal, retos atrevidos, vergonzosos y de mayor dificultad. 3 Sobrecarga: retos extremos de creatividad, atrevimiento y exposición voluntaria.
+- **Límites:** solo generales, para todo el grupo y para cada partida. Ningún límite por jugador. Confirma el punto 2 de v1.28.
+- **Nadie se obliga:** cada jugador puede no hacer el reto o no responder si no quiere, y siempre puede tomar la alternativa (beber lo que tenga, con Drunk). Ver PENDIENTE de abajo sobre qué cuesta decir que no.
+- **Drunk:** interruptor aparte en la partida, independiente de los niveles. Encendido, incluye bebidas como salida para no hacer un reto o no responder, y cartas con beber dentro. Tomar nunca da XP.
+- **Consentimiento de contacto:** se acepta al aceptar los Términos y Condiciones; además siempre se puede decir que no o tomar la alternativa (complementa v1.29 a).
+- **Primera jornada oficial:** sábado 28 de noviembre de 2026; antes hay sesiones de prueba (resuelve el pendiente 1 de v1.29).
+**PENDIENTE (v1.52):** (1) qué cuesta no hacer un reto o no responder: v1.28 punto 3 y v1.29 a dicen que pasar sin nada cuesta un comodín y que la alternativa (beber, castigo u otra pregunta) es gratis; falta confirmar si sigue así; (2) agregar al texto de los Términos la aceptación de retos de contacto; (3) eventos sorpresa (v1.29 c): Elías pidió explicación antes de decidir; (4) presets, curva de la noche y peso entre niveles de la página de diseño siguen como PROPUESTA; (5) anécdotas de los amigos (pendientes 2 y 3 de v1.29) siguen abiertos.
+**DECISIÓN (v1.53, Elías, 21 de noviembre) — decir que no, eventos sorpresa y ¿Voy a tener suerte?:** resuelve los pendientes 1, 3 y 5 de v1.52.
+- **Si alguien no quiere hacer el reto o responder:** con Drunk encendido, puede beber algo (lo que tenga). Con Drunk apagado, usa un comodín; si no tiene, pierde puntos él y, si juega en pareja o equipo, también su grupo, o compra el comodín ahí mismo con monedas al precio que tenga en la tienda.
+- **Eventos sorpresa:** interruptor aparte, como Drunk. Encendido, salen al azar en algunas preguntas o retos y suelen ser grupales (por ejemplo, todos hacen el reto).
+- **¿Voy a tener suerte?:** interruptor aparte. Encendido, quien tiene el turno puede elegir esa opción; el resultado puede ser bueno o malo para quien la elige y lo sabe antes de elegirla. Deja de ser un comodín (cambia el punto 5 de v1.28 en esa parte).
+- **Anécdotas de los amigos:** fuera por ahora (pendientes 2 y 3 de v1.29 y 5 de v1.52 quedan en pausa).
+- **Nivel exacto (Elías, 21 de noviembre):** cada nivel solo saca preguntas o retos de ese nivel; si se elige Extremo no sale nada de Frío. Por eso cada nivel necesita contenido suficiente para una jornada larga. Los castigos no tienen eje: son el precio de no cumplir y salen en cualquier nivel. Descarta la PROPUESTA de peso 60/30/10 entre niveles.
+**PENDIENTE (v1.53):** ~~(1) cuántos puntos se pierden al decir que no sin comodín;~~ **Resuelto el mismo día (Elías):** se le restan los puntos que valía la carta (hoy en Verdad o reto: 1 por pregunta, 2 por reto), a él y, si aplica, a su pareja o equipo; ~~(2) precio de un comodín suelto~~ **Resuelto (Elías):** un comodín suelto cuesta **50 monedas** (lo mismo que cada uno dentro del sobre de 3 por 150); comprarlo en vivo necesita una función nueva en el servidor (migración con autorización); (3) lista de eventos sorpresa y de resultados de ¿Voy a tener suerte?, y qué tan seguido salen.
 
 **DECISIÓN (v1.12, Elías; la parte de menores y contenido familiar queda sustituida por D1 en v1.25) — cuentas y edad:** todo jugador necesita cuenta, también en el juego local (se acaban los jugadores creados sin cuenta en el celular). Los menores de 18 sí pueden tener cuenta. Si en la sala o en la partida local hay al menos un menor, no se pueden activar el contenido adulto ni el modo Drunk y solo queda disponible el contenido **familiar**: temas, preguntas, retos y castigos marcados como familiares. La edad es la que declara cada quien al registrarse.
 
@@ -1600,7 +1616,7 @@ Requisitos:
 - Comodines = acciones del motor, consumibles, con matriz por juego (D2, 13.4).
 - Un personalizador con modos Simple y Avanzado (Básico y Completo), sin perder lo armado; el Avanzado es el libro de cómic propio, no el taller de Minifig Studio (D3, 10; v1.41).
 - Diseño final: 8 pantallas de alta fidelidad + prototipo HTML navegable, hecho en el paso 1.5 antes del paso 2 (D4, 23.2).
-- Menores de 18: mensaje de bloqueo hasta corregir la fecha. Intensidad: Temperatura (preguntas) y Voltaje (retos), 5 niveles cada uno, nivel general de la sala (v1.28; sustituye el termómetro de 4 niveles). Comodines en todos los juegos, de un solo uso; pasar solo con comodín. Cartas de trago obligatorias con la bebida que cada quien elija; tomar nunca da XP. Modo Avanzado también en celular (v1.26).
+- Menores de 18: mensaje de bloqueo hasta corregir la fecha. Intensidad: Temperatura (preguntas) y Voltaje (retos), 3 niveles cada uno (v1.52; antes 5 en v1.28), nivel general de la sala por partida (sustituye el termómetro de 4 niveles); Drunk como interruptor aparte. Comodines en todos los juegos, de un solo uso; pasar solo con comodín. Cartas de trago obligatorias con la bebida que cada quien elija; tomar nunca da XP. Modo Avanzado también en celular (v1.26).
 - El lenguaje de la app usa siglas con ingenio.
 - Presentador: ALV-I.A., apodo «Don ALVur» cuando se pone formal; figura y diálogos pendientes (1.3.1; v1.43).
 - ALVerca, FBI y GPS son los escenarios activos.
@@ -1667,6 +1683,12 @@ Decisiones del usuario del 12 de noviembre de 2026:
 
 ## v1.6
 - Primeros logros (14.2), con ámbito de sesión o histórico (ver DECISIÓN v1.6 en 14.2).
+
+## v1.53
+- 21 nov 2026. Decir que no: con Drunk se bebe; sin Drunk, comodín, perder puntos (también el grupo) o comprar el comodín en vivo con monedas. Eventos sorpresa y ¿Voy a tener suerte? como interruptores aparte; el segundo deja de ser comodín. Anécdotas en pausa. Decir que no sin comodín resta lo que valía la carta; comodín suelto a 50 monedas (3.2). Elías aprobó el plan y el borrador; etapa 1 construida sin cambio visible: cada carta lleva nivel 1 a 3 en su eje y marca de contacto, 282 cartas nuevas (565 en total) que solo verán las partidas con Temperatura y Voltaje. Etapa 2 construida: sección «Intensidad» del configurador con termómetro, voltímetro e interruptor Drunk (apagado y nivel 1 por omisión), cada eje como techo, sin repetir cartas en la partida y conteo de cartas; lo adulto de fuera de las cartas se abre con nivel 3. Elías decidió nivel exacto (cada nivel solo sus cartas) y los castigos salen en cualquier nivel. Publicado en main.
+
+## v1.52
+- 21 nov 2026. Temperatura + Voltaje pasa a 3 niveles por eje (Frío, Caliente, Extremo; Bajo voltaje, Alto voltaje, Sobrecarga), límites solo generales por partida, Drunk como interruptor aparte, consentimiento de contacto en los Términos y primera jornada oficial el 28 de noviembre (3.2). Solo documento; sin código ni base.
 
 ## v1.51
 - 20 nov 2026. Género con Mujer, Hombre y «Prefiero no decirlo» (guardado como `otro`); ALVersus se acomoda solo según el género y el anfitrión puede editar bandos, equipos y parejas antes de iniciar (6A, junto a las modalidades). Términos y Condiciones y Política de Privacidad con créditos de Elías Cortés (`src/content/terminos.ts`, copia en `docs/TERMINOS_Y_CONDICIONES.md`); las marcas de terceros se declaran de sus dueños, sin afiliación.
@@ -1836,5 +1858,5 @@ Decisiones del usuario del 12 de noviembre de 2026:
 
 ---
 
-**Fin del Documento Maestro ALV v1.51**  
+**Fin del Documento Maestro ALV v1.53**  
 Este documento debe actualizarse de forma incremental y conservar la distinción entre decisiones aprobadas, propuestas, pendientes y descartadas.

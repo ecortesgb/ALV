@@ -62,6 +62,8 @@ export interface EstadoPartida {
   vr?: { eleccion?: "verdad" | "reto"; fuente?: "app" | "voz" };
   /** Verdad o reto nuevo: quienes ya usaron su única Verdad. */
   verdadUsada?: string[];
+  /** Temperatura + Voltaje (cfg.ejes): cartas que ya salieron en la partida, para no repetirlas. Privado: no va en las vistas. */
+  usadas?: string[];
   accionesVistas: string[];
   bitacora: EventoMotor[];
 }
@@ -124,9 +126,21 @@ function personalizar(texto: string, e: EstadoPartida, para: Jugador | undefined
 }
 
 function sacarCarta(e: EstadoPartida, c: Contenido, mazos: string[]): Carta | undefined {
-  const pool = cartasPermitidas(e.cfg, c.cartas, mazos);
+  let pool = cartasPermitidas(e.cfg, c.cartas, mazos);
   if (pool.length === 0) return undefined;
+  // Temperatura + Voltaje: sin repetir carta en la partida. Si ya salieron todas, se vuelve a usar el mazo completo.
+  if (e.cfg.ejes && e.usadas?.length) {
+    const nuevas = pool.filter(x => !e.usadas!.includes(x.id));
+    if (nuevas.length) pool = nuevas;
+  }
   return azarDeRonda(e).elegir(pool);
+}
+
+/** Temperatura + Voltaje: anota la carta nueva que quedó en la mesa. Las partidas sin ejes no cambian. */
+function anotarCarta(antes: EstadoPartida | undefined, n: EstadoPartida): EstadoPartida {
+  const id = n.carta?.id;
+  if (!n.cfg.ejes || !id || id === antes?.carta?.id || (n.usadas ?? []).includes(id)) return n;
+  return { ...n, usadas: [...(n.usadas ?? []), id] };
 }
 
 /** Normaliza una respuesta escrita para comparar: sin acentos, minúsculas, sin espacios de más. */
@@ -612,7 +626,7 @@ export function crearPartida(juego: DefinicionJuego, cfg: Configuracion, semilla
     manos: Object.fromEntries(cfg.jugadores.map(j => [j.id, [] as string[]])), cambios: 0, accionesVistas: [],
     bitacora: [{ n: 1, tipo: "partida-creada", datos: { juego: juego.id, semilla } }],
   };
-  return prepararRonda(base, contenido);
+  return anotarCarta(undefined, prepararRonda(base, contenido));
 }
 
 /** Pasa la ronda a «revelada». Los `ausentes` (si hay) no contestaron: no puntúan ni ganan retos esa ronda. */
@@ -637,7 +651,7 @@ export function aplicar(e: EstadoPartida, a: Accion, contenido: Contenido): Esta
   if (e.accionesVistas.includes(a.id) || e.fase === "terminada") return e;
   const m = mecanica(e);
   const visto = [...e.accionesVistas, a.id];
-  const sube = (n: EstadoPartida): EstadoPartida => ({ ...n, version: e.version + 1, accionesVistas: visto });
+  const sube = (n: EstadoPartida): EstadoPartida => anotarCarta(e, { ...n, version: e.version + 1, accionesVistas: visto });
 
   switch (a.tipo) {
     case "contestar": {
