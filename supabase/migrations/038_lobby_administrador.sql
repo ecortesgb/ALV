@@ -1,6 +1,6 @@
 -- 038 · Lobby del administrador (ALV_PLAN_MODOS_DE_JUEGO.md, pedido de Elías del 2026-11-22).
--- ESCRITA, NO APLICADA. Necesita autorización expresa de Elías (D-002) y, antes, prueba en transacción deshecha
--- con un usuario que no es anfitrión y el asesor de seguridad.
+-- APLICADA en la base remota el 2026-11-22 con autorización de Elías («Sí, aplícala»), después de la prueba en
+-- transacción deshecha (supabase/pruebas/038_remota_prueba.sql) y del asesor (28 → 31 avisos RPC, los 3 esperados).
 --
 -- 1. lobby_abierto(): cualquier cuenta con sesión sabe si hay un lobby abierto del administrador, su código y cuántos
 --    hay dentro, sin ser miembro (hoy solo se sabe si el aparato del anfitrión está anunciándolo por Realtime).
