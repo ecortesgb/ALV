@@ -543,14 +543,14 @@
     const frente = Math.max(w, k);
     let giro = AZ_GIRO + AZ.usuario * (1 - frente) + m.ax * 0.5 * w;
     J.head.rotation.y += (m.ax * 0.55 - J.head.rotation.y) * w;
-    J.head.rotation.x += -m.ay * 0.2 * w; // en la figura, x positivo levanta la cara
+    e.lx += m.ay * 0.05 * w; // mirar arriba o abajo: se inclina el torso (la cabeza solo gira a los lados)
     if (k > 0 && !QUIETO_AZ) {
       if (cual === "listo") {
         e.lx += 0.13 * k; J.armR.rotation.x += -0.8 * k; J.armL.rotation.x += -0.8 * k;
         J.armR.rotation.z -= V.ladoR * 0.1 * k; J.armL.rotation.z -= V.ladoL * 0.1 * k;
         J.root.position.y += Math.abs(Math.sin(t * 8)) * 0.035 * k; J.head.rotation.x += 0.1 * k;
       } else if (cual === "mirarse") {
-        giro += -AZ_GIRO * k; J.head.rotation.x += -0.34 * k; J.head.rotation.y *= 1 - k;
+        giro += -AZ_GIRO * k; e.lx += 0.16 * k; J.head.rotation.x += -0.1 * k; J.head.rotation.y *= 1 - k;
         J.armR.rotation.x += -0.55 * k; J.armR.rotation.z -= V.ladoR * 0.25 * k;
       } else if (cual === "frotar") {
         const o = Math.sin(t * 15);
@@ -767,7 +767,18 @@
       const cj = new THREE.Box3().setFromObject(J.legR), s = cj.getSize(new THREE.Vector3());
       V.largo = Math.max(0.3, J.legR.getWorldPosition(_v).y - cj.min.y); V.pie = s.x / 2;
     }
+    // Medio ancho de la cabeza: cuánto se hunde su borde de abajo en el cuello al ladearla (ver cuidarCuello).
+    const mc = J.head && J.head.children.find(o => o.isMesh);
+    V.radioCabeza = mc ? new THREE.Box3().setFromObject(mc).getSize(new THREE.Vector3()).x / 2 : 0.3;
     J.vida = V;
+  }
+  // Como en una minifigura real, la cabeza SOLO gira a los lados sobre el cuello (pedido de Elías): sin ladearse,
+  // sin asentir y sin subir. Cualquier inclinación que pidan el saludo, la mirada o un gesto se anula aquí, al final
+  // del cuadro; mirar arriba o abajo lo hace el torso (reaccionAzotea).
+  function cuidarCuello(J) {
+    if (!J || !J.head || J.headY == null) return;
+    J.head.rotation.x = 0; J.head.rotation.z = 0;
+    J.head.position.y = J.headY;
   }
   // Inclina el torso (con brazos, cabeza y capa) alrededor de la cintura. lx > 0 = hacia el frente.
   function inclinar(J, lx, lz) {
@@ -1018,6 +1029,7 @@
       cuidarObjetos(e.obj, e.plano);
       mezclar(e, t);
       inclinar(J, e.lx, e.lz);
+      cuidarCuello(J);
       if (EDITOR) {
         e.obj.rotation.y = cam.giro;
         // Al cambiar una pieza, la figura da un saltito.
@@ -1045,7 +1057,7 @@
     }
     const { r, s, cam } = fotografo;
     r.setSize(ancho, alto, false); cam.aspect = ancho / alto;
-    const a = armar(f), z = zona && (typeof zona === "object" ? zona : ZONAS[zona]); window.MOM_T0 = 0; animar(a.obj, pose && Momentos.info(pose.mom) ? "mom:" + pose.mom : "quieto", pose ? +pose.t || 0 : 0); postura(a.obj.userData.j); cuidarObjetos(a.obj, a.plano); a.obj.rotation.y = z ? z.giro : -0.35; s.add(a.obj);
+    const a = armar(f), z = zona && (typeof zona === "object" ? zona : ZONAS[zona]); window.MOM_T0 = 0; animar(a.obj, pose && Momentos.info(pose.mom) ? "mom:" + pose.mom : "quieto", pose ? +pose.t || 0 : 0); postura(a.obj.userData.j); cuidarObjetos(a.obj, a.plano); cuidarCuello(a.obj.userData.j); a.obj.rotation.y = z ? z.giro : -0.35; s.add(a.obj);
     if (z && z.mano) { // vista de revisión: la cámara mira a esa mano
       a.obj.updateMatrixWorld(true); const h = new THREE.Vector3(); a.obj.userData.j[z.mano === "izq" ? "handL" : "handR"].getWorldPosition(h);
       cam.updateProjectionMatrix(); const d = distancia(z, 1, cam); cam.position.set(h.x, h.y + d * 0.07, h.z + d); cam.lookAt(h.x, h.y, h.z);

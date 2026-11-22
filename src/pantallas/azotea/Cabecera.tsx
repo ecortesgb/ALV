@@ -9,6 +9,7 @@ import type { FiguraV2 } from "../../content/personaje";
 import { tituloPorNivel } from "../../engine/economia";
 
 const num = (n: number) => Math.max(0, Math.round(n)).toLocaleString("es-MX");
+// Ojo: dentro de una variable CSS la url relativa se resolvería desde assets/ en el sitio (base "./"); ahí va absoluta.
 export const arteHub = (n: string) => `${import.meta.env.BASE_URL}arte/ui/hub/${n}.webp`;
 
 export function CabeceraJugador({ id, nombre, figura, nivel, xp, costo, compacta }: {
@@ -71,7 +72,7 @@ export function RecursosAzotea({ monedas, puntos }: { monedas: number; puntos: n
       <span className="azr-pildora azr-monedas">
         <button type="button" className="azr-cuerpo" onClick={() => ir("tienda")} aria-label={`${num(monedas)} monedas. Abrir la tienda`}
           onPointerEnter={e => { if (e.pointerType === "mouse") setGira(g => g + 1); }}>
-          <span key={gira} className={"azr-ico azr-moneda" + (gira ? " gira" : "")} style={{ "--sprite": `url("${arteHub("moneda-giro")}")` } as CSSProperties} aria-hidden="true" />
+          <span key={gira} className={"azr-ico azr-moneda" + (gira ? " gira" : "")} style={{ "--sprite": `url("${new URL(arteHub("moneda-giro"), document.baseURI).href}")` } as CSSProperties} aria-hidden="true" />
           <b>{num(monedas)}</b>
         </button>
         <button type="button" className="azr-mas" onClick={() => ir("tienda")} aria-label="Conseguir monedas en la tienda"><span aria-hidden="true">+</span></button>
