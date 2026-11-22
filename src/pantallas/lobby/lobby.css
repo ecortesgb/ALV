@@ -1,0 +1,309 @@
+/* Lobby estilo fiesta (Lobby.tsx). Tokens del HUB «La Azotea» (.D.az). Los pedestales y columnas son los de
+   SalaEspera (alv.css, .a-sala-*); aquí van banner, controles por lugar, franja de nombres y pie. */
+.D .lb-caja { position: relative; flex: 1 0 auto; min-height: 100%; display: flex; flex-direction: column; gap: clamp(8px, 1.4vh, 16px); }
+.D .lb-top { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 12px; z-index: 3; }
+.D .lb-red { justify-self: end; font: 800 13px/1 var(--f-texto); color: #ffe0a8; min-width: 1px; }
+
+/* Banner morado «N/8 · X listos» */
+.D .lb-banner { justify-self: center; display: inline-flex; align-items: baseline; gap: 12px; padding: 10px 28px 12px; border-radius: 0 0 18px 18px;
+  color: #fff; background: linear-gradient(180deg, #8b5cf6, #5b2bc9); border: 2px solid rgba(255, 255, 255, .25); border-top: 0;
+  box-shadow: inset 0 -4px 0 rgba(0, 0, 0, .18), 0 10px 22px rgba(30, 10, 80, .45); margin-top: calc(var(--az-pad) * -1); }
+.D .lb-banner-n { font: 400 clamp(24px, 2.2vw, 38px)/1 var(--f-titulo); text-shadow: 0 3px 0 rgba(20, 0, 60, .55); }
+.D .lb-banner-t { font: 400 clamp(18px, 1.6vw, 28px)/1 var(--f-titulo); text-transform: uppercase; letter-spacing: .04em; text-shadow: 0 3px 0 rgba(20, 0, 60, .55); }
+.D .lb-banner.todos { background: linear-gradient(180deg, #34d36a, #13994a); }
+
+/* Escenario: pedestales arriba, controles alineados a cada columna abajo */
+.D .lb-escenario { display: flex; flex-direction: column; gap: 10px; flex: 1 1 auto; min-height: 0; }
+.D .lb-pedestales.a-sala-escenario { height: clamp(260px, 46vh, 540px); }
+.D .lb-ctls { display: grid; grid-template-columns: repeat(var(--lugares, 4), minmax(0, 1fr)); gap: .5em; }
+.D .lb-ctl { display: flex; flex-direction: column; align-items: center; gap: 8px; min-width: 0; padding: 10px 8px 12px; border-radius: 16px;
+  background: var(--vidrio, rgba(14, 22, 60, .55)); border: 1px solid var(--vidrio-borde, rgba(255, 255, 255, .18)); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+  box-shadow: inset 0 3px 0 var(--pj, transparent); }
+.D .lb-ctl.vacio { opacity: .55; box-shadow: none; }
+.D .lb-ctl.yo { border-color: rgba(255, 225, 74, .7); }
+.D .lb-estado { font: 400 clamp(17px, 1.4vw, 24px)/1 var(--f-titulo); text-transform: uppercase; letter-spacing: .04em; color: #fff; text-shadow: 0 2px 0 rgba(0, 0, 0, .45); }
+.D .lb-estado.si { color: #ffe14a; }
+
+.D .lb-listo { width: 100%; max-width: 240px; min-height: 48px; padding: 8px 14px; cursor: pointer; border-radius: 14px; border: 2.5px solid var(--az-tinta);
+  font: 400 clamp(18px, 1.5vw, 24px)/1 var(--f-titulo); text-transform: uppercase; letter-spacing: .03em; color: var(--az-tinta);
+  background: linear-gradient(180deg, #ffe066, #ffb000); box-shadow: 0 5px 0 #c77700, 0 10px 18px rgba(0, 0, 0, .3); transition: transform .14s cubic-bezier(.2, .8, .2, 1); }
+.D .lb-listo.quitar { color: #fff; background: linear-gradient(180deg, #5b6aa8, #333f7a); box-shadow: 0 5px 0 #1d2550, 0 10px 18px rgba(0, 0, 0, .3); font-size: 16px; }
+.D .lb-listo:active { transform: translateY(3px); box-shadow: 0 2px 0 #c77700; }
+.D .lb-admin { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; }
+.D .lb-mini { min-height: 36px; padding: 6px 12px; cursor: pointer; border-radius: 10px; border: 1px solid rgba(255, 255, 255, .3); color: #fff;
+  font: 800 13px/1 var(--f-texto); background: rgba(255, 255, 255, .12); }
+.D .lb-mini.peligro { border-color: rgba(255, 110, 110, .6); background: rgba(232, 52, 58, .35); }
+@media (hover: hover) and (pointer: fine) { .D .lb-mini:hover { background: rgba(255, 255, 255, .22); } .D .lb-mini.peligro:hover { background: rgba(232, 52, 58, .55); } }
+.D .lb-mini:focus-visible, .D .lb-listo:focus-visible, .D .lb-mini-fig:focus-visible, .D .lb-flecha:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+
+/* Elegir figura: 3 miniaturas con flechas */
+.D .lb-figs { display: flex; flex-direction: column; align-items: center; gap: 6px; width: 100%; }
+.D .lb-figs small { font: 800 12px/1 var(--f-texto); color: rgba(255, 255, 255, .8); }
+.D .lb-figs-fila { display: flex; align-items: center; gap: 6px; }
+.D .lb-flecha { width: 30px; height: 44px; padding: 0; cursor: pointer; border-radius: 10px; border: 0; color: var(--az-tinta); font: 900 24px/1 var(--f-texto);
+  background: #fff; box-shadow: 0 3px 0 rgba(0, 0, 0, .3); }
+.D .lb-flecha:disabled { opacity: .35; cursor: default; }
+.D .lb-mini-fig { width: 52px; height: 52px; padding: 0; cursor: pointer; border-radius: 12px; overflow: hidden; border: 3px solid rgba(255, 255, 255, .25);
+  background: linear-gradient(180deg, #e9eefb, #b9c4e4); transition: transform .14s ease, border-color .14s ease; }
+.D .lb-mini-fig img { width: 100%; height: 100%; object-fit: cover; }
+.D .lb-mini-fig.activa { border-color: #ffc21a; transform: scale(1.1); box-shadow: 0 0 0 3px rgba(255, 194, 26, .35); }
+.D .lb-mini-fig:disabled { opacity: .45; cursor: default; }
+.D .lb-cargando { display: block; width: 100%; height: 100%; background: rgba(255, 255, 255, .25); }
+.D .lb-figs.bloqueado small::after { content: " · quita el listo para cambiar"; }
+
+/* Franja de nombres con el color de cada lugar */
+.D .lb-franja { display: grid; grid-template-columns: repeat(var(--lugares, 4), minmax(0, 1fr)); margin: 0; padding: 0; list-style: none; border-radius: 12px; overflow: hidden; }
+.D .lb-franja li { display: flex; align-items: center; justify-content: center; gap: 6px; min-width: 0; padding: 9px 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  font: 400 clamp(15px, 1.2vw, 20px)/1 var(--f-titulo); color: var(--pj-texto, #fff); background: var(--pj, rgba(20, 28, 70, .8)); text-shadow: 0 1px 0 rgba(0, 0, 0, .25); }
+.D .lb-franja li.vacio { color: rgba(255, 255, 255, .5); background: rgba(20, 28, 70, .7); }
+.D .lb-franja i { font-style: normal; color: #ffe14a; text-shadow: 0 1px 0 #7a4b00; }
+
+/* Resultados de la partida anterior */
+.D .lb-resultados { padding: 10px 14px 14px; border-radius: 16px; background: var(--vidrio, rgba(14, 22, 60, .55)); border: 1px solid var(--vidrio-borde, rgba(255, 255, 255, .18));
+  -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); max-height: 34vh; overflow: auto; }
+.D .lb-res-tit { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 8px; font: 400 20px/1 var(--f-titulo); text-transform: uppercase; color: #fff; }
+
+/* Pie: Continuar (administrador) */
+.D .lb-pie { display: flex; align-items: center; justify-content: center; gap: 12px; flex-wrap: wrap; padding-bottom: 4px; }
+.D .lb-continuar { display: flex; flex-direction: column; align-items: center; gap: 3px; min-width: min(360px, 100%); min-height: 64px; padding: 10px 26px; cursor: pointer;
+  border-radius: 16px; border: 2.5px solid var(--az-tinta); color: var(--az-tinta); background: linear-gradient(180deg, #ffe066, #ffb000);
+  box-shadow: 0 6px 0 #c77700, 0 14px 24px rgba(0, 0, 0, .35); transition: transform .14s cubic-bezier(.2, .8, .2, 1); }
+.D .lb-continuar span { font: 400 clamp(24px, 2vw, 32px)/1 var(--f-titulo); text-transform: uppercase; letter-spacing: .04em; }
+.D .lb-continuar small { font: 800 13px/1.1 var(--f-texto); }
+.D .lb-continuar:disabled { filter: grayscale(.7) brightness(.85); cursor: default; }
+.D .lb-continuar:not(:disabled):active { transform: translateY(4px); box-shadow: 0 2px 0 #c77700; }
+.D .lb-sec { min-height: 48px; padding: 8px 18px; cursor: pointer; border-radius: 14px; border: 1px solid rgba(255, 255, 255, .3); color: #fff;
+  font: 400 18px/1 var(--f-titulo); text-transform: uppercase; letter-spacing: .03em; background: rgba(14, 22, 60, .6); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); }
+.D .lb-espera { margin: 0; padding: 10px 18px; border-radius: 999px; font: 800 15px/1.3 var(--f-texto); color: #fff; text-align: center; background: rgba(14, 22, 60, .6); }
+@media (hover: hover) and (pointer: fine) { .D .lb-continuar:not(:disabled):hover, .D .lb-listo:hover { transform: translateY(-2px); } }
+
+/* ---------- Celular ---------- */
+.D .lb-cel { display: flex; flex-direction: column; gap: 10px; }
+.D .lb-cel .a-sala-mio { height: clamp(220px, 38vh, 360px); }
+.D .lb-lista { display: flex; flex-direction: column; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.D .lb-lista li { display: grid; grid-template-columns: auto minmax(0, 1fr) auto auto; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 12px;
+  background: rgba(14, 22, 60, .6); border-left: 6px solid var(--pj, #888); }
+.D .lb-pn { display: grid; place-items: center; min-width: 34px; height: 28px; padding: 0 6px; border-radius: 8px; font: 400 16px/1 var(--f-titulo); color: var(--pj-texto, #fff); background: var(--pj, #444); }
+.D .lb-nom { display: flex; flex-direction: column; min-width: 0; color: #fff; }
+.D .lb-nom b { font: 800 15px/1.2 var(--f-texto); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.D .lb-nom small { font: 700 11px/1.2 var(--f-texto); color: #ffe14a; }
+.D .lb-lista .lb-estado { font-size: 15px; }
+.D.az.lb:not(.wide) .pf-atras { height: 42px; padding: 0 12px; font-size: 17px; }
+.D.az.lb:not(.wide) .lb-banner { padding: 8px 16px 10px; gap: 8px; }
+.D.az.lb:not(.wide) .lb-continuar { width: 100%; }
+.D.az.lb:not(.wide) .lb-pie { flex-direction: column; align-items: stretch; }
+
+@media (prefers-reduced-motion: reduce) { .D .lb-listo, .D .lb-continuar, .D .lb-mini-fig { transition: none; } }
+
+/* ---------- Arte de Elías (entra solo cuando existe el archivo) ----------
+   Fondo del cuarto: public/arte/lobby/fondo-lobby-1920.webp y -1100.webp. Mientras no llega, el HUB con velo oscuro.
+   Cápsula por color: public/arte/lobby/capsula-<color>.webp, encima del degradado de la columna. */
+.D .lb-cuarto { position: absolute; inset: 0; pointer-events: none; background: var(--lb-fondo-c) center 40% / cover no-repeat; }
+@media (min-width: 900px) { .D .lb-cuarto { background-image: var(--lb-fondo-g); } }
+/* La cápsula llena el alto de la columna; a los lados queda su pared oscura del mismo color. */
+.D .lb-cel .a-sala-mio, .D .lb-pedestales .a-sala-col:not(.vacia) { background: var(--pj-arte, none) center / auto 108% no-repeat, color-mix(in srgb, var(--pj-oscuro, #1a2250) 55%, #05060c);
+  border-color: rgba(0, 0, 0, .65); box-shadow: 0 10px 24px rgba(0, 0, 0, .45); backdrop-filter: none; }
+.D .lb-pedestales .a-sala-col:not(.vacia)::before, .D .lb-cel .a-sala-mio::before { opacity: .22; }
+.D .lb-cel .a-sala-mio::after { opacity: 0; }
+.D .lb-pedestales .a-sala-col:not(.vacia)::after { opacity: 0; }
+.D .lb-fondo { position: absolute; inset: 0; overflow: hidden; }
+.D .lb-vacio { margin: auto; display: flex; flex-direction: column; align-items: center; gap: 10px; max-width: 520px; padding: 26px 30px; border-radius: 20px; text-align: center; color: #fff;
+  background: var(--vidrio, rgba(14, 22, 60, .6)); border: 1px solid var(--vidrio-borde, rgba(255, 255, 255, .18)); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); }
+.D .lb-vacio b { font: 400 clamp(24px, 2.4vw, 36px)/1.05 var(--f-titulo); text-transform: uppercase; letter-spacing: .03em; }
+.D .lb-vacio p { margin: 0; font: 700 16px/1.4 var(--f-texto); color: rgba(255, 255, 255, .85); }
+.D .lb-puntitos { display: flex; gap: 8px; }
+.D .lb-puntitos i { width: 10px; height: 10px; border-radius: 50%; background: #ffc21a; animation: lbPunto 1.2s ease-in-out infinite; }
+.D .lb-puntitos i:nth-child(2) { animation-delay: .2s; } .D .lb-puntitos i:nth-child(3) { animation-delay: .4s; }
+@keyframes lbPunto { 50% { opacity: .25; transform: translateY(-4px); } }
+@media (prefers-reduced-motion: reduce) { .D .lb-puntitos i { animation: none; } }
+/* La regla general de botones (.D.alv button { font-family: inherit }) le gana a una sola clase. */
+.D.alv .lb-listo, .D.alv .lb-continuar span, .D.alv .lb-sec { font-family: var(--f-titulo); }
+.D.alv .lb-mini, .D.alv .lb-continuar small { font-family: var(--f-texto); }
+/* Celular: el fondo cubre toda la pantalla (sin el piso liso del HUB). */
+.D.az.lb:not(.wide) .az-escenario:has(.az-fondo) .az-fondo { background-size: cover; background-position: 42% 70%; }
+.D.az.lb:not(.wide) .az-escenario:has(.az-fondo)::after { display: none; }
+
+/* =====================================================================
+   v2 (Elías, 22 nov): cápsulas hasta el piso del fondo, nombre arriba junto al P1, controles dentro de la cápsula,
+   opciones del administrador a un lado y «Continuar» cuando todos están listos.
+   ===================================================================== */
+.D.az.lb.wide .a-scroll { overflow: hidden; }
+.D.az.lb.wide .lb-caja { height: 100%; }
+.D .lb-escenario { flex: 1 1 auto; min-height: 0; }
+.D .lb-pedestales.a-sala-escenario.fiesta { height: 100%; min-height: 420px; }
+/* La cápsula se apoya en el piso: sombra de contacto abajo. */
+.D .lb-pedestales .a-sala-col:not(.vacia) { box-shadow: 0 26px 30px -14px rgba(0, 0, 0, .8), 0 0 0 1px rgba(255, 255, 255, .06) inset; }
+.D .lb-pedestales .a-sala-col.vacia { background: rgba(10, 14, 34, .45); border: 2px dashed rgba(255, 255, 255, .22); box-shadow: 0 26px 30px -14px rgba(0, 0, 0, .6); }
+
+.D .lb-rot { justify-content: flex-start; padding: .55em .5em .6em; }
+.D .lb-rot > .lb-arriba, .D .lb-rot > .lb-abajo { pointer-events: auto; }
+/* Nombre arriba: P1 + corona + nombre */
+.D .lb-etq { display: inline-flex; align-items: center; gap: 6px; max-width: 100%; padding: 4px 12px 4px 4px; border-radius: 999px;
+  background: rgba(5, 8, 22, .78); border: 2px solid color-mix(in srgb, var(--pj, #6d7398) 80%, #fff); box-shadow: 0 4px 10px rgba(0, 0, 0, .4); }
+.D .lb-etq b { display: grid; place-items: center; min-width: 34px; height: 28px; padding: 0 6px; border-radius: 999px; font: 400 17px/1 var(--f-titulo); color: var(--pj-texto, #fff); background: var(--pj, #444); }
+.D .lb-etq-nom { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 400 clamp(15px, 1.2vw, 20px)/1 var(--f-titulo); color: #fff; }
+.D .lb-etq-nom .a-nom, .D .lb-etq-nom span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.D .lb-rot.vacia .lb-etq { opacity: .6; border-style: dashed; }
+.D .lb-corona { width: 26px; height: auto; flex: none; filter: drop-shadow(0 2px 2px rgba(0, 0, 0, .45)); }
+.D .lb-rot.yo .lb-etq { border-color: #ffe14a; }
+/* Botones redondos del administrador arriba a la derecha */
+.D .lb-arriba { position: absolute; top: 46px; right: 8px; }
+.D .lb-redondos { display: flex; flex-direction: column; gap: 8px; }
+.D .lb-lista .lb-redondos { flex-direction: row; }
+.D .lb-redondo { display: grid; place-items: center; width: 46px; height: 46px; padding: 6px; cursor: pointer; border-radius: 50%; border: 2px solid rgba(255, 255, 255, .55);
+  background: radial-gradient(circle at 35% 30%, #ffffff, #dfe5f2 60%, #aab5cc); box-shadow: 0 4px 0 rgba(0, 0, 0, .35), 0 8px 14px rgba(0, 0, 0, .35); transition: transform .14s cubic-bezier(.2, .8, .2, 1); }
+.D .lb-redondo img { width: 100%; height: 100%; object-fit: contain; }
+.D .lb-redondo.activo { border-color: #3fe06a; box-shadow: 0 0 0 3px rgba(63, 224, 106, .45), 0 4px 0 rgba(0, 0, 0, .35); }
+.D .lb-redondo.peligro { border-color: rgba(255, 120, 120, .8); }
+.D .lb-redondo:active { transform: translateY(2px) scale(.96); }
+.D .lb-redondo:focus-visible { outline: 3px solid #fff; outline-offset: 2px; }
+@media (hover: hover) and (pointer: fine) { .D .lb-redondo:hover { transform: translateY(-2px) scale(1.06); } }
+/* ¡Listo! con palomita */
+.D .lb-sello { position: absolute; left: 50%; top: 13%; translate: -50% 0; rotate: -6deg; display: inline-flex; align-items: center; gap: 4px; white-space: nowrap;
+  font: 400 clamp(22px, 2.2vw, 40px)/1 var(--f-titulo); text-transform: uppercase; color: #ffe14a; -webkit-text-stroke: .08em #0a1030; paint-order: stroke fill;
+  text-shadow: 0 .08em 0 #0a1030; animation: aSelloListo 420ms cubic-bezier(.2, 1.6, .35, 1) backwards; }
+.D .lb-sello img { width: 1.5em; height: auto; filter: drop-shadow(0 3px 2px rgba(0, 0, 0, .5)); }
+.D .lb-libre { position: absolute; left: 50%; top: 40%; translate: -50% -50%; width: min(56%, 170px); height: auto; opacity: .9; filter: drop-shadow(0 10px 16px rgba(0, 0, 0, .55)); }
+.D .lb-aun { position: absolute; left: 50%; top: 14%; translate: -50% 0; font: 400 clamp(16px, 1.3vw, 22px)/1 var(--f-titulo); text-transform: uppercase; letter-spacing: .04em;
+  color: rgba(255, 255, 255, .78); text-shadow: 0 2px 0 rgba(0, 0, 0, .55); }
+/* Tu selector dentro de tu cápsula, abajo (sobre el piso) */
+.D .lb-abajo { position: absolute; left: 6px; right: 6px; bottom: 6px; }
+.D .lb-panel { position: relative; display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 8px 8px 10px; border-radius: 16px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, .96), rgba(225, 231, 244, .96)); border: 2px solid var(--pj, #fff); box-shadow: 0 12px 24px rgba(0, 0, 0, .45); color: var(--az-tinta); }
+.D .lb-panel .lb-figs small { color: #3a4470; }
+.D .lb-panel .lb-flecha { background: var(--pj, #2f7cf0); color: var(--pj-texto, #fff); }
+.D .lb-panel .lb-mini { color: var(--az-tinta); background: #eef1f8; border-color: #c4cbe0; }
+.D .lb-panel .lb-mini-fig { border-color: #c9d0e3; }
+.D .lb-panel .lb-mini-fig.activa { border-color: #ffb000; }
+.D .lb-listo { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 44px; }
+.D .lb-listo img { width: 30px; height: auto; margin-left: -4px; }
+.D .lb-panel .lb-continuar { min-width: 0; width: 100%; min-height: 72px; }
+/* Opciones del administrador: pestaña a un lado del selector */
+.D .lb-opciones { position: absolute; left: calc(100% + 4px); bottom: 0; display: flex; align-items: flex-end; gap: 6px; z-index: 3; }
+.D .lb-opc-tab { writing-mode: vertical-rl; rotate: 180deg; min-height: 96px; padding: 10px 6px; cursor: pointer; border-radius: 10px; border: 2px solid rgba(255, 255, 255, .35);
+  font: 400 15px/1 var(--f-titulo); text-transform: uppercase; letter-spacing: .05em; color: #fff; background: rgba(10, 14, 40, .85); }
+.D.alv .lb-opc-tab { font-family: var(--f-titulo); }
+.D .lb-opc-lista { display: flex; flex-direction: column; gap: 6px; width: 190px; padding: 8px; border-radius: 14px; background: rgba(10, 14, 40, .92); border: 1px solid rgba(255, 255, 255, .2); }
+.D .lb-opc-lista .lb-sec { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; width: 100%; min-height: 44px; text-align: left; font-size: 16px; }
+.D .lb-opc-lista .lb-sec small { font: 700 11px/1.2 var(--f-texto); text-transform: none; letter-spacing: 0; opacity: .8; }
+.D .lb-sec.peligro { border-color: rgba(255, 110, 110, .6); background: rgba(150, 25, 30, .55); }
+/* Si la cápsula del administrador es la última de la fila, las opciones abren hacia la izquierda. */
+.D .lb-rot:last-child .lb-opciones { left: auto; right: calc(100% + 4px); flex-direction: row-reverse; }
+
+/* Celular */
+.D .lb-cel .lb-panel { margin-top: -18px; z-index: 2; }
+.D .lb-cel .lb-opciones { position: static; flex-direction: column-reverse; align-items: stretch; width: 100%; }
+.D .lb-cel .lb-opc-tab { writing-mode: horizontal-tb; rotate: none; min-height: 40px; width: 100%; }
+.D .lb-cel .lb-opc-lista { width: 100%; }
+.D .lb-lista li { grid-template-columns: auto minmax(0, 1fr) auto auto; }
+.D .lb-lista .lb-redondo { width: 40px; height: 40px; }
+.D .lb-ok { width: 32px; height: auto; }
+.D .lb-nom b { display: inline-flex; align-items: center; gap: 6px; }
+.D .lb-nom .lb-corona { width: 22px; }
+.D .lb-banner { flex-direction: row; flex-wrap: wrap; justify-content: center; }
+.D .lb-banner-s { flex-basis: 100%; text-align: center; font: 800 12px/1.2 var(--f-texto); opacity: .9; }
+@media (prefers-reduced-motion: reduce) { .D .lb-redondo { transition: none; } .D .lb-sello { animation: none; } }
+.D .a-sala-rot.lb-rot { justify-content: flex-start; }
+/* La escena 3D ocupa la franja media de la cápsula: figura de tamaño de la referencia y pies sobre el piso,
+   arriba queda el nombre y abajo tu selector. Las columnas no cambian (mismo ancho). */
+.D .lb-pedestales.fiesta .a-sala-3d { top: 17%; bottom: auto; height: 64%; min-height: 0; }
+.D .lb-cel .a-sala-mio .a-sala-3d { top: 10%; bottom: auto; height: 82%; min-height: 0; }
+
+/* PRUEBA ?escenarios=1: cápsula completa pintada por Elías (con su pedestal, luz y cruz en los libres).
+   La escena no dibuja pedestal; los pies caen en el pedestal pintado (~60 % del alto de la imagen). */
+.D .lb-pedestales .a-sala-col.lb-esc, .D .lb-pedestales .a-sala-col.lb-esc.vacia { background: var(--pj-arte) center 60% / cover no-repeat, #07080f;
+  border: 0; border-radius: 14px; box-shadow: 0 26px 30px -14px rgba(0, 0, 0, .8); backdrop-filter: none; }
+.D .lb-pedestales .a-sala-col.lb-esc::before, .D .lb-pedestales .a-sala-col.lb-esc::after { display: none; }
+.D .lb-pedestales.fiesta:has(.lb-esc) .a-sala-3d { top: 17%; height: 55%; }
+
+/* =====================================================================
+   PRUEBA ?escenarios=1 v2 (Elías, 22 nov): cabinas por color, pedestal encima de la madera y la figura sobre él.
+   Medidas en unidades del ancho (cqw): la cabina se ajusta al ancho de su columna y se apoya abajo, así la madera
+   queda siempre a la misma altura (≈ 21 % del alto de la imagen 837×2000 desde abajo).
+   ===================================================================== */
+.D .lb-pedestales.fiesta:has(.lb-cab) { container-type: inline-size; --lb-w: calc((100cqw - (var(--lugares, 4) - 1) * .5em) / var(--lugares, 4)); }
+.D .lb-pedestales .a-sala-col.lb-cab { container-type: inline-size; overflow: hidden; border: 0; border-radius: 12px; backdrop-filter: none;
+  background: var(--pj-arte) center bottom / 100% auto no-repeat, linear-gradient(180deg, #0b0d18, color-mix(in srgb, var(--pj-oscuro, #1a2250) 45%, #05060c));
+  box-shadow: 0 26px 30px -14px rgba(0, 0, 0, .85); }
+.D .lb-pedestales .a-sala-col.lb-cab::before, .D .lb-pedestales .a-sala-col.lb-cab::after { display: none; }
+/* Pedestal de color sobre la madera */
+.D .lb-ped { position: absolute; left: 50%; bottom: 47cqw; width: 52cqw; height: auto; translate: -50% 0; filter: drop-shadow(0 6px 8px rgba(0, 0, 0, .55));
+  animation: lbPed .45s cubic-bezier(.2, 1.4, .4, 1) backwards; }
+@keyframes lbPed { from { opacity: 0; scale: .6; translate: -50% 18%; } }
+/* Rayo de llegada: columna de luz del color que baja al pedestal y se apaga */
+.D .lb-tele { position: absolute; left: 50%; bottom: 58cqw; width: 46cqw; height: 75%; translate: -50% 0; pointer-events: none; mix-blend-mode: screen; opacity: 0;
+  background: linear-gradient(0deg, color-mix(in srgb, var(--pj-claro, #fff) 90%, #fff), color-mix(in srgb, var(--pj, #fff) 60%, transparent) 55%, transparent);
+  border-radius: 50% 50% 6px 6px / 12% 12% 6px 6px; filter: blur(3px); animation: lbTele 1.1s ease-out .15s; }
+@keyframes lbTele { 0% { opacity: 0; scale: .2 1; } 20% { opacity: 1; scale: 1 1; } 100% { opacity: 0; scale: .5 1.05; } }
+/* Luz de «¡Listo!»: foco del color de la cabina que cae sobre el personaje */
+.D .lb-luz { position: absolute; left: 50%; top: 0; bottom: 60cqw; width: 100%; translate: -50% 0; pointer-events: none; mix-blend-mode: screen;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--pj-claro, #fff) 85%, #fff) 0%, color-mix(in srgb, var(--pj, #fff) 45%, transparent) 55%, transparent 100%);
+  clip-path: polygon(40% 0, 60% 0, 88% 100%, 12% 100%); opacity: .75; animation: lbLuz .5s ease-out backwards, lbLuzLate 3s ease-in-out .5s infinite; }
+@keyframes lbLuz { from { opacity: 0; } }
+@keyframes lbLuzLate { 50% { opacity: .55; } }
+/* Figura: la escena (todas las columnas) se acomoda para que los pies caigan en la tapa del pedestal.
+   Tapa ≈ 47cqw + 0.8 × alto del pedestal (62cqw × 0.465) ≈ 70cqw de la columna; la escena pone los pies al 21.7 %
+   de su alto y la figura mide ~51 % de él. */
+.D .lb-pedestales.fiesta:has(.lb-cab) .a-sala-3d { top: auto; height: calc(var(--lb-w) * 1.4); bottom: calc(var(--lb-w) * (.665 - .217 * 1.4)); }
+@media (prefers-reduced-motion: reduce) { .D .lb-ped, .D .lb-tele, .D .lb-luz { animation: none; } .D .lb-tele { display: none; } }
+
+/* =====================================================================
+   Cabinas de arriba abajo con el piso alineado al del cuarto (Elías, 22 nov).
+   Cuarto (2000×1000, cover centrado): el piso empieza al 79.5 % → --piso = 50dvh + 295 × escala.
+   Cabina (837×2000, al ancho W de su columna, alto 2.39W): la pared termina al 72.5 % → su imagen empieza en
+   --piso − 1.733W. La madera queda 0.18W bajo el piso; el pedestal (0.52W de ancho, 0.242W de alto) se apoya ahí y
+   la tapa queda en --piso − 0.014W, donde caen los pies.
+   ===================================================================== */
+.D.az.lb .lb-cuarto { background-position: center center; }
+.D.az.lb .lb-escenario:has(.lb-cab) { position: fixed; inset: 0 var(--az-pad); z-index: 0; }
+.D.az.lb .lb-escenario:has(.lb-cab) .lb-pedestales.fiesta { height: 100%; min-height: 0; border-radius: 0;
+  --escala: max(calc(100vw / 2000), calc(100dvh / 1000)); --piso: calc(50dvh + 295 * var(--escala)); }
+.D.az.lb .lb-escenario:has(.lb-cab) .a-sala-col.lb-cab { border-radius: 0;
+  background: var(--pj-arte) center calc(var(--piso) - var(--lb-w) * 1.733) / 100% auto no-repeat, transparent; box-shadow: none; }
+.D.az.lb .lb-escenario:has(.lb-cab) .lb-sello, .D.az.lb .lb-escenario:has(.lb-cab) .lb-aun { top: calc(var(--az-pad) + 112px); }
+.D.az.lb .lb-escenario:has(.lb-cab) .lb-ped { bottom: auto; top: calc(var(--piso) + 18cqw - 24.2cqw); }
+.D.az.lb .lb-escenario:has(.lb-cab) .lb-tele { bottom: auto; top: calc(var(--piso) - 115cqw); height: 115cqw; }
+.D.az.lb .lb-escenario:has(.lb-cab) .lb-luz { bottom: auto; height: calc(var(--piso)); }
+.D.az.lb .lb-escenario:has(.lb-cab) .a-sala-3d { bottom: auto; height: calc(var(--lb-w) * 1.4);
+  top: calc(var(--piso) - var(--lb-w) * (.014 + 1.096)); }
+/* Nombres y botones bajo la cabecera; el encabezado queda encima de las cabinas. */
+.D.az.lb .lb-escenario:has(.lb-cab) .lb-rot { padding-top: calc(var(--az-pad) + 62px); }
+.D.az.lb .lb-escenario:has(.lb-cab) .lb-arriba { top: calc(var(--az-pad) + 108px); }
+.D.az.lb .lb-escenario:has(.lb-cab) .lb-abajo { bottom: max(10px, var(--az-pad)); }
+.D.az.lb:has(.lb-cab) .lb-top { position: relative; z-index: 4; }
+
+/* v3 (referencia LEGO Party, 22 nov): la cabina crece lo necesario para tocar el borde de arriba (--hc = alto de la
+   imagen), figura y pedestal más grandes, y el estado grande bajo el pedestal. */
+.D.az.lb .lb-escenario:has(.lb-cab) .lb-pedestales.fiesta { --hc: max(calc(var(--lb-w) * 2.39), calc(var(--piso) / .725)); }
+.D.az.lb .lb-escenario:has(.lb-cab) .a-sala-col.lb-cab { background: var(--pj-arte) center calc(var(--piso) - var(--hc) * .725) / auto var(--hc) no-repeat, transparent; }
+/* Dentro de la cabina, 100cqw es su ancho W. */
+.D.az.lb .lb-escenario:has(.lb-cab) .lb-ped { width: 62cqw; top: calc(var(--piso) + max(239cqw, var(--piso) / .725) * .075 - 28.8cqw); }
+.D.az.lb .lb-escenario:has(.lb-cab) .a-sala-3d { height: calc(var(--lb-w) * 1.8);
+  top: calc(var(--piso) + var(--hc) * .075 - var(--lb-w) * (.23 + 1.409)); }
+/* Estado grande bajo el pedestal, como «¡TODO LISTO!» / «AÚN NO» de la referencia */
+.D.az.lb .lb-escenario:has(.lb-cab) .lb-sello, .D.az.lb .lb-escenario:has(.lb-cab) .lb-aun {
+  top: calc(var(--piso) + var(--hc) * .075 + var(--lb-w) * .1); rotate: -3deg; font-size: clamp(22px, 2.3vw, 42px); }
+.D.az.lb .lb-escenario:has(.lb-cab) .lb-aun { color: #fff; }
+.D.az.lb .lb-escenario:has(.lb-cab) .lb-rot.yo .lb-sello, .D.az.lb .lb-escenario:has(.lb-cab) .lb-rot.yo .lb-aun { display: none; }
+/* Celular: tu cabina de color (el pedestal es el de la escena). */
+.D .lb-cel .a-sala-mio { background: var(--pj-arte) center 78% / cover no-repeat, #0b0d18; }
+
+/* Celular (Elías, 22 nov): una cabina por pantalla, en vertical, deslizando a los lados. */
+.D.az.lb:not(.wide) .lb-escenario.lb-carrusel { inset: 0; overflow-x: auto; overflow-y: hidden; scroll-snap-type: x mandatory; overscroll-behavior-x: contain; scrollbar-width: none; }
+.D.az.lb:not(.wide) .lb-carrusel::-webkit-scrollbar { display: none; }
+.D .lb-pista { width: calc(var(--lugares, 4) * 100vw); height: 100%; }
+.D .lb-carrusel .a-sala-cols, .D .lb-carrusel .a-sala-rotulos { gap: 0; }
+.D .lb-carrusel .lb-pedestales.fiesta:has(.lb-cab) { --lb-w: calc(100cqw / var(--lugares, 4)); }
+.D .lb-carrusel .a-sala-col { scroll-snap-align: center; scroll-snap-stop: always; }
+.D .lb-carrusel .lb-rot { padding-top: calc(max(var(--az-pad), env(safe-area-inset-top)) + 58px); }
+.D .lb-carrusel .lb-abajo { left: 12px; right: 12px; bottom: max(12px, env(safe-area-inset-bottom)); }
+.D .lb-carrusel .lb-arriba { right: 12px; top: calc(var(--az-pad) + 104px); }
+.D .lb-carrusel .lb-opciones { position: static; flex-direction: column-reverse; align-items: stretch; width: 100%; }
+.D .lb-carrusel .lb-opc-tab { writing-mode: horizontal-tb; rotate: none; min-height: 38px; width: 100%; }
+.D .lb-carrusel .lb-opc-lista { width: 100%; }
+.D .lb-puntos-cel { position: fixed; left: 0; right: 0; bottom: 4px; z-index: 5; display: flex; justify-content: center; gap: 8px; pointer-events: none; }
+.D .lb-puntos-cel i { width: 8px; height: 8px; border-radius: 99px; background: rgba(255, 255, 255, .45); }
+.D .lb-puntos-cel i.si { width: 22px; background: #ffc21a; }
+/* Celular: figura un poco más chica que en computadora (1.3 × ancho de la cabina). */
+.D.az.lb .lb-carrusel .lb-escenario-x, .D.az.lb .lb-escenario.lb-carrusel:has(.lb-cab) .a-sala-3d { height: calc(var(--lb-w) * 1.3);
+  top: calc(var(--piso) + var(--hc) * .075 - var(--lb-w) * (.23 + .783 * 1.3)); }

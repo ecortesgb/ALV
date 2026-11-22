@@ -395,6 +395,8 @@
   }
   // Sala: un pedestal por columna, con la tapa y la luz del color del jugador (se crean y se pintan en acomodar).
   const SALA = MODO === "sala";
+  // &pedestal=no (sala): el pedestal viene pintado en la cápsula de Elías; aquí solo va la figura.
+  const SALA_SIN_PED = SALA && new URLSearchParams(location.search).get("pedestal") === "no";
   let columnas = 0;
   const pedestales = [];
   const brilloSala = SALA ? (function () { const cv = document.createElement("canvas"); cv.width = cv.height = 128; const g = cv.getContext("2d"), r = g.createRadialGradient(64, 64, 4, 64, 64, 64); r.addColorStop(0, "rgba(255,255,255,1)"); r.addColorStop(0.45, "rgba(255,255,255,.4)"); r.addColorStop(1, "rgba(255,255,255,0)"); g.fillStyle = r; g.fillRect(0, 0, 128, 128); return new THREE.CanvasTexture(cv); })() : null;
@@ -636,6 +638,8 @@
           fase: Math.random() * Math.PI * 2, mira: { y: 0, v: 0, meta: 0, inc: 0, prox: t + 1 + Math.random() * 2 }, lx: 0, lz: 0, saludoK: 0 }; }
         catch (err) { console.error("escena: no se pudo armar", id, err); return; }
         scene.add(e.obj); figuras.set(id, e);
+        // Sala: la figura llega «teletransportada»: crece desde los pies sobre su pedestal.
+        if (SALA) { e.tele = t; e.obj.visible = false; }
         if (AZOTEA) { if (AZ.pendiente) { AZ.pendiente = false; iniciarLlegada(t, true); } else if (habia) iniciarLlegada(t, false); AZ.saludo = t + 6; }
         if (EDITOR && habia) polvo(reloj.getElapsedTime());
       }
@@ -662,7 +666,7 @@
   function acomodarSala() {
     const n = lugares(), x0 = i => (i - (n - 1) / 2) * paso;
     while (pedestales.length < n) pedestales.push(pedestalSala());
-    pedestales.forEach((p, i) => { p.visible = i < n; if (i < n) p.position.set(x0(i), 0, 0); });
+    pedestales.forEach((p, i) => { p.visible = i < n && !SALA_SIN_PED; if (i < n) p.position.set(x0(i), 0, 0); });
     const color = new Map();
     orden.forEach(id => { const e = figuras.get(id); e.obj.position.set(x0(e.columna), 0, 0); e.obj.rotation.y = -x0(e.columna) * 0.05; e.obj.scale.setScalar(1); color.set(e.columna, e.color); });
     pedestales.forEach((p, i) => { if (i < n) pintarPedestal(p, color.get(i)); });
@@ -1036,6 +1040,11 @@
         const p = t - e.pop; e.obj.scale.setScalar(p < 0.45 ? 1 + Math.sin(p / 0.45 * Math.PI) * 0.07 * (1 - p / 0.45) : 1);
       }
       gestosSolos(e, t); // parpadea y sonríe sola en todas las escenas (HUB, sala, TV)
+      if (SALA && e.tele != null) {
+        const d = (t - e.tele) / 0.9;
+        if (d >= 1) { e.tele = null; e.obj.visible = true; e.obj.scale.setScalar(1); }
+        else { const k = 1 - Math.pow(1 - Math.max(0, d), 3); e.obj.visible = d > 0.03; e.obj.scale.set(0.3 + 0.7 * k, Math.max(0.001, k), 0.3 + 0.7 * k); }
+      }
     });
     if (AZOTEA) animarAzotea(t);
     medirContorno(renderer);

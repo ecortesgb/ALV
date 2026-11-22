@@ -46,6 +46,12 @@ export interface Enlace {
   anunciarLobby(sala: SalaV): () => void;
   /** Código del lobby abierto que se está anunciando (null si no hay). */
   buscarLobby(alCodigo: (codigo: string | null) => void): () => void;
+  /** Lobby abierto del administrador y cuántos hay dentro (038). undefined si el servidor aún no tiene la función. */
+  lobbyAbierto(): Promise<{ codigo: string; miembros: number } | null | undefined>;
+  /** El anfitrión saca a alguien del lobby (038). */
+  expulsar(sala: SalaV, jugador: string): Promise<boolean>;
+  /** El anfitrión marca «listo» a otro jugador (038). */
+  listoDe(sala: SalaV, jugador: string, listo: boolean): Promise<boolean>;
 }
 
 const CODIGO = /^[A-Z0-9]{6}$/;
@@ -190,6 +196,20 @@ const nube: Enlace = {
   vigilarPantalla: (sala, soyPantalla, alEstado) => vigilarPantalla(sala.id, soyPantalla, alEstado),
   anunciarLobby: sala => anunciarLobby(sala.codigo),
   buscarLobby,
+  async lobbyAbierto() {
+    try {
+      const { data, error } = await cliente!.rpc("lobby_abierto");
+      if (error) { if (!esFalta(error)) log("lobbyAbierto", error); return esFalta(error) ? undefined : null; }
+      const f = (data as { codigo: string; miembros: number }[] | null)?.[0];
+      return f ? { codigo: f.codigo, miembros: Number(f.miembros) || 0 } : null;
+    } catch (e) { log("lobbyAbierto", e); return undefined; }
+  },
+  async expulsar(sala, jugador) {
+    try { const r = await cliente!.rpc("expulsar_de_sala", { p_evento: sala.id, p_jugador: jugador }); if (r.error) log("expulsar", r.error); return !r.error; } catch (e) { log("expulsar", e); return false; }
+  },
+  async listoDe(sala, jugador, listo) {
+    try { const r = await cliente!.rpc("marcar_listo_de", { p_evento: sala.id, p_jugador: jugador, p_listo: listo }); if (r.error) log("listoDe", r.error); return !r.error; } catch (e) { log("listoDe", e); return false; }
+  },
 };
 
 // ---------- Respaldo local (sin servidor): la sala vive en este navegador y se comparte entre pestañas ----------
@@ -275,6 +295,20 @@ const local: Enlace = {
     const f = () => alCodigo(Object.values(leer()).reverse().find(s => !s.cerrada)?.sala.codigo ?? null);
     oyentes.add(f); queueMicrotask(f);
     return () => { oyentes.delete(f); };
+  },
+  async lobbyAbierto() {
+    const s = Object.values(leer()).reverse().find(x => !x.cerrada);
+    return s ? { codigo: s.sala.codigo, miembros: s.miembros.length } : null;
+  },
+  async expulsar(sala, jugador) {
+    let ok = false;
+    cambiar(t => { const s = t[sala.codigo]; if (s && s.sala.anfitrionId === yoLocal.id && jugador !== yoLocal.id) { s.miembros = s.miembros.filter(m => m.id !== jugador); ok = true; } });
+    return ok;
+  },
+  async listoDe(sala, jugador, listo) {
+    let ok = false;
+    cambiar(t => { const s = t[sala.codigo]; const m = s?.miembros.find(x => x.id === jugador); if (s && m && s.sala.anfitrionId === yoLocal.id) { m.listo = listo; ok = true; } });
+    return ok;
   },
 };
 

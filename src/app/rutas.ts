@@ -3,9 +3,9 @@
 import { useEffect, useState } from "react";
 
 export type Ruta =
-  | "inicio" | "jugar" | "catalogo" | "juego" | "sala" | "tv" | "configurar" | "personalizar" | "editor"
+  | "inicio" | "modos" | "jugar" | "catalogo" | "juego" | "sala" | "tv" | "configurar" | "personalizar" | "editor"
   | "tienda" | "ranking" | "logros" | "perfil" | "ajustes" | "admin" | "ds";
-const RUTAS: Ruta[] = ["inicio", "jugar", "catalogo", "juego", "sala", "tv", "configurar", "personalizar", "editor", "tienda", "ranking", "logros", "perfil", "ajustes", "admin", "ds"];
+const RUTAS: Ruta[] = ["inicio", "modos", "jugar", "catalogo", "juego", "sala", "tv", "configurar", "personalizar", "editor", "tienda", "ranking", "logros", "perfil", "ajustes", "admin", "ds"];
 /** Nombres viejos o alternos que siguen funcionando (enlaces guardados y QR ya impresos). */
 const ALIAS: Record<string, Ruta> = {
   hub: "inicio", "hub-prototipo": "inicio", s: "sala", unirse: "sala", mesa: "sala", proyectar: "jugar", lobby: "jugar", juegos: "catalogo",

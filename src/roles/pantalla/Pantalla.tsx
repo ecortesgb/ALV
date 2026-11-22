@@ -14,12 +14,14 @@ import { confirmar } from "../../pantallas/comun";
 import { TarjetaEsquina } from "../../pantallas/Identidad";
 import { colorDe } from "../../app/colorJugador";
 import { ContadorListos, Cupo, Pedestales, TodosListos } from "../../pantallas/SalaEspera";
+import { useColoresSala } from "../../pantallas/lobby/colores";
 import { useSala } from "../sala";
 import { control, useMotor } from "./motor";
 
 export function PantallaTv({ codigo }: { codigo: string }) {
   const ses = useSesion();
   const s = useSala(codigo, ses.uid);
+  const ordenados = useColoresSala(s.sala, s.miembros);
   const tengoControl = !!s.sala && s.sala.anfitrionId === ses.uid;
   useMotor(s.sala, s.partida, tengoControl, s.tic);
   useDespierta(true);
@@ -71,6 +73,7 @@ export function PantallaTv({ codigo }: { codigo: string }) {
           <button type="button" onClick={() => void control(pid, v.pausada ? "reanudar" : "pausar")}>{v.pausada ? "Seguir" : "Pausar"}</button>
           {v.fase === "contestando" ? <button type="button" onClick={() => void control(pid, "saltar")}>Saltar</button>
             : <button type="button" onClick={() => void control(pid, "siguiente")}>{ultima ? "Resultados" : "Siguiente"}</button>}
+          <button type="button" onClick={() => void confirmar({ titulo: "¿Terminar la partida?", texto: "Se reparten los puntos como van.", si: "Terminar", peligro: true }).then(ok => { if (ok) void control(pid, "terminar"); })}>Terminar</button>
         </div>
       )}
     </>, <FondoEscenario escenario={v.escenario} />);
@@ -82,7 +85,7 @@ export function PantallaTv({ codigo }: { codigo: string }) {
     <main className="a-tv-main a-tv-lobby">
       {final ? <Posiciones v={final} miembros={s.miembros} grande /> : (
         <div className="a-tv-elenco">
-          <Pedestales miembros={s.miembros} />
+          <Pedestales miembros={ordenados} className="lb-pedestales" />
           {!s.miembros.length && <span className="dsp ol a-tv-t2">Abre ALV y toca «¡Jugar!» para entrar</span>}
         </div>
       )}

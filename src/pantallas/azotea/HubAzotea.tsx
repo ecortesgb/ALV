@@ -29,7 +29,7 @@ const CON_CURSOR = typeof matchMedia !== "undefined" && matchMedia("(hover: hove
  * Momento del escenario: el de la app (día, atardecer, noche) y, dentro del día, la tarde de 15:00 a 18:00.
  * PROPUESTA de corte. Se revisa cada minuto; ?hora= sirve para probar.
  */
-function useMomentoAzotea(): MomentoAzotea {
+export function useMomentoAzotea(): MomentoAzotea {
   const m = useMomentoDia();
   const minutos = () => horaDePrueba(location.search) ?? (() => { const d = new Date(); return d.getHours() * 60 + d.getMinutes(); })();
   const [min, setMin] = useState(minutos);
@@ -69,7 +69,6 @@ export function HubAzotea() {
   const [sala, setSala] = useState<SalaV | null>(null);
   useEffect(() => { let v = true; void enlace.miSala().then(x => { if (v) setSala(x); }); return () => { v = false; }; }, [s.uid]);
   const lobby = useLobby();
-  const destino = sala?.codigo ?? lobby;
 
 
   // El chat tapa el escenario: la figura deja de dibujarse mientras está abierto.
@@ -90,8 +89,9 @@ export function HubAzotea() {
 
 
   const botones: BotonHub[] = [
-    { id: "jugar", icono: "jugar", titulo: "¡Jugar!", sub: sala ? "Volver al lobby" : lobby ? "Entrar al lobby" : "Juega con amigos", reaccion: "listo",
-      alerta: !sala && lobby ? "¡Lobby abierto!" : undefined, accion: () => (destino ? ir("sala", destino) : ir("jugar")) },
+    // «¡Jugar!» siempre abre Modos de juego (Elías, 22 nov); el lobby abierto se marca ahí sobre En línea.
+    { id: "jugar", icono: "jugar", titulo: "¡Jugar!", sub: sala ? "Volver al lobby" : "Local, en línea o físico", reaccion: "listo",
+      alerta: !sala && lobby ? "¡Lobby abierto!" : undefined, accion: () => ir("modos") },
     { id: "personalizar", icono: "personalizar", titulo: "Personalizar", sub: "Tu figura, a tu estilo", reaccion: "mirarse", accion: () => ir("personalizar") },
     { id: "tienda", icono: "tienda", titulo: "Tienda", sub: "Sobres y comodines", reaccion: "frotar", accion: () => ir("tienda") },
     { id: "ranking", icono: "ranking", titulo: "Ranking", sub: "Tú y tus amigos", reaccion: "flexionar", accion: () => ir("ranking") },

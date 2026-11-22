@@ -1,12 +1,12 @@
 // Lobby con pedestales (referencia: LEGO Party, ALV_REFERENCIA_LEGO_PARTY.md §1 y §2).
 // La usan el celular (Sala.tsx) y la Pantalla (roles/pantalla/Pantalla.tsx). Solo lee lo público de la sala:
 // nombre, figura, anfitrión, «listo» y el último gesto de cada miembro. El color de cada quien sale del orden de entrada.
-import { useRef, type CSSProperties } from "react";
+import { useRef, type CSSProperties, type ReactNode } from "react";
 import { GESTOS, type Gesto, type Miembro } from "../servicios/enlace";
-import { colorJugador, varsColor } from "../app/colorJugador";
+import { claveArchivo, colorDe, colorJugador, varsColor } from "../app/colorJugador";
 import { Escena3D, enEscena, type EnEscena, type Momento } from "../app/figura3d";
 import { Boton } from "../ds";
-import { NombreJugador } from "./comun";
+import { NombreJugador, urlArte } from "./comun";
 
 /** Cupo del lobby en esta fase de prueba (también lo valida el servidor en `unirse_evento`). */
 export const CUPO_LOBBY = 8;
@@ -67,21 +67,48 @@ export function FondoLobby() {
   );
 }
 
+/** Cápsula pintada de cada color (arte de Elías en public/arte/lobby/capsula-<color>.webp). Si aún no existe, no se pinta y queda la columna de color. */
+const artePara = (nombre: string) => ({ "--pj-arte": urlArte(`lobby/capsula-${nombre.toLowerCase()}.webp`) }) as CSSProperties;
+
 /** Columna de color por lugar, figura en su pedestal bajo un foco, «+» en los vacíos y «¡LISTO!» encima de quien confirmó. */
-export function Pedestales({ miembros, yo, className = "" }: { miembros: readonly Miembro[]; yo?: string; className?: string }) {
+/** Variante «fiesta» del lobby: nombre arriba junto al P1, sello con palomita, cruceta en lugares libres y controles dentro. */
+export interface Fiesta { arriba?: (m: Miembro) => ReactNode; abajo?: (m: Miembro) => ReactNode;
+  /** PRUEBA (Elías, 22 nov): cápsulas con el pedestal pintado; la escena no dibuja el suyo. */
+  escenarios?: boolean }
+const arteLobby = (n: string) => `${import.meta.env.BASE_URL}arte/lobby/${n}.webp`;
+
+export function Pedestales({ miembros, yo, className = "", fiesta }: { miembros: readonly Miembro[]; yo?: string; className?: string; fiesta?: Fiesta }) {
   const lugares = lugaresSala(miembros.length);
   const momentos = useMomentos(miembros);
-  const figuras: EnEscena[] = miembros.map((m, i) => ({ ...enEscena(m.id, m.figura), color: colorJugador(i).base, columna: i }));
-  const cols = Array.from({ length: lugares }, (_, i) => ({ i, m: miembros[i], c: colorJugador(i) }));
+  const ids = miembros.map(m => m.id);
+  const colorEn = (i: number) => (miembros[i] ? colorDe(miembros[i]!.id, ids) : null) ?? colorJugador(i);
+  const figuras: EnEscena[] = miembros.map((m, i) => ({ ...enEscena(m.id, m.figura), color: colorEn(i).base, columna: i }));
+  const cols = Array.from({ length: lugares }, (_, i) => ({ i, m: miembros[i], c: colorEn(i) }));
   const estilo = { "--lugares": lugares } as CSSProperties;
   return (
-    <div className={"a-sala-escenario" + (lugares > 4 ? " muchos" : "") + (className ? " " + className : "")} style={estilo}>
+    <div className={"a-sala-escenario" + (lugares > 4 ? " muchos" : "") + (fiesta ? " fiesta" : "") + (className ? " " + className : "")} style={estilo}>
       <div className="a-sala-cols" aria-hidden="true">
-        {cols.map(({ i, m, c }) => <div key={i} className={"a-sala-col" + (m ? "" : " vacia") + (m?.listo ? " listo" : "")} style={varsColor(m ? c : null)} />)}
+        {cols.map(({ i, m, c }) => fiesta?.escenarios
+          ? <div key={i} className={"a-sala-col lb-cab" + (m ? "" : " vacia") + (m?.listo ? " listo" : "")} style={{ ...varsColor(c), "--pj-arte": urlArte(`lobby/cabina-${m ? claveArchivo(c) : "vacia"}.webp`) } as CSSProperties}>
+              {m && <img key={"p" + m.id} className="lb-ped" src={arteLobby(`pedestal-${claveArchivo(c)}`)} alt="" draggable={false} />}
+              {m && <span key={"t" + m.id + (m.figura ? JSON.stringify(m.figura).length : 0)} className="lb-tele" aria-hidden="true" />}
+              {m?.listo && <span className="lb-luz" aria-hidden="true" />}
+            </div>
+          : <div key={i} className={"a-sala-col" + (m ? "" : " vacia") + (m?.listo ? " listo" : "")} style={{ ...varsColor(m ? c : null), ...(m ? artePara(c.nombre) : {}) }} />)}
       </div>
-      <Escena3D modo="sala" figuras={figuras} columnas={lugares} momentos={momentos} className="a-sala-3d" />
+      <Escena3D modo="sala" figuras={figuras} columnas={lugares} momentos={momentos} className="a-sala-3d" sinPedestal={!!fiesta?.escenarios} />
       <ul className="a-sala-rotulos" aria-label="Jugadores en el lobby">
         {cols.map(({ i, m, c }) => (
+          fiesta ? (
+          <li key={i} className={"a-sala-rot lb-rot" + (m ? "" : " vacia") + (m?.listo ? " listo" : "") + (m && m.id === yo ? " yo" : "")} style={varsColor(m ? c : null)}>
+            <span className="lb-etq"><b>{c.etiqueta}</b>{m?.anfitrion && <img src={arteLobby("ico-corona")} alt="Administrador" className="lb-corona" />}<span className="lb-etq-nom">{m ? <NombreJugador nombre={m.nombre} figura={m.figura} /> : "Libre"}</span></span>
+            {m && fiesta.arriba && <span className="lb-arriba">{fiesta.arriba(m)}</span>}
+            {m?.listo && <span className="lb-sello"><img src={arteLobby("ico-listo")} alt="" /><span>¡Listo!</span></span>}
+            {!m && !fiesta.escenarios && <img className="lb-libre" src={arteLobby("lugar-libre")} alt="" />}
+            {m && !m.listo && <span className="lb-aun">Aún no</span>}
+            {m && fiesta.abajo && <span className="lb-abajo">{fiesta.abajo(m)}</span>}
+            <span className="a-oculto">{m ? (m.listo ? "listo" : "esperando") : "lugar libre"}</span>
+          </li>) : (
           <li key={i} className={"a-sala-rot" + (m ? "" : " vacia") + (m?.listo ? " listo" : "") + (m && m.id === yo ? " yo" : "")} style={varsColor(m ? c : null)}>
             <span className="a-sala-pn dsp">{c.etiqueta}</span>
             {m?.listo && <span className="a-sala-listo dsp ol">¡Listo!</span>}
@@ -89,7 +116,7 @@ export function Pedestales({ miembros, yo, className = "" }: { miembros: readonl
             <span className="a-sala-nombre">{m ? <NombreJugador nombre={m.nombre} figura={m.figura} /> : <span className="dsp">Libre</span>}
               {m?.anfitrion && <small className="a-sala-anf">Anfitrión</small>}</span>
             <span className="a-oculto">{m ? (m.listo ? "listo" : "esperando") : "lugar libre"}</span>
-          </li>
+          </li>)
         ))}
       </ul>
     </div>
@@ -101,9 +128,9 @@ export function MiPedestal({ miembros, yo }: { miembros: readonly Miembro[]; yo:
   const i = miembros.findIndex(m => m.id === yo), m = miembros[i];
   const momentos = useMomentos(m ? [m] : []);
   if (!m) return null;
-  const c = colorJugador(i);
+  const c = colorDe(m.id, miembros.map(x => x.id)) ?? colorJugador(i);
   return (
-    <div className={"a-sala-mio" + (m.listo ? " listo" : "")} style={varsColor(c)}>
+    <div className={"a-sala-mio" + (m.listo ? " listo" : "")} style={{ ...varsColor(c), "--pj-arte": urlArte(`lobby/cabina-${claveArchivo(c)}.webp`) } as CSSProperties}>
       <span className="a-sala-pn dsp">{c.etiqueta}</span>
       <span className="a-sala-color">{c.nombre}</span>
       {m.listo && <span className="a-sala-listo dsp ol">¡Listo!</span>}
@@ -118,7 +145,7 @@ export function FilaSala({ miembros, yo }: { miembros: readonly Miembro[]; yo: s
   return (
     <ul className="a-sala-fila" aria-label="Quién está en el lobby">
       {miembros.map((m, i) => {
-        const c = colorJugador(i);
+        const c = colorDe(m.id, miembros.map(x => x.id)) ?? colorJugador(i);
         return (
           <li key={m.id} className={(m.listo ? "listo" : "") + (m.id === yo ? " yo" : "")} style={varsColor(c)}>
             <span className="a-sala-pn dsp">{c.etiqueta}</span>

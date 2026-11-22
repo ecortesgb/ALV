@@ -6,7 +6,8 @@ import { Ajustes, Admin } from "../pantallas/Ajustes";
 import { Catalogo, FichaJuego } from "../pantallas/Catalogo";
 import { PaginaConfigurar } from "../pantallas/ConfigurarPartida";
 import { Recompensas } from "../pantallas/Recompensas";
-import { Jugar } from "../pantallas/Hub";
+import { EsperaLobby } from "../pantallas/lobby/EsperaLobby";
+import { ModosJuego } from "../pantallas/modos/ModosJuego";
 import { HubAzotea } from "../pantallas/azotea/HubAzotea";
 import { Editor, Personalizar, SincroCapsulas } from "../pantallas/Personalizar";
 import { Sala } from "../pantallas/Sala";
@@ -38,7 +39,8 @@ export function App() {
     : fase === "fuera" ? <Acceso />
     : fase === "registro" ? <CompletarRegistro />
     : fase === "menor" ? <SoloMayores />
-    : ruta === "jugar" ? <Jugar />
+    : ruta === "modos" ? <ModosJuego />
+    : ruta === "jugar" ? <EsperaLobby />
     : ruta === "catalogo" ? <Catalogo />
     : ruta === "juego" && arg ? <FichaJuego id={arg} />
     : ruta === "sala" && arg ? <Sala key={arg} codigo={arg} />

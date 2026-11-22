@@ -11,14 +11,14 @@ import type { PresenciaPantalla } from "../servicios/tiempoReal";
 import { HerramientaCelular, type MiVista } from "../juegos/general/celular";
 import { esPublico, marcador, nombreJuego, quedan, type Publico } from "../juegos/general/texto";
 import { control, entregarCopas, jugada, useMotor } from "../roles/pantalla/motor";
-import { PodioJuego, esFinalDeJuego } from "../juegos/general/Copas";
+import { esFinalDeJuego } from "../juegos/general/Copas";
 import { useSala } from "../roles/sala";
-import { Capsulas } from "./Personalizar";
-import { Cabecera, Marco, NombreJugador, Vacio, aviso, confirmar, useAncho } from "./comun";
+import { Marco, NombreJugador, Vacio, aviso, confirmar } from "./comun";
 import { Burbuja, TarjetaEsquina } from "./Identidad";
 import { colorDe } from "../app/colorJugador";
-import { ContadorListos, Cupo, FilaSala, Gestos, MiPedestal, Pedestales, TodosListos } from "./SalaEspera";
 import { FondoEscenario } from "./Fondos";
+import { Lobby } from "./lobby/Lobby";
+import { useColoresSala } from "./lobby/colores";
 
 /** Mantiene la pantalla encendida mientras `activo` (la Pantalla y el celular que hace de Pantalla). */
 export function useDespierta(activo: boolean) {
@@ -88,10 +88,15 @@ function XpReto({ v, alDar, cerrar }: { v: Publico; alDar: (jugador: string, xp:
 export function Sala({ codigo }: { codigo: string }) {
   const ses = useSesion();
   const s = useSala(codigo, ses.uid);
+  // Colores del lobby (anfitrión P1 rojo; los demás por entrada y género) y los miembros en orden de lugares.
+  const ordenados = useColoresSala(s.sala, s.miembros);
   const soyAnfitrion = !!s.sala && s.sala.anfitrionId === ses.uid;
   const v = s.partida && !s.partida.terminada && esPublico(s.partida.estado) ? s.partida.estado : null;
   const final = s.partida?.terminada && esPublico(s.partida.estado) ? s.partida.estado : null;
-  const corroMotor = soyAnfitrion && s.sala?.modo === "mesa";
+  // Relevo: con pantalla, el motor corre en la TV. Si el anfitrión termina la partida, su celular también la procesa,
+  // así la partida se cierra aunque la TV se haya apagado o desconectado (antes se quedaba trabada).
+  const [relevo, setRelevo] = useState(false);
+  const corroMotor = soyAnfitrion && (s.sala?.modo === "mesa" || relevo);
   useMotor(s.sala, s.partida, corroMotor, s.tic, () => void refrescarSesion());
   useDespierta(corroMotor && !!v);
   // Con pantalla (modo tv) la partida solo avanza si la Pantalla está. Sin ella, el celular no deja contestar ni avanzar.
@@ -102,8 +107,8 @@ export function Sala({ codigo }: { codigo: string }) {
   const [copando, setCopando] = useState(false), [xpReto, setXpReto] = useState(false);
   const terminada = !!s.partida?.terminada;
   useEffect(() => { if (terminada) { sonar("exito"); void refrescarSesion(); } }, [terminada, s.partida?.id]);
+  useEffect(() => { setRelevo(false); }, [s.partida?.id]);
   // Lobby: cada quien marca «¡Listo!» y el anfitrión inicia la partida cuando quiera (Elías, 18 nov).
-  const ancho = useAncho();
   const listoYo = !!s.miembros.find(m => m.id === ses.uid)?.listo;
   // El anfitrión anuncia su lobby mientras esté abierto: quien abre ALV entra sin código.
   useEffect(() => { if (!s.sala || !soyAnfitrion) return; return enlace.anunciarLobby(s.sala); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [s.sala?.id, soyAnfitrion]);
@@ -122,6 +127,11 @@ export function Sala({ codigo }: { codigo: string }) {
     if (!(await confirmar(soyAnfitrion ? { titulo: "¿Cerrar la sala?", texto: "Todos salen y la sesión termina.", si: "Cerrar sala", peligro: true } : { titulo: "¿Salir de la sala?", si: "Salir" }))) return;
     await (soyAnfitrion ? enlace.cerrar(sala) : enlace.salir(sala));
     ir("inicio");
+  };
+  const terminarPartida = async () => {
+    if (!(await confirmar({ titulo: "¿Terminar la partida?", texto: "Se reparten los puntos como van.", si: "Terminar", peligro: true }))) return;
+    await control(pid, "terminar");
+    if (sala.modo === "tv") setRelevo(true);
   };
 
   // ---------- En partida ----------
@@ -173,16 +183,18 @@ export function Sala({ codigo }: { codigo: string }) {
             {marcador(v).map(j => <li key={j.id} className={j.id === ses.uid ? "yo" : ""}><Burbuja p={{ id: j.id, figura: s.miembros.find(m => m.id === j.id)?.figura, nombre: j.nombre, color: colorDe(j.id, v.jugadores.map(x => x.id)) }} tamano={34} /><NombreJugador nombre={j.nombre} figura={s.miembros.find(m => m.id === j.id)?.figura} clase="" />{(v.cartasEnMano[j.id] ?? 0) > 0 && <Chip texto={String(v.cartasEnMano[j.id])} icono="bolt" />}<b className="dsp">{j.puntos}</b></li>)}
           </ul>}
           {copas && <Boton color={soyAnfitrion ? "rojo" : "amarillo"} texto={soyAnfitrion ? "Cerrar sala" : "Salir de la sala"} icono="back" onClick={() => void salir()} />}
-          {soyAnfitrion && !copas && <button type="button" className="a-plano" disabled={sinPantalla} onClick={() => void confirmar({ titulo: "¿Terminar la partida?", texto: "Se reparten los puntos como van.", si: "Terminar", peligro: true }).then(ok => { if (ok) void control(pid, "terminar"); })}>Terminar partida</button>}
+          {/* Siempre hay salida: terminar funciona sin TV (relevo) y cualquiera puede salir o cerrar la sala. */}
+          {soyAnfitrion && !copas && <button type="button" className="a-plano" onClick={() => void terminarPartida()}>Terminar partida</button>}
+          {!copas && <button type="button" className="a-plano" onClick={() => void salir()}>{soyAnfitrion ? "Cerrar sala" : "Salir de la sala"}</button>}
         </div>
         {xpReto && <XpReto v={v} cerrar={() => setXpReto(false)} alDar={(j, x) => { void enlace.darXp(sala, j, x).then(ok => { if (ok) { void control(pid, "xp-reto", { jugador: j, xp: x }); aviso(`+${x} XP para ${v.jugadores.find(p => p.id === j)?.nombre ?? ""}`); } else aviso("No se pudo dar la XP."); }); }} />}
       </Marco>
     );
   }
 
-  // ---------- Espera (antes de la primera partida o entre partidas) ----------
-  const yo = s.miembros.find(m => m.id === ses.uid);
-  // El anfitrión arma la partida en #/configurar (tipo, juego, opciones, escenario) y desde ahí la inicia.
+  // ---------- Espera: lobby estilo fiesta (pantallas/lobby/Lobby.tsx) ----------
+  // Si el administrador te sacó del lobby, ya no apareces en la lista.
+  if (s.miembros.length > 0 && !s.miembros.some(m => m.id === ses.uid)) return <Marco clase="a-centro"><Vacio titulo="Saliste del lobby" texto="El administrador te sacó del lobby."><Boton color="amarillo" texto="Ir al inicio" icono="back" onClick={() => ir("inicio")} /></Vacio></Marco>;
   const copasNoche = async () => {
     if (!(await confirmar({ titulo: "¿Entregar las copas?", texto: "Se suman los puntos de todos los juegos de la noche y se anuncian los ganadores.", si: "Entregar copas" }))) return;
     setCopando(true);
@@ -190,42 +202,6 @@ export function Sala({ codigo }: { codigo: string }) {
     setCopando(false);
     if (!ok) aviso("No se pudieron entregar las copas. Intenta otra vez."); else { sonar("exito"); s.refrescar(); }
   };
-  const listo = (
-    <Boton className="a-sala-boton" color={yo?.listo ? "azul" : "verde"} principal={!yo?.listo} texto={yo?.listo ? "Ya no estoy listo" : "¡Listo!"} icono="star" onClick={() => void enlace.marcarListo(sala, !yo?.listo).then(s.refrescar)} />
-  );
-  const gesto = (g: Parameters<typeof enlace.gesto>[1]) => void enlace.gesto(sala, g).then(s.refrescar);
-  const outfit = (
-    <div className="a-pila a-sala-outfit">
-      <div className="a-entre"><span className="dsp ol a-t3">Tu outfit</span><button type="button" className="a-plano" onClick={() => ir("personalizar")}>Cambiar outfit</button></div>
-      <Capsulas />
-    </div>
-  );
-  return (
-    <Marco clase="a-sala">
-      <div className="a-ancho a-pila">
-        <Cabecera titulo="Lobby" icono="users" recursos={false} alVolver={() => void salir()} derecha={<><ContadorListos miembros={s.miembros} /><Conexion red={s.red} /></>} />
-        <TodosListos miembros={s.miembros} texto={soyAnfitrion ? "Toca «Armar partida»" : "El anfitrión prepara la partida"} />
-        {final && <Panel className="a-pila a-entra" como="section"><Etiqueta texto={`Resultados · ${nombreJuego(final.juegoId)}`} icono="trophy" /><PodioJuego v={final} miembros={s.miembros} modo="celular" /></Panel>}
-        {ancho ? <Pedestales miembros={s.miembros} yo={ses.uid} /> : <MiPedestal miembros={s.miembros} yo={ses.uid} />}
-        <div className="a-dos">
-          <Panel className="a-pila" como="section">
-            {ancho ? <div className="a-entre"><Cupo miembros={s.miembros} /><Chip texto={sala.modo === "tv" ? "Con pantalla" : "Sin pantalla"} icono="eye" /></div>
-              : <>{listo}<div className="a-entre"><Cupo miembros={s.miembros} /><Chip texto={sala.modo === "tv" ? "Con pantalla" : "Sin pantalla"} icono="eye" /></div><FilaSala miembros={s.miembros} yo={ses.uid} /></>}
-            {ancho && listo}
-            <Gestos alGesto={gesto} />
-            {outfit}
-          </Panel>
-          {soyAnfitrion ? (
-            <Panel className="a-pila" como="section">
-              <Etiqueta texto="Tú armas la partida" icono="star" />
-              <p className="a-suave">Eliges el tipo de partida, el juego, sus opciones y el escenario. Al final tocas «¡Iniciar!».</p>
-              {sala.modo === "tv" && <p className="a-nota">Abre ALV en la laptop o TV con tu cuenta y elige «Volver a mi sala»: ahí se proyecta la partida.</p>}
-              <Boton color="amarillo" principal texto={final ? "Otra partida" : "Armar partida"} sub={`${s.miembros.length} en el lobby`} icono="play" onClick={() => ir("configurar", sala.codigo)} />
-              <Boton color="morado" texto="Entregar copas" sub="Cierra la noche con los ganadores" icono="trophy" cargando={copando} onClick={() => void copasNoche()} />
-            </Panel>
-          ) : <Panel className="a-pila a-centro-txt" como="section"><span className="dsp ol a-t2">Esperando al anfitrión</span><p className="a-suave">{s.miembros.find(m => m.anfitrion)?.nombre ?? "El anfitrión"} elige el juego e inicia la partida. Mientras, cambia tu outfit, saluda o baila.</p></Panel>}
-        </div>
-      </div>
-    </Marco>
-  );
+  return <Lobby sala={sala} miembros={ordenados} yo={ses.uid} soyAnfitrion={soyAnfitrion} final={final} red={s.red} refrescar={s.refrescar}
+    alSalir={() => void salir()} alCopas={() => void copasNoche()} copando={copando} />;
 }

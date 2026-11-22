@@ -23,3 +23,16 @@ export function usePuedeAbrir(uid: string): boolean {
   }, [uid]);
   return si;
 }
+
+/** Lobby abierto del administrador y cuántos hay dentro (038). Se revisa cada 8 s. Sin la 038, null y se usa el anuncio. */
+export function useLobbyAbierto(): { codigo: string; miembros: number } | null {
+  const [info, setInfo] = useState<{ codigo: string; miembros: number } | null>(null);
+  useEffect(() => {
+    let vivo = true;
+    const leer = () => void enlace.lobbyAbierto().then(x => { if (vivo) setInfo(x ?? null); });
+    leer();
+    const t = setInterval(leer, 8000);
+    return () => { vivo = false; clearInterval(t); };
+  }, []);
+  return info;
+}
