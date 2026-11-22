@@ -1,13 +1,10 @@
-// Ranking, logros y perfil. La XP y los movimientos los dice el servidor; aquí solo se muestran.
+// Ranking y logros (el Perfil vive en perfil/Perfil.tsx). La XP y los movimientos los dice el servidor; aquí solo se muestran.
 import { useEffect, useState } from "react";
-import { Boton, Chip, Etiqueta, Icono, Panel, TarjetaJugador } from "../ds";
-import { costoNivel, tituloPorNivel, xpParaNivel } from "../engine/economia";
-import { figuraActiva, useCapsulas } from "../app/figura3d";
-import { ir } from "../app/rutas";
-import { refrescarSesion, salirDemo, useSesion } from "../app/sesion";
-import { hayNube } from "../servicios/cliente";
-import { cambiarClave, misMovimientos, rankingConocidos, salir, type FilaRanking, type MovimientoXp } from "../servicios/cuenta";
-import { Cabecera, Campo, Marco, Retrato, Vacio, aviso, confirmar } from "./comun";
+import { Chip, Icono, Panel } from "../ds";
+import { tituloPorNivel } from "../engine/economia";
+import { useSesion } from "../app/sesion";
+import { misMovimientos, rankingConocidos, type FilaRanking, type MovimientoXp } from "../servicios/cuenta";
+import { Cabecera, Marco, Retrato, Vacio } from "./comun";
 
 const num = (n: number) => n.toLocaleString("es-MX");
 
@@ -45,7 +42,7 @@ export function logrosDeCuenta(nivel: number, movs: MovimientoXp[]): Logro[] {
   ];
 }
 
-function useMovimientos() {
+export function useMovimientos() {
   const [movs, setMovs] = useState<MovimientoXp[] | undefined>(undefined);
   useEffect(() => { let vivo = true; void misMovimientos().then(r => { if (vivo) setMovs(r); }); return () => { vivo = false; }; }, []);
   return movs;
@@ -68,49 +65,6 @@ export function Logros() {
             })}
           </ul>
         )}
-      </div>
-    </Marco>
-  );
-}
-
-export function Perfil() {
-  const s = useSesion(), movs = useMovimientos();
-  const f = figuraActiva(useCapsulas(s.uid));
-  const [clave, setClave] = useState(""), [ocupado, setOcupado] = useState(false);
-  const partidas = movs?.filter(m => m.motivo.startsWith("partida:")).length;
-  const cambiar = async () => {
-    setOcupado(true);
-    const r = await cambiarClave(clave);
-    setOcupado(false);
-    aviso(r ?? "Contraseña cambiada");
-    if (!r) setClave("");
-  };
-  const cerrar = async () => {
-    if (s.invitado && hayNube && !(await confirmar({ titulo: "¿Salir de la prueba?", texto: "Entraste sin cuenta: al salir no podrás volver a este apodo ni a su XP.", si: "Salir", peligro: true }))) return;
-    if (hayNube) { await salir(); await refrescarSesion(); } else salirDemo();
-    ir("inicio");
-  };
-  return (
-    <Marco>
-      <div className="a-ancho a-angosto a-pila">
-        <Cabecera titulo="Perfil" icono="users" />
-        <TarjetaJugador retrato={<Retrato id={s.uid} figura={f} nombre={s.nombre} size={44} />} apodo={s.nombre} nivel={s.nivel} titulo={tituloPorNivel(s.nivel)}
-          xp={{ actual: s.acumulada - xpParaNivel(s.nivel), siguiente: costoNivel(s.nivel) }} numeros={partidas != null ? { PJ: partidas } : undefined} />
-        <Panel className="a-pila" como="section">
-          <Etiqueta texto="Tu XP" icono="star" />
-          <div className="a-cifras"><div><b className="dsp ol">{num(s.acumulada)}</b><small>Acumulada</small></div><div><b className="dsp ol">{num(s.disponible)}</b><small>Para gastar</small></div><div><b className="dsp ol">{s.nivel}</b><small>Nivel</small></div></div>
-          {movs && movs.length > 0 && <ul className="a-tabla">{movs.slice(0, 6).map((m, i) => <li key={i}><span>{m.motivo.replace("partida:", "Partida · ")}</span><b className="dsp a-xp">{m.tipo === "ganada" ? "+" : "−"}{m.xp}</b></li>)}</ul>}
-          {movs && movs.length === 0 && <p className="a-suave">Tu primera XP llega al terminar una partida de 5 rondas o más.</p>}
-        </Panel>
-        {hayNube && !s.invitado && <Panel className="a-pila" como="section">
-          <Etiqueta texto="Cuenta" icono="lock" />
-          <form className="a-pila" onSubmit={e => { e.preventDefault(); void cambiar(); }}>
-            <Campo etiqueta="Contraseña nueva (8 o más)" type="password" value={clave} onChange={e => setClave(e.target.value)} autoComplete="new-password" maxLength={72} />
-            <Boton color="azul" texto="Cambiar contraseña" icono="lock" desactivado={clave.length < 8} cargando={ocupado} onClick={() => void cambiar()} />
-          </form>
-        </Panel>}
-        {s.invitado && <p className="a-nota">Entrada de prueba: tu XP y tu figura se borran cuando terminen las pruebas. Para conservarlas, crea una cuenta.</p>}
-        <Boton color="rojo" texto={s.invitado ? "Salir de la prueba" : "Cerrar sesión"} icono="back" onClick={() => void cerrar()} />
       </div>
     </Marco>
   );

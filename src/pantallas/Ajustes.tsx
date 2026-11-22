@@ -2,14 +2,30 @@
 import { useEffect, useState } from "react";
 import { Boton, Chip, Etiqueta, Panel } from "../ds";
 import { ir } from "../app/rutas";
-import { useSesion } from "../app/sesion";
+import { refrescarSesion, salirDemo, useSesion } from "../app/sesion";
 import { alternarSonido, useSonidoActivo } from "../app/sonido";
 import { adminAjustarXp, adminBorrarInvitados, adminJugadores, restablecerClave, type CuentaAdmin } from "../servicios/admin";
+import { hayNube } from "../servicios/cliente";
+import { cambiarClave, salir } from "../servicios/cuenta";
 import { Cabecera, Campo, Marco, Vacio, aviso, confirmar } from "./comun";
 
 export function Ajustes() {
   const s = useSesion();
   const sonido = useSonidoActivo();
+  const [clave, setClave] = useState(""), [ocupado, setOcupado] = useState(false);
+  // Cuenta (antes en el Perfil; se mudó aquí el 2026-11-21). Misma lógica de siempre.
+  const cambiar = async () => {
+    setOcupado(true);
+    const r = await cambiarClave(clave);
+    setOcupado(false);
+    aviso(r ?? "Contraseña cambiada");
+    if (!r) setClave("");
+  };
+  const cerrar = async () => {
+    if (s.invitado && hayNube && !(await confirmar({ titulo: "¿Salir de la prueba?", texto: "Entraste sin cuenta: al salir no podrás volver a este apodo ni a su XP.", si: "Salir", peligro: true }))) return;
+    if (hayNube) { await salir(); await refrescarSesion(); } else salirDemo();
+    ir("inicio");
+  };
   const completa = () => { if (document.fullscreenElement) void document.exitFullscreen(); else void document.documentElement.requestFullscreen?.().catch(() => aviso("Este navegador no deja usar pantalla completa.")); };
   return (
     <Marco>
@@ -19,7 +35,16 @@ export function Ajustes() {
           <div className="a-entre"><span>Sonidos</span><Chip texto={sonido ? "Encendidos" : "Apagados"} seleccionado={sonido} onClick={alternarSonido} /></div>
           <div className="a-entre"><span>Pantalla completa</span><Chip texto="Cambiar" icono="eye" onClick={completa} /></div>
         </Panel>
-        <Boton color="azul" texto="Perfil y cuenta" icono="users" onClick={() => ir("perfil")} />
+        <Boton color="azul" texto="Mi perfil" icono="users" onClick={() => ir("perfil")} />
+        {hayNube && !s.invitado && <Panel className="a-pila" como="section">
+          <Etiqueta texto="Cuenta" icono="lock" />
+          <form className="a-pila" onSubmit={e => { e.preventDefault(); void cambiar(); }}>
+            <Campo etiqueta="Contraseña nueva (8 o más)" type="password" value={clave} onChange={e => setClave(e.target.value)} autoComplete="new-password" maxLength={72} />
+            <Boton color="azul" texto="Cambiar contraseña" icono="lock" desactivado={clave.length < 8} cargando={ocupado} onClick={() => void cambiar()} />
+          </form>
+        </Panel>}
+        {s.invitado && <p className="a-nota">Entrada de prueba: tu XP y tu figura se borran cuando terminen las pruebas. Para conservarlas, crea una cuenta.</p>}
+        <Boton color="rojo" texto={s.invitado ? "Salir de la prueba" : "Cerrar sesión"} icono="back" onClick={() => void cerrar()} />
         {s.admin && <Boton color="rojo" texto="Administración" sub="Cuentas, XP y contraseñas" icono="lock" onClick={() => ir("admin")} />}
         <p className="a-nota">ALV 2.0 · versión de prueba</p>
       </div>

@@ -24,13 +24,14 @@ function primeraVez(): boolean {
   try { if (sessionStorage.getItem(LLEGADA)) return false; sessionStorage.setItem(LLEGADA, "1"); return true; } catch { return false; }
 }
 
-export const EscenaAzotea = forwardRef<MandoAzotea, { id: string; figura: FiguraV2 | null; ambiente: Ambiente; plataforma: ColoresPlataforma; className?: string }>(
-  function EscenaAzotea({ id, figura, ambiente, plataforma, className }, mando) {
+export const EscenaAzotea = forwardRef<MandoAzotea, { id: string; figura: FiguraV2 | null; ambiente: Ambiente; plataforma: ColoresPlataforma; className?: string;
+  /** false: nunca hace la entrada (el Perfil no la repite). */ llegada?: boolean }>(
+  function EscenaAzotea({ id, figura, ambiente, plataforma, className, llegada = true }, mando) {
     const ref = useRef<HTMLIFrameElement>(null);
     const [listo, setListo] = useState(false);
     // La dirección se calcula una sola vez: cambiarla recargaría la escena.
     const anclaje = ambiente.pedestal;
-    const [src] = useState(() => `${BASE}escena.html?modo=azotea&estilo=cine&acabado=brillo&calidad=${tactil() ? "media" : "alta"}${primeraVez() ? "&llegada=1" : ""}${anclaje ? "&plataforma=no" : ""}`);
+    const [src] = useState(() => `${BASE}escena.html?modo=azotea&estilo=cine&acabado=brillo&calidad=${tactil() ? "media" : "alta"}${llegada && primeraVez() ? "&llegada=1" : ""}${anclaje ? "&plataforma=no" : ""}`);
     const caja = useRef<HTMLDivElement>(null);
     // Dónde caen los pies dentro del lienzo y cuánto mide la figura (fracciones); la escena lo dice al encuadrar.
     const pies = useRef({ x: 0.5, y: 0.955, alto: 0.83 });

@@ -43,7 +43,7 @@ export function CabeceraJugador({ id, nombre, figura, nivel, xp, costo, compacta
 }
 
 /** Barra de XP fina: rayo 3D, riel de vidrio, relleno turquesa con brillo y la cifra encima a la derecha. */
-function BarraXPAzotea({ xp, costo, nivel }: { xp: number; costo: number; nivel: number }) {
+export function BarraXPAzotea({ xp, costo, nivel }: { xp: number; costo: number; nivel: number }) {
   const pct = costo > 0 ? Math.max(0, Math.min(1, xp / costo)) : 0;
   const [visto, setVisto] = useState(0);
   const primera = useRef(true);
