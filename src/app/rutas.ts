@@ -8,7 +8,7 @@ export type Ruta =
 const RUTAS: Ruta[] = ["inicio", "jugar", "catalogo", "juego", "sala", "tv", "configurar", "personalizar", "editor", "tienda", "ranking", "logros", "perfil", "ajustes", "admin", "ds"];
 /** Nombres viejos o alternos que siguen funcionando (enlaces guardados y QR ya impresos). */
 const ALIAS: Record<string, Ruta> = {
-  hub: "inicio", s: "sala", unirse: "sala", mesa: "sala", proyectar: "jugar", lobby: "jugar", juegos: "catalogo",
+  hub: "inicio", "hub-prototipo": "inicio", s: "sala", unirse: "sala", mesa: "sala", proyectar: "jugar", lobby: "jugar", juegos: "catalogo",
   figura: "editor", coleccion: "personalizar", historial: "ranking", grupo: "jugar", fisico: "jugar",
 };
 const CON_CODIGO = new Set<Ruta>(["sala", "tv", "configurar"]);

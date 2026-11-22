@@ -79,4 +79,17 @@ export function retoDelDia(fecha: string): Reto {
   const dias = Math.floor(Date.UTC(a!, m! - 1, d!) / 86400000);
   return diarios[dias % diarios.length]!;
 }
+/**
+ * Retos que se muestran un día en el HUB: de 1 a 3. El primero es siempre el diario (el único que el servidor
+ * reconoce como «del día», 033); los demás son retos de combinación que rotan por fecha y se pueden reclamar
+ * cualquier día. PROVISIONAL hasta que Elías pase la lista final de retos y recompensas.
+ */
+export function retosDelDia(fecha: string): Reto[] {
+  const combos = RETOS.filter(r => r.tipo === "combinacion");
+  const [a, m, d] = fecha.split("-").map(Number);
+  const dias = Math.floor(Date.UTC(a!, m! - 1, d!) / 86400000);
+  const cuantos = 1 + (((dias * 7) % 3) + 3) % 3; // 1, 2 o 3 según el día
+  const extra = Array.from({ length: Math.min(cuantos - 1, combos.length) }, (_, k) => combos[(dias + k * 2) % combos.length]!);
+  return [retoDelDia(fecha), ...extra];
+}
 export const hoyMexico = (ahora = new Date()) => new Intl.DateTimeFormat("en-CA", { timeZone: "America/Mexico_City", year: "numeric", month: "2-digit", day: "2-digit" }).format(ahora);

@@ -12,6 +12,8 @@ import { Apertura as VistaApertura } from "./Apertura";
 import { aviso, confirmar, Marco } from "./comun";
 import { infoPieza } from "./Desbloqueo";
 import { miniatura } from "./Libro";
+import { PildoraMonedas, PildoraPuntos } from "./Recursos";
+import { useSesion } from "../app/sesion";
 import "./tienda.css";
 
 type Pestana = "sobres" | "personajes" | "accesorios" | "coleccion" | "ofertas";
@@ -25,6 +27,7 @@ export const srcArte = (n: string) => `${import.meta.env.BASE_URL}arte/${n}`;
 const MONEDA = <span className="t-moneda" aria-hidden="true" />;
 
 export function Tienda() {
+  const sesion = useSesion();
   const t = useTienda();
   const [pestana, setPestana] = useState<Pestana>("sobres");
   const [abierto, setAbierto] = useState<{ sobre: Sobre; apertura: Apertura } | null>(null);
@@ -37,7 +40,7 @@ export function Tienda() {
         <header className="t-cab">
           <button type="button" className="t-atras" onClick={() => ir("inicio")} aria-label="Regresar al HUB">‹</button>
           <h1 className="t-titulo"><span>Tienda y recompensas ALV</span></h1>
-          <div className="t-saldo" title="Tus monedas">{MONEDA}<b>{t.monedas.toLocaleString("es-MX")}</b></div>
+          <div className="t-recursos rc-compacta"><PildoraMonedas monedas={t.monedas} conMas={false} /><PildoraPuntos puntos={sesion.acumulada} /></div>
         </header>
         {t.demo && <p className="t-demo">Demostración: monedas de mentira, solo en este aparato.</p>}
 

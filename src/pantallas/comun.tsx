@@ -3,6 +3,7 @@ import { useEffect, useState, useSyncExternalStore, type ReactNode } from "react
 import type { FiguraV2 } from "../content/personaje";
 import { Icono, RaizDS, type IconoId } from "../ds";
 import { FondoALV } from "./Fondos";
+import { BarraRecursos } from "./Recursos";
 import { Escena3D, FotoFigura, apodoDe, semillaDe, type EnEscena, type Momento } from "../app/figura3d";
 import { atras } from "../app/rutas";
 
@@ -32,12 +33,13 @@ export function Marco({ children, clase = "", fijo, fondo }: { children: ReactNo
 }
 
 /** Cabecera con regreso y el nombre de la sección en su etiqueta amarilla. */
-export function Cabecera({ titulo, icono, derecha, alVolver }: { titulo: string; icono?: IconoId; derecha?: ReactNode; alVolver?: () => void }) {
+export function Cabecera({ titulo, icono, derecha, alVolver, recursos = true }: { titulo: string; icono?: IconoId; derecha?: ReactNode; alVolver?: () => void;
+  /** Monedas y puntos a la derecha (Recursos.tsx), como en el HUB. */ recursos?: boolean }) {
   return (
-    <header className="a-cab">
+    <header className={"a-cab" + (recursos ? " a-cab-rc" : "")}>
       <button type="button" className="a-atras" onClick={alVolver ?? atras} aria-label="Regresar"><Icono id="back" /></button>
       <h1 className="d-lbl a-titulo">{icono && <Icono id={icono} />}{titulo}</h1>
-      {derecha && <div className="a-cab-der">{derecha}</div>}
+      {(derecha || recursos) && <div className="a-cab-der">{derecha}{recursos && <BarraRecursos compacta className="a-cab-recursos" />}</div>}
     </header>
   );
 }

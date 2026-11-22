@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { RETOS, RAREZA, retoDelDia, hoyMexico } from "../content/rarezas";
+import { RETOS, RAREZA, retoDelDia, retosDelDia, hoyMexico } from "../content/rarezas";
 import catalogo from "../content/catalogo-figura.json";
 import { alternarDetalle, figuraNueva, ponerCascoSolo, ponerObjeto, ponerTorsoCompleto, ponerMomentos, colorTorso, colorPiernas } from "./editarFigura";
 import { bloqueadasEn, coloresDe, cumple, idsDe } from "./retos";
@@ -56,5 +56,20 @@ describe("la migración 033 coincide con rarezas.ts", () => {
     for (const [id, r] of Object.entries(RAREZA)) expect(sql, id).toContain(`('${id}', '${r}', ${PRECIO[r]})`);
     for (const r of RETOS) expect(sql, r.id).toContain(`('${r.id}', '${r.tipo}'`);
     expect(sql).toContain(`'ganada', ${XP_SI_YA_LA_TIENES}`);
+  });
+});
+
+describe("retosDelDia", () => {
+  it("da de 1 a 3 retos distintos y el primero es el diario", () => {
+    const vistos = new Set<number>();
+    for (let i = 0; i < 30; i++) {
+      const f = new Date(Date.UTC(2026, 10, 1 + i)).toISOString().slice(0, 10), r = retosDelDia(f);
+      expect(r.length).toBeGreaterThanOrEqual(1); expect(r.length).toBeLessThanOrEqual(3);
+      expect(r[0]!.id).toBe(retoDelDia(f).id);
+      expect(new Set(r.map(x => x.id)).size).toBe(r.length);
+      expect(r.slice(1).every(x => x.tipo === "combinacion")).toBe(true);
+      vistos.add(r.length);
+    }
+    expect(vistos.size).toBe(3); // en un mes salen días con 1, 2 y 3
   });
 });

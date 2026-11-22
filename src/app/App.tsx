@@ -6,7 +6,8 @@ import { Ajustes, Admin } from "../pantallas/Ajustes";
 import { Catalogo, FichaJuego } from "../pantallas/Catalogo";
 import { PaginaConfigurar } from "../pantallas/ConfigurarPartida";
 import { Recompensas } from "../pantallas/Recompensas";
-import { Hub, Jugar } from "../pantallas/Hub";
+import { Jugar } from "../pantallas/Hub";
+import { HubAzotea } from "../pantallas/azotea/HubAzotea";
 import { Editor, Personalizar, SincroCapsulas } from "../pantallas/Personalizar";
 import { Sala } from "../pantallas/Sala";
 import { Logros, Perfil, Ranking } from "../pantallas/Social";
@@ -50,6 +51,7 @@ export function App() {
     : ruta === "perfil" ? <Perfil />
     : ruta === "ajustes" ? <Ajustes />
     : ruta === "admin" ? <Admin />
-    : <Hub />;
+    // HUB «La Azotea» (antes Hub.tsx; de ahí solo queda Jugar).
+    : <HubAzotea />;
   return <>{pantalla}{fase === "dentro" && <SincroCapsulas />}{fase === "dentro" && <Recompensas />}{!inicio && fase === "dentro" && invitado && ruta !== "tv" && ruta !== "editor" && <span className="a-prueba" aria-label="Estás en una entrada de prueba">Prueba</span>}<Avisos /></>;
 }

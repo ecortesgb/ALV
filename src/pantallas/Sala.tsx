@@ -203,7 +203,7 @@ export function Sala({ codigo }: { codigo: string }) {
   return (
     <Marco clase="a-sala">
       <div className="a-ancho a-pila">
-        <Cabecera titulo="Lobby" icono="users" alVolver={() => void salir()} derecha={<><ContadorListos miembros={s.miembros} /><Conexion red={s.red} /></>} />
+        <Cabecera titulo="Lobby" icono="users" recursos={false} alVolver={() => void salir()} derecha={<><ContadorListos miembros={s.miembros} /><Conexion red={s.red} /></>} />
         <TodosListos miembros={s.miembros} texto={soyAnfitrion ? "Toca «Armar partida»" : "El anfitrión prepara la partida"} />
         {final && <Panel className="a-pila a-entra" como="section"><Etiqueta texto={`Resultados · ${nombreJuego(final.juegoId)}`} icono="trophy" /><PodioJuego v={final} miembros={s.miembros} modo="celular" /></Panel>}
         {ancho ? <Pedestales miembros={s.miembros} yo={ses.uid} /> : <MiPedestal miembros={s.miembros} yo={ses.uid} />}

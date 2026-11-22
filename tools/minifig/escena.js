@@ -14,6 +14,13 @@
 // Modo sala (escena.html?modo=sala, la sala de espera): una columna por lugar, cada una con su pedestal del color del jugador.
 //   En «figuras» cada figura trae `color` ("#rrggbb") y `columna` (0…), y el mensaje trae `columnas` (lugares, con vacíos).
 //   Los lugares sin figura muestran un pedestal apagado; ALV dibuja encima el «+» y el nombre.
+// Modo azotea (escena.html?modo=azotea, prototipo del HUB nuevo «La Azotea»): una figura sobre la Plataforma ALV,
+//   en el piso de la azotea. &llegada=1 → la figura llega con la animación de energía (ALV decide si es la primera de la sesión).
+//   {tipo:"mirar", x, y, activa}  → la figura voltea hacia un punto (x: -1 izquierda … 1 derecha; y: -1 arriba … 1 abajo)
+//   {tipo:"accion", cual:"listo"|"mirarse"|"frotar"|"flexionar"|"orgullo"|"saludar"|null}  → pose breve mientras dura (null la suelta)
+//   {tipo:"ambiente", brillo, clave, contra, relleno}  → luz del momento del día (colores "#rrggbb", brillo de la ranura 0…1)
+//   {tipo:"plataforma", colores:{placa, base, panelA, panelB, stud, ranura, estrella}} → colores del paquete del escenario
+//   {tipo:"llegada"} → repite la llegada · {tipo:"pausa", si} → deja de dibujar (un panel tapa el escenario)
 // Responde {origen:"minifig", tipo:"listo"} cuando la biblioteca y la geometría cargaron.
 (function () {
   "use strict";
@@ -87,16 +94,225 @@
     panel(1.0, 6, 9.9, 2.5, -4, -Math.PI / 2, 0, 3.0, 0x9fc4ff); panel(4, 2.4, 1.5, 2.2, 9.9, Math.PI, 0, 1.3, 0xfff0dc);
     scene.environment = pm.fromScene(env, 0.02).texture; pm.dispose();
   })();
-  // Luz de caricatura: una principal cálida que marca el corte de sombra, cielo azul de relleno y un contraluz frío.
-  scene.add(new THREE.HemisphereLight(0xdfe8ff, 0x3a2c48, 0.75));
-  const luz = new THREE.DirectionalLight(0xfff4e2, 1.25); luz.position.set(-3.5, 6, 5); scene.add(luz);
-  const contra = new THREE.DirectionalLight(0x9cc4ff, 0.9); contra.position.set(4.5, 4, -5); scene.add(contra);
-  const relleno = new THREE.DirectionalLight(0xffd6a8, 0.25); relleno.position.set(4, 1.5, 4); scene.add(relleno);
+  // Luz: una principal cálida (en plástico, la única que proyecta sombra), cielo azul de relleno y un contraluz frío
+  // que dibuja el borde de la figura contra el fondo, como en los juegos.
+  const TOON = !!window.ESTILO_TOON;
+  scene.add(new THREE.HemisphereLight(0xdfe8ff, 0x3a2c48, TOON ? 0.75 : 0.55));
+  const luz = new THREE.DirectionalLight(0xfff4e2, TOON ? 1.25 : 1.7); luz.position.set(-3.5, 6, 5); scene.add(luz); scene.add(luz.target);
+  const contra = new THREE.DirectionalLight(0x9cc4ff, TOON ? 0.9 : 1.5); contra.position.set(4.5, 4, -5); scene.add(contra);
+  const relleno = new THREE.DirectionalLight(0xffd6a8, TOON ? 0.25 : 0.4); relleno.position.set(4, 1.5, 4); scene.add(relleno);
+  if (!TOON) {
+    luz.castShadow = true; luz.shadow.mapSize.set(1024, 1024); luz.shadow.bias = -0.0006; luz.shadow.normalBias = 0.02; luz.shadow.radius = 3;
+    const sc = luz.shadow.camera; sc.near = 1; sc.far = 20; sc.left = -2; sc.right = 2; sc.top = 3; sc.bottom = -1;
+  }
+  // ---------- Cine (prototipo, ALV_PLAN_LEGO_CINE.md) ----------
+  // Tres puntos: clave cálida y suave arriba a la izquierda, contraluz frío fuerte atrás a la derecha, relleno bajo.
+  // Ambiente bajo para que la luz haga el volumen. Calidad: alta (sombra 2048 + oclusión), media (1024, sin oclusión),
+  // baja (además densidad de píxeles 1). Empieza en alta (1024 en pantallas táctiles) y baja sola si no alcanza 45 cuadros.
+  const MODO = new URLSearchParams(location.search).get("modo") || "";
+  const CINE = !!window.ESTILO_CINE, Q = new URLSearchParams(location.search), BRILLO = CINE && Q.get("acabado") === "brillo";
+  const TACTIL = matchMedia("(pointer: coarse)").matches;
+  const calidad = { nivel: /^(alta|media|baja)$/.test(Q.get("calidad") || "") ? Q.get("calidad") : "alta", fija: !!Q.get("calidad"), muestras: [], desde: 0 };
+  if (CINE) {
+    scene.children.filter(o => o.isHemisphereLight).forEach(h => { h.color.set(0xcfdcff); h.groundColor.set(0x2a2232); h.intensity = 0.34; });
+    luz.color.set(0xffe6c8); luz.intensity = 2.1; luz.shadow.radius = 3.5; luz.shadow.bias = -0.0004; luz.shadow.normalBias = 0.015;
+    contra.color.set(0xa8ccff); contra.intensity = 2.3; contra.position.set(4.5, 4.8, -5.5);
+    relleno.color.set(0xffd2a8); relleno.intensity = 0.38; relleno.position.set(5, 1.2, 4);
+  }
+  function aplicarCalidad() {
+    if (!CINE) return;
+    const n = calidad.nivel, mapa = n === "alta" && !TACTIL ? 2048 : 1024;
+    if (luz.shadow.mapSize.x !== mapa) { luz.shadow.mapSize.set(mapa, mapa); if (luz.shadow.map) { luz.shadow.map.dispose(); luz.shadow.map = null; } }
+    // Celular: 1.25 (a 3x de densidad la tarjeta dibujaría 6 veces más puntos y el teléfono se calienta).
+    renderer.setPixelRatio(n === "baja" ? 1 : Math.min(window.devicePixelRatio || 1, TACTIL ? 1.25 : BRILLO ? 2 : 1.5));
+    AO.activo = n === "alta" && !!AO.pase;
+    if (n === "alta" && !AO.pase && !AO.cargando) prepararAO();
+    tamano();
+  }
+  // Satinado: brillo amplio y suave en vez del barniz de juguete nuevo. Los estampados llevan el mismo acabado.
+  function satinar(obj) {
+    obj.traverse(o => {
+      if (!o.isMesh) return;
+      (Array.isArray(o.material) ? o.material : [o.material]).forEach(m => {
+        if (!m || !m.isMeshPhysicalMaterial || m.emissiveMap) return;
+        // ?acabado=brillo (prueba de material, tools/lookdev): plástico LEGO nuevo, barniz duro y reflejos nítidos.
+        if (BRILLO) { m.roughness = 0.24; m.clearcoat = 1; m.clearcoatRoughness = 0.04; m.envMapIntensity = 1.35; m.needsUpdate = true; return; }
+        m.roughness = 0.5; m.clearcoat = 0.18; m.clearcoatRoughness = 0.45; m.envMapIntensity = 0.7; m.needsUpdate = true;
+      });
+    });
+  }
+  // Oclusión ambiental (SSAO) a media resolución: oscurece uniones (cuello, axilas, cadera, entre piernas, pelo sobre la
+  // cara, pies sobre el pedestal). Se calcula aparte y se multiplica encima del cuadro ya dibujado, así el fondo
+  // transparente del HUB no se toca. Lo transparente (calcomanías, halo, discos de sombra, efectos) no entra al cálculo.
+  const AO = { pase: null, cargando: false, activo: false, escena: null, cam: null };
+  const CDN = "https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/";
+  const cargarJS = src => new Promise((ok, mal) => { const s = document.createElement("script"); s.src = src; s.onload = ok; s.onerror = () => mal(new Error(src)); document.head.appendChild(s); });
+  async function prepararAO() {
+    AO.cargando = true;
+    try {
+      for (const f of ["shaders/CopyShader.js", "postprocessing/EffectComposer.js", "math/SimplexNoise.js", "shaders/SSAOShader.js", "postprocessing/SSAOPass.js"]) await cargarJS(CDN + f);
+      const p = new THREE.SSAOPass(scene, camera, 16, 16);
+      AO.pase = p;
+      AO.cam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1); AO.escena = new THREE.Scene();
+      AO.escena.add(new THREE.Mesh(new THREE.PlaneGeometry(2, 2), new THREE.ShaderMaterial({
+        uniforms: { tAO: { value: p.blurRenderTarget.texture }, fuerza: { value: 0.9 } },
+        vertexShader: "varying vec2 vUv;void main(){vUv=uv;gl_Position=vec4(position.xy,0.0,1.0);}",
+        fragmentShader: "uniform sampler2D tAO;uniform float fuerza;varying vec2 vUv;void main(){float a=pow(texture2D(tAO,vUv).r,2.2);gl_FragColor=vec4(vec3(mix(1.0,a,fuerza)),1.0);}",
+        blending: THREE.MultiplyBlending, depthTest: false, depthWrite: false })));
+    } catch (e) { console.warn("escena: sin oclusión ambiental", e); AO.pase = null; }
+    AO.cargando = false; aplicarCalidad();
+  }
+  // Escala de la escena: figura de 2.7 de alto. Uniones de 1 mm a 25 cm cuentan como contacto; la curva (2.2) marca más las uniones.
+  function ajustarAO(p) {
+    const sm = p.ssaoMaterial, dm = p.depthRenderMaterial, k = camera.far - camera.near;
+    sm.uniforms.cameraNear.value = dm.uniforms.cameraNear.value = camera.near; sm.uniforms.cameraFar.value = dm.uniforms.cameraFar.value = camera.far;
+    sm.uniforms.cameraProjectionMatrix.value.copy(camera.projectionMatrix);
+    if (sm.uniforms.cameraInverseProjectionMatrix) sm.uniforms.cameraInverseProjectionMatrix.value.copy(camera.projectionMatrixInverse);
+    sm.uniforms.kernelRadius.value = 0.16; sm.uniforms.minDistance.value = 0.0012 / k; sm.uniforms.maxDistance.value = 0.25 / k;
+  }
+  const transparente = o => { const m = Array.isArray(o.material) ? o.material[0] : o.material; return !m || m.transparent || m.isShadowMaterial; };
+  function dibujarAO() {
+    const p = AO.pase, ocultos = [];
+    ajustarAO(p);
+    scene.traverse(o => { if (o.visible && (o.isPoints || o.isLine || o.isSprite || (o.isMesh && transparente(o)))) { o.visible = false; ocultos.push(o); } });
+    const su = renderer.shadowMap.autoUpdate; renderer.shadowMap.autoUpdate = false;
+    p.renderOverride(renderer, p.normalMaterial, p.normalRenderTarget, 0x7777ff, 1.0);
+    ocultos.forEach(o => { o.visible = true; });
+    p.renderPass(renderer, p.ssaoMaterial, p.ssaoRenderTarget);
+    p.renderPass(renderer, p.blurMaterial, p.blurRenderTarget);
+    renderer.shadowMap.autoUpdate = su;
+    renderer.setRenderTarget(null);
+    const ac = renderer.autoClear; renderer.autoClear = false; renderer.render(AO.escena, AO.cam); renderer.autoClear = ac;
+  }
+  // Mide los cuadros por segundo 3 s (solo con la página visible) y baja un nivel si no llega a 45.
+  function medirCalidad(t, dt) {
+    if (!CINE || calidad.fija || calidad.nivel === "baja" || !figuras.size) return;
+    if (!calidad.desde) { calidad.desde = t + 1; return; } // el primer segundo carga cosas: no cuenta
+    if (t < calidad.desde) return;
+    // Pausas de más de 0.2 s no cuentan: el navegador frena las páginas en segundo plano (pestaña o panel oculto).
+    if (dt > 0.2) { calidad.muestras = []; calidad.desde = t + 1; return; }
+    calidad.muestras.push(dt);
+    if (t - calidad.desde < 3 || calidad.muestras.length < 60) return;
+    const prom = calidad.muestras.reduce((a, b) => a + b, 0) / calidad.muestras.length, fps = 1 / Math.max(1e-3, prom);
+    calidad.muestras = []; calidad.desde = t;
+    // En la azotea táctil y en reposo se dibuja a propósito a 30 cuadros: ahí el mínimo es 26.
+    if (fps < (AZOTEA && TACTIL && AZ.quieto ? 26 : 45)) { calidad.nivel = calidad.nivel === "alta" ? "media" : "baja"; console.info("escena: calidad", calidad.nivel, Math.round(fps) + " cps"); aplicarCalidad(); }
+  }
+  // Fase B: en cine, las piezas base (cabeza, torso, brazos, mano, cadera, piernas) usan su versión con biseles
+  // (tools/biseles/ → piezas-biseladas.js). Mismo origen y ejes que LDraw: estampados, objetos, pelo y articulaciones
+  // encajan igual. Las normales vienen de Blender (caras planas planas, luz curva solo en el bisel). Pieza sin versión
+  // biselada = la de siempre.
+  async function cargarBiseles() {
+    try { await cargarJS("piezas-biseladas.js"); } catch (e) { console.warn("escena: sin biseles", e); return; }
+    const B = window.LDRAW_BISELADO || {}, geo0 = geoLD, hechas = {};
+    const bin = s => Uint8Array.from(atob(s), c => c.charCodeAt(0)).buffer;
+    // Pelo y cascos: LDraw los trae con pocas caras y la luz marcaba cada faceta. Se recalculan las normales con
+    // un ángulo de 88° (en vez de 35°): la superficie se ve curva y los bordes de verdad (visera, orillas) siguen vivos.
+    const PELO = new Set((BIB.piezas || []).filter(p => (p.categoria === "cabello" || p.categoria === "casco") && p.ldraw).map(p => String(p.ldraw)));
+    geoLD = function (id) {
+      if (!B[id] && PELO.has(String(id))) { const g0 = geo0(id); return g0 && (hechas[id] || (hechas[id] = suavizar(g0, 88))); }
+      if (id === "3626c") return hechas[id] || (hechas[id] = cabezaTorno());
+      const d = B[id]; if (!d) return geo0(id);
+      if (hechas[id]) return hechas[id];
+      const P = new Int16Array(bin(d.p)), M = new Int8Array(bin(d.n)), I = d.i32 ? new Uint32Array(bin(d.i)) : new Uint16Array(bin(d.i));
+      const n = P.length / 3, pos = new Float32Array(n * 3), nor = new Float32Array(n * 3);
+      for (let k = 0; k < n; k++) {
+        pos[k * 3] = P[k * 3] / 64 / LD; pos[k * 3 + 1] = -P[k * 3 + 1] / 64 / LD; pos[k * 3 + 2] = -P[k * 3 + 2] / 64 / LD;
+        const x = M[k * 3], y = -M[k * 3 + 1], z = -M[k * 3 + 2], l = Math.hypot(x, y, z) || 1;
+        nor[k * 3] = x / l; nor[k * 3 + 1] = y / l; nor[k * 3 + 2] = z / l;
+      }
+      const gi = new THREE.BufferGeometry(); gi.setAttribute("position", new THREE.BufferAttribute(pos, 3)); gi.setAttribute("normal", new THREE.BufferAttribute(nor, 3));
+      gi.setIndex(new THREE.BufferAttribute(I, 1));
+      // Sin índice, como las de LDraw: geoLDcorte (botas) recorre los triángulos de 9 en 9.
+      const g = gi.toNonIndexed(); gi.dispose();
+      d.g.forEach(([st, cnt], k) => g.addGroup(st, cnt, k)); g.userData.colores = d.g.map(x => x[2]); g.computeBoundingBox();
+      return (hechas[id] = g);
+    };
+    // La cara y el estampado del torso se ajustan midiendo los vértices de la pieza. La versión biselada tiene caras
+    // largas sin vértices a media altura (la cara quedaba metida en la cabeza): esas medidas usan la original,
+    // que tiene el mismo contorno exterior.
+    ["perfilLD", "caraTorso"].forEach(n => {
+      const f0 = window[n]; if (typeof f0 !== "function") return;
+      window[n] = function () { const g = geoLD; geoLD = geo0; try { return f0.apply(this, arguments); } finally { geoLD = g; } };
+    });
+  }
+  // Cabeza 3626c rehecha girando su perfil: en LDraw el cilindro tiene 48 lados y las curvas de arriba y de la barbilla
+  // solo 16, no encajan (quedaba una línea y otro tono de piel bajo la cara). Mismas medidas de LDraw (LDU, Y hacia
+  // abajo): perno hueco de r 4–6 y alto 4, tapa en y 0, curva de radio 4 hasta el cilindro de r 13 (y 4 a 17), curva
+  // de radio 4 hasta el cuello de r 8 (y 21 a 24) y hueco del cuello de r 6. Las esquinas vivas llevan un bisel de 0.6.
+  function cabezaTorno() {
+    const pts = [], arco = (cx, cy, r, a0, a1, n) => { for (let k = 0; k <= n; k++) { const a = a0 + (a1 - a0) * k / n; pts.push([cx + r * Math.cos(a), cy + r * Math.sin(a)]); } };
+    const esquina = (x, y, dx0, dy0, dx1, dy1, r) => { // redondea la esquina (x, y) que llega con dirección 0 y sale con dirección 1
+      pts.push([x - dx0 * r, y - dy0 * r]); pts.push([x - dx0 * r * 0.3 + dx1 * r * 0.3, y - dy0 * r * 0.3 + dy1 * r * 0.3]); pts.push([x + dx1 * r, y + dy1 * r]);
+    };
+    const B6 = 0.6, H = Math.PI / 2;
+    pts.push([0, 0]);                                  // fondo del hueco del perno
+    esquina(4, 0, 1, 0, 0, -1, B6);                    // pared interior del perno
+    esquina(4, -4, 0, -1, 1, 0, B6);
+    esquina(6, -4, 1, 0, 0, 1, B6);                    // orilla del perno
+    esquina(6, 0, 0, 1, 1, 0, B6);                     // base del perno sobre la tapa
+    arco(9, 4, 4, -H, 0, 14);                          // curva de la tapa al cilindro (centro 9,4)
+    arco(9, 17, 4, 0, H, 14);                          // cilindro y curva de la barbilla (centro 9,17)
+    esquina(8, 21, -1, 0, 0, 1, B6);                   // cuello
+    esquina(8, 24, 0, 1, -1, 0, B6);
+    esquina(6, 24, -1, 0, 0, -1, B6);                  // hueco del cuello
+    esquina(6, 4, 0, -1, -1, 0, B6);
+    pts.push([0, 4]);
+    // Escena: 1 unidad = 40 LDU, Y hacia arriba. LatheGeometry gira alrededor de Y; el perfil va de adentro hacia afuera.
+    const perfil = pts.map(([r, y]) => new THREE.Vector2(Math.max(0, r) / LD, -y / LD)).reverse();
+    const gi = new THREE.LatheGeometry(perfil, 64);
+    gi.computeVertexNormals();
+    const g = gi.toNonIndexed(); gi.dispose();
+    g.addGroup(0, g.attributes.position.count, 0); g.userData.colores = ["16"]; g.computeBoundingBox();
+    return g;
+  }
+  // Normales suaves por ángulo: cada esquina promedia las caras vecinas (por área) que no doblen más de `grados`.
+  // Las vecinas se buscan por posición, porque la geometría de LDraw no comparte vértices entre caras.
+  function suavizar(g0, grados) {
+    const g = g0.clone(); g.userData = Object.assign({}, g0.userData);
+    const P = g.attributes.position.array, n = P.length / 9, fn = new Float32Array(n * 3), cs = Math.cos(grados * Math.PI / 180);
+    const cerca = new Map(), clave = i => Math.round(P[i] * 4000) + "," + Math.round(P[i + 1] * 4000) + "," + Math.round(P[i + 2] * 4000);
+    for (let t = 0; t < n; t++) {
+      const o = t * 9, ux = P[o + 3] - P[o], uy = P[o + 4] - P[o + 1], uz = P[o + 5] - P[o + 2], vx = P[o + 6] - P[o], vy = P[o + 7] - P[o + 1], vz = P[o + 8] - P[o + 2];
+      fn[t * 3] = uy * vz - uz * vy; fn[t * 3 + 1] = uz * vx - ux * vz; fn[t * 3 + 2] = ux * vy - uy * vx; // largo = 2 × área
+      for (let k = 0; k < 3; k++) { const c = clave(o + k * 3); let L = cerca.get(c); if (!L) cerca.set(c, (L = [])); L.push(t); }
+    }
+    const N = g.attributes.normal.array;
+    for (let t = 0; t < n; t++) {
+      const ax = fn[t * 3], ay = fn[t * 3 + 1], az = fn[t * 3 + 2], la = Math.hypot(ax, ay, az) || 1;
+      for (let k = 0; k < 3; k++) {
+        let x = 0, y = 0, z = 0;
+        for (const u of cerca.get(clave(t * 9 + k * 3))) {
+          const bx = fn[u * 3], by = fn[u * 3 + 1], bz = fn[u * 3 + 2], lb = Math.hypot(bx, by, bz) || 1;
+          if ((ax * bx + ay * by + az * bz) / (la * lb) > cs) { x += bx; y += by; z += bz; }
+        }
+        const l = Math.hypot(x, y, z) || 1, i = t * 9 + k * 3; N[i] = x / l; N[i + 1] = y / l; N[i + 2] = z / l;
+      }
+    }
+    g.attributes.normal.needsUpdate = true;
+    return g;
+  }
+  // Figura de prueba del prototipo (?prueba=cine): pelo café, rostro clásico, torso azul con estrella blanca,
+  // pantalón azul, manos color piel. Se arma con el núcleo como cualquier figura de jugador.
+  let figPrueba = null;
+  const figuraPrueba = () => figPrueba || (figPrueba = MinifigCore.nueva({ nombre: "Prueba cine",
+    identidad: { piel: "#e9bf98", rostro: "FACE_001", cabello: { id: "HAIR_001", color: "#4f2c14" } },
+    ropa: { torso: { id: null, color: "#1f3b6e", estampado: "PRINT_010", colores: ["#f4f4f4", "#1b2a34", "#6b4a2b"], texto: "★" },
+      cadera: { id: null, color: "#1f3b6e" }, piernas: { tipo: "normal", id: null, color: "#1f3b6e" } } }));
+  const PRUEBA = (CINE && MODO === "hub" || MODO === "azotea") && Q.get("prueba") === "cine";
+  if (CINE || PRUEBA) window.__cine = { AO, calidad, scene }; // para revisar el prototipo desde la consola
+
+  // La caja de la sombra sigue a las figuras (en la sala son varias a lo ancho).
+  function cajaSombra(ancho) {
+    if (TOON) return;
+    const sc = luz.shadow.camera, a = Math.max(2, ancho / 2 + 1);
+    sc.left = -a; sc.right = a; sc.top = 3.2; sc.bottom = -1.2; sc.updateProjectionMatrix();
+    luz.position.set(-3.5, 6, 5); luz.target.position.set(0, 1, 0);
+  }
 
   // ---------- Estilo toon: tres tonos de luz y contorno oscuro ----------
   // El modelo de Minifig Studio no se toca: después de armar la figura se cambian sus materiales y se le agrega
   // una «cáscara» negra por pieza (casco invertido). Una sola pasada de dibujo; sirve igual en celular.
-  const MODO = new URLSearchParams(location.search).get("modo") || "";
   const tonos = (function () { const d = new Uint8Array([70, 70, 70, 150, 150, 150, 255, 255, 255]); const t = new THREE.DataTexture(d, 3, 1, THREE.RGBFormat); t.minFilter = t.magFilter = THREE.NearestFilter; t.generateMipmaps = false; t.needsUpdate = true; return t; })();
   const contorno = new THREE.ShaderMaterial({
     uniforms: { grosor: { value: 2.2 }, res: { value: new THREE.Vector2(800, 600) }, color: { value: new THREE.Color(0x0b0f24) } },
@@ -115,6 +331,16 @@
     return t;
   }
   function caricatura(obj) {
+    // Plástico: se quedan los materiales de Minifig Studio (barniz brillante); solo se activan las sombras.
+    if (!TOON) {
+      obj.traverse(o => {
+        if (!o.isMesh || o.userData.sinSombra) return;
+        const m0 = Array.isArray(o.material) ? o.material[0] : o.material;
+        o.castShadow = !(m0 && m0.transparent); o.receiveShadow = true; // calcomanías y efectos no proyectan
+      });
+      if (CINE) satinar(obj);
+      return obj;
+    }
     const cascaras = [];
     obj.traverse(o => {
       if (!o.isMesh || o.userData.cascara) return;
@@ -142,19 +368,29 @@
   }
   function medirContorno(r) { const v = new THREE.Vector2(); r.getDrawingBufferSize(v); contorno.uniforms.res.value.copy(v); contorno.uniforms.grosor.value = Math.max(2, Math.min(4.5, v.y / 210)); }
 
+  // Disco invisible que solo muestra la sombra que le cae (encima del pedestal o, sin pedestal, como piso).
+  function pisoSombra(r) {
+    const m = new THREE.Mesh(new THREE.CircleGeometry(r, 48), new THREE.ShadowMaterial({ opacity: 0.38, depthWrite: false }));
+    m.rotation.x = -Math.PI / 2; m.position.y = 0.014; m.receiveShadow = true; m.renderOrder = 1; m.userData.sinSombra = true; return m;
+  }
   // Pedestal del HUB: base con luz y aro dorado; la figura se para encima (y = 0).
   let pedestal = null;
   const EDITOR = MODO === "editor";
+  const AZOTEA = MODO === "azotea";
+  // &plataforma=no: el pedestal viene pintado en el fondo de Elías; aquí solo va la figura con su sombra.
+  const SIN_PLAT = AZOTEA && new URLSearchParams(location.search).get("plataforma") === "no";
   if (MODO === "hub" || EDITOR) {
     pedestal = new THREE.Group();
-    const tm = c => new THREE.MeshToonMaterial({ color: new THREE.Color(c).convertSRGBToLinear(), gradientMap: tonos });
+    const tm = c => TOON ? new THREE.MeshToonMaterial({ color: new THREE.Color(c).convertSRGBToLinear(), gradientMap: tonos })
+      : new THREE.MeshStandardMaterial({ color: new THREE.Color(c).convertSRGBToLinear(), roughness: 0.3, metalness: 0.15 });
     const base = new THREE.Mesh(new THREE.CylinderGeometry(1.05, 1.18, 0.34, 48), tm(0x24306b)); base.position.y = -0.17; pedestal.add(base);
     const tapa = new THREE.Mesh(new THREE.CylinderGeometry(1.0, 1.0, 0.02, 48), new THREE.MeshBasicMaterial({ color: 0x5aa6f0 })); tapa.position.y = 0.0; pedestal.add(tapa);
     const aro = new THREE.Mesh(new THREE.TorusGeometry(1.03, 0.035, 10, 64), new THREE.MeshBasicMaterial({ color: 0xffd23f })); aro.rotation.x = Math.PI / 2; aro.position.y = 0.0; pedestal.add(aro);
     const brillo = (function () { const cv = document.createElement("canvas"); cv.width = cv.height = 128; const g = cv.getContext("2d"), r = g.createRadialGradient(64, 64, 4, 64, 64, 64); r.addColorStop(0, "rgba(200,235,255,1)"); r.addColorStop(0.45, "rgba(120,190,255,.45)"); r.addColorStop(1, "rgba(80,140,255,0)"); g.fillStyle = r; g.fillRect(0, 0, 128, 128); return new THREE.CanvasTexture(cv); })();
     const halo = new THREE.Mesh(new THREE.PlaneGeometry(2.6, 2.6), new THREE.MeshBasicMaterial({ map: brillo, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
     halo.rotation.x = -Math.PI / 2; halo.position.y = 0.015; pedestal.add(halo);
-    caricatura(base);
+    caricatura(base); tapa.userData.sinSombra = halo.userData.sinSombra = true; tapa.castShadow = false;
+    if (!TOON) pedestal.add(pisoSombra(1.0));
     scene.add(pedestal);
   }
   // Sala: un pedestal por columna, con la tapa y la luz del color del jugador (se crean y se pintan en acomodar).
@@ -164,7 +400,9 @@
   const brilloSala = SALA ? (function () { const cv = document.createElement("canvas"); cv.width = cv.height = 128; const g = cv.getContext("2d"), r = g.createRadialGradient(64, 64, 4, 64, 64, 64); r.addColorStop(0, "rgba(255,255,255,1)"); r.addColorStop(0.45, "rgba(255,255,255,.4)"); r.addColorStop(1, "rgba(255,255,255,0)"); g.fillStyle = r; g.fillRect(0, 0, 128, 128); return new THREE.CanvasTexture(cv); })() : null;
   function pedestalSala() {
     const p = new THREE.Group();
-    const base = new THREE.Mesh(new THREE.CylinderGeometry(0.66, 0.74, 0.3, 40), new THREE.MeshToonMaterial({ color: 0x24306b, gradientMap: tonos })); base.position.y = -0.15; p.add(base);
+    const base = new THREE.Mesh(new THREE.CylinderGeometry(0.66, 0.74, 0.3, 40), TOON ? new THREE.MeshToonMaterial({ color: 0x24306b, gradientMap: tonos })
+      : new THREE.MeshStandardMaterial({ color: 0x24306b, roughness: 0.3, metalness: 0.15 })); base.position.y = -0.15; p.add(base);
+    if (!TOON) p.add(pisoSombra(0.62));
     const tapa = new THREE.Mesh(new THREE.CylinderGeometry(0.62, 0.62, 0.02, 40), new THREE.MeshBasicMaterial({ color: 0x5aa6f0 })); p.add(tapa);
     const aro = new THREE.Mesh(new THREE.TorusGeometry(0.645, 0.03, 8, 48), new THREE.MeshBasicMaterial({ color: 0xffd23f })); aro.rotation.x = Math.PI / 2; p.add(aro);
     const halo = new THREE.Mesh(new THREE.PlaneGeometry(1.7, 1.7), new THREE.MeshBasicMaterial({ map: brilloSala, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, color: 0x88bbff }));
@@ -182,7 +420,163 @@
     u.base.material.color.copy(new THREE.Color(c || "#24306b").convertSRGBToLinear().multiplyScalar(c ? 0.35 : 1));
     u.aro.material.color.set(c ? 0xffd23f : 0x6d7398);
   }
-  const sombraGeo = new THREE.CircleGeometry(0.62, 40), sombraMat = new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.32, depthWrite: false });
+  // Sombra de contacto bajo los pies: mancha difusa (en plástico, además de la sombra de la luz).
+  const sombraGeo = new THREE.CircleGeometry(0.62, 40), sombraMat = new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: TOON ? 0.32 : 0.5, depthWrite: false,
+    map: TOON ? null : (function () { const cv = document.createElement("canvas"); cv.width = cv.height = 64; const g = cv.getContext("2d"), r = g.createRadialGradient(32, 32, 2, 32, 32, 32); r.addColorStop(0, "rgba(255,255,255,1)"); r.addColorStop(0.55, "rgba(255,255,255,.55)"); r.addColorStop(1, "rgba(255,255,255,0)"); g.fillStyle = r; g.fillRect(0, 0, 64, 64); return new THREE.CanvasTexture(cv); })() });
+  // Sin pedestal (marcador de la TV, listas): un piso invisible recibe la sombra.
+  if (!TOON && !pedestal && !SALA && !AZOTEA) scene.add(pisoSombra(14));
+  if (SIN_PLAT && !TOON) scene.add(pisoSombra(1.6));
+  // Celular sin plataforma: tampoco mapa de sombras (queda la sombra de contacto bajo los pies).
+  if (SIN_PLAT && TACTIL && new URLSearchParams(location.search).get("sombras") !== "1") { luz.castShadow = false; renderer.shadowMap.enabled = false; }
+
+  // ---------- Azotea: Plataforma ALV ----------
+  // Placa blanca con 24 studs dorados en el borde y una estrella donde pisa la figura (y = 0); anillo de 12 paneles con
+  // una ranura de energía en los huecos; tres patas hidráulicas sobre el piso de la azotea (y = PISO). Todo barato:
+  // los studs son una sola malla instanciada, los brillos son planos aditivos y no hay luces extra.
+  const PISO = -0.72, AZ_GIRO = 0.3, QUIETO_AZ = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const AZ = { brillo: 0.6, ranura: new THREE.Color(0x2ee6d6), pausa: false, llegada: null, polvo: false, pendiente: AZOTEA && Q.get("llegada") === "1" && !QUIETO_AZ,
+    mira: { x: 0, y: 0, ax: 0, ay: 0, w: 0, activa: false }, acc: { cual: null, k: 0, sale: null }, saludo: 0, quieto: true, salto: false,
+    usuario: 0, vel: 0 }; // giro que le da el jugador arrastrando (radianes) y su inercia
+  let plat = null;
+  // Plataforma futurista (pedido de Elías, 2026-11-21): metal oscuro en capas con tiras de luz (turquesa arriba y
+  // abajo, ámbar en el collar), 24 luces pequeñas en el borde que se encienden en cadena en la llegada, un plato de luz
+  // donde pisa la figura y una columna holográfica tenue. Colores del paquete: placa, base, panelA (collar),
+  // panelB (anillo bajo), stud (luces del borde), ranura (tiras turquesa), estrella (tira ámbar).
+  if (AZOTEA && !SIN_PLAT) {
+    const lin = c => new THREE.Color(c).convertSRGBToLinear();
+    const metal = (c, r) => BRILLO
+      ? new THREE.MeshPhysicalMaterial({ color: lin(c), roughness: r == null ? 0.28 : r, metalness: 0.75, clearcoat: 0.8, clearcoatRoughness: 0.08, envMapIntensity: 1.4 })
+      : new THREE.MeshStandardMaterial({ color: lin(c), roughness: r == null ? 0.35 : r, metalness: 0.6 });
+    const M = { placa: metal(0x3a4150, 0.24), base: metal(0x232833), panelA: metal(0x2c3240), panelB: metal(0x303746), estrella: new THREE.MeshBasicMaterial({ color: lin(0xffc21a) }),
+      stud: new THREE.MeshBasicMaterial({ color: 0xffffff }), piston: metal(0x8d96a8, 0.2) };
+    const g = new THREE.Group();
+    const pieza = (geo, m, x, y, z, sombra) => { const o = new THREE.Mesh(geo, m); o.position.set(x, y, z); o.castShadow = sombra !== false; o.receiveShadow = true; g.add(o); return o; };
+    const ranura = new THREE.MeshBasicMaterial({ color: AZ.ranura.clone() });
+    const tira = (r, y, m, arco) => { const o = pieza(new THREE.TorusGeometry(r, 0.028, 10, 96, arco || Math.PI * 2), m, 0, y, 0, false); o.rotation.x = Math.PI / 2; return o; };
+    // Placa de arriba con borde de luz
+    pieza(new THREE.CylinderGeometry(1.0, 1.02, 0.1, 72), M.placa, 0, -0.05, 0);
+    tira(1.012, -0.012, ranura);
+    // Collar con tres arcos ámbar
+    pieza(new THREE.CylinderGeometry(0.94, 0.86, 0.2, 64), M.panelA, 0, -0.2, 0);
+    for (let i = 0; i < 3; i++) { const o = tira(0.905, -0.2, M.estrella, Math.PI * 2 / 3 - 0.35); o.rotation.z = i * Math.PI * 2 / 3; }
+    // Anillo bajo ancho con su tira turquesa y aletas
+    pieza(new THREE.CylinderGeometry(1.2, 1.3, 0.14, 72), M.panelB, 0, -0.37, 0);
+    tira(1.21, -0.3, ranura);
+    const aleta = new THREE.BoxGeometry(0.1, 0.12, 0.34);
+    for (let i = 0; i < 8; i++) { const a = (i + 0.5) / 8 * Math.PI * 2, o = pieza(aleta, M.base, Math.sin(a) * 1.24, -0.46, Math.cos(a) * 1.24); o.rotation.y = a; }
+    // Pie hasta el piso
+    pieza(new THREE.CylinderGeometry(0.9, 1.05, 0.2, 64), M.base, 0, -0.54, 0);
+    pieza(new THREE.CylinderGeometry(1.1, 1.16, 0.08, 64), M.base, 0, PISO + 0.04, 0);
+    // 24 luces pequeñas en el borde de la placa (una sola malla instanciada; se encienden en cadena)
+    const nS = 24, ORO = new THREE.Color(0x7ff7ee).convertSRGBToLinear().multiplyScalar(0.55);
+    const studs = new THREE.InstancedMesh(new THREE.BoxGeometry(0.06, 0.03, 0.06), M.stud, nS), d0 = new THREE.Object3D();
+    for (let i = 0; i < nS; i++) { const a = i / nS * Math.PI * 2; d0.position.set(Math.sin(a) * 0.93, 0.004, Math.cos(a) * 0.93); d0.rotation.y = a; d0.updateMatrix(); studs.setMatrixAt(i, d0.matrix); studs.setColorAt(i, ORO); }
+    g.add(studs);
+    caricatura(g);
+    const degr = (fn) => { const cv = document.createElement("canvas"); cv.width = cv.height = 128; fn(cv.getContext("2d")); return new THREE.CanvasTexture(cv); };
+    const texHalo = degr(c => { const r = c.createRadialGradient(64, 64, 6, 64, 64, 64); r.addColorStop(0, "rgba(255,255,255,1)"); r.addColorStop(0.4, "rgba(255,255,255,.45)"); r.addColorStop(1, "rgba(255,255,255,0)"); c.fillStyle = r; c.fillRect(0, 0, 128, 128); });
+    const texHaz = degr(c => { const r = c.createLinearGradient(0, 0, 0, 128); r.addColorStop(0, "rgba(255,255,255,0)"); r.addColorStop(0.7, "rgba(255,255,255,.55)"); r.addColorStop(1, "rgba(255,255,255,1)"); c.fillStyle = r; c.fillRect(0, 0, 128, 128); });
+    const aditivo = (map, color, op) => new THREE.MeshBasicMaterial({ map, color, transparent: true, opacity: op || 0, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide });
+    // Plato de luz donde pisa la figura
+    const plato = new THREE.Mesh(new THREE.CircleGeometry(0.82, 64), aditivo(texHalo, AZ.ranura.clone(), 0.5)); plato.rotation.x = -Math.PI / 2; plato.position.y = 0.003;
+    const halo = new THREE.Mesh(new THREE.PlaneGeometry(3.6, 3.6), aditivo(texHalo, AZ.ranura.clone())); halo.rotation.x = -Math.PI / 2; halo.position.y = PISO + 0.012;
+    // Columna holográfica tenue (siempre) y haz fuerte de la llegada
+    const cono = new THREE.Mesh(new THREE.CylinderGeometry(0.7, 0.86, 3.0, 48, 1, true), aditivo(texHaz, AZ.ranura.clone(), 0.12)); cono.position.y = 1.5;
+    const haz = new THREE.Mesh(new THREE.CylinderGeometry(0.92, 0.92, 3.4, 40, 1, true), aditivo(texHaz, AZ.ranura.clone())); haz.position.y = 1.7;
+    const aro = new THREE.Mesh(new THREE.TorusGeometry(0.62, 0.022, 8, 64), aditivo(null, new THREE.Color(0xc8fff8))); aro.rotation.x = Math.PI / 2;
+    [plato, halo, cono, haz, aro].forEach(o => { o.userData.sinSombra = true; o.renderOrder = 2; g.add(o); });
+    haz.visible = aro.visible = false;
+    const piso = pisoSombra(2.6); piso.position.y = PISO + 0.004; piso.material.opacity = 0.34; g.add(piso);
+    const contacto = new THREE.Mesh(new THREE.CircleGeometry(1.45, 40), new THREE.MeshBasicMaterial({ color: 0x000000, map: texHalo, transparent: true, opacity: 0.5, depthWrite: false }));
+    contacto.rotation.x = -Math.PI / 2; contacto.position.y = PISO + 0.006; contacto.userData.sinSombra = true; g.add(contacto);
+    scene.add(g);
+    plat = { g, M, ranura, studs, nS, ORO, halo, haz, aro, plato, cono, luz: new THREE.Color() };
+    if (TACTIL && Q.get("sombras") !== "1") { luz.castShadow = false; renderer.shadowMap.enabled = false; piso.visible = false; contacto.material.opacity = 0.6; }
+  }
+  // Estudios de la llegada y de cada cambio de figura (escaneo: sin caída).
+  function iniciarLlegada(t, completa) { if (QUIETO_AZ || (!plat && !completa)) return; AZ.llegada = { t0: completa ? t : t - 0.6, completa }; AZ.polvo = !completa; }
+  function animarAzotea(t) {
+    if (!plat) { if (AZ.llegada && t - AZ.llegada.t0 > 1.4) AZ.llegada = null; return; }
+    const L = AZ.llegada, d = L ? t - L.t0 : 99;
+    const pulso = QUIETO_AZ ? 1 : 0.82 + 0.18 * Math.sin(t * Math.PI / 2);
+    const flare = d < 0.3 ? d / 0.3 : d < 0.95 ? 1 - (d - 0.3) / 0.65 : 0;
+    const e = Math.min(2.4, AZ.brillo * pulso + flare * 1.4);
+    plat.ranura.color.copy(AZ.ranura).multiplyScalar(0.55 + e * 0.75);
+    plat.halo.material.opacity = Math.min(0.85, 0.08 + AZ.brillo * 0.32 * pulso + flare * 0.5);
+    plat.plato.material.opacity = Math.min(0.9, 0.3 + AZ.brillo * 0.35 * pulso + flare * 0.4);
+    plat.cono.material.opacity = QUIETO_AZ ? 0.08 : (0.05 + AZ.brillo * 0.1) * pulso + flare * 0.15;
+    plat.haz.visible = d > 0.15 && d < 0.85;
+    if (plat.haz.visible) plat.haz.material.opacity = Math.sin((d - 0.15) / 0.7 * Math.PI) * 0.55;
+    plat.aro.visible = d > 0.6 && d < 1.2;
+    if (plat.aro.visible) { const k = (d - 0.6) / 0.6; plat.aro.position.y = k * 2.8; plat.aro.material.opacity = Math.sin(k * Math.PI) * 0.9; }
+    // Studs que se encienden en cadena alrededor del borde
+    if (d > 0.6 && d < 1.35) {
+      const frente = (d - 0.6) / 0.5 * plat.nS;
+      for (let i = 0; i < plat.nS; i++) { const a = Math.max(0, 1 - Math.abs(frente - i) / 4); plat.luz.copy(plat.ORO).lerp(new THREE.Color(2.2, 2.0, 1.3), a * (d < 1.1 ? 1 : 1 - (d - 1.1) / 0.25)); plat.studs.setColorAt(i, plat.luz); }
+      plat.studs.instanceColor.needsUpdate = true; AZ.studsSucios = true;
+    } else if (AZ.studsSucios) { for (let i = 0; i < plat.nS; i++) plat.studs.setColorAt(i, plat.ORO); plat.studs.instanceColor.needsUpdate = true; AZ.studsSucios = false; }
+    if (L && d > 1.4) AZ.llegada = null;
+  }
+  // Caída de la figura en la llegada: invisible, cae desde arriba y se aplasta un poco al tocar la placa.
+  function caidaAzotea(e, t) {
+    const L = AZ.llegada; if (!L || !L.completa) { e.obj.visible = true; return; }
+    const d = t - L.t0, o = e.obj;
+    o.visible = d >= 0.35;
+    const p = Math.min(1, Math.max(0, (d - 0.35) / 0.25));
+    o.position.y = 1.1 * (1 - p * p);
+    const s = d > 0.6 && d < 0.8 ? Math.sin((d - 0.6) / 0.2 * Math.PI) : 0;
+    o.scale.set(1 + 0.06 * s, 1 - 0.1 * s, 1 + 0.06 * s);
+    if (d >= 0.6 && !AZ.polvo) { AZ.polvo = true; polvo(t); }
+    if (d > 0.8) { o.position.y = 0; o.scale.setScalar(1); }
+  }
+  // Mirada dirigida y poses breves (encima de la pose del momento, como la «vida»).
+  function reaccionAzotea(e, t, dt) {
+    const J = e.obj.userData.j, V = J && J.vida; if (!V) return;
+    const m = AZ.mira, a = AZ.acc, r = Math.min(1, dt * 7);
+    m.w += ((m.activa ? 1 : 0) - m.w) * Math.min(1, dt * 5); m.ax += (m.x - m.ax) * r; m.ay += (m.y - m.ay) * r;
+    a.k = Math.max(0, Math.min(1, a.k + (a.cual ? dt : -dt) / 0.22));
+    if (!a.cual && a.k === 0 && a.sale) { if (a.sale === "flexionar") { cambio(e, t); e.mom = e.momentos.espera || "respirar"; e.t0 = t; } a.sale = null; }
+    const w = m.w, k = a.k * a.k * (3 - 2 * a.k), cual = a.cual || a.sale;
+    // Giro del jugador con inercia; al señalar un botón o hacer un gesto, la figura vuelve a quedar de frente para reaccionar.
+    if (Math.abs(AZ.vel) > 0.001) { AZ.usuario += AZ.vel * dt; AZ.vel *= Math.exp(-4 * dt); } else AZ.vel = 0;
+    AZ.usuario = Math.atan2(Math.sin(AZ.usuario), Math.cos(AZ.usuario));
+    const frente = Math.max(w, k);
+    let giro = AZ_GIRO + AZ.usuario * (1 - frente) + m.ax * 0.5 * w;
+    J.head.rotation.y += (m.ax * 0.55 - J.head.rotation.y) * w;
+    J.head.rotation.x += -m.ay * 0.2 * w; // en la figura, x positivo levanta la cara
+    if (k > 0 && !QUIETO_AZ) {
+      if (cual === "listo") {
+        e.lx += 0.13 * k; J.armR.rotation.x += -0.8 * k; J.armL.rotation.x += -0.8 * k;
+        J.armR.rotation.z -= V.ladoR * 0.1 * k; J.armL.rotation.z -= V.ladoL * 0.1 * k;
+        J.root.position.y += Math.abs(Math.sin(t * 8)) * 0.035 * k; J.head.rotation.x += 0.1 * k;
+      } else if (cual === "mirarse") {
+        giro += -AZ_GIRO * k; J.head.rotation.x += -0.34 * k; J.head.rotation.y *= 1 - k;
+        J.armR.rotation.x += -0.55 * k; J.armR.rotation.z -= V.ladoR * 0.25 * k;
+      } else if (cual === "frotar") {
+        const o = Math.sin(t * 15);
+        J.armR.rotation.x += (-1.0 + o * 0.08) * k; J.armL.rotation.x += (-1.0 - o * 0.08) * k;
+        J.armR.rotation.z -= V.ladoR * 0.28 * k; J.armL.rotation.z -= V.ladoL * 0.28 * k;
+        if (J.wristR) J.wristR.rotation.y += o * 0.5 * k; if (J.wristL) J.wristL.rotation.y -= o * 0.5 * k;
+        J.head.rotation.x += -0.08 * k;
+      } else if (cual === "orgullo") {
+        e.lx += -0.08 * k; J.head.rotation.x += 0.16 * k;
+        J.armR.rotation.x += -1.05 * k; J.armR.rotation.z -= V.ladoR * 0.38 * k;
+        J.armL.rotation.z += V.ladoL * 0.12 * k;
+      }
+    }
+    e.obj.rotation.y = giro;
+    AZ.quieto = !L_activa() && a.k === 0 && w < 0.01 && AZ.vel === 0;
+  }
+  const L_activa = () => !!AZ.llegada;
+  function accionAzotea(cual, e, t) {
+    const a = AZ.acc, ok = ["listo", "mirarse", "frotar", "flexionar", "orgullo", "saludar"];
+    if (cual === "saludar") { if (e) e.saluda = t; AZ.saludo = t + 12; return; }
+    if (cual && !ok.includes(cual)) return;
+    if (a.cual === "flexionar" && cual !== "flexionar") a.sale = "flexionar";
+    if (cual === "flexionar" && e && a.cual !== "flexionar" && Momentos.info("flexionar")) { cambio(e, t); e.mom = "flexionar"; e.t0 = t; }
+    a.cual = cual || null;
+  }
+  const colorHex = c => (typeof c === "string" && /^#[0-9a-f]{6}$/i.test(c) ? c : null);
 
   let listo = false;
   const figuras = new Map(); // id → {obj, huella, mom, t0, espera, momentos, foco, x}
@@ -211,6 +605,7 @@
     const plano = desdeFigura(f);
     if (CASCO_MASCARA.has(plano.cabello)) { plano.rostro = "sonrisa"; plano.facial = []; }
     const obj = caricatura(build(plano));
+    prepararVida(obj);
     const sombra = new THREE.Mesh(sombraGeo, sombraMat); sombra.rotation.x = -Math.PI / 2; sombra.position.y = 0.003; obj.add(sombra);
     return { obj, momentos: plano._momentos || {}, plano };
   }
@@ -223,6 +618,7 @@
 
   function ponerFiguras(lista, cols) {
     if (SALA) columnas = Math.max(0, Math.min(12, cols | 0));
+    if (PRUEBA) lista = lista.slice(0, 1).map(x => ({ id: x.id, foco: x.foco, figura: figuraPrueba() }));
     const ids = new Set(lista.map(x => String(x.id)));
     [...figuras.keys()].forEach(id => { if (!ids.has(id)) quitar(id); });
     orden = [];
@@ -236,9 +632,11 @@
         if (e) quitar(id);
         const t = reloj.getElapsedTime(), habia = !!e;
         try { const a = armar(fx); e = { id, obj: a.obj, momentos: a.momentos, plano: a.plano, huella: h, mom: a.momentos.espera || "respirar", t0: t - Math.random() * 3,
-          pop: EDITOR && habia ? t : -9, parpadeo: t + 2 + Math.random() * 2, sonrisa: t + 7 + Math.random() * 4 }; }
+          pop: EDITOR && habia ? t : -9, parpadeo: t + 2 + Math.random() * 2, sonrisa: t + 7 + Math.random() * 4,
+          fase: Math.random() * Math.PI * 2, mira: { y: 0, v: 0, meta: 0, inc: 0, prox: t + 1 + Math.random() * 2 }, lx: 0, lz: 0, saludoK: 0 }; }
         catch (err) { console.error("escena: no se pudo armar", id, err); return; }
         scene.add(e.obj); figuras.set(id, e);
+        if (AZOTEA) { if (AZ.pendiente) { AZ.pendiente = false; iniciarLlegada(t, true); } else if (habia) iniciarLlegada(t, false); AZ.saludo = t + 6; }
         if (EDITOR && habia) polvo(reloj.getElapsedTime());
       }
       e.foco = !!x.foco; orden.push(id);
@@ -253,11 +651,12 @@
   function acomodar() {
     if (EDITOR) { tamano(); orden.forEach(id => figuras.get(id).obj.position.set(0, 0, 0)); return; }
     encuadrar();
+    cajaSombra((SALA ? lugares() : Math.max(1, orden.length)) * paso);
     if (SALA) { acomodarSala(); return; }
     const n = orden.length;
     orden.forEach((id, i) => {
       const e = figuras.get(id), x = (i - (n - 1) / 2) * paso;
-      e.obj.position.set(x, 0, e.foco ? 0.6 : 0); e.obj.rotation.y = MODO === "hub" ? -0.32 : -x * 0.04; e.obj.scale.setScalar(e.foco ? 1.12 : 1);
+      e.obj.position.set(x, 0, e.foco ? 0.6 : 0); e.obj.rotation.y = MODO === "hub" ? -0.32 : AZOTEA ? AZ_GIRO : -x * 0.04; e.obj.scale.setScalar(e.foco ? 1.12 : 1);
     });
   }
   function acomodarSala() {
@@ -272,12 +671,14 @@
   function tamano() {
     const r = lienzo.getBoundingClientRect(), w = Math.max(2, r.width), h = Math.max(2, r.height);
     renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix();
+    if (AO.pase) { const v = new THREE.Vector2(); renderer.getDrawingBufferSize(v); AO.pase.setSize(Math.max(2, v.x >> 1), Math.max(2, v.y >> 1)); }
   }
   function encuadrar() {
     tamano();
     // Medidas reales de una figura armada: 2.6–2.75 de alto con pelo o casco, 1.6–1.9 de ancho con brazos y objeto.
     // HUB: cabe también el pedestal (de y = -0.34 a 0) y queda aire arriba para que la figura no se vea gigante.
-    const n = SALA ? lugares() : Math.max(1, orden.length), alto = SALA ? 5.3 : MODO === "hub" ? 4.5 : 3.3, minimo = n * 1.9 + 0.3;
+    // Azotea: de la base de las patas (y ≈ -0.94 con aire) a lo más alto de un casco, con la figura a ~57 % del alto.
+    const n = SALA ? lugares() : Math.max(1, orden.length), alto = SALA ? 5.3 : SIN_PLAT ? 3.3 : AZOTEA ? 4.9 : MODO === "hub" ? 4.5 : 3.3, minimo = SIN_PLAT ? 2.0 : AZOTEA ? 2.8 : n * 1.9 + 0.3;
     const tv = Math.tan(camera.fov * Math.PI / 360), th = tv * camera.aspect;
     // Primero que quepa de alto; si así no caben a lo ancho, se aleja hasta que quepan.
     let d = (alto / 2) / tv;
@@ -285,14 +686,23 @@
     paso = (2 * d * th) / n;
     // Pantalla alta (celular vertical): sobra cielo; se mira más arriba para que los pies queden abajo, sobre el piso.
     // Sala: queda aire abajo para el nombre y arriba para el «¡LISTO!».
-    const centro = SALA ? d * tv * 0.85 - 0.75 : MODO === "hub" ? Math.max(1.55, d * tv * 0.92 - 0.4) : Math.max(1.4, d * tv * 0.88);
-    camera.position.set(0, centro + 0.15, d); camera.lookAt(0, centro, 0); camera.updateProjectionMatrix();
+    const centro = SALA ? d * tv * 0.85 - 0.75 : SIN_PLAT ? -0.15 + d * tv : AZOTEA ? Math.max(1.26, PISO - 0.22 + d * tv) : MODO === "hub" ? Math.max(1.55, d * tv * 0.92 - 0.4) : Math.max(1.4, d * tv * 0.88);
+    // Azotea: cámara un poco más baja que el centro (vista heroica).
+    camera.position.set(0, centro + (SIN_PLAT ? 0.55 : AZOTEA ? -0.12 : 0.15), d); camera.lookAt(0, centro, 0); camera.updateProjectionMatrix();
+    // Sin plataforma, ALV coloca el lienzo para que los pies caigan en el pedestal pintado: le decimos dónde quedan
+    // los pies y cuánto mide la figura (fracciones del lienzo).
+    if (SIN_PLAT) {
+      camera.updateMatrixWorld(true);
+      const pies = new THREE.Vector3(0, 0, 0).project(camera), cabeza = new THREE.Vector3(0, 2.7, 0).project(camera);
+      enviar({ tipo: "pies", x: (pies.x + 1) / 2, y: (1 - pies.y) / 2, alto: (cabeza.y - pies.y) / 2 });
+    }
   }
 
   function momento(id, cual) {
     const e = figuras.get(String(id)); if (!e) return;
     // Gestos del lobby: saludar (la mano libre, una vez) y bailar (vuelta rápida).
     if (cual === "saludar") { e.saluda = reloj.getElapsedTime(); return; }
+    cambio(e, reloj.getElapsedTime());
     if (cual === "bailar") cual = "vuelta-rapida";
     const m = e.momentos[cual] || (Momentos.info(cual) ? cual : null) || (cual === "espera" ? "respirar" : null); if (!m || !Momentos.info(m)) return;
     e.mom = m; e.t0 = reloj.getElapsedTime();
@@ -314,19 +724,135 @@
   // Saluda con la mano libre: con un objeto en la mano (escudo, escoba…) el brazo arriba lo metía en la cabeza.
   // armL lleva el objeto de la izquierda (accesorioIzq) y armR el de la derecha (accesorio); con las dos ocupadas solo voltea.
   const libre = v => !v || v === "ninguno";
+  // El saludo de los juegos: el brazo sube de lado (no al frente) y se mece de un lado a otro, la cabeza se ladea hacia
+  // la mano, el cuerpo se carga al otro lado y da un rebotito al empezar.
   function saludo(e, t) {
     const obj = e.obj, J = obj.userData.j, p = e.plano || {}; if (!J) return;
-    const c = t % 7, sube = c < 0.35 ? c / 0.35 : c < 1.95 ? 1 : c < 2.3 ? 1 - (c - 1.95) / 0.35 : 0;
+    const c = t % 7, sube = c < 0.4 ? c / 0.4 : c < 2.1 ? 1 : c < 2.5 ? 1 - (c - 2.1) / 0.4 : 0;
     const k = sube * sube * (3 - 2 * sube);
+    e.saludoK = k;
     if (k <= 0) return;
     const lado = libre(p.accesorioIzq) ? "L" : libre(p.accesorio) ? "R" : null;
+    const V = J.vida, sg = lado && V ? V["lado" + lado] : 1, mece = Math.sin(t * 10) * (c > 0.3 && c < 2.2 ? 1 : 0.3);
     if (lado) {
       const brazo = J["arm" + lado], muneca = J["wrist" + lado];
-      brazo.rotation.x += (-2.6 + Math.sin(t * 9) * 0.25 - brazo.rotation.x) * k;
-      muneca.rotation.y += (Math.sin(t * 9) * 0.6 - muneca.rotation.y) * k;
+      brazo.rotation.x += (-2.35 - brazo.rotation.x) * k;
+      brazo.rotation.z += (sg * (0.42 + mece * 0.3) - brazo.rotation.z) * k;
+      muneca.rotation.y += (mece * 0.35 - muneca.rotation.y) * k;
     }
-    J.head.rotation.y += ((lado === "R" ? -0.25 : 0.25) - J.head.rotation.y) * k;
+    J.head.rotation.y += ((sg > 0 ? 0.28 : -0.28) - J.head.rotation.y) * k;
+    J.head.rotation.z += (-sg * 0.14 - J.head.rotation.z) * k;
+    e.lz += -sg * 0.07 * k; e.lx += -0.03 * k;
+    J.root.position.y += Math.max(0, Math.sin(Math.min(1, c / 0.45) * Math.PI)) * 0.05;
   }
+
+  // ---------- Vida: postura de juego, peso, mirada y transiciones ----------
+  // Una minifigura real solo gira en 7 ejes y por eso se ve tiesa. Los juegos de bloques hacen trampa para darle vida:
+  // el torso se inclina en la cintura, los brazos se abren hacia los lados y las piernas se separan. Todo se suma
+  // encima de la pose del momento (08-poses.js la recalcula en cada cuadro); nucleo/momentos.js no cambia.
+  const _v = new THREE.Vector3(), _q = new THREE.Quaternion(), _eu = new THREE.Euler();
+  function prepararVida(obj) {
+    const J = obj.userData.j; if (!J || !J.torso || J.vida) return;
+    obj.updateMatrixWorld(true); // recién armada: la figura está en el origen, sin giro
+    const xMundo = o => o.getWorldPosition(_v).x;
+    const centro = o => new THREE.Box3().setFromObject(o).getCenter(new THREE.Vector3());
+    const malla = J.torso.children.find(o => o.isMesh);
+    const cintura = new THREE.Vector3(0, malla ? new THREE.Box3().setFromObject(malla).min.y : 1.2, 0);
+    J.torso.parent.worldToLocal(cintura);
+    const V = { cintura, p0: J.torso.position.clone(), q0: J.torso.quaternion.clone(),
+      ladoR: J.mountR ? (xMundo(J.mountR) >= 0 ? 1 : -1) : 1, ladoL: J.mountL ? (xMundo(J.mountL) >= 0 ? 1 : -1) : -1,
+      piernaR: 1, piernaL: -1, largo: 0.7, pie: 0.25 };
+    if (J.piernasArt && J.legR && J.legL) {
+      V.piernaR = centro(J.legR).x >= 0 ? 1 : -1; V.piernaL = -V.piernaR;
+      const cj = new THREE.Box3().setFromObject(J.legR), s = cj.getSize(new THREE.Vector3());
+      V.largo = Math.max(0.3, J.legR.getWorldPosition(_v).y - cj.min.y); V.pie = s.x / 2;
+    }
+    J.vida = V;
+  }
+  // Inclina el torso (con brazos, cabeza y capa) alrededor de la cintura. lx > 0 = hacia el frente.
+  function inclinar(J, lx, lz) {
+    const V = J.vida; if (!V) return;
+    _eu.set(lx, 0, lz); _q.setFromEuler(_eu);
+    J.torso.quaternion.copy(V.q0).premultiply(_q);
+    J.torso.position.copy(V.p0).sub(V.cintura).applyQuaternion(_q).add(V.cintura);
+  }
+  // Postura de juego: piernas un poco abiertas y brazos separados del cuerpo (también en las fotos).
+  const POSTURA = { pierna: 0.075, brazo: 0.13 };
+  function postura(J, extraPierna, extraBrazoR, extraBrazoL) {
+    const V = J.vida; if (!V) return;
+    if (J.armR) J.armR.rotation.z += V.ladoR * (POSTURA.brazo + (extraBrazoR || 0));
+    if (J.armL) J.armL.rotation.z += V.ladoL * (POSTURA.brazo + (extraBrazoL || 0));
+    if (J.piernasArt) {
+      const a = POSTURA.pierna + (extraPierna || 0);
+      J.legR.rotation.z += V.piernaR * a; J.legL.rotation.z += V.piernaL * a;
+      // Al abrirlas, el borde de adentro del pie baja: la figura sube un poco para no hundirse en el piso.
+      J.root.position.y += Math.max(0, V.pie * Math.sin(a) - V.largo * (1 - Math.cos(a)));
+    }
+  }
+  // Movimiento de reposo: cambio de peso de un pie al otro, respiración y la mirada que busca cosas.
+  function reposo(e, t, dt) {
+    const J = e.obj.userData.j, V = J.vida; if (!V || MENOS_MOVIMIENTO) return;
+    const f = e.fase, amp = EDITOR ? 0.5 : 1;
+    const w = Math.sin(t * 0.75 + f), d = w * 0.035 * amp;
+    J.root.position.x += d;
+    if (J.piernasArt) { const a = -d / V.largo; J.legR.rotation.z += a; J.legL.rotation.z += a; }
+    e.lz += -w * 0.045 * amp;
+    const b = Math.sin(t * 1.7 + f * 2);
+    e.lx += b * 0.018 * amp;
+    J.armR.rotation.x += b * 0.035; J.armL.rotation.x += b * 0.035;
+    J.armR.rotation.z += V.ladoR * (b * 0.5 + 0.5) * 0.03; J.armL.rotation.z += V.ladoL * (b * 0.5 + 0.5) * 0.03;
+    // Mirada: cada 1.5–4.5 s elige a dónde ver (a veces a la cámara) y gira rápido, con un resorte que frena solo.
+    if (e.mom !== "respirar" || EDITOR) return;
+    const m = e.mira;
+    if (t > m.prox) { m.meta = Math.random() < 0.4 ? 0 : (Math.random() * 2 - 1) * 0.6; m.inc = (Math.random() * 2 - 1) * 0.08; m.prox = t + 1.5 + Math.random() * 3; }
+    // Resorte en pasos cortos: con cuadros lentos (dt de 0.1 s, celular a 30 cuadros, pestaña que vuelve) un solo paso
+    // se volvía inestable y la cabeza giraba sin fin (la figura terminaba volteada).
+    const w0 = 13, pasos = Math.max(1, Math.ceil(dt / 0.016)), h = dt / pasos;
+    for (let i = 0; i < pasos; i++) { m.v += (w0 * w0 * (m.meta - m.y) - 2 * w0 * m.v) * h; m.y += m.v * h; }
+    if (!Number.isFinite(m.y) || Math.abs(m.y) > 1.2) { m.y = m.meta; m.v = 0; }
+    J.head.rotation.y = m.y; J.head.rotation.z = m.inc * 0.6 - m.y * 0.12;
+    e.lz += m.y * 0.03; // el cuerpo acompaña un poco la mirada
+  }
+  // Reacciones a la pose: en el aire las piernas se abren; con los brazos arriba, abren en «V» como en los festejos.
+  function reacciones(e) {
+    const J = e.obj.userData.j, V = J.vida; if (!V) return;
+    const aire = Math.min(1, Math.max(0, J.root.position.y - 0.04) / 0.3);
+    const arriba = x => Math.min(1, Math.max(0, (-x - 1.6) / 1.1));
+    const sal = e.saludoK > 0.05;
+    postura(J, aire * 0.14, sal ? 0 : arriba(J.armR.rotation.x) * 0.32, sal ? 0 : arriba(J.armL.rotation.x) * 0.32);
+    e.lx += aire * -0.05;
+  }
+  // Transiciones: al cambiar de momento la figura no salta de pose, se mezcla 0.35 s desde donde estaba.
+  const MEZCLA = 0.35;
+  function leer(J, e) {
+    const r = J.root;
+    return [J.head.rotation.y, J.head.rotation.z, J.armR.rotation.x, J.armR.rotation.z, J.armL.rotation.x, J.armL.rotation.z,
+      J.wristR.rotation.y, J.wristL.rotation.y, J.legR ? J.legR.rotation.x : 0, J.legR ? J.legR.rotation.z : 0, J.legL ? J.legL.rotation.x : 0, J.legL ? J.legL.rotation.z : 0,
+      r.position.x, r.position.y, r.position.z, r.rotation.x, r.rotation.y, r.rotation.z, e.lx, e.lz];
+  }
+  function escribir(J, e, a) {
+    const r = J.root;
+    J.head.rotation.y = a[0]; J.head.rotation.z = a[1]; J.armR.rotation.x = a[2]; J.armR.rotation.z = a[3]; J.armL.rotation.x = a[4]; J.armL.rotation.z = a[5];
+    J.wristR.rotation.y = a[6]; J.wristL.rotation.y = a[7];
+    if (J.piernasArt) { J.legR.rotation.x = a[8]; J.legR.rotation.z = a[9]; J.legL.rotation.x = a[10]; J.legL.rotation.z = a[11]; }
+    r.position.set(a[12], a[13], a[14]); r.rotation.set(a[15], a[16], a[17]); e.lx = a[18]; e.lz = a[19];
+  }
+  const ANGULO = new Set([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 15, 16, 17]);
+  function mezclar(e, t) {
+    const J = e.obj.userData.j, cur = leer(J, e);
+    const k = e.snap ? Math.min(1, (t - e.tCambio) / MEZCLA) : 1;
+    if (k < 1) {
+      const s = k * k * (3 - 2 * k);
+      for (let i = 0; i < cur.length; i++) {
+        let d = cur[i] - e.snap[i];
+        if (ANGULO.has(i)) d = Math.atan2(Math.sin(d), Math.cos(d)); // el camino corto (tras una vuelta completa no regresa girando)
+        cur[i] = e.snap[i] + d * s;
+      }
+      escribir(J, e, cur);
+    } else e.snap = null;
+    e.ult = cur;
+  }
+  function cambio(e, t) { if (e.ult) { e.snap = e.ult.slice(); e.tCambio = t; } }
 
   // ---------- Modo editor ----------
   // Zonas de la figura (unidades de la escena; pies en y = 0, lo más alto de un casco ≈ 2.75).
@@ -470,25 +996,40 @@
   let antes = 0;
   function cuadro() {
     requestAnimationFrame(cuadro);
-    if (!listo || document.hidden) return;
-    const t = reloj.getElapsedTime(), dt = Math.min(0.1, t - antes); antes = t;
+    if (!listo || document.hidden || AZ.pausa) return;
+    // Azotea en pantalla táctil y en reposo: un cuadro sí y uno no (30 por segundo) para cuidar la batería.
+    if (AZOTEA && TACTIL && AZ.quieto && (AZ.salto = !AZ.salto)) return;
+    const t = reloj.getElapsedTime(), bruto = t - antes, dt = Math.min(0.1, bruto); antes = t;
     if (EDITOR) { moverCamara(dt); moverPolvo(t, dt); }
+    else if (AZOTEA) moverPolvo(t, dt);
     figuras.forEach(e => {
+      const J = e.obj.userData.j; if (!J) return;
       const i = Momentos.info(e.mom);
-      if (i && !i.bucle && t - e.t0 > i.dur + 0.4) { e.mom = e.momentos.espera || "respirar"; e.t0 = t; }
+      if (i && !i.bucle && t - e.t0 > i.dur + 0.4) { cambio(e, t); e.mom = e.momentos.espera || "respirar"; e.t0 = t; }
+      e.lx = 0; e.lz = 0; e.saludoK = 0;
       window.MOM_T0 = e.t0; animar(e.obj, "mom:" + e.mom, t);
-      if (MODO === "hub" && !(i && !i.bucle)) saludo(e, t);
-      else if (e.saluda != null) { const d = t - e.saluda; if (d < 2.3) saludo(e, d); else e.saluda = null; }
+      const enBucle = !(i && !i.bucle);
+      if (enBucle) reposo(e, t, dt);
+      if (AZOTEA && enBucle && !AZ.acc.cual && !AZ.mira.activa && !AZ.llegada && t > AZ.saludo && e.saluda == null) { e.saluda = t; AZ.saludo = t + 11 + Math.random() * 5; }
+      if (MODO === "hub" && enBucle) saludo(e, t);
+      else if (e.saluda != null) { const d = t - e.saluda; if (d < 2.5) saludo(e, d); else e.saluda = null; }
+      if (AZOTEA) { reaccionAzotea(e, t, dt); caidaAzotea(e, t); }
+      reacciones(e);
       cuidarObjetos(e.obj, e.plano);
+      mezclar(e, t);
+      inclinar(J, e.lx, e.lz);
       if (EDITOR) {
         e.obj.rotation.y = cam.giro;
         // Al cambiar una pieza, la figura da un saltito.
         const p = t - e.pop; e.obj.scale.setScalar(p < 0.45 ? 1 + Math.sin(p / 0.45 * Math.PI) * 0.07 * (1 - p / 0.45) : 1);
-        gestosSolos(e, t);
       }
+      gestosSolos(e, t); // parpadea y sonríe sola en todas las escenas (HUB, sala, TV)
     });
+    if (AZOTEA) animarAzotea(t);
     medirContorno(renderer);
     renderer.render(scene, camera);
+    if (AO.activo) dibujarAO();
+    medirCalidad(t, bruto);
   }
 
   // Fotos: un dibujante aparte, con fondo transparente, sin tocar la escena viva.
@@ -497,14 +1038,14 @@
     ancho = Math.min(512, Math.max(64, ancho | 0 || 256)); alto = Math.min(640, Math.max(64, alto | 0 || 320));
     if (!fotografo) {
       const r = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true });
-      r.outputEncoding = THREE.sRGBEncoding; r.toneMapping = THREE.NoToneMapping; r.setClearColor(0, 0);
+      r.outputEncoding = THREE.sRGBEncoding; r.toneMapping = renderer.toneMapping; r.toneMappingExposure = renderer.toneMappingExposure; r.setClearColor(0, 0);
       const s = new THREE.Scene(); s.environment = scene.environment;
       scene.children.filter(o => o.isLight).forEach(l => s.add(l.clone()));
       fotografo = { r, s, cam: new THREE.PerspectiveCamera(24, 1, 0.3, 40) };
     }
     const { r, s, cam } = fotografo;
     r.setSize(ancho, alto, false); cam.aspect = ancho / alto;
-    const a = armar(f), z = zona && (typeof zona === "object" ? zona : ZONAS[zona]); window.MOM_T0 = 0; animar(a.obj, pose && Momentos.info(pose.mom) ? "mom:" + pose.mom : "quieto", pose ? +pose.t || 0 : 0); cuidarObjetos(a.obj, a.plano); a.obj.rotation.y = z ? z.giro : -0.35; s.add(a.obj);
+    const a = armar(f), z = zona && (typeof zona === "object" ? zona : ZONAS[zona]); window.MOM_T0 = 0; animar(a.obj, pose && Momentos.info(pose.mom) ? "mom:" + pose.mom : "quieto", pose ? +pose.t || 0 : 0); postura(a.obj.userData.j); cuidarObjetos(a.obj, a.plano); a.obj.rotation.y = z ? z.giro : -0.35; s.add(a.obj);
     if (z && z.mano) { // vista de revisión: la cámara mira a esa mano
       a.obj.updateMatrixWorld(true); const h = new THREE.Vector3(); a.obj.userData.j[z.mano === "izq" ? "handL" : "handR"].getWorldPosition(h);
       cam.updateProjectionMatrix(); const d = distancia(z, 1, cam); cam.position.set(h.x, h.y + d * 0.07, h.z + d); cam.lookAt(h.x, h.y, h.z);
@@ -544,12 +1085,30 @@
       } catch (e) { console.error("escena: " + d.tipo, e); }
       enviar({ tipo: d.tipo, pid: d.pid, figura });
     }
+    else if (AZOTEA && d.tipo === "mirar") { const m = AZ.mira, n = v => Math.max(-1, Math.min(1, Number(v) || 0)); m.x = n(d.x); m.y = n(d.y); m.activa = !!d.activa; }
+    else if (AZOTEA && d.tipo === "accion") { const t = reloj.getElapsedTime(); accionAzotea(d.cual == null ? null : String(d.cual), figuras.get(orden[0]), t); }
+    else if (AZOTEA && d.tipo === "llegada") { const e = figuras.get(orden[0]); iniciarLlegada(reloj.getElapsedTime(), true); if (e) e.obj.visible = false; AZ.polvo = false; }
+    else if (AZOTEA && d.tipo === "pausa") AZ.pausa = !!d.si;
+    else if (AZOTEA && d.tipo === "girar" && Number.isFinite(d.cuanto)) { AZ.usuario += Math.max(-1, Math.min(1, d.cuanto)); AZ.vel = 0; AZ.quieto = false; }
+    else if (AZOTEA && d.tipo === "impulso" && Number.isFinite(d.vel)) { AZ.vel = Math.max(-9, Math.min(9, d.vel)); AZ.quieto = false; }
+    else if (AZOTEA && d.tipo === "ambiente") {
+      if (Number.isFinite(d.brillo)) AZ.brillo = Math.max(0, Math.min(1, d.brillo));
+      const c = colorHex(d.clave), k = colorHex(d.contra), r = colorHex(d.relleno), ra = colorHex(d.ranura);
+      if (c) luz.color.set(c); if (k) contra.color.set(k); if (r) relleno.color.set(r); if (ra) AZ.ranura.set(ra).convertSRGBToLinear();
+      if (plat && ra) { plat.halo.material.color.copy(AZ.ranura); plat.haz.material.color.copy(AZ.ranura); }
+    }
+    else if (AZOTEA && d.tipo === "plataforma" && plat && d.colores && typeof d.colores === "object") {
+      const C = d.colores, pon = (m, v) => { const h = colorHex(v); if (h) m.color.set(h).convertSRGBToLinear(); };
+      pon(plat.M.placa, C.placa); pon(plat.M.base, C.base); pon(plat.M.panelA, C.panelA); pon(plat.M.panelB, C.panelB); pon(plat.M.estrella, C.estrella);
+      const s = colorHex(C.stud); if (s) { plat.ORO.set(s).convertSRGBToLinear().multiplyScalar(0.55); for (let i = 0; i < plat.nS; i++) plat.studs.setColorAt(i, plat.ORO); plat.studs.instanceColor.needsUpdate = true; }
+      const ra = colorHex(C.ranura); if (ra) { AZ.ranura.set(ra).convertSRGBToLinear(); [plat.halo, plat.haz, plat.plato, plat.cono].forEach(o => o.material.color.copy(AZ.ranura)); }
+    }
     else if (!EDITOR) return;
     else if (d.tipo === "enfocar") enfocar(String(d.zona));
     else if (d.tipo === "girar" && Number.isFinite(d.cuanto)) { cam.meta += Math.max(-7, Math.min(7, d.cuanto)); cam.vel = 0; }
     else if (d.tipo === "acercar" && Number.isFinite(d.cuanto) && d.cuanto > 0) cam.zoom = Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, cam.zoom / d.cuanto));
     else if (d.tipo === "gesto") figuras.forEach(e => gesto(e, d.cual, reloj.getElapsedTime()));
-    else if (d.tipo === "probar" && Momentos.info(String(d.cual))) figuras.forEach(e => { e.mom = String(d.cual); e.t0 = reloj.getElapsedTime(); });
+    else if (d.tipo === "probar" && Momentos.info(String(d.cual))) figuras.forEach(e => { cambio(e, reloj.getElapsedTime()); e.mom = String(d.cual); e.t0 = reloj.getElapsedTime(); });
   }
   window.addEventListener("message", e => {
     if (e.origin !== location.origin || !e.data || e.data.origen !== "alv") return;
@@ -563,7 +1122,8 @@
       await new Promise((ok, mal) => { const s = document.createElement("script"); s.src = "biblioteca/geometria/ldraw_piezas.js"; s.onload = ok; s.onerror = () => mal(new Error("geometría")); document.head.appendChild(s); });
       if (window.LDRAW_COLORES) Object.assign(LDCOL, window.LDRAW_COLORES);
       integrarPiezas();
+      if (CINE && Q.get("bisel") !== "no") await cargarBiseles();
     } catch (e) { console.error("escena: no cargó la biblioteca", e); enviar({ tipo: "error" }); return; }
-    listo = true; acomodar(); pendientes.splice(0).forEach(atender); enviar({ tipo: "listo" }); cuadro();
+    listo = true; aplicarCalidad(); acomodar(); pendientes.splice(0).forEach(atender); enviar({ tipo: "listo" }); cuadro();
   })();
 })();
