@@ -6,12 +6,14 @@ import { Ajustes, Admin } from "../pantallas/Ajustes";
 import { Catalogo, FichaJuego } from "../pantallas/Catalogo";
 import { PaginaConfigurar } from "../pantallas/ConfigurarPartida";
 import { Recompensas } from "../pantallas/Recompensas";
+import { AvisoLogro } from "../pantallas/AvisoLogro";
 import { EsperaLobby } from "../pantallas/lobby/EsperaLobby";
 import { ModosJuego } from "../pantallas/modos/ModosJuego";
 import { HubAzotea } from "../pantallas/azotea/HubAzotea";
 import { Editor, Personalizar, SincroCapsulas } from "../pantallas/Personalizar";
 import { Sala } from "../pantallas/Sala";
-import { Logros, Ranking } from "../pantallas/Social";
+import { Logros } from "../pantallas/logros/Logros";
+import { Ranking } from "../pantallas/ranking/Ranking";
 import { Perfil } from "../pantallas/perfil/Perfil";
 import { Tienda } from "../pantallas/Tienda";
 import { Avisos } from "../pantallas/comun";
@@ -56,5 +58,5 @@ export function App() {
     : ruta === "admin" ? <Admin />
     // HUB «La Azotea» (antes Hub.tsx; de ahí solo queda Jugar).
     : <HubAzotea />;
-  return <>{pantalla}{fase === "dentro" && <SincroCapsulas />}{fase === "dentro" && <Recompensas />}{!inicio && fase === "dentro" && invitado && ruta !== "tv" && ruta !== "editor" && <span className="a-prueba" aria-label="Estás en una entrada de prueba">Prueba</span>}<Avisos /></>;
+  return <>{pantalla}{fase === "dentro" && <SincroCapsulas />}{fase === "dentro" && <Recompensas />}{fase === "dentro" && ruta !== "tv" && <AvisoLogro />}{!inicio && fase === "dentro" && invitado && ruta !== "tv" && ruta !== "editor" && <span className="a-prueba" aria-label="Estás en una entrada de prueba">Prueba</span>}<Avisos /></>;
 }

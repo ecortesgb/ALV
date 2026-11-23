@@ -1,7 +1,7 @@
 # ALV — Amigos Legendarios Verdaderos
 ## Documento Maestro del Producto
-**Versión:** 1.53  
-**Última actualización:** 21 de noviembre de 2026  
+**Versión:** 1.54  
+**Última actualización:** 23 de noviembre de 2026  
 **Estado:** Documento vivo de producto; decisiones y propuestas identificadas por separado.
 
 ---
@@ -365,6 +365,7 @@ La lista de 6.2 incluía Botella, Micrófono, Votaciones y Tablero. La botella q
 - No se confunden los tres. Perder una ronda no quita XP ni monedas por sí mismo: las recompensas dependen de las reglas de cada juego.
 - No se confunde la puntuación de una ronda con el acumulado de la sesión: los puntos de cada ronda se suman al marcador de la sesión.
 - Los valores todavía no se definen; no hay cantidades definitivas.
+- **ACTUALIZADO (v1.54):** el ranking usa otra cosa, los **Puntos ALV** (14.3): 3, 2 y 1 por el lugar final de la partida. Los puntos competitivos de esta tabla deciden ese lugar; nunca se suman directo al ranking.
 - Resuelve el pendiente de 18 («si dentro de una partida se pueden perder puntos de ronda»): **sí**, los puntos competitivos de una ronda pueden ser negativos. La XP sigue sin descontarse (12.4).
 
 Estado de lo construido: la XP se calcula en `economia.ts` (terminar la partida, rondas jugadas, retos cumplidos y lugar) y se acredita en el servidor. **Las monedas no existen todavía.** El motor suma puntos por ronda y nunca da negativos. El ranking «Sesión» ordena por XP (C2). Una partida de menos de 5 rondas no da XP (C7).
@@ -707,7 +708,7 @@ Referencia de Elías: lámina de 12 pantallas (carga, registro, personalizar, me
 
 **DECISIÓN (v1.20, Elías aprobó, 15 de noviembre) — Fase 3, tanda 4: personalizador, colección y sobres.** Referencia: https://claude.ai/artifact/DLmnegsSqJy7mQ9aSKWjeF (fuente `alv2\fase3-t4\`). Cápsulas (tocar una la activa al instante), editor rápido (cara, pelo, playera, pantalón, accesorios, pose; al azar solo con piezas propias), taller completo de Minifig Studio, tienda (sobres de piezas y de contenido), apertura de sobre y mi colección. Decisiones, todas las recomendadas, que resuelven pendientes de 13: (1) sobres de piezas bronce 60 XP (nivel 1, 2 piezas), plata 120 (nivel 3, 3 piezas), oro 240 (nivel 6, 4 piezas); (2) sin repetidas: los sobres solo traen piezas que no se tienen y uno sin piezas nuevas no se vende; (3) cuatro rarezas solo de colección, común 60 %, rara 28 %, épica 10 %, legendaria 2 %, visibles antes de comprar; (4) sobres de contenido de 100 a 150 XP, con etiquetas de familiar, adulto e intensidad, válidos para toda la sala del dueño, y el contenido base siempre alcanza para jugar; (5) en el editor se ven las piezas que faltan, en gris y con el sobre donde salen; (6) el taller completo solo en tablet o computadora; en celular, el editor rápido.
 
-**DECISIÓN (v1.21, Elías aprobó, 15 de noviembre) — Fase 3, tanda 5: perfil, logros y rankings. Con esto la Fase 3 de ALV 2.0 queda cerrada.** Referencia: https://claude.ai/artifact/6kYG6Lr7vp7i1ynjx3aSYv (fuente `alv2\fase3-t5\`). Perfil con tarjeta de jugador (figura, nivel, título por nivel y números con siglas), logros de sesión e históricos con avance, y ranking con Esta reunión, Histórico, Parejas, Equipos e Historial. Decisiones, todas las recomendadas: (1) el perfil que ven los demás muestra figura, apodo, nivel, título, números, logros y últimas partidas, nunca fecha de nacimiento ni género; (2) el ranking histórico compara por defecto con «Mi grupo» (gente con la que se ha jugado), con «Todo ALV» y «Este mes» como filtros; (3) cada quien elige 3 logros destacados; (4) unos pocos logros secretos, visibles como «???» con pista; (5) los logros no dan XP; (6) la tarjeta usa siglas: PJ partidas jugadas, PG ganadas, RC retos cumplidos, MVP, IMP impostores atrapados, RAC mejor racha.
+**DECISIÓN (v1.21, Elías aprobó, 15 de noviembre) — Fase 3, tanda 5: perfil, logros y rankings. Con esto la Fase 3 de ALV 2.0 queda cerrada.** Referencia: https://claude.ai/artifact/6kYG6Lr7vp7i1ynjx3aSYv (fuente `alv2\fase3-t5\`). Perfil con tarjeta de jugador (figura, nivel, título por nivel y números con siglas), logros de sesión e históricos con avance, y ranking con Esta reunión, Histórico, Parejas, Equipos e Historial. Decisiones, todas las recomendadas: (1) el perfil que ven los demás muestra figura, apodo, nivel, título, números, logros y últimas partidas, nunca fecha de nacimiento ni género; (2) el ranking histórico compara por defecto con «Mi grupo» (gente con la que se ha jugado), con «Todo ALV» y «Este mes» como filtros; (3) cada quien elige 3 logros destacados; (4) unos pocos logros secretos, visibles como «???» con pista; (5) los logros no dan XP (ratificado en v1.54, D0); (6) la tarjeta usa siglas: PJ partidas jugadas, PG ganadas, RC retos cumplidos, MVP, IMP impostores atrapados, RAC mejor racha.
 
 ## 8.8 Propuesta de diseño Neon Party — PROPUESTA (v1.32)
 
@@ -1011,7 +1012,24 @@ Propuestas:
 
 XP acumulada y victorias deben ser rankings separados. No confundir clasificación histórica con podio de sesión.
 
-**DECISIÓN (v1.5):** existe la pestaña Ranking con Sesión (ordena podio y TOP), Histórico (XP acumulada), Parejas e Historial de partidas. Equipos se agrega cuando exista el modo por equipos; Logros, semanal y mensual siguen como propuesta.
+**DECISIÓN (v1.54, Elías, 23 de noviembre) — Ranking, Logros y Salón de la Fama.** Plan completo en `juegos-fiesta\ALV_PLAN_RANKING_LOGROS.md` (versión 2). Reemplaza las pestañas de v1.5 y v1.21 (ver abajo).
+- **D0.** Los logros no dan XP (se ratifica v1.21 (5)). Recompensas: insignias, títulos, marcos, accesorios, poses, efectos y piezas coleccionables. La XP no cambia por esta función. **D3:** el tope diario de 600 sigue igual.
+- **D1. MVP:** individual, el de más puntos de la partida; parejas o equipos, el de más puntos dentro del grupo ganador (con grupos empatados en 1.º, entre los integrantes de todos ellos). Empates: MVP compartido. Sin votación.
+- **D2. Temporada:** mes calendario en hora de México. Solo se reinicia el ranking de temporada; XP, niveles y logros se conservan. Campeones al Salón de la Fama.
+- **D4.** Parejas y equipos se reconocen por sus integrantes (etapa 1); nombre, color e insignia en la etapa 2. Sin equipos permanentes.
+- **D5.** El filtro «Mi grupo» se llama **«Amigos Legendarios Verdaderos»**: gente con la que compartiste sala. No hay sistema de amigos. Es el filtro por omisión.
+- **D6.** Reconocimientos por votación (más divertido, bromista, alma de la fiesta, «El impredecible de la noche») en la etapa 2.
+- **D7.** Bebidas: solo con Drunk, en tono de broma, sin XP, monedas, ventajas ni rankings competitivos; cada quien puede ocultarlas.
+- **D8.** Ranking Global y Amigos Legendarios Verdaderos, con filtro de temporada. Muestra posición, avatar, apodo, nivel y Puntos ALV. Solo cuentas registradas. Opción «Aparecer en el ranking Global», encendida por omisión.
+- **D9. Puntos ALV** (nombre nuevo para no chocar con los puntos competitivos de 6A.5): 1.º 3, 2.º 2, 3.º 1, resto 0. Empates comparten lugar y se salta el siguiente (1, 1, 3). Cuántos lugares puntúan sale de las unidades que compiten, con la misma regla de la XP (2–3: solo 1.º; 4–5: dos; 6+: tres). En parejas y equipos compite el grupo y cada integrante recibe los puntos de su grupo. ALVersus cuenta como equipos; los bandos no tienen ranking propio. Cuentan solo partidas terminadas con al menos la mitad de las rondas planeadas y un mínimo de 3, con 2 o más cuentas registradas; Bienvenida y la partida «copas» no cuentan. Los invitados ocupan lugar pero no aparecen ni ganan Puntos ALV. La racha solo mira partidas que dieron Puntos ALV.
+- **D10.** Azar: Ruleta, Dados HOT y Verdad o reto con dados o ruleta. Deducción: El impostor, ¿Quién es más probable? y Conoces a tu pareja.
+- **Pestañas.** Ranking: General, Individual, Parejas, Equipos, Torneos y Récords. Logros: Mi colección, Ocultos, Por minijuego, Colectivos, Objetivos y Recompensas. «Esta reunión» pasa a Torneos como **Torneo de la noche**; «Histórico» queda en General sin filtro de temporada; «Historial de partidas» pasa al Perfil (etapa 3).
+- **Etapas.** 1: resultados por jugador (migración 040), ranking individual, parejas, equipos, torneos simples (de la noche y los que abre el administrador), colección de logros visibles con 3 destacados y aviso de logro. 2: ocultos, logros de nivel, objetivos, votaciones, títulos, marcos e identidad de grupos. 3: temporada formal, Salón de la Fama, récords, recompensas especiales y estadísticas avanzadas.
+- **Pastilla PTS del HUB:** muestra los Puntos ALV de la temporada (reemplaza la PROPUESTA del 20 de noviembre que mostraba la XP total).
+- **PENDIENTE (etapa 3):** al borrar una cuenta, su lugar en el Salón de la Fama queda como «Jugador retirado», sin apodo ni figura. **PENDIENTE (etapa 2):** si los objetivos diarios dan XP.
+- Riesgo aceptado: el aparato que cierra la partida manda los resultados y el servidor los valida, como hoy la XP, hasta que el motor pase al servidor.
+
+**DECISIÓN (v1.5, REEMPLAZADA en v1.54):** existe la pestaña Ranking con Sesión (ordena podio y TOP), Histórico (XP acumulada), Parejas e Historial de partidas. Equipos se agrega cuando exista el modo por equipos; Logros, semanal y mensual siguen como propuesta.
 
 ---
 
@@ -1684,6 +1702,9 @@ Decisiones del usuario del 12 de noviembre de 2026:
 ## v1.6
 - Primeros logros (14.2), con ámbito de sesión o histórico (ver DECISIÓN v1.6 en 14.2).
 
+## v1.54
+- 23 nov 2026. Ranking, Logros y Salón de la Fama (14.3): D0–D10 de Elías y las decisiones técnicas del plan. Logros sin XP (ratifica v1.21), MVP por puntos, temporada mensual en hora de México, «Amigos Legendarios Verdaderos», Puntos ALV 3/2/1 con reglas de empate, partidas cortas y pocos jugadores, categorías de azar y deducción, pestañas nuevas (reemplazan v1.5), etapas 1–3, PTS del HUB con Puntos ALV. Aclaración en 6A.5: Puntos ALV y puntos competitivos son cosas distintas. Sin cambios de código ni base.
+
 ## v1.53
 - 21 nov 2026. Decir que no: con Drunk se bebe; sin Drunk, comodín, perder puntos (también el grupo) o comprar el comodín en vivo con monedas. Eventos sorpresa y ¿Voy a tener suerte? como interruptores aparte; el segundo deja de ser comodín. Anécdotas en pausa. Decir que no sin comodín resta lo que valía la carta; comodín suelto a 50 monedas (3.2). Elías aprobó el plan y el borrador; etapa 1 construida sin cambio visible: cada carta lleva nivel 1 a 3 en su eje y marca de contacto, 282 cartas nuevas (565 en total) que solo verán las partidas con Temperatura y Voltaje. Etapa 2 construida: sección «Intensidad» del configurador con termómetro, voltímetro e interruptor Drunk (apagado y nivel 1 por omisión), cada eje como techo, sin repetir cartas en la partida y conteo de cartas; lo adulto de fuera de las cartas se abre con nivel 3. Elías decidió nivel exacto (cada nivel solo sus cartas) y los castigos salen en cualquier nivel. Publicado en main.
 
@@ -1858,5 +1879,5 @@ Decisiones del usuario del 12 de noviembre de 2026:
 
 ---
 
-**Fin del Documento Maestro ALV v1.53**  
+**Fin del Documento Maestro ALV v1.54**  
 Este documento debe actualizarse de forma incremental y conservar la distinción entre decisiones aprobadas, propuestas, pendientes y descartadas.

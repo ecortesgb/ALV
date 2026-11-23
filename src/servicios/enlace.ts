@@ -16,7 +16,15 @@ export interface Miembro { id: string; nombre: string; figura: FiguraV2 | null; 
 export interface PartidaPub { id: string; juego: string; version: number; estado: Record<string, unknown>; terminada: boolean }
 export type TipoFila = "contestar" | "carta" | "pista" | "control";
 export interface FilaAccion { id: string; jugador: string; tipo: TipoFila; datos: Record<string, unknown>; creada: string }
-export interface ResultadoFinal { jugador: string; rondas: number; retos: number; lugar: number }
+/** `puntos` y `datos` van a `resultados_partida` (migración 040); el servidor recalcula lugar, Puntos ALV y MVP. */
+export interface ResultadoFinal { jugador: string; rondas: number; retos: number; lugar: number; puntos?: number; datos?: Record<string, unknown> }
+/** Ganadores de la noche para `guardar_copas` (040). */
+export interface CopasParaGuardar {
+  individual: { id: string; lugar: number; puntos: number }[];
+  parejas?: { nombre: string; jugadores: string[]; puntos: number }[];
+  equipos?: { nombre: string; jugadores: string[]; puntos: number }[];
+  alversus?: { nombre: string; jugadores: string[]; puntos: number }[];
+}
 
 export interface Enlace {
   abrir(modo: ModoSala): Promise<SalaV | string>;
@@ -37,6 +45,8 @@ export interface Enlace {
   acciones(partida: string): Promise<FilaAccion[]>;
   publicar(partida: string, version: number, estado: unknown, privados: Record<string, unknown>): Promise<void>;
   terminar(partida: string, juego: string, jugadores: number, resultados: ResultadoFinal[]): Promise<void>;
+  /** Guarda los ganadores de la noche y termina la partida «copas» (sin XP ni monedas). */
+  guardarCopas(partida: string, copas: CopasParaGuardar): Promise<void>;
   darXp(sala: SalaV, jugador: string, xp: number): Promise<boolean>;
   activarCapsula(n: number): Promise<void>;
   escuchar(sala: SalaV, alCambiar: () => void, alEstado?: (e: EstadoRed) => void): () => void;
@@ -186,6 +196,12 @@ const nube: Enlace = {
   async terminar(partida, juego, jugadores, resultados) {
     try { const r = await cliente!.rpc("terminar_partida_sala", { p_partida: partida, p_juego: juego, p_jugadores: jugadores, p_resultados: resultados }); if (r.error) log("terminar", r.error); } catch (e) { log("terminar", e); }
   },
+  async guardarCopas(partida, copas) {
+    try {
+      const r = await cliente!.rpc("guardar_copas", { p_partida: partida, p_copas: copas });
+      if (r.error && !esFalta(r.error)) log("guardarCopas", r.error);
+    } catch (e) { log("guardarCopas", e); }
+  },
   async darXp(sala, jugador, xp) {
     try { const r = await cliente!.rpc("dar_xp_reto", { p_evento: sala.id, p_jugador: jugador, p_xp: xp }); if (r.error) log("darXp", r.error); return !r.error; } catch (e) { log("darXp", e); return false; }
   },
@@ -281,6 +297,7 @@ const local: Enlace = {
     cambiar(t => { const p = porPartida(t, partida); if (!p || p.version > version) return; p.version = version; p.estado = estado as Record<string, unknown>; p.privados = privados as PartidaLocal["privados"]; });
   },
   async terminar(partida) { cambiar(t => { const p = porPartida(t, partida); if (p) p.terminada = true; }); },
+  async guardarCopas() { /* sin servidor las copas solo se ven en la ceremonia */ },
   async darXp() { return true; },
   async activarCapsula() { /* sin servidor no hay cápsulas en la nube */ },
   escuchar(_sala, alCambiar, alEstado) {

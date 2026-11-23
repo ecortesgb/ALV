@@ -61,13 +61,19 @@ const SONIDOS = {
   rara: [{ f: 659, t: 0, d: 0.1, tipo: "triangle" }, { f: 988, t: 0.09, d: 0.22, tipo: "triangle" }],
   epica: [{ f: 523, t: 0, d: 0.1, tipo: "triangle" }, { f: 784, t: 0.09, d: 0.1, tipo: "triangle" }, { f: 1047, t: 0.18, d: 0.3, tipo: "triangle" }, { f: 220, a: 880, t: 0, d: 0.3, tipo: "sawtooth", v: 0.03 }],
   legendaria: [{ f: 110, a: 55, t: 0, d: 0.5, tipo: "sine", v: 0.12 }, { f: 523, t: 0.1, d: 0.12 }, { f: 659, t: 0.22, d: 0.12 }, { f: 784, t: 0.34, d: 0.12 }, { f: 1047, t: 0.46, d: 0.5 }, { f: 1319, t: 0.46, d: 0.5, tipo: "triangle", v: 0.05 }],
+  // ---- Aviso de logro (Ranking y Logros) ----
+  /** Logro: «ding» suave de dos tonos con brillo. */
+  logro: [{ f: 880, t: 0, d: 0.12, tipo: "sine", v: 0.07 }, { f: 1319, t: 0.1, d: 0.3, tipo: "sine", v: 0.07 }, { f: 2637, t: 0.1, d: 0.18, tipo: "triangle", v: 0.02 }],
+  /** Logro legendario: subida con acorde final. */
+  logroLegendario: [{ f: 659, t: 0, d: 0.1, tipo: "sine", v: 0.07 }, { f: 880, t: 0.09, d: 0.1, tipo: "sine", v: 0.07 }, { f: 1319, t: 0.18, d: 0.45, tipo: "sine", v: 0.07 },
+    { f: 1047, t: 0.18, d: 0.45, tipo: "triangle", v: 0.04 }, { f: 2637, t: 0.22, d: 0.3, tipo: "triangle", v: 0.02 }],
 } satisfies Record<string, Nota[]>;
 
 export type Sonido = keyof typeof SONIDOS;
 
 /** Momentos que además vibran (si el aparato vibra y la vibración está encendida), aunque el sonido esté apagado. */
 const VIBRA: Partial<Record<Sonido, number | number[]>> = {
-  tiempo: [120, 80, 120], revelar: 60, exito: [40, 40, 80], error: [90, 50, 90], poder: 50, fanfarria: [60, 40, 60, 40, 120], legendaria: [80, 50, 160],
+  tiempo: [120, 80, 120], revelar: 60, exito: [40, 40, 80], error: [90, 50, 90], poder: 50, fanfarria: [60, 40, 60, 40, 120], legendaria: [80, 50, 160], logro: 40, logroLegendario: [60, 40, 120],
 };
 
 // Clic de botones con el audio de Elías (public/audio/clic.mp3). Mientras carga (o si falla) suena el clic sintético.

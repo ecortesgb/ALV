@@ -8,6 +8,7 @@ import { costoNivel, xpParaNivel } from "../engine/economia";
 import { useSesion } from "../app/sesion";
 import { ir } from "../app/rutas";
 import { cargarTienda, useTienda } from "../servicios/tienda";
+import { useMisPuntos } from "../servicios/ranking";
 import "./recursos.css";
 
 const num = (n: number) => Math.max(0, Math.round(n)).toLocaleString("es-MX");
@@ -19,7 +20,9 @@ export function useRecursos() {
   const t = useTienda();
   useEffect(() => { if (s.fase === "dentro" && !pedida) { pedida = true; void cargarTienda(); } }, [s.fase]);
   const base = xpParaNivel(s.nivel), costo = costoNivel(s.nivel);
-  return { nivel: s.nivel, xp: Math.max(0, s.acumulada - base), costo, monedas: t.monedas, monedasListas: t.activa, puntos: s.acumulada };
+  // PTS = Puntos ALV de la temporada (Maestro v1.54, T10); mientras se leen, 0.
+  const pa = useMisPuntos();
+  return { nivel: s.nivel, xp: Math.max(0, s.acumulada - base), costo, monedas: t.monedas, monedasListas: t.activa, puntos: pa ?? 0 };
 }
 
 const ico = (n: "xp" | "moneda" | "puntos") => `${import.meta.env.BASE_URL}arte/ui/icono-${n}.webp`;

@@ -6,6 +6,7 @@
 // para poder correrla también en el servidor. Aquí quedan los timers, la hora del aparato y el enlace con la base.
 import { useEffect, useRef } from "react";
 import { resultados } from "../../engine/partida";
+import { datosDeRepeticion, datosPorJugador } from "../../engine/estadisticas";
 import { armarArranque, ESPERA_MS, idAutoRevelar, idTiempo, paraPublicar, reconstruir, relojLogico, SUSPENSO_MS } from "../../engine/nucleo";
 import { enlace, type Miembro, type PartidaPub, type SalaV } from "../../servicios/enlace";
 import type { OpcionesPartida } from "../../engine/types";
@@ -42,7 +43,8 @@ export function useMotor(sala: SalaV | null, partida: PartidaPub | null, activo:
         const m = ref.current;
         if (m.id !== partida.id) { clearTimeout(m.suspenso); clearTimeout(m.tiempo); ref.current = { id: partida.id, publicada: 0, reloj: null, espera: null, cerrada: false }; }
         const yo = ref.current;
-        const e = reconstruir(await enlace.acciones(partida.id), sala.anfitrionId);
+        const filas = await enlace.acciones(partida.id);
+        const e = reconstruir(filas, sala.anfitrionId);
         if (!e || yo.cerrada) return;
         const { claveReloj, conReloj, listos, hayEspera, claveEspera, claveTurno } = relojLogico(e);
         // Temporizador por turno: cuando cambia el turno se rearma; al vencer se manda «tiempo» (el mismo id en cada aparato).
@@ -64,7 +66,11 @@ export function useMotor(sala: SalaV | null, partida: PartidaPub | null, activo:
         if (listos) yo.suspenso = setTimeout(() => { void enlace.enviar(partida.id, idAutoRevelar(partida.id, e), "control", { que: "revelar" }); }, SUSPENSO_MS);
         if (e.fase === "terminada") {
           yo.cerrada = true;
-          await enlace.terminar(partida.id, e.juegoId, e.cfg.jugadores.length, resultados(e).map(r => ({ jugador: r.jugador, rondas: r.rondas, retos: r.retos, lugar: r.lugar })));
+          const datos = datosPorJugador(e), rep = datosDeRepeticion(filas, sala.anfitrionId);
+          for (const [j, x] of Object.entries(rep)) datos[j] = { ...datos[j], ...x };
+          await enlace.terminar(partida.id, e.juegoId, e.cfg.jugadores.length, resultados(e).map(r => ({
+            jugador: r.jugador, rondas: r.rondas, retos: r.retos, lugar: r.lugar, puntos: r.puntos, ...(datos[r.jugador] ? { datos: { ...datos[r.jugador] } } : {}),
+          })));
           alTerminar?.();
         }
       } finally {
@@ -99,5 +105,12 @@ export async function entregarCopas(sala: SalaV, miembros: Miembro[]): Promise<b
     contestaron: [], esperados: [], cartasEnMano: {}, pistas: {}, xpReto: {}, ausentes: [], esperas: 0, pausada: false, copas,
   };
   await enlace.publicar(id, 1, estado, {});
+  // 040: los ganadores quedan guardados y la partida «copas» se termina.
+  await enlace.guardarCopas(id, {
+    individual: copas.individual.map(l => ({ id: l.id, lugar: l.lugar, puntos: l.puntos })),
+    ...(copas.parejas ? { parejas: copas.parejas.map(g => ({ nombre: g.nombre, jugadores: g.jugadores, puntos: g.puntos })) } : {}),
+    ...(copas.equipos ? { equipos: copas.equipos.map(g => ({ nombre: g.nombre, jugadores: g.jugadores, puntos: g.puntos })) } : {}),
+    ...(copas.alversus ? { alversus: copas.alversus.map(g => ({ nombre: g.nombre, jugadores: g.jugadores, puntos: g.puntos })) } : {}),
+  });
   return true;
 }

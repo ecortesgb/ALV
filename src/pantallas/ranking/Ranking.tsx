@@ -1,0 +1,266 @@
+// Ranking «salón de campeones» (ALV_PLAN_RANKING_LOGROS.md v2, etapa 1; Maestro v1.54, 14.3).
+// Mismo lenguaje que el HUB «La Azotea» y el Perfil: fondo de la azotea por hora, Atrás, recursos, vidrio oscuro.
+// Datos: ranking_jugadores y ranking_grupos (040). Los Puntos ALV los calcula el servidor.
+// Trofeos, medallas y podio son imágenes de Elías (public/arte/ui/ranking/*.webp); mientras no llegan se usa el icono
+// de puntos del HUB y el podio va sin ilustración. Posiciones, nombres y números son interfaz.
+import { useEffect, useMemo, useState, type CSSProperties } from "react";
+import { apodoDe, semillaDe, useFoto } from "../../app/figura3d";
+import { atras } from "../../app/rutas";
+import { useSesion } from "../../app/sesion";
+import { tituloPorNivel } from "../../engine/economia";
+import { CATEGORIAS, fijarRankingGlobal, leerRankingGlobal, ordenarPor, rankingGrupos, rankingJugadores, cargarMisPuntos,
+  type Categoria, type FilaGrupo, type FilaJugador, type FiltroRanking } from "../../servicios/ranking";
+import { Marco, aviso, useAncho } from "../comun";
+import { useRecursos } from "../Recursos";
+import { RecursosAzotea, arteHub } from "../azotea/Cabecera";
+import { EscenarioFondo } from "../azotea/Escenario";
+import { useMomentoAzotea } from "../azotea/HubAzotea";
+import { escenarioActual } from "../azotea/paquetes";
+import "../azotea/azotea.css";
+import "../perfil/perfil.css";
+import "./ranking.css";
+
+const BASE = import.meta.env.BASE_URL;
+const num = (n: number) => Math.max(0, Math.round(n)).toLocaleString("es-MX");
+const MES = () => new Date().toLocaleDateString("es-MX", { month: "long", timeZone: "America/Mexico_City" });
+
+type Pestana = "general" | "individual" | "parejas" | "equipos" | "torneos" | "records";
+const PESTANAS: { id: Pestana; titulo: string; pronto?: string }[] = [
+  { id: "general", titulo: "General" }, { id: "individual", titulo: "Individual" }, { id: "parejas", titulo: "Parejas" },
+  { id: "equipos", titulo: "Equipos" }, { id: "torneos", titulo: "Torneos", pronto: "Muy pronto" }, { id: "records", titulo: "Récords", pronto: "Próximamente" },
+];
+
+// Arte de Elías con respaldo: si la imagen no existe, se usa la otra (o nada).
+const faltan = new Set<string>();
+function Arte({ nombre, alterno, className = "" }: { nombre: string; alterno?: string; className?: string }) {
+  const [falta, setFalta] = useState(() => faltan.has(nombre));
+  if (falta && !alterno) return null;
+  return <img className={className} src={falta ? alterno : `${BASE}arte/ui/ranking/${nombre}.webp`} alt="" draggable={false}
+    onError={() => { if (!falta) { faltan.add(nombre); setFalta(true); } }} />;
+}
+const MEDALLA = ["medalla-oro", "medalla-plata", "medalla-bronce"] as const;
+
+// Flechas de subida o bajada: comparan con la última vez que se abrió esta vista en el aparato.
+const claveVista = (uid: string, v: string) => `alv-ranking-${uid.replace(/[^a-zA-Z0-9_-]/g, "").slice(0, 40)}-${v}`;
+function leerPrevias(clave: string): Record<string, number> {
+  try { return JSON.parse(localStorage.getItem(clave) ?? "{}") as Record<string, number>; } catch { return {}; }
+}
+function guardarPrevias(clave: string, pos: Record<string, number>) { try { localStorage.setItem(clave, JSON.stringify(pos)); } catch { /* sin almacenamiento */ } }
+
+export function Ranking() {
+  const s = useSesion();
+  const r = useRecursos();
+  const ancho = useAncho();
+  const momento = useMomentoAzotea();
+  const esc = escenarioActual();
+  const [pestana, setPestana] = useState<Pestana>("general");
+  const [filtro, setFiltro] = useState<FiltroRanking>("amigos");
+  const [temporada, setTemporada] = useState(true);
+  const [cat, setCat] = useState<Categoria>("puntos");
+  const [jugadores, setJugadores] = useState<FilaJugador[] | null | undefined>(undefined);
+  const [grupos, setGrupos] = useState<FilaGrupo[] | null | undefined>(undefined);
+  const [enGlobal, setEnGlobal] = useState<boolean | null>(null);
+
+  useEffect(() => { void leerRankingGlobal().then(setEnGlobal); }, [s.uid]);
+  useEffect(() => {
+    if (pestana !== "general" && pestana !== "individual") return;
+    let vivo = true; setJugadores(undefined);
+    void rankingJugadores(filtro, temporada).then(f => { if (vivo) setJugadores(f); });
+    return () => { vivo = false; };
+  }, [pestana === "general" || pestana === "individual", filtro, temporada]);
+  useEffect(() => {
+    if (pestana !== "parejas" && pestana !== "equipos") return;
+    let vivo = true; setGrupos(undefined);
+    void rankingGrupos(pestana, filtro, temporada).then(f => { if (vivo) setGrupos(f); });
+    return () => { vivo = false; };
+  }, [pestana, filtro, temporada]);
+  useEffect(() => { void cargarMisPuntos(); }, []);
+
+  const alternarGlobal = async () => {
+    const nuevo = !(enGlobal ?? true);
+    if (await fijarRankingGlobal(nuevo)) { setEnGlobal(nuevo); aviso(nuevo ? "Ya apareces en el ranking Global." : "Ya no apareces en el Global. Tus amigos te siguen viendo."); }
+    else aviso("No se pudo cambiar. Intenta de nuevo.");
+  };
+
+  const etiquetaTemporada = temporada ? `Temporada de ${MES()}` : "Histórico";
+  return (
+    <Marco clase={`az pf rk m-${momento}`} fondo={<EscenarioFondo ambiente={esc.ambientes[momento]} momento={momento} velo={Math.max(esc.velo, .45)} />}>
+      <div className="rk-caja">
+        <header className="pf-top rk-top">
+          <button type="button" className="pf-atras" onClick={atras}><span aria-hidden="true">◀</span>Atrás</button>
+          <RecursosAzotea monedas={r.monedas} puntos={r.puntos} />
+        </header>
+
+        <h1 className="rk-titulo"><span>Salón de campeones</span></h1>
+
+        <nav className="rk-pestanas" aria-label="Secciones del ranking">
+          {PESTANAS.map(p => (
+            <button key={p.id} type="button" className={"rk-pest" + (pestana === p.id ? " si" : "") + (p.pronto ? " pronto" : "")}
+              aria-pressed={pestana === p.id} onClick={() => setPestana(p.id)}>
+              <Arte nombre={`tab-${p.id}`} className="rk-pest-ico" />
+              <span>{p.titulo}</span>
+              {p.pronto && <small>{p.pronto}</small>}
+            </button>
+          ))}
+        </nav>
+
+        {!PESTANAS.find(p => p.id === pestana)!.pronto && (
+          <div className="rk-filtros">
+            <div className="rk-seg" role="group" aria-label="Con quién comparar">
+              <button type="button" className={filtro === "amigos" ? "si" : ""} aria-pressed={filtro === "amigos"} onClick={() => setFiltro("amigos")}>Amigos Legendarios Verdaderos</button>
+              <button type="button" className={filtro === "global" ? "si" : ""} aria-pressed={filtro === "global"} onClick={() => setFiltro("global")}>Global</button>
+            </div>
+            <div className="rk-seg" role="group" aria-label="Periodo">
+              <button type="button" className={temporada ? "si" : ""} aria-pressed={temporada} onClick={() => setTemporada(true)}>Temporada</button>
+              <button type="button" className={!temporada ? "si" : ""} aria-pressed={!temporada} onClick={() => setTemporada(false)}>Histórico</button>
+            </div>
+          </div>
+        )}
+
+        {(pestana === "general" || pestana === "individual") && (
+          <Jugadores filas={jugadores} cat={pestana === "general" ? "puntos" : cat} conCategorias={pestana === "individual"} alCat={setCat}
+            yo={s.uid} vista={`${pestana}-${pestana === "general" ? "puntos" : cat}-${filtro}-${temporada ? "t" : "h"}`} etiqueta={etiquetaTemporada} ancho={ancho} />
+        )}
+        {(pestana === "parejas" || pestana === "equipos") && <Grupos filas={grupos} modalidad={pestana} yo={s.uid} etiqueta={etiquetaTemporada} />}
+        {pestana === "torneos" && (
+          <Pronto titulo="Torneos" texto="Aquí vas a ver el torneo de la noche en vivo y los torneos que abra el administrador, con su tabla y cuánto falta para terminar." />
+        )}
+        {pestana === "records" && (
+          <Pronto titulo="Récords" texto="Rey del caos, El incansable, El noctámbulo y más. Ya se están guardando los datos de cada partida, así que nada se pierde." />
+        )}
+
+        {filtro === "global" && enGlobal !== null && !PESTANAS.find(p => p.id === pestana)!.pronto && (
+          <p className="rk-privacidad">
+            {enGlobal ? "Apareces en el ranking Global." : "No apareces en el Global; solo te ven tus Amigos Legendarios Verdaderos."}
+            <button type="button" onClick={() => void alternarGlobal()}>{enGlobal ? "Ocultarme" : "Aparecer"}</button>
+          </p>
+        )}
+      </div>
+    </Marco>
+  );
+}
+
+function Pronto({ titulo, texto }: { titulo: string; texto: string }) {
+  return (
+    <section className="pf-bloque rk-pronto" aria-label={titulo}>
+      <h2 className="pf-tit"><span>{titulo}</span><span className="pf-pronto">Próximamente</span></h2>
+      <p className="pf-suave">{texto}</p>
+    </section>
+  );
+}
+
+/** Ranking individual: podio con los tres primeros y la tabla. */
+function Jugadores({ filas, cat, conCategorias, alCat, yo, vista, etiqueta, ancho }: {
+  filas: FilaJugador[] | null | undefined; cat: Categoria; conCategorias: boolean; alCat: (c: Categoria) => void;
+  yo: string; vista: string; etiqueta: string; ancho: boolean;
+}) {
+  const orden = useMemo(() => (filas ? ordenarPor(filas, cat) : []), [filas, cat]);
+  const def = CATEGORIAS.find(c => c.id === cat)!;
+  const clave = claveVista(yo, vista);
+  const [previas] = useState(() => leerPrevias(clave));
+  useEffect(() => { if (orden.length) guardarPrevias(clave, Object.fromEntries(orden.map(f => [f.id, f.lugar]))); }, [orden, clave]);
+
+  const conValor = orden.filter(f => f.valor > 0);
+  const mia = orden.find(f => f.id === yo);
+  const visibles = orden.slice(0, ancho ? 20 : 15);
+  const miaFuera = mia && !visibles.some(f => f.id === yo);
+
+  return (
+    <>
+      {conCategorias && (
+        <div className="rk-cats" role="group" aria-label="Categoría">
+          {CATEGORIAS.map(c => <button key={c.id} type="button" className={c.id === cat ? "si" : ""} aria-pressed={c.id === cat} onClick={() => alCat(c.id)}>{c.titulo}</button>)}
+        </div>
+      )}
+      {filas === undefined ? <p className="rk-cargando" role="status">Leyendo el ranking…</p>
+        : filas === null ? <p className="rk-cargando" role="status">No se pudo leer el ranking. Revisa tu conexión.</p>
+        : !conValor.length ? (
+          <section className="pf-bloque rk-vacio"><p className="pf-suave">Todavía nadie suma en «{def.titulo}» ({etiqueta.toLowerCase()}). El primer lugar está libre: termina una partida.</p></section>
+        ) : (
+          <>
+            <Podio filas={conValor.slice(0, 3)} unidad={def.unidad} yo={yo} />
+            <section className="pf-bloque rk-tabla-caja" aria-label={`${def.titulo}, ${etiqueta}`}>
+              <h2 className="pf-tit"><span>{def.titulo}</span><small className="rk-periodo">{etiqueta}</small></h2>
+              <ol className="rk-tabla">
+                {visibles.map(f => <Fila key={f.id} f={f} unidad={def.unidad} yo={yo} antes={previas[f.id]} />)}
+                {miaFuera && <><li className="rk-salto" aria-hidden="true">···</li><Fila f={mia} unidad={def.unidad} yo={yo} antes={previas[mia.id]} /></>}
+              </ol>
+            </section>
+          </>
+        )}
+    </>
+  );
+}
+
+function Retrato({ f, grande }: { f: Pick<FilaJugador, "id" | "figura">; grande?: boolean }) {
+  const url = useFoto(f.figura, f.figura ? undefined : semillaDe(f.id), grande ? "cuerpo" : "busto");
+  return <span className={grande ? "rk-cuerpo" : "rk-retrato"}>{url ? <img src={url} alt="" draggable={false} /> : <span className="rk-sin-foto" />}</span>;
+}
+
+function Podio({ filas, unidad, yo }: { filas: (FilaJugador & { lugar: number; valor: number })[]; unidad: string; yo: string }) {
+  // Orden visual: 2.º, 1.º, 3.º
+  const lugares = [filas[1], filas[0], filas[2]];
+  return (
+    <section className="rk-podio" aria-label="Podio">
+      <Arte nombre="podio" className="rk-podio-img" />
+      {lugares.map((f, i) => {
+        const puesto = i === 1 ? 1 : i === 0 ? 2 : 3;
+        if (!f) return <span key={i} className={`rk-escalon p${puesto} vacio`} />;
+        return (
+          <div key={f.id} className={`rk-escalon p${puesto}` + (f.id === yo ? " yo" : "")} style={{ "--i": i } as CSSProperties}>
+            {puesto === 1 && <span className="rk-rayos" aria-hidden="true" />}
+            <Retrato f={f} grande />
+            <div className="rk-placa">
+              <Arte nombre={MEDALLA[f.lugar - 1] ?? "medalla-bronce"} alterno={arteHub("puntos")} className="rk-medalla" />
+              <b>{apodoDe(f.figura) ?? f.nombre}</b>
+              <small>{num(f.valor)} {unidad}</small>
+            </div>
+          </div>
+        );
+      })}
+    </section>
+  );
+}
+
+function Fila({ f, unidad, yo, antes }: { f: FilaJugador & { lugar: number; valor: number }; unidad: string; yo: string; antes?: number }) {
+  const cambio = antes == null ? 0 : antes - f.lugar;
+  const apodo = apodoDe(f.figura);
+  return (
+    <li className={"rk-fila" + (f.id === yo ? " yo" : "") + (f.lugar <= 3 && f.valor > 0 ? ` top${f.lugar}` : "")}>
+      <span className="rk-pos">{f.lugar <= 3 && f.valor > 0 ? <Arte nombre={MEDALLA[f.lugar - 1]!} alterno={arteHub("puntos")} className="rk-medalla-chica" /> : null}<b>{f.lugar}</b></span>
+      <Retrato f={f} />
+      <span className="rk-nombre">
+        <b>{apodo ?? f.nombre}{f.id === yo && <em>Tú</em>}</b>
+        <small>{apodo ? `@${f.nombre} · ` : ""}Niv. {f.nivel} · {tituloPorNivel(f.nivel)}</small>
+      </span>
+      {cambio !== 0 && <span className={"rk-cambio " + (cambio > 0 ? "sube" : "baja")} aria-label={cambio > 0 ? `Subió ${cambio}` : `Bajó ${-cambio}`}>
+        <Arte nombre={cambio > 0 ? "flecha-sube" : "flecha-baja"} className="rk-flecha" /><span aria-hidden="true">{cambio > 0 ? "▲" : "▼"}{Math.abs(cambio)}</span>
+      </span>}
+      <span className="rk-valor"><b>{num(f.valor)}</b><small>{unidad}</small></span>
+    </li>
+  );
+}
+
+function Grupos({ filas, modalidad, yo, etiqueta }: { filas: FilaGrupo[] | null | undefined; modalidad: "parejas" | "equipos"; yo: string; etiqueta: string }) {
+  if (filas === undefined) return <p className="rk-cargando" role="status">Leyendo el ranking…</p>;
+  if (filas === null) return <p className="rk-cargando" role="status">No se pudo leer el ranking. Revisa tu conexión.</p>;
+  const titulo = modalidad === "parejas" ? "Mejores parejas" : "Mejores equipos";
+  if (!filas.length) return <section className="pf-bloque rk-vacio"><p className="pf-suave">Todavía no hay {modalidad} con partidas ({etiqueta.toLowerCase()}). Jueguen una partida {modalidad === "parejas" ? "en parejas" : "por equipos"} para estrenar esta tabla.</p></section>;
+  return (
+    <section className="pf-bloque rk-tabla-caja" aria-label={`${titulo}, ${etiqueta}`}>
+      <h2 className="pf-tit"><span>{titulo}</span><small className="rk-periodo">{etiqueta}</small></h2>
+      <ol className="rk-tabla">
+        {filas.map(g => (
+          <li key={g.integrantes.join("+")} className={"rk-fila grupo" + (g.integrantes.includes(yo) ? " yo" : "") + (g.posicion <= 3 ? ` top${g.posicion}` : "")}>
+            <span className="rk-pos">{g.posicion <= 3 ? <Arte nombre={MEDALLA[g.posicion - 1]!} alterno={arteHub("puntos")} className="rk-medalla-chica" /> : null}<b>{g.posicion}</b></span>
+            <span className="rk-nombre">
+              <b>{g.nombres.join(" + ")}</b>
+              <small>{g.victorias} {g.victorias === 1 ? "victoria" : "victorias"} · {g.partidas} {g.partidas === 1 ? "partida" : "partidas"} · {g.porcentaje}%{g.racha > 1 ? ` · racha de ${g.racha}` : ""}</small>
+            </span>
+            <span className="rk-valor"><b>{num(g.puntos_alv)}</b><small>PA</small></span>
+          </li>
+        ))}
+      </ol>
+    </section>
+  );
+}
