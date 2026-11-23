@@ -1,6 +1,6 @@
 # ALV — Amigos Legendarios Verdaderos
 ## Documento Maestro del Producto
-**Versión:** 1.54  
+**Versión:** 1.55  
 **Última actualización:** 23 de noviembre de 2026  
 **Estado:** Documento vivo de producto; decisiones y propuestas identificadas por separado.
 
@@ -1029,6 +1029,14 @@ XP acumulada y victorias deben ser rankings separados. No confundir clasificaci�
 - **PENDIENTE (etapa 3):** al borrar una cuenta, su lugar en el Salón de la Fama queda como «Jugador retirado», sin apodo ni figura. **PENDIENTE (etapa 2):** si los objetivos diarios dan XP.
 - Riesgo aceptado: el aparato que cierra la partida manda los resultados y el servidor los valida, como hoy la XP, hasta que el motor pase al servidor.
 
+**DECISIÓN (v1.55, Elías: «sigue con la etapa 2, publicar directo») — Ranking y Logros, etapa 2 (migración 043).**
+- Logros ocultos: «¿Y tú qué haces aquí?», «El sospechoso habitual», «El intocable», «El noctámbulo» y «Caos absoluto»; se ven como silueta con pista hasta ganarlos. «Fantasma», «Última esperanza» y «No era personal» del plan no se pueden medir con lo que guarda el motor; «El intocable» (gana 3 veces siendo impostor) toma uno de esos lugares.
+- Progresión: «Leyenda local» (nivel 10), «ALV Legendario» (nivel 20) y «Constante» (10 objetivos). Total: 27 logros. Siguen sin XP (D0).
+- **PROPUESTA (valores):** objetivos del día (juega 3 partidas 100 XP, gana una 100, prueba un juego nuevo 150, juega con 3 personas 200) y de la semana (gana 5 300, juega 15 300, MVP 3 veces 250), en hora de México, cobrados a mano y dentro del tope de 600 XP al día. Resuelve T16 con los valores del encargo; Elías puede cambiarlos.
+- Votaciones de la noche (D6): más divertido, el bromista, alma de la fiesta y el impredecible de la noche; desde Ranking → Torneos mientras la sala está abierta o hasta 24 h después; nadie vota por sí mismo; no se dice quién votó. Ranking de reconocimientos en Individual.
+- Título y marco: cada logro ganado da su nombre como título y su marco por rareza; uno en uso; se ve en el Ranking.
+- Identidad de parejas y equipos (D4 etapa 2): nombre, color y emoji, que pone cualquier integrante.
+
 **DECISIÓN (v1.5, REEMPLAZADA en v1.54):** existe la pestaña Ranking con Sesión (ordena podio y TOP), Histórico (XP acumulada), Parejas e Historial de partidas. Equipos se agrega cuando exista el modo por equipos; Logros, semanal y mensual siguen como propuesta.
 
 ---
@@ -1702,6 +1710,9 @@ Decisiones del usuario del 12 de noviembre de 2026:
 ## v1.6
 - Primeros logros (14.2), con ámbito de sesión o histórico (ver DECISIÓN v1.6 en 14.2).
 
+## v1.55
+- 23 nov 2026. Ranking y Logros, etapa 2 (14.3): logros ocultos y de progresión, objetivos del día y de la semana (valores PROPUESTA), votaciones de la noche, título y marco por logro, identidad de parejas y equipos. Migración 043 aplicada; código publicado.
+
 ## v1.54
 - 23 nov 2026. Ranking, Logros y Salón de la Fama (14.3): D0–D10 de Elías y las decisiones técnicas del plan. Logros sin XP (ratifica v1.21), MVP por puntos, temporada mensual en hora de México, «Amigos Legendarios Verdaderos», Puntos ALV 3/2/1 con reglas de empate, partidas cortas y pocos jugadores, categorías de azar y deducción, pestañas nuevas (reemplazan v1.5), etapas 1–3, PTS del HUB con Puntos ALV. Aclaración en 6A.5: Puntos ALV y puntos competitivos son cosas distintas. Sin cambios de código ni base.
 
@@ -1879,5 +1890,5 @@ Decisiones del usuario del 12 de noviembre de 2026:
 
 ---
 
-**Fin del Documento Maestro ALV v1.54**  
+**Fin del Documento Maestro ALV v1.55**  
 Este documento debe actualizarse de forma incremental y conservar la distinción entre decisiones aprobadas, propuestas, pendientes y descartadas.
