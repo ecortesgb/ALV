@@ -17,7 +17,7 @@ import "./logros/logros.css";
 import "./aviso-logro.css";
 
 export interface AvisoItem {
-  tipo?: "logro" | "reto" | "nivel" | "mas";
+  tipo?: "logro" | "reto" | "objetivo" | "nivel" | "mas";
   clave?: string; nombre: string; rareza?: Rareza; recompensa?: string | null; quien?: string; oculto?: boolean;
 }
 const ESPERA = 400;
@@ -97,7 +97,7 @@ export function AvisoLogro() {
   const inicio = useRef<number | null>(null);
   if (!actual) return null;
   const a = actual;
-  const etiqueta = a.tipo === "mas" ? "Más logros" : a.tipo === "reto" ? "Reto completado" : a.tipo === "nivel" ? "¡Subiste de nivel!" : "Logro desbloqueado";
+  const etiqueta = a.tipo === "mas" ? "Más logros" : a.tipo === "reto" ? "Reto completado" : a.tipo === "objetivo" ? "Objetivo cumplido" : a.tipo === "nivel" ? "¡Subiste de nivel!" : "Logro desbloqueado";
   const rareza = a.rareza ?? "comun";
   return createPortal(
     <div className={`D az al r-${rareza}` + (saliendo ? " sale" : "") + (a.oculto ? " oculto" : "")} role="status" aria-live="polite">

@@ -13,11 +13,18 @@ const bloque = bloqueDe("042_logros.sql") + bloqueDe("041_torneos.sql");
 const filas = [...bloque.matchAll(/\(\s*'([a-z0-9-]+)',\s*'([a-z]+)',\s*(null|'[a-z0-9-]+'),\s*'([a-z]+)',\s*'([^']+)',\s*'([^']+)',\s*(\d+),\s*'([^']+)',\s*(\d+)\)/g)]
   .map(m => ({ clave: m[1], categoria: m[2], juego: m[3] === "null" ? null : m[3]!.slice(1, -1), rareza: m[4], nombre: m[5], descripcion: m[6], meta: Number(m[7]), recompensa: m[8], orden: Number(m[9]) }));
 
-describe("catálogo de logros = migraciones 042 y 041", () => {
+describe("catálogo de logros = migraciones 042, 041 y 043", () => {
   it("mismos logros, mismos datos", () => {
     expect(filas.length).toBe(19);
     const orden = (xs: { orden: number }[]) => [...xs].sort((a, b) => a.orden - b.orden);
-    expect(orden(filas)).toEqual(orden(LOGROS_ETAPA1));
+    expect(orden(filas)).toEqual(orden(LOGROS_ETAPA1.filter(l => l.orden < 300)));
+  });
+  it("los 8 de la etapa 2 son los de la 043", () => {
+    const sql = readFileSync(join(__dirname, "../../supabase/migrations/043_logros_etapa2.sql"), "utf8");
+    const i = sql.indexOf("insert into public.logros ("), b = sql.slice(i, sql.indexOf(";", i));
+    const claves = [...b.matchAll(/\(\s*'([a-z0-9-]+)',\s*'(oculto|progresion)'/g)].map(m => m[1]);
+    expect(claves).toEqual(LOGROS_ETAPA1.filter(l => l.orden > 300).map(l => l.clave));
+    for (const l of LOGROS_ETAPA1.filter(x => x.oculto)) expect(b).toContain(`'${l.nombre}'`);
   });
   it("ningún logro da XP ni habla de beber", () => {
     for (const l of LOGROS_ETAPA1) {

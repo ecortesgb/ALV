@@ -117,3 +117,28 @@
   .D .lg-rejilla li, .D.lg-capa, .D .lg-detalle { animation: none; }
   .D .lg-barra i { transition: none; }
 }
+
+/* ---------- Etapa 2: ocultos, objetivos y títulos ---------- */
+.D .lg-pista { font: 700 11px/1.3 var(--f-texto); color: #c9b6ff; font-style: italic; }
+.D .lg-interroga { position: relative; font: 400 34px/1 var(--f-titulo); color: rgba(201, 182, 255, .75); text-shadow: 0 0 14px rgba(163, 92, 255, .6); }
+.D .lg-insignia.grande .lg-interroga { font-size: 58px; }
+.D .lg-insignia.secreto::before { opacity: .35; background: radial-gradient(closest-side, rgba(163, 92, 255, .6), transparent 75%); }
+.D .lg-nota { margin: 0; text-align: center; font: 600 12px/1.4 var(--f-texto); color: var(--texto-2); }
+.D .lg-obj-lista { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.D .lg-obj { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 14px; background: rgba(255, 255, 255, .045); border: 1px solid rgba(255, 255, 255, .08); }
+.D .lg-obj.listo { border-color: rgba(127, 247, 160, .55); background: linear-gradient(90deg, rgba(127, 247, 160, .14), rgba(255, 255, 255, .03)); }
+.D .lg-obj.cobrado { opacity: .7; }
+.D .lg-obj-txt { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+.D .lg-obj-txt b { font: 400 16px/1.15 var(--f-titulo); letter-spacing: .02em; }
+.D .lg-obj-xp { flex: none; font: 400 16px/1 var(--f-titulo); color: #7ff7f0; }
+.D .lg-obj-ok { flex: none; font: 800 12px/1 var(--f-texto); color: #7ff7a0; }
+.D .lg-obj-cobrar { flex: none; min-height: 40px; padding: 0 16px; border: 0; border-radius: 12px; cursor: pointer; color: #2a1700; font: 400 15px/1 var(--f-titulo);
+  background: linear-gradient(180deg, #ffd65a, #ffc21a 60%, #e89a00); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .6); }
+.D .lg-obj-cobrar:disabled { cursor: default; color: var(--texto-2); background: rgba(255, 255, 255, .08); box-shadow: none; }
+.D .lg-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.D .lg-chip { min-height: 38px; padding: 0 14px; border-radius: 999px; cursor: pointer; color: #fff; font: 800 13px/1 var(--f-texto);
+  background: rgba(255, 255, 255, .06); border: 1px solid var(--lg-c, rgba(255, 255, 255, .2)); }
+.D .lg-chip.r-comun { --lg-c: #c9d3e2; } .D .lg-chip.r-rara { --lg-c: #4f8dff; } .D .lg-chip.r-epica { --lg-c: #a35cff; } .D .lg-chip.r-legendaria { --lg-c: #ffc21a; }
+.D .lg-chip.si { background: color-mix(in srgb, var(--lg-c, #ffc21a) 35%, transparent); box-shadow: 0 0 12px color-mix(in srgb, var(--lg-c, #ffc21a) 45%, transparent); }
+.D.az.lg:not(.wide) .lg-obj { flex-wrap: wrap; }
+.D.az.lg:not(.wide) .lg-obj-txt { flex-basis: 100%; }

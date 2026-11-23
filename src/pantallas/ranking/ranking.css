@@ -138,6 +138,40 @@
 .D .rk-abrir:disabled { opacity: .5; cursor: default; }
 .D .rk-torneo .rk-podio { padding-top: 26px; }
 
+/* ---------- Etapa 2: títulos, marcos, reconocimientos y grupos ---------- */
+.D .rk-marco { flex: none; display: grid; place-items: center; padding: 2px; border-radius: 50%; }
+.D .rk-marco.r-comun { background: linear-gradient(135deg, #e6edf7, #9aa6b8); }
+.D .rk-marco.r-rara { background: linear-gradient(135deg, #8fb6ff, #2f5fd0); }
+.D .rk-marco.r-epica { background: linear-gradient(135deg, #d1a8ff, #6f2fd6); }
+.D .rk-marco.r-legendaria { background: linear-gradient(135deg, #ffe58a, #c77700); box-shadow: 0 0 10px rgba(255, 194, 26, .55); }
+.D .rk-tlogro { font-style: normal; font-weight: 800; }
+.D .rk-tlogro.r-comun { color: #dfe6f1; } .D .rk-tlogro.r-rara { color: #8fb6ff; } .D .rk-tlogro.r-epica { color: #d1a8ff; } .D .rk-tlogro.r-legendaria { color: #ffd65a; }
+.D .rk-votos button { border-color: rgba(163, 92, 255, .4); }
+.D .rk-votos button.si { border-color: #a35cff; background: rgba(163, 92, 255, .25); color: #fff; }
+.D .rk-emoji { flex: none; display: grid; place-items: center; width: 40px; height: 40px; border-radius: 12px; font-size: 22px; background: rgba(0, 0, 0, .3); border: 2px solid rgba(255, 255, 255, .25); }
+.D .rk-misgrupos-lista { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.D .rk-migrupo { display: flex; align-items: center; gap: 10px; width: 100%; padding: 8px 12px 8px 8px; border-radius: 14px; cursor: pointer; color: #fff; text-align: left;
+  background: rgba(255, 255, 255, .045); border: 1px solid rgba(255, 255, 255, .08); }
+.D .rk-editar { flex: none; font-size: 18px; color: var(--texto-2); }
+.D .rk-grupo-editor { display: flex; flex-direction: column; gap: 10px; padding: 10px; border-radius: 14px; background: rgba(0, 0, 0, .25); }
+.D .rk-grupo-editor input { min-height: 44px; padding: 0 12px; border-radius: 12px; color: #fff; font: 700 15px/1.2 var(--f-texto); background: rgba(0, 0, 0, .35); border: 1px solid rgba(255, 255, 255, .2); }
+.D .rk-paleta { display: flex; flex-wrap: wrap; gap: 8px; }
+.D .rk-paleta button { width: 34px; height: 34px; border-radius: 50%; cursor: pointer; border: 2px solid rgba(255, 255, 255, .25); }
+.D .rk-paleta.emojis button { background: rgba(255, 255, 255, .06); font-size: 18px; border-radius: 10px; }
+.D .rk-paleta button.si { border-color: #fff; box-shadow: 0 0 0 2px rgba(255, 255, 255, .5); transform: scale(1.08); }
+.D .rk-votacion { display: flex; flex-direction: column; gap: 8px; padding-top: 6px; border-top: 1px solid rgba(255, 255, 255, .08); }
+.D .rk-votacion h3 { margin: 0; font: 400 18px/1.1 var(--f-titulo); letter-spacing: .02em; }
+.D .rk-votos-lista { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 8px; }
+.D .rk-voto { border-radius: 14px; background: rgba(255, 255, 255, .045); border: 1px solid rgba(255, 255, 255, .08); }
+.D .rk-voto.abierta { border-color: rgba(163, 92, 255, .5); }
+.D .rk-voto-cab { display: grid; grid-template-columns: auto 1fr; align-items: center; gap: 0 10px; width: 100%; padding: 10px 12px; border: 0; background: none; color: #fff; text-align: left; cursor: pointer; }
+.D .rk-voto-cab > span { grid-row: span 2; font-size: 24px; }
+.D .rk-voto-cab b { font: 400 16px/1.1 var(--f-titulo); }
+.D .rk-voto-cab small { font: 700 12px/1.3 var(--f-texto); color: var(--texto-2); }
+.D .rk-voto-opciones { display: flex; flex-wrap: wrap; gap: 6px; padding: 0 12px 12px; }
+.D .rk-voto-opciones button { min-height: 36px; padding: 0 12px; border-radius: 999px; cursor: pointer; color: #fff; font: 800 13px/1 var(--f-texto); background: rgba(255, 255, 255, .08); border: 1px solid rgba(255, 255, 255, .2); }
+.D .rk-voto-opciones button.si { background: rgba(163, 92, 255, .35); border-color: #a35cff; }
+
 /* ---------- Celular ---------- */
 .D.az.rk:not(.wide) .rk-titulo span { padding: 6px 16px; }
 .D.az.rk:not(.wide) .rk-pest { min-width: 88px; font-size: 15px; }

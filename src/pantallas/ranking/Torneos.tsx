@@ -5,7 +5,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { calcularCopas, esResultado } from "../../engine/copas";
 import { enlace, type SalaV } from "../../servicios/enlace";
-import type { FilaJugador } from "../../servicios/ranking";
+import { VOTOS, votarNoche, votosDeLaNoche, type CategoriaVoto, type ConteoVoto, type FilaJugador } from "../../servicios/ranking";
 import { cancelarTorneo, crearTorneo, cuentaRegresiva, tablaTorneo, torneosVigentes, type FilaTorneo, type ModalidadTorneo, type Torneo } from "../../servicios/torneos";
 import { aviso } from "../comun";
 import { arteHub } from "../azotea/Cabecera";
@@ -70,6 +70,7 @@ function TorneoNoche({ yo }: { yo: string }) {
         <ol className="rk-tabla">{filas.map(f => <Fila key={f.id} f={f} unidad="pts" yo={yo} />)}</ol>
       )}
       <p className="rk-nota">Suma los puntos de cada juego de esta noche. Las copas se entregan al cerrar la sala.</p>
+      <VotosNoche evento={sala.id} yo={yo} gente={filas.map(f => ({ id: f.id, nombre: f.nombre }))} />
     </section>
   );
 }
@@ -152,5 +153,42 @@ function NuevoTorneo({ alCrear }: { alCrear: () => void }) {
         <button type="button" className="rk-abrir" disabled={enviando || nombre.trim().length < 3} onClick={() => void enviar()}>{enviando ? "Abriendo…" : "Abrir torneo"}</button>
       </div>
     </section>
+  );
+}
+
+/** Votación de la noche (043, D6): cada quien vota una vez por categoría y puede cambiar su voto. Nadie ve quién votó. */
+function VotosNoche({ evento, yo, gente }: { evento: string; yo: string; gente: { id: string; nombre: string }[] }) {
+  const [conteo, setConteo] = useState<ConteoVoto[] | null>(null);
+  const [abierta, setAbierta] = useState<CategoriaVoto | null>(null);
+  const cargar = () => votosDeLaNoche(evento).then(setConteo);
+  useEffect(() => { void cargar(); }, [evento]);
+  const otros = gente.filter(g => g.id !== yo);
+  if (!otros.length) return null;
+  const votar = async (c: CategoriaVoto, id: string) => {
+    const error = await votarNoche(evento, c, id);
+    if (error) { aviso(error); return; }
+    setAbierta(null); void cargar();
+  };
+  return (
+    <div className="rk-votacion">
+      <h3>Vota por los de esta noche</h3>
+      <div className="rk-votos-lista">
+        {VOTOS.map(v => {
+          const mio = conteo?.find(x => x.categoria === v.id)?.mi_voto ?? null;
+          const lider = conteo?.filter(x => x.categoria === v.id && x.votado).sort((a, b) => b.votos - a.votos)[0];
+          return (
+            <div key={v.id} className={"rk-voto" + (abierta === v.id ? " abierta" : "")}>
+              <button type="button" className="rk-voto-cab" onClick={() => setAbierta(a => (a === v.id ? null : v.id))} aria-expanded={abierta === v.id}>
+                <span aria-hidden="true">{v.emoji}</span><b>{v.titulo}</b>
+                <small>{mio ? `Votaste por ${gente.find(g => g.id === mio)?.nombre ?? "alguien"}` : "Sin votar"}{lider?.nombre ? ` · Va ganando ${lider.nombre}` : ""}</small>
+              </button>
+              {abierta === v.id && <div className="rk-voto-opciones">{otros.map(g => (
+                <button key={g.id} type="button" className={g.id === mio ? "si" : ""} aria-pressed={g.id === mio} onClick={() => void votar(v.id, g.id)}>{g.nombre}</button>
+              ))}</div>}
+            </div>
+          );
+        })}
+      </div>
+    </div>
   );
 }

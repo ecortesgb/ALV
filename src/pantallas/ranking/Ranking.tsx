@@ -8,7 +8,7 @@ import { apodoDe, semillaDe, useFoto } from "../../app/figura3d";
 import { atras } from "../../app/rutas";
 import { useSesion } from "../../app/sesion";
 import { tituloPorNivel } from "../../engine/economia";
-import { CATEGORIAS, fijarRankingGlobal, leerRankingGlobal, ordenarPor, rankingGrupos, rankingJugadores, cargarMisPuntos,
+import { CATEGORIAS, VOTOS, misGrupos, nombrarGrupo, rankingReconocimientos, type CategoriaVoto, type FilaVoto, type MiGrupo, fijarRankingGlobal, leerRankingGlobal, ordenarPor, rankingGrupos, rankingJugadores, cargarMisPuntos,
   type Categoria, type FilaGrupo, type FilaJugador, type FiltroRanking } from "../../servicios/ranking";
 import { hayNube } from "../../servicios/cliente";
 import { Marco, aviso, useAncho } from "../comun";
@@ -59,6 +59,7 @@ export function Ranking() {
   const [filtro, setFiltro] = useState<FiltroRanking>("amigos");
   const [temporada, setTemporada] = useState(true);
   const [cat, setCat] = useState<Categoria>("puntos");
+  const [voto, setVoto] = useState<CategoriaVoto | null>(null);
   const [jugadores, setJugadores] = useState<FilaJugador[] | null | undefined>(undefined);
   const [grupos, setGrupos] = useState<FilaGrupo[] | null | undefined>(undefined);
   const [enGlobal, setEnGlobal] = useState<boolean | null>(null);
@@ -119,11 +120,18 @@ export function Ranking() {
           </div>
         )}
 
-        {(pestana === "general" || pestana === "individual") && (
-          <Jugadores filas={jugadores} cat={pestana === "general" ? "puntos" : cat} conCategorias={pestana === "individual"} alCat={setCat}
+        {pestana === "individual" && (
+          <div className="rk-cats rk-votos" role="group" aria-label="Reconocimientos de los amigos">
+            {VOTOS.map(v => <button key={v.id} type="button" className={voto === v.id ? "si" : ""} aria-pressed={voto === v.id} onClick={() => setVoto(x => (x === v.id ? null : v.id))}>{v.emoji} {v.titulo}</button>)}
+          </div>
+        )}
+        {pestana === "individual" && voto && <Reconocimientos categoria={voto} filtro={filtro} temporada={temporada} yo={s.uid} etiqueta={etiquetaTemporada} />}
+        {(pestana === "general" || (pestana === "individual" && !voto)) && (
+          <Jugadores filas={jugadores} cat={pestana === "general" ? "puntos" : cat} conCategorias={pestana === "individual"} alCat={c => { setCat(c); setVoto(null); }}
             yo={s.uid} vista={`${pestana}-${pestana === "general" ? "puntos" : cat}-${filtro}-${temporada ? "t" : "h"}`} etiqueta={etiquetaTemporada} ancho={ancho} />
         )}
-        {(pestana === "parejas" || pestana === "equipos") && <Grupos filas={grupos} modalidad={pestana} yo={s.uid} etiqueta={etiquetaTemporada} />}
+        {(pestana === "parejas" || pestana === "equipos") && <><Grupos filas={grupos} modalidad={pestana} yo={s.uid} etiqueta={etiquetaTemporada} />
+          <MisGrupos modalidad={pestana} alGuardar={() => void rankingGrupos(pestana, filtro, temporada).then(setGrupos)} /></>}
         {pestana === "torneos" && (
           <Torneos yo={s.uid} admin={s.admin || !hayNube} />
         )}
@@ -230,10 +238,10 @@ export function Fila({ f, unidad, yo, antes }: { f: FilaJugador & { lugar: numbe
   return (
     <li className={"rk-fila" + (f.id === yo ? " yo" : "") + (f.lugar <= 3 && f.valor > 0 ? ` top${f.lugar}` : "")}>
       <span className="rk-pos">{f.lugar <= 3 && f.valor > 0 ? <Arte nombre={MEDALLA[f.lugar - 1]!} alterno={arteHub("puntos")} className="rk-medalla-chica" /> : null}<b>{f.lugar}</b></span>
-      <Retrato f={f} />
+      <span className={"rk-marco" + (f.rareza_titulo ? ` r-${f.rareza_titulo}` : "")}><Retrato f={f} /></span>
       <span className="rk-nombre">
         <b>{apodo ?? f.nombre}{f.id === yo && <em>Tú</em>}</b>
-        <small>{apodo ? `@${f.nombre} · ` : ""}Niv. {f.nivel} · {tituloPorNivel(f.nivel)}</small>
+        <small>{apodo ? `@${f.nombre} · ` : ""}Niv. {f.nivel} · {f.titulo ? <i className={`rk-tlogro r-${f.rareza_titulo ?? "comun"}`}>{f.titulo}</i> : tituloPorNivel(f.nivel)}</small>
       </span>
       {cambio !== 0 && <span className={"rk-cambio " + (cambio > 0 ? "sube" : "baja")} aria-label={cambio > 0 ? `Subió ${cambio}` : `Bajó ${-cambio}`}>
         <Arte nombre={cambio > 0 ? "flecha-sube" : "flecha-baja"} className="rk-flecha" /><span aria-hidden="true">{cambio > 0 ? "▲" : "▼"}{Math.abs(cambio)}</span>
@@ -255,14 +263,78 @@ function Grupos({ filas, modalidad, yo, etiqueta }: { filas: FilaGrupo[] | null 
         {filas.map(g => (
           <li key={g.integrantes.join("+")} className={"rk-fila grupo" + (g.integrantes.includes(yo) ? " yo" : "") + (g.posicion <= 3 ? ` top${g.posicion}` : "")}>
             <span className="rk-pos">{g.posicion <= 3 ? <Arte nombre={MEDALLA[g.posicion - 1]!} alterno={arteHub("puntos")} className="rk-medalla-chica" /> : null}<b>{g.posicion}</b></span>
+            {g.emoji ? <span className="rk-emoji" style={{ borderColor: g.color ?? undefined }} aria-hidden="true">{g.emoji}</span> : null}
             <span className="rk-nombre">
-              <b>{g.nombres.join(" + ")}</b>
+              <b style={g.color ? { color: g.color } : undefined}>{g.nombre_grupo ?? g.nombres.join(" + ")}</b>
+              {g.nombre_grupo && <small>{g.nombres.join(" + ")}</small>}
               <small>{g.victorias} {g.victorias === 1 ? "victoria" : "victorias"} · {g.partidas} {g.partidas === 1 ? "partida" : "partidas"} · {g.porcentaje}%{g.racha > 1 ? ` · racha de ${g.racha}` : ""}</small>
             </span>
             <span className="rk-valor"><b>{num(g.puntos_alv)}</b><small>PA</small></span>
           </li>
         ))}
       </ol>
+    </section>
+  );
+}
+
+/** Ranking por votos de la noche (043, D6). */
+function Reconocimientos({ categoria, filtro, temporada, yo, etiqueta }: { categoria: CategoriaVoto; filtro: FiltroRanking; temporada: boolean; yo: string; etiqueta: string }) {
+  const [filas, setFilas] = useState<FilaVoto[] | null | undefined>(undefined);
+  useEffect(() => { let v = true; setFilas(undefined); void rankingReconocimientos(filtro, categoria, temporada).then(f => { if (v) setFilas(f); }); return () => { v = false; }; }, [categoria, filtro, temporada]);
+  const def = VOTOS.find(v => v.id === categoria)!;
+  if (filas === undefined) return <p className="rk-cargando" role="status">Contando votos…</p>;
+  if (filas === null) return <p className="rk-cargando" role="status">No se pudo leer. Revisa tu conexión.</p>;
+  if (!filas.length) return <section className="pf-bloque rk-vacio"><p className="pf-suave">Todavía nadie recibe votos de «{def.titulo}». Se vota al final de cada noche, en la pestaña Torneos.</p></section>;
+  const conLugar = filas.map(f => ({ ...f, lugar: f.posicion, valor: f.votos, puntos_alv: 0, victorias: 0, partidas: 0, mvp: 0, racha: 0, juegos: 0, victorias_azar: 0, victorias_deduccion: 0 }));
+  return (
+    <section className="pf-bloque rk-tabla-caja" aria-label={`${def.titulo}, ${etiqueta}`}>
+      <h2 className="pf-tit"><span>{def.emoji} {def.titulo}</span><small className="rk-periodo">{etiqueta}</small></h2>
+      <ol className="rk-tabla">{conLugar.map(f => <Fila key={f.id} f={f} unidad={f.votos === 1 ? "voto" : "votos"} yo={yo} />)}</ol>
+    </section>
+  );
+}
+
+const COLORES = ["#ff3b6b", "#ffc21a", "#2ee6d6", "#4f8dff", "#a35cff", "#7ff7a0", "#ff8a1f", "#ffffff"];
+const EMOJIS = ["👑", "🔥", "⚡", "🦁", "🐍", "🦄", "💀", "🎯", "🍕", "🚀", "🌮", "🎉"];
+
+/** Ponle nombre, color y emoji a tus parejas y equipos (043, D4). */
+function MisGrupos({ modalidad, alGuardar }: { modalidad: "parejas" | "equipos"; alGuardar: () => void }) {
+  const [lista, setLista] = useState<MiGrupo[] | null>(null);
+  const [editando, setEditando] = useState<string | null>(null);
+  const [nombre, setNombre] = useState(""); const [color, setColor] = useState(COLORES[0]!); const [emoji, setEmoji] = useState(EMOJIS[0]!);
+  useEffect(() => { void misGrupos().then(setLista); }, []);
+  const mios = (lista ?? []).filter(g => g.modalidad === modalidad);
+  if (!mios.length) return null;
+  const abrir = (g: MiGrupo) => { setEditando(g.grupo); setNombre(g.nombre ?? ""); setColor(g.color ?? COLORES[0]!); setEmoji(g.emoji ?? EMOJIS[0]!); };
+  const guardar = async (g: MiGrupo) => {
+    const error = await nombrarGrupo(g.grupo, nombre.trim(), color, emoji);
+    if (error) { aviso(error); return; }
+    aviso("Guardado."); setEditando(null); void misGrupos().then(setLista); alGuardar();
+  };
+  return (
+    <section className="pf-bloque rk-misgrupos" aria-label={`Tus ${modalidad}`}>
+      <h2 className="pf-tit"><span>Tus {modalidad}</span></h2>
+      <ul className="rk-misgrupos-lista">
+        {mios.map(g => (
+          <li key={g.grupo}>
+            {editando === g.grupo ? (
+              <div className="rk-grupo-editor">
+                <input value={nombre} maxLength={30} onChange={e => setNombre(e.target.value)} placeholder="Nombre" aria-label="Nombre" />
+                <div className="rk-paleta" role="group" aria-label="Color">{COLORES.map(c => <button key={c} type="button" className={c === color ? "si" : ""} style={{ background: c }} aria-label={c} onClick={() => setColor(c)} />)}</div>
+                <div className="rk-paleta emojis" role="group" aria-label="Emoji">{EMOJIS.map(e => <button key={e} type="button" className={e === emoji ? "si" : ""} onClick={() => setEmoji(e)}>{e}</button>)}</div>
+                <div className="rk-nuevo-acciones"><button type="button" className="rk-cancelar" onClick={() => setEditando(null)}>Cancelar</button>
+                  <button type="button" className="rk-abrir" disabled={nombre.trim().length < 2} onClick={() => void guardar(g)}>Guardar</button></div>
+              </div>
+            ) : (
+              <button type="button" className="rk-migrupo" onClick={() => abrir(g)}>
+                <span className="rk-emoji" style={{ borderColor: g.color ?? undefined }} aria-hidden="true">{g.emoji ?? "＋"}</span>
+                <span className="rk-nombre"><b style={g.color ? { color: g.color } : undefined}>{g.nombre ?? "Sin nombre"}</b><small>{g.integrantes.join(" + ")} · {g.partidas} partidas</small></span>
+                <span className="rk-editar">✎</span>
+              </button>
+            )}
+          </li>
+        ))}
+      </ul>
     </section>
   );
 }

@@ -6,7 +6,7 @@ export type CategoriaLogro = "coleccion" | "minijuego" | "colectivo" | "oculto" 
 
 export interface DefLogro {
   clave: string; categoria: CategoriaLogro; juego: string | null; rareza: Rareza; nombre: string; descripcion: string;
-  meta: number; recompensa: string; orden: number;
+  meta: number; recompensa: string; orden: number; oculto?: boolean; pista?: string;
 }
 
 export const LOGROS_ETAPA1: DefLogro[] = [
@@ -29,6 +29,15 @@ export const LOGROS_ETAPA1: DefLogro[] = [
   { clave: "cara-de-poker", categoria: "minijuego", juego: "impostor", rareza: "rara", nombre: "Cara de póker", descripcion: "Gana una partida siendo el impostor.", meta: 1, recompensa: "Insignia rara", orden: 210 },
   { clave: "detective", categoria: "minijuego", juego: "impostor", rareza: "comun", nombre: "Detective", descripcion: "Vota por el impostor 5 veces.", meta: 5, recompensa: "Insignia común", orden: 220 },
   { clave: "valiente", categoria: "minijuego", juego: "verdad-reto", rareza: "comun", nombre: "Valiente", descripcion: "Elige reto 10 veces en Verdad o reto.", meta: 10, recompensa: "Insignia común", orden: 230 },
+  // Etapa 2 (migración 043): ocultos y de progresión.
+  { clave: "remontada", categoria: "oculto", juego: null, rareza: "epica", oculto: true, nombre: "¿Y tú qué haces aquí?", descripcion: "Gana una partida después de ir en último lugar.", pista: "Nunca te des por vencido.", meta: 1, recompensa: "Insignia épica", orden: 310 },
+  { clave: "sospechoso", categoria: "oculto", juego: "impostor", rareza: "rara", oculto: true, nombre: "El sospechoso habitual", descripcion: "Recibe votos de impostor en 5 partidas sin serlo.", pista: "Algo en tu cara no convence.", meta: 5, recompensa: "Insignia rara", orden: 320 },
+  { clave: "intocable", categoria: "oculto", juego: "impostor", rareza: "epica", oculto: true, nombre: "El intocable", descripcion: "Gana 3 partidas siendo el impostor.", pista: "Mentir se te da muy bien.", meta: 3, recompensa: "Insignia épica", orden: 330 },
+  { clave: "noctambulo", categoria: "oculto", juego: null, rareza: "rara", oculto: true, nombre: "El noctámbulo", descripcion: "Termina una partida entre las 3:00 y las 5:00.", pista: "La fiesta no se acaba.", meta: 1, recompensa: "Insignia rara", orden: 340 },
+  { clave: "caos", categoria: "oculto", juego: null, rareza: "legendaria", oculto: true, nombre: "Caos absoluto", descripcion: "En una misma noche gana una de azar, una de deducción y una por equipos.", pista: "Hazlo todo en una sola noche.", meta: 1, recompensa: "Insignia legendaria", orden: 350 },
+  { clave: "leyenda-local", categoria: "progresion", juego: null, rareza: "rara", nombre: "Leyenda local", descripcion: "Llega al nivel 10.", meta: 10, recompensa: "Insignia rara", orden: 410 },
+  { clave: "alv-legendario", categoria: "progresion", juego: null, rareza: "legendaria", nombre: "ALV Legendario", descripcion: "Llega al nivel 20.", meta: 20, recompensa: "Insignia legendaria", orden: 420 },
+  { clave: "constante", categoria: "progresion", juego: null, rareza: "rara", nombre: "Constante", descripcion: "Completa 10 objetivos.", meta: 10, recompensa: "Insignia rara", orden: 430 },
 ];
 
 export const RAREZA_TEXTO: Record<Rareza, string> = { comun: "Común", rara: "Rara", epica: "Épica", legendaria: "Legendaria" };
