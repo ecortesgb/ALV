@@ -23,7 +23,7 @@ describe("catálogo de logros = migraciones 042, 041 y 043", () => {
     const sql = readFileSync(join(__dirname, "../../supabase/migrations/043_logros_etapa2.sql"), "utf8");
     const i = sql.indexOf("insert into public.logros ("), b = sql.slice(i, sql.indexOf(";", i));
     const claves = [...b.matchAll(/\(\s*'([a-z0-9-]+)',\s*'(oculto|progresion)'/g)].map(m => m[1]);
-    expect(claves).toEqual(LOGROS_ETAPA1.filter(l => l.orden > 300).map(l => l.clave));
+    expect(claves).toEqual(LOGROS_ETAPA1.filter(l => l.orden > 300 && l.orden < 440).map(l => l.clave));
     for (const l of LOGROS_ETAPA1.filter(x => x.oculto)) expect(b).toContain(`'${l.nombre}'`);
   });
   it("ningún logro da XP ni habla de beber", () => {

@@ -179,3 +179,55 @@ export async function nombrarGrupo(grupo: string, nombre: string, color: string,
     return /nombre/.test(error.message) ? "El nombre debe tener de 2 a 30 letras." : "No se pudo guardar.";
   } catch (e) { console.error("nombrarGrupo", e); return "No se pudo guardar."; }
 }
+
+// ===== Etapa 3 (044): Salón de la Fama y Récords =====
+export interface FilaSalon { tipo: "temporada" | "pareja" | "equipo" | "torneo"; etiqueta: string; fecha: string; posicion: number; nombres: string[]; figura: FiguraV2 | null; valor: number; retirados: number }
+export async function salonDeLaFama(): Promise<FilaSalon[] | null> {
+  if (!hayNube) return [
+    { tipo: "temporada", etiqueta: "2026-10", fecha: "2026-10-01", posicion: 1, nombres: ["Ana"], figura: null, valor: 48, retirados: 0 },
+    { tipo: "temporada", etiqueta: "2026-10", fecha: "2026-10-01", posicion: 2, nombres: ["Beto"], figura: null, valor: 41, retirados: 0 },
+    { tipo: "temporada", etiqueta: "2026-10", fecha: "2026-10-01", posicion: 3, nombres: ["Jugador retirado"], figura: null, valor: 30, retirados: 1 },
+    { tipo: "pareja", etiqueta: "2026-10", fecha: "2026-10-01", posicion: 1, nombres: ["Ana", "Beto"], figura: null, valor: 27, retirados: 0 },
+    { tipo: "torneo", etiqueta: "ALV Champions", fecha: "2026-10-20", posicion: 1, nombres: ["Cata"], figura: null, valor: 21, retirados: 0 },
+  ];
+  try {
+    const { data, error } = await cliente!.rpc("salon_de_la_fama");
+    if (error) { console.error("salonDeLaFama", error.message); return null; }
+    return (data ?? []) as FilaSalon[];
+  } catch (e) { console.error("salonDeLaFama", e); return null; }
+}
+
+export interface Record_ { clave: string; id: string; nombre: string; figura: FiguraV2 | null; valor: number; mio: number }
+export const RECORDS: { clave: string; titulo: string; emoji: string; texto: string; unidad: string }[] = [
+  { clave: "rey-del-caos", titulo: "Rey del caos", emoji: "🌪️", texto: "Más partidas jugadas", unidad: "partidas" },
+  { clave: "incansable", titulo: "El incansable", emoji: "💪", texto: "Más retos cumplidos", unidad: "retos" },
+  { clave: "sobreviviente", titulo: "El sobreviviente", emoji: "🛡️", texto: "Más rondas jugadas", unidad: "rondas" },
+  { clave: "desafortunado", titulo: "El más desafortunado", emoji: "🌧️", texto: "Más derrotas seguidas", unidad: "seguidas" },
+  { clave: "traicionero", titulo: "El traicionero", emoji: "🗡️", texto: "Más veces impostor", unidad: "veces" },
+  { clave: "bromista", titulo: "El bromista", emoji: "🃏", texto: "Más votos de bromista", unidad: "votos" },
+  { clave: "noctambulo", titulo: "El noctámbulo", emoji: "🦉", texto: "Más partidas de 11 pm a 5 am", unidad: "partidas" },
+  { clave: "fiestero", titulo: "El fiestero", emoji: "🍻", texto: "Más veces que tomó en vez de cumplir (solo con Drunk; no da puntos ni XP)", unidad: "veces" },
+];
+export async function records(filtro: FiltroRanking): Promise<Record_[] | null> {
+  if (!hayNube) return RECORDS.map((r, i) => ({ clave: r.clave, id: `demo-${i}`, nombre: DEMO[i % DEMO.length]!, figura: null, valor: 30 - i * 3, mio: i % 3 }));
+  try {
+    const { data, error } = await cliente!.rpc("records", { p_filtro: filtro });
+    if (error) { console.error("records", error.message); return null; }
+    return (data ?? []) as Record_[];
+  } catch (e) { console.error("records", e); return null; }
+}
+export async function leerOcultarBebidas(): Promise<boolean> {
+  if (!hayNube) return false;
+  try {
+    const { data } = await cliente!.from("preferencias_cuenta").select("datos").maybeSingle();
+    return (data?.datos as Record<string, unknown> | undefined)?.ocultarBebidas === true;
+  } catch { return false; }
+}
+export async function fijarOcultarBebidas(ocultar: boolean): Promise<boolean> {
+  if (!hayNube) return true;
+  try {
+    const { error } = await cliente!.rpc("fijar_ocultar_bebidas", { p_ocultar: ocultar });
+    if (error) { console.error("fijarOcultarBebidas", error.message); return false; }
+    return true;
+  } catch (e) { console.error("fijarOcultarBebidas", e); return false; }
+}

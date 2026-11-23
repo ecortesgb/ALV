@@ -8,7 +8,7 @@ import { apodoDe, semillaDe, useFoto } from "../../app/figura3d";
 import { atras } from "../../app/rutas";
 import { useSesion } from "../../app/sesion";
 import { tituloPorNivel } from "../../engine/economia";
-import { CATEGORIAS, VOTOS, misGrupos, nombrarGrupo, rankingReconocimientos, type CategoriaVoto, type FilaVoto, type MiGrupo, fijarRankingGlobal, leerRankingGlobal, ordenarPor, rankingGrupos, rankingJugadores, cargarMisPuntos,
+import { CATEGORIAS, RECORDS, VOTOS, fijarOcultarBebidas, leerOcultarBebidas, records, salonDeLaFama, type FilaSalon, type Record_, misGrupos, nombrarGrupo, rankingReconocimientos, type CategoriaVoto, type FilaVoto, type MiGrupo, fijarRankingGlobal, leerRankingGlobal, ordenarPor, rankingGrupos, rankingJugadores, cargarMisPuntos,
   type Categoria, type FilaGrupo, type FilaJugador, type FiltroRanking } from "../../servicios/ranking";
 import { hayNube } from "../../servicios/cliente";
 import { Marco, aviso, useAncho } from "../comun";
@@ -26,10 +26,10 @@ const BASE = import.meta.env.BASE_URL;
 const num = (n: number) => Math.max(0, Math.round(n)).toLocaleString("es-MX");
 const MES = () => new Date().toLocaleDateString("es-MX", { month: "long", timeZone: "America/Mexico_City" });
 
-type Pestana = "general" | "individual" | "parejas" | "equipos" | "torneos" | "records";
+type Pestana = "general" | "individual" | "parejas" | "equipos" | "torneos" | "records" | "salon";
 const PESTANAS: { id: Pestana; titulo: string; pronto?: string }[] = [
   { id: "general", titulo: "General" }, { id: "individual", titulo: "Individual" }, { id: "parejas", titulo: "Parejas" },
-  { id: "equipos", titulo: "Equipos" }, { id: "torneos", titulo: "Torneos" }, { id: "records", titulo: "Récords", pronto: "Próximamente" },
+  { id: "equipos", titulo: "Equipos" }, { id: "torneos", titulo: "Torneos" }, { id: "records", titulo: "Récords" }, { id: "salon", titulo: "Salón de la Fama" },
 ];
 
 // Arte de Elías con respaldo: si la imagen no existe, se usa la otra (o nada).
@@ -107,16 +107,16 @@ export function Ranking() {
           ))}
         </nav>
 
-        {!PESTANAS.find(p => p.id === pestana)!.pronto && pestana !== "torneos" && (
+        {!PESTANAS.find(p => p.id === pestana)!.pronto && pestana !== "torneos" && pestana !== "salon" && (
           <div className="rk-filtros">
             <div className="rk-seg" role="group" aria-label="Con quién comparar">
               <button type="button" className={filtro === "amigos" ? "si" : ""} aria-pressed={filtro === "amigos"} onClick={() => setFiltro("amigos")}>Amigos Legendarios Verdaderos</button>
               <button type="button" className={filtro === "global" ? "si" : ""} aria-pressed={filtro === "global"} onClick={() => setFiltro("global")}>Global</button>
             </div>
-            <div className="rk-seg" role="group" aria-label="Periodo">
+            {pestana !== "records" && <div className="rk-seg" role="group" aria-label="Periodo">
               <button type="button" className={temporada ? "si" : ""} aria-pressed={temporada} onClick={() => setTemporada(true)}>Temporada</button>
               <button type="button" className={!temporada ? "si" : ""} aria-pressed={!temporada} onClick={() => setTemporada(false)}>Histórico</button>
-            </div>
+            </div>}
           </div>
         )}
 
@@ -135,11 +135,10 @@ export function Ranking() {
         {pestana === "torneos" && (
           <Torneos yo={s.uid} admin={s.admin || !hayNube} />
         )}
-        {pestana === "records" && (
-          <Pronto titulo="Récords" texto="Rey del caos, El incansable, El noctámbulo y más. Ya se están guardando los datos de cada partida, así que nada se pierde." />
-        )}
+        {pestana === "records" && <Records filtro={filtro} yo={s.uid} />}
+        {pestana === "salon" && <Salon />}
 
-        {filtro === "global" && enGlobal !== null && !PESTANAS.find(p => p.id === pestana)!.pronto && pestana !== "torneos" && (
+        {filtro === "global" && enGlobal !== null && !PESTANAS.find(p => p.id === pestana)!.pronto && pestana !== "torneos" && pestana !== "salon" && (
           <p className="rk-privacidad">
             {enGlobal ? "Apareces en el ranking Global." : "No apareces en el Global; solo te ven tus Amigos Legendarios Verdaderos."}
             <button type="button" onClick={() => void alternarGlobal()}>{enGlobal ? "Ocultarme" : "Aparecer"}</button>
@@ -150,14 +149,6 @@ export function Ranking() {
   );
 }
 
-function Pronto({ titulo, texto }: { titulo: string; texto: string }) {
-  return (
-    <section className="pf-bloque rk-pronto" aria-label={titulo}>
-      <h2 className="pf-tit"><span>{titulo}</span><span className="pf-pronto">Próximamente</span></h2>
-      <p className="pf-suave">{texto}</p>
-    </section>
-  );
-}
 
 /** Ranking individual: podio con los tres primeros y la tabla. */
 function Jugadores({ filas, cat, conCategorias, alCat, yo, vista, etiqueta, ancho }: {
@@ -336,5 +327,83 @@ function MisGrupos({ modalidad, alGuardar }: { modalidad: "parejas" | "equipos";
         ))}
       </ul>
     </section>
+  );
+}
+
+/** Récords históricos (044). El fiestero solo cuenta partidas con Drunk y nunca da puntos ni XP (D7). */
+function Records({ filtro, yo }: { filtro: FiltroRanking; yo: string }) {
+  const [lista, setLista] = useState<Record_[] | null | undefined>(undefined);
+  const [oculto, setOculto] = useState<boolean | null>(null);
+  const cargar = () => records(filtro).then(setLista);
+  useEffect(() => { setLista(undefined); void cargar(); }, [filtro]);
+  useEffect(() => { void leerOcultarBebidas().then(setOculto); }, []);
+  const alternar = async () => {
+    const nuevo = !oculto;
+    if (await fijarOcultarBebidas(nuevo)) { setOculto(nuevo); aviso(nuevo ? "Tu estadística de bebidas ya no se muestra." : "Tu estadística de bebidas se vuelve a mostrar."); void cargar(); }
+    else aviso("No se pudo cambiar.");
+  };
+  if (lista === undefined) return <p className="rk-cargando" role="status">Buscando récords…</p>;
+  if (lista === null) return <p className="rk-cargando" role="status">No se pudieron leer los récords.</p>;
+  return (
+    <>
+      <ul className="rk-records">
+        {RECORDS.map((d, i) => {
+          const r = lista.find(x => x.clave === d.clave);
+          return (
+            <li key={d.clave} className={"rk-record" + (r?.id === yo ? " yo" : "") + (r ? "" : " libre")} style={{ "--i": i } as CSSProperties}>
+              <span className="rk-record-emoji" aria-hidden="true">{d.emoji}</span>
+              <b className="rk-record-tit">{d.titulo}</b>
+              <small className="rk-record-txt">{d.texto}</small>
+              {r ? <span className="rk-record-quien"><Retrato f={r} /><span><b>{r.nombre}{r.id === yo && <em>Tú</em>}</b><small>{num(r.valor)} {d.unidad}</small></span></span>
+                : <span className="rk-record-quien vacio">Nadie todavía. ¡Es tuyo si lo quieres!</span>}
+              {r && r.id !== yo && r.mio > 0 && <small className="rk-record-mio">Tú: {num(r.mio)}</small>}
+            </li>
+          );
+        })}
+      </ul>
+      {oculto !== null && <p className="rk-privacidad">{oculto ? "Tu estadística de bebidas está oculta." : "Tu estadística de bebidas se muestra en «El fiestero»."}
+        <button type="button" onClick={() => void alternar()}>{oculto ? "Mostrarla" : "Ocultarla"}</button></p>}
+    </>
+  );
+}
+
+const MESES = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
+const mesTexto = (e: string) => { const [a, m] = e.split("-"); return `${MESES[Number(m) - 1] ?? ""} ${a}`; };
+
+/** Salón de la Fama (044): fotos fijas de campeones de temporada, parejas, equipos y torneos. */
+function Salon() {
+  const [lista, setLista] = useState<FilaSalon[] | null | undefined>(undefined);
+  useEffect(() => { void salonDeLaFama().then(setLista); }, []);
+  if (lista === undefined) return <p className="rk-cargando" role="status">Abriendo el Salón de la Fama…</p>;
+  if (lista === null) return <p className="rk-cargando" role="status">No se pudo leer el Salón de la Fama.</p>;
+  if (!lista.length) return <section className="pf-bloque rk-vacio"><p className="pf-suave">El Salón de la Fama se llena al cerrar cada mes y cada torneo. El primer campeón de temporada se corona el día 1 del próximo mes.</p></section>;
+  const meses = [...new Set(lista.filter(x => x.tipo !== "torneo").map(x => x.etiqueta))];
+  const torneos = lista.filter(x => x.tipo === "torneo");
+  return (
+    <>
+      {meses.map(m => {
+        const xs = lista.filter(x => x.etiqueta === m && x.tipo !== "torneo");
+        const podio = xs.filter(x => x.tipo === "temporada");
+        const grupos = xs.filter(x => x.tipo !== "temporada");
+        return (
+          <section key={m} className="pf-bloque rk-salon" aria-label={`Temporada de ${mesTexto(m)}`}>
+            <h2 className="pf-tit"><span>Temporada de {mesTexto(m)}</span></h2>
+            {podio.length > 0 && <Podio filas={podio.map((x, i) => ({ posicion: x.posicion, lugar: x.posicion, valor: x.valor, id: `${m}-${i}`, nombre: x.nombres[0] ?? "", nivel: 1, figura: x.figura,
+              puntos_alv: x.valor, victorias: 0, partidas: 0, mvp: 0, racha: 0, juegos: 0, victorias_azar: 0, victorias_deduccion: 0 }))} unidad="PA" yo="" />}
+            {grupos.length > 0 && <ul className="rk-salon-grupos">{grupos.map((g, i) => (
+              <li key={i}><span aria-hidden="true">{g.tipo === "pareja" ? "💞" : "🛡️"}</span><b>{g.tipo === "pareja" ? "Mejor pareja" : "Mejor equipo"}</b><small>{g.nombres.join(" + ")} · {num(g.valor)} PA</small></li>
+            ))}</ul>}
+          </section>
+        );
+      })}
+      {torneos.length > 0 && (
+        <section className="pf-bloque rk-salon" aria-label="Campeones de torneos">
+          <h2 className="pf-tit"><span>Campeones de torneos</span></h2>
+          <ul className="rk-salon-grupos">{torneos.map((t, i) => (
+            <li key={i}><span aria-hidden="true">🏆</span><b>{t.etiqueta}</b><small>{t.nombres.join(", ")} · {num(t.valor)} PA</small></li>
+          ))}</ul>
+        </section>
+      )}
+    </>
   );
 }

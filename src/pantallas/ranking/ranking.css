@@ -172,6 +172,29 @@
 .D .rk-voto-opciones button { min-height: 36px; padding: 0 12px; border-radius: 999px; cursor: pointer; color: #fff; font: 800 13px/1 var(--f-texto); background: rgba(255, 255, 255, .08); border: 1px solid rgba(255, 255, 255, .2); }
 .D .rk-voto-opciones button.si { background: rgba(163, 92, 255, .35); border-color: #a35cff; }
 
+/* ---------- Etapa 3: Récords y Salón de la Fama ---------- */
+.D .rk-records { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; }
+.D .rk-record { position: relative; display: flex; flex-direction: column; gap: 6px; padding: 14px; border-radius: 18px; background: var(--vidrio); border: 1px solid var(--vidrio-borde);
+  box-shadow: var(--vidrio-luz), var(--sombra-suave); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); animation: rkSube .5s cubic-bezier(.2, .8, .2, 1) calc(var(--i, 0) * 60ms) backwards; }
+.D .rk-record.yo { border-color: rgba(46, 230, 214, .6); box-shadow: var(--vidrio-luz), 0 0 18px rgba(46, 230, 214, .2); }
+.D .rk-record.libre { opacity: .75; }
+.D .rk-record-emoji { font-size: 30px; line-height: 1; }
+.D .rk-record-tit { font: 400 20px/1.1 var(--f-titulo); letter-spacing: .02em; color: var(--rk-oro); }
+.D .rk-record-txt { font: 700 12px/1.35 var(--f-texto); color: var(--texto-2); }
+.D .rk-record-quien { display: flex; align-items: center; gap: 10px; margin-top: 4px; }
+.D .rk-record-quien > span { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.D .rk-record-quien b { display: flex; align-items: center; gap: 6px; font: 400 16px/1.1 var(--f-titulo); }
+.D .rk-record-quien b em { font: 800 11px/1 var(--f-texto); font-style: normal; padding: 3px 7px; border-radius: 999px; color: #04201d; background: var(--pf-turquesa, #2ee6d6); }
+.D .rk-record-quien small { font: 800 13px/1.2 var(--f-texto); color: #fff4cf; }
+.D .rk-record-quien.vacio { font: 700 13px/1.3 var(--f-texto); color: var(--texto-2); }
+.D .rk-record-mio { font: 700 12px/1.2 var(--f-texto); color: #7ff7f0; }
+.D .rk-salon { border-color: rgba(255, 194, 26, .4); background: radial-gradient(80% 60% at 50% 0%, rgba(255, 194, 26, .12), transparent 70%), var(--vidrio); }
+.D .rk-salon-grupos { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.D .rk-salon-grupos li { display: grid; grid-template-columns: auto 1fr; align-items: center; gap: 2px 12px; padding: 10px 12px; border-radius: 14px; background: rgba(255, 255, 255, .045); border: 1px solid rgba(255, 255, 255, .08); }
+.D .rk-salon-grupos li > span { grid-row: span 2; font-size: 26px; }
+.D .rk-salon-grupos b { font: 400 17px/1.1 var(--f-titulo); color: var(--rk-oro); }
+.D .rk-salon-grupos small { font: 700 13px/1.3 var(--f-texto); color: var(--texto-2); }
+
 /* ---------- Celular ---------- */
 .D.az.rk:not(.wide) .rk-titulo span { padding: 6px 16px; }
 .D.az.rk:not(.wide) .rk-pest { min-width: 88px; font-size: 15px; }

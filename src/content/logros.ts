@@ -37,6 +37,7 @@ export const LOGROS_ETAPA1: DefLogro[] = [
   { clave: "caos", categoria: "oculto", juego: null, rareza: "legendaria", oculto: true, nombre: "Caos absoluto", descripcion: "En una misma noche gana una de azar, una de deducción y una por equipos.", pista: "Hazlo todo en una sola noche.", meta: 1, recompensa: "Insignia legendaria", orden: 350 },
   { clave: "leyenda-local", categoria: "progresion", juego: null, rareza: "rara", nombre: "Leyenda local", descripcion: "Llega al nivel 10.", meta: 10, recompensa: "Insignia rara", orden: 410 },
   { clave: "alv-legendario", categoria: "progresion", juego: null, rareza: "legendaria", nombre: "ALV Legendario", descripcion: "Llega al nivel 20.", meta: 20, recompensa: "Insignia legendaria", orden: 420 },
+  { clave: "campeon-temporada", categoria: "progresion", juego: null, rareza: "legendaria", nombre: "Campeón de temporada", descripcion: "Termina un mes en primer lugar por Puntos ALV.", meta: 1, recompensa: "Insignia legendaria", orden: 440 },
   { clave: "constante", categoria: "progresion", juego: null, rareza: "rara", nombre: "Constante", descripcion: "Completa 10 objetivos.", meta: 10, recompensa: "Insignia rara", orden: 430 },
 ];
 
