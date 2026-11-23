@@ -10,6 +10,7 @@ import { useSesion } from "../../app/sesion";
 import { tituloPorNivel } from "../../engine/economia";
 import { CATEGORIAS, fijarRankingGlobal, leerRankingGlobal, ordenarPor, rankingGrupos, rankingJugadores, cargarMisPuntos,
   type Categoria, type FilaGrupo, type FilaJugador, type FiltroRanking } from "../../servicios/ranking";
+import { hayNube } from "../../servicios/cliente";
 import { Marco, aviso, useAncho } from "../comun";
 import { useRecursos } from "../Recursos";
 import { RecursosAzotea, arteHub } from "../azotea/Cabecera";
@@ -18,6 +19,7 @@ import { useMomentoAzotea } from "../azotea/HubAzotea";
 import { escenarioActual } from "../azotea/paquetes";
 import "../azotea/azotea.css";
 import "../perfil/perfil.css";
+import { Torneos } from "./Torneos";
 import "./ranking.css";
 
 const BASE = import.meta.env.BASE_URL;
@@ -27,18 +29,18 @@ const MES = () => new Date().toLocaleDateString("es-MX", { month: "long", timeZo
 type Pestana = "general" | "individual" | "parejas" | "equipos" | "torneos" | "records";
 const PESTANAS: { id: Pestana; titulo: string; pronto?: string }[] = [
   { id: "general", titulo: "General" }, { id: "individual", titulo: "Individual" }, { id: "parejas", titulo: "Parejas" },
-  { id: "equipos", titulo: "Equipos" }, { id: "torneos", titulo: "Torneos", pronto: "Muy pronto" }, { id: "records", titulo: "Récords", pronto: "Próximamente" },
+  { id: "equipos", titulo: "Equipos" }, { id: "torneos", titulo: "Torneos" }, { id: "records", titulo: "Récords", pronto: "Próximamente" },
 ];
 
 // Arte de Elías con respaldo: si la imagen no existe, se usa la otra (o nada).
 const faltan = new Set<string>();
-function Arte({ nombre, alterno, className = "" }: { nombre: string; alterno?: string; className?: string }) {
+export function Arte({ nombre, alterno, className = "" }: { nombre: string; alterno?: string; className?: string }) {
   const [falta, setFalta] = useState(() => faltan.has(nombre));
   if (falta && !alterno) return null;
   return <img className={className} src={falta ? alterno : `${BASE}arte/ui/ranking/${nombre}.webp`} alt="" draggable={false}
     onError={() => { if (!falta) { faltan.add(nombre); setFalta(true); } }} />;
 }
-const MEDALLA = ["medalla-oro", "medalla-plata", "medalla-bronce"] as const;
+export const MEDALLA = ["medalla-oro", "medalla-plata", "medalla-bronce"] as const;
 
 // Flechas de subida o bajada: comparan con la última vez que se abrió esta vista en el aparato.
 const claveVista = (uid: string, v: string) => `alv-ranking-${uid.replace(/[^a-zA-Z0-9_-]/g, "").slice(0, 40)}-${v}`;
@@ -104,7 +106,7 @@ export function Ranking() {
           ))}
         </nav>
 
-        {!PESTANAS.find(p => p.id === pestana)!.pronto && (
+        {!PESTANAS.find(p => p.id === pestana)!.pronto && pestana !== "torneos" && (
           <div className="rk-filtros">
             <div className="rk-seg" role="group" aria-label="Con quién comparar">
               <button type="button" className={filtro === "amigos" ? "si" : ""} aria-pressed={filtro === "amigos"} onClick={() => setFiltro("amigos")}>Amigos Legendarios Verdaderos</button>
@@ -123,13 +125,13 @@ export function Ranking() {
         )}
         {(pestana === "parejas" || pestana === "equipos") && <Grupos filas={grupos} modalidad={pestana} yo={s.uid} etiqueta={etiquetaTemporada} />}
         {pestana === "torneos" && (
-          <Pronto titulo="Torneos" texto="Aquí vas a ver el torneo de la noche en vivo y los torneos que abra el administrador, con su tabla y cuánto falta para terminar." />
+          <Torneos yo={s.uid} admin={s.admin || !hayNube} />
         )}
         {pestana === "records" && (
           <Pronto titulo="Récords" texto="Rey del caos, El incansable, El noctámbulo y más. Ya se están guardando los datos de cada partida, así que nada se pierde." />
         )}
 
-        {filtro === "global" && enGlobal !== null && !PESTANAS.find(p => p.id === pestana)!.pronto && (
+        {filtro === "global" && enGlobal !== null && !PESTANAS.find(p => p.id === pestana)!.pronto && pestana !== "torneos" && (
           <p className="rk-privacidad">
             {enGlobal ? "Apareces en el ranking Global." : "No apareces en el Global; solo te ven tus Amigos Legendarios Verdaderos."}
             <button type="button" onClick={() => void alternarGlobal()}>{enGlobal ? "Ocultarme" : "Aparecer"}</button>
@@ -197,7 +199,7 @@ function Retrato({ f, grande }: { f: Pick<FilaJugador, "id" | "figura">; grande?
   return <span className={grande ? "rk-cuerpo" : "rk-retrato"}>{url ? <img src={url} alt="" draggable={false} /> : <span className="rk-sin-foto" />}</span>;
 }
 
-function Podio({ filas, unidad, yo }: { filas: (FilaJugador & { lugar: number; valor: number })[]; unidad: string; yo: string }) {
+export function Podio({ filas, unidad, yo }: { filas: (FilaJugador & { lugar: number; valor: number })[]; unidad: string; yo: string }) {
   // Orden visual: 2.º, 1.º, 3.º
   const lugares = [filas[1], filas[0], filas[2]];
   return (
@@ -222,7 +224,7 @@ function Podio({ filas, unidad, yo }: { filas: (FilaJugador & { lugar: number; v
   );
 }
 
-function Fila({ f, unidad, yo, antes }: { f: FilaJugador & { lugar: number; valor: number }; unidad: string; yo: string; antes?: number }) {
+export function Fila({ f, unidad, yo, antes }: { f: FilaJugador & { lugar: number; valor: number }; unidad: string; yo: string; antes?: number }) {
   const cambio = antes == null ? 0 : antes - f.lugar;
   const apodo = apodoDe(f.figura);
   return (

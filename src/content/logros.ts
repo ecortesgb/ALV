@@ -1,5 +1,5 @@
 // Logros de la etapa 1 (ALV_PLAN_RANKING_LOGROS.md §8.1; Maestro v1.54, 14.3). La fuente de verdad es la tabla
-// public.logros de la migración 042; esta copia sirve para el modo demostración y una prueba la compara con la 042.
+// public.logros de las migraciones 042 y 041 («Campeón»); esta copia sirve para el modo demostración y una prueba la compara con la 042.
 // Los logros NO dan XP ni monedas (D0): la recompensa es la insignia.
 export type Rareza = "comun" | "rara" | "epica" | "legendaria";
 export type CategoriaLogro = "coleccion" | "minijuego" | "colectivo" | "oculto" | "progresion";
@@ -25,6 +25,7 @@ export const LOGROS_ETAPA1: DefLogro[] = [
   { clave: "dupla", categoria: "colectivo", juego: null, rareza: "rara", nombre: "La dupla perfecta", descripcion: "Gana 5 partidas con la misma pareja.", meta: 5, recompensa: "Insignia rara", orden: 140 },
   { clave: "los-de-siempre", categoria: "colectivo", juego: null, rareza: "epica", nombre: "Los de siempre", descripcion: "Juega 20 partidas con el mismo equipo.", meta: 20, recompensa: "Insignia épica", orden: 150 },
   { clave: "campeon-noche", categoria: "colectivo", juego: null, rareza: "rara", nombre: "Campeón de la noche", descripcion: "Gana la copa individual de una noche.", meta: 1, recompensa: "Insignia rara", orden: 160 },
+  { clave: "campeon", categoria: "colectivo", juego: null, rareza: "legendaria", nombre: "Campeón", descripcion: "Gana un torneo.", meta: 1, recompensa: "Insignia legendaria", orden: 170 },
   { clave: "cara-de-poker", categoria: "minijuego", juego: "impostor", rareza: "rara", nombre: "Cara de póker", descripcion: "Gana una partida siendo el impostor.", meta: 1, recompensa: "Insignia rara", orden: 210 },
   { clave: "detective", categoria: "minijuego", juego: "impostor", rareza: "comun", nombre: "Detective", descripcion: "Vota por el impostor 5 veces.", meta: 5, recompensa: "Insignia común", orden: 220 },
   { clave: "valiente", categoria: "minijuego", juego: "verdad-reto", rareza: "comun", nombre: "Valiente", descripcion: "Elige reto 10 veces en Verdad o reto.", meta: 10, recompensa: "Insignia común", orden: 230 },
