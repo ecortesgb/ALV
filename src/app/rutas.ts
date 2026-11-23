@@ -30,6 +30,8 @@ export function leerRuta(hash: string): Destino {
   if (!ruta) return { ruta: "inicio" };
   if (CON_CODIGO.has(ruta)) { const c = codigo(arg); return c ? { ruta, arg: c } : { ruta: "jugar" }; }
   if (ruta === "juego") return arg && /^[a-z0-9-]{1,40}$/.test(arg) ? { ruta, arg } : { ruta: "catalogo" };
+  // Configuración: la categoría abierta (en celular, sin categoría se ve la lista).
+  if (ruta === "ajustes") return arg && /^(cuenta|experiencia|admin|acerca)$/.test(arg) ? { ruta, arg } : { ruta };
   return { ruta };
 }
 

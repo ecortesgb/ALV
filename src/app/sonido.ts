@@ -1,17 +1,15 @@
 // Efectos de sonido hechos con la Web Audio API: sin archivos ni dependencias.
-// El silencio se guarda en el dispositivo. Nada en la app depende solo del sonido.
-import { useSyncExternalStore } from "react";
+// Encendido y volumen salen de las preferencias del aparato (app/preferencias.ts). Nada en la app depende solo del sonido.
+import { cambiarPreferencias, preferencias, usePreferencias, vibrar } from "./preferencias";
 
-const CLAVE = "alv-sonido";
 type Nota = { f: number; a?: number; t: number; d: number; tipo?: OscillatorType; v?: number };
 
-const leer = (): boolean => { try { return localStorage.getItem(CLAVE) !== "no"; } catch { return true; } };
-let activo = leer();
-const oyentes = new Set<() => void>();
 let ctx: AudioContext | null = null;
+/** Volumen 70 = el volumen de siempre; 0 = mudo; 100 ≈ 1.4 veces. */
+const factor = () => preferencias().volumenEfectos / 70;
 
 function contexto(): AudioContext | null {
-  if (!activo) return null;
+  if (!preferencias().efectos || preferencias().volumenEfectos <= 0) return null;
   try {
     const AC = window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
     if (!AC) return null;
@@ -27,7 +25,7 @@ function tocar(notas: Nota[]) {
   if (!c) return;
   for (const n of notas) {
     const osc = c.createOscillator(), gan = c.createGain();
-    const t0 = c.currentTime + n.t, v = n.v ?? 0.08;
+    const t0 = c.currentTime + n.t, v = Math.max(0.0002, (n.v ?? 0.08) * factor());
     osc.type = n.tipo ?? "square";
     osc.frequency.setValueAtTime(n.f, t0);
     if (n.a) osc.frequency.exponentialRampToValueAtTime(n.a, t0 + n.d);
@@ -66,19 +64,54 @@ const SONIDOS = {
 } satisfies Record<string, Nota[]>;
 
 export type Sonido = keyof typeof SONIDOS;
-export const sonar = (s: Sonido) => tocar(SONIDOS[s]);
 
-export function alternarSonido() {
-  activo = !activo;
-  try { localStorage.setItem(CLAVE, activo ? "si" : "no"); } catch { /* sin almacenamiento: vale solo para esta visita */ }
-  if (!activo) void ctx?.suspend(); else sonar("clic");
-  oyentes.forEach(f => f());
+/** Momentos que además vibran (si el aparato vibra y la vibración está encendida), aunque el sonido esté apagado. */
+const VIBRA: Partial<Record<Sonido, number | number[]>> = {
+  tiempo: [120, 80, 120], revelar: 60, exito: [40, 40, 80], error: [90, 50, 90], poder: 50, fanfarria: [60, 40, 60, 40, 120], legendaria: [80, 50, 160],
+};
+
+// Clic de botones con el audio de Elías (public/audio/clic.mp3). Mientras carga (o si falla) suena el clic sintético.
+const MUESTRA_CLIC = `${import.meta.env.BASE_URL}audio/clic.mp3`;
+let bufClic: AudioBuffer | null = null, pidiendoClic = false;
+function cargarClic(c: AudioContext) {
+  if (bufClic || pidiendoClic) return;
+  pidiendoClic = true;
+  fetch(MUESTRA_CLIC).then(r => r.arrayBuffer()).then(b => c.decodeAudioData(b)).then(x => { bufClic = x; }).catch(() => { /* se queda el sintético */ });
+}
+function tocarClic(): boolean {
+  const c = contexto();
+  if (!c) return true; // apagado: no suena nada
+  cargarClic(c);
+  if (!bufClic) return false;
+  const fuente = c.createBufferSource(), gan = c.createGain();
+  fuente.buffer = bufClic;
+  gan.gain.value = 0.7 * factor();
+  fuente.connect(gan).connect(c.destination);
+  fuente.start();
+  return true;
 }
 
-export const useSonidoActivo = () => useSyncExternalStore(
-  f => { oyentes.add(f); return () => { oyentes.delete(f); }; },
-  () => activo,
-);
+export const sonar = (s: Sonido) => {
+  const v = VIBRA[s];
+  if (v) vibrar(v);
+  if (s === "clic" && tocarClic()) return;
+  tocar(SONIDOS[s]);
+};
+
+/** Enciende o apaga los efectos. */
+export function fijarEfectos(encendidos: boolean) {
+  cambiarPreferencias({ efectos: encendidos });
+  if (!encendidos) void ctx?.suspend(); else sonar("clic");
+}
+export const alternarSonido = () => fijarEfectos(!preferencias().efectos);
+
+/** Cambia el volumen y suena un clic con el volumen nuevo para que se oiga cómo queda. */
+export function fijarVolumenEfectos(v: number) {
+  cambiarPreferencias({ volumenEfectos: v });
+  sonar("clic");
+}
+
+export const useSonidoActivo = () => usePreferencias().efectos;
 
 /** Clic en cualquier botón o enlace de la app. Se instala una sola vez. */
 export function instalarClics() {

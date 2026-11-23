@@ -5,6 +5,7 @@ import { cargarCapsulasNube, entrar, entrarInvitado, esNickInvitado, guardarRegi
 import { hayNube } from "../servicios/cliente";
 import { entrarDemo, refrescarSesion, useSesion, type Fase } from "../app/sesion";
 import { ir } from "../app/rutas";
+import { pantallaDeCarga } from "../app/musica";
 import { sonar } from "../app/sonido";
 import { Marco, urlArte } from "./comun";
 import { LogoALV } from "./Logo";
@@ -130,6 +131,8 @@ export function Carga({ texto = "Entrando…" }: { texto?: string }) {
 export function Inicio({ fase, alTerminar }: { fase: Fase; alTerminar: () => void }) {
   const [tiempo, setTiempo] = useState(false), [acceso, setAcceso] = useState(false);
   useEffect(() => { const t = setTimeout(() => setTiempo(true), CARGA_MS); return () => clearTimeout(t); }, []);
+  // Mientras se ve la pantalla de carga suena su pista (al primer toque: antes el navegador no deja).
+  useEffect(() => { pantallaDeCarga(true); return () => pantallaDeCarga(false); }, []);
   // Entró o creó cuenta desde Acceso: se quita el inicio y manda la ruta (Acceso ya lleva a Personalizar si es nueva).
   useEffect(() => { if (acceso && fase !== "fuera" && fase !== "cargando") alTerminar(); }, [acceso, fase, alTerminar]);
   if (acceso && fase === "fuera") return <Acceso alVolver={() => setAcceso(false)} />;

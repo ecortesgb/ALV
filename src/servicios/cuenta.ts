@@ -191,6 +191,41 @@ export async function cambiarClave(nueva: string): Promise<string | null> {
   } catch (e) { console.error("cambiarClave", e); return "No se pudo cambiar la contraseña."; }
 }
 
+/**
+ * Cambia la contraseña comprobando antes la actual (se entra con ella; si no es, no se cambia nada).
+ * Devuelve null si salió bien, o el mensaje para la persona.
+ */
+export async function cambiarClaveConActual(actual: string, nueva: string): Promise<string | null> {
+  if (!cliente) return GENERICO;
+  const nick = cuentaActiva();
+  if (!nick) return "No hay cuenta abierta.";
+  if (!passValida(nueva)) return "La contraseña nueva va de 8 a 72 caracteres.";
+  if (actual === nueva) return "La contraseña nueva es igual a la actual.";
+  try {
+    const { error } = await cliente.auth.signInWithPassword({ email: correoInterno(nick), password: actual });
+    if (error) return "La contraseña actual no es correcta.";
+  } catch (e) { console.error("cambiarClaveConActual", e); return "No se pudo comprobar. Intenta otra vez."; }
+  return cambiarClave(nueva);
+}
+
+/** Cierra la sesión en todos los aparatos donde esté abierta esta cuenta (también en este). */
+export async function salirDeTodos(): Promise<boolean> {
+  if (!cliente) return false;
+  try {
+    const { error } = await cliente.auth.signOut({ scope: "global" });
+    if (error) { console.error("salirDeTodos", error.message); return false; }
+    fijarUsuario(null);
+    fijarArticulos([]);
+    return true;
+  } catch (e) { console.error("salirDeTodos", e); return false; }
+}
+
+/** Cuándo se inició sesión por última vez en esta cuenta (ISO), o null. */
+export async function ultimoInicio(): Promise<string | null> {
+  if (!cliente) return null;
+  try { const { data } = await cliente.auth.getUser(); return data.user?.last_sign_in_at ?? null; } catch { return null; }
+}
+
 export interface MovimientoXp { tipo: string; xp: number; motivo: string; creado: string }
 /** Mis movimientos de XP (solo los míos: RLS), del más nuevo al más viejo. */
 export async function misMovimientos(): Promise<MovimientoXp[]> {

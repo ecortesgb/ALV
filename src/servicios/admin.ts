@@ -43,6 +43,19 @@ export async function restablecerClave(jugador: string, clave: string): Promise<
   } catch (e) { console.error("restablecerClave", e); return "No se pudo cambiar la contraseña."; }
 }
 
+/** Borra la cuenta de otro jugador con todo lo suyo (039; el servidor no deja borrar administradores). Null si salió bien. */
+export async function adminBorrarCuenta(jugador: string): Promise<string | null> {
+  if (!cliente || !cuentaActiva()) return "No hay cuenta abierta.";
+  try {
+    const { error } = await cliente.rpc("admin_borrar_cuenta", { p_jugador: jugador });
+    if (!error) return null;
+    if (error.message.includes("es administrador")) return "No se puede borrar a un administrador.";
+    if (error.message.includes("no válido")) return "No puedes borrar tu propia cuenta desde aquí.";
+    console.error("adminBorrarCuenta", error.message);
+    return "No se pudo borrar.";
+  } catch (e) { console.error("adminBorrarCuenta", e); return "No se pudo borrar."; }
+}
+
 /** Borra todas las cuentas de invitado con su XP, figuras y salas. Devuelve cuántas borró, o null si no se pudo. */
 export async function adminBorrarInvitados(): Promise<number | null> {
   if (!cliente || !cuentaActiva()) return null;

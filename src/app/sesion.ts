@@ -1,5 +1,6 @@
 // Sesión de este aparato: quién entró, su XP (la dice el servidor) y si puede jugar (solo mayores de 18, D1).
 // No guarda XP ni compras en el aparato (decisión 3 de §22.1).
+import { cargarPreferenciasCuenta, olvidarPreferenciasCuenta } from "../servicios/preferencias";
 import { useSyncExternalStore } from "react";
 import { cliente, fijarUsuario, hayNube, uidActual } from "../servicios/cliente";
 import { miRegistro, sesionActual } from "../servicios/cuenta";
@@ -42,7 +43,7 @@ export async function refrescarSesion(): Promise<void> {
   }
   const ses = await sesionActual();
   if (mio !== turno) return;
-  if (!ses) { fijarUsuario(null); fijar({ ...VACIA, fase: "fuera" }); return; }
+  if (!ses) { fijarUsuario(null); olvidarPreferenciasCuenta(); fijar({ ...VACIA, fase: "fuera" }); return; }
   const uid = (await uidActual()) ?? ses.user.id;
   try {
     const [perfil, registro, saldos, admin] = await Promise.all([
@@ -58,6 +59,8 @@ export async function refrescarSesion(): Promise<void> {
     // El invitado no tiene fecha de nacimiento: confirmó ser mayor al entrar y el servidor lo marcó.
     const fase: Fase = invitado && perfil.data?.mayor_18 === true ? "dentro" : !registro ? "registro" : perfil.data?.mayor_18 === true ? "dentro" : "menor";
     fijar({ fase, uid, nombre, acumulada: fila?.acumulada ?? 0, disponible: fila?.disponible ?? 0, nivel: fila?.nivel ?? 1, admin, invitado });
+    // Preferencias de «Mi experiencia» guardadas en la cuenta (039): se leen una vez por sesión.
+    if (fase === "dentro") void cargarPreferenciasCuenta(uid);
   } catch (e) {
     console.error("refrescarSesion", e);
     if (mio === turno) fijar({ ...VACIA, fase: "fuera" });

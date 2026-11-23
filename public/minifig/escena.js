@@ -435,7 +435,7 @@
   // Placa blanca con 24 studs dorados en el borde y una estrella donde pisa la figura (y = 0); anillo de 12 paneles con
   // una ranura de energía en los huecos; tres patas hidráulicas sobre el piso de la azotea (y = PISO). Todo barato:
   // los studs son una sola malla instanciada, los brillos son planos aditivos y no hay luces extra.
-  const PISO = -0.72, AZ_GIRO = 0.3, QUIETO_AZ = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const PISO = -0.72, AZ_GIRO = 0.3, QUIETO_AZ = Q.get("quieto") === "1" || matchMedia("(prefers-reduced-motion: reduce)").matches;
   const AZ = { brillo: 0.6, ranura: new THREE.Color(0x2ee6d6), pausa: false, llegada: null, polvo: false, pendiente: AZOTEA && Q.get("llegada") === "1" && !QUIETO_AZ,
     mira: { x: 0, y: 0, ax: 0, ay: 0, w: 0, activa: false }, acc: { cual: null, k: 0, sale: null }, saludo: 0, quieto: true, salto: false,
     usuario: 0, vel: 0 }; // giro que le da el jugador arrastrando (radianes) y su inercia
@@ -981,7 +981,7 @@
   }
 
   // Polvo de cómic al cambiar una pieza (solo en el personalizador): puntitos blancos y amarillos que salen y se apagan.
-  const MENOS_MOVIMIENTO = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const MENOS_MOVIMIENTO = Q.get("quieto") === "1" || matchMedia("(prefers-reduced-motion: reduce)").matches;
   const texPolvo = (function () { const cv = document.createElement("canvas"); cv.width = cv.height = 64; const g = cv.getContext("2d");
     g.fillStyle = "#0b0f24"; g.beginPath(); g.arc(32, 32, 30, 0, 7); g.fill(); g.fillStyle = "#ffffff"; g.beginPath(); g.arc(32, 32, 22, 0, 7); g.fill();
     return new THREE.CanvasTexture(cv); })();

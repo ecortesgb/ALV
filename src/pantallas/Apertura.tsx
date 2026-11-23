@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import { FiguraViva, figuraActiva, useCapsulas } from "../app/figura3d";
 import { ponerPieza } from "../app/equiparPieza";
 import { sesionAhora } from "../app/sesion";
+import { movimientoReducido, vibrar } from "../app/preferencias";
 import { sonar } from "../app/sonido";
 import { RaizDS } from "../ds";
 import { NOMBRE_RAREZA } from "../content/rarezas";
@@ -18,9 +19,7 @@ import { Momento, srcArte } from "./Tienda";
 
 type Fase = "sacudir" | "rasgar" | "luz" | "cartas" | "resumen";
 const GOLPES = 3;
-const quieto = () => typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches;
-/** Vibración corta (Android; en iPhone el navegador no la permite). */
-const vibrar = (p: number | number[]) => { try { if (!quieto()) navigator.vibrate?.(p); } catch { /* sin vibración */ } };
+const quieto = movimientoReducido;
 
 export function Apertura({ sobre, apertura, alOtro, alColeccion }: { sobre: Sobre; apertura: Resultado; alOtro: () => void; alColeccion: () => void }) {
   const [fase, setFase] = useState<Fase>("sacudir");

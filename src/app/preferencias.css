@@ -1,0 +1,10 @@
+/* Preferencias de «Mi experiencia» que valen en toda la app (las aplica app/preferencias.ts en <html>). */
+
+/* Animaciones apagadas: todo llega a su estado final sin moverse. */
+html.alv-quieto *, html.alv-quieto *::before, html.alv-quieto *::after {
+  animation-duration: .01ms !important; animation-iteration-count: 1 !important; animation-delay: 0s !important;
+  transition-duration: .01ms !important; transition-delay: 0s !important; scroll-behavior: auto !important;
+}
+
+/* Letra grande y modo TV: se agranda todo el contenido por igual (la app mide casi todo en px). */
+html.alv-zoom #root { zoom: var(--alv-zoom, 1); }

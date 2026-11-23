@@ -2,6 +2,7 @@
 // Desde aquí se le pide que voltee, que haga una pose breve, que llegue o que deje de dibujar.
 import { useEffect, useImperativeHandle, useRef, useState, forwardRef } from "react";
 import { huella, semillaDe } from "../../app/figura3d";
+import { calidadAzotea, movimientoReducido } from "../../app/preferencias";
 import type { FiguraV2 } from "../../content/personaje";
 import type { Ambiente, Anclaje, ColoresPlataforma } from "./paquetes";
 
@@ -31,7 +32,8 @@ export const EscenaAzotea = forwardRef<MandoAzotea, { id: string; figura: Figura
     const [listo, setListo] = useState(false);
     // La dirección se calcula una sola vez: cambiarla recargaría la escena.
     const anclaje = ambiente.pedestal;
-    const [src] = useState(() => `${BASE}escena.html?modo=azotea&estilo=cine&acabado=brillo&calidad=${tactil() ? "media" : "alta"}${llegada && primeraVez() ? "&llegada=1" : ""}${anclaje ? "&plataforma=no" : ""}`);
+    // Calidad y movimiento salen de Configuración → Mi experiencia (al volver a esta pantalla ya se ven).
+    const [src] = useState(() => `${BASE}escena.html?modo=azotea&estilo=cine&acabado=brillo&calidad=${calidadAzotea(tactil())}${llegada && primeraVez() ? "&llegada=1" : ""}${anclaje ? "&plataforma=no" : ""}${movimientoReducido() ? "&quieto=1" : ""}`);
     const caja = useRef<HTMLDivElement>(null);
     // Dónde caen los pies dentro del lienzo y cuánto mide la figura (fracciones); la escena lo dice al encuadrar.
     const pies = useRef({ x: 0.5, y: 0.955, alto: 0.83 });
