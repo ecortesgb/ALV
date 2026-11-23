@@ -1,6 +1,6 @@
 # ALV — Amigos Legendarios Verdaderos
 ## Documento Maestro del Producto
-**Versión:** 1.55  
+**Versión:** 1.56  
 **Última actualización:** 23 de noviembre de 2026  
 **Estado:** Documento vivo de producto; decisiones y propuestas identificadas por separado.
 
@@ -1029,6 +1029,12 @@ XP acumulada y victorias deben ser rankings separados. No confundir clasificaci�
 - **PENDIENTE (etapa 3):** al borrar una cuenta, su lugar en el Salón de la Fama queda como «Jugador retirado», sin apodo ni figura. **PENDIENTE (etapa 2):** si los objetivos diarios dan XP.
 - Riesgo aceptado: el aparato que cierra la partida manda los resultados y el servidor los valida, como hoy la XP, hasta que el motor pase al servidor.
 
+**DECISIÓN (v1.56, Elías: «Sigue con etapa 3») — Ranking y Logros, etapa 3 (migración 044).**
+- Temporada formal (D2): al terminar cada mes (hora de México) se guarda una foto fija: top 3 individual por Puntos ALV, mejor pareja y mejor equipo. El 1.º recibe el logro «Campeón de temporada» (28 logros). La foto no cambia después.
+- Salón de la Fama: temporadas y campeones de torneos. Sin apodo guardado; si la cuenta se borra sale «Jugador retirado» (resuelve el choque 3 de v1.54).
+- Récords históricos: rey del caos, el incansable, el sobreviviente, el más desafortunado, el traicionero, el bromista (votos), el noctámbulo (11 pm a 5 am) y el fiestero (solo partidas con Drunk, sin puntos ni XP; cada quien puede ocultarlo, D7).
+- **PENDIENTE:** recompensas especiales (poses, efectos de entrada, accesorios), historial de partidas y estadísticas avanzadas en el Perfil, torneos con rondas y llaves.
+
 **DECISIÓN (v1.55, Elías: «sigue con la etapa 2, publicar directo») — Ranking y Logros, etapa 2 (migración 043).**
 - Logros ocultos: «¿Y tú qué haces aquí?», «El sospechoso habitual», «El intocable», «El noctámbulo» y «Caos absoluto»; se ven como silueta con pista hasta ganarlos. «Fantasma», «Última esperanza» y «No era personal» del plan no se pueden medir con lo que guarda el motor; «El intocable» (gana 3 veces siendo impostor) toma uno de esos lugares.
 - Progresión: «Leyenda local» (nivel 10), «ALV Legendario» (nivel 20) y «Constante» (10 objetivos). Total: 27 logros. Siguen sin XP (D0).
@@ -1710,6 +1716,9 @@ Decisiones del usuario del 12 de noviembre de 2026:
 ## v1.6
 - Primeros logros (14.2), con ámbito de sesión o histórico (ver DECISIÓN v1.6 en 14.2).
 
+## v1.56
+- 23 nov 2026. Ranking y Logros, etapa 3 (14.3): temporada mensual con foto fija y «Campeón de temporada», Salón de la Fama con «Jugador retirado», 8 récords con el fiestero ocultable. Migración 044 aplicada; código publicado.
+
 ## v1.55
 - 23 nov 2026. Ranking y Logros, etapa 2 (14.3): logros ocultos y de progresión, objetivos del día y de la semana (valores PROPUESTA), votaciones de la noche, título y marco por logro, identidad de parejas y equipos. Migración 043 aplicada; código publicado.
 
@@ -1890,5 +1899,5 @@ Decisiones del usuario del 12 de noviembre de 2026:
 
 ---
 
-**Fin del Documento Maestro ALV v1.55**  
+**Fin del Documento Maestro ALV v1.56**  
 Este documento debe actualizarse de forma incremental y conservar la distinción entre decisiones aprobadas, propuestas, pendientes y descartadas.
