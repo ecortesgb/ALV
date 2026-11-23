@@ -5,7 +5,7 @@
 import { useEffect, useState, type FormEvent, type ReactNode } from "react";
 import { figuraActiva, apodoDe, semillaDe, useCapsulas, useFoto } from "../../app/figura3d";
 import { cambiarPreferencias, hayVibracion, usePreferencias, type Calidad, type Letra } from "../../app/preferencias";
-import { atras, ir, useRuta } from "../../app/rutas";
+import { atras, href, ir, useRuta } from "../../app/rutas";
 import { refrescarSesion, salirDemo, useSesion } from "../../app/sesion";
 import { fijarEfectos, fijarVolumenEfectos } from "../../app/sonido";
 import { CREDITOS, SECCIONES_TERMINOS, TERMINOS_ACTUALIZADOS } from "../../content/terminos";
@@ -49,7 +49,9 @@ export function Configuracion({ forzar }: { forzar?: Categoria }) {
   // En computadora siempre hay una categoría abierta; en celular, sin categoría se ve la lista.
   const abierta: Categoria | undefined = valida ?? (ancho ? "cuenta" : undefined);
   const info = categorias.find(c => c.id === abierta);
-  const volver = () => { if (!ancho && abierta && !forzar) ir("ajustes"); else atras(); };
+  // Cambiar de categoría reemplaza la página en el historial: «Atrás» regresa de una vez a donde estabas (no recorre cada toque).
+  const abrir = (c?: Categoria) => location.replace(href("ajustes", c));
+  const volver = () => { if (!ancho && abierta && !forzar) abrir(); else atras(); };
 
   return (
     <Marco clase={`az pf cf m-${momento}`} fondo={<div className="cf-fondo"><EscenarioFondo ambiente={esc.ambientes[momento]} momento={momento} velo={esc.velo} /></div>}>
@@ -66,7 +68,7 @@ export function Configuracion({ forzar }: { forzar?: Categoria }) {
             <nav className="cf-nav" aria-label="Categorías">
               {categorias.map(c => (
                 <button key={c.id} type="button" className={"cf-cat" + (c.id === abierta && ancho ? " on" : "")} aria-current={c.id === abierta && ancho ? "page" : undefined}
-                  onClick={() => ir("ajustes", c.id)}>
+                  onClick={() => abrir(c.id)}>
                   <span className="cf-cat-ico"><Arte nombre={c.arte} alterno={c.alterno} /></span>
                   <span className="cf-cat-txt"><b>{c.titulo}</b><small>{c.sub}</small></span>
                   <span className="cf-cat-flecha" aria-hidden="true">›</span>
