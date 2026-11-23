@@ -1,0 +1,11 @@
+/* Fondo pintado de sección (FondoSeccion.tsx). */
+.D .sf { position: absolute; inset: 0; overflow: hidden; background: #0b0a14; }
+.D .sf-img { position: absolute; inset: 0; background: var(--sf-c) var(--sf-foco) / cover no-repeat; }
+@media (min-width: 900px) { .D .sf-img { background-image: var(--sf-g); } }
+/* Velo: oscurece arriba (cabecera) y en las orillas, deja ver el centro de la escena. */
+.D .sf-velo { position: absolute; inset: 0; pointer-events: none;
+  background:
+    linear-gradient(180deg, rgba(8, 6, 16, calc(var(--sf-velo) * 1.1)) 0, rgba(8, 6, 16, calc(var(--sf-velo) * .55)) 22%, rgba(8, 6, 16, calc(var(--sf-velo) * .7)) 100%),
+    radial-gradient(ellipse 80% 70% at 50% 45%, transparent 40%, rgba(8, 6, 16, calc(var(--sf-velo) * .9)) 100%); }
+/* Celular: la lista ocupa todo el alto; más velo para leer. */
+@media (max-width: 899px) { .D .sf-velo { background-color: rgba(8, 6, 16, calc(var(--sf-velo) * .35)); } }

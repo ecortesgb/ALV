@@ -14,9 +14,8 @@ import { hayNube } from "../../servicios/cliente";
 import { Marco, aviso, useAncho } from "../comun";
 import { useRecursos } from "../Recursos";
 import { RecursosAzotea, arteHub } from "../azotea/Cabecera";
-import { EscenarioFondo } from "../azotea/Escenario";
+import { FondoSeccion, type OpcionFondo } from "../FondoSeccion";
 import { useMomentoAzotea } from "../azotea/HubAzotea";
-import { escenarioActual } from "../azotea/paquetes";
 import "../azotea/azotea.css";
 import "../perfil/perfil.css";
 import { Torneos } from "./Torneos";
@@ -34,6 +33,12 @@ const PESTANAS: { id: Pestana; titulo: string; pronto?: string }[] = [
 
 // Arte de Elías con respaldo: si la imagen no existe, se usa la otra (o nada).
 const faltan = new Set<string>();
+// Fondo de ceremonia (Elías, 2026-11-23). PRUEBA: ?fondo=publico muestra la versión con público.
+const FONDOS_RANKING: OpcionFondo[] = [
+  { clave: "ceremonia", archivo: "rk-ceremonia", foco: "50% 40%" },
+  { clave: "publico", archivo: "rk-ceremonia-publico", foco: "50% 35%" },
+];
+
 export function Arte({ nombre, alterno, className = "" }: { nombre: string; alterno?: string; className?: string }) {
   const [falta, setFalta] = useState(() => faltan.has(nombre));
   if (falta && !alterno) return null;
@@ -54,7 +59,6 @@ export function Ranking() {
   const r = useRecursos();
   const ancho = useAncho();
   const momento = useMomentoAzotea();
-  const esc = escenarioActual();
   const [pestana, setPestana] = useState<Pestana>("general");
   const [filtro, setFiltro] = useState<FiltroRanking>("amigos");
   const [temporada, setTemporada] = useState(true);
@@ -87,7 +91,7 @@ export function Ranking() {
 
   const etiquetaTemporada = temporada ? `Temporada de ${MES()}` : "Histórico";
   return (
-    <Marco clase={`az pf rk m-${momento}`} fondo={<EscenarioFondo ambiente={esc.ambientes[momento]} momento={momento} velo={Math.max(esc.velo, .45)} />}>
+    <Marco clase={`az pf rk m-${momento}`} fondo={<FondoSeccion opciones={FONDOS_RANKING} velo={.5} />}>
       <div className="rk-caja">
         <header className="pf-top rk-top">
           <button type="button" className="pf-atras" onClick={atras}><span aria-hidden="true">◀</span>Atrás</button>

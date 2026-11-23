@@ -12,9 +12,8 @@ import { destacarLogro, miProgresoLogros, misObjetivos, reclamarObjetivo, usarTi
 import { Marco, aviso } from "../comun";
 import { useRecursos } from "../Recursos";
 import { RecursosAzotea, arteHub } from "../azotea/Cabecera";
-import { EscenarioFondo } from "../azotea/Escenario";
+import { FondoSeccion, type OpcionFondo } from "../FondoSeccion";
 import { useMomentoAzotea } from "../azotea/HubAzotea";
-import { escenarioActual } from "../azotea/paquetes";
 import "../azotea/azotea.css";
 import "../perfil/perfil.css";
 import "./logros.css";
@@ -37,6 +36,13 @@ function Arte({ nombre, alterno, className = "" }: { nombre: string; alterno?: s
 }
 
 /** La insignia: marco por rareza (o bloqueado) y el dibujo del logro encima. */
+// Fondos del salón de logros (Elías, 2026-11-23). PRUEBA: ?fondo=galeria | muro para comparar; el salón con vitrinas quedó por omisión.
+const FONDOS_LOGROS: OpcionFondo[] = [
+  { clave: "salon", archivo: "lg-salon", foco: "50% 45%" },
+  { clave: "galeria", archivo: "lg-galeria", foco: "60% 50%" },
+  { clave: "muro", archivo: "lg-muro", foco: "50% 40%" },
+];
+
 export function Insignia({ l, grande }: { l: Pick<FilaLogro, "clave" | "rareza" | "ganado"> & { oculto?: boolean }; grande?: boolean }) {
   const ganado = !!l.ganado, secreto = !!l.oculto && !ganado;
   return (
@@ -51,7 +57,6 @@ export function Logros() {
   const s = useSesion();
   const r = useRecursos();
   const momento = useMomentoAzotea();
-  const esc = escenarioActual();
   const [pestana, setPestana] = useState<Pestana>("coleccion");
   const [lista, setLista] = useState<FilaLogro[] | null | undefined>(undefined);
   const [abierto, setAbierto] = useState<FilaLogro | null>(null);
@@ -75,7 +80,7 @@ export function Logros() {
   };
 
   return (
-    <Marco clase={`az pf lg m-${momento}`} fondo={<EscenarioFondo ambiente={esc.ambientes[momento]} momento={momento} velo={Math.max(esc.velo, .5)} />}>
+    <Marco clase={`az pf lg m-${momento}`} fondo={<FondoSeccion opciones={FONDOS_LOGROS} velo={.5} />}>
       <div className="lg-caja">
         <header className="pf-top lg-top">
           <button type="button" className="pf-atras" onClick={atras}><span aria-hidden="true">◀</span>Atrás</button>
