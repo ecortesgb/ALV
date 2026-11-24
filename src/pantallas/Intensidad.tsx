@@ -1,7 +1,7 @@
 // Temperatura + Voltaje en el configurador (Maestro v1.52): termómetro para las preguntas, voltímetro para los retos
 // e interruptor de Drunk. El nivel es general para toda la partida y lo pone el anfitrión.
 // Diseño tomado de la página aprobada (alv2/intensidad.html), con los tokens de .D.
-import type { CSSProperties } from "react";
+import { useState, type CSSProperties } from "react";
 import { EJE_DE_MAZO, JUEGOS, NIVELES_EJE } from "../content/catalogo";
 import type { Eje, NivelEje } from "../engine/types";
 import "./intensidad.css";
@@ -38,21 +38,34 @@ export function nivelMinimo(juego: string, eje: Eje): NivelEje {
   return def && def.intensidadMin >= 4 && ejesDeJuego(juego).includes(eje) ? 3 : 1;
 }
 
+/**
+ * Instrumento del nivel: la imagen de Elías (`public/arte/ui/configurar/termometro-N.webp` o `voltimetro-N.webp`).
+ * Mientras no llega, una barra de vidrio de tres segmentos (interfaz, no dibujo), como la barra de XP del HUB.
+ */
+function Instrumento({ eje, nivel }: { eje: Eje; nivel: NivelEje }) {
+  const base = eje === "temperatura" ? "termometro" : "voltimetro";
+  const [sinImagen, setSinImagen] = useState(false);
+  if (!sinImagen) {
+    return (
+      <span className="in-img">
+        {NIVELES.map(n => <img key={n} className={n === nivel ? "on" : ""} src={`${import.meta.env.BASE_URL}arte/ui/configurar/${base}-${n}.webp`} alt="" draggable={false}
+          onError={() => setSinImagen(true)} />)}
+      </span>
+    );
+  }
+  return <span className="in-barra">{[3, 2, 1].map(n => <i key={n} className={n <= nivel ? "on" : ""} style={{ "--m": n } as CSSProperties} />)}</span>;
+}
+
 function Medidor({ eje, nivel, alCambiar, apagado, minimo }: { eje: Eje; nivel: NivelEje; alCambiar: (n: NivelEje) => void; apagado?: boolean; minimo: NivelEje }) {
   const termo = eje === "temperatura";
   return (
     <section className={`in-medidor in-${eje} in-n${nivel}` + (apagado ? " apagado" : "")} aria-label={termo ? "Temperatura de las preguntas" : "Voltaje de los retos"}>
       <div className="in-instrumento" aria-hidden="true">
-        {termo ? (
-          <span className="in-termo"><span className="in-tubo"><span className="in-merc" /></span><span className="in-bulbo" />
-            {NIVELES.map(n => <span key={n} className="in-marca" style={{ "--m": n } as CSSProperties} />)}</span>
-        ) : (
-          <span className="in-volt">{[3, 2, 1].map(n => <i key={n} className={n <= nivel ? "on" : ""} style={{ "--m": n } as CSSProperties} />)}<span className="in-chispa" /></span>
-        )}
+        <Instrumento eje={eje} nivel={nivel} />
       </div>
       <div className="in-info">
-        <span className="in-eje dsp">{termo ? "🌡️ Temperatura · preguntas" : "⚡ Voltaje · retos"}</span>
-        <b className="in-nombre dsp ol">{NIVELES_EJE[eje][nivel]}</b>
+        <span className="in-eje">{termo ? "Temperatura · preguntas" : "Voltaje · retos"}</span>
+        <b className="in-nombre">{NIVELES_EJE[eje][nivel]}</b>
         <span className="in-num">Nivel {nivel} de 3</span>
         <p className="in-desc">{apagado ? (termo ? "Este juego no usa preguntas." : "Este juego no usa retos.") : DESCRIPCION_NIVEL[eje][nivel]}</p>
       </div>
@@ -67,10 +80,11 @@ function Medidor({ eje, nivel, alCambiar, apagado, minimo }: { eje: Eje; nivel: 
 }
 
 /** Interruptor grande (Drunk y, más adelante, eventos sorpresa y ¿Voy a tener suerte?). */
-export function Interruptor({ titulo, texto, icono, encendido, alCambiar }: { titulo: string; texto: string; icono: string; encendido: boolean; alCambiar: (v: boolean) => void }) {
+export function Interruptor({ titulo, texto, icono, encendido, alCambiar }: { titulo: string; texto: string; /** Nombre del icono en `public/arte/ui/configurar/` (si no existe, no se dibuja). */ icono: string; encendido: boolean; alCambiar: (v: boolean) => void }) {
+  const [sinIcono, setSinIcono] = useState(false);
   return (
     <button type="button" role="switch" aria-checked={encendido} className={"in-switch" + (encendido ? " on" : "")} onClick={() => alCambiar(!encendido)}>
-      <span className="in-switch-ico" aria-hidden="true">{icono}</span>
+      {!sinIcono && <img className="in-switch-ico" src={`${import.meta.env.BASE_URL}arte/ui/configurar/${icono}.webp`} alt="" draggable={false} onError={() => setSinIcono(true)} />}
       <span className="in-switch-txt"><b className="dsp">{titulo}</b><small>{texto}</small></span>
       <span className="in-switch-pista" aria-hidden="true"><span /></span>
     </button>
@@ -92,7 +106,7 @@ export function SeccionIntensidad({ juego, valor, alCambiar, cuenta }: {
         <Medidor eje="temperatura" nivel={valor.temperatura} alCambiar={fijar("temperatura")} apagado={!usa.includes("temperatura")} minimo={nivelMinimo(juego, "temperatura")} />
         <Medidor eje="voltaje" nivel={valor.voltaje} alCambiar={fijar("voltaje")} apagado={!usa.includes("voltaje")} minimo={nivelMinimo(juego, "voltaje")} />
       </div>
-      <Interruptor titulo="Modo Drunk" icono="🍹" encendido={valor.drunk} alCambiar={drunk => alCambiar({ ...valor, drunk })}
+      <Interruptor titulo="Modo Drunk" icono="drunk" encendido={valor.drunk} alCambiar={drunk => alCambiar({ ...valor, drunk })}
         texto={valor.drunk ? "Hay cartas con trago y quien no quiera hacer algo puede tomar. Agua o refresco cuentan." : "Sin cartas de trago. Quien no quiera hacer algo usa un comodín."} />
       {cuenta && usa.length > 0 && (
         <p className="in-cuenta" aria-live="polite">

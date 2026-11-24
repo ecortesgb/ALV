@@ -1,84 +1,96 @@
-/* Temperatura + Voltaje en el configurador (Intensidad.tsx). Tokens de .D. Prefijo in-. */
-.D .in-seccion { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; max-width: 64em; margin-inline: auto; contain: inline-size; } /* contain: no ensancha el cuerpo del configurador en celular */
-.D .in-lead { margin: 0; font: 600 15px/1.35 var(--letra-cuerpo); color: #fff; text-align: center; text-shadow: 0 2px 0 var(--tinta); }
+/* Temperatura + Voltaje en el configurador (Intensidad.tsx), con el lenguaje del HUB «La Azotea»: vidrio oscuro,
+   borde de luz, neón por nivel y oro en lo elegido. Tokens de azotea.css (el configurador lleva «az»). Prefijo in-. */
+.D .in-seccion { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; max-width: 64em; margin-inline: auto; contain: inline-size; } /* contain: no ensancha el cuerpo en celular */
+.D .in-lead { margin: 0; font: 700 15px/1.4 var(--f-texto, sans-serif); color: var(--texto-2, #c9d4ff); text-align: center; text-shadow: 0 2px 8px rgba(0, 0, 0, .5); }
 .D .in-medidores { display: grid; gap: 14px; }
 .D.wide .in-medidores { grid-template-columns: 1fr 1fr; }
-
-.D .in-medidor { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 14px; align-items: center; padding: 14px; min-width: 0;
-  background: linear-gradient(165deg, var(--panel), var(--panel-oscuro)); border: 3px solid var(--tinta); border-radius: 14px;
-  box-shadow: inset 0 0 0 2px rgba(95, 180, 255, .4), 0 5px 0 var(--tinta); transition: opacity .2s; }
-.D .in-medidor.apagado { opacity: .5; }
-.D .in-info { display: grid; gap: 4px; min-width: 0; }
-.D .in-eje { font-size: .95em; letter-spacing: .1em; color: var(--texto-suave); text-transform: uppercase; }
-.D .in-nombre { font-size: clamp(1.6em, 5vw, 2.2em); line-height: 1; text-transform: uppercase; color: var(--c1); transition: color .3s; }
-.D .in-num { font: 1.05em/1 var(--letra-sfx); color: var(--amarillo); letter-spacing: .05em; }
-.D .in-desc { margin: 2px 0 6px; min-height: 2.6em; font: 600 14px/1.3 var(--letra-cuerpo); color: #d4def8; }
-.D .in-pasos { grid-column: 2; display: flex; flex-wrap: wrap; gap: 6px; }
-.D .in-instrumento { grid-row: span 2; }
-.D .in-pasos button { flex: 1 1 auto; min-height: 42px; padding: 6px 10px; border: 3px solid var(--tinta); border-radius: 10px; cursor: pointer;
-  background: rgba(255, 255, 255, .1); color: #fff; font: var(--etiqueta); text-transform: uppercase; box-shadow: 0 3px 0 var(--tinta); }
-.D .in-pasos button.on { background: var(--amarillo); color: var(--tinta); translate: 0 -2px; }
-.D .in-pasos button:disabled { cursor: not-allowed; opacity: .45; }
-.D .in-pasos button:focus-visible { outline: 3px solid #fff; outline-offset: 2px; }
 
 /* Colores por nivel */
 .D .in-temperatura.in-n1 { --c1: #41d6ff; --c2: #8ee9ff; }
 .D .in-temperatura.in-n2 { --c1: #ff8a2a; --c2: #ffc24d; }
-.D .in-temperatura.in-n3 { --c1: #ff3d4a; --c2: #ff8a2a; }
-.D .in-voltaje.in-n1 { --c1: #c6ff3d; }
-.D .in-voltaje.in-n2 { --c1: var(--amarillo); }
-.D .in-voltaje.in-n3 { --c1: #b06bff; }
+.D .in-temperatura.in-n3 { --c1: #ff4a55; --c2: #ff8a2a; }
+.D .in-voltaje.in-n1 { --c1: #b6ff4a; --c2: #e4ff9a; }
+.D .in-voltaje.in-n2 { --c1: #ffd23f; --c2: #fff09a; }
+.D .in-voltaje.in-n3 { --c1: #b06bff; --c2: #e0b8ff; }
 
-/* Termómetro */
-.D .in-termo { position: relative; display: block; width: 60px; height: 190px; }
-.D .in-tubo { position: absolute; left: 18px; top: 4px; width: 24px; height: 150px; border-radius: 12px; overflow: hidden;
-  background: rgba(255, 255, 255, .12); border: 3px solid var(--tinta); box-shadow: inset 0 0 0 2px rgba(255, 255, 255, .25); }
-.D .in-merc { position: absolute; inset: auto 0 0; height: calc(var(--alto) * 1%); background: linear-gradient(0deg, var(--c1), var(--c2));
-  transition: height .55s cubic-bezier(.3, 1.5, .5, 1), background .4s; }
-.D .in-n1 .in-merc { --alto: 36; } .D .in-n2 .in-merc { --alto: 68; } .D .in-n3 .in-merc { --alto: 100; }
-.D .in-bulbo { position: absolute; left: 6px; bottom: 0; width: 48px; height: 48px; border-radius: 50%; background: var(--c1); border: 3px solid var(--tinta);
-  box-shadow: inset -6px -6px 0 rgba(0, 0, 0, .18), 0 0 18px var(--c1); transition: background .4s, box-shadow .4s; }
-.D .in-marca { position: absolute; left: 44px; bottom: calc(44px + (var(--m) - 1) * 38px + 20px); width: 12px; height: 3px; border-radius: 2px; background: var(--tinta); }
-.D .in-n3 .in-bulbo { animation: inLatido 1.2s ease-in-out infinite; }
-@keyframes inLatido { 50% { box-shadow: inset -6px -6px 0 rgba(0, 0, 0, .18), 0 0 30px var(--c1); } }
+.D .in-medidor { position: relative; display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 12px 16px; align-items: center; padding: 16px; min-width: 0; overflow: hidden;
+  border-radius: 20px; background: var(--vidrio, rgba(12, 18, 56, .62)); border: 1px solid var(--vidrio-borde, rgba(255, 255, 255, .16));
+  box-shadow: var(--vidrio-luz, none), var(--sombra-suave, none), inset 0 0 0 1px color-mix(in srgb, var(--c1) 18%, transparent);
+  -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); transition: opacity .25s, box-shadow .35s; }
+/* Resplandor del color del nivel detrás del instrumento */
+.D .in-medidor::before { content: ""; position: absolute; left: -20%; top: -30%; width: 70%; height: 160%; pointer-events: none;
+  background: radial-gradient(closest-side, color-mix(in srgb, var(--c1) 30%, transparent), transparent); opacity: .7; transition: background .4s; }
+.D .in-medidor > * { position: relative; }
+.D .in-medidor.apagado { opacity: .45; }
+.D .in-instrumento { grid-row: span 2; display: grid; place-items: center; width: 120px; height: 170px; }
+.D .in-info { display: grid; gap: 4px; min-width: 0; }
+.D .in-eje { font: 800 13px/1.2 var(--f-texto, sans-serif); letter-spacing: .08em; color: var(--texto-2, #c9d4ff); text-transform: uppercase; }
+.D .in-nombre { font: 400 clamp(26px, 2.6vw, 38px)/1 var(--f-titulo, sans-serif); letter-spacing: .02em; text-transform: uppercase; color: var(--c1);
+  text-shadow: 0 0 18px color-mix(in srgb, var(--c1) 55%, transparent), 0 2px 6px rgba(0, 0, 0, .5); transition: color .3s, text-shadow .3s; }
+.D .in-num { font: 800 13px/1 var(--f-texto, sans-serif); color: var(--oro, #ffc21a); letter-spacing: .04em; }
+.D .in-desc { margin: 2px 0 4px; min-height: 2.7em; font: 600 14px/1.35 var(--f-texto, sans-serif); color: #e4eaff; }
 
-/* Voltímetro */
-.D .in-volt { position: relative; display: grid; grid-template-rows: repeat(3, 1fr); gap: 6px; width: 66px; height: 190px; padding: 8px;
-  border-radius: 12px; background: #121a3a; border: 3px solid var(--tinta); box-shadow: inset 0 0 0 2px rgba(255, 255, 255, .18); }
-.D .in-volt i { display: block; border-radius: 6px; border: 2px solid var(--tinta); background: #24305e; transition: background .25s, box-shadow .25s; }
-.D .in-volt i.on { background: var(--c1); box-shadow: 0 0 12px var(--c1); }
-.D .in-chispa { position: absolute; inset: -6px; border-radius: 16px; pointer-events: none; opacity: 0; }
-.D .in-n3 .in-chispa { opacity: 1; animation: inZumbido .18s steps(2) infinite; box-shadow: 0 0 0 2px rgba(255, 210, 63, .5), 0 0 22px rgba(176, 107, 255, .45); }
-.D .in-voltaje.in-n3 .in-volt { animation: inTemblor .12s linear infinite; }
-@keyframes inZumbido { 50% { box-shadow: 0 0 0 1px rgba(255, 210, 63, .2), 0 0 10px rgba(176, 107, 255, .2); } }
-@keyframes inTemblor { 0%, 100% { translate: 0 0; } 25% { translate: 1px -1px; } 75% { translate: -1px 1px; } }
-.D .in-medidor.apagado .in-chispa, .D .in-medidor.apagado .in-volt, .D .in-medidor.apagado .in-bulbo { animation: none; }
+/* Instrumento: las tres imágenes encimadas; la del nivel aparece con un fundido */
+.D .in-img { position: relative; display: block; width: 100%; height: 100%; }
+.D .in-img img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; opacity: 0; scale: .94;
+  filter: drop-shadow(0 10px 16px rgba(0, 0, 0, .45)) drop-shadow(0 0 14px color-mix(in srgb, var(--c1) 40%, transparent));
+  transition: opacity .35s ease, scale .45s cubic-bezier(.2, 1.3, .4, 1); }
+.D .in-img img.on { opacity: 1; scale: 1; }
+/* Mientras llega la imagen: barra de vidrio con tres segmentos de neón (como la barra de XP) */
+.D .in-barra { display: grid; grid-template-rows: repeat(3, 1fr); gap: 6px; width: 46px; height: 150px; padding: 6px; border-radius: 16px;
+  background: rgba(0, 0, 0, .35); border: 1px solid rgba(255, 255, 255, .18); box-shadow: inset 0 2px 8px rgba(0, 0, 0, .5), var(--vidrio-luz, none); }
+.D .in-barra i { display: block; border-radius: 9px; background: rgba(255, 255, 255, .07); border: 1px solid rgba(255, 255, 255, .08);
+  transition: background .3s, box-shadow .3s; transition-delay: calc((3 - var(--m)) * 40ms); }
+.D .in-barra i.on { background: linear-gradient(180deg, var(--c2), var(--c1)); border-color: color-mix(in srgb, var(--c2) 70%, transparent);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .5), 0 0 14px color-mix(in srgb, var(--c1) 65%, transparent); }
 
-/* Interruptor */
-.D .in-switch { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 12px; align-items: center; width: 100%; padding: 12px 14px; text-align: left; cursor: pointer;
-  background: #eef2fb; color: var(--tinta); border: 3px solid var(--tinta); border-radius: 14px; box-shadow: 0 4px 0 var(--tinta); }
-.D .in-switch.on { background: linear-gradient(180deg, #ffe27a, var(--amarillo)); }
-.D .in-switch:focus-visible { outline: 3px solid #fff; outline-offset: 2px; }
-.D .in-switch-ico { font-size: 1.8em; }
-.D .in-switch-txt b { display: block; font-size: 1.3em; text-transform: uppercase; }
-.D .in-switch-txt small { display: block; font: 600 13px/1.3 var(--letra-cuerpo); color: #3b4a72; }
-.D .in-switch-pista { position: relative; width: 58px; height: 32px; border-radius: 99px; border: 3px solid var(--tinta); background: #9aa6c8; transition: background .2s; }
-.D .in-switch-pista span { position: absolute; top: 2px; left: 2px; width: 22px; height: 22px; border-radius: 50%; background: #fff; border: 2px solid var(--tinta); transition: translate .2s cubic-bezier(.3, 1.5, .5, 1); }
-.D .in-switch.on .in-switch-pista { background: var(--verde); }
-.D .in-switch.on .in-switch-pista span { translate: 26px 0; }
+/* Los tres niveles: selector segmentado de vidrio, el elegido en el color del nivel */
+.D .in-pasos { grid-column: 2; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; padding: 4px; border-radius: 14px;
+  background: rgba(255, 255, 255, .06); border: 1px solid rgba(255, 255, 255, .14); box-shadow: inset 0 2px 6px rgba(0, 0, 0, .35); }
+.D .in-pasos button { min-height: 42px; padding: 4px 8px; border: 0; border-radius: 10px; cursor: pointer; background: none; color: var(--texto-2, #c9d4ff);
+  font: 800 14px/1.1 var(--f-texto, sans-serif); transition: background .25s, color .2s, box-shadow .25s, transform .15s; }
+.D .in-pasos button.on { color: #10183a; background: linear-gradient(180deg, var(--c2), var(--c1));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .55), 0 4px 14px color-mix(in srgb, var(--c1) 45%, transparent); }
+.D .in-pasos button:not(.on):not(:disabled):hover { color: #fff; background: rgba(255, 255, 255, .08); }
+.D .in-pasos button:active:not(:disabled) { transform: scale(.97); }
+.D .in-pasos button:disabled { cursor: not-allowed; opacity: .4; }
+.D .in-pasos button:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
 
-.D .in-cuenta { justify-self: center; margin: 0; padding: 6px 14px; border-radius: 99px; text-align: center; font: 700 15px/1.3 var(--letra-cuerpo); color: var(--amarillo); background: color-mix(in srgb, var(--noche) 80%, transparent); }
+/* Interruptor de Drunk: fila de vidrio con riel turquesa (como en Configuración) */
+.D .in-switch { display: flex; gap: 14px; align-items: center; width: 100%; padding: 14px 16px; text-align: left; cursor: pointer; color: #fff;
+  border-radius: 20px; background: var(--vidrio, rgba(12, 18, 56, .62)); border: 1px solid var(--vidrio-borde, rgba(255, 255, 255, .16));
+  box-shadow: var(--vidrio-luz, none), var(--sombra-suave, none); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
+  transition: border-color .25s, box-shadow .25s, transform .15s; }
+.D .in-switch.on { border-color: rgba(46, 230, 214, .6); box-shadow: var(--vidrio-luz, none), 0 0 0 1px rgba(46, 230, 214, .3), 0 0 24px rgba(46, 230, 214, .2); }
+.D .in-switch:active { transform: scale(.99); }
+.D .in-switch:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
+.D .in-switch-ico { flex: none; width: 56px; height: 56px; object-fit: contain; filter: drop-shadow(0 4px 8px rgba(0, 0, 0, .45)); transition: scale .3s cubic-bezier(.2, 1.4, .4, 1); }
+.D .in-switch.on .in-switch-ico { scale: 1.08; }
+.D .in-switch-txt { flex: 1; display: grid; gap: 3px; min-width: 0; }
+.D .in-switch-txt b { font: 400 20px/1.1 var(--f-titulo, sans-serif); letter-spacing: .02em; text-transform: uppercase; }
+.D .in-switch-txt small { font: 600 13.5px/1.35 var(--f-texto, sans-serif); color: var(--texto-2, #c9d4ff); }
+.D .in-switch-pista { position: relative; flex: none; width: 58px; height: 32px; border-radius: 999px; background: rgba(255, 255, 255, .12); border: 1px solid rgba(255, 255, 255, .22);
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, .4); transition: background .2s, border-color .2s, box-shadow .2s; }
+.D .in-switch-pista span { position: absolute; top: 3px; left: 3px; width: 24px; height: 24px; border-radius: 50%; background: linear-gradient(180deg, #fff, #cfd8ff);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, .45); transition: transform .22s cubic-bezier(.3, 1.4, .5, 1); }
+.D .in-switch.on .in-switch-pista { background: linear-gradient(180deg, #4ff3e4, #12b5a8); border-color: rgba(160, 255, 245, .8); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .4), 0 0 14px rgba(46, 230, 214, .45); }
+.D .in-switch.on .in-switch-pista span { transform: translateX(26px); }
 
-/* Celular: instrumento más chico y los tres niveles en una sola fila debajo */
+.D .in-cuenta { justify-self: center; margin: 0; padding: 7px 16px; border-radius: 999px; text-align: center; font: 800 14.5px/1.3 var(--f-texto, sans-serif); color: #ffe0a8;
+  background: rgba(7, 10, 28, .6); border: 1px solid rgba(255, 194, 26, .35); }
+
+/* Celular: instrumento a un lado de la información y los tres niveles en una fila abajo */
 @media (max-width: 599px) {
-  .D .in-medidor { gap: 6px 12px; padding: 10px 12px; }
-  .D .in-termo, .D .in-volt { zoom: .62; }
+  .D .in-medidor { gap: 8px 12px; padding: 12px; }
+  .D .in-instrumento { grid-row: auto; width: 64px; height: 104px; }
+  .D .in-barra { width: 34px; height: 96px; gap: 4px; padding: 4px; }
   .D .in-desc { min-height: 0; margin-bottom: 0; font-size: 13px; }
-  .D .in-instrumento { grid-row: auto; }
-  .D .in-pasos { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .D .in-pasos { grid-column: 1 / -1; }
   .D .in-pasos button { min-height: 40px; padding: 4px; font-size: 13px; }
   .D .in-lead { font-size: 13px; }
+  .D .in-switch { gap: 10px; padding: 12px; }
+  .D .in-switch-ico { width: 44px; height: 44px; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .D .in-medidor * { animation: none !important; transition: none !important; }
+  .D .in-medidor, .D .in-medidor *, .D .in-switch, .D .in-switch * { animation: none !important; transition: none !important; }
 }

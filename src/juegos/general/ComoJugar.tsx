@@ -1,14 +1,14 @@
 // «Cómo jugar» (Maestro v1.44): láminas con las reglas antes de la primera ronda, si el anfitrión lo pidió.
-// Estilo pantalla «How to play» de juego de fiesta: nombre del juego en cinta, ilustración grande a un lado,
+// Estilo de La Azotea (vidrio oscuro, título con franja, oro y turquesa): nombre del juego arriba, ilustración grande a un lado,
 // lámina al otro y barra abajo con anterior, puntos y siguiente. Solo usa la vista pública (TV y celular).
 // Celular: cada quien avanza (botones, deslizar o flechas del teclado) o toca «Omitir»; la última dice «¡A jugar!».
 // TV: las láminas pasan solas con una barra de tiempo. Se quita en cuanto la partida arranca.
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { createPortal } from "react-dom";
 import { laminas } from "../../content/comoJugar";
-import { ARTE_JUEGOS, EMOJI_JUEGO } from "../../content/arteJuegos";
+import { ARTE_JUEGOS } from "../../content/arteJuegos";
 import { colorDe } from "../../pantallas/Catalogo";
-import { srcArte } from "../../pantallas/TarjetasConfig";
+import { SinArte, srcArte } from "../../pantallas/TarjetasConfig";
 import { nombreJuego, type Publico } from "./texto";
 import "./comoJugar.css";
 
@@ -57,28 +57,28 @@ export function ComoJugar({ v, modo, alCerrar }: { v: Publico; modo: "tv" | "cel
       onPointerDown={e => { toque.current = e.clientX; }}
       onPointerUp={e => { if (modo !== "celular" || toque.current == null) return; const dx = e.clientX - toque.current; toque.current = null; if (dx < -50) sig(); else if (dx > 50) ir(i - 1); }}>
       <div className="cj-cab">
-        <span className="cj-cinta dsp ol">{nombreJuego(v.juegoId)}</span>
-        <span className="cj-cuenta dsp" aria-live="polite">{i + 1} / {total}</span>
-        {modo === "celular" && <button type="button" className="cj-omitir" onClick={alCerrar}>Omitir <span aria-hidden="true">⏭</span></button>}
+        <span className="cj-cinta"><span>{nombreJuego(v.juegoId)}</span></span>
+        <span className="cj-cuenta" aria-live="polite">{i + 1} / {total}</span>
+        {modo === "celular" && <button type="button" className="cj-omitir" onClick={alCerrar}>Omitir <span aria-hidden="true">▶▶</span></button>}
       </div>
       <div className="cj-cuerpo">
         <div className="cj-ilus">
-          {arte ? <img src={srcArte(arte)} alt="" draggable={false} /> : <span className="cj-sinarte" aria-hidden="true"><span>{EMOJI_JUEGO[v.juegoId] ?? "🎲"}</span></span>}
+          {arte ? <img src={srcArte(arte)} alt="" draggable={false} /> : <SinArte />}
           <span className="cj-insignia" key={i} aria-hidden="true">{l.icono}</span>
         </div>
         <div className="cj-texto" key={i} style={{ "--dir": dir } as CSSProperties}>
-          <span className="cj-como dsp ol">Cómo jugar</span>
-          <b className="cj-titulo dsp ol">{l.titulo}</b>
+          <span className="cj-como">Cómo jugar</span>
+          <b className="cj-titulo">{l.titulo}</b>
           <p>{l.texto}</p>
         </div>
       </div>
       <div className="cj-barra">
-        {modo === "celular" && <button type="button" className="cj-flecha atras" onClick={() => ir(i - 1)} disabled={i === 0} aria-label="Lámina anterior">‹</button>}
+        {modo === "celular" && <button type="button" className="cj-flecha atras" onClick={() => ir(i - 1)} disabled={i === 0} aria-label="Lámina anterior"><span aria-hidden="true">◀</span></button>}
         <div className="cj-puntos" role="tablist" aria-label="Láminas">
           {lams.map((x, k) => <button key={k} type="button" role="tab" aria-selected={k === i} aria-label={x.titulo} className={k === i ? "on" : k < i ? "visto" : ""} onClick={() => ir(k)} />)}
         </div>
         {modo === "celular"
-          ? <button type="button" className={"cj-flecha sig" + (ultima ? " final" : "")} onClick={sig} aria-label={ultima ? "¡A jugar!" : "Siguiente lámina"}>{ultima ? <span className="dsp">¡A jugar!</span> : "›"}</button>
+          ? <button type="button" className={"cj-flecha sig" + (ultima ? " final" : "")} onClick={sig} aria-label={ultima ? "¡A jugar!" : "Siguiente lámina"}>{ultima ? <span className="cj-final-txt">¡A jugar!</span> : <span aria-hidden="true">▶</span>}</button>
           : <span className="cj-tiempo" key={i} style={{ "--seg": `${SEG_TV}s` } as CSSProperties} aria-hidden="true" />}
       </div>
       {modo === "tv" && <p className="cj-nota">La partida empieza en cuanto alguien juegue en su celular.</p>}

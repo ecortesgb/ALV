@@ -1,10 +1,24 @@
 // Tarjetas del configurador de partida (Maestro v1.44): juego, tipo de partida y escenario.
 // Se inclinan siguiendo el dedo o el ratón, brillan al elegirse y llevan su ilustración.
-// Si un juego todavía no tiene ilustración en `public/arte/juegos/`, se dibuja un cartel con rayos de cómic.
-import { useRef, type CSSProperties } from "react";
-import { ARTE_ESCENARIOS, ARTE_JUEGOS, ARTE_TIPOS, EMOJI_JUEGO } from "../content/arteJuegos";
+// Si un juego todavía no tiene ilustración en `public/arte/juegos/`, va una placa de vidrio con el icono de jugar.
+import { useState, useRef, type CSSProperties } from "react";
+import { ARTE_ESCENARIOS, ARTE_JUEGOS, ARTE_TIPOS } from "../content/arteJuegos";
 import type { Modalidad } from "../engine/types";
 import { Icono } from "../ds";
+
+/** Iconos del configurador: primero el arte de Elías (`public/arte/ui/configurar/<nombre>.webp`); si no existe, `alterno`; si tampoco, nada. */
+const faltanCfg = new Set<string>();
+export function ArteCfg({ nombre, alterno, className = "" }: { nombre: string; alterno?: string; className?: string }) {
+  const [falta, setFalta] = useState(() => faltanCfg.has(nombre));
+  if (falta && !alterno) return null;
+  const src = falta ? alterno! : `${import.meta.env.BASE_URL}arte/ui/configurar/${nombre}.webp`;
+  return <img className={className} src={src} alt="" draggable={false} onError={() => { if (!falta) { faltanCfg.add(nombre); setFalta(true); } }} />;
+}
+
+/** Juego o escenario sin ilustración: placa de vidrio tintada con el icono de jugar del HUB (sin dibujos en CSS). */
+export function SinArte({ className = "" }: { className?: string }) {
+  return <span className={"cfg-sinarte " + className} aria-hidden="true"><img src={`${import.meta.env.BASE_URL}arte/ui/hub/icono-jugar.webp`} alt="" draggable={false} /></span>;
+}
 
 /** Dirección de una imagen de `public/arte/` para `<img src>`. */
 export const srcArte = (nombre: string) => new URL(`${import.meta.env.BASE_URL}arte/${nombre}`, document.baseURI).href;
@@ -23,6 +37,7 @@ export function useInclina() {
   return { ref, onPointerMove: mover, onPointerLeave: salir };
 }
 
+/** Rayos de cómic (los usan Modos.tsx y Originales.tsx del personalizador; el configurador ya no). */
 export function Rayos({ color }: { color: string }) {
   const puntas: string[] = [];
   for (let i = 0; i < 24; i += 2) {
@@ -49,7 +64,7 @@ export function CartaJuego({ id, nombre, sigla, color, jugadores, duracion, eleg
     <button type="button" {...inc} className={"tc tc-juego" + (elegida ? " on" : "") + (bloqueada ? " bloq" : "")} style={{ "--tc": color, "--i": indice } as CSSProperties}
       aria-pressed={!!elegida} aria-label={`${nombre}${bloqueada ? ` (${bloqueada})` : ""}`} onClick={onClick}>
       <span className="tc-arte">
-        {arte ? <img src={srcArte(arte)} alt="" loading="lazy" draggable={false} /> : <><Rayos color={color} /><span className="tc-emoji" aria-hidden="true">{EMOJI_JUEGO[id] ?? "🎲"}</span></>}
+        {arte ? <img src={srcArte(arte)} alt="" loading="lazy" draggable={false} /> : <SinArte />}
         <span className="tc-sigla dsp">{sigla}</span>
         {bloqueada && <span className="tc-candado"><Icono id="lock" />{bloqueada}</span>}
       </span>
@@ -70,20 +85,20 @@ export function CartaTipo({ id, nombre, texto, elegida, bloqueada, indice = 0, o
       aria-pressed={!!elegida} aria-label={`${nombre}: ${bloqueada ?? texto}`} disabled={!!bloqueada} onClick={onClick}>
       <img src={srcArte(ARTE_TIPOS[id])} alt="" draggable={false} />
       {bloqueada && <span className="tc-tipo-candado"><Icono id="lock" /> {bloqueada}</span>}
-      {elegida && <span className="tc-check" aria-hidden="true">✓</span>}
+      {elegida && <span className="tc-check" aria-hidden="true"><img src={`${import.meta.env.BASE_URL}arte/lobby/ico-listo.webp`} alt="" draggable={false} /></span>}
       <span className="tc-brillo" aria-hidden="true" />
     </button>
   );
 }
 
-/** Tarjeta de escenario con su ilustración (o su color y emoji). */
-export function CartaEscenario({ id, nombre, texto, emoji, color, elegida, bloqueada, onClick }: { id: string; nombre: string; texto: string; emoji: string; color: string; elegida?: boolean; bloqueada?: string | null; onClick: () => void }) {
+/** Tarjeta de escenario con su ilustración (o la placa de vidrio). */
+export function CartaEscenario({ id, nombre, texto, color, elegida, bloqueada, onClick }: { id: string; nombre: string; texto: string; /** Ya no se dibuja (sin emojis en el configurador). */ emoji?: string; color: string; elegida?: boolean; bloqueada?: string | null; onClick: () => void }) {
   const inc = useInclina();
   const arte = ARTE_ESCENARIOS[id];
   return (
     <button type="button" {...inc} className={"tc tc-esc" + (elegida ? " on" : "") + (bloqueada ? " bloq" : "")} style={{ "--tc": color } as CSSProperties} aria-pressed={!!elegida} disabled={!!bloqueada} onClick={onClick}>
       <span className="tc-arte">
-        {arte ? <img src={srcArte(arte)} alt="" loading="lazy" draggable={false} /> : <><Rayos color={color} /><span className="tc-emoji" aria-hidden="true">{emoji}</span></>}
+        {arte ? <img src={srcArte(arte)} alt="" loading="lazy" draggable={false} /> : <SinArte />}
       </span>
       <span className="tc-pie"><span className="dsp ol tc-nombre">{nombre}</span><span className="tc-texto">{bloqueada ?? texto}</span></span>
       <span className="tc-brillo" aria-hidden="true" />

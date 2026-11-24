@@ -7,13 +7,13 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { CONTENIDO } from "../content";
 import { EJE_DE_MAZO, ESCENARIOS, JUEGOS, NIVELES_EJE } from "../content/catalogo";
-import { ARTE_ESCENARIOS, ARTE_JUEGOS, ARTE_TIPOS, EMOJI_JUEGO } from "../content/arteJuegos";
+import { ARTE_ESCENARIOS, ARTE_JUEGOS, ARTE_TIPOS } from "../content/arteJuegos";
 import { INSTRUMENTOS, MODALIDADES, MODALIDADES_JUEGO, admite } from "../content/configurar";
 import { GRUPOS_EQUIPOS, GRUPOS_SEXOS, JUEGOS_CON_TEMPORIZADOR, armarArranque, armarGrupos, conParejas, intensidadVieja } from "../engine/nucleo";
 import { adultoPorEjes, cartasPermitidas } from "../engine/filtros";
 import { maxImpostores } from "../engine/partida";
 import type { DefinicionJuego, EscenarioId, Modalidad, OpcionesPartida } from "../engine/types";
-import { Boton, Chip, Icono, Panel } from "../ds";
+import { Boton, Icono } from "../ds";
 import { colorJugador, varsColor } from "../app/colorJugador";
 import { bandosIniciales, intercambiar, parejasIniciales } from "../app/bandos";
 import { generosSala, type Genero } from "../servicios/cuenta";
@@ -25,10 +25,18 @@ import { entregarCopas, iniciarPartida } from "../roles/pantalla/motor";
 import { useSala } from "../roles/sala";
 import { FILAS, Reglas, candado, colorDe, duracion, gente } from "./Catalogo";
 import { SeccionIntensidad, ejesDeJuego, nivelMinimo, type ValorIntensidad } from "./Intensidad";
-import { CartaEscenario, CartaJuego, CartaTipo, srcArte } from "./TarjetasConfig";
+import { ArteCfg, CartaEscenario, CartaJuego, CartaTipo, SinArte, srcArte } from "./TarjetasConfig";
 import { Marco, NombreJugador, Retrato, Vacio, aviso, confirmar } from "./comun";
 import { FondoEscenario } from "./Fondos";
+import { useRecursos } from "./Recursos";
+import { RecursosAzotea, arteHub } from "./azotea/Cabecera";
+import { EscenarioFondo } from "./azotea/Escenario";
+import { useMomentoAzotea } from "./azotea/HubAzotea";
+import { escenarioActual } from "./azotea/paquetes";
+import "./azotea/azotea.css";
+import "./perfil/perfil.css";
 import "./configurar.css";
+import "./configurar-az.css";
 
 export interface MiembroConfig { id: string; nombre: string; figura?: FiguraV2 | null }
 
@@ -115,16 +123,21 @@ function jugados(): string[] { try { return JSON.parse(localStorage.getItem(CLAV
 export const yaJugado = (juego: string) => jugados().includes(juego);
 function marcarJugado(juego: string) { try { localStorage.setItem(CLAVE_JUGADOS, JSON.stringify([...new Set([...jugados(), juego])].slice(-40))); } catch { /* sin almacenamiento: se vuelve a proponer */ } }
 
-const EMOJI_TEMA: Record<string, string> = { fut: "⚽", fam: "⭐", pel: "🎬", com: "🌮", ani: "🦁", hot: "🔥" };
+const LOBBY = (n: string) => `${import.meta.env.BASE_URL}arte/lobby/${n}.webp`;
+/** Icono de cada sección: el de Elías (`sec-<sección>`) o, mientras llega, uno del HUB o del lobby. */
+const ICONO_SECCION: Record<string, string | undefined> = {
+  tipo: LOBBY("ico-cambiar-figura"), grupos: LOBBY("ico-dar-listo"), juego: arteHub("icono-jugar"), intensidad: arteHub("xp"),
+  opciones: arteHub("ajustes"), escenario: undefined, resumen: LOBBY("ico-listo"),
+};
 
 /** Equipos por orden de llegada: A, B, A, B… */
 const repartir = (ids: string[], cuantos: number) => Object.fromEntries(ids.map((id, i) => [id, GRUPOS_EQUIPOS[i % cuantos]!.id]));
 
-/** Ilustración de un juego (o rayos con su emoji si todavía no tiene). */
+/** Ilustración de un juego (o la placa de vidrio si todavía no tiene). */
 function ArteJuego({ id, className = "" }: { id: string; className?: string }) {
   const arte = ARTE_JUEGOS[id];
   return arte ? <img className={className} src={srcArte(arte)} alt="" draggable={false} />
-    : <span className={"cfg-sinarte " + className} style={{ "--tc": colorDe(id) } as CSSProperties}><span aria-hidden="true">{EMOJI_JUEGO[id] ?? "🎲"}</span></span>;
+    : <SinArte className={className} />;
 }
 
 export function ConfigurarPartida({ miembros, alIniciar, alCancelar, iniciando, inicial, alEntregarCopas, alFondo, generos }: {
@@ -142,6 +155,7 @@ export function ConfigurarPartida({ miembros, alIniciar, alCancelar, iniciando, 
   inicial?: PartidaConfigurada;
 }) {
   const n = miembros.length;
+  const r = useRecursos();
   const ids = useMemo(() => miembros.map(m => m.id), [miembros]);
   const [sec, setSec] = useState<Seccion>(inicial ? "resumen" : "tipo");
   // Si se entró a una sección desde el resumen, «Listo» regresa al resumen.
@@ -252,8 +266,8 @@ export function ConfigurarPartida({ miembros, alIniciar, alCancelar, iniciando, 
       setTocado(null);
     };
     contenido = (
-      <Panel className="a-pila cfg-ancho">
-        <span className="a-kick">{tocado ? `Ahora toca a quien cambia de lugar con ${miembros.find(m => m.id === tocado)?.nombre ?? ""}` : "Toca a dos personas para cambiarlas de pareja"}</span>
+      <div className="cfg-vidrio a-pila cfg-ancho">
+        <span className="cfg-kick">{tocado ? `Ahora toca a quien cambia de lugar con ${miembros.find(m => m.id === tocado)?.nombre ?? ""}` : "Toca a dos personas para cambiarlas de pareja"}</span>
         <div className="cp-equipos" style={{ "--cols": 2 } as CSSProperties}>
           {parejas.map((g, x) => (
             <div key={g} className="cp-equipo"><span className="dsp ol">Pareja {x + 1}</span>
@@ -265,13 +279,13 @@ export function ConfigurarPartida({ miembros, alIniciar, alCancelar, iniciando, 
             </div>
           ))}
         </div>
-      </Panel>
+      </div>
     );
   } else if (sec === "grupos") {
     contenido = tipo === "equipos" ? (
-      <Panel className="a-pila cfg-ancho">
-        <div className="a-entre"><span className="a-kick">Toca a alguien para cambiarlo de equipo</span>
-          <div className="a-fila">{[2, 3, 4].filter(x => x <= Math.floor(n / 2)).map(x => <Chip key={x} texto={`${x} equipos`} seleccionado={cuantosEquipos === x} onClick={() => { setCuantosEquipos(x); setGrupos(repartir(ids, x)); }} />)}</div>
+      <div className="cfg-vidrio a-pila cfg-ancho">
+        <div className="a-entre"><span className="cfg-kick">Toca a alguien para cambiarlo de equipo</span>
+          <div className="a-fila">{[2, 3, 4].filter(x => x <= Math.floor(n / 2)).map(x => <ChipCfg key={x} texto={`${x} equipos`} on={cuantosEquipos === x} onClick={() => { setCuantosEquipos(x); setGrupos(repartir(ids, x)); }} />)}</div>
         </div>
         <div className="cp-equipos" style={{ "--cols": cuantosEquipos } as CSSProperties}>
           {GRUPOS_EQUIPOS.slice(0, cuantosEquipos).map((g, x) => (
@@ -284,16 +298,16 @@ export function ConfigurarPartida({ miembros, alIniciar, alCancelar, iniciando, 
             </div>
           ))}
         </div>
-      </Panel>
+      </div>
     ) : (
-      <Panel className="a-pila cfg-ancho"><span className="a-kick">¿De qué bando es cada quien?</span>
+      <div className="cfg-vidrio a-pila cfg-ancho"><span className="cfg-kick">¿De qué bando es cada quien?</span>
         <p className="a-suave cp-nota">Ya los acomodamos según su registro; quien prefirió no decirlo va al bando con menos gente. Toca para cambiar.</p>
         <ul className="cp-bandos">{miembros.map(m => (
           <li key={m.id}><Persona m={m} c={color(m.id)} />
-            <div className="a-fila">{GRUPOS_SEXOS.map(g => <Chip key={g.id} texto={g.nombre} seleccionado={grupos[m.id] === g.id} onClick={() => setGrupos(z => ({ ...z, [m.id]: g.id }))} />)}</div>
+            <div className="a-fila">{GRUPOS_SEXOS.map(g => <ChipCfg key={g.id} texto={g.nombre} on={grupos[m.id] === g.id} onClick={() => setGrupos(z => ({ ...z, [m.id]: g.id }))} />)}</div>
           </li>
         ))}</ul>
-      </Panel>
+      </div>
     );
   } else if (sec === "juego") {
     // Solo los juegos que admiten la modalidad elegida (Maestro 6A.12).
@@ -347,13 +361,13 @@ export function ConfigurarPartida({ miembros, alIniciar, alCancelar, iniciando, 
             </section>
             <section className="a-pila"><span className="cfg-sub dsp ol">Categoría de las palabras</span>
               <div className="cfg-temas">
-                {[{ id: null as string | null, nombre: "Al azar", ico: "🎲" }, { id: "escenario", nombre: "Del escenario", ico: "🏝️" }, ...temasImpostor(adulto).map(t => ({ ...t, ico: EMOJI_TEMA[t.id] ?? "🎭" }))].map(t => (
-                  <button key={t.id ?? "azar"} type="button" className={"cfg-tema" + (tema === t.id ? " on" : "")} aria-pressed={tema === t.id} onClick={() => setTema(t.id)}><span aria-hidden="true">{t.ico}</span>{t.nombre}</button>
+                {[{ id: null as string | null, nombre: "Al azar" }, { id: "escenario", nombre: "Del escenario" }, ...temasImpostor(adulto)].map(t => (
+                  <button key={t.id ?? "azar"} type="button" className={"cfg-tema" + (tema === t.id ? " on" : "")} aria-pressed={tema === t.id} onClick={() => setTema(t.id)}>{t.nombre}</button>
                 ))}
               </div>
             </section>
             <p className="a-nota">Se juega por vueltas hasta atrapar a todos los impostores, o hasta que ellos igualen a los civiles.</p>
-            {conTemporizador && <section className="a-pila"><span className="cfg-sub dsp ol">⏱ Temporizador</span>
+            {conTemporizador && <section className="a-pila"><span className="cfg-sub dsp ol"><ArteCfg nombre="herr-tiempo" className="cfg-sub-ico" />Temporizador</span>
               <div className="a-fila a-envuelve">{[null, 20, 30, 60, 90].map(x => (
                 <button key={x ?? 0} type="button" className={"cfg-tiempo" + (temporizador === x ? " on" : "")} aria-pressed={temporizador === x} onClick={() => setTemporizador(x)}>{x ? `${x} s` : "Sin tiempo"}</button>
               ))}</div>
@@ -364,13 +378,13 @@ export function ConfigurarPartida({ miembros, alIniciar, alCancelar, iniciando, 
               <div className="cfg-temas grandes">
                 {instrumentos.map(x => (
                   <button key={x.id} type="button" className={"cfg-tema" + (inst?.id === x.id ? " on" : "")} aria-pressed={inst?.id === x.id} onClick={() => setInstrumento(x.id)}>
-                    <span aria-hidden="true">{x.emoji ?? (x.id === "ruleta" ? "🎡" : x.id === "reloj-arena" ? "⏳" : x.id === "dados" ? "🎲" : x.id === "botella" ? "🍾" : "🃏")}</span>
+                    <ArteCfg nombre={`herr-${x.id}`} className="cfg-tema-ico" />
                     <span><b className="dsp">{x.nombre}</b><small>{x.detalle}</small></span>
                   </button>
                 ))}
               </div>
             </section>
-            {conTemporizador && <section className="a-pila"><span className="cfg-sub dsp ol">⏱ Temporizador</span>
+            {conTemporizador && <section className="a-pila"><span className="cfg-sub dsp ol"><ArteCfg nombre="herr-tiempo" className="cfg-sub-ico" />Temporizador</span>
               <div className="a-fila a-envuelve">{[null, 20, 30, 60, 90].map(x => (
                 <button key={x ?? 0} type="button" className={"cfg-tiempo" + (temporizador === x ? " on" : "")} aria-pressed={temporizador === x} onClick={() => setTemporizador(x)}>{x ? `${x} s` : "Sin tiempo"}</button>
               ))}</div>
@@ -398,21 +412,20 @@ export function ConfigurarPartida({ miembros, alIniciar, alCancelar, iniciando, 
     contenido = (
       <div className="cfg-resumen">
         <div className="cfg-tablero">
-          <span className="cfg-tachas" aria-hidden="true" />
           <Casilla titulo="Tipo" valor={m.nombre} detalle={conGrupos ? (gruposOk ? "Equipos listos" : "Falta armar equipos") : m.gana} img={srcArte(ARTE_TIPOS[tipo])} alTocar={() => editar("tipo")} />
           <Casilla titulo="Juego" valor={j?.nombre ?? "—"} detalle={j ? `${gente(j)} jugadores` : undefined} arte={<ArteJuego id={juego} />} alTocar={() => editar("juego")} ancha />
           <Casilla titulo="Nivel" valor={ejesDeJuego(juego).map(x => NIVELES_EJE[x][ejes[x]]).join(" · ") || "Sin nivel"}
             detalle={(ejes.drunk ? "Drunk encendido" : "Drunk apagado") + (cuenta && ejesDeJuego(juego).length ? ` · ${[ejesDeJuego(juego).includes("temperatura") ? `${cuenta.preguntas} preguntas` : "", ejesDeJuego(juego).includes("voltaje") ? `${cuenta.retos} retos` : ""].filter(Boolean).join(" y ")}` : "")}
-            emoji={ejes.temperatura === 3 || ejes.voltaje === 3 ? "🔥" : ejes.drunk ? "🍹" : "🌡️"} alTocar={() => editar("intensidad")} />
+            ico={<ArteCfg nombre={ejesDeJuego(juego).includes("temperatura") || !ejesDeJuego(juego).length ? `termometro-${ejes.temperatura}` : `voltimetro-${ejes.voltaje}`} alterno={arteHub("xp")} />} alTocar={() => editar("intensidad")} />
           <Casilla titulo={esImpostor(j) ? "Opciones" : "Herramienta"} valor={esImpostor(j) ? `${Math.min(impostores, maxImp)} ${Math.min(impostores, maxImp) === 1 ? "impostor" : "impostores"}` : inst?.nombre ?? "—"}
             detalle={esImpostor(j) ? (tema === null ? "Palabras al azar" : tema === "escenario" ? "Palabras del escenario" : temasImpostor(adulto).find(t => t.id === tema)?.nombre ?? "") + (temporizador && conTemporizador ? ` · ⏱ ${temporizador} s` : "") : `${rondas} rondas${temporizador && conTemporizador ? ` · ⏱ ${temporizador} s` : ""}`}
-            emoji={esImpostor(j) ? "🕵️" : "🃏"} alTocar={() => editar("opciones")} />
-          <Casilla titulo="Escenario" valor={esc ? esc.nombre : "Ciudad ALV"} detalle={esc ? esc.ambientacion : "Sin escenario"} img={ARTE_ESCENARIOS[escenario ?? "ciudad"] ? srcArte(ARTE_ESCENARIOS[escenario ?? "ciudad"]!) : undefined} emoji={esc?.emoji} alTocar={() => editar("escenario")} />
+            ico={<ArteCfg nombre={esImpostor(j) ? "sec-herramienta" : `herr-${inst?.id ?? "cartas"}`} alterno={arteHub("ajustes")} />} alTocar={() => editar("opciones")} />
+          <Casilla titulo="Escenario" valor={esc ? esc.nombre : "Ciudad ALV"} detalle={esc ? esc.ambientacion : "Sin escenario"} img={ARTE_ESCENARIOS[escenario ?? "ciudad"] ? srcArte(ARTE_ESCENARIOS[escenario ?? "ciudad"]!) : undefined} alTocar={() => editar("escenario")} />
           <div className="cfg-casilla cfg-reglas">
             <span className="cfg-casilla-t dsp">Cómo jugar</span>
             <div className="cfg-reglas-opc" role="radiogroup" aria-label="Explicar las reglas">
-              <button type="button" role="radio" aria-checked={explicarFinal} className={explicarFinal ? "on" : ""} onClick={() => setExplicar(true)}><span aria-hidden="true">📖</span>Explicar</button>
-              <button type="button" role="radio" aria-checked={!explicarFinal} className={!explicarFinal ? "on" : ""} onClick={() => setExplicar(false)}><span aria-hidden="true">⏩</span>Omitir</button>
+              <button type="button" role="radio" aria-checked={explicarFinal} className={explicarFinal ? "on" : ""} onClick={() => setExplicar(true)}><ArteCfg nombre="explicar" />Explicar</button>
+              <button type="button" role="radio" aria-checked={!explicarFinal} className={!explicarFinal ? "on" : ""} onClick={() => setExplicar(false)}><ArteCfg nombre="omitir" />Omitir</button>
             </div>
             <small>{yaJugado(juego) ? "Ya lo jugaron en este aparato." : "Primera vez con este juego: se recomienda explicar."}</small>
           </div>
@@ -429,31 +442,51 @@ export function ConfigurarPartida({ miembros, alIniciar, alCancelar, iniciando, 
   return (
     <div className="cfg">
       <header className="cfg-cab">
-        <button type="button" className="cfg-volver" onClick={atras} aria-label={desdeResumen ? "Volver al resumen" : k <= 0 ? "Cancelar" : "Atrás"}><Icono id="back" /></button>
-        <h2 className="cfg-titulo dsp ol" key={sec}>{TITULO[sec]}</h2>
-        {alEntregarCopas && sec === "tipo" && <button type="button" className="cfg-copas" onClick={alEntregarCopas}><span aria-hidden="true">🏆</span> Entregar copas</button>}
-        <ol className="cfg-avance" aria-hidden="true">{orden.map((s, x) => <li key={s} className={x === k ? "on" : x < k ? "hecho" : ""} />)}</ol>
+        <div className="cfg-cab-fila">
+          <button type="button" className="pf-atras cfg-volver" onClick={atras} aria-label={desdeResumen ? "Volver al resumen" : k <= 0 ? "Volver a la sala" : "Atrás"}><span aria-hidden="true">◀</span>{desdeResumen ? "Resumen" : "Atrás"}</button>
+          {alEntregarCopas && sec === "tipo" && <button type="button" className="cfg-copas" onClick={alEntregarCopas} aria-label="Entregar copas"><ArteCfg nombre="copas" alterno={arteHub("icono-ranking")} className="cfg-copas-ico" /><span className="cfg-copas-txt">Entregar copas</span></button>}
+          <RecursosAzotea monedas={r.monedas} puntos={r.puntos} />
+        </div>
+        <div className="cfg-cab-titulo">
+          <h2 className="pf-tit cfg-titulo" key={sec}><span><ArteCfg nombre={`sec-${sec === "grupos" ? "equipos" : sec === "opciones" ? "herramienta" : sec}`} alterno={ICONO_SECCION[sec]} className="cfg-tit-ico" /><span className="cfg-tit-txt">{TITULO[sec]}</span></span></h2>
+          <ol className="cfg-avance" aria-label={`Paso ${k + 1} de ${orden.length}`}>{orden.map((s, x) => <li key={s} className={x === k ? "on" : x < k ? "hecho" : ""} />)}</ol>
+        </div>
       </header>
       <div className="cfg-cuerpo" ref={cuerpo} key={sec}>{contenido}</div>
       <footer className="cfg-pie">
         {sec === "tipo" && <p className="cfg-pie-info" aria-live="polite"><b className="dsp">{MODALIDADES.find(x => x.id === tipo)!.nombre}:</b> {MODALIDADES.find(x => x.id === tipo)!.gana}</p>}
         {sec === "resumen"
-          ? <Boton color="amarillo" principal texto="¡Iniciar!" sub={motivo ?? `${j?.nombre ?? ""} · ${n} jugadores`} icono="play" desactivado={!!motivo} cargando={iniciando} onClick={() => { marcarJugado(juego); alIniciar(config); }} />
-          : <Boton color={desdeResumen ? "verde" : "azul"} texto={desdeResumen && !(sec === "tipo" && conGrupos) ? "Listo" : "Siguiente"} sub={falta(sec) ?? undefined} icono="chev" desactivado={!!falta(sec)} onClick={siguiente} />}
+          ? <BotonPie principal texto={iniciando ? "Iniciando…" : "¡Iniciar!"} sub={motivo ?? `${j?.nombre ?? ""} · ${n} jugadores`} desactivado={!!motivo || !!iniciando} onClick={() => { marcarJugado(juego); alIniciar(config); }} />
+          : <BotonPie listo={desdeResumen} texto={desdeResumen && !(sec === "tipo" && conGrupos) ? "Listo" : "Siguiente"} sub={falta(sec) ?? undefined} desactivado={!!falta(sec)} onClick={siguiente} />}
       </footer>
     </div>
   );
 }
 
 /** Una casilla del resumen: se toca para cambiar esa parte. */
-function Casilla({ titulo, valor, detalle, img, arte, emoji, ancha, alTocar }: { titulo: string; valor: string; detalle?: string; img?: string; arte?: ReactNode; emoji?: string; ancha?: boolean; alTocar: () => void }) {
+function Casilla({ titulo, valor, detalle, img, arte, ico, ancha, alTocar }: { titulo: string; valor: string; detalle?: string; img?: string; arte?: ReactNode; ico?: ReactNode; ancha?: boolean; alTocar: () => void }) {
   return (
     <button type="button" className={"cfg-casilla" + (ancha ? " ancha" : "")} onClick={alTocar} aria-label={`${titulo}: ${valor}. Cambiar`}>
       <span className="cfg-casilla-t dsp">{titulo}</span>
-      <span className="cfg-casilla-img">{img ? <img src={img} alt="" draggable={false} /> : arte ?? <span className="cfg-casilla-emoji" aria-hidden="true">{emoji ?? "✨"}</span>}</span>
+      <span className="cfg-casilla-img">{img ? <img src={img} alt="" draggable={false} /> : arte ?? <span className="cfg-casilla-ico" aria-hidden="true">{ico}</span>}</span>
       <b className="dsp ol">{valor}</b>
       {detalle && <small>{detalle}</small>}
-      <span className="cfg-cambiar"><Icono id="gear" />Cambiar</span>
+      <span className="cfg-cambiar">Cambiar</span>
+    </button>
+  );
+}
+
+/** Opción chica de vidrio (cuántos equipos, Ellas / Ellos). */
+function ChipCfg({ texto, on, onClick }: { texto: string; on: boolean; onClick: () => void }) {
+  return <button type="button" className={"cfg-chip" + (on ? " on" : "")} aria-pressed={on} onClick={onClick}>{texto}</button>;
+}
+
+/** Botón del pie: vidrio para avanzar, dorado para iniciar. `sub` dice qué falta. */
+function BotonPie({ texto, sub, principal, listo, desactivado, onClick }: { texto: string; sub?: string; principal?: boolean; listo?: boolean; desactivado?: boolean; onClick: () => void }) {
+  return (
+    <button type="button" className={"cfg-sig" + (principal ? " principal" : listo ? " listo" : "")} disabled={desactivado} onClick={onClick}>
+      <span className="cfg-sig-txt"><b>{texto}</b>{sub && <small>{sub}</small>}</span>
+      <span className="cfg-sig-flecha" aria-hidden="true">▶</span>
     </button>
   );
 }
@@ -478,6 +511,8 @@ export function PaginaConfigurar({ codigo }: { codigo: string }) {
   const s = useSala(codigo, ses.uid);
   const [iniciando, setIniciando] = useState(false);
   const [fondoEsc, setFondoEsc] = useState<EscenarioId | null | undefined>(undefined);
+  const momento = useMomentoAzotea();
+  const az = escenarioActual();
   const soyAnfitrion = !!s.sala && s.sala.anfitrionId === ses.uid;
   const [generos, setGeneros] = useState<Record<string, Genero> | undefined>(undefined);
   const salaId = s.sala?.id, cuantos = s.miembros.length;
@@ -507,7 +542,9 @@ export function PaginaConfigurar({ codigo }: { codigo: string }) {
     ir("sala", codigo);
   };
   return (
-    <Marco clase="cfg-pagina" fondo={fondoEsc !== undefined ? <FondoEscenario escenario={fondoEsc} /> : undefined}>
+    <Marco clase={`az pf cfg-pagina m-${momento}`} fondo={<div className="cfg-fondo">{fondoEsc !== undefined
+      ? <FondoEscenario escenario={fondoEsc} />
+      : <EscenarioFondo ambiente={az.ambientes[momento]} momento={momento} velo={az.velo} />}</div>}>
       {soyAnfitrion
         ? <ConfigurarPartida miembros={s.miembros} generos={generos} iniciando={iniciando} alIniciar={c => void iniciar(c)} alCancelar={() => ir("sala", codigo)} alEntregarCopas={() => void copas()} alFondo={setFondoEsc} />
         : <Vacio titulo="El anfitrión está configurando" texto="En cuanto toque «Iniciar», empieza la partida."><Boton color="amarillo" texto="Volver a la sala" icono="back" onClick={() => ir("sala", codigo)} /></Vacio>}
