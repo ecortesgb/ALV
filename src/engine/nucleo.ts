@@ -5,7 +5,7 @@
 // acciones, reconstruye la partida, arma lo que se publica y calcula las señales del reloj lógico.
 import { CONTENIDO } from "../content";
 import { ESCENARIOS, JUEGOS } from "../content/catalogo";
-import { aplicar, conEliminacion, conVerdadReto, crearPartida, etapaImpostor, etapaVR, HERRAMIENTAS_VR, maxImpostores, type Accion, type EstadoPartida, type HerramientaVR } from "./partida";
+import { aplicar, conEliminacion, conVerdadReto, crearPartida, enCarga, etapaImpostor, etapaVR, HERRAMIENTAS_VR, maxImpostores, type Accion, type EstadoPartida, type HerramientaVR } from "./partida";
 import { adultoPorEjes } from "./filtros";
 import type { Configuracion, EjesPartida, Jugador, NivelEje, OpcionesPartida } from "./types";
 import { vistaJugador, vistaPublica } from "./vistas";
@@ -18,7 +18,7 @@ export interface Arranque { semilla: number; juego: string; rondas: number; cfg:
 export const SUSPENSO_MS = 2000;
 /** P-03: sin respuesta de alguien, a los 20 s el anfitrión elige esperar o seguir sin él. «Esperar» rearma el mismo intervalo. */
 export const ESPERA_MS = 20000;
-export const CONTROL_SIMPLE = new Set(["pausar", "reanudar", "saltar", "seguir-sin", "esperar", "revelar", "siguiente", "terminar", "ruleta", "tiempo"]);
+export const CONTROL_SIMPLE = new Set(["pausar", "reanudar", "saltar", "seguir-sin", "esperar", "revelar", "siguiente", "terminar", "ruleta", "tiempo", "comenzar"]);
 
 /** Parejas por orden de llegada (1 con 2, 3 con 4…). Solo si son pares. */
 export function conParejas(miembros: { id: string; nombre: string }[]) {
@@ -47,7 +47,22 @@ export const GRUPOS_SEXOS = [{ id: "ellas", nombre: "Ellas" }, { id: "ellos", no
  * Equipos y guerra de sexos: cada jugador con su grupo en `grupos`; pide al menos dos grupos con gente.
  * Devuelve null si no se puede armar.
  */
+/** Nombre de grupo que puso el anfitrión, limpio (sin saltos ni controles, 1 a 20 letras), o undefined. */
+export function nombreGrupo(op: OpcionesPartida, id: string): string | undefined {
+  const n = op.nombres?.[id];
+  if (typeof n !== "string") return undefined;
+  const sinControl = [...n].filter(c => c.charCodeAt(0) >= 32 && c.charCodeAt(0) !== 127).join("");
+  const limpio = sinControl.replace(/\s+/g, " ").trim().slice(0, 20);
+  return limpio || undefined;
+}
+
 export function armarGrupos(jugadores: Jugador[], op: OpcionesPartida): { jugadores: Jugador[]; equipos?: { id: string; nombre: string }[] } | null {
+  const r = armarGruposBase(jugadores, op);
+  if (!r?.equipos || !op.nombres) return r;
+  return { ...r, equipos: r.equipos.map(g => ({ ...g, nombre: nombreGrupo(op, g.id) ?? g.nombre })) };
+}
+
+function armarGruposBase(jugadores: Jugador[], op: OpcionesPartida): { jugadores: Jugador[]; equipos?: { id: string; nombre: string }[] } | null {
   const tipo = op.modalidad ?? "individual";
   if (tipo === "individual") return { jugadores };
   if (tipo === "parejas") {
@@ -174,7 +189,7 @@ export function relojLogico(e: EstadoPartida) {
   const hayEspera = e.fase === "contestando" && !e.pausada && !listos && vp.contestaron.length > 0;
   return {
     claveReloj: `${e.ronda}-${e.cambios}`,
-    conReloj: !!(e.segundos && e.fase === "contestando"),
+    conReloj: !!(e.segundos && e.fase === "contestando" && !enCarga(e)),
     listos,
     hayEspera,
     claveEspera: `${e.ronda}-${e.cambios}-${e.esperas ?? 0}`,
@@ -185,7 +200,7 @@ export function relojLogico(e: EstadoPartida) {
 
 /** Clave del turno que corre con temporizador (quién habla en El impostor, o la etapa en Verdad o reto). null: no corre tiempo. */
 export function claveTurno(e: EstadoPartida): string | null {
-  if (!e.cfg.temporizador || e.fase !== "contestando" || e.pausada) return null;
+  if (!e.cfg.temporizador || e.fase !== "contestando" || e.pausada || enCarga(e)) return null;
   if (conEliminacion(e) && etapaImpostor(e) === "pistas" && e.turnoDe) return `${e.ronda}-i-${e.turnoDe}-${e.esperas ?? 0}`;
   if (conVerdadReto(e) && etapaVR(e) !== "listo") return `${e.ronda}-vr-${etapaVR(e)}-${e.cambios}`;
   return null;

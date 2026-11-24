@@ -64,9 +64,15 @@ export interface EstadoPartida {
   verdadUsada?: string[];
   /** Temperatura + Voltaje (cfg.ejes): cartas que ya salieron en la partida, para no repetirlas. Privado: no va en las vistas. */
   usadas?: string[];
+  /** Pantalla de carga (cfg.explicar): el anfitrión ya tocó «¡Iniciar!». Antes de eso no corre ningún reloj. */
+  comenzada?: boolean;
   accionesVistas: string[];
   bitacora: EventoMotor[];
 }
+
+/** ¿La partida sigue en su pantalla de carga? (pidió explicar, nadie ha hecho nada y el anfitrión no ha tocado «¡Iniciar!»). */
+export const enCarga = (e: EstadoPartida) =>
+  !!e.cfg.explicar && !e.comenzada && e.ronda === 1 && e.fase === "contestando" && Object.keys(e.respuestas).length === 0 && Object.keys(e.pistas ?? {}).length === 0 && !e.vr;
 
 export type Accion =
   | { id: string; tipo: "contestar"; jugador: string; valor: unknown }
@@ -89,7 +95,9 @@ export type Accion =
   | { id: string; tipo: "ruleta" }
   | { id: string; tipo: "pasar-control"; jugador: string }
   /** Se acabó el tiempo del turno (temporizador): el turno pasa al siguiente. Lo manda quien corre el motor. */
-  | { id: string; tipo: "tiempo" };
+  | { id: string; tipo: "tiempo" }
+  /** El anfitrión cerró la pantalla de carga: empieza la partida (y sus relojes) para todos. */
+  | { id: string; tipo: "comenzar" };
 
 export const MAX_PISTA = 40;
 
@@ -823,7 +831,7 @@ export function aplicar(e: EstadoPartida, a: Accion, contenido: Contenido): Esta
     case "tiempo": {
       // Temporizador: se acabó el tiempo del turno. El impostor salta a quien no dijo su palabra; en Verdad o reto,
       // si nadie decidió la fuente sale la carta de ALV, y si quien responde no eligió o no cumplió, pierde el turno (0).
-      if (!e.cfg.temporizador || e.fase !== "contestando" || e.pausada) return e;
+      if (!e.cfg.temporizador || e.fase !== "contestando" || e.pausada || enCarga(e)) return e;
       if (conEliminacion(e) && etapaImpostor(e) === "pistas" && e.turnoDe) {
         const pistas = { ...(e.pistas ?? {}), [e.turnoDe]: "…" };
         return sube({ ...e, pistas, turnoDe: siguienteEnHablar(e, pistas), bitacora: registrar(e, "tiempo", e.turnoDe) });
@@ -836,6 +844,8 @@ export function aplicar(e: EstadoPartida, a: Accion, contenido: Contenido): Esta
       }
       return e;
     }
+    case "comenzar":
+      return !e.cfg.explicar || e.comenzada ? e : sube({ ...e, comenzada: true, bitacora: registrar(e, "comenzada") });
     case "pasar-control": {
       if (!ids(e).includes(a.jugador) || a.jugador === e.control) return e;
       return sube({ ...e, control: a.jugador, bitacora: registrar(e, "control", a.jugador) });

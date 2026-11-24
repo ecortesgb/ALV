@@ -98,7 +98,7 @@ export function CelularVerdadReto({ v, mi, miembros, mandar }: { v: Publico; mi:
 
   return (
     <section className="vr-cel a-pila" aria-label="Verdad o reto">
-      <div className="vr-arriba"><Herramienta v={v} chica /><RelojTurno v={v} /></div>
+      <div className="vr-arriba"><Herramienta v={v} chica interactiva /><RelojTurno v={v} /></div>
       <div className="vr-duelo">
         <div><span className="a-kick">Pregunta</span><Persona id={vr.pregunta} /></div>
         <span className="vr-flecha" aria-hidden="true">➜</span>

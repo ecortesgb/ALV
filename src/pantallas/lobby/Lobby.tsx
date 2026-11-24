@@ -7,6 +7,10 @@ import { escribirCapsulas, leerCapsulas, apodoDe, useCapsulas, useFoto, N_CAPSUL
 import { ir } from "../../app/rutas";
 import { enlace, esLocal, modoLocal, type Miembro, type SalaV } from "../../servicios/enlace";
 import { PersonajeLocal, type DatosPersonaje } from "./PersonajeLocal";
+import { colorDe } from "../../app/colorJugador";
+import { BotonCast } from "./Cast";
+import { ConfigEnVivo, useConfigEnVivo } from "../ConfigEnVivo";
+import type { PresenciaPantalla } from "../../servicios/tiempoReal";
 import type { Publico } from "../../juegos/general/texto";
 import { nombreJuego } from "../../juegos/general/texto";
 import { PodioJuego } from "../../juegos/general/Copas";
@@ -23,9 +27,11 @@ const PRUEBA_ESCENARIOS = true;
 export interface PropsLobby {
   sala: SalaV; miembros: Miembro[]; yo: string; soyAnfitrion: boolean; final: Publico | null; red: string;
   refrescar: () => void; alSalir: () => void; alCopas: () => void; copando: boolean;
+  /** ¿Hay una Pantalla conectada? (con ella se juega en pantalla externa). */
+  pantalla?: PresenciaPantalla;
 }
 
-export function Lobby({ sala, miembros, yo, soyAnfitrion, final, red, refrescar, alSalir, alCopas, copando }: PropsLobby) {
+export function Lobby({ sala, miembros, yo, soyAnfitrion, final, red, refrescar, alSalir, alCopas, copando, pantalla = "desconocida" }: PropsLobby) {
   const ancho = useAncho();
   const p = preparados(miembros);
   const hayAdmin = miembros.some(m => m.anfitrion);
@@ -33,6 +39,9 @@ export function Lobby({ sala, miembros, yo, soyAnfitrion, final, red, refrescar,
   const local = esLocal(sala.id);
   const [editar, setEditar] = useState<{ tipo: "nuevo" } | { tipo: "figura"; m: Miembro } | null>(null);
   const [verResultados, setVerResultados] = useState(true);
+  // En celulares (sin pantalla), los demás ven en vivo lo que el anfitrión va armando.
+  const vivo = useConfigEnVivo(!soyAnfitrion && !local ? sala.id : undefined, pantalla !== "presente");
+  const [vivoMin, setVivoMin] = useState(false);
 
 
   const listo = (m: Miembro) => {
@@ -71,7 +80,7 @@ export function Lobby({ sala, miembros, yo, soyAnfitrion, final, red, refrescar,
           {!m.listo && <img src={ico("ico-listo")} alt="" />}{m.listo ? "Ya no estoy listo" : "¡Listo!"}
         </button>
       </>)}
-      {soyAnfitrion && <OpcionesAdmin ancho={ancho} copando={copando} alProyectar={() => ir("tv", sala.codigo)} alCopas={alCopas} alCerrar={alSalir} />}
+      {soyAnfitrion && <OpcionesAdmin copando={copando} alCopas={alCopas} alCerrar={alSalir} />}
     </div>
   );
 
@@ -96,6 +105,7 @@ export function Lobby({ sala, miembros, yo, soyAnfitrion, final, red, refrescar,
             {!soyAnfitrion && <small className="lb-banner-s">{!hayAdmin ? "Esperando al administrador" : p.todos ? "El administrador arma la partida" : "Elige tu figura y da ¡Listo!"}</small>}
           </div>
           <span className="lb-red">{red === "vivo" ? "" : red === "respaldo" ? "Reconectando…" : "Conectando…"}</span>
+          {soyAnfitrion && !local && <BotonCast sala={sala} pantalla={pantalla} className="lb-cast" />}
         </header>
 
         {final && verResultados && (
@@ -106,17 +116,19 @@ export function Lobby({ sala, miembros, yo, soyAnfitrion, final, red, refrescar,
         )}
 
         {ancho ? (
-          <section className="lb-escenario" style={{ "--lugares": lugaresSala(miembros.length) } as CSSProperties}>
+          <section className="lb-escenario" style={{ "--lugares": lugaresSala(miembros.length, local) } as CSSProperties}>
             <Pedestales miembros={miembros} yo={yo} className="lb-pedestales" fiesta={{ arriba: botonesAdmin, abajo: miPanel, escenarios: PRUEBA_ESCENARIOS, libre: libreLocal }} />
           </section>
         ) : (
-          <Carrusel lugares={lugaresSala(miembros.length)} ids={miembros.map(m => m.id)} yo={yo}>
+          <Carrusel lugares={lugaresSala(miembros.length, local)} ids={miembros.map(m => m.id)} yo={yo}>
             <Pedestales miembros={miembros} yo={yo} className="lb-pedestales" fiesta={{ arriba: botonesAdmin, abajo: miPanel, escenarios: PRUEBA_ESCENARIOS, libre: libreLocal }} />
           </Carrusel>
         )}
       </div>
+      {vivo && <div className={"cv-lobby" + (vivoMin ? " min" : "")} role="button" tabIndex={0} aria-expanded={!vivoMin} onClick={() => setVivoMin(x => !x)} onKeyDown={e => { if (e.key === "Enter" || e.key === " ") setVivoMin(x => !x); }}><ConfigEnVivo e={vivo} /></div>}
       {editar && <PersonajeLocal titulo={editar.tipo === "nuevo" ? "Nuevo jugador" : `Figura de ${editar.m.nombre}`} soloFigura={editar.tipo === "figura"}
-        inicial={editar.tipo === "figura" ? { figura: editar.m.figura } : undefined} alListo={guardarPersonaje} alCerrar={() => setEditar(null)} />}
+        inicial={editar.tipo === "figura" ? { figura: editar.m.figura, nombre: editar.m.nombre } : undefined}
+        color={editar.tipo === "figura" ? colorDe(editar.m.id, miembros.map(x => x.id)) : undefined} alListo={guardarPersonaje} alCerrar={() => setEditar(null)} />}
     </Marco>
   );
 }
@@ -141,14 +153,13 @@ function Carrusel({ lugares, ids, yo, children }: { lugares: number; ids: string
   </>);
 }
 
-/** Opciones del administrador a un lado de su selector: proyectar, finalizar la sesión con copas y cerrar el lobby. */
-function OpcionesAdmin({ ancho, copando, alProyectar, alCopas, alCerrar }: { ancho: boolean; copando: boolean; alProyectar: () => void; alCopas: () => void; alCerrar: () => void }) {
+/** Opciones del administrador a un lado de su selector: finalizar la sesión con copas y cerrar el lobby (proyectar ya es el botón «cast» de arriba). */
+function OpcionesAdmin({ copando, alCopas, alCerrar }: { copando: boolean; alCopas: () => void; alCerrar: () => void }) {
   const [abierto, setAbierto] = useState(false);
   return (
     <div className={"lb-opciones" + (abierto ? " abierto" : "")}>
       <button type="button" className="lb-opc-tab" onClick={() => setAbierto(a => !a)} aria-expanded={abierto}>{abierto ? "Cerrar ›" : "‹ Opciones"}</button>
       {abierto && <div className="lb-opc-lista">
-        {ancho && <button type="button" className="lb-sec" onClick={alProyectar}>Proyectar aquí</button>}
         <button type="button" className="lb-sec" disabled={copando} onClick={alCopas}>{copando ? "Entregando…" : "Finalizar sesión"}<small>Entrega las copas</small></button>
         <button type="button" className="lb-sec peligro" onClick={alCerrar}>Cerrar lobby</button>
       </div>}

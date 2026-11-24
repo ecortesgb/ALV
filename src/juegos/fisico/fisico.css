@@ -104,3 +104,10 @@
   .D .fi-paso { min-width: 34px; height: 36px; font-size: 15px; }
 }
 @media (prefers-reduced-motion: reduce) { .D .fi-res, .D .fi-crono.fin b { animation: none; } }
+
+/* Dados rodando (DadosRuedan). */
+.D .fi-dados.rodando span { animation: fiRueda .22s linear infinite; }
+.D .fi-dados.listo span { animation: fiCae .4s cubic-bezier(.2, 1.6, .4, 1) both; }
+@keyframes fiRueda { to { transform: rotate(360deg) translateY(-6px); } }
+@keyframes fiCae { from { transform: translateY(-18px) scale(1.2); } }
+@media (prefers-reduced-motion: reduce) { .D .fi-dados span { animation: none !important; } }

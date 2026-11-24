@@ -113,3 +113,11 @@
 .D.az.pt .cc::before { display: none; }
 .D.az.pt .d-ban { transform: none; border-radius: 14px; }
 .D.az.pt .d-ban > * { transform: none; }
+
+/* Partida con escenario (Elías, 24 nov): la foto del escenario de fondo con un velo para que se lean las tarjetas. */
+.D.pt-esc .a-fondo-esc::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(180deg, rgba(6, 9, 30, .28), rgba(6, 9, 30, .62)); }
+/* Con pantalla externa (Elías, 24 nov): aviso en los celulares y botón cast arriba. */
+.D .pt-mira { margin: 0; padding: 10px 14px; border-radius: 14px; text-align: center; font: 700 14.5px/1.35 var(--f-texto); color: #c8fff8; background: rgba(10, 60, 70, .55); border: 1px solid rgba(46, 230, 214, .4); }
+.D .pt-cast { margin-left: auto; }
+.D .lb-cast { flex: none; }
+.D.a-tv.pt-esc .a-fondo-esc::after { background: linear-gradient(180deg, rgba(6, 9, 30, .5), rgba(6, 9, 30, .72)); }

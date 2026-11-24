@@ -38,6 +38,23 @@ function Cronometro({ segundos, n }: { segundos: number; n: number }) {
   );
 }
 
+/** Los dados ruedan un momento y caen en el resultado (que ya decidió el motor). */
+function DadosRuedan({ dados }: { dados: [number, number] }) {
+  const [listo, setListo] = useState(false);
+  const [c, setC] = useState(1);
+  useEffect(() => {
+    const t = setInterval(() => setC(1 + Math.floor(Math.random() * 6)), 80);
+    const f = setTimeout(() => { clearInterval(t); setListo(true); }, 1100);
+    return () => { clearInterval(t); clearTimeout(f); };
+  }, []);
+  return (
+    <div className={"fi-dados" + (listo ? " listo" : " rodando")} aria-label={listo ? `Dados: ${dados[0]} y ${dados[1]}` : "Rodando los dados"}>
+      <span>{CARA[listo ? dados[0] : c]}</span><span>{CARA[listo ? dados[1] : (c % 6) + 1]}</span>
+      {listo && <b className="fi-suma">= {dados[0] + dados[1]}</b>}
+    </div>
+  );
+}
+
 /** Resultado de la última herramienta. `grande` para la TV. */
 export function ResultadoHerramienta({ v, miembros, grande }: { v: Publico; miembros: Miembro[]; grande?: boolean }) {
   const h = selFisico(v).herr;
@@ -46,7 +63,7 @@ export function ResultadoHerramienta({ v, miembros, grande }: { v: Publico; miem
   const info = HERR_FISICO[h.tipo];
   let cuerpo: JSX.Element | null = null;
   if (h.tipo === "dados" && h.dados) {
-    cuerpo = <div className="fi-dados" aria-label={`Dados: ${h.dados[0]} y ${h.dados[1]}`}><span>{CARA[h.dados[0]]}</span><span>{CARA[h.dados[1]]}</span><b className="fi-suma">= {h.dados[0] + h.dados[1]}</b></div>;
+    cuerpo = <DadosRuedan key={h.n} dados={h.dados} />;
   } else if (h.tipo === "ruleta" && h.jugador) {
     const c = colorDe(h.jugador, ids);
     cuerpo = <div className="fi-ruleta" style={varsColor(c)}><Burbuja p={{ id: h.jugador, nombre: nombreDe(v, h.jugador), figura: miembros.find(m => m.id === h.jugador)?.figura, color: c }} tamano={grande ? "6em" : 64} seleccionada /><b>{nombreDe(v, h.jugador)}</b></div>;

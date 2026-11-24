@@ -11,6 +11,8 @@ import type { FiguraV2 } from "../content/personaje";
 import type { ColorJugador } from "../app/colorJugador";
 import { FichaJugador } from "./lobby/Ficha";
 import { AvisoCuarto, FondoCuarto } from "./lobby/Cuarto";
+import { FondoEscenario } from "./Fondos";
+import { ComoJugar, tocaExplicar } from "../juegos/general/ComoJugar";
 import type { PresenciaPantalla } from "../servicios/tiempoReal";
 import { HerramientaCelular, type MiVista } from "../juegos/general/celular";
 import { esPublico, marcador, nombreJuego, quedan, type Publico } from "../juegos/general/texto";
@@ -21,6 +23,8 @@ import { Marco, aviso, confirmar } from "./comun";
 import { colorDe } from "../app/colorJugador";
 import { Lobby } from "./lobby/Lobby";
 import { useColoresSala } from "./lobby/colores";
+import { BotonCast } from "./lobby/Cast";
+import { MesaJuego } from "./MesaJuego";
 
 /** Mantiene la pantalla encendida mientras `activo` (la Pantalla y el celular que hace de Pantalla). */
 export function useDespierta(activo: boolean) {
@@ -96,6 +100,8 @@ export function Sala({ codigo }: { codigo: string }) {
   // Modo Local: un solo teléfono. Juega quien lo tiene en la mano (`enMano`); vacío = el anfitrión.
   const local = esLocal(s.sala?.id);
   const [enMano, setEnMano] = useState("");
+  // Local: la pantalla de carga se ve una vez por partida, antes de pasar el teléfono.
+  const [cargaVista, setCargaVista] = useState("");
   const v = s.partida && !s.partida.terminada && esPublico(s.partida.estado) ? s.partida.estado : null;
   const final = s.partida?.terminada && esPublico(s.partida.estado) ? s.partida.estado : null;
   // Relevo: con pantalla, el motor corre en la TV. Si el anfitrión termina la partida, su celular también la procesa,
@@ -105,8 +111,10 @@ export function Sala({ codigo }: { codigo: string }) {
   useMotor(s.sala, s.partida, corroMotor, s.tic, () => void refrescarSesion());
   useDespierta(corroMotor && !!v);
   // Con pantalla (modo tv) la partida solo avanza si la Pantalla está. Sin ella, el celular no deja contestar ni avanzar.
-  const pantalla = usePantalla(s.sala, false, s.sala?.modo === "tv" && !!v);
-  const sinPantalla = pantalla === "ausente";
+  // ¿Hay una Pantalla conectada? Con ella se juega «en pantalla externa» (Elías, 24 nov); se vigila siempre (no en Local).
+  const pantalla = usePantalla(s.sala, false, !!s.sala && !local);
+  const sinPantalla = s.sala?.modo === "tv" && !!v && pantalla === "ausente";
+  const conPantalla = pantalla === "presente";
   const quedanS = useQuedan(v);
   const esperaVencida = useVencida(v?.fase === "contestando" && !v.pausada ? v.espera?.fin : null);
   const [copando, setCopando] = useState(false), [xpReto, setXpReto] = useState(false);
@@ -149,6 +157,10 @@ export function Sala({ codigo }: { codigo: string }) {
     const pendientes = v.fase === "contestando" ? v.esperados.filter(j => !v.contestaron.includes(j)) : [];
     const sigue = pendientes[0] ?? anf;
     const mano = enMano || anf;
+    const idPartida = s.partida?.id ?? "";
+    if (local && tocaExplicar(v) && cargaVista !== idPartida) {
+      return <Marco clase="az pt" fondo={v.escenario ? <FondoEscenario escenario={v.escenario} /> : <FondoCuarto oscuro />}><ComoJugar v={v} modo="celular" alCerrar={() => { setCargaVista(idPartida); void control(idPartida, "comenzar"); }} /></Marco>;
+    }
     if (local && mano !== sigue && v.juegoId !== "copas") {
       const m = s.miembros.find(x => x.id === sigue);
       return <PasaTelefono nombre={m?.nombre ?? "el siguiente"} id={sigue} figura={m?.figura ?? null} color={colorDe(sigue, v.jugadores.map(j => j.id))}
@@ -166,7 +178,7 @@ export function Sala({ codigo }: { codigo: string }) {
     const figDe = (id: string) => s.miembros.find(x => x.id === id)?.figura ?? null;
     const ico = (n: string) => `${import.meta.env.BASE_URL}arte/ui/${n}.webp`;
     return (
-      <Marco clase="az pt" fondo={<FondoCuarto oscuro />} fijo={soyAnfitrion && !copas ? (
+      <Marco clase={"az pt" + (!copas && v.escenario ? " pt-esc" : "")} fondo={!copas && v.escenario ? <FondoEscenario escenario={v.escenario} /> : <FondoCuarto oscuro />} fijo={soyAnfitrion && !copas ? (
         // Barra del anfitrión con el arte nuevo (Elías, 23 nov): sin los iconos del sistema de diseño viejo.
         <nav className={"pt-host" + (sinPantalla ? " a-sin-pantalla" : "")} aria-label="Controles del anfitrión" {...inerte(sinPantalla)}>
           {v.fase === "revelada" && !sinPantalla && <button type="button" className="pt-momento" onClick={() => void control(pid, "siguiente")}>{ultima ? "Ver resultados" : "Siguiente ronda"}</button>}
@@ -186,9 +198,10 @@ export function Sala({ codigo }: { codigo: string }) {
             </div>
             {v.reloj && v.fase === "contestando" && <Reloj segundos={quedanS} total={v.reloj.total} pausado={v.pausada} style={{ width: 56, height: 56 }} />}
             <Conexion red={s.red} />
+            {soyAnfitrion && !local && !copas && <BotonCast sala={sala} pantalla={pantalla} className="pt-cast" />}
           </header>
           {/* Tu ficha: tu cabina, tus puntos, tu lugar y tus comodines. */}
-          {estoy && !copas && (() => {
+          {estoy && !copas && conPantalla && (() => {
             const m = marcador(v).find(j => j.id === yo), cartas = v.cartasEnMano[yo] ?? 0;
             return <FichaJugador className="pt-mia" id={yo} figura={figDe(yo)} nombre={yoNombre} color={colorDe(yo, ids)} tamano={72} yo>
               <span className="fj-datos"><span>🏆 <b>{v.puntos[yo] ?? 0}</b></span>{m && <span>🏅 <b>{m.lugar}.º</b></span>}{cartas > 0 && <span>⚡ <b>{cartas}</b></span>}</span>
@@ -205,16 +218,14 @@ export function Sala({ codigo }: { codigo: string }) {
             </div>
           )}
           {v.fase === "revelada" && v.ausentes?.includes(yo) && <div className="pt-aviso" role="status"><b>La ronda se cerró sin tu respuesta</b><p>No sumaste puntos en esta ronda. Sigues en la partida y juegas la siguiente.</p></div>}
-          {estoy ? <div className={"pt-juego" + (sinPantalla ? " a-espera-tv" : "")} {...inerte(sinPantalla)}><HerramientaCelular v={v} mi={mi} miembros={s.miembros} mandar={async (t, d) => !sinPantalla && jugada(pid, t, d)} /></div>
-            : <div className="pt-aviso"><b>Juegas en la siguiente</b><p>Llegaste con la partida empezada. Mira la pantalla.</p></div>}
-          {!copas && <ul className="pt-marcador" aria-label="Marcador">
-            {marcador(v).map(j => <li key={j.id}>
-              <FichaJugador id={j.id} figura={figDe(j.id)} nombre={j.nombre} color={colorDe(j.id, ids)} tamano={44} yo={j.id === yo}>
-                {(v.cartasEnMano[j.id] ?? 0) > 0 && <small className="fj-cartas">⚡ {v.cartasEnMano[j.id]}</small>}
-              </FichaJugador>
-              <b className="pt-pts">{j.puntos}</b>
-            </li>)}
-          </ul>}
+          {/* Mesa (Elías, 24 nov): en celulares, todos a los lados con sus puntos y reacciones; tu herramienta al centro. */}
+          {(() => {
+            const juego = estoy ? <div className={"pt-juego" + (sinPantalla ? " a-espera-tv" : "")} {...inerte(sinPantalla)}><HerramientaCelular v={v} mi={mi} miembros={s.miembros} sinCarga={local || (conPantalla && !soyAnfitrion)} alComenzar={soyAnfitrion ? () => void control(pid, "comenzar") : undefined} mandar={async (t, d) => !sinPantalla && jugada(pid, t, d)} /></div>
+              : <div className="pt-aviso"><b>Juegas en la siguiente</b><p>Llegaste con la partida empezada. Mira la pantalla.</p></div>;
+            return !copas && !conPantalla ? <MesaJuego v={v} miembros={s.miembros} yo={yo} modo="celular">{juego}</MesaJuego> : juego;
+          })()}
+          {/* Con pantalla externa, el marcador y la tarjeta grande se ven en la TV: aquí solo lo tuyo. */}
+          {conPantalla && !copas && <p className="pt-mira" role="status"><span aria-hidden="true">📺</span> Mira la pantalla: aquí solo va lo tuyo.</p>}
           <div className="pt-salidas">
             {copas && <button type="button" className="lb-listo" onClick={() => void salir()}>{local ? "Terminar sesión" : soyAnfitrion ? "Cerrar sala" : "Salir de la sala"}</button>}
             {/* Siempre hay salida: terminar funciona sin TV (relevo) y cualquiera puede salir o cerrar la sala. */}
@@ -238,7 +249,7 @@ export function Sala({ codigo }: { codigo: string }) {
     if (!ok) aviso("No se pudieron entregar las copas. Intenta otra vez."); else { sonar("exito"); s.refrescar(); }
   };
   return <Lobby sala={sala} miembros={ordenados} yo={ses.uid} soyAnfitrion={soyAnfitrion} final={final} red={s.red} refrescar={s.refrescar}
-    alSalir={() => void salir()} alCopas={() => void copasNoche()} copando={copando} />;
+    alSalir={() => void salir()} alCopas={() => void copasNoche()} copando={copando} pantalla={pantalla} />;
 }
 
 /** Local: tapa la pantalla entre turnos para que nadie vea lo de otro. */

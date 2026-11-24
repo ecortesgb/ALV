@@ -90,3 +90,20 @@
 .D .vr-arriba { display: flex; align-items: center; justify-content: center; gap: 12px; }
 .D .vr-arriba > .vr-herr { flex: 1; min-width: 0; }
 .D .rt { flex: none; }
+
+/* La herramienta se usa (Elías, 24 nov): tapada hasta lanzar, voltear o girar. */
+.D .vr-usar { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.D .vr-tapados { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+.D .vr-tapados .vr-dado { display: inline-block; animation: vrBota 1.4s ease-in-out calc(var(--i) * 80ms) infinite; }
+.D .vr-usar.rodando .vr-tapados .vr-dado { animation: vrRueda .25s linear infinite; }
+@keyframes vrBota { 50% { transform: translateY(-5px); } }
+@keyframes vrRueda { to { transform: rotate(360deg) translateY(-6px); } }
+.D .vr-naipe.dorso { background: repeating-linear-gradient(45deg, #2f7cf0 0 6px, #1b4fb0 6px 12px); border-color: #fff; animation: vrBota 1.6s ease-in-out calc(var(--i) * 90ms) infinite; }
+.D .vr-giro-ico { font-size: 3.2em; animation: vrBota 1.4s ease-in-out infinite; }
+.D .vr-usar-btn { min-height: 52px; padding: 0 22px; border-radius: 16px; cursor: pointer; color: #3a2200; font: 400 20px/1 "Lilita One", "Bangers", system-ui, sans-serif; text-transform: uppercase; letter-spacing: .02em;
+  border: 1px solid rgba(255, 240, 180, .9); background: linear-gradient(180deg, #ffe680, #ffb000 60%, #f09a00); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .7), 0 10px 24px rgba(255, 176, 0, .35);
+  animation: vrLate 1.6s ease-in-out infinite; }
+.D .vr-usar-btn:disabled { animation: none; opacity: .7; }
+@keyframes vrLate { 50% { transform: scale(1.05); } }
+.D .vr-usar-nota { min-height: 1em; }
+@media (prefers-reduced-motion: reduce) { .D .vr-tapados .vr-dado, .D .vr-naipe.dorso, .D .vr-giro-ico, .D .vr-usar-btn { animation: none !important; } }

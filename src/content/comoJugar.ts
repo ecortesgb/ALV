@@ -2,7 +2,7 @@
 // Solo datos. Los juegos sin láminas propias se explican con sus reglas (content/reglas.ts).
 import { ESCENARIOS, JUEGOS, LUGARES } from "./catalogo";
 import { REGLAS } from "./reglas";
-import { ARTE_ESCENARIOS } from "./arteJuegos";
+import { ARTE_ESCENARIOS, ARTE_JUEGOS } from "./arteJuegos";
 import type { EscenarioId, Modalidad } from "../engine/types";
 import { VR_PUNTOS } from "../engine/partida";
 
@@ -54,7 +54,7 @@ export function laminas(juegoId: string, modalidad: Modalidad = "individual"): L
 
 /** De qué es cada tarjeta: cambia la etiqueta de arriba y la imagen. */
 export type GrupoTarjeta = "juego" | "herramienta" | "escenario";
-export interface Tarjeta extends Lamina { grupo: GrupoTarjeta; /** Archivo dentro de `public/arte/` (si falta, la ilustración del juego). */ imagen?: string }
+export interface Tarjeta extends Lamina { grupo: GrupoTarjeta; /** Archivo dentro de `public/arte/` (si falta, la ilustración del juego). */ imagen?: string; /** Línea corta abajo («Gana…», un consejo). */ consejo?: string }
 
 const HERRAMIENTA: Record<string, { titulo: string; texto: string }> = {
   orden: { titulo: "En orden", texto: "Se va por turnos: responde el que sigue y pregunta el de antes. Nadie se salta." },
@@ -74,6 +74,19 @@ function tarjetaEscenario(id: EscenarioId): Tarjeta | null {
     l?.bloqueaTrasTomar ? "Después de tomar, no hay retos en el agua." : "",
     cuida ? `Aquí no se vale: ${cuida}.` : ""].filter(Boolean).join(" ");
   return { grupo: "escenario", titulo: e.nombre, texto, icono: e.emoji, imagen: ARTE_ESCENARIOS[id] };
+}
+
+/**
+ * Pantalla de carga (Elías, 24 nov): UNA tarjeta del juego (de qué se trata y cómo se gana) y después una por herramienta,
+ * el temporizador y el escenario. Pasan solas mientras carga la partida.
+ */
+export function tarjetasCarga(o: { juegoId: string; modalidad?: Modalidad; herramienta?: string; temporizador?: number; escenario?: EscenarioId }): Tarjeta[] {
+  const j = JUEGOS.find(x => x.id === o.juegoId);
+  if (!j?.motor) return [];
+  const r = REGLAS[j.motor];
+  const mod = o.modalidad ?? "individual";
+  const juego: Tarjeta = { grupo: "juego", titulo: j.nombre, texto: r.objetivo, consejo: mod === "individual" ? r.gana : GANA[mod], icono: "🎯", imagen: ARTE_JUEGOS[j.id] };
+  return [juego, ...tarjetasInicio({ ...o, explicar: false })];
 }
 
 /**

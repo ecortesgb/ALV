@@ -1,0 +1,42 @@
+/* Configuración en vivo (ConfigEnVivo.tsx): tarjeta de vidrio que ven los demás mientras el anfitrión arma la partida. */
+.D .cv { --cv-titulo: "Lilita One", "Bangers", system-ui, sans-serif; --cv-texto: "Nunito", "Barlow", system-ui, sans-serif;
+  display: flex; flex-direction: column; gap: 10px; width: min(560px, 100%); padding: 14px; border-radius: 20px; color: #fff; font-family: var(--cv-texto);
+  background: linear-gradient(180deg, rgba(20, 28, 74, .92), rgba(9, 13, 40, .94)); border: 1px solid rgba(46, 230, 214, .45);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .16), 0 18px 40px rgba(0, 0, 0, .5), 0 0 24px rgba(46, 230, 214, .2); animation: cvEntra .35s cubic-bezier(.2, .8, .2, 1) both; }
+@keyframes cvEntra { from { opacity: 0; transform: translateY(14px); } }
+.D .cv-cab { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.D .cv-cab b { font: 800 14.5px/1.2 var(--cv-texto); }
+.D .cv-punto { width: 10px; height: 10px; border-radius: 50%; background: #4ff3e4; box-shadow: 0 0 10px #4ff3e4; animation: cvLate 1.2s ease-in-out infinite; }
+@keyframes cvLate { 50% { opacity: .35; } }
+.D .cv-paso { margin-left: auto; padding: 4px 10px; border-radius: 999px; font: 400 14px/1 var(--cv-titulo); text-transform: uppercase; letter-spacing: .03em; color: #3a2200;
+  background: linear-gradient(180deg, #ffe680, #ffb000); animation: cvPaso .35s cubic-bezier(.2, 1.4, .4, 1) both; }
+@keyframes cvPaso { from { transform: scale(.7); } }
+.D .cv-fila { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.D .cv-item { margin: 0; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.D .cv-img { display: grid; place-items: center; aspect-ratio: 4 / 3; border-radius: 12px; overflow: hidden; background: rgba(255, 255, 255, .06); border: 1px solid rgba(255, 255, 255, .16); }
+.D .cv-img img { width: 100%; height: 100%; object-fit: cover; }
+.D .cv-emoji { font-size: 44px; }
+.D .cv-item figcaption { display: flex; flex-direction: column; gap: 2px; font: 400 16px/1.1 var(--cv-titulo); overflow: hidden; text-overflow: ellipsis; }
+.D .cv-item small, .D .cv-datos dt { font: 800 11px/1 var(--cv-texto); letter-spacing: .1em; text-transform: uppercase; color: #6ff3e6; }
+.D .cv-datos { display: flex; flex-wrap: wrap; gap: 8px 16px; margin: 0; }
+.D .cv-datos div { display: flex; flex-direction: column; gap: 3px; }
+.D .cv-datos dd { margin: 0; font: 700 14px/1.2 var(--cv-texto); }
+.D .cv-grupos { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 6px; margin: 0; padding: 0; list-style: none; }
+.D .cv-grupos li { display: flex; flex-direction: column; gap: 2px; padding: 8px 10px; border-radius: 10px; background: rgba(255, 255, 255, .06); border: 1px solid rgba(255, 255, 255, .12); animation: cvEntra .3s calc(var(--i) * 60ms) both; }
+.D .cv-grupos b { font: 400 15px/1.1 var(--cv-titulo); color: #ffe14a; }
+.D .cv-grupos span { font: 700 12.5px/1.3 var(--cv-texto); color: #dfe6ff; }
+.D .cv.grande { width: min(980px, 92vw); padding: 26px; gap: 16px; font-size: 1.2em; }
+.D .cv.grande .cv-cab b { font-size: 22px; }
+.D .cv.grande .cv-paso { font-size: 22px; padding: 6px 14px; }
+.D .cv.grande .cv-item figcaption { font-size: 28px; }
+.D .cv.grande .cv-datos dd { font-size: 20px; }
+/* En el lobby del celular: abajo, encima de las cabinas */
+.D .cv-lobby { position: fixed; left: 50%; bottom: max(12px, env(safe-area-inset-bottom)); z-index: 45; translate: -50% 0; width: min(560px, calc(100% - 24px)); }
+.D .cv-tv { position: fixed; inset: 0; z-index: 30; display: grid; place-items: center; background: rgba(4, 6, 20, .55); }
+@media (prefers-reduced-motion: reduce) { .D .cv, .D .cv-punto, .D .cv-paso, .D .cv-grupos li { animation: none; } }
+
+/* Plegada (tocar la tarjeta): solo la línea de arriba. */
+.D .cv-lobby { cursor: pointer; }
+.D .cv-lobby.min .cv > :not(.cv-cab) { display: none; }
+.D .cv-lobby.min .cv { padding: 10px 14px; }
+@media (max-width: 600px) { .D .cv { padding: 12px; gap: 8px; } .D .cv-img { aspect-ratio: 16 / 9; } .D .cv-grupos { display: none; } }

@@ -343,3 +343,51 @@
 .D .lb-traje.si { border-color: #ffc21a; box-shadow: 0 0 0 3px rgba(255, 194, 26, .35); }
 .D .lb-modal .lb-listo { max-width: none; }
 .D .lb-modal .lb-listo:disabled { filter: grayscale(.7) brightness(.8); cursor: default; }
+
+/* ---------- Agregar jugador en Local (Elías, 24 nov): vidrio oscuro, cabina del color y figura completa ---------- */
+.D .pl-velo { position: fixed; inset: 0; z-index: 60; display: grid; place-items: center; padding: 16px; background: rgba(4, 6, 20, .7); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); animation: plVelo .2s ease both; }
+@keyframes plVelo { from { opacity: 0; } }
+.D .pl-modal { display: flex; flex-direction: column; gap: 14px; width: min(760px, 100%); max-height: calc(100dvh - 32px); padding: 18px; border-radius: 22px; color: #fff;
+  background: linear-gradient(180deg, rgba(20, 28, 74, .94), rgba(9, 13, 40, .96)); border: 1px solid rgba(255, 255, 255, .16);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .18), 0 24px 60px rgba(0, 0, 0, .55), 0 0 0 1px var(--pj, transparent); animation: plEntra .28s cubic-bezier(.2, .8, .2, 1) both; }
+@keyframes plEntra { from { opacity: 0; transform: translateY(14px) scale(.97); } }
+.D .pl-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.D .pl-tit { margin: 0; font: 400 26px/1 var(--f-titulo); text-transform: uppercase; letter-spacing: .02em; text-shadow: 0 2px 0 rgba(0, 0, 0, .45); }
+.D .pl-tit span { padding: 2px 14px 4px; border-radius: 8px; background: linear-gradient(90deg, var(--pj, #ffb000), transparent); }
+.D .pl-cerrar { width: 40px; height: 40px; border-radius: 12px; cursor: pointer; color: #fff; font-size: 18px; border: 1px solid rgba(255, 255, 255, .25); background: rgba(255, 255, 255, .08); }
+.D .pl-cuerpo { display: grid; grid-template-columns: 200px minmax(0, 1fr); gap: 18px; min-height: 0; overflow: hidden; }
+.D .pl-vista { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.D .pl-cabina { position: relative; display: block; width: 180px; height: 220px; border-radius: 16px; overflow: hidden; background: var(--fj-cab) center / cover no-repeat, #141a46;
+  border: 2px solid var(--pj, rgba(255, 255, 255, .3)); box-shadow: 0 10px 24px rgba(0, 0, 0, .45), 0 0 22px color-mix(in srgb, var(--pj, #fff) 35%, transparent); }
+.D .pl-cabina img { position: absolute; left: 50%; bottom: 0; width: 94%; height: auto; translate: -50% 0; filter: drop-shadow(0 6px 6px rgba(0, 0, 0, .5)); animation: plFig .35s cubic-bezier(.2, .8, .2, 1) both; }
+@keyframes plFig { from { opacity: 0; transform: translateY(12px) scale(.94); } }
+.D .pl-nombre { max-width: 100%; font: 400 22px/1.05 var(--f-titulo); text-align: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--pj-claro, #fff); }
+.D .pl-azar { min-height: 42px; padding: 0 16px; border-radius: 999px; cursor: pointer; color: #3a2200; font: 800 14px/1 var(--f-texto); border: 1px solid rgba(255, 240, 180, .85); background: linear-gradient(180deg, #ffe680, #ffb000); }
+.D .pl-datos { display: flex; flex-direction: column; gap: 10px; min-height: 0; }
+.D .pl-campo { display: flex; flex-direction: column; gap: 6px; font: 800 12.5px/1 var(--f-texto); letter-spacing: .08em; text-transform: uppercase; color: #6ff3e6; }
+.D .pl-campo input { min-height: 48px; padding: 0 14px; border-radius: 12px; border: 1px solid rgba(255, 255, 255, .22); background: rgba(255, 255, 255, .08); color: #fff; font: 800 18px/1 var(--f-texto); letter-spacing: 0; text-transform: none; }
+.D .pl-campo input::placeholder { color: rgba(255, 255, 255, .45); }
+.D .pl-campo input:focus-visible { outline: 2px solid #6ff3e6; outline-offset: 1px; }
+.D .pl-chips { display: flex; gap: 6px; flex-wrap: wrap; }
+.D .pl-chip { min-height: 38px; padding: 0 14px; border-radius: 999px; cursor: pointer; color: rgba(255, 255, 255, .85); font: 800 14px/1 var(--f-texto); border: 1px solid rgba(255, 255, 255, .2); background: rgba(255, 255, 255, .06); }
+.D .pl-chip.si { color: #062a28; border-color: rgba(160, 255, 245, .8); background: linear-gradient(180deg, #4ff3e4, #12b5a8); }
+.D .pl-sub { font: 800 12.5px/1 var(--f-texto); letter-spacing: .08em; text-transform: uppercase; color: #6ff3e6; }
+.D .pl-trajes { display: grid; grid-template-columns: repeat(auto-fill, minmax(62px, 1fr)); gap: 8px; overflow-y: auto; min-height: 120px; max-height: 300px; padding: 2px 4px 4px 2px; }
+.D .pl-traje { aspect-ratio: 1; padding: 4px; cursor: pointer; border-radius: 12px; border: 1px solid rgba(255, 255, 255, .14); background: radial-gradient(circle at 50% 40%, rgba(255, 255, 255, .16), rgba(255, 255, 255, .04)); transition: transform .15s, border-color .15s; }
+.D .pl-traje img { width: 100%; height: 100%; object-fit: contain; }
+.D .pl-traje.si { border: 2px solid #ffc21a; box-shadow: 0 0 0 3px rgba(255, 194, 26, .3); transform: scale(1.04); }
+.D .pl-traje:active { transform: scale(.94); }
+.D .pl-espera { color: rgba(255, 255, 255, .7); }
+.D .pl-listo { min-height: 56px; border-radius: 16px; cursor: pointer; color: #3a2200; font: 400 22px/1 var(--f-titulo); text-transform: uppercase; border: 1px solid rgba(255, 240, 180, .85);
+  background: linear-gradient(180deg, #ffe680, #ffb000 60%, #f09a00); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .7), 0 10px 24px rgba(255, 176, 0, .3); }
+.D .pl-listo:disabled { filter: grayscale(.7) brightness(.75); cursor: default; }
+.D .pl-cerrar:focus-visible, .D .pl-chip:focus-visible, .D .pl-traje:focus-visible, .D .pl-listo:focus-visible, .D .pl-azar:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+@media (max-width: 600px) {
+  .D .pl-modal { padding: 14px; gap: 10px; }
+  .D .pl-cuerpo { grid-template-columns: 1fr; overflow-y: auto; }
+  .D .pl-vista { flex-direction: row; justify-content: center; gap: 12px; }
+  .D .pl-cabina { width: 110px; height: 134px; }
+  .D .pl-nombre { font-size: 18px; }
+  .D .pl-trajes { max-height: 220px; }
+}
+@media (prefers-reduced-motion: reduce) { .D .pl-velo, .D .pl-modal, .D .pl-cabina img { animation: none; } }

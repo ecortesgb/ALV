@@ -66,6 +66,8 @@ export interface OpcionesPartida {
   modalidad?: Modalidad;
   /** Equipos y guerra de sexos: id del jugador → id de su grupo. Parejas: p1, p2… si el anfitrión las eligió; sin esto, por orden de llegada. */
   grupos?: Record<string, string>;
+  /** Nombre que el anfitrión le puso a cada grupo (id del grupo → nombre, 1 a 20 letras). Sin él, el nombre de siempre. */
+  nombres?: Record<string, string>;
   escenario?: EscenarioId;
   turno?: "orden" | "ruleta";
   /** Verdad o reto: herramienta que decide quién pregunta y quién responde (orden, ruleta, reloj, dados o póker). */

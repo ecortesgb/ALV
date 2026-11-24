@@ -1,5 +1,21 @@
 import { describe, expect, it } from "vitest";
-import { laminas, tarjetasInicio } from "./comoJugar";
+import { laminas, tarjetasCarga, tarjetasInicio } from "./comoJugar";
+
+describe("pantalla de carga", () => {
+  it("una sola tarjeta del juego con su imagen y cómo se gana, luego herramienta, temporizador y escenario", () => {
+    const t = tarjetasCarga({ juegoId: "verdad-reto", herramienta: "dados", temporizador: 30, escenario: "alverca" });
+    expect(t.map(x => x.grupo)).toEqual(["juego", "herramienta", "herramienta", "escenario"]);
+    expect(t[0]).toMatchObject({ titulo: "Verdad o reto", imagen: "juegos/verdad-reto.webp" });
+    expect(t[0]!.consejo).toBeTruthy();
+  });
+  it("por equipos, el consejo dice cómo se suma", () => {
+    expect(tarjetasCarga({ juegoId: "mas-probable", modalidad: "equipos" })[0]!.consejo).toMatch(/equipo/);
+  });
+  it("juego sin herramienta ni escenario: solo su tarjeta", () => {
+    expect(tarjetasCarga({ juegoId: "mimica" })).toHaveLength(1);
+    expect(tarjetasCarga({ juegoId: "no-existe" })).toEqual([]);
+  });
+});
 
 describe("tarjetas al iniciar", () => {
   it("primero cómo se juega, luego herramienta, temporizador y escenario", () => {

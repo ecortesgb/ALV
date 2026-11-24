@@ -24,10 +24,11 @@ function Elegir({ gente, miembros, sin, alElegir, titulo = "¿A quién eliges?",
     gente={gente.filter(j => j.id !== sin).map(j => ({ id: j.id, nombre: j.nombre, figura: miembros.find(m => m.id === j.id)?.figura, color: colorDe(j.id, ids) }))} />;
 }
 
-export function HerramientaCelular(p: { v: Publico; mi: MiVista; miembros: Miembro[]; mandar: Mandar }) {
-  // «Cómo jugar» antes de la primera ronda, si el anfitrión lo pidió. Cada quien lo cierra en su celular.
+export function HerramientaCelular(p: { v: Publico; mi: MiVista; miembros: Miembro[]; mandar: Mandar; /** Local: la carga ya se mostró antes de pasar el teléfono. */ sinCarga?: boolean;
+  /** Solo el anfitrión: al cerrar la carga empieza la partida para todos (acción «comenzar»). */ alComenzar?: () => void }) {
+  // Pantalla de carga antes de la primera ronda. Cada quien la cierra en su celular; la del anfitrión arranca la partida.
   const [visto, setVisto] = useState(false);
-  const reglas = !visto && tocaExplicar(p.v) && <ComoJugar v={p.v} modo="celular" alCerrar={() => setVisto(true)} />;
+  const reglas = !visto && !p.sinCarga && tocaExplicar(p.v) && <ComoJugar v={p.v} modo="celular" alCerrar={() => { setVisto(true); p.alComenzar?.(); }} />;
   if (p.v.juegoId === "copas") return <CeremoniaCopas v={p.v} miembros={p.miembros} modo="celular" />;
   // Al final del juego, su podio abajo del resultado.
   const podio = esFinalDeJuego(p.v) && <PodioJuego v={p.v} miembros={p.miembros} modo="celular" />;

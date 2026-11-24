@@ -1,0 +1,74 @@
+/* Mesa de la partida (MesaJuego.tsx): personajes a los lados que reaccionan y la tarjeta al centro con más presencia. */
+.D .ms { --ms-titulo: "Lilita One", "Bangers", system-ui, sans-serif; --ms-texto: "Nunito", "Barlow", system-ui, sans-serif;
+  display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 12px; align-items: start; width: 100%; color: #fff; }
+.D .ms-lado { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.D .ms-lado ul { display: flex; flex-direction: column; align-items: center; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.D .ms-grupo.titulado { padding: 8px 6px; border-radius: 16px; background: rgba(10, 16, 48, .55); border: 1px solid rgba(255, 255, 255, .14); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); }
+.D .ms-grupo-cab { display: flex; flex-direction: column; align-items: center; gap: 2px; margin-bottom: 6px; text-align: center; }
+.D .ms-grupo-cab b { max-width: 9em; font: 400 14px/1.05 var(--ms-titulo); text-transform: uppercase; letter-spacing: .02em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.D .ms-grupo-cab span { padding: 1px 10px; border-radius: 999px; font: 400 15px/1.2 var(--ms-titulo); color: #3a2200; background: linear-gradient(180deg, #ffe680, #ffb000); }
+
+/* Ficha */
+.D .ms-ficha { display: grid; justify-items: center; gap: 2px; width: calc(var(--ms-t) + 16px); transition: opacity .3s, filter .3s; }
+.D .ms-cuerpo { position: relative; display: block; }
+.D .ms-ficha .fj-cab { box-shadow: 0 6px 12px rgba(0, 0, 0, .45); transition: box-shadow .3s; }
+.D .ms-nom { max-width: 100%; font: 800 11.5px/1.1 var(--ms-texto); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-shadow: 0 1px 3px rgba(0, 0, 0, .9); }
+.D .ms-pts { min-width: 26px; padding: 0 7px; border-radius: 999px; text-align: center; font: 400 14px/1.35 var(--ms-titulo); color: #ffe14a; background: rgba(7, 10, 28, .78); border: 1px solid rgba(255, 225, 74, .35); }
+.D .ms-ficha.yo .ms-nom { color: #ffe14a; }
+.D .ms-insignia { position: absolute; top: -7px; right: -9px; display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; font-size: 13px; line-height: 1;
+  background: rgba(7, 10, 28, .9); border: 1px solid rgba(255, 255, 255, .3); animation: msPop .35s cubic-bezier(.2, 1.6, .4, 1) both; }
+@keyframes msPop { from { transform: scale(0); } }
+.D .ms-delta { position: absolute; left: 50%; top: -6px; translate: -50% 0; padding: 1px 8px; border-radius: 999px; font: 400 16px/1.2 var(--ms-titulo); color: #062a28;
+  background: linear-gradient(180deg, #8dffb8, #2fbf4f); box-shadow: 0 4px 10px rgba(0, 0, 0, .4); animation: msSube 1.6s cubic-bezier(.2, .8, .2, 1) both; }
+.D .ms-delta.menos { color: #fff; background: linear-gradient(180deg, #ff8a80, #c9362b); }
+@keyframes msSube { 0% { opacity: 0; transform: translateY(10px) scale(.6); } 20% { opacity: 1; transform: translateY(-14px) scale(1.15); } 70% { opacity: 1; transform: translateY(-22px); } 100% { opacity: 0; transform: translateY(-34px); } }
+
+/* Estados */
+.D .ms-ficha.turno .fj-cab { box-shadow: 0 0 0 3px #ffe14a, 0 0 22px rgba(255, 225, 74, .7), 0 6px 12px rgba(0, 0, 0, .45); }
+.D .ms-ficha.turno .ms-cuerpo { animation: msTurno 1.6s ease-in-out infinite; }
+@keyframes msTurno { 50% { transform: scale(1.08); } }
+.D .ms-ficha.pensando .ms-cuerpo { animation: msPiensa 2.2s ease-in-out infinite; }
+@keyframes msPiensa { 50% { transform: translateY(-4px) rotate(-3deg); } }
+.D .ms-ficha.listo .ms-cuerpo { animation: msListo .5s cubic-bezier(.2, 1.6, .4, 1) both; }
+.D .ms-ficha.listo .fj-cab { box-shadow: 0 0 0 2px #6dffa0, 0 6px 12px rgba(0, 0, 0, .45); }
+@keyframes msListo { 40% { transform: translateY(-10px) scale(1.1); } }
+.D .ms-ficha.festeja .ms-cuerpo { animation: msFesteja .7s cubic-bezier(.2, .8, .2, 1) 3; }
+.D .ms-ficha.festeja .fj-cab { box-shadow: 0 0 0 3px #6dffa0, 0 0 24px rgba(109, 255, 160, .6), 0 6px 12px rgba(0, 0, 0, .45); }
+@keyframes msFesteja { 30% { transform: translateY(-14px) rotate(-6deg) scale(1.08); } 60% { transform: translateY(0) rotate(4deg); } }
+.D .ms-ficha.lamenta .ms-cuerpo { animation: msLamenta .5s ease-in-out 2; }
+.D .ms-ficha.lamenta { filter: saturate(.7); }
+@keyframes msLamenta { 25% { transform: translateX(-4px) rotate(-4deg); } 75% { transform: translateX(4px) rotate(4deg); } }
+.D .ms-ficha.fuera { opacity: .45; filter: grayscale(1); }
+
+/* Centro: la tarjeta con más presencia */
+.D .ms-centro { display: flex; flex-direction: column; gap: 12px; min-width: 0; animation: msCentro .45s cubic-bezier(.2, .8, .2, 1) both; }
+@keyframes msCentro { from { opacity: 0; transform: translateY(14px) scale(.98); } }
+.D .ms-centro .a-carta { margin: 0; padding: 18px 16px; border-radius: 18px; text-align: center; font: 800 clamp(19px, 4.4vw, 28px)/1.28 var(--ms-texto); text-wrap: balance;
+  background: radial-gradient(90% 80% at 50% 0%, rgba(255, 225, 74, .16), transparent 70%), linear-gradient(180deg, rgba(255, 255, 255, .1), rgba(10, 16, 48, .55));
+  border: 1px solid rgba(255, 225, 74, .45); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .2), 0 12px 30px rgba(0, 0, 0, .4), 0 0 26px rgba(255, 225, 74, .15);
+  animation: msCarta .6s cubic-bezier(.2, .8, .2, 1) both; transform-origin: 50% 100%; }
+@keyframes msCarta { from { opacity: 0; transform: perspective(800px) rotateX(-35deg) translateY(10px); } }
+
+/* Celular angosto: lados delgados */
+@media (max-width: 600px) {
+  .D .ms { gap: 6px; }
+  .D .ms-lado ul { gap: 6px; }
+  .D .ms-nom { font-size: 10px; }
+  .D .ms-pts { font-size: 12px; padding: 0 5px; }
+  .D .ms-grupo.titulado { padding: 6px 3px; }
+  .D .ms-grupo-cab b { font-size: 11px; max-width: 5.5em; }
+  .D .ms-insignia { width: 20px; height: 20px; font-size: 11px; right: -6px; }
+}
+/* TV: más aire, la mesa ocupa el ancho */
+.D .ms-tv { gap: 3vw; align-items: center; }
+.D .ms-tv .ms-lado ul { gap: 1.2vh; }
+.D .ms-tv .ms-nom { font-size: 15px; }
+.D .ms-tv .ms-pts { font-size: 19px; }
+.D .ms-tv .ms-insignia { width: 32px; height: 32px; font-size: 17px; }
+.D .ms-tv .ms-delta { font-size: 22px; }
+.D .ms-tv .ms-grupo-cab b { font-size: 19px; }
+@media (prefers-reduced-motion: reduce) {
+  .D .ms-ficha .ms-cuerpo, .D .ms-centro, .D .ms-centro .a-carta, .D .ms-insignia { animation: none !important; }
+  .D .ms-delta { animation: none; opacity: 1; }
+}
+.D .ms-cartas { margin-left: 4px; font: 800 .75em/1 var(--ms-texto); color: #9fe8ff; }

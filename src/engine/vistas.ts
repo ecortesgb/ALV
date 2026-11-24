@@ -90,7 +90,8 @@ export function vistaPublica(e: EstadoPartida): VistaPublica {
       ? Object.fromEntries(Object.entries(e.respuestas).map(([j, v]) => [j, String(v)])) : undefined,
     ...(e.cfg.escenario ? { escenario: e.cfg.escenario } : {}),
     ...(e.cfg.modalidad ? { modalidad: e.cfg.modalidad } : {}),
-    ...(e.cfg.explicar ? { explicar: true } : {}),
+    // La pantalla de carga se quita en todos los aparatos cuando el anfitrión toca «¡Iniciar!».
+    ...(e.cfg.explicar && !e.comenzada ? { explicar: true } : {}),
     // Temporizador por turno: solo en partidas que lo eligieron (las guardadas antes salen igual).
     ...(e.cfg.temporizador ? { temporizador: e.cfg.temporizador } : {}),
     ...(conVerdadReto(e) ? { verdadReto: {

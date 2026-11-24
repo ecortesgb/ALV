@@ -1,0 +1,69 @@
+/* Armar equipos (ArmarEquipos.tsx): banca de vidrio y placas de bloques del color de cada equipo, con «studs». */
+.D .eq { --eq-titulo: "Lilita One", "Bangers", system-ui, sans-serif; --eq-texto: "Nunito", "Barlow", system-ui, sans-serif;
+  display: flex; flex-direction: column; gap: 14px; width: min(100%, 1100px); margin-inline: auto; color: #fff; font-family: var(--eq-texto); }
+.D .eq.arrastrando, .D .eq.arrastrando * { cursor: grabbing !important; }
+
+.D .eq-barra { display: flex; align-items: center; justify-content: space-between; gap: 10px 14px; flex-wrap: wrap; padding: 10px 14px; border-radius: 16px;
+  background: rgba(10, 16, 48, .62); border: 1px solid rgba(255, 255, 255, .14); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
+.D .eq-ayuda { flex: 1 1 18em; font: 700 14.5px/1.35 var(--eq-texto); color: #dfe6ff; }
+.D .eq-acciones { display: flex; gap: 6px; flex-wrap: wrap; }
+.D .eq-chip { display: inline-flex; flex-direction: column; align-items: center; justify-content: center; min-height: 44px; padding: 4px 14px; border-radius: 12px; cursor: pointer; color: #dfe6ff;
+  font: 800 14px/1.1 var(--eq-texto); border: 1px solid rgba(255, 255, 255, .2); background: rgba(255, 255, 255, .06); transition: background .2s, transform .15s; }
+.D .eq-chip small { font: 700 11px/1 var(--eq-texto); opacity: .8; }
+.D .eq-chip.on { color: #062a28; border-color: rgba(160, 255, 245, .8); background: linear-gradient(180deg, #4ff3e4, #12b5a8); }
+.D .eq-chip.azar { color: #3a2200; border-color: rgba(255, 240, 180, .85); background: linear-gradient(180deg, #ffe680, #ffb000); }
+.D .eq-chip:active { transform: scale(.95); }
+
+/* Fichas */
+.D .eq-fichas { display: flex; flex-wrap: wrap; gap: 8px 10px; justify-content: center; }
+.D .eq-ficha { display: flex; flex-direction: column; align-items: center; gap: 4px; width: 74px; padding: 4px 2px 6px; border: 0; border-radius: 14px; cursor: grab; color: #fff;
+  background: none; touch-action: none; user-select: none; transition: transform .18s cubic-bezier(.2, .8, .2, 1), opacity .15s; animation: eqEntra .3s cubic-bezier(.2, 1.3, .4, 1) both; }
+@keyframes eqEntra { from { transform: scale(.6); opacity: 0; } }
+.D .eq-ficha .fj { gap: 0; }
+.D .eq-ficha .fj-cab { box-shadow: 0 6px 12px rgba(0, 0, 0, .45); }
+.D .eq-nom { max-width: 100%; font: 800 12.5px/1.1 var(--eq-texto); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-shadow: 0 1px 3px rgba(0, 0, 0, .8); }
+.D .eq-ficha.sel { transform: translateY(-6px) scale(1.06); }
+.D .eq-ficha.sel .fj-cab { outline: 3px solid #ffe14a; outline-offset: 2px; box-shadow: 0 0 18px rgba(255, 225, 74, .55); }
+.D .eq-ficha.fantasma { opacity: .3; }
+.D .eq-ficha:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+@media (hover: hover) and (pointer: fine) { .D .eq-ficha:hover { transform: translateY(-3px); } }
+.D .eq-flota { position: fixed; z-index: 80; pointer-events: none; translate: -50% -60%; rotate: -6deg; filter: drop-shadow(0 14px 18px rgba(0, 0, 0, .55)); }
+.D .eq-flota .fj-cab { outline: 3px solid #ffe14a; }
+
+/* Banca */
+.D .eq-banca { display: flex; flex-direction: column; gap: 10px; padding: 12px; border-radius: 18px; background: rgba(10, 16, 48, .62); border: 1px dashed rgba(255, 255, 255, .3);
+  transition: border-color .15s, background .15s; }
+.D .eq-banca.sobre { border-color: #ffe14a; background: rgba(255, 225, 74, .1); }
+.D .eq-banca-t { font: 400 18px/1 var(--eq-titulo); text-transform: uppercase; letter-spacing: .03em; text-align: center; }
+
+/* Placas */
+.D .eq-placas { display: grid; grid-template-columns: repeat(var(--cols, 2), minmax(0, 1fr)); gap: 14px; }
+.D .eq-placa { display: flex; flex-direction: column; gap: 8px; min-width: 0; padding: 10px; border-radius: 18px; background: rgba(10, 16, 48, .55); border: 1px solid rgba(255, 255, 255, .14);
+  transition: transform .18s, box-shadow .18s; }
+.D .eq-placa.sobre { transform: scale(1.03); box-shadow: 0 0 0 3px #ffe14a, 0 0 26px color-mix(in srgb, var(--eqc) 60%, transparent); }
+.D .eq-placa.destino { box-shadow: 0 0 0 2px color-mix(in srgb, var(--eqc) 70%, #fff); cursor: pointer; }
+.D .eq-placa-cab { display: flex; align-items: center; gap: 6px; }
+.D .eq-nombre { flex: 1; min-width: 0; height: 40px; padding: 0 10px; border-radius: 10px; font: 400 19px/1 var(--eq-titulo); letter-spacing: .02em; text-transform: uppercase; color: #fff;
+  border: 1px solid color-mix(in srgb, var(--eqc) 60%, transparent); background: color-mix(in srgb, var(--eqc) 22%, rgba(7, 10, 28, .7)); }
+.D .eq-nombre::placeholder { color: color-mix(in srgb, var(--eqc) 45%, #fff); opacity: .9; }
+.D .eq-nombre:focus-visible { outline: 2px solid #fff; outline-offset: 1px; }
+.D .eq-dado { flex: none; width: 40px; height: 40px; border-radius: 10px; cursor: pointer; font-size: 18px; border: 1px solid rgba(255, 255, 255, .22); background: rgba(255, 255, 255, .08); }
+.D .eq-dado:active { transform: scale(.92); }
+.D .eq-cuenta { flex: none; display: grid; place-items: center; min-width: 32px; height: 32px; border-radius: 50%; font: 400 17px/1 var(--eq-titulo); color: #062a28; background: var(--eqc); }
+/* Base de bloques del color del equipo con sus studs */
+.D .eq-base { position: relative; min-height: 118px; display: grid; place-items: center; padding: 14px 8px 10px; border-radius: 12px;
+  background: radial-gradient(circle at 50% 45%, rgba(255, 255, 255, .38) 0 22%, rgba(0, 0, 0, .22) 25% 30%, transparent 33%) 0 0 / 26px 26px,
+    linear-gradient(180deg, color-mix(in srgb, var(--eqc) 92%, #fff), color-mix(in srgb, var(--eqc) 72%, #000));
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, .35), inset 0 -6px 0 rgba(0, 0, 0, .25), 0 10px 20px rgba(0, 0, 0, .35); }
+.D .eq-vacio { font: 400 16px/1 var(--eq-titulo); text-transform: uppercase; color: rgba(255, 255, 255, .9); text-shadow: 0 2px 4px rgba(0, 0, 0, .5); }
+
+@media (max-width: 700px) {
+  .D .eq-placas { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .D .eq-ficha { width: 64px; }
+  .D .eq-base { min-height: 100px; padding: 10px 4px 8px; }
+  .D .eq-nombre { font-size: 14px; height: 34px; padding: 0 8px; }
+  .D .eq-dado { width: 32px; height: 34px; font-size: 15px; }
+  .D .eq-cuenta { display: none; }
+  .D .eq-placa { padding: 8px; }
+}
+@media (prefers-reduced-motion: reduce) { .D .eq-ficha, .D .eq-placa { transition: none; animation: none; } }

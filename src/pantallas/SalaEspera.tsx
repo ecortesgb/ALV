@@ -11,7 +11,8 @@ import { NombreJugador, urlArte } from "./comun";
 /** Cupo del lobby en esta fase de prueba (también lo valida el servidor en `unirse_evento`). */
 export const CUPO_LOBBY = 8;
 /** Lugares que se dibujan: 4 como mínimo (los vacíos con «+»); con más, uno por cada quien. */
-export const lugaresSala = (n: number) => Math.max(4, n);
+/** Lugares a dibujar: mínimo 4. Con `conLibre` (Local, donde se agrega desde un lugar vacío) siempre queda uno libre hasta llenar el cupo. */
+export const lugaresSala = (n: number, conLibre = false) => Math.min(CUPO_LOBBY, Math.max(4, conLibre ? n + 1 : n));
 
 export interface Preparados { listos: number; total: number; todos: boolean }
 /** Cuántos marcaron «¡Listo!». `todos` pide al menos dos personas en la sala. */
@@ -80,7 +81,7 @@ export interface Fiesta { arriba?: (m: Miembro) => ReactNode; abajo?: (m: Miembr
 const arteLobby = (n: string) => `${import.meta.env.BASE_URL}arte/lobby/${n}.webp`;
 
 export function Pedestales({ miembros, yo, className = "", fiesta }: { miembros: readonly Miembro[]; yo?: string; className?: string; fiesta?: Fiesta }) {
-  const lugares = lugaresSala(miembros.length);
+  const lugares = lugaresSala(miembros.length, !!fiesta?.libre);
   const momentos = useMomentos(miembros);
   const ids = miembros.map(m => m.id);
   const colorEn = (i: number) => (miembros[i] ? colorDe(miembros[i]!.id, ids) : null) ?? colorJugador(i);

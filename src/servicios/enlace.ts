@@ -4,6 +4,7 @@
 import type { FiguraV2 } from "../content/personaje";
 import { cliente, hayNube, uidActual } from "./cliente";
 import { anunciarLobby, buscarLobby, escucharSala, vigilarPantalla, type EstadoRed, type PresenciaPantalla } from "./tiempoReal";
+import { vigilarPantallaSinNube } from "./difusion";
 
 export type ModoSala = "tv" | "mesa";
 export interface SalaV { id: string; codigo: string; modo: ModoSala; anfitrionId: string }
@@ -321,8 +322,8 @@ function crearRespaldo(clave: string, canal: string | null, quien: () => { id: s
       oyentes.add(alCambiar); alEstado?.("vivo"); queueMicrotask(alCambiar);
       return () => { oyentes.delete(alCambiar); };
     },
-    /** Sin servidor no hay presencia: no se sabe y no se avisa. */
-    vigilarPantalla: () => () => { /* nada */ },
+    /** Sin servidor: latido entre pestañas del mismo navegador (demostración y Local en el mismo aparato). */
+    vigilarPantalla: (sala, soyPantalla, alEstado) => vigilarPantallaSinNube(sala.id, soyPantalla, alEstado),
     /** Sin servidor el anuncio es la misma lista del navegador: el lobby abierto más reciente. */
     anunciarLobby: () => () => { /* nada */ },
     buscarLobby(alCodigo) {

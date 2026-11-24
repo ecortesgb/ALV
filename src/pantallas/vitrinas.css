@@ -1,0 +1,97 @@
+/* Elegir juego: categorías y vitrinas giratorias (VitrinasJuego.tsx). Vidrio con borde de luz, oro y el color de la categoría. */
+.D .vt-cats, .D .vt { --vt-titulo: "Lilita One", "Bangers", system-ui, sans-serif; --vt-texto: "Nunito", "Barlow", system-ui, sans-serif; }
+
+/* ---------- Categorías ---------- */
+.D .vt-cats { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr)); gap: 16px; width: min(100%, 1060px); margin-inline: auto; }
+.D .vt-cat { position: relative; display: flex; flex-direction: column; gap: 10px; min-height: 250px; padding: 14px; border-radius: 20px; cursor: pointer; overflow: hidden; text-align: left; color: #fff;
+  border: 1px solid rgba(255, 255, 255, .16); background: radial-gradient(90% 70% at 50% 0%, color-mix(in srgb, var(--vc) 34%, transparent), transparent 70%), rgba(10, 16, 48, .72);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .16), 0 12px 26px rgba(4, 8, 30, .4); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+  transition: transform .2s cubic-bezier(.2, .8, .2, 1), border-color .2s, box-shadow .2s; animation: vtEntra .45s cubic-bezier(.2, .8, .2, 1) calc(var(--i) * 60ms) both; }
+@keyframes vtEntra { from { opacity: 0; transform: translateY(16px) scale(.96); } }
+.D .vt-cat::before { content: ""; position: absolute; inset: 0 auto 0 0; width: 5px; background: var(--vc); }
+.D .vt-cat.on { border-color: color-mix(in srgb, var(--vc) 70%, #fff); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .2), 0 0 0 2px color-mix(in srgb, var(--vc) 55%, transparent), 0 14px 30px rgba(4, 8, 30, .45); }
+.D .vt-cat:active { transform: scale(.97); }
+.D .vt-cat:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
+@media (hover: hover) and (pointer: fine) { .D .vt-cat:hover { transform: translateY(-4px); border-color: color-mix(in srgb, var(--vc) 70%, #fff); } .D .vt-cat:hover .vt-cat-carta { --abre: 1; } }
+.D .vt-cat-fan { position: relative; flex: 1; min-height: 170px; display: grid; place-items: center; }
+.D .vt-cat-carta { --abre: 0; position: absolute; width: 60%; max-width: 200px; aspect-ratio: 4 / 3; display: grid; place-items: center; padding: 4px; border-radius: 12px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, .18), rgba(10, 16, 48, .8)); border: 1px solid rgba(255, 255, 255, .3); box-shadow: 0 8px 16px rgba(0, 0, 0, .45);
+  transform: translateX(calc(var(--k) * (34% + var(--abre) * 8%))) rotate(calc(var(--k) * (9deg + var(--abre) * 4deg))) translateY(calc(var(--abre) * -6px)); transition: transform .3s cubic-bezier(.2, .8, .2, 1); }
+.D .vt-cat-carta .vt-img { width: 100%; height: 100%; object-fit: contain; border-radius: 8px; }
+.D .vt-cat-carta .vt-sinarte { font-size: 34px; }
+.D .vt-cat-txt { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.D .vt-cat-txt b { font: 400 21px/1.05 var(--vt-titulo); letter-spacing: .02em; text-shadow: 0 2px 6px rgba(0, 0, 0, .45); }
+.D .vt-cat-txt small { flex: none; font: 800 12.5px/1 var(--vt-texto); color: color-mix(in srgb, var(--vc) 70%, #fff); }
+
+/* ---------- Vitrinas ---------- */
+.D .vt { --paso: min(clamp(180px, 25vw, 380px), 40vh); --ancho: min(clamp(230px, 30vw, 420px), 44vh);
+  display: flex; flex-direction: column; align-items: center; gap: 10px; width: 100%; overflow-x: clip; padding-bottom: 4px; }
+.D .vt-cab { display: flex; flex-direction: column; align-items: center; gap: 6px; max-width: 40em; text-align: center; animation: vtCab .35s cubic-bezier(.2, .8, .2, 1) both; }
+@keyframes vtCab { from { opacity: 0; transform: translateY(-8px); } }
+.D .vt-nombre { font: 400 clamp(28px, 3.4vw, 46px)/1 var(--vt-titulo); letter-spacing: .02em; text-transform: uppercase; color: #ffe14a;
+  text-shadow: 0 0 18px color-mix(in srgb, var(--vc) 60%, transparent), 0 3px 0 rgba(0, 0, 0, .45); }
+.D .vt-datos { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; }
+.D .vt-datos span { padding: 4px 10px; border-radius: 999px; font: 800 12.5px/1 var(--vt-texto); color: #dfe6ff; background: rgba(10, 16, 48, .6); border: 1px solid rgba(255, 255, 255, .16); }
+.D .vt-desc { margin: 0; min-height: 2.7em; font: 700 15px/1.35 var(--vt-texto); color: #eef2ff; text-shadow: 0 1px 4px rgba(0, 0, 0, .6); }
+
+.D .vt-escena { position: relative; width: 100%; height: calc(var(--ancho) * 1.02); perspective: 1400px; touch-action: pan-y; user-select: none; }
+.D .vt-plataforma { position: absolute; left: 50%; bottom: 2%; width: min(96%, 980px); height: calc(var(--ancho) * .34); translate: -50% 0; border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(255, 255, 255, .14), transparent 70%), radial-gradient(closest-side, #2c3566 0 62%, #151b40 63% 86%, transparent 87%);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--vc) 60%, transparent), 0 0 40px color-mix(in srgb, var(--vc) 40%, transparent), inset 0 -10px 30px rgba(0, 0, 0, .5);
+  animation: vtAnillo 3.2s ease-in-out infinite; }
+@keyframes vtAnillo { 50% { box-shadow: 0 0 0 2px color-mix(in srgb, var(--vc) 80%, transparent), 0 0 60px color-mix(in srgb, var(--vc) 55%, transparent), inset 0 -10px 30px rgba(0, 0, 0, .5); } }
+.D .vt-caja { position: absolute; left: 50%; bottom: 12%; width: var(--ancho); padding: 0; border: 0; background: none; cursor: pointer; color: #fff;
+  display: flex; flex-direction: column; align-items: center; gap: 8px; transform-style: preserve-3d;
+  transform: translateX(calc(-50% + var(--d) * var(--paso))) translateZ(calc(var(--ad) * -220px)) rotateY(calc(var(--d) * -24deg));
+  z-index: calc(20 - var(--ad)); opacity: calc(1 - var(--ad) * .28); filter: brightness(calc(1 - var(--ad) * .22));
+  transition: transform .55s cubic-bezier(.2, .8, .2, 1), opacity .45s, filter .45s; }
+.D .vt-caja.lejos { opacity: 0; pointer-events: none; }
+.D .vt-cristal { position: relative; display: grid; place-items: center; width: 100%; aspect-ratio: 4 / 3; padding: 7px; border-radius: 14px; overflow: hidden;
+  background: linear-gradient(180deg, rgba(160, 210, 255, .16), rgba(10, 16, 48, .55) 70%), rgba(8, 12, 34, .55);
+  border: 1px solid rgba(255, 255, 255, .35); box-shadow: inset 0 0 24px rgba(160, 220, 255, .18), 0 16px 30px rgba(0, 0, 0, .5); }
+.D .vt-cristal .vt-img { width: 100%; height: 100%; object-fit: contain; border-radius: 8px; filter: drop-shadow(0 8px 12px rgba(0, 0, 0, .45)); }
+.D .vt-sinarte { display: grid; place-items: center; width: 100%; height: 100%; font-size: clamp(54px, 7vw, 86px); background: radial-gradient(circle, color-mix(in srgb, var(--vc) 35%, transparent), transparent 65%); }
+.D .vt-brillo { position: absolute; inset: 0; pointer-events: none; background: linear-gradient(115deg, transparent 30%, rgba(255, 255, 255, .22) 42%, transparent 52%); }
+.D .vt-caja.centro .vt-cristal { border-color: color-mix(in srgb, var(--vc) 75%, #fff);
+  box-shadow: inset 0 0 30px color-mix(in srgb, var(--vc) 35%, transparent), 0 0 0 2px color-mix(in srgb, var(--vc) 45%, transparent), 0 0 42px color-mix(in srgb, var(--vc) 50%, transparent), 0 20px 36px rgba(0, 0, 0, .55); }
+.D .vt-caja.centro .vt-brillo { animation: vtBrillo 3.6s ease-in-out infinite; }
+@keyframes vtBrillo { from { translate: -120% 0; } 45%, to { translate: 120% 0; } }
+.D .vt-caja.centro { animation: vtFlota 3.4s ease-in-out infinite; }
+@keyframes vtFlota { 50% { margin-bottom: 8px; } }
+.D .vt-caja.cerrada .vt-cristal { filter: grayscale(.75) brightness(.7); }
+.D .vt-candado { position: absolute; top: 10px; right: 10px; display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; font-size: 17px; background: rgba(7, 10, 28, .8); border: 1px solid rgba(255, 255, 255, .3); }
+.D .vt-placa { max-width: 100%; padding: 5px 14px; border-radius: 8px; font: 400 15px/1.1 var(--vt-titulo); letter-spacing: .03em; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  background: rgba(7, 10, 28, .82); border: 1px solid rgba(255, 255, 255, .22); }
+.D .vt-caja.centro .vt-placa { color: #ffe14a; border-color: color-mix(in srgb, var(--vc) 60%, #fff); }
+.D .vt-caja.elegida .vt-placa::before { content: "✓ "; color: #6dffa0; }
+.D .vt-caja:focus-visible { outline: none; }
+.D .vt-caja:focus-visible .vt-cristal { outline: 3px solid #fff; outline-offset: 3px; }
+
+.D .vt-mando { display: flex; align-items: center; gap: 12px; }
+.D .vt-flecha { width: 52px; height: 52px; border-radius: 50%; cursor: pointer; color: #fff; font-size: 18px; border: 1px solid rgba(255, 255, 255, .25); background: rgba(10, 16, 48, .65);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .18); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); transition: transform .15s; }
+.D .vt-flecha:active:not(:disabled) { transform: scale(.92); }
+.D .vt-flecha:disabled { opacity: .35; }
+.D .vt-elegir { min-width: 190px; height: 56px; padding: 0 24px; border-radius: 16px; cursor: pointer; color: #3a2200; font: 400 22px/1 var(--vt-titulo); letter-spacing: .03em; text-transform: uppercase;
+  border: 1px solid rgba(255, 240, 180, .9); background: linear-gradient(180deg, #ffe680, #ffb000 60%, #f09a00); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .7), 0 10px 26px rgba(255, 176, 0, .35); transition: transform .15s; }
+.D .vt-elegir:active { transform: scale(.96); }
+.D .vt-elegir.cerrada { color: #fff; border-color: rgba(255, 255, 255, .25); background: rgba(10, 16, 48, .65); box-shadow: none; }
+.D .vt-flecha:focus-visible, .D .vt-elegir:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
+.D .vt-puntos { display: flex; gap: 6px; }
+.D .vt-puntos i { width: 8px; height: 8px; border-radius: 99px; background: rgba(255, 255, 255, .3); transition: width .3s, background .3s; }
+.D .vt-puntos i.on { width: 22px; background: var(--vc); }
+
+@media (max-width: 600px) {
+  .D .vt { --ancho: 70vw; --paso: 50vw; }
+  .D .vt-cats { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .D .vt-cat { min-height: 168px; padding: 12px; }
+  .D .vt-cat-fan { min-height: 96px; }
+  .D .vt-cat-txt { flex-direction: column; gap: 4px; }
+  .D .vt-cat-txt b { font-size: 18px; }
+  .D .vt-desc { font-size: 14px; }
+  .D .vt-elegir { min-width: 150px; font-size: 19px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .D .vt-cat, .D .vt-cab, .D .vt-plataforma, .D .vt-caja.centro, .D .vt-caja.centro .vt-brillo { animation: none !important; }
+  .D .vt-caja, .D .vt-cat-carta { transition: none; }
+}

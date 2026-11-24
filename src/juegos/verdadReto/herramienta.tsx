@@ -1,6 +1,6 @@
 // La herramienta de Verdad o reto, dibujada con lo público de la ronda: dados, cartas de póker, reloj, ruleta o en orden.
 // Decide quién pregunta y quién responde; no cambia el juego (Maestro 6A.3). La usan el celular y la TV.
-import type { CSSProperties } from "react";
+import { useEffect, useState, type CSSProperties } from "react";
 import { colorDe, varsColor } from "../../app/colorJugador";
 import { nombreDe, type Publico } from "../general/texto";
 
@@ -11,9 +11,49 @@ const VALOR = (v: number) => (v <= 10 ? String(v) : ["J", "Q", "K", "A"][v - 11]
 const PALO = ["♣", "♦", "♥", "♠"]; // de menor a mayor
 export const NOMBRE_HERRAMIENTA: Record<string, string> = { orden: "En orden", ruleta: "Ruleta", reloj: "Reloj", dados: "Dados", poker: "Cartas de póker" };
 
-export function Herramienta({ v, chica }: { v: Publico; chica?: boolean }) {
+const ACCION: Record<string, string> = { dados: "🎲 ¡Lanzar dados!", poker: "🃏 Voltear cartas", reloj: "🕐 ¡Girar el reloj!", ruleta: "🎡 ¡Girar la ruleta!" };
+const RUEDA_MS = 1300;
+
+/**
+ * La herramienta se usa (Elías, 24 nov): en el celular hay que tocar para lanzar los dados, voltear las cartas o girar;
+ * en la TV pasa sola. El resultado ya lo decidió el motor: aquí solo se anima hasta mostrarlo. Si la ronda ya avanzó,
+ * se muestra directo.
+ */
+export function Herramienta({ v, chica, interactiva }: { v: Publico; chica?: boolean; interactiva?: boolean }) {
   const s = v.seleccion as unknown as Sel | undefined;
+  const clave = `${v.ronda}-${s?.herramienta ?? ""}`;
+  const [hecho, setHecho] = useState<string | null>(null);
+  const [rodando, setRodando] = useState(false);
+  const [cara, setCara] = useState(1);
+  const yaAvanzo = !!v.verdadReto && v.verdadReto.etapa !== "elegir";
+  const usa = !!s && s.herramienta !== "orden";
+  const listo = !usa || yaAvanzo || hecho === clave;
+  const usar = () => {
+    if (!s || listo || rodando) return;
+    if (s.herramienta === "reloj" || s.herramienta === "ruleta") { setHecho(clave); return; } // el giro ya es la animación
+    setRodando(true);
+    setTimeout(() => { setRodando(false); setHecho(clave); }, RUEDA_MS);
+  };
+  // TV (o sin toque): pasa sola un momento después de empezar la ronda.
+  useEffect(() => { if (!interactiva && usa && !listo) { const t = setTimeout(usar, 700); return () => clearTimeout(t); } }, [clave, interactiva]); // eslint-disable-line react-hooks/exhaustive-deps
+  // Mientras ruedan los dados, las caras cambian rápido.
+  useEffect(() => { if (!rodando) return; const t = setInterval(() => setCara(1 + Math.floor(Math.random() * 6)), 80); return () => clearInterval(t); }, [rodando]);
   if (!s?.herramienta) return null;
+  if (!listo) {
+    const n = v.jugadores.length;
+    return (
+      <div className={"vr-herr vr-usar" + (chica ? " chica" : "") + (rodando ? " rodando" : "")}>
+        <span className="vr-herr-t dsp">{NOMBRE_HERRAMIENTA[s.herramienta] ?? s.herramienta}</span>
+        <div className="vr-tapados" aria-hidden="true">
+          {s.herramienta === "dados" ? Array.from({ length: Math.min(n, 8) }, (_, i) => <span key={i} className="vr-dado" style={{ "--i": i } as CSSProperties}>{CARA[rodando ? ((cara + i) % 6) + 1 : 6]}</span>)
+            : s.herramienta === "poker" ? Array.from({ length: Math.min(n, 8) }, (_, i) => <span key={i} className="vr-naipe dorso" style={{ "--i": i } as CSSProperties} />)
+            : <span className="vr-giro-ico">{s.herramienta === "reloj" ? "🕐" : "🎡"}</span>}
+        </div>
+        {interactiva ? <button type="button" className="vr-usar-btn" onClick={usar} disabled={rodando}>{rodando ? "…" : ACCION[s.herramienta]}</button>
+          : <small className="vr-usar-nota">{rodando ? "…" : ""}</small>}
+      </div>
+    );
+  }
   const ids = v.jugadores.map(j => j.id);
   const marca = (id: string) => (id === s.pregunta ? "pregunta" : id === s.responde ? "responde" : "");
   const etiqueta = (id: string) => (id === s.pregunta ? "Pregunta" : id === s.responde ? "Responde" : "");

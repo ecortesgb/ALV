@@ -12,6 +12,11 @@ import { Posiciones, esFinalDeJuego } from "../../juegos/general/Copas";
 import { confirmar } from "../../pantallas/comun";
 import { FichaJugador } from "../../pantallas/lobby/Ficha";
 import { FondoCuarto } from "../../pantallas/lobby/Cuarto";
+import { FondoEscenario } from "../../pantallas/Fondos";
+import { escucharSalirPantalla } from "../../servicios/difusion";
+import { ConfigEnVivo, useConfigEnVivo } from "../../pantallas/ConfigEnVivo";
+import { MesaJuego } from "../../pantallas/MesaJuego";
+import "../../pantallas/lobby/cast.css";
 import { colorDe, varsColor } from "../../app/colorJugador";
 import { CUPO_LOBBY, Pedestales, TodosListos } from "../../pantallas/SalaEspera";
 import { useColoresSala } from "../../pantallas/lobby/colores";
@@ -24,7 +29,9 @@ export function PantallaTv({ codigo }: { codigo: string }) {
   const s = useSala(codigo, ses.uid);
   const ordenados = useColoresSala(s.sala, s.miembros);
   const tengoControl = !!s.sala && s.sala.anfitrionId === ses.uid;
-  useMotor(s.sala, s.partida, tengoControl, s.tic);
+  // El motor corre siempre en el celular del anfitrión (Elías, 24 nov); la Pantalla solo muestra. Las salas viejas
+  // «con pantalla» (modo tv) siguen corriéndolo aquí.
+  useMotor(s.sala, s.partida, tengoControl && s.sala?.modo === "tv", s.tic);
   useDespierta(true);
   usePantalla(s.sala, true, true); // se anota como la Pantalla: los celulares saben si está
   const v = s.partida && !s.partida.terminada && esPublico(s.partida.estado) ? s.partida.estado : null;
@@ -43,7 +50,16 @@ export function PantallaTv({ codigo }: { codigo: string }) {
   }, [nRuleta]);
 
   // Con el estilo del lobby (Elías, 23 nov): el cuarto de fondo y los componentes de cada juego en vidrio (`az pt`).
-  const marco = (hijos: React.ReactNode) => <RaizDS ancho className="alv a-tv az pt">{<FondoCuarto oscuro />}{hijos}<AvisoLogro tv={s.sala?.id ?? ""} /></RaizDS>;
+  // En partida, el fondo es el escenario elegido (Elías, 24 nov); en el lobby y las copas, el cuarto.
+  const escPartida = v && v.juegoId !== "copas" && v.escenario ? v.escenario : null;
+  // En el lobby, la TV muestra en grande lo que el anfitrión va armando.
+  const vivoTv = useConfigEnVivo(s.sala?.id, !v);
+  // Dejar de proyectar (Elías, 24 nov): este aparato vuelve a ser normal. También si el anfitrión lo pide desde su celular.
+  const dejar = () => ir(s.sala ? "sala" : "inicio", s.sala?.codigo);
+  useEffect(() => { if (!s.sala) return; return escucharSalirPantalla(s.sala.id, dejar); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [s.sala?.id]);
+  const marco = (hijos: React.ReactNode) => <RaizDS ancho className={"alv a-tv az pt" + (escPartida ? " pt-esc" : "")}>{escPartida ? <FondoEscenario escenario={escPartida} /> : <FondoCuarto oscuro />}{hijos}
+    <button type="button" className="cs-boton on tv-dejar" onClick={dejar} aria-label="Dejar de proyectar"><span aria-hidden="true">✕</span> Dejar de proyectar</button>
+    <AvisoLogro tv={s.sala?.id ?? ""} /></RaizDS>;
   if (s.error || s.cerrada) return marco(<div className="lb-vacio a-tv-msj"><b>{s.cerrada ? "La sala se cerró" : "No se pudo abrir la pantalla"}</b>{s.error && <p>{s.error}</p>}<button type="button" className="lb-listo" onClick={() => ir("inicio")}>Ir al inicio</button></div>);
   if (!s.sala) return marco(<div className="lb-vacio a-tv-msj"><b>Abriendo la sala…</b></div>);
   const pid = s.partida?.id ?? "";
@@ -52,6 +68,8 @@ export function PantallaTv({ codigo }: { codigo: string }) {
     const ultima = esFinalDeJuego(v);
     // Ceremonia de copas: sin ronda, marcador ni controles de partida; quien tiene el control puede cerrar la sala.
     const copas = v.juegoId === "copas";
+    // Mesa con los personajes a los lados (Elías, 24 nov). El impostor ya pone a todos en su escena.
+    const conMesa = !copas && !v.impostor;
     const cerrar = async () => { if (s.sala && await confirmar({ titulo: "¿Cerrar la sala?", texto: "Todos salen y la sesión termina.", si: "Cerrar sala", peligro: true })) { await enlace.cerrar(s.sala); ir("inicio"); } };
     return marco(<>
       <header className="a-tv-top">
@@ -62,8 +80,8 @@ export function PantallaTv({ codigo }: { codigo: string }) {
         <Conexion red={s.red} />
         {v.reloj && v.fase === "contestando" && <Reloj segundos={quedanS} total={v.reloj.total} pausado={v.pausada} style={{ width: "6.5em", height: "6.5em" }} />}
       </header>
-      <main className="a-tv-main"><EscenaTv v={v} miembros={s.miembros} />{v.fase === "revelada" && v.ausentes?.length > 0 && <p className="a-tv-sub">Sin respuesta en esta ronda: {v.ausentes.map(j => nombreDe(v, j)).join(", ")}</p>}</main>
-      {!copas && <footer className="a-tv-pie">
+      <main className="a-tv-main">{conMesa ? <MesaJuego v={v} miembros={s.miembros} modo="tv"><EscenaTv v={v} miembros={s.miembros} /></MesaJuego> : <EscenaTv v={v} miembros={s.miembros} />}{v.fase === "revelada" && v.ausentes?.length > 0 && <p className="a-tv-sub">Sin respuesta en esta ronda: {v.ausentes.map(j => nombreDe(v, j)).join(", ")}</p>}</main>
+      {!copas && !conMesa && <footer className="a-tv-pie">
         <ul className="a-tv-marcador" aria-label="Marcador">
           {/* Fichas con la cabina de cada jugador (pantallas/lobby/Ficha.tsx) y sus puntos. */}
           {marcador(v).map(j => <li key={j.id} className="tv-ficha" style={varsColor(colorDe(j.id, v.jugadores.map(x => x.id)))}>
@@ -88,6 +106,7 @@ export function PantallaTv({ codigo }: { codigo: string }) {
   }
 
   return marco(<>
+    {vivoTv && <div className="cv-tv"><ConfigEnVivo e={vivoTv} grande /></div>}
     <header className="a-tv-top">
       <div className="lb-banner pt-banner tv-banner">
         <span className="lb-banner-n">{s.miembros.length}/{CUPO_LOBBY}</span>

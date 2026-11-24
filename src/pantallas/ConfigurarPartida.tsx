@@ -6,17 +6,16 @@
 // `PaginaConfigurar` (#/configurar/código) la envuelve: arranca la partida en la sala y regresa a ella.
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { CONTENIDO } from "../content";
-import { tarjetasInicio } from "../content/comoJugar";
 import { EJE_DE_MAZO, ESCENARIOS, JUEGOS, NIVELES_EJE } from "../content/catalogo";
 import { ARTE_ESCENARIOS, ARTE_JUEGOS, ARTE_TIPOS } from "../content/arteJuegos";
 import { INSTRUMENTOS, JUEGOS_FISICO, MODALIDADES, MODALIDADES_JUEGO, admite } from "../content/configurar";
-import { GRUPOS_EQUIPOS, GRUPOS_SEXOS, JUEGOS_CON_TEMPORIZADOR, armarArranque, armarGrupos, conParejas, intensidadVieja } from "../engine/nucleo";
+import { GRUPOS_EQUIPOS, JUEGOS_CON_TEMPORIZADOR, armarArranque, armarGrupos, conParejas, intensidadVieja } from "../engine/nucleo";
 import { adultoPorEjes, cartasPermitidas } from "../engine/filtros";
 import { maxImpostores } from "../engine/partida";
 import type { DefinicionJuego, EscenarioId, Modalidad, OpcionesPartida } from "../engine/types";
-import { Boton, Icono } from "../ds";
+import { Boton } from "../ds";
 import { colorJugador, varsColor } from "../app/colorJugador";
-import { bandosIniciales, intercambiar, parejasIniciales } from "../app/bandos";
+import { bandosIniciales, parejasIniciales } from "../app/bandos";
 import { generosSala, type Genero } from "../servicios/cuenta";
 import { ir } from "../app/rutas";
 import { useSesion } from "../app/sesion";
@@ -27,9 +26,14 @@ import { useSala } from "../roles/sala";
 import { usePuedeAbrir } from "../app/lobby";
 import { esLocal, modoLocal } from "../servicios/enlace";
 import { guardarPartidaPredeterminada, leerPartidaPredeterminada } from "../servicios/partidaPredeterminada";
-import { FILAS, Reglas, candado, colorDe, duracion, gente } from "./Catalogo";
+import { candado, colorDe, gente } from "./Catalogo";
 import { SeccionIntensidad, ejesDeJuego, nivelMinimo, type ValorIntensidad } from "./Intensidad";
-import { ArteCfg, CartaEscenario, CartaJuego, CartaTipo, SinArte, srcArte } from "./TarjetasConfig";
+import { Categorias, Vitrinas, categoriasDe } from "./VitrinasJuego";
+import { ArmarEquipos, gruposDe } from "./ArmarEquipos";
+import { useTransmitirConfig, type EstadoConfig } from "./ConfigEnVivo";
+import { BotonCast } from "./lobby/Cast";
+import { usePantalla } from "./Sala";
+import { ArteCfg, CartaEscenario, CartaTipo, SinArte, srcArte } from "./TarjetasConfig";
 import { Marco, NombreJugador, Retrato, Vacio, aviso, confirmar } from "./comun";
 import { FondoEscenario } from "./Fondos";
 import { useRecursos } from "./Recursos";
@@ -89,6 +93,12 @@ export function candadoTipo(tipo: Modalidad, n: number): string | null {
   if (n < m.minimo) return `Mínimo ${m.minimo}`;
   if (m.par && n % 2 !== 0) return "Número par";
   return null;
+}
+
+/** Por qué el juego no se puede jugar con `n` jugadores en ninguno de sus modos (o null si alguno sirve). */
+export function candadoModo(juego: string, n: number): string | null {
+  const modos = MODALIDADES_JUEGO[juego] ?? ["individual"];
+  return modos.some(m => !candadoTipo(m, n)) ? null : candadoTipo(modos[0]!, n);
 }
 
 /** Por qué el escenario no sirve con este juego (o null si sí). */
@@ -161,7 +171,12 @@ export function mismaPartida(a: PartidaConfigurada, b: PartidaConfigurada | null
   return o(a) === o(b);
 }
 
-export function ConfigurarPartida({ miembros, alIniciar, alCancelar, iniciando, inicial, abrirEnResumen = true, predeterminada, modoFisico, alEntregarCopas, alFondo, generos }: {
+export function ConfigurarPartida({ miembros, alIniciar, alCancelar, iniciando, inicial, abrirEnResumen = true, predeterminada, modoFisico, alEntregarCopas, alFondo, generos, alEstadoVivo, nombreAnfitrion, cabExtra }: {
+  /** Configuración en vivo: cada cambio, para transmitirlo a los demás. */
+  alEstadoVivo?: (e: EstadoConfig) => void;
+  nombreAnfitrion?: string;
+  /** Algo más en la cabecera (el botón «cast»). */
+  cabExtra?: ReactNode;
   /** Se entró por «Juego físico» en Modos de juego: arranca con ese juego y la categoría de competencias. */
   modoFisico?: boolean;
   /** Con `inicial`: abrir directo en el resumen (si no, en el paso 1 con lo de `inicial` ya marcado). */
@@ -184,7 +199,8 @@ export function ConfigurarPartida({ miembros, alIniciar, alCancelar, iniciando, 
   const n = miembros.length;
   const r = useRecursos();
   const ids = useMemo(() => miembros.map(m => m.id), [miembros]);
-  const [sec, setSec] = useState<Seccion>(inicial && abrirEnResumen ? "resumen" : "tipo");
+  // Orden (Elías, 24 nov): escenario → juego → opciones del juego (modo u opciones propias) → equipos → herramientas → intensidad → resumen.
+  const [sec, setSec] = useState<Seccion>(inicial && abrirEnResumen ? "resumen" : "escenario");
   // Si se entró a una sección desde el resumen, «Listo» regresa al resumen.
   const [desdeResumen, setDesdeResumen] = useState(false);
   const cuerpo = useRef<HTMLDivElement>(null);
@@ -192,6 +208,8 @@ export function ConfigurarPartida({ miembros, alIniciar, alCancelar, iniciando, 
   const [tipo, setTipo] = useState<Modalidad>(inicial?.opciones.modalidad ?? "individual");
   const [cuantosEquipos, setCuantosEquipos] = useState(2);
   const [grupos, setGrupos] = useState<Record<string, string>>(inicial?.opciones.grupos ?? {});
+  // Nombre que el anfitrión le pone a cada equipo, pareja o bando (vacío = el de siempre).
+  const [nombres, setNombres] = useState<Record<string, string>>(inicial?.opciones.nombres ?? {});
   const [juego, setJuego] = useState(inicial?.juego ?? (modoFisico ? JUEGOS_FISICO[0]! : "impostor"));
   const [ejes, setEjes] = useState<ValorIntensidad>(inicial?.ejes ?? EJES_INICIALES);
   const adulto = adultoPorEjes(ejes);
@@ -202,23 +220,23 @@ export function ConfigurarPartida({ miembros, alIniciar, alCancelar, iniciando, 
   const [impostores, setImpostores] = useState(inicial?.opciones.impostor?.cantidad ?? 1);
   const [tema, setTema] = useState<string | null>(inicial?.opciones.impostor?.tema ?? null);
   const [escenario, setEscenario] = useState<EscenarioId | undefined>(inicial?.opciones.escenario);
-  const [filtro, setFiltro] = useState(() => (modoFisico ? FILAS.find(f => f.juegos.includes(JUEGOS_FISICO[0]!))?.id ?? "todos" : "todos"));
-  // En la sección «Escenario» la página toma el fondo del escenario elegido.
-  useEffect(() => { alFondo?.(sec === "escenario" ? escenario ?? null : undefined); }, [sec, escenario, alFondo]);
+  // Categoría abierta en «Elige el juego» (null: las tarjetas de categoría). En Físico abre directo la de competencias.
+  const cats = useMemo(() => categoriasDe(id => id in MODALIDADES_JUEGO), []);
+  const catDe = (id: string) => cats.find(c => c.juegos.includes(id))?.id ?? null;
+  const [filtro, setFiltro] = useState<string | null>(() => (modoFisico ? catDe(JUEGOS_FISICO[0]!) : null));
+  // Desde el primer paso la página toma el fondo del escenario elegido (sin escenario: la azotea).
+  useEffect(() => { alFondo?.(escenario); }, [escenario, alFondo]);
   // Temporizador por turno (herramienta opcional, 6A.11 C6). null: sin tiempo.
   const [temporizador, setTemporizador] = useState<number | null>(inicial?.opciones.temporizador ?? null);
   const conTemporizador = JUEGOS_CON_TEMPORIZADOR.includes(juego);
-  const [verReglas, setVerReglas] = useState(false);
   // «Cómo jugar»: se propone explicar si en este aparato nunca se ha jugado ese juego; el anfitrión puede omitirlo.
-  const [explicar, setExplicar] = useState<boolean | null>(inicial ? !!inicial.opciones.explicar : null);
-  const explicarFinal = explicar ?? !yaJugado(juego);
+  // Pantalla de carga siempre al iniciar (Elías, 24 nov): ya no se elige en el resumen.
+  const explicarFinal = true;
   const j = defJuego(juego);
   const instrumentos = INSTRUMENTOS[juego] ?? [];
   const inst = instrumentos.find(i => i.id === instrumento) ?? instrumentos[0];
   const maxImp = maxImpostores(n);
   const conGrupos = tipo === "equipos" || tipo === "sexos" || tipo === "parejas";
-  // Parejas: la primera persona tocada espera a la segunda para intercambiarlas.
-  const [tocado, setTocado] = useState<string | null>(null);
 
   // Al cambiar de tipo, grupos de arranque (el anfitrión los puede cambiar antes de iniciar): equipos alternados;
   // parejas por orden de llegada; ALVersus según el género de cada quien («Prefiero no decirlo» al bando con menos gente).
@@ -226,20 +244,19 @@ export function ConfigurarPartida({ miembros, alIniciar, alCancelar, iniciando, 
     if (tipo === "equipos") setGrupos(g => (ids.every(id => GRUPOS_EQUIPOS.some(x => x.id === g[id])) ? g : repartir(ids, cuantosEquipos)));
     if (tipo === "parejas") setGrupos(g => parejasIniciales(ids, g));
     if (tipo === "sexos" && generos) setGrupos(g => bandosIniciales(ids, generos, g));
-    setTocado(null);
   }, [tipo, ids, generos]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { if (impostores > maxImp) setImpostores(maxImp); }, [maxImp, impostores]);
-  // Si el juego elegido no admite el tipo de partida, se cambia por el primero que sí (y vuelve a «Todos»).
+  // El juego manda: si no admite el modo elegido, se pasa al primero que sí admite y sirve con quienes están.
   useEffect(() => {
     if (admite(juego, tipo)) return;
-    const otro = FILAS.flatMap(f => f.juegos).find(id => admite(id, tipo));
-    if (otro) { setJuego(otro); setInstrumento(undefined); setExplicar(null); }
-    setFiltro("todos");
-  }, [tipo]); // eslint-disable-line react-hooks/exhaustive-deps
+    const modos = MODALIDADES_JUEGO[juego] ?? ["individual"];
+    setTipo(modos.find(m => !candadoTipo(m, n)) ?? modos[0]!);
+  }, [juego]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const opciones: OpcionesPartida = {
     modalidad: tipo,
     ...(conGrupos ? { grupos: Object.fromEntries(ids.filter(id => grupos[id]).map(id => [id, grupos[id]!])) } : {}),
+    ...(conGrupos && Object.values(nombres).some(x => x.trim()) ? { nombres: Object.fromEntries(Object.entries(nombres).filter(([, x]) => x.trim()).map(([g, x]) => [g, x.trim()])) } : {}),
     ...(escenario ? { escenario } : {}),
     ...(inst?.turno ? { turno: inst.turno } : {}),
     ...(inst?.herramienta ? { herramienta: inst.herramienta } : {}),
@@ -253,124 +270,105 @@ export function ConfigurarPartida({ miembros, alIniciar, alCancelar, iniciando, 
   const motivo = motivoConfig(config, miembros);
   const gruposOk = !!armarGrupos(conParejas(miembros), opciones);
 
-  const orden: Seccion[] = ["tipo", ...(conGrupos ? ["grupos" as const] : []), "juego", "intensidad", "opciones", "escenario", "resumen"];
-  const k = orden.indexOf(sec);
+  // Pasos sin nada que elegir se saltan: modo si el juego solo admite uno (salvo El impostor, que pone ahí sus opciones),
+  // herramientas si no hay instrumento, temporizador ni rondas, e intensidad si el juego no usa Temperatura ni Voltaje.
+  const conModo = esImpostor(j) || (MODALIDADES_JUEGO[juego]?.length ?? 1) > 1;
+  const conHerramientas = !esImpostor(j) || conTemporizador;
+  const conNivel = ejesDeJuego(juego).length > 0;
+  const orden: Seccion[] = ["escenario", "juego", ...(conModo ? ["tipo" as const] : []), ...(conGrupos ? ["grupos" as const] : []),
+    ...(conHerramientas ? ["opciones" as const] : []), ...(conNivel ? ["intensidad" as const] : []), "resumen"];
+  const k = Math.max(0, orden.indexOf(sec));
   const falta = (s: Seccion): string | null => {
     if (s === "tipo") return candadoTipo(tipo, n);
+    if (s === "grupos" && tipo === "equipos") {
+      if (ids.some(id => !GRUPOS_EQUIPOS.slice(0, cuantosEquipos).some(g => g.id === grupos[id]))) return "Falta acomodar a alguien de la banca";
+      if (GRUPOS_EQUIPOS.slice(0, cuantosEquipos).some(g => !ids.some(id => grupos[id] === g.id))) return "Cada equipo necesita al menos una persona";
+    }
     if (s === "grupos") return gruposOk ? null : tipo === "sexos" ? (generos ? "Toca Ellas o Ellos en cada quien" : "Acomodando bandos…") : tipo === "parejas" ? "Cada pareja necesita dos" : "Cada equipo necesita gente";
-    if (s === "juego") return j ? candadoJuego(j, n) : "Elige un juego";
+    if (s === "juego") return j ? candadoJuego(j, n) ?? candadoModo(juego, n) ?? candadoEscenario(escenario, j) : "Elige un juego";
     if (s === "intensidad") return faltaNivel(juego, ejes);
-    if (s === "escenario") return candadoEscenario(escenario, j);
     return null;
   };
   const siguiente = () => {
     // Desde el resumen se regresa al resumen, salvo que el tipo nuevo pida armar equipos antes.
-    if (desdeResumen && !(sec === "tipo" && conGrupos)) { setDesdeResumen(false); setSec("resumen"); return; }
+    // Si desde el resumen se cambió el juego, se siguen sus pasos (sus opciones, modo, herramientas) antes de volver.
+    const cambioJuego = sec === "juego" && juego !== juegoAlEditar.current;
+    if (desdeResumen && !(sec === "tipo" && conGrupos) && !cambioJuego) { setDesdeResumen(false); setSec("resumen"); return; }
+    if (cambioJuego) setDesdeResumen(false);
     setSec(orden[Math.min(orden.length - 1, k + 1)]!);
   };
   const atras = () => {
+    // Dentro de una categoría, «Atrás» regresa a las categorías.
+    if (sec === "juego" && filtro) { setFiltro(null); return; }
     if (desdeResumen) { setDesdeResumen(false); setSec("resumen"); return; }
     if (k <= 0) alCancelar?.(); else setSec(orden[k - 1]!);
   };
-  const editar = (s: Seccion) => { setDesdeResumen(true); setSec(s); };
+  const juegoAlEditar = useRef(juego);
+  const editar = (s: Seccion) => { juegoAlEditar.current = juego; if (s === "juego") setFiltro(catDe(juego)); setDesdeResumen(true); setSec(s); };
+  // Elegir y seguir (Elías, 24 nov): en pasos de una sola elección, tocar la tarjeta avanza sola tras una pausa corta.
+  const [avanzar, setAvanzar] = useState(0);
+  const avanzado = useRef(0); // cada toque avanza una sola vez (aunque el efecto se vuelva a correr)
+  useEffect(() => {
+    if (!avanzar || avanzar === avanzado.current) return;
+    avanzado.current = avanzar;
+    const t = setTimeout(() => { if (!falta(sec)) siguiente(); }, 260);
+    return () => clearTimeout(t);
+  }, [avanzar]); // eslint-disable-line react-hooks/exhaustive-deps
   const color = (id: string) => colorJugador(ids.indexOf(id));
+  // Pasos donde tocar ya elige y sigue: no llevan botón «Siguiente».
+  const soloTocar = sec === "escenario" || sec === "juego" || (sec === "tipo" && !esImpostor(j));
 
   const TITULO: Record<Seccion, string> = {
-    tipo: "Modo de juego", grupos: tipo === "sexos" ? "Ellas y ellos" : tipo === "parejas" ? "Arma las parejas" : "Arma los equipos", juego: "Tipo de juego",
-    intensidad: "Intensidad", opciones: esImpostor(j) ? "Opciones del juego" : "Herramientas", escenario: "Escenario", resumen: "¡Todo listo!",
+    tipo: esImpostor(j) ? "Opciones del juego" : "Modo de juego", grupos: tipo === "sexos" ? "Ellas y ellos" : tipo === "parejas" ? "Arma las parejas" : "Arma los equipos", juego: cats.find(c => c.id === filtro)?.nombre ?? "Elige el juego",
+    intensidad: "Intensidad", opciones: "Herramientas", escenario: "¿Dónde juegan?", resumen: "¡Todo listo!",
   };
 
   let contenido: ReactNode;
-  if (sec === "tipo") {
+  if (sec === "tipo" && esImpostor(j)) {
+    // El impostor solo se juega individual (Maestro 6A.12): aquí van sus opciones propias.
     contenido = (
-      <div className="cfg-tipos" role="radiogroup" aria-label="Modo de juego">
-        {MODALIDADES.map((m, i) => <CartaTipo key={m.id} id={m.id} indice={i} nombre={m.nombre} texto={m.gana} elegida={tipo === m.id} bloqueada={candadoTipo(m.id, n)} onClick={() => setTipo(m.id)} />)}
-      </div>
-    );
-  } else if (sec === "grupos" && tipo === "parejas") {
-    const parejas = [...new Set(ids.map(id => grupos[id]).filter((g): g is string => !!g))].sort((x, y) => Number(x.slice(1)) - Number(y.slice(1)));
-    const tocar = (id: string) => {
-      if (!tocado) { setTocado(id); return; }
-      if (tocado !== id) setGrupos(g => intercambiar(g, tocado, id));
-      setTocado(null);
-    };
-    contenido = (
-      <div className="cfg-vidrio a-pila cfg-ancho">
-        <span className="cfg-kick">{tocado ? `Ahora toca a quien cambia de lugar con ${miembros.find(m => m.id === tocado)?.nombre ?? ""}` : "Toca a dos personas para cambiarlas de pareja"}</span>
-        <div className="cp-equipos" style={{ "--cols": 2 } as CSSProperties}>
-          {parejas.map((g, x) => (
-            <div key={g} className="cp-equipo"><span className="dsp ol">Pareja {x + 1}</span>
-              {miembros.filter(m => grupos[m.id] === g).map(m => (
-                <button key={m.id} type="button" className={"cp-mover" + (tocado === m.id ? " on" : "")} aria-pressed={tocado === m.id} onClick={() => tocar(m.id)}>
-                  <Persona m={m} c={color(m.id)} />
-                </button>
+      <div className="cfg-opciones">
+        <div className="cfg-opciones-arte" style={{ "--tc": colorDe(juego) } as CSSProperties}>
+          <ArteJuego id={juego} className="cfg-opciones-img" />
+          <span className="cfg-cinta dsp ol">{j?.nombre}</span>
+        </div>
+        <div className="a-pila cfg-opciones-lado">
+          <section className="a-pila"><span className="cfg-sub dsp ol">¿Cuántos impostores?</span>
+            <div className="a-fila a-envuelve">{[1, 2, 3].map(x => (
+              <button key={x} type="button" className={"cp-num dsp ol" + (impostores === x ? " on" : "")} aria-pressed={impostores === x} disabled={x > maxImp} onClick={() => setImpostores(x)}>{x}</button>
+            ))}</div>
+            <p className="a-nota">{maxImp < 3 ? `Con ${n} jugadores caben hasta ${maxImp}: siempre hay más civiles que impostores.` : "Siempre hay más civiles que impostores."}</p>
+          </section>
+          <section className="a-pila"><span className="cfg-sub dsp ol">Categoría de las palabras</span>
+            <div className="cfg-temas">
+              {[{ id: null as string | null, nombre: "Al azar" }, { id: "escenario", nombre: "Del escenario" }, ...temasImpostor(adulto)].map(t => (
+                <button key={t.id ?? "azar"} type="button" className={"cfg-tema" + (tema === t.id ? " on" : "")} aria-pressed={tema === t.id} onClick={() => setTema(t.id)}>{t.nombre}</button>
               ))}
             </div>
-          ))}
+          </section>
+          <p className="a-nota">Se juega por vueltas hasta atrapar a todos los impostores, o hasta que ellos igualen a los civiles.</p>
         </div>
+      </div>
+    );
+  } else if (sec === "tipo") {
+    // Solo los modos que admite el juego elegido (Maestro 6A.12). Tocar uno elige y sigue.
+    contenido = (
+      <div className="cfg-tipos" role="radiogroup" aria-label="Modo de juego">
+        {MODALIDADES.filter(m => admite(juego, m.id)).map((m, i) => <CartaTipo key={m.id} id={m.id} indice={i} nombre={m.nombre} texto={m.gana} elegida={tipo === m.id} bloqueada={candadoTipo(m.id, n)}
+          onClick={() => { setTipo(m.id); setAvanzar(x => x + 1); }} />)}
       </div>
     );
   } else if (sec === "grupos") {
-    contenido = tipo === "equipos" ? (
-      <div className="cfg-vidrio a-pila cfg-ancho">
-        <div className="a-entre"><span className="cfg-kick">Toca a alguien para cambiarlo de equipo</span>
-          <div className="a-fila">{[2, 3, 4].filter(x => x <= Math.floor(n / 2)).map(x => <ChipCfg key={x} texto={`${x} equipos`} on={cuantosEquipos === x} onClick={() => { setCuantosEquipos(x); setGrupos(repartir(ids, x)); }} />)}</div>
-        </div>
-        <div className="cp-equipos" style={{ "--cols": cuantosEquipos } as CSSProperties}>
-          {GRUPOS_EQUIPOS.slice(0, cuantosEquipos).map((g, x) => (
-            <div key={g.id} className="cp-equipo"><span className="dsp ol">{g.nombre}</span>
-              {miembros.filter(m => grupos[m.id] === g.id).map(m => (
-                <button key={m.id} type="button" className="cp-mover" onClick={() => setGrupos(z => ({ ...z, [m.id]: GRUPOS_EQUIPOS[(x + 1) % cuantosEquipos]!.id }))} aria-label={`Pasar a ${m.nombre} al ${GRUPOS_EQUIPOS[(x + 1) % cuantosEquipos]!.nombre}`}>
-                  <Persona m={m} c={color(m.id)} />
-                </button>
-              ))}
-            </div>
-          ))}
-        </div>
-      </div>
-    ) : (
-      <div className="cfg-vidrio a-pila cfg-ancho"><span className="cfg-kick">¿De qué bando es cada quien?</span>
-        <p className="a-suave cp-nota">Ya los acomodamos según su registro; quien prefirió no decirlo va al bando con menos gente. Toca para cambiar.</p>
-        <ul className="cp-bandos">{miembros.map(m => (
-          <li key={m.id}><Persona m={m} c={color(m.id)} />
-            <div className="a-fila">{GRUPOS_SEXOS.map(g => <ChipCfg key={g.id} texto={g.nombre} on={grupos[m.id] === g.id} onClick={() => setGrupos(z => ({ ...z, [m.id]: g.id }))} />)}</div>
-          </li>
-        ))}</ul>
-      </div>
-    );
+    // Banca y placas con arrastre (Elías, 24 nov): equipos, parejas o bandos, con nombre editable por grupo.
+    contenido = <ArmarEquipos tipo={tipo as "equipos" | "parejas" | "sexos"} miembros={miembros} grupos={grupos} alGrupos={setGrupos}
+      cuantos={cuantosEquipos} alCuantos={x => { setCuantosEquipos(x); setGrupos(repartir(ids, x)); }} nombres={nombres} alNombres={setNombres} color={color} />;
   } else if (sec === "juego") {
-    // Solo los juegos que admiten la modalidad elegida (Maestro 6A.12).
-    const lista = (filtro === "todos" ? FILAS.flatMap(f => f.juegos) : FILAS.find(f => f.id === filtro)?.juegos ?? []).filter(id => admite(id, tipo));
-    contenido = (
-      <div className="cfg-juego">
-        {j && (
-          <section className="cfg-destacado" key={j.id} aria-label={`Elegido: ${j.nombre}`} style={{ "--tc": colorDe(j.id) } as CSSProperties}>
-            <ArteJuego id={j.id} className="cfg-destacado-arte" />
-            <div className="cfg-destacado-info">
-              <span className="cfg-etq dsp">Juego:</span>
-              <span className="dsp ol cfg-destacado-nombre">{j.nombre}</span>
-              <div className="a-fila a-envuelve"><span className="cfg-pastilla"><Icono id="users" />{gente(j)}</span><span className="cfg-pastilla"><Icono id="clock" />{duracion(j)}</span>{j.sigla && <span className="cfg-pastilla dsp">{j.sigla}</span>}</div>
-              <p className="cfg-desc">{j.descripcion}</p>
-              <button type="button" className="a-plano cfg-reglas-btn" onClick={() => setVerReglas(v => !v)}>{verReglas ? "Ocultar reglas" : "Ver reglas"}</button>
-              {verReglas && <Reglas id={j.id} />}
-            </div>
-          </section>
-        )}
-        <div className="tc-filtros" role="tablist" aria-label="Categorías">
-          {[{ id: "todos", nombre: "Todos", color: "var(--amarillo)", juegos: Object.keys(MODALIDADES_JUEGO) }, ...FILAS].filter(f => f.juegos.some(id => admite(id, tipo))).map(f => (
-            <button key={f.id} type="button" role="tab" aria-selected={filtro === f.id} className={"tc-filtro" + (filtro === f.id ? " on" : "")} style={{ "--f": f.color } as CSSProperties} onClick={() => setFiltro(f.id)}>{f.nombre}</button>
-          ))}
-        </div>
-        <div className="cfg-carrusel" key={filtro}>
-          {lista.map((id, x) => {
-            const d = defJuego(id);
-            if (!d) return null;
-            return <CartaJuego key={id} id={id} nombre={d.nombre} sigla={d.sigla ?? "ALV"} color={colorDe(id)} jugadores={gente(d)} duracion={duracion(d)} indice={x}
-              elegida={juego === id} bloqueada={candadoJuego(d, n)} onClick={() => { setJuego(id); setInstrumento(undefined); setExplicar(null); }} />;
-          })}
-        </div>
-      </div>
-    );
+    // Categorías y vitrinas giratorias (Elías, 24 nov). Con candado los juegos que no sirven con quienes están o en el escenario.
+    const categoria = cats.find(c => c.id === filtro);
+    contenido = categoria
+      ? <Vitrinas categoria={categoria} elegido={juego} candado={d => candadoJuego(d, n) ?? candadoModo(d.id, n) ?? candadoEscenario(escenario, d)}
+          alElegir={id => { if (id !== juego) { setJuego(id); setInstrumento(undefined); } setAvanzar(x => x + 1); }} />
+      : <Categorias categorias={cats} actual={cats.find(c => c.juegos.includes(juego))?.id} alElegir={setFiltro} />;
   } else if (sec === "intensidad") {
     contenido = <SeccionIntensidad juego={juego} valor={ejes} alCambiar={setEjes} cuenta={cuenta} />;
   } else if (sec === "opciones") {
@@ -382,20 +380,6 @@ export function ConfigurarPartida({ miembros, alIniciar, alCancelar, iniciando, 
         </div>
         <div className="a-pila cfg-opciones-lado">
           {esImpostor(j) ? <>
-            <section className="a-pila"><span className="cfg-sub dsp ol">¿Cuántos impostores?</span>
-              <div className="a-fila a-envuelve">{[1, 2, 3].map(x => (
-                <button key={x} type="button" className={"cp-num dsp ol" + (impostores === x ? " on" : "")} aria-pressed={impostores === x} disabled={x > maxImp} onClick={() => setImpostores(x)}>{x}</button>
-              ))}</div>
-              <p className="a-nota">{maxImp < 3 ? `Con ${n} jugadores caben hasta ${maxImp}: siempre hay más civiles que impostores.` : "Siempre hay más civiles que impostores."}</p>
-            </section>
-            <section className="a-pila"><span className="cfg-sub dsp ol">Categoría de las palabras</span>
-              <div className="cfg-temas">
-                {[{ id: null as string | null, nombre: "Al azar" }, { id: "escenario", nombre: "Del escenario" }, ...temasImpostor(adulto)].map(t => (
-                  <button key={t.id ?? "azar"} type="button" className={"cfg-tema" + (tema === t.id ? " on" : "")} aria-pressed={tema === t.id} onClick={() => setTema(t.id)}>{t.nombre}</button>
-                ))}
-              </div>
-            </section>
-            <p className="a-nota">Se juega por vueltas hasta atrapar a todos los impostores, o hasta que ellos igualen a los civiles.</p>
             {conTemporizador && <section className="a-pila"><span className="cfg-sub dsp ol"><ArteCfg nombre="herr-tiempo" className="cfg-sub-ico" />Temporizador</span>
               <div className="a-fila a-envuelve">{[null, 20, 30, 60, 90].map(x => (
                 <button key={x ?? 0} type="button" className={"cfg-tiempo" + (temporizador === x ? " on" : "")} aria-pressed={temporizador === x} onClick={() => setTemporizador(x)}>{x ? `${x} s` : "Sin tiempo"}</button>
@@ -439,16 +423,17 @@ export function ConfigurarPartida({ miembros, alIniciar, alCancelar, iniciando, 
   } else if (sec === "escenario") {
     contenido = (
       <div className="cfg-escs">
-        <CartaEscenario id="ciudad" nombre="Ciudad ALV" texto="Sin escenario: cartas de cualquier lugar." emoji="🌃" color="#5fb4ff" elegida={!escenario} onClick={() => setEscenario(undefined)} />
+        <CartaEscenario id="ciudad" nombre="Ciudad ALV" texto="Sin escenario: cartas de cualquier lugar." emoji="🌃" color="#5fb4ff" elegida={!escenario} onClick={() => { setEscenario(undefined); setAvanzar(x => x + 1); }} />
         {ESCENARIOS.filter(e => e.activo && (!e.adulto || adulto)).map(e => (
-          <CartaEscenario key={e.id} id={e.id} nombre={e.nombre} texto={e.ambientacion} emoji={e.emoji} color={e.color} elegida={escenario === e.id} bloqueada={candadoEscenario(e.id, j)} onClick={() => setEscenario(e.id)} />
+          // Primer paso: ningún escenario se bloquea (el juego se elige después). Desde el resumen sí, por el juego ya elegido.
+          <CartaEscenario key={e.id} id={e.id} nombre={e.nombre} texto={e.ambientacion} emoji={e.emoji} color={e.color} elegida={escenario === e.id}
+            bloqueada={desdeResumen ? candadoEscenario(e.id, j) : null} onClick={() => { setEscenario(e.id); setAvanzar(x => x + 1); }} />
         ))}
       </div>
     );
   } else {
     const m = MODALIDADES.find(x => x.id === tipo)!;
     const esc = ESCENARIOS.find(e => e.id === escenario);
-    const tarjetas = tarjetasInicio({ juegoId: juego, modalidad: tipo, explicar: true, herramienta: inst?.herramienta, temporizador: temporizador && conTemporizador ? temporizador : undefined, escenario }).length;
     contenido = (
       <div className="cfg-resumen">
         <div className="cfg-tablero">
@@ -461,14 +446,6 @@ export function ConfigurarPartida({ miembros, alIniciar, alCancelar, iniciando, 
             detalle={esImpostor(j) ? (tema === null ? "Palabras al azar" : tema === "escenario" ? "Palabras del escenario" : temasImpostor(adulto).find(t => t.id === tema)?.nombre ?? "") + (temporizador && conTemporizador ? ` · ⏱ ${temporizador} s` : "") : `${rondas} rondas${temporizador && conTemporizador ? ` · ⏱ ${temporizador} s` : ""}`}
             ico={<ArteCfg nombre={esImpostor(j) ? "sec-herramienta" : `herr-${inst?.id ?? "cartas"}`} alterno={arteHub("ajustes")} />} alTocar={() => editar("opciones")} />
           <Casilla titulo="Escenario" valor={esc ? esc.nombre : "Ciudad ALV"} detalle={esc ? esc.ambientacion : "Sin escenario"} img={ARTE_ESCENARIOS[escenario ?? "ciudad"] ? srcArte(ARTE_ESCENARIOS[escenario ?? "ciudad"]!) : undefined} alTocar={() => editar("escenario")} />
-          <div className="cfg-casilla cfg-reglas">
-            <span className="cfg-casilla-t dsp">Tarjetas al iniciar</span>
-            <div className="cfg-reglas-opc" role="radiogroup" aria-label="Tarjetas al iniciar">
-              <button type="button" role="radio" aria-checked={explicarFinal} className={explicarFinal ? "on" : ""} onClick={() => setExplicar(true)}><ArteCfg nombre="explicar" />Mostrar</button>
-              <button type="button" role="radio" aria-checked={!explicarFinal} className={!explicarFinal ? "on" : ""} onClick={() => setExplicar(false)}><ArteCfg nombre="omitir" />Omitir</button>
-            </div>
-            <small>{tarjetas} {tarjetas === 1 ? "tarjeta" : "tarjetas"}: {[ "cómo se juega", inst?.herramienta || (temporizador && conTemporizador) ? "herramientas" : "", escenario ? "escenario" : ""].filter(Boolean).join(", ")}. {yaJugado(juego) ? "Ya lo jugaron en este aparato." : "Primera vez con este juego: se recomienda mostrarlas."}</small>
-          </div>
           <div className="cfg-casilla cfg-gente">
             <span className="cfg-casilla-t dsp">{n} jugadores</span>
             <ul className="cp-jugadores" aria-label="Jugadores">{miembros.map(x => <li key={x.id}><Persona m={x} c={color(x.id)} /></li>)}</ul>
@@ -488,12 +465,27 @@ export function ConfigurarPartida({ miembros, alIniciar, alCancelar, iniciando, 
     );
   }
 
+  // Configuración en vivo para los demás (Elías, 24 nov): lo mismo que se ve aquí, ya en texto.
+  const escNombre = escenario ? ESCENARIOS.find(e => e.id === escenario)?.nombre ?? "" : "Ciudad ALV";
+  const vivo: EstadoConfig = {
+    quien: nombreAnfitrion ?? "", paso: TITULO[sec], escenario: escenario ?? null, escenarioNombre: escNombre, juego, juegoNombre: j?.nombre ?? "",
+    modo: MODALIDADES.find(m => m.id === tipo)?.nombre ?? "",
+    grupos: conGrupos ? gruposDe(tipo as "equipos" | "parejas" | "sexos", n, cuantosEquipos).map(g => ({
+      nombre: nombres[g.id]?.trim() || (tipo === "parejas" ? miembros.filter(m => grupos[m.id] === g.id).map(m => m.nombre).join(" y ") || g.nombre : g.nombre),
+      jugadores: miembros.filter(m => grupos[m.id] === g.id).map(m => m.nombre) })) : [],
+    herramienta: esImpostor(j) ? `${Math.min(impostores, maxImp)} ${Math.min(impostores, maxImp) === 1 ? "impostor" : "impostores"}` : inst?.nombre ?? "",
+    nivel: ejesDeJuego(juego).map(x => NIVELES_EJE[x][ejes[x]]).join(" · ") + (ejes.drunk ? " · Drunk" : ""),
+  };
+  const claveVivo = JSON.stringify(vivo);
+  useEffect(() => { alEstadoVivo?.(vivo); }, [claveVivo]); // eslint-disable-line react-hooks/exhaustive-deps
+
   return (
     <div className="cfg">
       <header className="cfg-cab">
         <div className="cfg-cab-fila">
           <button type="button" className="pf-atras cfg-volver" onClick={atras} aria-label={desdeResumen ? "Volver al resumen" : k <= 0 ? "Volver a la sala" : "Atrás"}><span aria-hidden="true">◀</span>{desdeResumen ? "Resumen" : "Atrás"}</button>
-          {alEntregarCopas && sec === "tipo" && <button type="button" className="cfg-copas" onClick={alEntregarCopas} aria-label="Entregar copas"><ArteCfg nombre="copas" alterno={arteHub("icono-ranking")} className="cfg-copas-ico" /><span className="cfg-copas-txt">Entregar copas</span></button>}
+          {alEntregarCopas && k === 0 && !desdeResumen && <button type="button" className="cfg-copas" onClick={alEntregarCopas} aria-label="Entregar copas"><ArteCfg nombre="copas" alterno={arteHub("icono-ranking")} className="cfg-copas-ico" /><span className="cfg-copas-txt">Entregar copas</span></button>}
+          {cabExtra}
           <RecursosAzotea monedas={r.monedas} puntos={r.puntos} />
         </div>
         <div className="cfg-cab-titulo">
@@ -503,10 +495,11 @@ export function ConfigurarPartida({ miembros, alIniciar, alCancelar, iniciando, 
       </header>
       <div className="cfg-cuerpo" ref={cuerpo} key={sec}>{contenido}</div>
       <footer className="cfg-pie">
-        {sec === "tipo" && <p className="cfg-pie-info" aria-live="polite"><b className="dsp">{MODALIDADES.find(x => x.id === tipo)!.nombre}:</b> {MODALIDADES.find(x => x.id === tipo)!.gana}</p>}
+        {sec === "tipo" && !esImpostor(j) && <p className="cfg-pie-info" aria-live="polite"><b className="dsp">{MODALIDADES.find(x => x.id === tipo)!.nombre}:</b> {MODALIDADES.find(x => x.id === tipo)!.gana}</p>}
         {sec === "resumen"
           ? <BotonPie principal texto={iniciando ? "Iniciando…" : "¡Iniciar!"} sub={motivo ?? `${j?.nombre ?? ""} · ${n} jugadores`} desactivado={!!motivo || !!iniciando} onClick={() => { marcarJugado(juego); alIniciar(config); }} />
-          : <BotonPie listo={desdeResumen} texto={desdeResumen && !(sec === "tipo" && conGrupos) ? "Listo" : "Siguiente"} sub={falta(sec) ?? undefined} desactivado={!!falta(sec)} onClick={siguiente} />}
+          : soloTocar ? null // tocar la tarjeta ya elige y sigue
+          : <BotonPie listo={desdeResumen} texto={desdeResumen ? "Listo" : "Siguiente"} sub={falta(sec) ?? undefined} desactivado={!!falta(sec)} onClick={siguiente} />}
       </footer>
     </div>
   );
@@ -523,11 +516,6 @@ function Casilla({ titulo, valor, detalle, img, arte, ico, ancha, alTocar }: { t
       <span className="cfg-cambiar">Cambiar</span>
     </button>
   );
-}
-
-/** Opción chica de vidrio (cuántos equipos, Ellas / Ellos). */
-function ChipCfg({ texto, on, onClick }: { texto: string; on: boolean; onClick: () => void }) {
-  return <button type="button" className={"cfg-chip" + (on ? " on" : "")} aria-pressed={on} onClick={onClick}>{texto}</button>;
 }
 
 /** Botón del pie: vidrio para avanzar, dorado para iniciar. `sub` dice qué falta. */
@@ -570,6 +558,11 @@ export function PaginaConfigurar({ codigo }: { codigo: string }) {
   const esAdmin = usePuedeAbrir(ses.uid);
   const [pred, setPred] = useState<PartidaConfigurada | null | undefined>(undefined);
   const [guardandoPred, setGuardandoPred] = useState(false);
+  // Dónde se juega (Elías, 24 nov): presencia de la Pantalla para el botón «cast», y la configuración en vivo para los demás.
+  const salaLocal = esLocal(s.sala?.id);
+  const pantalla = usePantalla(s.sala, false, !!s.sala && !salaLocal);
+  const [vivo, setVivo] = useState<EstadoConfig | null>(null);
+  useTransmitirConfig(soyAnfitrion && !salaLocal ? s.sala?.id : undefined, vivo);
   useEffect(() => {
     let vivo = true;
     const t = setTimeout(() => { if (vivo) setPred(p => (p === undefined ? null : p)); }, 4000);
@@ -586,9 +579,11 @@ export function PaginaConfigurar({ codigo }: { codigo: string }) {
   }, [salaId, soyAnfitrion, cuantos]); // eslint-disable-line react-hooks/exhaustive-deps
   const enCurso = !!s.partida && !s.partida.terminada;
   useEffect(() => { if (enCurso && !iniciando) ir("sala", codigo); }, [enCurso, iniciando, codigo]);
-  if (s.error) return <Marco clase="a-centro"><Vacio titulo="No se pudo abrir" texto={s.error}><Boton color="amarillo" texto="Volver" icono="back" onClick={() => ir("jugar")} /></Vacio></Marco>;
+  // Mientras abre, el mismo fondo de la azotea que la página (nunca la ciudad vieja del marco común).
+  const fondoAz = <div className="cfg-fondo"><EscenarioFondo ambiente={az.ambientes[momento]} momento={momento} velo={az.velo} /></div>;
+  if (s.error) return <Marco clase={`az pf cfg-pagina a-centro m-${momento}`} fondo={fondoAz}><Vacio titulo="No se pudo abrir" texto={s.error}><Boton color="amarillo" texto="Volver" icono="back" onClick={() => ir("jugar")} /></Vacio></Marco>;
   // El anfitrión espera la predeterminada y a los jugadores: con ellos se decide si abre en el resumen o en el paso 1.
-  if (!s.sala || (soyAnfitrion && (pred === undefined || s.miembros.length === 0))) return <Marco clase="a-centro"><p className="a-suave a-pulso" role="status">Abriendo la sala {codigo}…</p></Marco>;
+  if (!s.sala || (soyAnfitrion && (pred === undefined || s.miembros.length === 0))) return <Marco clase={`az pf cfg-pagina a-centro m-${momento}`} fondo={fondoAz}><p className="a-suave a-pulso cfg-abriendo" role="status">Preparando la partida…</p></Marco>;
   const sala = s.sala;
   // Si la predeterminada no sirve con quienes están (faltan jugadores, número par…), se abre en el paso 1 con ella marcada.
   const predSirve = !!pred && !motivoConfig(pred, s.miembros);
@@ -623,7 +618,8 @@ export function PaginaConfigurar({ codigo }: { codigo: string }) {
       ? <FondoEscenario escenario={fondoEsc} />
       : <EscenarioFondo ambiente={az.ambientes[momento]} momento={momento} velo={az.velo} />}</div>}>
       {soyAnfitrion
-        ? <ConfigurarPartida miembros={s.miembros} generos={generos} inicial={pred && (!modoFisico || JUEGOS_FISICO.includes(pred.juego)) ? pred : undefined} abrirEnResumen={predSirve}
+        ? <ConfigurarPartida miembros={s.miembros} generos={generos} alEstadoVivo={setVivo} nombreAnfitrion={ses.nombre}
+          cabExtra={!salaLocal ? <BotonCast sala={sala} pantalla={pantalla} className="cfg-cast" /> : undefined}inicial={pred && (!modoFisico || JUEGOS_FISICO.includes(pred.juego)) ? pred : undefined} abrirEnResumen={predSirve}
           modoFisico={modoFisico}
           predeterminada={esAdmin ? { actual: pred ?? null, guardando: guardandoPred, alGuardar: c => void guardarPred(c), alQuitar: () => void guardarPred(null) } : undefined} iniciando={iniciando} alIniciar={c => void iniciar(c)} alCancelar={() => ir("sala", codigo)} alEntregarCopas={() => void copas()} alFondo={setFondoEsc} />
         : <Vacio titulo="El anfitrión está configurando" texto="En cuanto toque «Iniciar», empieza la partida."><Boton color="amarillo" texto="Volver a la sala" icono="back" onClick={() => ir("sala", codigo)} /></Vacio>}

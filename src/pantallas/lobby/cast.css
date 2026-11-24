@@ -1,0 +1,41 @@
+/* Botón «cast» y su panel (Cast.tsx): vidrio oscuro, turquesa cuando se está proyectando. */
+.D .cs-boton { display: inline-flex; align-items: center; gap: 6px; height: 44px; padding: 0 14px 0 10px; border-radius: 12px; cursor: pointer; color: #fff;
+  font: 800 14px/1 "Nunito", system-ui, sans-serif; border: 1px solid rgba(255, 255, 255, .25); background: rgba(10, 16, 48, .65);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .16); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); transition: transform .15s, background .2s; }
+.D .cs-boton.on { color: #062a28; border-color: rgba(160, 255, 245, .85); background: linear-gradient(180deg, #4ff3e4, #12b5a8); box-shadow: 0 0 16px rgba(46, 230, 214, .45); }
+.D .cs-boton:active { transform: scale(.95); }
+.D .cs-boton:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+.D .cs-ico { width: 22px; height: 22px; flex: none; }
+@media (max-width: 420px) { .D .cs-txt { display: none; } .D .cs-boton { padding: 0 10px; } }
+
+.D .cs-velo { position: fixed; inset: 0; z-index: 70; display: grid; place-items: center; padding: 16px; background: rgba(4, 6, 20, .72); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); }
+.D .cs-panel { display: flex; flex-direction: column; gap: 12px; width: min(520px, 100%); max-height: calc(100dvh - 32px); overflow-y: auto; padding: 18px; border-radius: 22px; color: #fff;
+  font-family: "Nunito", system-ui, sans-serif; background: linear-gradient(180deg, rgba(20, 28, 74, .96), rgba(9, 13, 40, .97)); border: 1px solid rgba(255, 255, 255, .16);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .18), 0 24px 60px rgba(0, 0, 0, .55); animation: csEntra .25s cubic-bezier(.2, .8, .2, 1) both; }
+@keyframes csEntra { from { opacity: 0; transform: translateY(12px) scale(.97); } }
+.D .cs-cab { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.D .cs-cab b { font: 400 24px/1 "Lilita One", "Bangers", system-ui, sans-serif; text-transform: uppercase; letter-spacing: .02em; }
+.D .cs-cerrar { width: 38px; height: 38px; border-radius: 10px; cursor: pointer; color: #fff; border: 1px solid rgba(255, 255, 255, .25); background: rgba(255, 255, 255, .08); }
+.D .cs-estado { display: block; margin: 0; font: 700 15px/1.4 inherit; color: #dfe6ff; }
+.D .cs-estado.on { color: #c8fff8; }
+.D .cs-estado .cs-ico { display: inline-block; vertical-align: -5px; margin-right: 6px; color: #4ff3e4; }
+.D .cs-op { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; padding: 14px 16px; border-radius: 16px; cursor: pointer; text-align: left; color: #fff;
+  border: 1px solid rgba(46, 230, 214, .45); background: linear-gradient(180deg, rgba(46, 230, 214, .18), rgba(10, 60, 70, .35)); }
+.D .cs-op b { font: 400 19px/1.1 "Lilita One", "Bangers", system-ui, sans-serif; text-transform: uppercase; letter-spacing: .02em; }
+.D .cs-op small { font: 700 13.5px/1.35 "Nunito", system-ui, sans-serif; color: #dfe6ff; }
+.D button.cs-op:active { transform: scale(.98); }
+.D .cs-op.peligro { border-color: rgba(255, 140, 130, .55); background: linear-gradient(180deg, rgba(255, 90, 79, .25), rgba(90, 20, 20, .35)); }
+.D .cs-otra { cursor: default; border-color: rgba(255, 255, 255, .18); background: rgba(255, 255, 255, .05); }
+.D .cs-otra-fila { display: flex; gap: 12px; align-items: center; width: 100%; margin-top: 6px; }
+.D .cs-qr { flex: none; width: 128px; height: 128px; border-radius: 10px; }
+.D .cs-url { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.D .cs-url code { font: 700 12.5px/1.3 ui-monospace, monospace; color: #c9d4ff; overflow-wrap: anywhere; }
+.D .cs-copiar { align-self: flex-start; min-height: 38px; padding: 0 14px; border-radius: 999px; cursor: pointer; color: #3a2200; font: 800 13.5px/1 "Nunito", system-ui, sans-serif;
+  border: 1px solid rgba(255, 240, 180, .85); background: linear-gradient(180deg, #ffe680, #ffb000); }
+.D .cs-op:focus-visible, .D .cs-copiar:focus-visible, .D .cs-cerrar:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+@media (max-width: 420px) { .D .cs-otra-fila { flex-direction: column; align-items: flex-start; } }
+
+/* En la TV: arriba a la derecha, discreto hasta pasar el cursor. */
+.D .tv-dejar { position: fixed; top: 14px; right: 14px; z-index: 60; opacity: .55; transition: opacity .2s; }
+.D .tv-dejar:hover, .D .tv-dejar:focus-visible { opacity: 1; }
+.D .cs-nota { margin: 0; font: 700 13.5px/1.35 "Nunito", system-ui, sans-serif; color: #c9d4ff; }
