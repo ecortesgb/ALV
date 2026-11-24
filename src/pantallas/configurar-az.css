@@ -86,6 +86,10 @@
   box-shadow: 0 0 0 2px rgba(46, 230, 214, .6), 0 0 30px rgba(46, 230, 214, .35), 0 12px 26px rgba(4, 8, 30, .5); animation: none; }
 .D.az.cfg-pagina .tc.bloq { filter: saturate(.3) brightness(.6); }
 .D.az.cfg-pagina .tc-tipo { border-width: 1px; background: #0b1236; }
+/* Ilustración completa con su marco amarillo: la tarjeta tiene la proporción de la imagen y no se acerca al elegirla */
+.D.az.cfg-pagina .tc-tipo, .D.wide.az.cfg-pagina .tc-tipo { aspect-ratio: 600 / 994; }
+.D.az.cfg-pagina .tc-tipo img { object-fit: contain; object-position: center; }
+.D.az.cfg-pagina .tc-tipo.on img { scale: 1; }
 .D.az.cfg-pagina .tc-tipo.on { animation: czLatido 2.4s ease-in-out infinite; }
 @keyframes czLatido { 50% { box-shadow: 0 0 0 2px rgba(46, 230, 214, .75), 0 0 46px rgba(46, 230, 214, .5), 0 12px 26px rgba(4, 8, 30, .5); } }
 .D.az.cfg-pagina .tc-check { width: 42px; height: 42px; border: 0; background: none; color: transparent; }
