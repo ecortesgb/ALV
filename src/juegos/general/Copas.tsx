@@ -5,32 +5,20 @@ import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { createPortal } from "react-dom";
 import { colorDe, varsColor } from "../../app/colorJugador";
 import type { Copas, Ganador } from "../../engine/copas";
-import { NombreJugador, Retrato } from "../../pantallas/comun";
+import { FichaJugador } from "../../pantallas/lobby/Ficha";
 import type { Miembro } from "../../servicios/enlace";
 import { marcador, nombreDe, nombreJuego, type Publico } from "./texto";
 import "./copas.css";
 
 type Tono = "oro" | "plata" | "bronce" | "parejas" | "equipos" | "alversus";
-const TONOS: Record<Tono, [string, string, string]> = {
-  oro: ["#fff09a", "#ffc83d", "#b37a00"], plata: ["#ffffff", "#c9d3e6", "#6f7b96"], bronce: ["#ffd2a8", "#d9833d", "#7d3f0f"],
-  parejas: ["#ffc6e4", "#ff4fa8", "#a01860"], equipos: ["#bfe0ff", "#2f7cf0", "#123f99"], alversus: ["#e2c8ff", "#9a4cf0", "#53198f"],
-};
 
-/** Trofeo dibujado: copa con asas, pie y placa. */
+/** Trofeo: la copa 3D de Elías (ui/configurar/copas.webp) con el tono de cada copa y su placa. */
 export function Copa({ tono, texto, size = 90 }: { tono: Tono; texto?: string; size?: number }) {
-  const [c1, c2, c3] = TONOS[tono], g = `g-${tono}`;
   return (
-    <svg className="cp-copa" width={size} height={size * 1.15} viewBox="0 0 100 115" role="img" aria-label={`Copa ${texto ?? tono}`}>
-      <defs><linearGradient id={g} x1="0" x2="1"><stop offset="0" stopColor={c3} /><stop offset=".35" stopColor={c1} /><stop offset=".6" stopColor={c2} /><stop offset="1" stopColor={c3} /></linearGradient></defs>
-      <path d="M22 18 C4 18 4 46 28 50 M78 18 C96 18 96 46 72 50" fill="none" stroke={c3} strokeWidth="7" strokeLinecap="round" />
-      <path d="M22 10 H78 V30 C78 52 64 62 50 64 C36 62 22 52 22 30 Z" fill={`url(#${g})`} stroke="#0a1030" strokeWidth="3" />
-      <path d="M30 16 C30 34 34 46 42 52" fill="none" stroke="#fff" strokeOpacity=".55" strokeWidth="4" strokeLinecap="round" />
-      <rect x="44" y="63" width="12" height="16" fill={c2} stroke="#0a1030" strokeWidth="3" />
-      <path d="M30 79 H70 L74 92 H26 Z" fill={`url(#${g})`} stroke="#0a1030" strokeWidth="3" />
-      <rect x="20" y="92" width="60" height="16" rx="3" fill="#2b2f3a" stroke="#0a1030" strokeWidth="3" />
-      {texto && <text x="50" y="104" textAnchor="middle" className="cp-copa-t">{texto}</text>}
-      <path d="M50 22 l3.5 7 7.5 1 -5.5 5 1.5 7.5 -7 -3.8 -7 3.8 1.5 -7.5 -5.5 -5 7.5 -1 z" fill="#fff" fillOpacity=".85" />
-    </svg>
+    <span className={`cp-copa cp-${tono}`} style={{ "--cp-t": `${size}px` } as CSSProperties} role="img" aria-label={`Copa ${texto ?? tono}`}>
+      <img src={`${import.meta.env.BASE_URL}arte/ui/configurar/copas.webp`} alt="" draggable={false} />
+      {texto && <b className="cp-copa-t">{texto}</b>}
+    </span>
   );
 }
 
@@ -63,8 +51,7 @@ export function Posiciones({ v, miembros, puntos, grande }: { v: Publico; miembr
         return (
           <li key={j.id} style={{ ...varsColor(c), "--i": i } as CSSProperties}>
             <span className="pos-lugar dsp ol">{ORDINAL(j.lugar)}</span>
-            <span className="pos-cara"><Retrato id={j.id} figura={figura(j.id)} nombre={j.nombre} size={grande ? 56 : 40} /></span>
-            <span className="pos-nom"><small className="dsp">{c?.etiqueta}</small><NombreJugador nombre={j.nombre} figura={figura(j.id)} clase="" /></span>
+            <span className="pos-nom"><FichaJugador id={j.id} figura={figura(j.id)} nombre={j.nombre} color={c} tamano={grande ? 56 : 40} /></span>
             <b className="pos-pts dsp ol">{j.puntos}<small> pts</small></b>
           </li>
         );
@@ -106,8 +93,8 @@ export function PodioJuego({ v, miembros, modo }: { v: Publico; miembros: Miembr
               const c = colorDe(id, ids), l = lugarDe(id);
               return (
                 <div key={id} className={"pj-col" + (l === 1 ? " gana" : "")} style={{ ...varsColor(c), "--alto": `${alto(id)}%`, "--i": i } as CSSProperties}>
-                  {l === 1 && <span className="pj-corona" aria-hidden="true">👑</span>}
-                  <Retrato id={id} figura={figura(id)} nombre={nombreDe(v, id)} size={l === 1 ? 104 : 84} />
+                  {l === 1 && <img className="pj-corona" src={`${import.meta.env.BASE_URL}arte/lobby/ico-corona.webp`} alt="" aria-hidden="true" />}
+                  <FichaJugador id={id} figura={figura(id)} nombre={nombreDe(v, id)} color={c} tamano={l === 1 ? 104 : 84} soloCara />
                   <span className="pj-bloque"><b className="dsp ol">{ORDINAL(l)}</b></span>
                   <span className="pj-pn dsp">{c?.etiqueta}</span>
                 </div>
@@ -154,7 +141,7 @@ export function CeremoniaCopas({ v, miembros, modo }: { v: Publico; miembros: Mi
   if (!c || c.juegos === 0) return <div className="cc cc-vacia"><Copa tono="oro" size={120} /><span className="dsp ol cc-t">Copas de la noche</span><p>Todavía no se terminó ningún juego.</p></div>;
   const Gente = ({ g }: { g: Momento["gente"][number] }) => (
     <span className="cc-gente">{g.jugadores.map(id => (
-      <span key={id} className="cc-persona" style={varsColor(colorDe(id, ids))}><Retrato id={id} figura={figura(id)} nombre={nombreDe(v, id)} size={modo === "tv" ? 110 : 44} /><NombreJugador nombre={nombreDe(v, id)} figura={figura(id)} clase="" /></span>
+      <span key={id} className="cc-persona" style={varsColor(colorDe(id, ids))}><FichaJugador id={id} figura={figura(id)} nombre={nombreDe(v, id)} color={colorDe(id, ids)} tamano={modo === "tv" ? 110 : 44} /></span>
     ))}</span>
   );
   if (modo === "tv" && k < momentos.length) {

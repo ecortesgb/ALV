@@ -80,3 +80,36 @@
 }
 @media (prefers-reduced-motion: reduce) { .D .pt-hb { transition: none; } }
 .D.az.pt .dsp, .D.az.pt .d-btn .dsp, .D.az.pt-aviso .dsp { font-style: normal; font-family: var(--f-titulo); }
+
+/* ---------- TV (#/tv) con el estilo del lobby ---------- */
+.D.a-tv.az .a-tv-top { justify-content: center; }
+.D.a-tv.az .tv-banner { margin-top: 0; padding: .35em 1.4em .45em; font-size: 1.6em; border-radius: 0 0 22px 22px; }
+.D.a-tv.az .tv-banner .lb-banner-s { font-size: .45em; }
+.D.a-tv.az .a-tv-marcador { gap: .6em; }
+.D.a-tv.az .tv-ficha { padding: .35em .9em .35em .35em; border-radius: 16px; background: rgba(10, 14, 40, .78); border: 1px solid rgba(255, 255, 255, .14);
+  border-bottom: 4px solid var(--pj, #888); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); list-style: none; }
+.D.a-tv.az .tv-ficha .fj-nom { font-size: 1.15em; }
+.D.a-tv.az .tv-ficha .fj-datos b { font-size: 1.25em; }
+.D .tv-pausa { padding: .2em 1em; border-radius: 24px; font: 400 7em/1 var(--f-titulo); text-transform: uppercase; letter-spacing: .05em; color: #ffe14a;
+  background: rgba(10, 14, 40, .85); border: 2px solid rgba(255, 225, 74, .55); text-shadow: 0 6px 0 rgba(0, 0, 0, .45); }
+.D.a-tv.az .a-tv-ruleta { display: flex; flex-direction: column; align-items: center; gap: .4em; text-align: center; }
+.D .tv-ruleta-ico { width: 4em; height: auto; filter: drop-shadow(0 6px 8px rgba(0, 0, 0, .45)); }
+.D.a-tv.az .a-tv-respaldo button { min-height: 2.6em; padding: .4em 1.1em; border-radius: 14px; cursor: pointer; color: #fff; font: 400 1em/1 var(--f-titulo); text-transform: uppercase;
+  letter-spacing: .03em; background: rgba(10, 14, 40, .85); border: 1px solid rgba(255, 255, 255, .25); }
+.D.a-tv.az .a-tv-msj.lb-vacio { margin: auto; font-size: 1.3em; }
+.D.a-tv.az .pos li, .D.az.pt .pos li { background: rgba(10, 14, 40, .78); border: 1px solid rgba(255, 255, 255, .14); border-left: 6px solid var(--pj, #888); border-radius: 14px; box-shadow: none; }
+.D.a-tv.az .pos-lugar, .D.az.pt .pos-lugar { font-family: var(--f-titulo); background: var(--pj, #444); color: var(--pj-texto, #fff); border-radius: 10px; }
+.D.a-tv.az .pos-pts, .D.az.pt .pos-pts { font-family: var(--f-titulo); color: #ffe14a; }
+
+/* Burbujas de jugador en cada juego (Identidad.tsx) con la cabina de su color, no el círculo viejo */
+.D .ide-burbuja .ide-b-circ { border-radius: calc(var(--b, 64px) * .22) !important; background: var(--fj-cab) center 38% / 160% auto no-repeat, #0b0d18 !important;
+  border: 2px solid color-mix(in srgb, var(--pj, #888) 70%, #000) !important; box-shadow: 0 6px 12px rgba(0, 0, 0, .45) !important; }
+.D .ide-burbuja .ide-b-circ::before, .D .ide-burbuja .ide-b-circ::after { display: none !important; }
+.D .ide-burbuja.sel .ide-b-circ { border-color: #ffe14a !important; box-shadow: 0 0 0 4px rgba(255, 225, 74, .45), 0 6px 12px rgba(0, 0, 0, .45) !important; }
+.D .ide-burbuja .ide-b-pn { border-radius: 999px; font-family: var(--f-titulo, "Lilita One"); }
+.D .ide-burbuja .ide-b-nom .dsp { font-family: var(--f-titulo, "Lilita One"); font-style: normal; }
+/* TV: controles de respaldo abajo a la derecha (no detrás de la banda) y sin los rayos dibujados en las copas */
+.D.a-tv.az .a-tv-respaldo { top: auto !important; bottom: 1em; right: 1em; left: auto !important; transform: none !important; }
+.D.az.pt .cc::before { display: none; }
+.D.az.pt .d-ban { transform: none; border-radius: 14px; }
+.D.az.pt .d-ban > * { transform: none; }

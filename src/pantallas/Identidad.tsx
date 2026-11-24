@@ -5,6 +5,7 @@
 // - AnilloBurbujas: burbujas acomodadas en círculo alrededor de un centro (elegir, votar, turnos).
 // Las fotos salen del motor 3D con el encuadre «busto» (tools/minifig/escena.js, ZONAS.busto), fondo transparente.
 import { useEffect, useState, type CSSProperties, type ReactNode } from "react";
+import { cabinaDe } from "./lobby/Ficha";
 import { Boton } from "../ds";
 import type { FiguraV2 } from "../content/personaje";
 import { apodoDe, semillaDe, useFoto } from "../app/figura3d";
@@ -60,7 +61,8 @@ export interface PersonaBurbuja { id: string; figura?: FiguraV2 | null; nombre: 
 export function Burbuja({ p, tamano = 64, seleccionada, conNombre, onClick, desactivada, className = "", style }: {
   p: PersonaBurbuja; tamano?: number | string; seleccionada?: boolean; conNombre?: boolean; onClick?: () => void; desactivada?: boolean; className?: string; style?: CSSProperties;
 }) {
-  const estilo = { ...varsColor(p.color ?? null), "--b": typeof tamano === "number" ? `${tamano}px` : tamano, ...style } as CSSProperties;
+  // Con el arte del lobby (Elías, 23 nov): la cabina del color de fondo en lugar del círculo con anillo.
+  const estilo = { ...varsColor(p.color ?? null), "--b": typeof tamano === "number" ? `${tamano}px` : tamano, "--fj-cab": cabinaDe(p.color ?? null), ...style } as CSSProperties;
   const clase = `ide-burbuja${seleccionada ? " sel" : ""}${p.apagada ? " apagada" : ""}${p.color ? "" : " sin-color"} ${className}`;
   const apodo = apodoDe(p.figura);
   const cuerpo = (<>
