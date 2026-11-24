@@ -4,6 +4,8 @@
 // Celular: arriba al centro. Computadora: abajo al centro. Con menos movimiento solo aparece y se desvanece.
 // Fuentes: (1) el servidor (mis_logros_nuevos) al subir la XP, al cambiar de pantalla y cada minuto en la sala;
 // (2) el evento `alv-logro` (pruebas y otras pantallas). Espera a que se cierre la pantalla de Recompensas.
+// TV (`tv` = id de la sala): no lee los logros de la cuenta; cada 12 s lee los de todos los miembros (logros_recientes_sala)
+// y los muestra con el nombre de quien lo ganó, arriba al centro y más grande. Tocarlo no navega.
 // Para probarlo sin nube: dispatchEvent(new CustomEvent("alv-logro", { detail: [{ clave: "detective", nombre: "Detective", rareza: "comun" }] }))
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
@@ -11,7 +13,7 @@ import { ir } from "../app/rutas";
 import { useSesion } from "../app/sesion";
 import { sonar } from "../app/sonido";
 import { ORDEN_RAREZA, RAREZA_TEXTO, type Rareza } from "../content/logros";
-import { logrosNuevos } from "../servicios/logros";
+import { logrosNuevos, logrosRecientesSala } from "../servicios/logros";
 import { Insignia } from "./logros/Logros";
 import "./logros/logros.css";
 import "./aviso-logro.css";
@@ -32,7 +34,8 @@ export function armarCola(nuevos: AvisoItem[]): AvisoItem[] {
 
 const hayRecompensas = () => !!document.querySelector(".rw");
 
-export function AvisoLogro() {
+export function AvisoLogro({ tv }: { tv?: string } = {}) {
+  const esTv = tv !== undefined;
   const s = useSesion();
   const [actual, setActual] = useState<AvisoItem | null>(null);
   const [saliendo, setSaliendo] = useState(false);
@@ -69,9 +72,28 @@ export function AvisoLogro() {
     return () => removeEventListener("alv-logro", f);
   }, []);
 
+  // TV: logros de toda la sala. Lo ganado antes de abrir la pantalla no se anuncia.
+  const vistos = useRef<Set<string> | null>(null);
+  useEffect(() => {
+    if (!tv || s.fase !== "dentro") return;
+    vistos.current = null;
+    let vivo = true;
+    const leer = () => void logrosRecientesSala(tv).then(fs => {
+      if (!vivo) return;
+      const primera = vistos.current == null;
+      const set = vistos.current ?? new Set<string>();
+      const nuevos = fs.filter(f => { const k = `${f.jugador}|${f.clave}`; if (set.has(k)) return false; set.add(k); return true; });
+      vistos.current = set;
+      if (!primera) encolar(nuevos.map(f => ({ tipo: "logro", clave: f.clave, nombre: f.nombre, rareza: f.rareza, quien: f.apodo })));
+    });
+    leer();
+    const t = setInterval(leer, 12000);
+    return () => { vivo = false; clearInterval(t); };
+  }, [tv, s.fase]);
+
   // Servidor: al entrar, al subir la XP (terminó una partida), al cambiar de pantalla y cada minuto.
   useEffect(() => {
-    if (s.fase !== "dentro" || s.invitado) return;
+    if (esTv || s.fase !== "dentro" || s.invitado) return;
     const leer = (forzar = false) => {
       if (!forzar && Date.now() - ultimaLectura.current < 20000) return;
       ultimaLectura.current = Date.now();
@@ -84,7 +106,7 @@ export function AvisoLogro() {
     return () => { removeEventListener("hashchange", alCambiar); clearInterval(t); };
   }, [s.fase, s.uid, s.invitado]);
   useEffect(() => {
-    if (s.acumulada > ultimaXp.current && s.fase === "dentro") {
+    if (!esTv && s.acumulada > ultimaXp.current && s.fase === "dentro") {
       // Un momento para que el servidor termine de guardar resultados y logros.
       const t = setTimeout(() => { ultimaLectura.current = Date.now(); void logrosNuevos().then(ns => encolar(ns.map(n => ({ tipo: "logro", clave: n.clave, nombre: n.nombre, rareza: n.rareza, recompensa: n.recompensa, oculto: n.oculto })))); }, 1500);
       ultimaXp.current = s.acumulada;
@@ -100,11 +122,11 @@ export function AvisoLogro() {
   const etiqueta = a.tipo === "mas" ? "Más logros" : a.tipo === "reto" ? "Reto completado" : a.tipo === "objetivo" ? "Objetivo cumplido" : a.tipo === "nivel" ? "¡Subiste de nivel!" : "Logro desbloqueado";
   const rareza = a.rareza ?? "comun";
   return createPortal(
-    <div className={`D az al r-${rareza}` + (saliendo ? " sale" : "") + (a.oculto ? " oculto" : "")} role="status" aria-live="polite">
-      <button type="button" className="al-capsula" onClick={() => { setSaliendo(true); ir("logros"); }}
+    <div className={`D az al r-${rareza}` + (esTv ? " tv" : "") + (saliendo ? " sale" : "") + (a.oculto ? " oculto" : "")} role="status" aria-live="polite">
+      <button type="button" className="al-capsula" onClick={() => { setSaliendo(true); if (!esTv) ir("logros"); }}
         onPointerDown={e => { inicio.current = e.clientY; }}
         onPointerUp={e => { if (inicio.current != null && Math.abs(e.clientY - inicio.current) > 40) setSaliendo(true); inicio.current = null; }}
-        aria-label={`${etiqueta}: ${a.nombre}${a.quien ? `, ${a.quien}` : ""}. Toca para ver tus logros.`}>
+        aria-label={`${etiqueta}: ${a.nombre}${a.quien ? `, ${a.quien}` : ""}${esTv ? "" : ". Toca para ver tus logros."}`}>
         <span className="al-circulo">
           <span className="al-anillo" aria-hidden="true" />
           {a.clave ? <Insignia l={{ clave: a.clave, rareza, ganado: "si" }} /> : <span className="al-mas" aria-hidden="true">★</span>}

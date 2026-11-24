@@ -104,3 +104,14 @@ export async function reclamarObjetivo(clave: string): Promise<number | null> {
     return data as number;
   } catch (e) { console.error("reclamarObjetivo", e); return null; }
 }
+
+/** Para la TV: lo que ganaron los miembros de la sala en los últimos 10 minutos (042). Solo nube y salas reales. */
+export interface LogroSala { jugador: string; apodo: string; clave: string; nombre: string; rareza: Rareza; creado: string }
+export async function logrosRecientesSala(evento: string): Promise<LogroSala[]> {
+  if (!hayNube || !/^[0-9a-f-]{36}$/i.test(evento)) return [];
+  try {
+    const { data, error } = await cliente!.rpc("logros_recientes_sala", { p_evento: evento });
+    if (error) { if (!/Could not find the function|PGRST202/.test(error.message + (error.code ?? ""))) console.error("logrosRecientesSala", error.message); return []; }
+    return (data ?? []) as LogroSala[];
+  } catch (e) { console.error("logrosRecientesSala", e); return []; }
+}

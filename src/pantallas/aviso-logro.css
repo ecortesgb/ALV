@@ -40,3 +40,9 @@
 }
 html.alv-quieto .D .al-anillo, html.alv-quieto .D .al-brillo { display: none; }
 @keyframes alFundido { from { opacity: 0; } }
+
+/* TV: arriba al centro (abajo está el marcador) y más grande para verse de lejos. */
+.D.al.tv { top: max(18px, 3vh); bottom: auto; }
+.D.al.tv .al-capsula { zoom: 1.45; }
+@media (min-width: 768px) { .D.al.tv .al-capsula { animation-name: alEntraTv, alEstira; } }
+@keyframes alEntraTv { from { opacity: 0; transform: translateY(-18px) scale(.6); } }

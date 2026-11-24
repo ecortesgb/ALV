@@ -16,6 +16,7 @@ import { colorDe } from "../../app/colorJugador";
 import { ContadorListos, Cupo, Pedestales, TodosListos } from "../../pantallas/SalaEspera";
 import { useColoresSala } from "../../pantallas/lobby/colores";
 import { useSala } from "../sala";
+import { AvisoLogro } from "../../pantallas/AvisoLogro";
 import { control, useMotor } from "./motor";
 
 export function PantallaTv({ codigo }: { codigo: string }) {
@@ -41,7 +42,7 @@ export function PantallaTv({ codigo }: { codigo: string }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [nRuleta]);
 
-  const marco = (hijos: React.ReactNode, fondo: React.ReactNode = <FondoALV />) => <RaizDS ancho className="alv a-tv">{fondo}{hijos}</RaizDS>;
+  const marco = (hijos: React.ReactNode, fondo: React.ReactNode = <FondoALV />) => <RaizDS ancho className="alv a-tv">{fondo}{hijos}<AvisoLogro tv={s.sala?.id ?? ""} /></RaizDS>;
   if (s.error || s.cerrada) return marco(<div className="a-tv-msj"><span className="dsp ol a-tv-t1">{s.cerrada ? "La sala se cerró" : "No se pudo abrir la pantalla"}</span><p className="a-tv-sub">{s.error}</p><Boton color="amarillo" texto="Ir al inicio" icono="back" onClick={() => ir("inicio")} /></div>);
   if (!s.sala) return marco(<div className="a-tv-msj"><p className="a-tv-sub a-pulso" role="status">Abriendo la sala {codigo}…</p></div>);
   const pid = s.partida?.id ?? "";
