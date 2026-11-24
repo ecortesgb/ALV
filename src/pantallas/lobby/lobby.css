@@ -307,3 +307,39 @@
 /* Celular: figura un poco más chica que en computadora (1.3 × ancho de la cabina). */
 .D.az.lb .lb-carrusel .lb-escenario-x, .D.az.lb .lb-escenario.lb-carrusel:has(.lb-cab) .a-sala-3d { height: calc(var(--lb-w) * 1.3);
   top: calc(var(--piso) + var(--hc) * .075 - var(--lb-w) * (.23 + .783 * 1.3)); }
+
+/* Modo Local: «Pásale el teléfono» entre turnos */
+.D .a-pasa-caja { display: flex; flex-direction: column; align-items: center; gap: 14px; max-width: 420px; margin: auto; padding: 28px 24px; text-align: center; color: #fff;
+  border-radius: 22px; background: rgba(10, 14, 40, .82); border: 2px solid var(--pj); box-shadow: 0 0 0 6px color-mix(in srgb, var(--pj) 25%, transparent), 0 20px 40px rgba(0, 0, 0, .45); }
+.D .a-pasa-ico { font-size: 44px; animation: lbPasa 1.6s ease-in-out infinite; }
+@keyframes lbPasa { 50% { transform: translateX(14px) rotate(8deg); } }
+.D .a-pasa-quien { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.D .a-pasa-quien b { font-size: clamp(28px, 7vw, 44px); color: var(--pj); }
+@media (prefers-reduced-motion: reduce) { .D .a-pasa-ico { animation: none; } }
+
+/* Modo Local: agregar jugador y elegir figura */
+.D .lb-libre-acc { display: flex; justify-content: center; bottom: 22%; }
+.D .lb-agregar { display: inline-flex; align-items: center; gap: 8px; min-height: 52px; padding: 10px 20px; cursor: pointer; border-radius: 16px; border: 2.5px solid var(--az-tinta);
+  font: 400 clamp(17px, 1.4vw, 22px)/1 var(--f-titulo); text-transform: uppercase; letter-spacing: .03em; color: var(--az-tinta);
+  background: linear-gradient(180deg, #ffe066, #ffb000); box-shadow: 0 5px 0 #c77700, 0 12px 22px rgba(0, 0, 0, .4); }
+.D.alv .lb-agregar { font-family: var(--f-titulo); }
+.D .lb-agregar span { font-size: 1.3em; line-height: 1; }
+.D .lb-agregar:active { transform: translateY(3px); box-shadow: 0 2px 0 #c77700; }
+.D .lb-velo { position: fixed; inset: 0; z-index: 50; display: grid; place-items: center; padding: 16px; background: rgba(4, 6, 20, .72); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
+.D .lb-modal { display: flex; flex-direction: column; gap: 12px; width: min(560px, 100%); max-height: calc(100dvh - 32px); padding: 16px; border-radius: 20px; color: #fff;
+  background: rgba(14, 20, 56, .96); border: 1px solid rgba(255, 255, 255, .2); box-shadow: 0 24px 48px rgba(0, 0, 0, .5); }
+.D .lb-modal-top { display: flex; align-items: center; justify-content: space-between; font: 400 24px/1 var(--f-titulo); text-transform: uppercase; }
+.D .lb-campo { display: flex; flex-direction: column; gap: 6px; font: 800 13px/1 var(--f-texto); }
+.D .lb-campo input { min-height: 48px; padding: 0 14px; border-radius: 12px; border: 2px solid rgba(255, 255, 255, .25); background: rgba(255, 255, 255, .95); color: var(--az-tinta); font: 800 18px/1 var(--f-texto); }
+.D .lb-campo input:focus-visible { outline: 3px solid #ffc21a; outline-offset: 1px; }
+.D .lb-chips { display: flex; gap: 8px; flex-wrap: wrap; }
+.D .lb-chip { min-height: 40px; padding: 6px 14px; cursor: pointer; border-radius: 999px; border: 2px solid rgba(255, 255, 255, .3); background: transparent; color: #fff; font: 800 14px/1 var(--f-texto); }
+.D .lb-chip.si { background: #ffc21a; border-color: #ffc21a; color: var(--az-tinta); }
+.D .lb-modal-fig { display: flex; align-items: center; gap: 14px; }
+.D .lb-modal-retrato { display: grid; place-items: center; width: 96px; height: 96px; border-radius: 50%; background: radial-gradient(circle, #34408f, #141a46); }
+.D .lb-trajes { display: grid; grid-template-columns: repeat(auto-fill, minmax(64px, 1fr)); gap: 8px; overflow-y: auto; min-height: 120px; padding: 4px; }
+.D .lb-traje { aspect-ratio: 1; padding: 4px; cursor: pointer; border-radius: 12px; border: 3px solid transparent; background: linear-gradient(180deg, #e9eefb, #b9c4e4); }
+.D .lb-traje img { width: 100%; height: 100%; object-fit: contain; }
+.D .lb-traje.si { border-color: #ffc21a; box-shadow: 0 0 0 3px rgba(255, 194, 26, .35); }
+.D .lb-modal .lb-listo { max-width: none; }
+.D .lb-modal .lb-listo:disabled { filter: grayscale(.7) brightness(.8); cursor: default; }

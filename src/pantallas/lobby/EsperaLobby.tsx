@@ -1,27 +1,22 @@
 // Lobby vacío (ruta #/jugar): cuando alguien elige En línea o Físico y el administrador todavía no abre el lobby.
 // Sin códigos (Elías, 22 nov): en cuanto el lobby aparece, entra solo. Sin el administrador no se puede empezar.
-import { useEffect, type CSSProperties } from "react";
+import { useEffect } from "react";
 import { atras, ir } from "../../app/rutas";
 import { useLobby, useLobbyAbierto } from "../../app/lobby";
-import { Marco, urlArte } from "../comun";
-import { EscenarioFondo } from "../azotea/Escenario";
-import { useMomentoAzotea } from "../azotea/HubAzotea";
-import { escenarioActual } from "../azotea/paquetes";
+import { Marco } from "../comun";
 import { CUPO_LOBBY } from "../SalaEspera";
 import "../azotea/azotea.css";
 import "../perfil/perfil.css";
 import "./lobby.css";
+import { FondoCuarto } from "./Cuarto";
 
 export function EsperaLobby() {
-  const momento = useMomentoAzotea();
-  const esc = escenarioActual();
   const info = useLobbyAbierto();
   const anunciado = useLobby();
   const codigo = info?.codigo ?? anunciado;
   useEffect(() => { if (codigo) ir("sala", codigo); }, [codigo]);
   return (
-    <Marco clase={`az lb m-${momento}`} fondo={<div className="lb-fondo"><EscenarioFondo ambiente={esc.ambientes[momento]} momento={momento} velo={1} />
-      <span className="lb-cuarto" style={{ "--lb-fondo-g": urlArte("lobby/fondo-lobby-1920.webp"), "--lb-fondo-c": urlArte("lobby/fondo-lobby-1100.webp") } as CSSProperties} aria-hidden="true" /></div>}>
+    <Marco clase="az lb" fondo={<FondoCuarto />}>
       <div className="lb-caja">
         <header className="lb-top">
           <button type="button" className="pf-atras" onClick={atras}><span aria-hidden="true">◀</span>Atrás</button>

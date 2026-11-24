@@ -4,7 +4,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { asignarColores, fijarColoresSala, ordenSala, type GeneroColor } from "../../app/colorJugador";
 import { generosSala } from "../../servicios/cuenta";
-import type { Miembro, SalaV } from "../../servicios/enlace";
+import { esLocal, modoLocal, type Miembro, type SalaV } from "../../servicios/enlace";
 
 const GENERO: Record<string, GeneroColor> = { mujer: "mujer", hombre: "hombre", otro: "otro" };
 
@@ -15,7 +15,9 @@ export function useColoresSala(sala: SalaV | null, miembros: readonly Miembro[])
   useEffect(() => {
     if (!sala || !ids) return;
     let vivo = true;
-    void generosSala(sala.id).then(g => { if (vivo) setGeneros(Object.fromEntries(Object.entries(g).map(([k, v]) => [k, GENERO[v] ?? "otro"]))); });
+    // Local: el género lo guarda cada personaje en este teléfono; en la nube sale de generos_sala.
+    const pedir = esLocal(sala.id) ? Promise.resolve(modoLocal.generos(sala)) : generosSala(sala.id);
+    void pedir.then(g => { if (vivo) setGeneros(Object.fromEntries(Object.entries(g).map(([k, v]) => [k, GENERO[v] ?? "otro"]))); });
     return () => { vivo = false; };
   }, [sala?.id, ids]); // eslint-disable-line react-hooks/exhaustive-deps
   const anfitrion = sala?.anfitrionId ?? null;

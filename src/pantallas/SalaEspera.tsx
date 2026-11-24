@@ -67,12 +67,14 @@ export function FondoLobby() {
   );
 }
 
-/** Cápsula pintada de cada color (arte de Elías en public/arte/lobby/capsula-<color>.webp). Si aún no existe, no se pinta y queda la columna de color. */
-const artePara = (nombre: string) => ({ "--pj-arte": urlArte(`lobby/capsula-${nombre.toLowerCase()}.webp`) }) as CSSProperties;
+/** Cabina pintada de cada color (arte de Elías en public/arte/lobby/cabina-<color>.webp). */
+const artePara = (nombre: string) => ({ "--pj-arte": urlArte(`lobby/cabina-${claveArchivo({ nombre })}.webp`) }) as CSSProperties;
 
 /** Columna de color por lugar, figura en su pedestal bajo un foco, «+» en los vacíos y «¡LISTO!» encima de quien confirmó. */
 /** Variante «fiesta» del lobby: nombre arriba junto al P1, sello con palomita, cruceta en lugares libres y controles dentro. */
 export interface Fiesta { arriba?: (m: Miembro) => ReactNode; abajo?: (m: Miembro) => ReactNode;
+  /** Algo para tocar en un lugar libre (modo Local: «Agregar jugador»). */
+  libre?: (i: number) => ReactNode;
   /** PRUEBA (Elías, 22 nov): cápsulas con el pedestal pintado; la escena no dibuja el suyo. */
   escenarios?: boolean }
 const arteLobby = (n: string) => `${import.meta.env.BASE_URL}arte/lobby/${n}.webp`;
@@ -107,6 +109,7 @@ export function Pedestales({ miembros, yo, className = "", fiesta }: { miembros:
             {!m && !fiesta.escenarios && <img className="lb-libre" src={arteLobby("lugar-libre")} alt="" />}
             {m && !m.listo && <span className="lb-aun">Aún no</span>}
             {m && fiesta.abajo && <span className="lb-abajo">{fiesta.abajo(m)}</span>}
+            {!m && fiesta.libre && <span className="lb-abajo lb-libre-acc">{fiesta.libre(i)}</span>}
             <span className="a-oculto">{m ? (m.listo ? "listo" : "esperando") : "lugar libre"}</span>
           </li>) : (
           <li key={i} className={"a-sala-rot" + (m ? "" : " vacia") + (m?.listo ? " listo" : "") + (m && m.id === yo ? " yo" : "")} style={varsColor(m ? c : null)}>

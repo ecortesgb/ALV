@@ -5,21 +5,20 @@
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { escribirCapsulas, leerCapsulas, apodoDe, useCapsulas, useFoto, N_CAPSULAS } from "../../app/figura3d";
 import { ir } from "../../app/rutas";
-import { enlace, type Miembro, type SalaV } from "../../servicios/enlace";
+import { enlace, esLocal, modoLocal, type Miembro, type SalaV } from "../../servicios/enlace";
+import { PersonajeLocal, type DatosPersonaje } from "./PersonajeLocal";
 import type { Publico } from "../../juegos/general/texto";
 import { nombreJuego } from "../../juegos/general/texto";
 import { PodioJuego } from "../../juegos/general/Copas";
-import { Marco, aviso, confirmar, urlArte, useAncho } from "../comun";
+import { Marco, aviso, confirmar, useAncho } from "../comun";
 import { CUPO_LOBBY, Pedestales, lugaresSala, preparados } from "../SalaEspera";
-import { EscenarioFondo } from "../azotea/Escenario";
-import { useMomentoAzotea } from "../azotea/HubAzotea";
-import { escenarioActual } from "../azotea/paquetes";
 import "../azotea/azotea.css";
 import "../perfil/perfil.css";
 import "./lobby.css";
+import { FondoCuarto } from "./Cuarto";
 
-/** Cabinas por color con pedestal (Elías aprobó el 22 nov; es el lobby normal). ?escenarios=0 regresa a las cápsulas. */
-const PRUEBA_ESCENARIOS = new URLSearchParams(location.search).get("escenarios") !== "0";
+/** Cabinas por color con pedestal (Elías aprobó el 22 nov; las cápsulas viejas se quitaron el 23 nov). */
+const PRUEBA_ESCENARIOS = true;
 
 export interface PropsLobby {
   sala: SalaV; miembros: Miembro[]; yo: string; soyAnfitrion: boolean; final: Publico | null; red: string;
@@ -28,10 +27,11 @@ export interface PropsLobby {
 
 export function Lobby({ sala, miembros, yo, soyAnfitrion, final, red, refrescar, alSalir, alCopas, copando }: PropsLobby) {
   const ancho = useAncho();
-  const momento = useMomentoAzotea();
-  const esc = escenarioActual();
   const p = preparados(miembros);
   const hayAdmin = miembros.some(m => m.anfitrion);
+  // Modo Local: un solo teléfono; el anfitrión agrega personajes sin cuenta y les cambia la figura.
+  const local = esLocal(sala.id);
+  const [editar, setEditar] = useState<{ tipo: "nuevo" } | { tipo: "figura"; m: Miembro } | null>(null);
   const [verResultados, setVerResultados] = useState(true);
 
 
@@ -49,6 +49,10 @@ export function Lobby({ sala, miembros, yo, soyAnfitrion, final, red, refrescar,
   const ico = (n: string) => `${import.meta.env.BASE_URL}arte/lobby/${n}.webp`;
   // Botones redondos del administrador sobre la cápsula de cada jugador (como X / Y de la referencia).
   const botonesAdmin = (m: Miembro) => soyAnfitrion && m.id !== yo ? (
+    local ? <span className="lb-redondos">
+      <button type="button" className="lb-redondo" onClick={() => setEditar({ tipo: "figura", m })} aria-label={`Cambiar la figura de ${m.nombre}`} title="Cambiar figura"><img src={ico("ico-cambiar-figura")} alt="" /></button>
+      <button type="button" className="lb-redondo peligro" onClick={() => void expulsar(m)} aria-label={`Quitar a ${m.nombre}`} title="Quitar"><img src={ico("ico-sacar")} alt="" /></button>
+    </span> :
     <span className="lb-redondos">
       <button type="button" className={"lb-redondo" + (m.listo ? " activo" : "")} onClick={() => listo(m)} aria-label={m.listo ? `Quitar el listo a ${m.nombre}` : `Dar listo por ${m.nombre}`} title={m.listo ? "Quitar listo" : "Dar listo"}><img src={ico("ico-dar-listo")} alt="" /></button>
       <button type="button" className="lb-redondo peligro" onClick={() => void expulsar(m)} aria-label={`Sacar a ${m.nombre} del lobby`} title="Sacar del lobby"><img src={ico("ico-sacar")} alt="" /></button>
@@ -61,7 +65,8 @@ export function Lobby({ sala, miembros, yo, soyAnfitrion, final, red, refrescar,
       {soyAnfitrion && p.todos ? (
         <button type="button" className="lb-continuar" onClick={() => ir("configurar", sala.codigo)}><span>Continuar</span><small>Todos listos: arma la partida</small></button>
       ) : (<>
-        <ElegirFigura uid={yo} alCambiar={refrescar} bloqueado={m.listo} />
+        {local ? <button type="button" className="lb-mini" onClick={() => setEditar({ tipo: "figura", m })}>Cambiar figura</button>
+          : <ElegirFigura uid={yo} alCambiar={refrescar} bloqueado={m.listo} />}
         <button type="button" className={"lb-listo" + (m.listo ? " quitar" : "")} onClick={() => listo(m)}>
           {!m.listo && <img src={ico("ico-listo")} alt="" />}{m.listo ? "Ya no estoy listo" : "¡Listo!"}
         </button>
@@ -70,15 +75,24 @@ export function Lobby({ sala, miembros, yo, soyAnfitrion, final, red, refrescar,
     </div>
   );
 
+  // Local: «Agregar jugador» en el primer lugar libre (hasta 8).
+  const libreLocal = local && soyAnfitrion ? (i: number) => (i === miembros.length && miembros.length < CUPO_LOBBY
+    ? <button type="button" className="lb-agregar" onClick={() => setEditar({ tipo: "nuevo" })}><span>＋</span>Agregar jugador</button> : null) : undefined;
+  const guardarPersonaje = (d: DatosPersonaje) => {
+    if (editar?.tipo === "nuevo") { if (!modoLocal.agregar(sala, d)) aviso("No se pudo agregar (máximo 8)."); }
+    else if (editar?.tipo === "figura") modoLocal.figura(sala, editar.m.id, d.figura);
+    setEditar(null); refrescar();
+  };
+
   return (
-    <Marco clase={`az lb m-${momento}`} fondo={<div className="lb-fondo"><EscenarioFondo ambiente={esc.ambientes[momento]} momento={momento} velo={1} />
-      <span className="lb-cuarto" style={{ "--lb-fondo-g": urlArte(`lobby/${PRUEBA_ESCENARIOS ? "fondo-cuarto" : "fondo-lobby"}-1920.webp`), "--lb-fondo-c": urlArte(`lobby/${PRUEBA_ESCENARIOS ? "fondo-cuarto" : "fondo-lobby"}-1100.webp`) } as CSSProperties} aria-hidden="true" /></div>}>
+    <Marco clase="az lb" fondo={<FondoCuarto />}>
       <div className="lb-caja">
         <header className="lb-top">
-          <button type="button" className="pf-atras" onClick={alSalir}><span aria-hidden="true">◀</span>{soyAnfitrion ? "Cerrar" : "Salir"}</button>
+          <button type="button" className="pf-atras" onClick={alSalir}><span aria-hidden="true">◀</span>{local ? "Terminar" : soyAnfitrion ? "Cerrar" : "Salir"}</button>
           <div className={"lb-banner" + (p.todos ? " todos" : "")} role="status" aria-live="polite">
             <span className="lb-banner-n">{miembros.length}/{CUPO_LOBBY}</span>
             <span className="lb-banner-t">{p.todos ? "¡Todos listos!" : `${p.listos} listo${p.listos === 1 ? "" : "s"}`}</span>
+            {local && <small className="lb-banner-s">Modo local · un solo teléfono</small>}
             {!soyAnfitrion && <small className="lb-banner-s">{!hayAdmin ? "Esperando al administrador" : p.todos ? "El administrador arma la partida" : "Elige tu figura y da ¡Listo!"}</small>}
           </div>
           <span className="lb-red">{red === "vivo" ? "" : red === "respaldo" ? "Reconectando…" : "Conectando…"}</span>
@@ -93,14 +107,16 @@ export function Lobby({ sala, miembros, yo, soyAnfitrion, final, red, refrescar,
 
         {ancho ? (
           <section className="lb-escenario" style={{ "--lugares": lugaresSala(miembros.length) } as CSSProperties}>
-            <Pedestales miembros={miembros} yo={yo} className="lb-pedestales" fiesta={{ arriba: botonesAdmin, abajo: miPanel, escenarios: PRUEBA_ESCENARIOS }} />
+            <Pedestales miembros={miembros} yo={yo} className="lb-pedestales" fiesta={{ arriba: botonesAdmin, abajo: miPanel, escenarios: PRUEBA_ESCENARIOS, libre: libreLocal }} />
           </section>
         ) : (
           <Carrusel lugares={lugaresSala(miembros.length)} ids={miembros.map(m => m.id)} yo={yo}>
-            <Pedestales miembros={miembros} yo={yo} className="lb-pedestales" fiesta={{ arriba: botonesAdmin, abajo: miPanel, escenarios: PRUEBA_ESCENARIOS }} />
+            <Pedestales miembros={miembros} yo={yo} className="lb-pedestales" fiesta={{ arriba: botonesAdmin, abajo: miPanel, escenarios: PRUEBA_ESCENARIOS, libre: libreLocal }} />
           </Carrusel>
         )}
       </div>
+      {editar && <PersonajeLocal titulo={editar.tipo === "nuevo" ? "Nuevo jugador" : `Figura de ${editar.m.nombre}`} soloFigura={editar.tipo === "figura"}
+        inicial={editar.tipo === "figura" ? { figura: editar.m.figura } : undefined} alListo={guardarPersonaje} alCerrar={() => setEditar(null)} />}
     </Marco>
   );
 }

@@ -6,7 +6,8 @@ import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { atras, ir } from "../../app/rutas";
 import { useSesion } from "../../app/sesion";
 import { useLobby, useLobbyAbierto, usePuedeAbrir } from "../../app/lobby";
-import { enlace, type SalaV } from "../../servicios/enlace";
+import { enlace, modoLocal, type SalaV } from "../../servicios/enlace";
+import { figuraActiva, useCapsulas } from "../../app/figura3d";
 import { Marco, aviso, useAncho } from "../comun";
 import { useRecursos } from "../Recursos";
 import { RecursosAzotea } from "../azotea/Cabecera";
@@ -23,7 +24,7 @@ const MENOS_MOV = typeof matchMedia !== "undefined" && matchMedia("(prefers-redu
 type IdModo = "local" | "en-linea" | "fisico";
 interface Modo { id: IdModo; nombre: string; lema: string; listo: boolean }
 const MODOS: Modo[] = [
-  { id: "local", nombre: "Local", lema: "Un solo teléfono, sin cuentas", listo: false },
+  { id: "local", nombre: "Local", lema: "Un solo teléfono, sin cuentas", listo: true },
   { id: "en-linea", nombre: "En línea", lema: "Cada quien en su celular", listo: true },
   { id: "fisico", nombre: "Juego físico", lema: "Retos en persona, el administrador da los puntos", listo: true },
 ];
@@ -39,6 +40,8 @@ export function ModosJuego() {
   const lobby = useLobby();
   const info = useLobbyAbierto();
   const puedeAbrir = usePuedeAbrir(s.uid);
+  const caps = useCapsulas(s.uid);
+  const localAbierto = modoLocal.abierto();
   const [elegido, setElegido] = useState<IdModo | null>(null);
   const [actual, setActual] = useState(1);
   const pista = useRef<HTMLDivElement>(null);
@@ -74,6 +77,8 @@ export function ModosJuego() {
     setElegido(m.id);
     try { sessionStorage.setItem("alv-modo", m.id); } catch { /* sin almacenamiento */ }
     const ir2 = async () => {
+      // Local: este teléfono abre (o retoma) su lobby; dura hasta «Terminar sesión».
+      if (m.id === "local") { const sl = modoLocal.abrir({ id: s.uid, nombre: s.nombre, figura: figuraActiva(caps) }); ir("sala", sl.codigo); return; }
       if (destinoLinea) { ir("sala", destinoLinea); return; }
       if (puedeAbrir) {
         const r = await enlace.abrir("mesa");
@@ -99,7 +104,7 @@ export function ModosJuego() {
         <div ref={pista} className="mj-pista" role="list">
           {MODOS.map((m, i) => {
             const n = info?.miembros;
-            const marca = m.id === "local" ? null : sala ? "Estás en el lobby" : destinoLinea ? (n ? `${n} en el lobby` : "Lobby abierto") : "Lobby vacío";
+            const marca = m.id === "local" ? (localAbierto ? "Sesión local abierta" : null) : sala ? "Estás en el lobby" : destinoLinea ? (n ? `${n} en el lobby` : "Lobby abierto") : "Lobby vacío";
             return (
               <div key={m.id} role="listitem" className="mj-hueco" style={{ "--i": i } as CSSProperties}>
                 <button type="button" className={"mj-carta" + (elegido === m.id ? " elegida" : "") + (m.listo ? "" : " pronto")}
@@ -107,7 +112,7 @@ export function ModosJuego() {
                   aria-label={`${m.nombre}. ${m.lema}.${marca ? ` ${marca}.` : ""}${m.listo ? "" : " Próximamente."}`}>
                   <span className="mj-brillo" aria-hidden="true" />
                   <img src={`${BASE}arte/modos/modo-${m.id}.webp`} alt="" draggable={false} width={628} height={1024} />
-                  {marca && <span className={"mj-marca" + (destinoLinea ? "" : " vacio")}><i />{marca}</span>}
+                  {marca && <span className={"mj-marca" + (destinoLinea || m.id === "local" ? "" : " vacio")}><i />{marca}</span>}
                   {!m.listo && <span className="mj-pronto">Próximamente</span>}
                 </button>
                 <p className="mj-lema">{m.lema}</p>

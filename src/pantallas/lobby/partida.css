@@ -1,0 +1,82 @@
+/* Partida con el estilo del lobby (Elías, 23 nov: «quitar todo rastro de imagen anterior»): cuarto de fondo, fichas
+   con la cabina de cada jugador, barra del anfitrión con el arte nuevo y los componentes de cada juego en vidrio. */
+.D .lb-fondo.oscuro::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(5, 8, 24, .55), rgba(5, 8, 24, .35) 40%, rgba(5, 8, 24, .65)); }
+
+/* ---------- Ficha de jugador: cabina de su color + busto ---------- */
+.D .fj { display: inline-flex; align-items: center; gap: 10px; min-width: 0; }
+.D .fj-cab { position: relative; flex: none; width: var(--fj-t, 64px); height: calc(var(--fj-t, 64px) * 1.18); border-radius: 12px; overflow: hidden;
+  background: var(--fj-cab) center 38% / 160% auto no-repeat, #0b0d18; border: 2px solid color-mix(in srgb, var(--pj, #888) 70%, #000);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, .45), inset 0 0 0 1px rgba(255, 255, 255, .08); }
+.D .fj-cab img { position: absolute; left: 50%; bottom: 0; width: 96%; translate: -50% 0; filter: drop-shadow(0 4px 4px rgba(0, 0, 0, .5)); }
+.D .fj-cargando { position: absolute; inset: 20%; border-radius: 50%; background: rgba(255, 255, 255, .15); }
+.D .fj.yo .fj-cab { border-color: #ffe14a; box-shadow: 0 0 0 3px rgba(255, 225, 74, .35), 0 6px 12px rgba(0, 0, 0, .45); }
+.D .fj-pn { position: absolute; left: 3px; top: 3px; z-index: 1; display: grid; place-items: center; min-width: 26px; height: 20px; padding: 0 5px;
+  border-radius: 999px; font: 400 13px/1 var(--f-titulo); color: var(--pj-texto, #fff); background: var(--pj, #444); border: 2px solid rgba(0, 0, 0, .55); }
+.D .fj-txt { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.D .fj-nom { font: 400 clamp(17px, 1.4vw, 22px)/1.05 var(--f-titulo); color: #fff; text-shadow: 0 2px 0 rgba(0, 0, 0, .5); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.D .fj-datos { display: flex; gap: 10px; font: 800 14px/1 var(--f-texto); color: rgba(255, 255, 255, .85); }
+.D .fj-datos b { font: 400 18px/1 var(--f-titulo); color: #ffe14a; }
+.D .fj-cartas { font: 800 12px/1 var(--f-texto); color: #9fe8ff; }
+
+/* ---------- Pantalla de partida ---------- */
+.D .pt-caja { position: relative; display: flex; flex-direction: column; gap: 12px; width: min(720px, 100%); margin: 0 auto; padding-bottom: 12px; }
+.D .pt-caja.con-barra { padding-bottom: 150px; }
+.D .pt-top { display: flex; align-items: flex-start; justify-content: center; gap: 12px; }
+.D .pt-banner { margin-top: calc(var(--az-pad) * -1); }
+.D .pt-mia { align-self: flex-start; padding: 8px 18px 8px 8px; border-radius: 16px; background: rgba(10, 14, 40, .72); border: 1px solid rgba(255, 255, 255, .16);
+  -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
+.D .pt-aviso { display: flex; flex-direction: column; gap: 8px; padding: 14px 16px; border-radius: 16px; color: #fff; background: rgba(10, 14, 40, .78); border: 1px solid rgba(255, 225, 74, .45); }
+.D .pt-aviso b { font: 400 20px/1.1 var(--f-titulo); text-transform: uppercase; letter-spacing: .02em; }
+.D .pt-aviso p { margin: 0; font: 700 15px/1.35 var(--f-texto); color: rgba(255, 255, 255, .85); }
+.D .pt-fila { display: flex; gap: 8px; flex-wrap: wrap; }
+.D .pt-marcador { display: flex; flex-direction: column; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.D .pt-marcador li { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 6px 14px 6px 6px; border-radius: 14px;
+  background: rgba(10, 14, 40, .66); border: 1px solid rgba(255, 255, 255, .12); border-left: 5px solid var(--pj, #888); }
+.D .pt-marcador li:has(.fj.yo) { border-color: rgba(255, 225, 74, .6); }
+.D .pt-pts { font: 400 26px/1 var(--f-titulo); color: #ffe14a; text-shadow: 0 2px 0 rgba(0, 0, 0, .5); }
+.D .pt-salidas { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; }
+.D .pt-salidas .lb-listo { max-width: 320px; }
+
+/* ---------- Barra del anfitrión ---------- */
+.D .pt-host { position: fixed; left: 50%; bottom: max(10px, env(safe-area-inset-bottom)); translate: -50% 0; z-index: 20; display: flex; flex-direction: column; align-items: center; gap: 8px;
+  width: min(560px, calc(100% - 20px)); padding: 10px; border-radius: 20px; background: rgba(10, 14, 40, .9); border: 1px solid rgba(255, 255, 255, .18);
+  box-shadow: 0 -6px 24px rgba(0, 0, 0, .4); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); }
+.D .pt-host-fila { display: grid; grid-template-columns: repeat(auto-fit, minmax(80px, 1fr)); gap: 8px; width: 100%; }
+.D .pt-hb { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; min-height: 64px; padding: 6px; cursor: pointer; border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, .2); background: linear-gradient(180deg, rgba(255, 255, 255, .12), rgba(255, 255, 255, .04)); color: #fff; transition: transform .14s ease; }
+.D .pt-hb img { width: 36px; height: 36px; object-fit: contain; filter: drop-shadow(0 3px 3px rgba(0, 0, 0, .4)); }
+.D .pt-hb-txt { display: grid; place-items: center; width: 36px; height: 36px; font: 400 22px/1 var(--f-titulo); color: #ffe14a; }
+.D .pt-hb small { font: 800 12px/1 var(--f-texto); }
+.D .pt-hb:active { transform: translateY(2px) scale(.97); }
+.D .pt-hb:focus-visible, .D .pt-momento:focus-visible { outline: 3px solid #fff; outline-offset: 2px; }
+.D .pt-momento { width: 100%; min-height: 54px; cursor: pointer; border-radius: 14px; border: 2.5px solid var(--az-tinta); color: var(--az-tinta);
+  font: 400 24px/1 var(--f-titulo); text-transform: uppercase; letter-spacing: .04em; background: linear-gradient(180deg, #ffe066, #ffb000); box-shadow: 0 5px 0 #c77700; }
+.D.alv .pt-momento { font-family: var(--f-titulo); }
+.D.alv .pt-hb small { font-family: var(--f-texto); }
+@media (hover: hover) and (pointer: fine) { .D .pt-hb:hover { transform: translateY(-2px); background: rgba(255, 255, 255, .18); } }
+
+/* ---------- Componentes de cada juego (sistema de diseño viejo) con el estilo nuevo, solo dentro de la partida ---------- */
+.D.az.pt .d-pnl { background: rgba(10, 14, 40, .78); border: 1px solid rgba(255, 255, 255, .16); border-radius: 18px; box-shadow: 0 14px 30px rgba(0, 0, 0, .35);
+  -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); }
+.D.az.pt .d-btn { transform: none; border-radius: 14px; border: 1px solid rgba(255, 255, 255, .28); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .35), 0 6px 14px rgba(0, 0, 0, .35); }
+.D.az.pt .d-btn > * { transform: none; }
+.D.az.pt .d-btn:hover { transform: translateY(-2px); }
+.D.az.pt .d-btn .dsp { font-family: var(--f-titulo); -webkit-text-stroke: 0; text-shadow: 0 2px 0 rgba(0, 0, 0, .35); letter-spacing: .02em; }
+.D.az.pt .dsp.ol { font-family: var(--f-titulo); -webkit-text-stroke: 0; text-shadow: 0 2px 0 rgba(0, 0, 0, .45); }
+.D.az.pt .d-lbl { transform: none; border-radius: 999px; font-family: var(--f-titulo); background: rgba(255, 225, 74, .95); }
+.D.az.pt .a-kick { font-family: var(--f-texto); font-weight: 900; color: #ffe14a; }
+.D.az.pt .a-carta { font-family: var(--f-texto); font-weight: 800; }
+.D.az.pt .d-chip { border-radius: 999px; }
+
+/* Avisos y «Pásale el teléfono» */
+.D.az.pt-aviso .a-scroll { display: flex; }
+.D .pt-pasa-ficha { flex-direction: column; }
+.D .pt-pasa-ficha .fj-nom { font-size: clamp(28px, 7vw, 42px); color: var(--pj, #ffe14a); }
+
+@media (max-width: 520px) {
+  .D .pt-host-fila { grid-template-columns: repeat(4, 1fr); }
+  .D .pt-hb { min-height: 58px; }
+  .D .pt-hb img, .D .pt-hb-txt { width: 30px; height: 30px; }
+}
+@media (prefers-reduced-motion: reduce) { .D .pt-hb { transition: none; } }
+.D.az.pt .dsp, .D.az.pt .d-btn .dsp, .D.az.pt-aviso .dsp { font-style: normal; font-family: var(--f-titulo); }

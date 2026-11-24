@@ -86,7 +86,7 @@ export function PantallaTv({ codigo }: { codigo: string }) {
     <main className="a-tv-main a-tv-lobby">
       {final ? <Posiciones v={final} miembros={s.miembros} grande /> : (
         <div className="a-tv-elenco">
-          <Pedestales miembros={ordenados} className="lb-pedestales" />
+          <Pedestales miembros={ordenados} className="lb-pedestales" fiesta={{ escenarios: true }} />
           {!s.miembros.length && <span className="dsp ol a-tv-t2">Abre ALV y toca «¡Jugar!» para entrar</span>}
         </div>
       )}

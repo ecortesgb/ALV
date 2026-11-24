@@ -228,107 +228,215 @@ const nube: Enlace = {
   },
 };
 
-// ---------- Respaldo local (sin servidor): la sala vive en este navegador y se comparte entre pestañas ----------
+// ---------- Respaldo local (sin servidor): la sala vive en este navegador ----------
+// Dos usos con el mismo código: la DEMOSTRACIÓN (sin Supabase; se comparte entre pestañas) y el MODO LOCAL
+// (Elías, 22 nov: un solo teléfono, personajes sin cuenta, nada se guarda en la nube; dura hasta «Terminar sesión»).
 interface PartidaLocal extends PartidaPub { privados: Record<string, Record<string, unknown>>; acciones: FilaAccion[] }
-interface SalaLocal { sala: SalaV; cerrada: boolean; miembros: { id: string; nombre: string; listo: boolean; gesto?: string | null; gestoN?: number }[]; partidas: PartidaLocal[] }
-const CLAVE = "alv.demo.v1";
-const leer = (): Record<string, SalaLocal> => { try { return JSON.parse(localStorage.getItem(CLAVE) ?? "{}") as Record<string, SalaLocal>; } catch { return {}; } };
-const oyentes = new Set<() => void>();
-const radio = typeof BroadcastChannel !== "undefined" ? new BroadcastChannel("alv-demo") : null;
-if (radio) radio.onmessage = () => oyentes.forEach(f => f());
-function guardar(todo: Record<string, SalaLocal>) {
-  try { localStorage.setItem(CLAVE, JSON.stringify(todo)); } catch { /* sin espacio */ }
-  radio?.postMessage(1);
-  oyentes.forEach(f => f());
-}
+export interface MiembroLocal { id: string; nombre: string; listo: boolean; gesto?: string | null; gestoN?: number; figura?: FiguraV2 | null; genero?: "mujer" | "hombre" | "otro" }
+interface SalaLocal { sala: SalaV; cerrada: boolean; miembros: MiembroLocal[]; partidas: PartidaLocal[] }
 /** Quién soy en el respaldo local: lo fija la sesión de demostración. */
 export const yoLocal = { id: "", nombre: "" };
-const porPartida = (todo: Record<string, SalaLocal>, id: string) => {
-  for (const s of Object.values(todo)) { const p = s.partidas.find(x => x.id === id); if (p) return p; }
-  return undefined;
-};
-const cambiar = (f: (todo: Record<string, SalaLocal>) => void) => { const todo = leer(); f(todo); guardar(todo); };
 const azarCodigo = () => Array.from({ length: 6 }, () => "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"[Math.floor(Math.random() * 32)]).join("");
 
-const local: Enlace = {
-  async abrir(modo) {
-    const sala: SalaV = { id: "sala-" + azarCodigo(), codigo: azarCodigo(), modo, anfitrionId: yoLocal.id };
-    cambiar(t => { t[sala.codigo] = { sala, cerrada: false, miembros: [{ id: yoLocal.id, nombre: yoLocal.nombre, listo: false }], partidas: [] }; });
+interface Respaldo extends Enlace {
+  leer(): Record<string, SalaLocal>;
+  cambiar(f: (todo: Record<string, SalaLocal>) => void): void;
+}
+/**
+ * `quien`: la persona que juega en este aparato (en la demostración, la sesión; en Local, el jugador que tiene el
+ * teléfono). Las acciones de control siempre salen a nombre del anfitrión, que es quien tiene el control de la partida.
+ */
+function crearRespaldo(clave: string, canal: string | null, quien: () => { id: string; nombre: string }, prefijo: string): Respaldo {
+  const leer = (): Record<string, SalaLocal> => { try { return JSON.parse(localStorage.getItem(clave) ?? "{}") as Record<string, SalaLocal>; } catch { return {}; } };
+  const oyentes = new Set<() => void>();
+  const radio = canal && typeof BroadcastChannel !== "undefined" ? new BroadcastChannel(canal) : null;
+  if (radio) radio.onmessage = () => oyentes.forEach(f => f());
+  const guardar = (todo: Record<string, SalaLocal>) => {
+    try { localStorage.setItem(clave, JSON.stringify(todo)); } catch { /* sin espacio */ }
+    radio?.postMessage(1);
+    oyentes.forEach(f => f());
+  };
+  const cambiar = (f: (todo: Record<string, SalaLocal>) => void) => { const todo = leer(); f(todo); guardar(todo); };
+  const porPartida = (todo: Record<string, SalaLocal>, id: string) => {
+    for (const s of Object.values(todo)) { const p = s.partidas.find(x => x.id === id); if (p) return { p, s }; }
+    return undefined;
+  };
+  return {
+    leer, cambiar,
+    async abrir(modo) {
+      const yo = quien();
+      const sala: SalaV = { id: prefijo + "sala-" + azarCodigo(), codigo: azarCodigo(), modo, anfitrionId: yo.id };
+      cambiar(t => { t[sala.codigo] = { sala, cerrada: false, miembros: [{ id: yo.id, nombre: yo.nombre, listo: false }], partidas: [] }; });
+      return sala;
+    },
+    async unirse(codigo) {
+      const c = codigo.trim().toUpperCase(), yo = quien();
+      const s = leer()[c];
+      if (!CODIGO.test(c) || !s || s.cerrada) return "No encontramos esa sala o ya se cerró.";
+      if (!s.miembros.some(m => m.id === yo.id)) {
+        if (s.miembros.length >= 8) return "La sala está llena (8).";
+        cambiar(t => { t[c]!.miembros.push({ id: yo.id, nombre: yo.nombre, listo: false }); });
+      }
+      return s.sala;
+    },
+    async miSala() { const yo = quien(); return Object.values(leer()).reverse().find(s => !s.cerrada && s.miembros.some(m => m.id === yo.id))?.sala ?? null; },
+    async miembros(sala) {
+      const s = leer()[sala.codigo];
+      if (!s || s.cerrada) return null;
+      return s.miembros.map(m => ({ id: m.id, nombre: m.nombre, listo: m.listo, gesto: m.gesto, gestoN: m.gestoN, figura: m.figura ?? null, anfitrion: m.id === s.sala.anfitrionId }));
+    },
+    async marcarListo(sala, listo) { const yo = quien(); cambiar(t => { const m = t[sala.codigo]?.miembros.find(x => x.id === yo.id); if (m) m.listo = listo; }); },
+    async gesto(sala, g) { const yo = quien(); cambiar(t => { const m = t[sala.codigo]?.miembros.find(x => x.id === yo.id); if (m && GESTOS.includes(g)) { m.gesto = g; m.gestoN = (m.gestoN ?? 0) + 1; } }); },
+    async salir(sala) { const yo = quien(); cambiar(t => { const s = t[sala.codigo]; if (s) s.miembros = s.miembros.filter(m => m.id !== yo.id); }); },
+    async cerrar(sala) { cambiar(t => { const s = t[sala.codigo]; if (s) s.cerrada = true; }); },
+    async partida(sala) {
+      const p = leer()[sala.codigo]?.partidas.at(-1);
+      return p ? { id: p.id, juego: p.juego, version: p.version, estado: p.estado, terminada: p.terminada } : null;
+    },
+    async secreto(partida) { return porPartida(leer(), partida)?.p.privados[quien().id] ?? null; },
+    async historial(sala) { return (leer()[sala.codigo]?.partidas ?? []).filter(p => p.terminada).map(p => p.estado); },
+    async crearPartida(sala, juego) {
+      const id = prefijo + "partida-" + Date.now().toString(36) + azarCodigo();
+      cambiar(t => { const s = t[sala.codigo]; if (!s) return; s.partidas.forEach(p => { p.terminada = true; }); s.partidas = [...s.partidas.slice(-30), { id, juego, version: 1, estado: {}, terminada: false, privados: {}, acciones: [] }]; });
+      return id;
+    },
+    async enviar(partida, id, tipo, datos) {
+      let ok = false;
+      cambiar(t => {
+        const x = porPartida(t, partida); if (!x || x.p.terminada) return; ok = true;
+        const jugador = tipo === "control" ? x.s.sala.anfitrionId : quien().id;
+        if (!x.p.acciones.some(a => a.id === id)) x.p.acciones.push({ id, jugador, tipo, datos, creada: new Date().toISOString() });
+      });
+      return ok;
+    },
+    async acciones(partida) { return porPartida(leer(), partida)?.p.acciones ?? []; },
+    async publicar(partida, version, estado, privados) {
+      cambiar(t => { const x = porPartida(t, partida); if (!x || x.p.version > version) return; x.p.version = version; x.p.estado = estado as Record<string, unknown>; x.p.privados = privados as PartidaLocal["privados"]; });
+    },
+    async terminar(partida) { cambiar(t => { const x = porPartida(t, partida); if (x) x.p.terminada = true; }); },
+    async guardarCopas() { /* sin servidor las copas solo se ven en la ceremonia */ },
+    async darXp() { return true; },
+    async activarCapsula() { /* sin servidor no hay cápsulas en la nube */ },
+    escuchar(_sala, alCambiar, alEstado) {
+      oyentes.add(alCambiar); alEstado?.("vivo"); queueMicrotask(alCambiar);
+      return () => { oyentes.delete(alCambiar); };
+    },
+    /** Sin servidor no hay presencia: no se sabe y no se avisa. */
+    vigilarPantalla: () => () => { /* nada */ },
+    /** Sin servidor el anuncio es la misma lista del navegador: el lobby abierto más reciente. */
+    anunciarLobby: () => () => { /* nada */ },
+    buscarLobby(alCodigo) {
+      const f = () => alCodigo(Object.values(leer()).reverse().find(s => !s.cerrada)?.sala.codigo ?? null);
+      oyentes.add(f); queueMicrotask(f);
+      return () => { oyentes.delete(f); };
+    },
+    async lobbyAbierto() {
+      const s = Object.values(leer()).reverse().find(x => !x.cerrada);
+      return s ? { codigo: s.sala.codigo, miembros: s.miembros.length } : null;
+    },
+    async expulsar(sala, jugador) {
+      let ok = false;
+      const yo = quien();
+      cambiar(t => { const s = t[sala.codigo]; if (s && s.sala.anfitrionId === yo.id && jugador !== yo.id) { s.miembros = s.miembros.filter(m => m.id !== jugador); ok = true; } });
+      return ok;
+    },
+    async listoDe(sala, jugador, listo) {
+      let ok = false;
+      const yo = quien();
+      cambiar(t => { const s = t[sala.codigo]; const m = s?.miembros.find(x => x.id === jugador); if (s && m && s.sala.anfitrionId === yo.id) { m.listo = listo; ok = true; } });
+      return ok;
+    },
+  };
+}
+
+const demo = crearRespaldo("alv.demo.v1", "alv-demo", () => yoLocal, "");
+
+// ---------- Modo Local (un solo teléfono) ----------
+// La sala y sus personajes viven en el localStorage de este teléfono (clave «alv.local.v1»): sobreviven a una recarga y
+// se borran con «Terminar sesión». Nada llega a Supabase: ni miembros, ni partidas, ni XP, ni monedas. Sus ids llevan
+// el prefijo «loc-», así el enlace sabe que van aquí y no a la nube.
+export const PREFIJO_LOCAL = "loc-";
+const anfitrionLocal = { id: "", nombre: "" };
+/** Jugador que tiene el teléfono en este momento (el que contesta). Vacío = el anfitrión. */
+let activoLocal = "";
+const quienLocal = () => {
+  if (!activoLocal) return anfitrionLocal;
+  for (const s of Object.values(localApp.leer())) { const m = s.miembros.find(x => x.id === activoLocal); if (m) return { id: m.id, nombre: m.nombre }; }
+  return anfitrionLocal;
+};
+const localApp = crearRespaldo("alv.local.v1", null, quienLocal, PREFIJO_LOCAL);
+export const esLocal = (id: string | null | undefined) => !!id && id.startsWith(PREFIJO_LOCAL);
+
+export const modoLocal = {
+  /** El lobby local abierto de este teléfono (o null). */
+  abierto(): SalaV | null { return Object.values(localApp.leer()).reverse().find(s => !s.cerrada)?.sala ?? null; },
+  /** Abre el lobby local con el anfitrión (cuenta abierta o demostración) como P1. */
+  abrir(anfitrion: { id: string; nombre: string; figura: FiguraV2 | null }): SalaV {
+    const ya = modoLocal.abierto(); if (ya) return ya;
+    anfitrionLocal.id = anfitrion.id; anfitrionLocal.nombre = anfitrion.nombre; activoLocal = "";
+    const sala: SalaV = { id: PREFIJO_LOCAL + "sala-" + azarCodigo(), codigo: azarCodigo(), modo: "mesa", anfitrionId: anfitrion.id };
+    localApp.cambiar(t => { t[sala.codigo] = { sala, cerrada: false, miembros: [{ id: anfitrion.id, nombre: anfitrion.nombre, listo: false, figura: anfitrion.figura }], partidas: [] }; });
     return sala;
   },
-  async unirse(codigo) {
-    const c = codigo.trim().toUpperCase();
-    const s = leer()[c];
-    if (!CODIGO.test(c) || !s || s.cerrada) return "No encontramos esa sala o ya se cerró.";
-    if (!s.miembros.some(m => m.id === yoLocal.id)) {
-      if (s.miembros.length >= 8) return "La sala está llena (8).";
-      cambiar(t => { t[c]!.miembros.push({ id: yoLocal.id, nombre: yoLocal.nombre, listo: false }); });
-    }
-    return s.sala;
-  },
-  async miSala() { return Object.values(leer()).reverse().find(s => !s.cerrada && s.miembros.some(m => m.id === yoLocal.id))?.sala ?? null; },
-  async miembros(sala) {
-    const s = leer()[sala.codigo];
-    if (!s || s.cerrada) return null;
-    return s.miembros.map(m => ({ ...m, figura: null, anfitrion: m.id === s.sala.anfitrionId }));
-  },
-  async marcarListo(sala, listo) { cambiar(t => { const m = t[sala.codigo]?.miembros.find(x => x.id === yoLocal.id); if (m) m.listo = listo; }); },
-  async gesto(sala, g) { cambiar(t => { const m = t[sala.codigo]?.miembros.find(x => x.id === yoLocal.id); if (m && GESTOS.includes(g)) { m.gesto = g; m.gestoN = (m.gestoN ?? 0) + 1; } }); },
-  async salir(sala) { cambiar(t => { const s = t[sala.codigo]; if (s) s.miembros = s.miembros.filter(m => m.id !== yoLocal.id); }); },
-  async cerrar(sala) { cambiar(t => { const s = t[sala.codigo]; if (s) s.cerrada = true; }); },
-  async partida(sala) {
-    const p = leer()[sala.codigo]?.partidas.at(-1);
-    return p ? { id: p.id, juego: p.juego, version: p.version, estado: p.estado, terminada: p.terminada } : null;
-  },
-  async secreto(partida) { return porPartida(leer(), partida)?.privados[yoLocal.id] ?? null; },
-  async historial(sala) { return (leer()[sala.codigo]?.partidas ?? []).filter(p => p.terminada).map(p => p.estado); },
-  async crearPartida(sala, juego) {
-    const id = "partida-" + Date.now().toString(36) + azarCodigo();
-    cambiar(t => { const s = t[sala.codigo]; if (!s) return; s.partidas.forEach(p => { p.terminada = true; }); s.partidas = [...s.partidas.slice(-30), { id, juego, version: 1, estado: {}, terminada: false, privados: {}, acciones: [] }]; });
-    return id;
-  },
-  async enviar(partida, id, tipo, datos) {
+  /** Agrega un personaje sin cuenta (máximo 8 en la sala). */
+  agregar(sala: SalaV, p: { nombre: string; figura: FiguraV2 | null; genero?: MiembroLocal["genero"] }): string | null {
+    const nombre = p.nombre.replace(/\s+/g, " ").trim().slice(0, 20);
+    if (nombre.length < 2) return null;
+    const id = PREFIJO_LOCAL + "j-" + azarCodigo().toLowerCase();
     let ok = false;
-    cambiar(t => { const p = porPartida(t, partida); if (!p || p.terminada) return; ok = true; if (!p.acciones.some(a => a.id === id)) p.acciones.push({ id, jugador: yoLocal.id, tipo, datos, creada: new Date().toISOString() }); });
-    return ok;
+    localApp.cambiar(t => { const s = t[sala.codigo]; if (!s || s.miembros.length >= 8) return; s.miembros.push({ id, nombre, listo: true, figura: p.figura, genero: p.genero }); ok = true; });
+    return ok ? id : null;
   },
-  async acciones(partida) { return porPartida(leer(), partida)?.acciones ?? []; },
-  async publicar(partida, version, estado, privados) {
-    cambiar(t => { const p = porPartida(t, partida); if (!p || p.version > version) return; p.version = version; p.estado = estado as Record<string, unknown>; p.privados = privados as PartidaLocal["privados"]; });
+  /** Cambia la figura de un personaje (o la del anfitrión en esta sesión local). */
+  figura(sala: SalaV, jugador: string, figura: FiguraV2 | null) { localApp.cambiar(t => { const m = t[sala.codigo]?.miembros.find(x => x.id === jugador); if (m) m.figura = figura; }); },
+  generos(sala: SalaV): Record<string, "mujer" | "hombre" | "otro"> {
+    const s = localApp.leer()[sala.codigo];
+    return Object.fromEntries((s?.miembros ?? []).filter(m => m.genero).map(m => [m.id, m.genero!]));
   },
-  async terminar(partida) { cambiar(t => { const p = porPartida(t, partida); if (p) p.terminada = true; }); },
-  async guardarCopas() { /* sin servidor las copas solo se ven en la ceremonia */ },
-  async darXp() { return true; },
-  async activarCapsula() { /* sin servidor no hay cápsulas en la nube */ },
-  escuchar(_sala, alCambiar, alEstado) {
-    oyentes.add(alCambiar); alEstado?.("vivo"); queueMicrotask(alCambiar);
-    return () => { oyentes.delete(alCambiar); };
-  },
-  /** Sin servidor no hay presencia: no se sabe y no se avisa. */
-  vigilarPantalla: () => () => { /* nada */ },
-  /** Sin servidor el anuncio es la misma lista del navegador: el lobby abierto más reciente. */
-  anunciarLobby: () => () => { /* nada */ },
-  buscarLobby(alCodigo) {
-    const f = () => alCodigo(Object.values(leer()).reverse().find(s => !s.cerrada)?.sala.codigo ?? null);
-    oyentes.add(f); queueMicrotask(f);
-    return () => { oyentes.delete(f); };
-  },
-  async lobbyAbierto() {
-    const s = Object.values(leer()).reverse().find(x => !x.cerrada);
-    return s ? { codigo: s.sala.codigo, miembros: s.miembros.length } : null;
-  },
-  async expulsar(sala, jugador) {
-    let ok = false;
-    cambiar(t => { const s = t[sala.codigo]; if (s && s.sala.anfitrionId === yoLocal.id && jugador !== yoLocal.id) { s.miembros = s.miembros.filter(m => m.id !== jugador); ok = true; } });
-    return ok;
-  },
-  async listoDe(sala, jugador, listo) {
-    let ok = false;
-    cambiar(t => { const s = t[sala.codigo]; const m = s?.miembros.find(x => x.id === jugador); if (s && m && s.sala.anfitrionId === yoLocal.id) { m.listo = listo; ok = true; } });
-    return ok;
-  },
+  /** El teléfono pasa a manos de `jugador` (o regresa al anfitrión con ""). */
+  pasarA(jugador: string) { activoLocal = jugador; },
+  activo(): string { return activoLocal || anfitrionLocal.id; },
+  /** Termina la sesión local: borra la sala, los personajes y sus partidas de este teléfono. */
+  terminar() { activoLocal = ""; try { localStorage.removeItem("alv.local.v1"); } catch { /* sin almacenamiento */ } },
+  /** Recupera el anfitrión tras recargar la página (la sala sigue en localStorage). */
+  recuperar(sala: SalaV) { if (!anfitrionLocal.id) { const s = localApp.leer()[sala.codigo]; const h = s?.miembros.find(m => m.id === sala.anfitrionId); if (h) { anfitrionLocal.id = h.id; anfitrionLocal.nombre = h.nombre; } } },
 };
 
-export const enlace: Enlace = hayNube ? nube : local;
+const base: Enlace = hayNube ? nube : demo;
+const porSala = (sala: SalaV): Enlace => (esLocal(sala.id) ? localApp : base);
+const porPartida = (partida: string): Enlace => (esLocal(partida) ? localApp : base);
+/** El enlace que usa toda la app: las salas y partidas locales van al teléfono; el resto, a la nube (o la demostración). */
+export const enlace: Enlace = {
+  abrir: modo => base.abrir(modo),
+  async unirse(codigo) {
+    const c = codigo.trim().toUpperCase(), s = localApp.leer()[c];
+    if (s && !s.cerrada) { modoLocal.recuperar(s.sala); return s.sala; }
+    return base.unirse(codigo);
+  },
+  miSala: () => base.miSala(),
+  miembros: sala => porSala(sala).miembros(sala),
+  marcarListo: (sala, l) => porSala(sala).marcarListo(sala, l),
+  gesto: (sala, g) => porSala(sala).gesto(sala, g),
+  salir: sala => porSala(sala).salir(sala),
+  cerrar: async sala => { await porSala(sala).cerrar(sala); if (esLocal(sala.id)) modoLocal.terminar(); },
+  partida: sala => porSala(sala).partida(sala),
+  historial: sala => porSala(sala).historial(sala),
+  secreto: partida => porPartida(partida).secreto(partida),
+  crearPartida: (sala, juego) => porSala(sala).crearPartida(sala, juego),
+  enviar: (partida, id, tipo, datos) => porPartida(partida).enviar(partida, id, tipo, datos),
+  acciones: partida => porPartida(partida).acciones(partida),
+  publicar: (partida, v, e, p) => porPartida(partida).publicar(partida, v, e, p),
+  terminar: (partida, j, n, r) => porPartida(partida).terminar(partida, j, n, r),
+  guardarCopas: (partida, c) => porPartida(partida).guardarCopas(partida, c),
+  darXp: (sala, j, x) => porSala(sala).darXp(sala, j, x),
+  activarCapsula: n => base.activarCapsula(n),
+  escuchar: (sala, f, e) => porSala(sala).escuchar(sala, f, e),
+  vigilarPantalla: (sala, yo, f) => porSala(sala).vigilarPantalla(sala, yo, f),
+  anunciarLobby: sala => porSala(sala).anunciarLobby(sala),
+  buscarLobby: f => base.buscarLobby(f),
+  lobbyAbierto: () => base.lobbyAbierto(),
+  expulsar: (sala, j) => porSala(sala).expulsar(sala, j),
+  listoDe: (sala, j, l) => porSala(sala).listoDe(sala, j, l),
+};
 /** Dirección que el QR abre: deja a la persona dentro de la sala. */
 export const enlaceSala = (codigo: string) => `${location.origin}${location.pathname}#/s/${codigo}`;
