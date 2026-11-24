@@ -10,6 +10,7 @@ import type { Miembro } from "../../servicios/enlace";
 import { desenlace, instruccion, nombreDe, type Publico } from "./texto";
 import { CelularImpostor } from "../impostor/celular";
 import { CelularVerdadReto } from "../verdadReto/celular";
+import { CelularFisico } from "../fisico/celular";
 import { ComoJugar, tocaExplicar } from "./ComoJugar";
 import { CeremoniaCopas, PodioJuego, esFinalDeJuego } from "./Copas";
 
@@ -33,6 +34,7 @@ export function HerramientaCelular(p: { v: Publico; mi: MiVista; miembros: Miemb
   // El impostor con eliminación (Maestro v1.44) tiene su propia pantalla.
   if (p.v.motor === "rol-secreto" && p.v.impostor) return <>{reglas}<CelularImpostor {...p} />{podio}</>;
   if (p.v.motor === "turnos-cartas" && p.v.verdadReto) return <>{reglas}<CelularVerdadReto {...p} />{podio}</>;
+  if (p.v.motor === "fisico") return <>{reglas}<CelularFisico {...p} />{podio}</>;
   return <>{reglas}<HerramientaGeneral {...p} />{podio}</>;
 }
 
@@ -145,6 +147,9 @@ function HerramientaGeneral({ v, mi, miembros, mandar }: { v: Publico; mi: MiVis
     case "competencia":
       cuerpo = meToca && !yaEnvie ? <><span className="a-kick">{v.carta?.tipo || "Reto del lugar"}</span><p className="a-carta">{v.carta?.texto}</p><span className="a-kick">Marca quién ganó</span><Elegir gente={v.jugadores} miembros={miembros} clave={clave} titulo="¿Quién ganó?" confirmar="Ganó" alElegir={id => void contestar(id)} /></>
         : <><span className="a-kick">{v.carta?.tipo || "Reto del lugar"}</span><p className="a-carta">{v.carta?.texto}</p>{meToca ? espera : <p className="a-suave">El anfitrión marca quién ganó.</p>}</>;
+      break;
+    case "fisico": // tiene su propia pantalla (CelularFisico)
+      cuerpo = <></>;
       break;
   }
   return <Panel className="a-herr a-entra" como="section">{cuerpo}{cartas}{v.cartaUsada && v.cartaUsada.ronda === v.ronda && <Chip texto={`${nombreDe(v, v.cartaUsada.jugador)} usó ${CARTAS_PODER.find(c => c.id === v.cartaUsada!.carta)?.nombre ?? "un comodín"}`} icono="bolt" />}</Panel>;

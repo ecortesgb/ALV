@@ -5,7 +5,7 @@
 // TV: las láminas pasan solas con una barra de tiempo. Se quita en cuanto la partida arranca.
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { createPortal } from "react-dom";
-import { laminas } from "../../content/comoJugar";
+import { tarjetasInicio, type GrupoTarjeta } from "../../content/comoJugar";
 import { ARTE_JUEGOS } from "../../content/arteJuegos";
 import { colorDe } from "../../pantallas/Catalogo";
 import { SinArte, srcArte } from "../../pantallas/TarjetasConfig";
@@ -18,8 +18,12 @@ export const tocaExplicar = (v: Publico) =>
 
 const SEG_TV = 8;
 
+const ETIQUETA: Record<GrupoTarjeta, string> = { juego: "Cómo jugar", herramienta: "Herramienta", escenario: "Escenario" };
+
 export function ComoJugar({ v, modo, alCerrar }: { v: Publico; modo: "tv" | "celular"; alCerrar?: () => void }) {
-  const lams = laminas(v.juegoId, v.modalidad);
+  // Tarjetas al iniciar: cómo se juega, cada herramienta elegida y el escenario (ALV_PLAN_MODOS_DE_JUEGO.md §10).
+  const lams = tarjetasInicio({ juegoId: v.juegoId, modalidad: v.modalidad, explicar: true, herramienta: v.verdadReto?.herramienta, temporizador: v.temporizador, escenario: v.escenario });
+  const [sinImagen, setSinImagen] = useState<Record<number, true>>({});
   const [i, setI] = useState(0);
   const [dir, setDir] = useState<1 | -1>(1);
   // Se dibuja en la raíz de la pantalla (.D) para quedar encima de todo, también del marcador de la TV.
@@ -51,6 +55,7 @@ export function ComoJugar({ v, modo, alCerrar }: { v: Publico; modo: "tv" | "cel
   if (!total) return null;
   if (!raiz) return <span ref={ancla} hidden />;
   const l = lams[Math.min(i, total - 1)]!;
+  const propia = l.imagen && !sinImagen[i] ? srcArte(l.imagen) : undefined;
   const arte = ARTE_JUEGOS[v.juegoId];
   return createPortal(
     <div className={"cj cj-" + modo} role="dialog" aria-modal="true" aria-label={`Cómo jugar ${nombreJuego(v.juegoId)}`} style={{ "--tc": colorDe(v.juegoId) } as CSSProperties}
@@ -59,15 +64,16 @@ export function ComoJugar({ v, modo, alCerrar }: { v: Publico; modo: "tv" | "cel
       <div className="cj-cab">
         <span className="cj-cinta"><span>{nombreJuego(v.juegoId)}</span></span>
         <span className="cj-cuenta" aria-live="polite">{i + 1} / {total}</span>
-        {modo === "celular" && <button type="button" className="cj-omitir" onClick={alCerrar}>Omitir <span aria-hidden="true">▶▶</span></button>}
+        {modo === "celular" && <button type="button" className="cj-omitir" onClick={alCerrar}>Omitir todas <span aria-hidden="true">▶▶</span></button>}
       </div>
       <div className="cj-cuerpo">
-        <div className="cj-ilus">
-          {arte ? <img src={srcArte(arte)} alt="" draggable={false} /> : <SinArte />}
-          <span className="cj-insignia" key={i} aria-hidden="true">{l.icono}</span>
+        <div className={"cj-ilus cj-" + l.grupo}>
+          {propia ? <img key={i} className="cj-propia" src={propia} alt="" draggable={false} onError={() => setSinImagen(s => ({ ...s, [i]: true }))} />
+            : arte ? <img src={srcArte(arte)} alt="" draggable={false} /> : <SinArte />}
+          {l.grupo === "juego" && <span className="cj-insignia" key={i} aria-hidden="true">{l.icono}</span>}
         </div>
         <div className="cj-texto" key={i} style={{ "--dir": dir } as CSSProperties}>
-          <span className="cj-como">Cómo jugar</span>
+          <span className="cj-como">{ETIQUETA[l.grupo]}</span>
           <b className="cj-titulo">{l.titulo}</b>
           <p>{l.texto}</p>
         </div>

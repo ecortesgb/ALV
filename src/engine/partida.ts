@@ -589,9 +589,82 @@ const competencia: Mecanica = {
   },
 };
 
+// ---------- Juego físico (ALV_PLAN_MODOS_DE_JUEGO.md §5, D5 y D6) ----------
+// Los retos se hacen en persona. Cada ronda sale un reto sugerido (mazo de competencias del lugar) que el administrador
+// puede cambiar. El administrador da o quita puntos a cualquiera (se ven al momento) y usa herramientas: dados, ruleta,
+// una carta, un orden al azar o un cronómetro. Lo que sale es público. Al tocar «Terminar ronda» se revela el resumen.
+// Todo llega como «contestar» del administrador: { puntos }, { herramienta }, { otro } o "listo".
+
+export type HerramientaFisico = "dados" | "ruleta" | "carta" | "orden" | "cronometro";
+export const HERRAMIENTAS_FISICO: HerramientaFisico[] = ["dados", "ruleta", "carta", "orden", "cronometro"];
+/** Lo público de la ronda física: puntos dados en la ronda y la última herramienta usada (`n` sube con cada uso). */
+export interface SeleccionFisico {
+  deltas: Record<string, number>;
+  herr?: { tipo: HerramientaFisico; n: number; dados?: [number, number]; jugador?: string; carta?: { v: number; p: number }; orden?: string[]; segundos?: number };
+}
+export const MAX_DELTA_FISICO = 5;
+export const conFisico = (e: Pick<EstadoPartida, "motor">) => e.motor === "fisico";
+export const seleccionFisico = (e: Pick<EstadoPartida, "seleccion">) => (e.seleccion ?? { deltas: {} }) as unknown as SeleccionFisico;
+/** Quien da los puntos: el que tiene el control (el anfitrión) o, si no hay, el primero de la lista. */
+export const adminFisico = (e: EstadoPartida) => e.control ?? e.cfg.jugadores[0]?.id ?? "";
+
+const fisico: Mecanica = {
+  preparar(e, c) {
+    const carta = sacarCarta(e, c, ["competencia"]);
+    return { privado: {}, seleccion: { deltas: {} }, carta: carta && { id: carta.id, texto: carta.texto, tipo: carta.descripcion ?? "" } };
+  },
+  quienes: e => [adminFisico(e)],
+  valida: (_e, _j, v) => v === "listo",
+  puntuar(e) {
+    const d = seleccionFisico(e).deltas;
+    // Los puntos ya se sumaron al darlos. Quien terminó la ronda arriba cuenta como reto cumplido.
+    return { puntos: {}, retos: Object.fromEntries(Object.entries(d).map(([j, x]) => [j, x > 0 ? 1 : 0])), revelado: { deltas: { ...d } } };
+  },
+};
+
+/** Aplica lo que manda el administrador en el juego físico. Devuelve null si no es una jugada física. */
+function jugadaFisico(e: EstadoPartida, jugador: string, valor: unknown, c: Contenido): EstadoPartida | null {
+  if (!conFisico(e) || e.fase !== "contestando" || e.pausada || jugador !== adminFisico(e) || typeof valor !== "object" || !valor) return null;
+  const v = valor as { puntos?: { jugador?: unknown; delta?: unknown }; herramienta?: unknown; segundos?: unknown; otro?: unknown };
+  const s = seleccionFisico(e);
+  if (v.puntos) {
+    const j = v.puntos.jugador, d = v.puntos.delta;
+    if (typeof j !== "string" || !ids(e).includes(j) || !Number.isInteger(d) || d === 0 || Math.abs(d as number) > MAX_DELTA_FISICO) return e;
+    const deltas = { ...s.deltas, [j]: (s.deltas[j] ?? 0) + (d as number) };
+    return { ...e, puntos: { ...e.puntos, [j]: (e.puntos[j] ?? 0) + (d as number) }, seleccion: { ...s, deltas } as unknown as Record<string, unknown>,
+      bitacora: registrar(e, "puntos", j, { delta: d }) };
+  }
+  if (typeof v.herramienta === "string") {
+    const tipo = v.herramienta as HerramientaFisico;
+    if (!HERRAMIENTAS_FISICO.includes(tipo)) return e;
+    const n = (s.herr?.n ?? 0) + 1;
+    const azar = crearAzar(e.semilla * 53 + e.ronda * 977 + n * 7919);
+    const js = ids(e);
+    const herr: SeleccionFisico["herr"] = { tipo, n };
+    if (tipo === "dados") herr.dados = [azar.entero(6) + 1, azar.entero(6) + 1];
+    else if (tipo === "ruleta") herr.jugador = azar.elegir(js);
+    else if (tipo === "carta") herr.carta = { v: 2 + azar.entero(13), p: azar.entero(4) };
+    else if (tipo === "orden") herr.orden = azar.mezclar(js);
+    else {
+      const seg = v.segundos;
+      if (!Number.isInteger(seg) || (seg as number) < 5 || (seg as number) > 300) return e;
+      herr.segundos = seg as number;
+    }
+    return { ...e, seleccion: { ...s, herr } as unknown as Record<string, unknown>, bitacora: registrar(e, "herramienta", jugador, { tipo }) };
+  }
+  if (v.otro === true) {
+    // Otro reto sugerido: se vuelve a sacar con otra semilla; los puntos y la herramienta de la ronda se quedan.
+    // Se intenta hasta 6 veces que salga una distinta a la de la mesa (si el mazo del lugar es chico, puede repetirse).
+    let cambios = e.cambios + 1, carta = sacarCarta({ ...e, cambios }, c, ["competencia"]);
+    for (let t = 0; t < 5 && carta && carta.id === e.carta?.id; t++) carta = sacarCarta({ ...e, cambios: ++cambios }, c, ["competencia"]);
+    return { ...e, cambios, carta: carta && { id: carta.id, texto: carta.texto, tipo: carta.descripcion ?? "" }, bitacora: registrar(e, "otro-reto", jugador) };
+  }
+  return e;
+}
+
 const MECANICAS: Record<Motor, Mecanica> = {
   "turnos-cartas": turnosCartas, votacion, "rol-secreto": rolSecretoClasico, pareja,
-  botella, ruleta, dados, conteo, confesion, senalar, competencia,
+  botella, ruleta, dados, conteo, confesion, senalar, competencia, fisico,
 };
 /** La mecánica que corre esta partida (El impostor tiene dos: clásico y con eliminación). */
 const mecanica = (e: EstadoPartida): Mecanica => (conEliminacion(e) ? impostorEliminacion : conVerdadReto(e) ? verdadRetoNuevo : MECANICAS[e.motor]);
@@ -669,6 +742,11 @@ export function aplicar(e: EstadoPartida, a: Accion, contenido: Contenido): Esta
           const carta = v.fuente === "app" ? cartaVR(e, contenido, e.vr!.eleccion!, e.cambios) : undefined;
           return sube({ ...e, vr: { ...e.vr, fuente: v.fuente }, carta, bitacora: registrar(e, "fuente", a.jugador, { fuente: v.fuente }) });
         }
+      }
+      // Juego físico: puntos, herramientas y otro reto no son la respuesta final («listo» sí).
+      if (conFisico(e) && a.valor !== "listo") {
+        const n = jugadaFisico(e, a.jugador, a.valor, contenido);
+        return !n || n === e ? e : sube(n);
       }
       if (e.pausada) return e;
       if (e.fase !== "contestando" || !m.quienes(e).includes(a.jugador) || a.jugador in e.respuestas) return e;

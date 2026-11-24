@@ -110,7 +110,9 @@ export interface Escenario {
 
 export type Motor =
   | "turnos-cartas" | "votacion" | "rol-secreto" | "pareja"
-  | "botella" | "ruleta" | "dados" | "conteo" | "confesion" | "senalar" | "competencia";
+  | "botella" | "ruleta" | "dados" | "conteo" | "confesion" | "senalar" | "competencia"
+  /** Juego físico (modos de juego, D5 y D6): retos en persona; el administrador da y quita puntos y usa herramientas. */
+  | "fisico";
 
 export interface DefinicionJuego {
   id: string;

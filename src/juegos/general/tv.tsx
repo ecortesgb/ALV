@@ -7,6 +7,7 @@ import type { Miembro } from "../../servicios/enlace";
 import { desenlace, instruccion, nombreDe, nombreJuego, type Publico } from "./texto";
 import { TvImpostor } from "../impostor/tv";
 import { TvVerdadReto } from "../verdadReto/tv";
+import { TvFisico } from "../fisico/tv";
 import { ComoJugar, tocaExplicar } from "./ComoJugar";
 import { CeremoniaCopas, PodioJuego, esFinalDeJuego } from "./Copas";
 
@@ -37,6 +38,7 @@ function Escena({ v, miembros }: { v: Publico; miembros: Miembro[] }) {
 
   if (v.motor === "rol-secreto" && v.impostor) return <TvImpostor v={v} miembros={miembros} />;
   if (v.motor === "turnos-cartas" && v.verdadReto) return <TvVerdadReto v={v} miembros={miembros} />;
+  if (v.motor === "fisico") return <TvFisico v={v} miembros={miembros} />;
   if (v.motor === "rol-secreto") {
     const personas = v.jugadores.map(j => ({
       id: j.id, nombre: j.nombre, figura: <Burbuja p={{ id: j.id, nombre: j.nombre, figura: figuraDe(miembros, j.id), color: colorDe(j.id, v.jugadores.map(x => x.id)) }} tamano={96} />,

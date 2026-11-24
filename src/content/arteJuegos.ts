@@ -37,5 +37,5 @@ export const FONDO_ESCENARIO: Record<string, string> = {
 export const EMOJI_JUEGO: Record<string, string> = {
   bienvenida: "👋", "verdad-reto": "🔥", conoces: "💞", mimica: "🎭", prohibida: "🤐", impostor: "🕵️",
   "reto-lugar": "🏅", lista: "⚡", reloj: "🍾", "yo-nunca": "🙊", "mas-probable": "👉", "que-prefieres": "🤔",
-  ruleta: "🎡", "dados-hot": "🎲",
+  ruleta: "🎡", "dados-hot": "🎲", fisico: "💪",
 };

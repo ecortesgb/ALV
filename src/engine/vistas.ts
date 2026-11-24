@@ -49,6 +49,8 @@ export interface VistaPublica {
   impostor?: { total: number; eliminados: string[]; etapa: "pistas" | "votar"; orden: string[] };
   /** El anfitrión pidió explicar las reglas («Cómo jugar») antes de la primera ronda. */
   explicar?: boolean;
+  /** Segundos por turno, si el anfitrión eligió temporizador. */
+  temporizador?: number;
   /** Verdad o reto nuevo: quién pregunta y quién responde, en qué etapa va, qué se eligió y quién ya usó su Verdad.
    * Lo que sacó cada quien con los dados o las cartas de póker va en `seleccion` (es público). */
   verdadReto?: {
@@ -89,6 +91,8 @@ export function vistaPublica(e: EstadoPartida): VistaPublica {
     ...(e.cfg.escenario ? { escenario: e.cfg.escenario } : {}),
     ...(e.cfg.modalidad ? { modalidad: e.cfg.modalidad } : {}),
     ...(e.cfg.explicar ? { explicar: true } : {}),
+    // Temporizador por turno: solo en partidas que lo eligieron (las guardadas antes salen igual).
+    ...(e.cfg.temporizador ? { temporizador: e.cfg.temporizador } : {}),
     ...(conVerdadReto(e) ? { verdadReto: {
       herramienta: seleccionVR(e).herramienta, pregunta: seleccionVR(e).pregunta, responde: seleccionVR(e).responde, etapa: etapaVR(e),
       ...(e.vr?.eleccion ? { eleccion: e.vr.eleccion } : {}), ...(e.vr?.fuente ? { fuente: e.vr.fuente } : {}), verdadUsada: [...(e.verdadUsada ?? [])],

@@ -33,6 +33,13 @@
 .D .cj-ilus { position: relative; min-height: 0; height: 100%; max-height: 62vh; border-radius: 22px; overflow: hidden; background: #0b1236;
   border: 1px solid rgba(255, 255, 255, .22); box-shadow: 0 16px 36px rgba(0, 0, 0, .5), 0 0 40px color-mix(in srgb, var(--tc, #2ee6d6) 18%, transparent); }
 .D .cj-ilus img { width: 100%; height: 100%; object-fit: cover; object-position: center bottom; display: block; }
+/* Tarjeta de herramienta: el icono 3D al centro sobre un resplandor turquesa (no se recorta). */
+.D .cj-ilus.cj-herramienta { display: grid; place-items: center; background: radial-gradient(60% 55% at 50% 50%, rgba(46, 230, 214, .32), transparent 70%), #0b1236; }
+.D .cj-ilus.cj-herramienta img.cj-propia { width: 62%; height: auto; max-height: 82%; aspect-ratio: 1; object-fit: contain; object-position: center;
+  filter: drop-shadow(0 14px 22px rgba(0, 0, 0, .45)); animation: cjFlota 3.2s ease-in-out infinite; }
+@keyframes cjFlota { 50% { translate: 0 -8px; } }
+.D .cj-ilus.cj-escenario img.cj-propia { object-position: center; }
+@media (prefers-reduced-motion: reduce) { .D .cj-ilus.cj-herramienta img.cj-propia { animation: none; } }
 .D .cj-ilus .cfg-sinarte { display: grid; place-items: center; width: 100%; height: 100%;
   background: radial-gradient(circle at 50% 40%, rgba(46, 230, 214, .22), transparent 60%), linear-gradient(180deg, #1a2566, #0b1236); }
 .D .cj-ilus .cfg-sinarte img { width: 34%; height: auto; aspect-ratio: 1; object-fit: contain; opacity: .85; }

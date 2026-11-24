@@ -39,7 +39,14 @@ export function instruccion(v: Publico): string {
     case "confesion": return "Yo nunca… ¿o sí? Contesten en su celular";
     case "senalar": return "Señalen a alguien en su celular";
     case "competencia": return "Compitan. El anfitrión marca quién ganó";
+    case "fisico": return "Hagan el reto en persona. El administrador da los puntos";
   }
+}
+
+/** Juego físico: «+2 Ana · −1 Beto» con lo que se dio en la ronda (lo más alto primero). */
+export function resumenDeltas(v: Publico, deltas: Record<string, number> | undefined): string {
+  const xs = Object.entries(deltas ?? {}).filter(([, d]) => d !== 0).sort((a, b) => b[1] - a[1]);
+  return xs.map(([j, d]) => `${d > 0 ? "+" : "−"}${Math.abs(d)} ${nombreDe(v, j)}`).join("  ·  ");
 }
 
 /** Lo que pasó en la ronda, ya revelada. Titular y detalle. */
@@ -76,6 +83,10 @@ export function desenlace(v: Publico): { titular: string; detalle?: string } {
     }
     case "senalar": return { titular: lista(((r.elegidos ?? []) as string[]).map(j => nombreDe(v, j))), detalle: "La mesa los señaló" };
     case "competencia": return { titular: `¡Ganó ${nombreDe(v, r.ganador as string)}!`, detalle: "+3 puntos" };
+    case "fisico": {
+      const txt = resumenDeltas(v, r.deltas as Record<string, number> | undefined);
+      return txt ? { titular: "¡Ronda terminada!", detalle: txt } : { titular: "Ronda terminada", detalle: "Nadie sumó ni perdió puntos." };
+    }
   }
 }
 

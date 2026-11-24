@@ -1,0 +1,106 @@
+/* Juego físico: vidrio oscuro con borde de luz, oro y turquesa (como el resto de la partida). */
+.D .fi { display: flex; flex-direction: column; gap: 12px; min-width: 0; color: #fff; font-family: var(--f-texto); }
+.D .fi-cel { padding: 14px; border-radius: 20px; background: rgba(10, 16, 48, .72); border: 1px solid rgba(255, 255, 255, .16);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .14), 0 12px 28px rgba(4, 8, 30, .45); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
+.D .fi-kick { font: 800 12.5px/1.25 var(--f-texto); letter-spacing: .08em; text-transform: uppercase; color: #6ff3e6; }
+.D .fi-titular { font: 400 26px/1.1 var(--f-titulo); color: #ffe14a; text-shadow: 0 2px 0 rgba(0, 0, 0, .45); }
+.D .fi-detalle { margin: 0; font: 700 16px/1.4 var(--f-texto); }
+.D .fi-nota { margin: 0; font: 600 14px/1.4 var(--f-texto); color: rgba(255, 255, 255, .78); }
+
+/* Reto sugerido */
+.D .fi-reto { position: relative; display: flex; flex-direction: column; gap: 6px; padding: 14px 16px; border-radius: 16px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, .09), rgba(255, 255, 255, .03)); border: 1px solid rgba(255, 210, 120, .4); }
+.D .fi-reto-t { font: 400 24px/1.1 var(--f-titulo); color: #ffe14a; text-shadow: 0 2px 0 rgba(0, 0, 0, .4); overflow-wrap: anywhere; }
+.D .fi-reto p { margin: 0; font: 600 16px/1.4 var(--f-texto); color: rgba(255, 255, 255, .9); overflow-wrap: anywhere; }
+.D .fi-reto .fi-chip { align-self: flex-start; }
+.D .fi-reto.grande { padding: 1.2em 1.4em; border-radius: 1.2em; max-width: 34em; }
+.D .fi-reto.grande .fi-reto-t { font-size: clamp(30px, 3vw, 56px); }
+.D .fi-reto.grande p { font-size: clamp(18px, 1.7vw, 30px); }
+.D .fi-chip { min-height: 36px; padding: 0 14px; border-radius: 999px; cursor: pointer; color: #062a28; font: 800 13.5px/1 var(--f-texto);
+  border: 1px solid rgba(160, 255, 245, .8); background: linear-gradient(180deg, #4ff3e4, #12b5a8); }
+.D .fi-chip:active { transform: scale(.96); }
+
+/* Herramientas del administrador */
+.D .fi-herrs { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.D .fi-herr { display: flex; flex-direction: column; align-items: center; gap: 4px; min-height: 76px; padding: 8px 4px; border-radius: 14px; cursor: pointer; color: #fff;
+  font: 800 12.5px/1.1 var(--f-texto); border: 1px solid rgba(255, 255, 255, .16); background: rgba(255, 255, 255, .06); transition: transform .15s, border-color .15s; }
+.D .fi-herr:active { transform: scale(.95); }
+.D button.fi-herr:hover { border-color: rgba(120, 255, 240, .7); }
+.D .fi-herr-ico { width: 40px; height: 40px; object-fit: contain; filter: drop-shadow(0 4px 6px rgba(0, 0, 0, .4)); }
+.D .fi-herr-crono { grid-column: 1 / -1; flex-direction: row; justify-content: center; gap: 10px; min-height: 0; cursor: default; }
+.D .fi-crono-ops { display: flex; gap: 6px; flex-wrap: wrap; }
+.D .fi-crono-ops button { min-height: 36px; padding: 0 12px; border-radius: 999px; cursor: pointer; color: #3a2200; font: 800 13px/1 var(--f-texto);
+  border: 1px solid rgba(255, 240, 180, .85); background: linear-gradient(180deg, #ffe680, #ffb000); }
+
+/* Resultado de la herramienta */
+.D .fi-res { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 12px; border-radius: 16px; text-align: center;
+  background: radial-gradient(70% 80% at 50% 40%, rgba(46, 230, 214, .18), transparent 75%), rgba(255, 255, 255, .04); border: 1px solid rgba(46, 230, 214, .35);
+  animation: fiEntra .35s cubic-bezier(.2, .8, .2, 1) backwards; }
+@keyframes fiEntra { from { opacity: 0; scale: .9; } }
+.D .fi-res-t { display: inline-flex; align-items: center; gap: 6px; font: 800 12.5px/1 var(--f-texto); letter-spacing: .08em; text-transform: uppercase; color: #6ff3e6; }
+.D .fi-res-ico { width: 24px; height: 24px; object-fit: contain; }
+.D .fi-dados { display: flex; align-items: center; gap: .2em; font-size: 56px; line-height: 1; }
+.D .fi-dados span { filter: drop-shadow(0 4px 6px rgba(0, 0, 0, .5)); }
+.D .fi-suma { margin-left: .2em; font: 400 .6em/1 var(--f-titulo); color: #ffe14a; }
+.D .fi-ruleta { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.D .fi-ruleta b { font: 400 22px/1 var(--f-titulo); color: var(--pj-claro, #fff); }
+.D .fi-naipe { display: grid; place-items: center; width: 72px; height: 100px; border-radius: 10px; color: #14182e; background: #fff;
+  box-shadow: 0 8px 18px rgba(0, 0, 0, .4); font: 400 34px/1 var(--f-titulo); }
+.D .fi-naipe span { font-size: 28px; }
+.D .fi-naipe.rojo { color: #d6213a; }
+.D .fi-orden { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.D .fi-orden li { display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px 5px 5px; border-radius: 999px; font: 800 14px/1 var(--f-texto);
+  background: rgba(255, 255, 255, .08); border: 1px solid var(--pj, rgba(255, 255, 255, .3)); }
+.D .fi-orden i { display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; font-style: normal; color: var(--pj-texto, #fff); background: var(--pj, #444); }
+.D .fi-crono { display: flex; flex-direction: column; align-items: center; gap: 8px; width: min(100%, 260px); }
+.D .fi-crono b { font: 400 48px/1 var(--f-titulo); color: #fff; font-variant-numeric: tabular-nums; }
+.D .fi-crono.ya b { color: #ffb000; }
+.D .fi-crono.fin b { color: #ff6b5f; animation: fiLatido .6s ease-in-out 3; }
+@keyframes fiLatido { 50% { scale: 1.12; } }
+.D .fi-crono-barra { width: 100%; height: 8px; border-radius: 999px; background: linear-gradient(90deg, #4ff3e4 var(--p), rgba(255, 255, 255, .12) var(--p)); }
+.D .fi-res.grande { padding: 1em 1.4em; border-radius: 1.2em; }
+.D .fi-res.grande .fi-dados { font-size: clamp(64px, 7vw, 120px); }
+.D .fi-res.grande .fi-naipe { width: 1.9em; height: 2.6em; font-size: clamp(40px, 4vw, 64px); }
+.D .fi-res.grande .fi-crono b { font-size: clamp(56px, 6vw, 110px); }
+.D .fi-res.grande .fi-orden li { font-size: clamp(16px, 1.5vw, 24px); }
+
+/* Puntos por jugador */
+.D .fi-lista { display: flex; flex-direction: column; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.D .fi-fila { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 10px; padding: 6px 8px; border-radius: 14px;
+  background: rgba(255, 255, 255, .05); border: 1px solid rgba(255, 255, 255, .12); border-left: 4px solid var(--pj, #888); }
+.D .fi-nom { display: flex; flex-direction: column; gap: 2px; min-width: 0; font: 800 15px/1.15 var(--f-texto); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.D .fi-nom small { font: 700 12.5px/1 var(--f-texto); color: rgba(255, 255, 255, .72); }
+.D .fi .sube { font-style: normal; color: #6dffa0; }
+.D .fi .baja { font-style: normal; color: #ff8a80; }
+.D .fi-pasos { display: flex; gap: 4px; }
+.D .fi-paso { min-width: 40px; height: 40px; border-radius: 12px; cursor: pointer; color: #062a28; font: 400 17px/1 var(--f-titulo);
+  border: 1px solid rgba(160, 255, 245, .8); background: linear-gradient(180deg, #4ff3e4, #12b5a8); }
+.D .fi-paso.menos { color: #fff; border-color: rgba(255, 150, 140, .7); background: linear-gradient(180deg, #ff7b6e, #c9362b); }
+.D .fi-paso:active { transform: scale(.92); }
+.D .fi-grupo { display: flex; flex-direction: column; gap: 6px; padding: 8px; border-radius: 16px; background: rgba(255, 255, 255, .03); border: 1px solid rgba(255, 255, 255, .1); }
+.D .fi-grupo-cab { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.D .fi-grupo-cab b { font: 400 18px/1 var(--f-titulo); color: #ffe14a; }
+.D .fi-grupo-cab span { font: 800 13px/1 var(--f-texto); color: rgba(255, 255, 255, .75); }
+.D .fi-grupo-cab .fi-chip { margin-left: auto; }
+
+.D .fi-terminar { display: flex; flex-direction: column; align-items: center; gap: 4px; min-height: 60px; padding: 10px 16px; border-radius: 16px; cursor: pointer; color: #3a2200;
+  border: 1px solid rgba(255, 240, 180, .85); background: linear-gradient(180deg, #ffe680, #ffb000 60%, #f09a00); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .7), 0 10px 24px rgba(255, 176, 0, .3); }
+.D .fi-terminar b { font: 400 22px/1 var(--f-titulo); text-transform: uppercase; }
+.D .fi-terminar small { font: 700 13px/1.25 var(--f-texto); color: #5c3800; text-align: center; overflow-wrap: anywhere; }
+.D .fi-terminar:disabled { opacity: .6; cursor: wait; }
+
+/* Mis puntos (jugadores) */
+.D .fi-mio { display: flex; align-items: baseline; justify-content: center; gap: 10px; flex-wrap: wrap; padding: 10px; border-radius: 14px; background: rgba(255, 255, 255, .05); }
+.D .fi-mio span { font: 800 13px/1 var(--f-texto); color: rgba(255, 255, 255, .75); text-transform: uppercase; letter-spacing: .06em; }
+.D .fi-mio b { font: 400 34px/1 var(--f-titulo); color: #ffe14a; }
+
+/* TV */
+.D .fi-tv { align-items: center; gap: 1.2em; width: 100%; }
+.D .fi-tv-centro { display: flex; align-items: center; justify-content: center; gap: 2em; flex-wrap: wrap; width: 100%; }
+.D .fi-tv-ronda { margin: 0; padding: .5em 1.2em; border-radius: 999px; font: 800 clamp(16px, 1.6vw, 26px)/1.2 var(--f-texto); background: rgba(10, 16, 48, .7); border: 1px solid rgba(255, 255, 255, .16); }
+
+@media (max-width: 360px) {
+  .D .fi-herrs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .D .fi-paso { min-width: 34px; height: 36px; font-size: 15px; }
+}
+@media (prefers-reduced-motion: reduce) { .D .fi-res, .D .fi-crono.fin b { animation: none; } }

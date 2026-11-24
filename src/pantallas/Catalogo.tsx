@@ -11,7 +11,7 @@ export const FILAS: { id: string; nombre: string; color: string; juegos: string[
   { id: "miente", nombre: "¿Quién miente?", color: "var(--fila-miente)", juegos: ["impostor", "mas-probable"] },
   { id: "secretos", nombre: "Para soltar secretos", color: "var(--fila-secretos)", juegos: ["verdad-reto", "yo-nunca", "reloj"] },
   { id: "reir", nombre: "Para reír", color: "var(--fila-reir)", juegos: ["mimica", "prohibida", "ruleta"] },
-  { id: "competir", nombre: "A competir", color: "var(--fila-competir)", juegos: ["reto-lugar"] },
+  { id: "competir", nombre: "A competir", color: "var(--fila-competir)", juegos: ["reto-lugar", "fisico"] },
   { id: "pareja", nombre: "En pareja", color: "var(--fila-pareja)", juegos: ["conoces", "dados-hot"] },
 ];
 export const NIVELES = ["", "Tranquilo", "Picante", "Sin filtro", "Salvaje"] as const;

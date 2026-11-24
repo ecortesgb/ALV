@@ -54,9 +54,12 @@ describe("equivalencia con el motor anterior: El impostor, 4 jugadores, semilla 
 
 describe("equivalencia del arranque en cada juego con motor (semilla 4242, 4 jugadores, 5 rondas)", () => {
   const cfg4 = { ...CFG, jugadores: [A, B, C, D].map((id, i) => ({ id, nombre: `J${i}` })) };
-  const conMotor = JUEGOS.filter(j => j.motor);
-  it("son los mismos juegos que en la referencia", () => {
+  // Juegos agregados después de la referencia: no existían en el motor anterior, así que no tienen con qué compararse.
+  const NUEVOS = ["fisico"];
+  const conMotor = JUEGOS.filter(j => j.motor && !NUEVOS.includes(j.id));
+  it("son los mismos juegos que en la referencia (más los nuevos declarados)", () => {
     expect(conMotor.map(j => j.id).sort()).toEqual(Object.keys(golden.juegos).sort());
+    for (const id of NUEVOS) expect(JUEGOS.find(j => j.id === id)?.motor, id).toBeTruthy();
   });
   for (const j of conMotor) {
     it(j.id, () => {

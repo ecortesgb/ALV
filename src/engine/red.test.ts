@@ -1,4 +1,4 @@
-// Red de seguridad de la Fase 6 (Maestro §22.1): los 14 juegos completos, la repetición con semilla
+// Red de seguridad de la Fase 6 (Maestro §22.1): los 15 juegos completos, la repetición con semilla
 // y acciones, y el secreto (la vista pública nunca trae lo privado).
 import { describe, expect, it } from "vitest";
 import { CONTENIDO } from "../content";
@@ -34,6 +34,7 @@ function respuesta(e: EstadoPartida, j: string): unknown {
     case "confesion": return j === "j1" ? "no" : "si";
     case "senalar": return "j2";
     case "competencia": return "j1";
+    case "fisico": return "listo"; // solo cuenta la del administrador (j0)
   }
 }
 
@@ -51,6 +52,8 @@ function jugar(juego: DefinicionJuego, semilla: number) {
   const manda = (a: Accion) => { acciones.push(a); e = aplicar(e, a, contenido); estados.push(e); };
   let vueltas = 0;
   while (e.fase !== "terminada" && vueltas++ < 50) {
+    // Juego físico: el administrador da un punto antes de cerrar la ronda.
+    if (e.motor === "fisico") manda({ id: `${juego.id}-${++n}`, tipo: "contestar", jugador: "j0", valor: { puntos: { jugador: "j1", delta: 1 } } });
     for (const j of e.cfg.jugadores) manda({ id: `${juego.id}-${++n}`, tipo: "contestar", jugador: j.id, valor: respuesta(e, j.id) });
     manda({ id: `${juego.id}-${++n}`, tipo: "revelar" });
     manda({ id: `${juego.id}-${++n}`, tipo: "siguiente" });
@@ -58,9 +61,9 @@ function jugar(juego: DefinicionJuego, semilla: number) {
   return { inicial, final: e, acciones, estados };
 }
 
-describe("Los 14 juegos completos", () => {
-  it("hay 14 juegos que corren en el motor", () => {
-    expect(JUGABLES).toHaveLength(14);
+describe("Los 15 juegos completos", () => {
+  it("hay 15 juegos que corren en el motor", () => {
+    expect(JUGABLES).toHaveLength(15);
   });
   for (const juego of JUGABLES) {
     it(`${juego.nombre}: de crear a terminar, con puntos y XP`, () => {

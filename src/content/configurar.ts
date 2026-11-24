@@ -62,7 +62,12 @@ export const MODALIDADES_JUEGO: Record<string, Modalidad[]> = {
   bienvenida: TODAS,
   lista: TODAS,
   "reto-lugar": TODAS,
+  // Modo Físico (D6): puntos por jugador, pareja, equipo o bando según el modo de juego.
+  fisico: TODAS,
 };
+
+/** Juegos que se sugieren primero al entrar por el modo Físico (Modos de juego). */
+export const JUEGOS_FISICO = ["fisico", "reto-lugar"];
 
 /** ¿Se puede jugar este juego con esta modalidad? */
 export const admite = (juego: string, modalidad: Modalidad) => (MODALIDADES_JUEGO[juego] ?? []).includes(modalidad);

@@ -6,9 +6,10 @@
 // `PaginaConfigurar` (#/configurar/código) la envuelve: arranca la partida en la sala y regresa a ella.
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { CONTENIDO } from "../content";
+import { tarjetasInicio } from "../content/comoJugar";
 import { EJE_DE_MAZO, ESCENARIOS, JUEGOS, NIVELES_EJE } from "../content/catalogo";
 import { ARTE_ESCENARIOS, ARTE_JUEGOS, ARTE_TIPOS } from "../content/arteJuegos";
-import { INSTRUMENTOS, MODALIDADES, MODALIDADES_JUEGO, admite } from "../content/configurar";
+import { INSTRUMENTOS, JUEGOS_FISICO, MODALIDADES, MODALIDADES_JUEGO, admite } from "../content/configurar";
 import { GRUPOS_EQUIPOS, GRUPOS_SEXOS, JUEGOS_CON_TEMPORIZADOR, armarArranque, armarGrupos, conParejas, intensidadVieja } from "../engine/nucleo";
 import { adultoPorEjes, cartasPermitidas } from "../engine/filtros";
 import { maxImpostores } from "../engine/partida";
@@ -23,6 +24,9 @@ import { sonar } from "../app/sonido";
 import type { FiguraV2 } from "../content/personaje";
 import { entregarCopas, iniciarPartida } from "../roles/pantalla/motor";
 import { useSala } from "../roles/sala";
+import { usePuedeAbrir } from "../app/lobby";
+import { esLocal, modoLocal } from "../servicios/enlace";
+import { guardarPartidaPredeterminada, leerPartidaPredeterminada } from "../servicios/partidaPredeterminada";
 import { FILAS, Reglas, candado, colorDe, duracion, gente } from "./Catalogo";
 import { SeccionIntensidad, ejesDeJuego, nivelMinimo, type ValorIntensidad } from "./Intensidad";
 import { ArteCfg, CartaEscenario, CartaJuego, CartaTipo, SinArte, srcArte } from "./TarjetasConfig";
@@ -130,6 +134,15 @@ const ICONO_SECCION: Record<string, string | undefined> = {
   opciones: arteHub("ajustes"), escenario: undefined, resumen: LOBBY("ico-listo"),
 };
 
+/** Herramientas del juego físico (se usan durante la partida; aquí solo se presentan). */
+const HERRAMIENTAS_FISICO_CFG = [
+  { id: "dados", nombre: "Dados", detalle: "Dos dados con su suma.", icono: "herr-dados" },
+  { id: "ruleta", nombre: "Ruleta", detalle: "Elige a alguien al azar.", icono: "herr-ruleta" },
+  { id: "carta", nombre: "Carta", detalle: "Saca un naipe de póker.", icono: "herr-poker" },
+  { id: "orden", nombre: "Orden", detalle: "Revuelve quién va primero.", icono: "herr-orden" },
+  { id: "cronometro", nombre: "Cronómetro", detalle: "30 s, 1 min o 2 min.", icono: "herr-tiempo" },
+];
+
 /** Equipos por orden de llegada: A, B, A, B… */
 const repartir = (ids: string[], cuantos: number) => Object.fromEntries(ids.map((id, i) => [id, GRUPOS_EQUIPOS[i % cuantos]!.id]));
 
@@ -140,7 +153,21 @@ function ArteJuego({ id, className = "" }: { id: string; className?: string }) {
     : <SinArte className={className} />;
 }
 
-export function ConfigurarPartida({ miembros, alIniciar, alCancelar, iniciando, inicial, alEntregarCopas, alFondo, generos }: {
+/** ¿Dos configuraciones son la misma partida? (para saber si lo que se ve ya es la predeterminada). */
+export function mismaPartida(a: PartidaConfigurada, b: PartidaConfigurada | null | undefined): boolean {
+  if (!b) return false;
+  const o = (c: PartidaConfigurada) => JSON.stringify([c.juego, c.rondas, c.ejes.temperatura, c.ejes.voltaje, c.ejes.drunk, c.opciones.modalidad ?? "individual",
+    c.opciones.escenario ?? null, c.opciones.temporizador ?? null, !!c.opciones.explicar, c.opciones.herramienta ?? null, c.opciones.impostor ?? null]);
+  return o(a) === o(b);
+}
+
+export function ConfigurarPartida({ miembros, alIniciar, alCancelar, iniciando, inicial, abrirEnResumen = true, predeterminada, modoFisico, alEntregarCopas, alFondo, generos }: {
+  /** Se entró por «Juego físico» en Modos de juego: arranca con ese juego y la categoría de competencias. */
+  modoFisico?: boolean;
+  /** Con `inicial`: abrir directo en el resumen (si no, en el paso 1 con lo de `inicial` ya marcado). */
+  abrirEnResumen?: boolean;
+  /** Solo administrador: la partida predeterminada guardada en su cuenta y cómo guardarla o quitarla. */
+  predeterminada?: { actual: PartidaConfigurada | null; alGuardar: (c: PartidaConfigurada) => void; alQuitar: () => void; guardando?: boolean };
   miembros: MiembroConfig[];
   /** Género de cada quien (para ALVersus). undefined mientras se lee; sin nube, {}. */
   generos?: Record<string, Genero>;
@@ -157,7 +184,7 @@ export function ConfigurarPartida({ miembros, alIniciar, alCancelar, iniciando, 
   const n = miembros.length;
   const r = useRecursos();
   const ids = useMemo(() => miembros.map(m => m.id), [miembros]);
-  const [sec, setSec] = useState<Seccion>(inicial ? "resumen" : "tipo");
+  const [sec, setSec] = useState<Seccion>(inicial && abrirEnResumen ? "resumen" : "tipo");
   // Si se entró a una sección desde el resumen, «Listo» regresa al resumen.
   const [desdeResumen, setDesdeResumen] = useState(false);
   const cuerpo = useRef<HTMLDivElement>(null);
@@ -165,15 +192,17 @@ export function ConfigurarPartida({ miembros, alIniciar, alCancelar, iniciando, 
   const [tipo, setTipo] = useState<Modalidad>(inicial?.opciones.modalidad ?? "individual");
   const [cuantosEquipos, setCuantosEquipos] = useState(2);
   const [grupos, setGrupos] = useState<Record<string, string>>(inicial?.opciones.grupos ?? {});
-  const [juego, setJuego] = useState(inicial?.juego ?? "impostor");
+  const [juego, setJuego] = useState(inicial?.juego ?? (modoFisico ? JUEGOS_FISICO[0]! : "impostor"));
   const [ejes, setEjes] = useState<ValorIntensidad>(inicial?.ejes ?? EJES_INICIALES);
   const adulto = adultoPorEjes(ejes);
   const [rondas, setRondas] = useState(inicial?.rondas ?? 8);
-  const [instrumento, setInstrumento] = useState<string | undefined>(undefined);
+  // Con `inicial`, el instrumento que corresponde a su herramienta o turno.
+  const [instrumento, setInstrumento] = useState<string | undefined>(() => (INSTRUMENTOS[inicial?.juego ?? ""] ?? [])
+    .find(x => (inicial?.opciones.herramienta && x.herramienta === inicial.opciones.herramienta) || (inicial?.opciones.turno && x.turno === inicial.opciones.turno))?.id);
   const [impostores, setImpostores] = useState(inicial?.opciones.impostor?.cantidad ?? 1);
   const [tema, setTema] = useState<string | null>(inicial?.opciones.impostor?.tema ?? null);
   const [escenario, setEscenario] = useState<EscenarioId | undefined>(inicial?.opciones.escenario);
-  const [filtro, setFiltro] = useState("todos");
+  const [filtro, setFiltro] = useState(() => (modoFisico ? FILAS.find(f => f.juegos.includes(JUEGOS_FISICO[0]!))?.id ?? "todos" : "todos"));
   // En la sección «Escenario» la página toma el fondo del escenario elegido.
   useEffect(() => { alFondo?.(sec === "escenario" ? escenario ?? null : undefined); }, [sec, escenario, alFondo]);
   // Temporizador por turno (herramienta opcional, 6A.11 C6). null: sin tiempo.
@@ -181,7 +210,7 @@ export function ConfigurarPartida({ miembros, alIniciar, alCancelar, iniciando, 
   const conTemporizador = JUEGOS_CON_TEMPORIZADOR.includes(juego);
   const [verReglas, setVerReglas] = useState(false);
   // «Cómo jugar»: se propone explicar si en este aparato nunca se ha jugado ese juego; el anfitrión puede omitirlo.
-  const [explicar, setExplicar] = useState<boolean | null>(null);
+  const [explicar, setExplicar] = useState<boolean | null>(inicial ? !!inicial.opciones.explicar : null);
   const explicarFinal = explicar ?? !yaJugado(juego);
   const j = defJuego(juego);
   const instrumentos = INSTRUMENTOS[juego] ?? [];
@@ -247,14 +276,14 @@ export function ConfigurarPartida({ miembros, alIniciar, alCancelar, iniciando, 
   const color = (id: string) => colorJugador(ids.indexOf(id));
 
   const TITULO: Record<Seccion, string> = {
-    tipo: "Tipo de partida", grupos: tipo === "sexos" ? "Ellas y ellos" : tipo === "parejas" ? "Arma las parejas" : "Arma los equipos", juego: "Elige el juego",
-    intensidad: "Intensidad", opciones: esImpostor(j) ? "Opciones del juego" : "Herramienta", escenario: "Escenario", resumen: "¡Todo listo!",
+    tipo: "Modo de juego", grupos: tipo === "sexos" ? "Ellas y ellos" : tipo === "parejas" ? "Arma las parejas" : "Arma los equipos", juego: "Tipo de juego",
+    intensidad: "Intensidad", opciones: esImpostor(j) ? "Opciones del juego" : "Herramientas", escenario: "Escenario", resumen: "¡Todo listo!",
   };
 
   let contenido: ReactNode;
   if (sec === "tipo") {
     contenido = (
-      <div className="cfg-tipos" role="radiogroup" aria-label="Tipo de partida">
+      <div className="cfg-tipos" role="radiogroup" aria-label="Modo de juego">
         {MODALIDADES.map((m, i) => <CartaTipo key={m.id} id={m.id} indice={i} nombre={m.nombre} texto={m.gana} elegida={tipo === m.id} bloqueada={candadoTipo(m.id, n)} onClick={() => setTipo(m.id)} />)}
       </div>
     );
@@ -374,7 +403,17 @@ export function ConfigurarPartida({ miembros, alIniciar, alCancelar, iniciando, 
               <p className="a-nota">{temporizador ? `Cada turno dura ${temporizador} s; si se acaba, el turno pasa al siguiente.` : "Sin tiempo por turno: si alguien tarda, el anfitrión decide esperar o seguir."}</p>
             </section>}
           </> : <>
-            <section className="a-pila"><span className="cfg-sub dsp ol">¿Con qué se juega?</span>
+            {j?.motor === "fisico" ? <section className="a-pila"><span className="cfg-sub dsp ol">Herramientas en tu celular</span>
+              <div className="cfg-temas grandes">
+                {HERRAMIENTAS_FISICO_CFG.map(x => (
+                  <div key={x.id} className="cfg-tema">
+                    <ArteCfg nombre={x.icono} className="cfg-tema-ico" />
+                    <span><b className="dsp">{x.nombre}</b><small>{x.detalle}</small></span>
+                  </div>
+                ))}
+              </div>
+              <p className="a-nota">Durante la partida tú das o quitas puntos y usas estas herramientas cuando quieras; todos ven lo que sale.</p>
+            </section> : instrumentos.length > 0 && <section className="a-pila"><span className="cfg-sub dsp ol">¿Con qué se juega?</span>
               <div className="cfg-temas grandes">
                 {instrumentos.map(x => (
                   <button key={x.id} type="button" className={"cfg-tema" + (inst?.id === x.id ? " on" : "")} aria-pressed={inst?.id === x.id} onClick={() => setInstrumento(x.id)}>
@@ -383,7 +422,7 @@ export function ConfigurarPartida({ miembros, alIniciar, alCancelar, iniciando, 
                   </button>
                 ))}
               </div>
-            </section>
+            </section>}
             {conTemporizador && <section className="a-pila"><span className="cfg-sub dsp ol"><ArteCfg nombre="herr-tiempo" className="cfg-sub-ico" />Temporizador</span>
               <div className="a-fila a-envuelve">{[null, 20, 30, 60, 90].map(x => (
                 <button key={x ?? 0} type="button" className={"cfg-tiempo" + (temporizador === x ? " on" : "")} aria-pressed={temporizador === x} onClick={() => setTemporizador(x)}>{x ? `${x} s` : "Sin tiempo"}</button>
@@ -409,10 +448,11 @@ export function ConfigurarPartida({ miembros, alIniciar, alCancelar, iniciando, 
   } else {
     const m = MODALIDADES.find(x => x.id === tipo)!;
     const esc = ESCENARIOS.find(e => e.id === escenario);
+    const tarjetas = tarjetasInicio({ juegoId: juego, modalidad: tipo, explicar: true, herramienta: inst?.herramienta, temporizador: temporizador && conTemporizador ? temporizador : undefined, escenario }).length;
     contenido = (
       <div className="cfg-resumen">
         <div className="cfg-tablero">
-          <Casilla titulo="Tipo" valor={m.nombre} detalle={conGrupos ? (gruposOk ? "Equipos listos" : "Falta armar equipos") : m.gana} img={srcArte(ARTE_TIPOS[tipo])} alTocar={() => editar("tipo")} />
+          <Casilla titulo="Modo" valor={m.nombre} detalle={conGrupos ? (gruposOk ? "Equipos listos" : "Falta armar equipos") : m.gana} img={srcArte(ARTE_TIPOS[tipo])} alTocar={() => editar("tipo")} />
           <Casilla titulo="Juego" valor={j?.nombre ?? "—"} detalle={j ? `${gente(j)} jugadores` : undefined} arte={<ArteJuego id={juego} />} alTocar={() => editar("juego")} ancha />
           <Casilla titulo="Nivel" valor={ejesDeJuego(juego).map(x => NIVELES_EJE[x][ejes[x]]).join(" · ") || "Sin nivel"}
             detalle={(ejes.drunk ? "Drunk encendido" : "Drunk apagado") + (cuenta && ejesDeJuego(juego).length ? ` · ${[ejesDeJuego(juego).includes("temperatura") ? `${cuenta.preguntas} preguntas` : "", ejesDeJuego(juego).includes("voltaje") ? `${cuenta.retos} retos` : ""].filter(Boolean).join(" y ")}` : "")}
@@ -422,18 +462,27 @@ export function ConfigurarPartida({ miembros, alIniciar, alCancelar, iniciando, 
             ico={<ArteCfg nombre={esImpostor(j) ? "sec-herramienta" : `herr-${inst?.id ?? "cartas"}`} alterno={arteHub("ajustes")} />} alTocar={() => editar("opciones")} />
           <Casilla titulo="Escenario" valor={esc ? esc.nombre : "Ciudad ALV"} detalle={esc ? esc.ambientacion : "Sin escenario"} img={ARTE_ESCENARIOS[escenario ?? "ciudad"] ? srcArte(ARTE_ESCENARIOS[escenario ?? "ciudad"]!) : undefined} alTocar={() => editar("escenario")} />
           <div className="cfg-casilla cfg-reglas">
-            <span className="cfg-casilla-t dsp">Cómo jugar</span>
-            <div className="cfg-reglas-opc" role="radiogroup" aria-label="Explicar las reglas">
-              <button type="button" role="radio" aria-checked={explicarFinal} className={explicarFinal ? "on" : ""} onClick={() => setExplicar(true)}><ArteCfg nombre="explicar" />Explicar</button>
+            <span className="cfg-casilla-t dsp">Tarjetas al iniciar</span>
+            <div className="cfg-reglas-opc" role="radiogroup" aria-label="Tarjetas al iniciar">
+              <button type="button" role="radio" aria-checked={explicarFinal} className={explicarFinal ? "on" : ""} onClick={() => setExplicar(true)}><ArteCfg nombre="explicar" />Mostrar</button>
               <button type="button" role="radio" aria-checked={!explicarFinal} className={!explicarFinal ? "on" : ""} onClick={() => setExplicar(false)}><ArteCfg nombre="omitir" />Omitir</button>
             </div>
-            <small>{yaJugado(juego) ? "Ya lo jugaron en este aparato." : "Primera vez con este juego: se recomienda explicar."}</small>
+            <small>{tarjetas} {tarjetas === 1 ? "tarjeta" : "tarjetas"}: {[ "cómo se juega", inst?.herramienta || (temporizador && conTemporizador) ? "herramientas" : "", escenario ? "escenario" : ""].filter(Boolean).join(", ")}. {yaJugado(juego) ? "Ya lo jugaron en este aparato." : "Primera vez con este juego: se recomienda mostrarlas."}</small>
           </div>
           <div className="cfg-casilla cfg-gente">
             <span className="cfg-casilla-t dsp">{n} jugadores</span>
             <ul className="cp-jugadores" aria-label="Jugadores">{miembros.map(x => <li key={x.id}><Persona m={x} c={color(x.id)} /></li>)}</ul>
           </div>
         </div>
+        {predeterminada && (
+          <div className="cfg-pred">
+            {mismaPartida(config, predeterminada.actual)
+              ? <><span className="cfg-pred-txt"><ArteCfg nombre="sec-resumen" alterno={LOBBY("ico-listo")} className="cfg-pred-ico" />Es tu partida predeterminada</span>
+                <button type="button" className="cfg-pred-btn" disabled={predeterminada.guardando} onClick={predeterminada.alQuitar}>Quitar</button></>
+              : <><span className="cfg-pred-txt">{predeterminada.actual ? "Tienes otra partida predeterminada" : "Sin partida predeterminada"}</span>
+                <button type="button" className="cfg-pred-btn on" disabled={predeterminada.guardando || !!motivo} onClick={() => predeterminada.alGuardar(config)}>{predeterminada.guardando ? "Guardando…" : "Guardar como predeterminada"}</button></>}
+          </div>
+        )}
         {motivo && <p className="a-error" role="alert">{motivo}</p>}
       </div>
     );
@@ -515,14 +564,42 @@ export function PaginaConfigurar({ codigo }: { codigo: string }) {
   const az = escenarioActual();
   const soyAnfitrion = !!s.sala && s.sala.anfitrionId === ses.uid;
   const [generos, setGeneros] = useState<Record<string, Genero> | undefined>(undefined);
+  // Modo por el que se entró (Modos de juego lo deja en la pestaña). En Físico, la predeterminada no se usa si es de otro juego.
+  const [modoFisico] = useState(() => { try { return sessionStorage.getItem("alv-modo") === "fisico"; } catch { return false; } });
+  // Partida predeterminada (solo administrador): se lee antes de abrir el configurador.
+  const esAdmin = usePuedeAbrir(ses.uid);
+  const [pred, setPred] = useState<PartidaConfigurada | null | undefined>(undefined);
+  const [guardandoPred, setGuardandoPred] = useState(false);
+  useEffect(() => {
+    let vivo = true;
+    const t = setTimeout(() => { if (vivo) setPred(p => (p === undefined ? null : p)); }, 4000);
+    void leerPartidaPredeterminada().then(p => { if (vivo) setPred(p); });
+    return () => { vivo = false; clearTimeout(t); };
+  }, [ses.uid]);
   const salaId = s.sala?.id, cuantos = s.miembros.length;
   // Se vuelve a leer si entra o sale alguien (para ALVersus).
-  useEffect(() => { if (salaId && soyAnfitrion) void generosSala(salaId).then(setGeneros); }, [salaId, soyAnfitrion, cuantos]);
+  // En Local los personajes viven en el teléfono: su género sale de ahí, no de la nube.
+  useEffect(() => {
+    if (!salaId || !soyAnfitrion || !s.sala) return;
+    if (esLocal(salaId)) setGeneros(modoLocal.generos(s.sala) as Record<string, Genero>);
+    else void generosSala(salaId).then(setGeneros);
+  }, [salaId, soyAnfitrion, cuantos]); // eslint-disable-line react-hooks/exhaustive-deps
   const enCurso = !!s.partida && !s.partida.terminada;
   useEffect(() => { if (enCurso && !iniciando) ir("sala", codigo); }, [enCurso, iniciando, codigo]);
   if (s.error) return <Marco clase="a-centro"><Vacio titulo="No se pudo abrir" texto={s.error}><Boton color="amarillo" texto="Volver" icono="back" onClick={() => ir("jugar")} /></Vacio></Marco>;
-  if (!s.sala) return <Marco clase="a-centro"><p className="a-suave a-pulso" role="status">Abriendo la sala {codigo}…</p></Marco>;
+  // El anfitrión espera la predeterminada y a los jugadores: con ellos se decide si abre en el resumen o en el paso 1.
+  if (!s.sala || (soyAnfitrion && (pred === undefined || s.miembros.length === 0))) return <Marco clase="a-centro"><p className="a-suave a-pulso" role="status">Abriendo la sala {codigo}…</p></Marco>;
   const sala = s.sala;
+  // Si la predeterminada no sirve con quienes están (faltan jugadores, número par…), se abre en el paso 1 con ella marcada.
+  const predSirve = !!pred && !motivoConfig(pred, s.miembros);
+  const guardarPred = async (c: PartidaConfigurada | null) => {
+    setGuardandoPred(true);
+    const err = await guardarPartidaPredeterminada(c);
+    setGuardandoPred(false);
+    if (err) { aviso(err); return; }
+    setPred(c); sonar("exito");
+    aviso(c ? "Partida predeterminada guardada." : "Partida predeterminada quitada.");
+  };
   const iniciar = async (c: PartidaConfigurada) => {
     setIniciando(true);
     const ok = await iniciarPartida(sala, s.miembros, c.juego, c.rondas, intensidadVieja(c.ejes), c.opciones);
@@ -546,7 +623,9 @@ export function PaginaConfigurar({ codigo }: { codigo: string }) {
       ? <FondoEscenario escenario={fondoEsc} />
       : <EscenarioFondo ambiente={az.ambientes[momento]} momento={momento} velo={az.velo} />}</div>}>
       {soyAnfitrion
-        ? <ConfigurarPartida miembros={s.miembros} generos={generos} iniciando={iniciando} alIniciar={c => void iniciar(c)} alCancelar={() => ir("sala", codigo)} alEntregarCopas={() => void copas()} alFondo={setFondoEsc} />
+        ? <ConfigurarPartida miembros={s.miembros} generos={generos} inicial={pred && (!modoFisico || JUEGOS_FISICO.includes(pred.juego)) ? pred : undefined} abrirEnResumen={predSirve}
+          modoFisico={modoFisico}
+          predeterminada={esAdmin ? { actual: pred ?? null, guardando: guardandoPred, alGuardar: c => void guardarPred(c), alQuitar: () => void guardarPred(null) } : undefined} iniciando={iniciando} alIniciar={c => void iniciar(c)} alCancelar={() => ir("sala", codigo)} alEntregarCopas={() => void copas()} alFondo={setFondoEsc} />
         : <Vacio titulo="El anfitrión está configurando" texto="En cuanto toque «Iniciar», empieza la partida."><Boton color="amarillo" texto="Volver a la sala" icono="back" onClick={() => ir("sala", codigo)} /></Vacio>}
     </Marco>
   );
