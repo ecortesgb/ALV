@@ -4,8 +4,66 @@
 // el jugador está probando algo); si la pestaña está oculta, espera. El motor además rechaza la vida si algo más
 // importante suena (misma regla de prioridades de siempre).
 import { useEffect, useRef } from "react";
-import { crearDirector, vidaPermitida, type Accion, type Contexto, type Perfil } from "./perfiles";
+import { ESPACIADO, crearDirector, perfilDe, vidaPermitida, type Accion, type Contexto, type Perfil } from "./perfiles";
 import { estadoGesto } from "./animaciones";
+import type { FiguraV2 } from "../content/personaje";
+
+// ---------- Vida compartida (etapa 3): HUB, lobby y TV ----------
+// Autoridad única: SOLO el aparato dueño de un jugador decide la vida de su figura (useVidaPropia). Lo decidido sale
+// por este bus: a las escenas de este aparato y a la red (gestosSala.ts, evento «v»). Los demás aparatos y la TV no
+// deciden nada: reproducen lo que llega (aplicarVidaRemota). Cada aparato elige la animación de la biblioteca si su
+// escena la tiene y si no, el respaldo de ALV. Reposo, velocidad e intensidad base salen de la figura (igual en todos).
+
+/** Una acción de vida tal como viaja: `a` = id preferido (biblioteca o ALV), `r` = respaldo de ALV. */
+export interface EventoVida { jugador: string; n: number; a: string; r: string; vel: number; int: number; dur?: number }
+const alEscenasVida = new Set<(e: EventoVida) => void>();
+const alRedVida = new Set<(e: EventoVida) => void>();
+const ultimoVida = new Map<string, number>();
+
+/** Las escenas oyen aquí qué vida dibujar. */
+export function alVida(f: (e: EventoVida) => void): () => void { alEscenasVida.add(f); return () => { alEscenasVida.delete(f); }; }
+/** La red oye aquí la vida que decidió este aparato. */
+export function alVidaPropia(f: (e: EventoVida) => void): () => void { alRedVida.add(f); return () => { alRedVida.delete(f); }; }
+/** Qué animación tocar en esta escena: la preferida si la tiene, si no el respaldo. */
+export const nombreVida = (e: EventoVida, hay: (n: string) => boolean) => (e.a.startsWith("lib:") ? (hay(e.a) ? e.a : e.r) : e.a);
+
+/** Vida que llegó por la red: se descarta si es vieja o repetida, o si ese jugador tiene un gesto sonando. */
+export function aplicarVidaRemota(e: EventoVida, ahora = Date.now()): boolean {
+  if ((ultimoVida.get(e.jugador) ?? 0) >= e.n) return false;
+  ultimoVida.set(e.jugador, e.n);
+  if (estadoGesto(e.jugador).hasta > ahora) return false;
+  alEscenasVida.forEach(f => f(e));
+  return true;
+}
+/** Solo para pruebas. */
+export function reiniciarVida() { ultimoVida.clear(); }
+
+/** Lo que hace el aparato dueño: decide y lo manda a sus escenas y a la red. Devuelve el evento (o null si no actuó). */
+export function emitirVidaPropia(jugador: string, a: Accion, ahora = Date.now()): EventoVida | null {
+  if (estadoGesto(jugador).hasta > ahora) return null; // un gesto del jugador manda
+  const n = Math.max((ultimoVida.get(jugador) ?? 0) + 1, Math.floor(ahora / 100));
+  ultimoVida.set(jugador, n);
+  const e: EventoVida = { jugador, n, a: a.lib ?? a.cual, r: a.respaldo, vel: a.vel, int: a.int, ...(a.dur ? { dur: a.dur } : {}) };
+  alEscenasVida.forEach(f => f(e));
+  alRedVida.forEach(f => f(e));
+  return e;
+}
+
+/** El director de la figura de ESTE aparato (dueño). Solo en contextos con vida; nunca para figuras ajenas. */
+export function useVidaPropia({ activo, jugador, figura, contexto }: { activo: boolean; jugador: string; figura: FiguraV2 | null | undefined; contexto: Contexto }) {
+  const perfil = perfilDe(figura);
+  useEffect(() => {
+    if (!activo || !jugador || !perfil || !vidaPermitida(contexto) || contexto === "tv") return;
+    const dir = crearDirector(perfil, Math.random, () => true, ESPACIADO[contexto]);
+    let reloj: ReturnType<typeof setTimeout>;
+    const turno = () => {
+      if (typeof document === "undefined" || !document.hidden) { const a = dir.decidir(); if (a) emitirVidaPropia(jugador, a); }
+      reloj = setTimeout(turno, dir.espera());
+    };
+    reloj = setTimeout(turno, dir.espera());
+    return () => clearTimeout(reloj);
+  }, [activo, jugador, perfil, contexto]);
+}
 
 export interface OpcionesVida {
   activo: boolean;

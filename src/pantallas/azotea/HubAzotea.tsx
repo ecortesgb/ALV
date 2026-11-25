@@ -18,6 +18,7 @@ import { PanelChat } from "../Vivo";
 import { CabeceraJugador, RecursosAzotea } from "./Cabecera";
 import { EscenarioFondo } from "./Escenario";
 import { EscenaAzotea, type AccionFigura, type MandoAzotea } from "./EscenaAzotea";
+import { useVidaPropia } from "../../app/vidaPerfil";
 import { MenuGestos } from "../gestos/MenuGestos";
 import { IconoIlustrado, type IconoHub } from "./Iconos";
 import { escenarioActual, type MomentoAzotea } from "./paquetes";
@@ -58,6 +59,8 @@ export function HubAzotea() {
   const bajo = useBajo();
   const r = useRecursos();
   const f = figuraActiva(useCapsulas(s.uid));
+  // Vida automática de tu figura según su personalidad (etapa 3): la decide este aparato.
+  useVidaPropia({ activo: true, jugador: s.uid, figura: f, contexto: "hub" });
   const momento = useMomentoAzotea();
   const esc = escenarioActual();
   const amb = esc.ambientes[momento];
@@ -118,7 +121,7 @@ export function HubAzotea() {
             <Boleto compacto={!ancho || bajo} />
           </div>
           <span className="az-reflector" aria-hidden="true" /><span className="az-reflector dos" aria-hidden="true" />
-          <EscenaAzotea ref={mando} id={s.uid} figura={f} ambiente={amb} plataforma={esc.plataforma} />
+          <EscenaAzotea ref={mando} id={s.uid} figura={f} ambiente={amb} plataforma={esc.plataforma} vida="hub" />
           <MenuGestos jugador={s.uid} figura={f} />
           {!ancho && <BotonChat mando={mando} />}
         </section>

@@ -8,6 +8,7 @@ import { Escena3D, enEscena, type EnEscena, type Momento } from "../app/figura3d
 import { Boton } from "../ds";
 import { NombreJugador, urlArte } from "./comun";
 import { carpetaLobby, LOBBY_NUEVO, VARIANTE_LOBBY } from "./lobby/version";
+import type { Contexto } from "../app/perfiles";
 
 /** Cupo del lobby en esta fase de prueba (también lo valida el servidor en `unirse_evento`). */
 export const CUPO_LOBBY = 8;
@@ -88,7 +89,8 @@ const piezasCabina = (k: string | null) => VARIANTE_LOBBY === "2" || VARIANTE_LO
 } : {};
 const arteLobby = (n: string) => `${import.meta.env.BASE_URL}arte/lobby/${n}.webp`;
 
-export function Pedestales({ miembros, yo, className = "", fiesta }: { miembros: readonly Miembro[]; yo?: string; className?: string; fiesta?: Fiesta }) {
+export function Pedestales({ miembros, yo, className = "", fiesta, vida }: { miembros: readonly Miembro[]; yo?: string; className?: string; fiesta?: Fiesta;
+  /** Vida automática (perfiles.ts): «lobby» en los celulares, «tv» en la pantalla (solo reproduce). */ vida?: Contexto }) {
   const lugares = lugaresSala(miembros.length, !!fiesta?.libre);
   const momentos = useMomentos(miembros);
   const ids = miembros.map(m => m.id);
@@ -116,7 +118,7 @@ export function Pedestales({ miembros, yo, className = "", fiesta }: { miembros:
             </div>
           : <div key={i} className={"a-sala-col" + (m ? "" : " vacia") + (m?.listo ? " listo" : "")} style={{ ...varsColor(m ? c : null), ...(m ? artePara(c.nombre) : {}) }} />)}
       </div>
-      <Escena3D modo="sala" figuras={figuras} columnas={lugares} momentos={momentos} className="a-sala-3d" sinPedestal={!!fiesta?.escenarios} />
+      <Escena3D modo="sala" figuras={figuras} columnas={lugares} momentos={momentos} className="a-sala-3d" sinPedestal={!!fiesta?.escenarios} vida={vida} />
       <ul className="a-sala-rotulos" aria-label="Jugadores en el lobby">
         {cols.map(({ i, m, c }) => (
           fiesta ? (

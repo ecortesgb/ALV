@@ -22,6 +22,7 @@ import "./lobby.css";
 import { FondoCuarto } from "./Cuarto";
 import { claseLobby, LOBBY_NUEVO } from "./version";
 import { MenuGestos } from "../gestos/MenuGestos";
+import { useVidaPropia } from "../../app/vidaPerfil";
 
 /** Cabinas por color con pedestal (Elías aprobó el 22 nov; las cápsulas viejas se quitaron el 23 nov). */
 const PRUEBA_ESCENARIOS = true;
@@ -36,6 +37,8 @@ export interface PropsLobby {
 export function Lobby({ sala, miembros, yo, soyAnfitrion, final, red, refrescar, alSalir, alCopas, copando, pantalla = "desconocida" }: PropsLobby) {
   const ancho = useAncho();
   const p = preparados(miembros);
+  // Vida automática de TU figura (etapa 3): solo este aparato la decide y la manda a la sala; las demás llegan por la red.
+  useVidaPropia({ activo: true, jugador: yo, figura: miembros.find(m => m.id === yo)?.figura ?? null, contexto: "lobby" });
   const hayAdmin = miembros.some(m => m.anfitrion);
   // Modo Local: un solo teléfono; el anfitrión agrega personajes sin cuenta y les cambia la figura.
   const local = esLocal(sala.id);
@@ -124,11 +127,11 @@ export function Lobby({ sala, miembros, yo, soyAnfitrion, final, red, refrescar,
 
         {ancho ? (
           <section className="lb-escenario" style={{ "--lugares": lugaresSala(miembros.length, local) } as CSSProperties}>
-            <Pedestales miembros={miembros} yo={yo} className="lb-pedestales" fiesta={{ arriba: botonesAdmin, abajo: miPanel, escenarios: PRUEBA_ESCENARIOS, libre: libreLocal }} />
+            <Pedestales miembros={miembros} yo={yo} className="lb-pedestales" fiesta={{ arriba: botonesAdmin, abajo: miPanel, escenarios: PRUEBA_ESCENARIOS, libre: libreLocal }} vida="lobby" />
           </section>
         ) : (
           <Carrusel lugares={lugaresSala(miembros.length, local)} ids={miembros.map(m => m.id)} yo={yo}>
-            <Pedestales miembros={miembros} yo={yo} className="lb-pedestales" fiesta={{ arriba: botonesAdmin, abajo: miPanel, escenarios: PRUEBA_ESCENARIOS, libre: libreLocal }} />
+            <Pedestales miembros={miembros} yo={yo} className="lb-pedestales" fiesta={{ arriba: botonesAdmin, abajo: miPanel, escenarios: PRUEBA_ESCENARIOS, libre: libreLocal }} vida="lobby" />
           </Carrusel>
         )}
       </div>

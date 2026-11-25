@@ -5,6 +5,8 @@ import { avisoDelMotor, huella, semillaDe } from "../../app/figura3d";
 import { alPedirGesto, animacionDe } from "../../app/animaciones";
 import { calidadAzotea, movimientoReducido, paramBiblioteca } from "../../app/preferencias";
 import type { FiguraV2 } from "../../content/personaje";
+import { PRIORIDAD_VIDA, animPerfil, soloApariencia, type Contexto } from "../../app/perfiles";
+import { alVida, nombreVida } from "../../app/vidaPerfil";
 import type { Ambiente, Anclaje, ColoresPlataforma } from "./paquetes";
 
 const BASE = `${import.meta.env.BASE_URL}minifig/`;
@@ -27,8 +29,9 @@ function primeraVez(): boolean {
 }
 
 export const EscenaAzotea = forwardRef<MandoAzotea, { id: string; figura: FiguraV2 | null; ambiente: Ambiente; plataforma: ColoresPlataforma; className?: string;
-  /** false: nunca hace la entrada (el Perfil no la repite). */ llegada?: boolean }>(
-  function EscenaAzotea({ id, figura, ambiente, plataforma, className, llegada = true }, mando) {
+  /** false: nunca hace la entrada (el Perfil no la repite). */ llegada?: boolean;
+  /** Contexto con vida automática (perfiles.ts), p. ej. «hub». Sin él, la figura se mueve como siempre. */ vida?: Contexto }>(
+  function EscenaAzotea({ id, figura, ambiente, plataforma, className, llegada = true, vida }, mando) {
     const ref = useRef<HTMLIFrameElement>(null);
     const [listo, setListo] = useState(false);
     const listoRef = useRef(false);
@@ -42,19 +45,24 @@ export const EscenaAzotea = forwardRef<MandoAzotea, { id: string; figura: Figura
     const colocar = useRef<() => void>(() => {});
     colocar.current = () => { if (anclaje && caja.current) ponerSobrePedestal(caja.current, anclaje, pies.current); };
     const enviar = (m: object) => ref.current?.contentWindow?.postMessage({ origen: "alv", ...m }, location.origin);
-    const datos = useRef({ id, figura, ambiente, plataforma });
-    datos.current = { id, figura, ambiente, plataforma };
+    const datos = useRef({ id, figura, ambiente, plataforma, vida });
+    datos.current = { id, figura, ambiente, plataforma, vida };
+    // Animaciones de la biblioteca que tiene esta escena (las avisa biblioteca-anim.js).
+    const bib = useRef(new Set<string>());
+    const hay = (n: string) => bib.current.has(n);
 
     const mandarTodo = () => {
       const d = datos.current;
       enviar({ tipo: "plataforma", colores: d.plataforma });
       enviar({ tipo: "ambiente", brillo: d.ambiente.brillo, ranura: d.plataforma.ranura, ...d.ambiente.luz });
-      enviar({ tipo: "figuras", lista: [d.figura ? { id: d.id, figura: d.figura, anim: animacionDe(d.figura) } : { id: d.id, semilla: semillaDe(d.id) }] });
+      // Con vida: al motor va solo la apariencia y la personalidad viaja como perillas (reposo, velocidad, intensidad).
+      enviar({ tipo: "figuras", lista: [d.figura ? { id: d.id, figura: d.vida ? soloApariencia(d.figura) : d.figura, anim: d.vida ? { ...animacionDe(d.figura), ...animPerfil(d.figura, hay) } : animacionDe(d.figura) } : { id: d.id, semilla: semillaDe(d.id) }] });
     };
     useEffect(() => {
       const f = (e: MessageEvent) => {
         if (e.origin !== location.origin || e.source !== ref.current?.contentWindow || e.data?.origen !== "minifig") return;
         if (e.data.tipo === "listo") { listoRef.current = true; setListo(true); mandarTodo(); }
+        if (e.data.tipo === "biblioteca" && Array.isArray(e.data.registradas)) { bib.current = new Set(e.data.registradas.filter((x: unknown) => typeof x === "string")); if (listoRef.current && datos.current.vida) mandarTodo(); }
         avisoDelMotor(e.data);
         if (e.data.tipo === "pies" && [e.data.x, e.data.y, e.data.alto].every(Number.isFinite) && e.data.alto > 0.1) {
           pies.current = { x: e.data.x, y: e.data.y, alto: e.data.alto }; colocar.current();
@@ -63,7 +71,12 @@ export const EscenaAzotea = forwardRef<MandoAzotea, { id: string; figura: Figura
       addEventListener("message", f);
       // Gestos de la tienda global (MenuGestos, la sala): solo los de esta figura.
       const fuera = alPedirGesto(g => { if (listoRef.current && g.jugador === datos.current.id) enviar({ tipo: "momento", id: g.jugador, cual: g.gesto, prio: g.prioridad }); });
-      return () => { removeEventListener("message", f); fuera(); };
+      // Vida automática de esta figura (la decide useVidaPropia en este aparato; aquí solo se dibuja).
+      const fueraVida = alVida(v => {
+        if (!listoRef.current || !datos.current.vida || v.jugador !== datos.current.id) return;
+        enviar({ tipo: "momento", id: v.jugador, cual: nombreVida(v, hay), prio: PRIORIDAD_VIDA, vel: v.vel, int: v.int, ...(v.dur ? { dur: v.dur } : {}) });
+      });
+      return () => { removeEventListener("message", f); fuera(); fueraVida(); };
     }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
     // Recolocar al cambiar el tamaño de la ventana o cuando el fondo ya tiene su tamaño.

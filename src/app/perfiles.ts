@@ -82,10 +82,18 @@ export function animPerfil(f: FiguraV2 | Figura | null | undefined, hay: (n: str
 export type Contexto = "editor" | "hub" | "perfil" | "lobby" | "tv" | "partida" | "resultado";
 export const CON_VIDA: readonly Contexto[] = ["editor", "hub", "perfil", "lobby", "tv"];
 export const vidaPermitida = (c: Contexto) => CON_VIDA.includes(c);
+/** Cuánto se espacian las oportunidades según dónde está la figura (el perfil conserva sus diferencias). */
+export const ESPACIADO: Record<Contexto, number> = { editor: 1, hub: 1, perfil: 1.2, lobby: 1.6, tv: 1, partida: 1, resultado: 1 };
 /** Prioridad de la vida automática: la corta cualquier gesto del jugador (1) o resultado. */
 export const PRIORIDAD_VIDA = 0.5;
 
-export interface Accion { cual: string; prio: number; vel: number; int: number; dur?: number }
+export interface Accion {
+  /** Lo que se toca en este aparato (biblioteca si la tiene; si no, el respaldo). */
+  cual: string;
+  /** Para la red: el id de la biblioteca (si la opción tiene) y el respaldo de ALV; cada aparato elige según lo que tenga. */
+  lib?: string; respaldo: string;
+  prio: number; vel: number; int: number; dur?: number;
+}
 export type Azar = () => number;
 
 /** Azar sembrable (mulberry32) para que las pruebas y la comparación sean repetibles. */
@@ -99,15 +107,17 @@ export function azarSembrado(semilla: number): Azar {
  * hacer en esa oportunidad (o null = quedarse en reposo). Evita repetir lo mismo dos veces seguidas y varía velocidad
  * e intensidad dentro de su margen. No sabe nada del motor: quien lo usa manda la acción como «momento».
  */
-export function crearDirector(perfil: Perfil, azar: Azar = Math.random, hay: (n: string) => boolean = () => false) {
+export function crearDirector(perfil: Perfil, azar: Azar = Math.random, hay: (n: string) => boolean = () => false, espaciado = 1) {
   const d = DATOS[perfil];
   const ultimas: string[] = [];
   const entre = ([a, b]: [number, number]) => a + (b - a) * azar();
-  const variar = (base: number) => +(base * (1 + (azar() * 2 - 1) * d.variacion)).toFixed(3);
+  // Variación controlada, recortada a los mismos topes que el motor y la red (velocidad 0.5–1.6, intensidad 0.4–1.4):
+  // así lo que decide el dueño es exactamente lo que reproducen los demás.
+  const variar = (base: number, min: number, max: number) => Math.min(max, Math.max(min, +(base * (1 + (azar() * 2 - 1) * d.variacion)).toFixed(3)));
   const nombreDe = (o: Opcion) => (o.lib && hay(o.lib) ? o.lib : o.anim ?? o.respaldo ?? "");
   return {
     perfil,
-    espera: () => Math.round(entre(d.intervalo) * 1000),
+    espera: () => Math.round(entre(d.intervalo) * 1000 * espaciado),
     decidir(): Accion | null {
       if (azar() >= d.actuar) return null;
       // No repetir las dos últimas (si hay con qué variar).
@@ -119,7 +129,9 @@ export function crearDirector(perfil: Perfil, azar: Azar = Math.random, hay: (n:
       let r = azar() * total, elegido = pool[pool.length - 1]!;
       for (const x of pool) { r -= x.o.peso; if (r < 0) { elegido = x; break; } }
       ultimas.unshift(elegido.n); ultimas.length = Math.min(ultimas.length, 2);
-      const a: Accion = { cual: elegido.n, prio: PRIORIDAD_VIDA, vel: variar(d.velocidad), int: variar(d.intensidad) };
+      const respaldo = elegido.o.anim ?? elegido.o.respaldo ?? elegido.n;
+      const a: Accion = { cual: elegido.n, respaldo, prio: PRIORIDAD_VIDA, vel: variar(d.velocidad, 0.5, 1.6), int: variar(d.intensidad, 0.4, 1.4) };
+      if (elegido.o.lib) a.lib = elegido.o.lib;
       if (elegido.o.dur) a.dur = +entre(elegido.o.dur).toFixed(2);
       return a;
     },

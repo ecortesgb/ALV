@@ -4,6 +4,7 @@
 import { useEffect, useRef } from "react";
 import { ENFRIAR_MS, alGestoPropio, aplicarGestoRemoto, esGesto, type Gesto } from "../app/animaciones";
 import { abrirDifusion } from "./difusion";
+import { alVidaPropia, aplicarVidaRemota, type EventoVida } from "../app/vidaPerfil";
 
 export interface MensajeGesto { g: Gesto; j: string; p: string | null; n: number }
 
@@ -22,6 +23,22 @@ export function revisarGesto(d: Record<string, unknown>, miembros: ReadonlySet<s
   return { g, j, n, p: typeof p === "string" && /^[a-z0-9-]{1,64}$/.test(p) ? p : null };
 }
 
+const NOMBRE_VIDA = /^(lib:[a-z0-9_]{1,60}|[a-z0-9-]{1,40})$/;
+const numeroEn = (v: unknown, a: number, b: number) => (typeof v === "number" && Number.isFinite(v) && v >= a && v <= b ? v : null);
+/**
+ * Revisa un aviso de vida automática (etapa 3): de un miembro (no de este aparato), con nombres válidos y números en
+ * rango. El orden y los repetidos los descarta aplicarVidaRemota. Devuelve el evento limpio o null.
+ */
+export function revisarVida(d: Record<string, unknown>, miembros: ReadonlySet<string>, yo: string): EventoVida | null {
+  const j = d.j, n = d.n, a = d.a, r = d.r;
+  if (typeof j !== "string" || j.length > 64 || !miembros.has(j) || j === yo) return null;
+  if (typeof n !== "number" || !Number.isInteger(n) || n < 1 || n > 1e13) return null;
+  if (typeof a !== "string" || typeof r !== "string" || !NOMBRE_VIDA.test(a) || !NOMBRE_VIDA.test(r) || r.startsWith("lib:")) return null;
+  const vel = numeroEn(d.vel, 0.5, 1.6), int = numeroEn(d.int, 0.4, 1.4), dur = d.dur == null ? undefined : numeroEn(d.dur, 0.5, 20);
+  if (vel == null || int == null || dur === null) return null;
+  return { jugador: j, n, a, r, vel, int, ...(dur ? { dur } : {}) };
+}
+
 /** Abre el canal de gestos de la sala mientras la pantalla está montada. `yo` vacío (la TV): solo escucha. */
 export function useGestosSala(salaId: string | null | undefined, yo: string, miembros: readonly { id: string }[]) {
   const ids = useRef<Set<string>>(new Set());
@@ -30,11 +47,14 @@ export function useGestosSala(salaId: string | null | undefined, yo: string, mie
     if (!salaId) return;
     const ultimo = new Map<string, { n: number; t: number }>();
     const canal = abrirDifusion(`gestos-${salaId}`, (evento, d) => {
+      if (evento === "v") { const v = revisarVida(d, ids.current, yo); if (v) aplicarVidaRemota(v); return; }
       if (evento !== "g") return;
       const m = revisarGesto(d, ids.current, yo, ultimo, Date.now());
       if (m) aplicarGestoRemoto(m.j, m.g, m.n, m.p);
     });
     const fuera = yo ? alGestoPropio(e => { if (e.jugador === yo && ids.current.has(yo)) canal.enviar("g", { g: e.gesto, j: e.jugador, p: e.personaje, n: e.n }); }) : () => {};
-    return () => { fuera(); canal.cerrar(); };
+    // Vida automática que decidió ESTE aparato para su jugador (la TV no decide: yo vacío).
+    const fueraVida = yo ? alVidaPropia(e => { if (e.jugador === yo && ids.current.has(yo)) canal.enviar("v", { j: e.jugador, n: e.n, a: e.a, r: e.r, vel: e.vel, int: e.int, ...(e.dur ? { dur: e.dur } : {}) }); }) : () => {};
+    return () => { fuera(); fueraVida(); canal.cerrar(); };
   }, [salaId, yo]);
 }
