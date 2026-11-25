@@ -90,15 +90,28 @@
   const existe = n => !!DEF[n] || orig.existe(n);
   M.pose = (n, t) => {
     const d = DEF[n]; if (!d) return orig.pose(n, t);
-    const r = Object.assign({}, CERO, d.pose(cl(t, 0, d.dur)));
+    // En bucle el tiempo da la vuelta; si no, se queda en el último cuadro.
+    const tt = d.bucle ? ((t % d.dur) + d.dur) % d.dur : cl(t, 0, d.dur);
+    const r = Object.assign({}, CERO, d.pose(tt));
     r.piernaIzq = cl(r.piernaIzq, -PI / 2, PI / 2); r.piernaDer = cl(r.piernaDer, -PI / 2, PI / 2); r.fx = cl(r.fx, 0, 1);
     return r;
   };
-  M.info = n => (DEF[n] ? { id: n, nombre: DEF[n].nombre, tipo: DEF[n].tipo, dur: DEF[n].dur, bucle: false } : orig.info(n));
+  M.info = n => (DEF[n] ? { id: n, nombre: DEF[n].nombre, tipo: DEF[n].tipo, dur: DEF[n].dur, bucle: !!DEF[n].bucle } : orig.info(n));
 
+  // Animaciones de afuera (biblioteca-anim.js): se suman a las de ALV con la misma forma. Solo nombres «lib:<id>»
+  // para que nunca pisen una de ALV ni de Minifig Studio. Devuelve true si quedó registrada.
+  const NOMBRE_EXTERNO = /^lib:[a-z0-9_]{1,60}$/;
+  const TIPOS = ["espera", "victoria", "derrota", "punto", "especial"];
+  function registrar(nombre, def) {
+    if (!NOMBRE_EXTERNO.test(String(nombre)) || !def || typeof def.pose !== "function") return false;
+    const dur = Number(def.dur);
+    if (!Number.isFinite(dur) || dur <= 0 || dur > 60 || !TIPOS.includes(def.tipo)) return false;
+    DEF[nombre] = { tipo: def.tipo, dur, bucle: !!def.bucle, nombre: String(def.nombre || nombre).slice(0, 60), pose: def.pose };
+    return true;
+  }
   M.efecto = n => (EFX[n] ? Object.assign({ dir: "frente", radio: 0.25 }, EFX[n]) : orig.efecto(n));
   M.existe = existe;
   M.lista = tipo => orig.lista(tipo).concat(Object.keys(DEF).filter(k => !tipo || DEF[k].tipo === tipo).map(M.info));
 
-  window.GestosALV = { TALLAS, talla, especial, DEF };
+  window.GestosALV = { TALLAS, talla, especial, DEF, registrar };
 })();

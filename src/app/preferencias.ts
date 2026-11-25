@@ -101,7 +101,16 @@ function envolverMatchMedia() {
 
 /** Parámetros para las escenas 3D (iframes): calidad elegida y movimiento reducido. */
 export function paramsEscena(): string {
-  return (prefs.calidad !== "auto" ? `&calidad=${prefs.calidad}` : "") + (movimientoReducido() ? "&quieto=1" : "");
+  return (prefs.calidad !== "auto" ? `&calidad=${prefs.calidad}` : "") + (movimientoReducido() ? "&quieto=1" : "") + paramBiblioteca();
+}
+
+/**
+ * Dónde está la biblioteca de animaciones (ALV_PLAN_ANIMATION_LIBRARY.md). Solo existe si se define
+ * VITE_ANIM_BIBLIOTECA_URL en .env.local: las tablas son privadas y nunca van al repositorio ni a la página publicada.
+ */
+export function paramBiblioteca(url: string | undefined = import.meta.env.VITE_ANIM_BIBLIOTECA_URL): string {
+  if (!url || !/^https?:\/\/[^\s"'<>]+$/.test(url)) return "";
+  return `&biblioteca=${encodeURIComponent(url)}`;
 }
 
 /** Calidad para la escena del HUB: «auto» es lo de siempre (alta en computadora, media en celular, y baja sola si va lenta). */

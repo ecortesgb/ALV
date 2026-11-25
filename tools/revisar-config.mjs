@@ -9,4 +9,21 @@ if (url && !/^https:\/\/[a-z0-9-]+\.supabase\.co$/.test(url)) {
   console.error("VITE_SUPABASE_URL no parece una URL de Supabase. Build detenido.");
   process.exit(1);
 }
+// Animaciones privadas (ALV_PLAN_ANIMATION_LIBRARY.md §6): las tablas derivan de un juego y NUNCA van a la página
+// publicada. Si alguna llega a public/, el build se detiene.
+import { readdirSync, readFileSync, statSync } from "node:fs";
+import { join } from "node:path";
+const SOSPECHOSOS = [/animation-library-v\d+\.json$/i, /tablas-alv/i, /biblioteca-v\d+/i];
+const MARCAS = ['"clip_tt"', '"archivo_tt"', '"articulaciones"'];
+function revisarCarpeta(dir) {
+  for (const n of readdirSync(dir)) {
+    const ruta = join(dir, n), st = statSync(ruta);
+    if (st.isDirectory()) { revisarCarpeta(ruta); continue; }
+    const mala = SOSPECHOSOS.some(r => r.test(ruta)) || (/\.json$/i.test(n) && st.size < 5_000_000 && MARCAS.some(m => readFileSync(ruta, "utf8").includes(m)));
+    if (mala) { console.error(`Animación privada dentro de public/ (${ruta}). Las tablas no se publican. Build detenido.`); process.exit(1); }
+  }
+}
+revisarCarpeta("public");
+const bib = process.env.VITE_ANIM_BIBLIOTECA_URL ?? "";
+if (bib && !/^https?:\/\/[^\s"'<>]+$/.test(bib)) { console.error("VITE_ANIM_BIBLIOTECA_URL no es una dirección http(s). Build detenido."); process.exit(1); }
 console.log(url ? "config ok: con servidor" : "config ok: sin servidor (modo local)");
