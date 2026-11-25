@@ -837,10 +837,14 @@
     // HUB: cabe también el pedestal (de y = -0.34 a 0) y queda aire arriba para que la figura no se vea gigante.
     // Azotea: de la base de las patas (y ≈ -0.94 con aire) a lo más alto de un casco, con la figura a ~57 % del alto.
     const n = SALA ? lugares() : Math.max(1, orden.length), alto = SALA ? 5.3 : SIN_PLAT ? 3.3 : AZOTEA ? 4.9 : MODO === "hub" ? 4.5 : 3.3, minimo = SIN_PLAT ? 2.0 : AZOTEA ? 2.8 : n * 1.9 + 0.3;
+    // Sala: el lienzo es muy ancho (hasta 8 columnas); con 30° las figuras de las orillas se estiraban y se veían más
+    // grandes que las del centro (Elías, 25 nov). Con 6° y la cámara más lejos casi no hay perspectiva: todas iguales.
+    if (SALA && camera.fov !== 6) camera.fov = 6;
     const tv = Math.tan(camera.fov * Math.PI / 360), th = tv * camera.aspect;
     // Primero que quepa de alto; si así no caben a lo ancho, se aleja hasta que quepan.
     let d = (alto / 2) / tv;
     if (2 * d * th < minimo) d = (minimo / 2) / th;
+    if (SALA) { camera.near = Math.max(0.3, d - 12); camera.far = d + 12; }
     paso = (2 * d * th) / n;
     // Pantalla alta (celular vertical): sobra cielo; se mira más arriba para que los pies queden abajo, sobre el piso.
     // Sala: queda aire abajo para el nombre y arriba para el «¡LISTO!».

@@ -6,6 +6,7 @@ import { FondoALV } from "./Fondos";
 import { BarraRecursos } from "./Recursos";
 import { Escena3D, FotoFigura, apodoDe, semillaDe, type EnEscena, type Momento } from "../app/figura3d";
 import { atras } from "../app/rutas";
+import { varsColor, type ColorJugador } from "../app/colorJugador";
 
 /** ¿Pantalla ancha (laptop o TV)? */
 // Celular girado (horizontal, desde 600 px de ancho) usa el mismo diseño que la computadora.
@@ -59,7 +60,9 @@ export function aviso(texto: string) {
   avisoActual = { texto, n: mio }; avisar();
   setTimeout(() => { if (avisoActual?.n === mio) { avisoActual = null; avisar(); } }, 3200);
 }
-export interface Pregunta { titulo: string; texto?: string; si: string; no?: string; peligro?: boolean }
+export interface Pregunta { titulo: string; texto?: string; si: string; no?: string; peligro?: boolean;
+  /** Lobby nuevo: caja de bloques del color de este jugador (Elías, 25 nov). */
+  lobby?: ColorJugador | null }
 let pregunta: (Pregunta & { responder: (v: boolean) => void }) | null = null;
 export const confirmar = (p: Pregunta) => new Promise<boolean>(r => { pregunta = { ...p, responder: v => { pregunta = null; avisar(); r(v); } }; avisar(); });
 
@@ -77,7 +80,7 @@ export function Avisos() {
       {a && <div key={a.n} className="a-aviso" role="status">{a.texto}</div>}
       {p && (
         <div className="a-velo" onClick={() => p.responder(false)}>
-          <div className="d-pnl a-dialogo" role="alertdialog" aria-modal="true" aria-label={p.titulo} onClick={e => e.stopPropagation()}>
+          <div className={"d-pnl a-dialogo" + (p.lobby !== undefined ? " lbn-dlg" : "")} style={p.lobby !== undefined ? varsColor(p.lobby) : undefined} role="alertdialog" aria-modal="true" aria-label={p.titulo} onClick={e => e.stopPropagation()}>
             <span className="dsp ol a-t2">{p.titulo}</span>
             {p.texto && <p className="a-suave">{p.texto}</p>}
             <div className="a-fila">

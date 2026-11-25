@@ -663,3 +663,67 @@
 .D.az.lb.lb3a .lb-escenario:has(.lb-cab) .a-sala-escenario.muchos .a-sala-3d { height: calc(var(--lb-w) * 1.5); top: calc(var(--pb) - var(--lb-w) * (.263 + .783 * 1.5)); }
 .D.az.lb.lbn .lb-escenario:has(.lb-cab) .a-sala-escenario.muchos .lb-barra { font-size: clamp(12px, calc(var(--lb-w) * .085), 22px); }
 .D.az.lb.lbn .lb-escenario:has(.lb-cab) .a-sala-escenario.muchos .lb-panel > .lb-mini { font-size: clamp(12px, calc(var(--lb-w) * .07), 20px); }
+/* Letra de la píldora a la medida de la cabina (con columnas angostas «CONTINUAR» se salía). */
+.D.az.lb.lbn.wide .lb-escenario:has(.lb-cab) .lb-panel .lb-continuar, .D.az.lb.lbn.wide .lb-escenario:has(.lb-cab) .lb-panel .lb-listo {
+  font-size: clamp(13px, min(1.6vw, calc(var(--lb-w) * .1)), 28px); padding-inline: 10px; }
+.D.az.lb.lbn.wide .lb-escenario:has(.lb-cab) .lb-agregar b { font-size: clamp(13px, min(1.6vw, calc(var(--lb-w) * .09)), 28px); }
+.D.az.lb.lbn .lb-panel .lb-quitar-listo { order: 0; }
+.D.az.lb.lbn .lb-panel .lb-opciones { order: 2; }
+
+/* Avisos de confirmar en el lobby nuevo (sacar a alguien, terminar/cerrar/salir): caja de bloques del color del
+   jugador, título en píldora clara con letra blanca cursiva y orilla oscura, texto en charola gris, «Cancelar» gris y
+   el botón de aceptar como píldora (roja si es peligroso). */
+.D .a-dialogo.lbn-dlg { position: relative; display: flex; flex-direction: column; gap: 12px; padding: 16px; border: 0; border-radius: 26px; color: #1a1a24;
+  background:
+    linear-gradient(90deg, transparent calc(25% - 1px), rgba(0, 0, 0, .14) calc(25% - 1px) 25%, transparent 25% calc(50% - 1px), rgba(0, 0, 0, .14) calc(50% - 1px) 50%, transparent 50% calc(75% - 1px), rgba(0, 0, 0, .14) calc(75% - 1px) 75%, transparent 75%),
+    linear-gradient(180deg, color-mix(in srgb, var(--pj, #e8343a) 80%, #fff), var(--pj, #e8343a));
+  box-shadow: 0 8px 0 var(--pj-oscuro, #8f1420), 0 20px 40px rgba(0, 0, 0, .55); }
+.D .a-dialogo.lbn-dlg::before { content: ""; position: absolute; left: 50%; top: -20px; translate: -50% 0; width: 34px; height: 24px; background: #f2b632;
+  clip-path: polygon(0 0, 100% 0, 50% 100%); filter: drop-shadow(0 2px 0 #1a1a24); }
+.D .a-dialogo.lbn-dlg .a-t2 { display: block; padding: 12px 18px; border-radius: 999px; text-align: center; color: #fff;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--pj, #e8343a) 45%, #fff), color-mix(in srgb, var(--pj, #e8343a) 70%, #fff));
+  box-shadow: inset 0 -4px 0 rgba(0, 0, 0, .12), 0 3px 0 rgba(0, 0, 0, .25);
+  font: italic 400 clamp(20px, 2.2vw, 30px)/1.05 var(--f-titulo); text-transform: uppercase; -webkit-text-stroke: 1.5px #1a1a24; paint-order: stroke fill; text-shadow: 2px 3px 0 #1a1a24; }
+.D .a-dialogo.lbn-dlg .a-suave { margin: 0; padding: 12px 14px; border-radius: 4px; background: #c3c6c9; color: #1a1a24; font-weight: 700;
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, .5), 0 3px 0 rgba(0, 0, 0, .2); }
+.D .a-dialogo.lbn-dlg .a-fila { display: flex; gap: 10px; justify-content: stretch; }
+.D .a-dialogo.lbn-dlg .a-fila > button { flex: 1; min-height: 52px; cursor: pointer; }
+.D .a-dialogo.lbn-dlg .a-plano { border: 0; border-radius: 4px; background: #c3c6c9; color: #1a1a24; text-decoration: none;
+  font: italic 400 clamp(17px, 1.6vw, 24px)/1 var(--f-titulo); text-transform: uppercase; box-shadow: inset 0 2px 0 rgba(255, 255, 255, .5), 0 3px 0 rgba(0, 0, 0, .2); }
+.D .a-dialogo.lbn-dlg .d-btn { border: 0; border-radius: 999px; transform: none; clip-path: none; color: #fff;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--pj, #f6dc55) 45%, #fff), color-mix(in srgb, var(--pj, #f6dc55) 70%, #fff));
+  box-shadow: inset 0 -4px 0 rgba(0, 0, 0, .12), 0 3px 0 rgba(0, 0, 0, .25); }
+.D .a-dialogo.lbn-dlg .d-btn.k-red { background: linear-gradient(180deg, #ff6b6b, #d8202a); }
+.D .a-dialogo.lbn-dlg .d-btn .dsp { font: italic 400 clamp(18px, 1.8vw, 26px)/1 var(--f-titulo); text-transform: uppercase; -webkit-text-stroke: 1.5px #1a1a24; paint-order: stroke fill; text-shadow: 2px 3px 0 #1a1a24; }
+/* La capa de avisos no está dentro de «La Azotea»: sin esto no tiene su letra de títulos. */
+.D .a-dialogo.lbn-dlg { --f-titulo: "Lilita One", "Bangers", system-ui, sans-serif; }
+.D .a-dialogo.lbn-dlg .a-plano { color: var(--pj-oscuro, #1a1a24); }
+.D .a-dialogo.lbn-dlg .a-fila > .d-btn { flex: 1.5; white-space: nowrap; }
+/* Lobby lleno: con la cámara casi sin perspectiva las figuras de las orillas ya no se estiran, así que vuelven a
+   1.8 W como con pocos jugadores (Elías: «parece que se encogen»). */
+.D.az.lb.lb3a .lb-escenario:has(.lb-cab) .a-sala-escenario.muchos .a-sala-3d { height: calc(var(--lb-w) * 1.85); top: calc(var(--pb) - var(--lb-w) * (.263 + .783 * 1.85)); }
+.D .a-dialogo.lbn-dlg { width: min(92vw, 480px); max-width: none; }
+.D .a-dialogo.lbn-dlg .a-fila > .d-btn { white-space: normal; }
+.D .a-dialogo.lbn-dlg .d-btn .dsp { font-size: clamp(17px, 1.6vw, 24px); }
+.D .a-dialogo.lbn-dlg .d-btn { overflow: hidden; padding: 8px 14px; height: auto; }
+.D .a-dialogo.lbn-dlg .d-btn .dsp { display: block; white-space: normal; line-height: 1.05; text-align: center; }
+/* Celular (Elías, 25 nov): el administrador ya tiene «Cerrar lobby» en Opciones, así que su botón de arriba se quita y
+   el letrero queda al centro. Los demás conservan «Salir» (no tienen Opciones). */
+.D.az.lb.lbn:not(.wide) .lb-atras-anf { display: none; }
+.D.az.lb.lbn:not(.wide):has(.lb-atras-anf) .lb-banner { left: 50%; right: auto; translate: -50% 0; }
+/* Celular: una cabina por pantalla, el sello va grande como en computadora. */
+.D.az.lb.lbn:not(.wide) .lb-escenario:has(.lb-cab) .lb-sello span { font-size: 38px; -webkit-text-stroke-width: 2px; }
+.D.az.lb.lbn:not(.wide) .lb-escenario:has(.lb-cab) .lb-aun { font-size: 34px; }
+.D.az.lb.lbn .lb-panel .lb-continuar { justify-content: center; align-items: center; }
+
+/* Plataforma que «crece» al entrar alguien (Elías, 25 nov): arranca como la tapa sola del lugar libre (hundida a la
+   altura de la base) y sube mostrando el cuerpo; después aparece el rayo de llegada. */
+.D.az.lb.lbn .lb-escenario:has(.lb-cab) .lb-ped:not(.lb-tapa) { animation: lbCrece .75s cubic-bezier(.2, 1.2, .35, 1) backwards; }
+@keyframes lbCrece {
+  0% { translate: -50% 13cqw; clip-path: inset(0 0 58% 0); }
+  25% { translate: -50% 13cqw; clip-path: inset(0 0 58% 0); }
+  100% { translate: -50% 0; clip-path: inset(0 0 0 0); } }
+.D.az.lb.lbn .lb-escenario:has(.lb-cab) .lb-tele { animation-delay: .55s; }
+@media (prefers-reduced-motion: reduce) { .D.az.lb.lbn .lb-escenario:has(.lb-cab) .lb-ped { animation: none; } }
+/* También en computadora (Elías): el administrador cierra desde Opciones → Cerrar lobby. */
+.D.az.lb.lbn .lb-atras-anf { display: none; }

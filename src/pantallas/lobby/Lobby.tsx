@@ -20,7 +20,7 @@ import "../azotea/azotea.css";
 import "../perfil/perfil.css";
 import "./lobby.css";
 import { FondoCuarto } from "./Cuarto";
-import { claseLobby } from "./version";
+import { claseLobby, LOBBY_NUEVO } from "./version";
 
 /** Cabinas por color con pedestal (Elías aprobó el 22 nov; las cápsulas viejas se quitaron el 23 nov). */
 const PRUEBA_ESCENARIOS = true;
@@ -50,7 +50,7 @@ export function Lobby({ sala, miembros, yo, soyAnfitrion, final, red, refrescar,
     else void enlace.listoDe(sala, m.id, !m.listo).then(ok => { if (!ok) aviso("Falta activar esto en el servidor (038)."); refrescar(); });
   };
   const expulsar = async (m: Miembro) => {
-    if (!(await confirmar({ titulo: `¿Sacar a ${m.nombre} del lobby?`, si: "Sacar", peligro: true }))) return;
+    if (!(await confirmar({ titulo: `¿Sacar a ${m.nombre} del lobby?`, si: "Sacar", peligro: true, ...(LOBBY_NUEVO ? { lobby: colorDe(m.id, miembros.map(x => x.id)) } : {}) }))) return;
     const ok = await enlace.expulsar(sala, m.id);
     if (!ok) aviso("Falta activar esto en el servidor (038).");
     refrescar();
@@ -102,7 +102,7 @@ export function Lobby({ sala, miembros, yo, soyAnfitrion, final, red, refrescar,
     <Marco clase={"az lb" + claseLobby} fondo={<FondoCuarto />}>
       <div className="lb-caja">
         <header className="lb-top">
-          <button type="button" className="pf-atras" onClick={alSalir}><span aria-hidden="true">◀</span>{local ? "Terminar" : soyAnfitrion ? "Cerrar" : "Salir"}</button>
+          <button type="button" className={"pf-atras" + (soyAnfitrion ? " lb-atras-anf" : "")} onClick={alSalir}><span aria-hidden="true">◀</span>{local ? "Terminar" : soyAnfitrion ? "Cerrar" : "Salir"}</button>
           <div className={"lb-banner" + (p.todos ? " todos" : "")} role="status" aria-live="polite">
             <span className="lb-banner-n">{miembros.length}/{CUPO_LOBBY}</span>
             <span className="lb-banner-t">{p.todos ? "¡Todos listos!" : `${p.listos} listo${p.listos === 1 ? "" : "s"}`}</span>

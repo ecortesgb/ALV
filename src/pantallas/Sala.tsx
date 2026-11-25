@@ -9,6 +9,7 @@ import { sonar } from "../app/sonido";
 import { enlace, esLocal, modoLocal, type SalaV } from "../servicios/enlace";
 import type { FiguraV2 } from "../content/personaje";
 import type { ColorJugador } from "../app/colorJugador";
+import { LOBBY_NUEVO } from "./lobby/version";
 import { FichaJugador } from "./lobby/Ficha";
 import { AvisoCuarto, FondoCuarto } from "./lobby/Cuarto";
 import { FondoEscenario } from "./Fondos";
@@ -146,8 +147,9 @@ export function Sala({ codigo }: { codigo: string }) {
   const sala = s.sala, pid = s.partida?.id ?? "";
 
   const salir = async () => {
-    if (!(await confirmar(local ? { titulo: "¿Terminar la sesión local?", texto: "Se borran los personajes y las partidas de este teléfono.", si: "Terminar sesión", peligro: true }
-      : soyAnfitrion ? { titulo: "¿Cerrar la sala?", texto: "Todos salen y la sesión termina.", si: "Cerrar sala", peligro: true } : { titulo: "¿Salir de la sala?", si: "Salir" }))) return;
+    const caja = LOBBY_NUEVO ? { lobby: colorDe(ses.uid, s.miembros.map(m => m.id)) } : {};
+    if (!(await confirmar(local ? { titulo: "¿Terminar la sesión local?", texto: "Se borran los personajes y las partidas de este teléfono.", si: "Terminar sesión", peligro: true, ...caja }
+      : soyAnfitrion ? { titulo: "¿Cerrar la sala?", texto: "Todos salen y la sesión termina.", si: "Cerrar sala", peligro: true, ...caja } : { titulo: "¿Salir de la sala?", si: "Salir", ...caja }))) return;
     await (soyAnfitrion ? enlace.cerrar(sala) : enlace.salir(sala));
     ir("inicio");
   };
