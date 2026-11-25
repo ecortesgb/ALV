@@ -391,3 +391,267 @@
   .D .pl-trajes { max-height: 220px; }
 }
 @media (prefers-reduced-motion: reduce) { .D .pl-velo, .D .pl-modal, .D .pl-cabina img { animation: none; } }
+/* =====================================================================
+   PRUEBA ?lobby=2 (Elías, 25 nov): estilo LEGO Party con el arte «Nueva Version».
+   Cuarto 1536×1024 (cover centrado): zoclo metálico del 46.8 % (--zt) al 63.5 % (--piso) → 50dvh + (y − 512) × escala.
+   Cada cabina es solo la pared de color (::before) y termina justo donde empieza el zoclo del cuarto; el zoclo y el
+   piso son los del cuarto, teñidos con su color. La figura hundida va aparte (56 % del ancho) para que no crezca con
+   el alto. ::after pone la sombra de las orillas, que se desvanece al llegar al piso. El pedestal se apoya en el piso
+   0.22 W bajo el zoclo (dentro de la cabina 22cqw; ahí --lb-w se mediría con la cabina, no sirve).
+   ===================================================================== */
+.D.az.lb.lb2 .lb-escenario:has(.lb-cab) .lb-pedestales.fiesta {
+  --escala: max(calc(100vw / 1536), calc(100dvh / 1024)); --piso: calc(50dvh + 138 * var(--escala)); --zt: calc(50dvh - 33 * var(--escala));
+  --hc: calc(var(--piso) / .663); --bajo: calc(var(--lb-w) * .22); }
+.D.az.lb.lb2 .lb-escenario:has(.lb-cab) .a-sala-col.lb-cab {
+  background: linear-gradient(180deg, transparent var(--zt), color-mix(in srgb, var(--pj, #8a90a8) 24%, transparent) var(--zt),
+    color-mix(in srgb, var(--pj, #8a90a8) 12%, transparent) var(--piso), transparent calc(var(--piso) + 60cqw)); }
+.D.az.lb.lb2 .lb-escenario:has(.lb-cab) .a-sala-col.lb-cab::before { content: ""; display: block; opacity: 1; clip-path: none; mix-blend-mode: normal; width: auto; translate: none; transform: none; filter: none; animation: none; border-radius: 0; position: absolute; inset: 0 0 auto; height: var(--zt);
+  background: var(--pj-forma, none) center calc(var(--zt) * .46 - 28cqw) / 56cqw auto no-repeat, var(--pj-pared) center top / cover no-repeat;
+  box-shadow: 0 2px 0 rgba(255, 255, 255, .12), 0 6px 10px rgba(0, 0, 0, .45); }
+.D.az.lb.lb2 .lb-escenario:has(.lb-cab) .a-sala-col.lb-cab::after { content: ""; display: block; opacity: 1; clip-path: none; mix-blend-mode: normal; width: auto; translate: none; transform: none; filter: none; animation: none; border-radius: 0; position: absolute; inset: 0 0 auto; height: calc(var(--piso) + 16cqw); pointer-events: none;
+  background: linear-gradient(90deg, rgba(0, 0, 0, .9), rgba(0, 0, 0, .45) 4%, transparent 15%, transparent 85%, rgba(0, 0, 0, .45) 96%, rgba(0, 0, 0, .9));
+  -webkit-mask-image: linear-gradient(180deg, #000 var(--piso), transparent); mask-image: linear-gradient(180deg, #000 var(--piso), transparent); }
+.D.az.lb.lb2 .lb-escenario:has(.lb-cab) .lb-ped { top: calc(var(--piso) + 22cqw - 28.8cqw); }
+.D.az.lb.lb2 .lb-escenario:has(.lb-cab) .a-sala-3d { height: calc(var(--lb-w) * 1.8); top: calc(var(--piso) + var(--bajo) - var(--lb-w) * (.23 + .783 * 1.8)); }
+.D.az.lb.lb2 .lb-escenario:has(.lb-cab) .lb-sello, .D.az.lb.lb2 .lb-escenario:has(.lb-cab) .lb-aun { top: calc(var(--piso) + var(--bajo) + var(--lb-w) * .1); }
+.D.az.lb.lb2 .lb-escenario.lb-carrusel:has(.lb-cab) .a-sala-3d { height: calc(var(--lb-w) * 1.3); top: calc(var(--piso) + var(--bajo) - var(--lb-w) * (.23 + .783 * 1.3)); }
+
+/* =====================================================================
+   PRUEBA ?lobby=a / ?lobby=b (Elías, 25 nov): cabinas amarillas de Elías (y sus colores sacados con generar_v3.py),
+   con zoclo alto y base de color pintada. La imagen (proporción 2.3) se apoya con su piso (--fl) en el piso del
+   cuarto y crece lo necesario para llegar arriba. El pedestal blanco se sienta sobre la tapa de la base (--fb).
+   Dentro de la cabina 100cqw es su ancho; fuera, --lb-w.
+   ===================================================================== */
+.D.az.lb.lb3a { --fl: .8025; --fb: .851; }
+.D.az.lb.lb3b { --fl: .8297; --fb: .8877; }
+.D.az.lb.lb3 .lb-escenario:has(.lb-cab) .lb-pedestales.fiesta {
+  --escala: max(calc(100vw / 1536), calc(100dvh / 1024)); --piso: calc(50dvh + 138 * var(--escala));
+  --hc: max(calc(var(--lb-w) * 2.3), calc(var(--piso) / var(--fl)));
+  --pb: calc(var(--piso) + var(--hc) * (var(--fb) - var(--fl)) + var(--lb-w) * .05); }
+.D.az.lb.lb3 .lb-escenario:has(.lb-cab) .a-sala-col.lb-cab { background: var(--pj-arte) center calc(var(--piso) - var(--hc) * var(--fl)) / auto var(--hc) no-repeat, #0b0a14; }
+.D.az.lb.lb3 .lb-escenario:has(.lb-cab) .lb-ped { width: 58cqw;
+  top: calc(var(--piso) + max(230cqw, var(--piso) / var(--fl)) * (var(--fb) - var(--fl)) + 5cqw - 27cqw); }
+.D.az.lb.lb3 .lb-escenario:has(.lb-cab) .a-sala-3d { height: calc(var(--lb-w) * 1.8); top: calc(var(--pb) - var(--lb-w) * (.21 + .783 * 1.8)); }
+.D.az.lb.lb3 .lb-escenario.lb-carrusel:has(.lb-cab) .a-sala-3d { height: calc(var(--lb-w) * 1.3); top: calc(var(--pb) - var(--lb-w) * (.21 + .783 * 1.3)); }
+.D.az.lb.lb3 .lb-escenario:has(.lb-cab) .lb-sello, .D.az.lb.lb3 .lb-escenario:has(.lb-cab) .lb-aun { top: calc(var(--pb) + var(--lb-w) * .12); }
+.D.az.lb.lb3 .lb-escenario:has(.lb-cab) .lb-luz { height: calc(var(--pb) - var(--lb-w) * .1); }
+
+/* ---------- Interfaz nueva del lobby (?lobby=2/a/b), inspirada en el lobby de LEGO Party, con arte propio ---------- */
+/* Letrero de arriba: placa morada con dos botones de cada lado y figura de persona. */
+.D.az.lb.lbn .lb-banner { position: relative; align-items: center; gap: 14px; padding: 12px 64px 14px; border-radius: 0 0 6px 6px; color: #fff;
+  clip-path: polygon(0 0, 100% 0, calc(100% - 22px) 100%, 22px 100%); border: 0;
+  background:
+    radial-gradient(circle at 30px 30%, #8e6ad4 0 9px, #5a3a9c 10px 12px, transparent 13px),
+    radial-gradient(circle at 30px 72%, #8e6ad4 0 9px, #5a3a9c 10px 12px, transparent 13px),
+    radial-gradient(circle at calc(100% - 30px) 30%, #8e6ad4 0 9px, #5a3a9c 10px 12px, transparent 13px),
+    radial-gradient(circle at calc(100% - 30px) 72%, #8e6ad4 0 9px, #5a3a9c 10px 12px, transparent 13px),
+    linear-gradient(90deg, transparent 52px, rgba(0, 0, 0, .25) 52px 54px, transparent 54px calc(100% - 54px), rgba(0, 0, 0, .25) calc(100% - 54px) calc(100% - 52px), transparent calc(100% - 52px)),
+    linear-gradient(180deg, #7a52c4, #6340ad); box-shadow: none; filter: drop-shadow(0 6px 10px rgba(0, 0, 0, .5)); }
+.D.az.lb.lbn .lb-banner::before { content: ""; width: 26px; height: 28px; flex: none; background: #fff; filter: drop-shadow(2px 2px 0 #1a1030);
+  -webkit-mask: radial-gradient(circle at 50% 22%, #000 0 7px, transparent 7.5px), linear-gradient(#000, #000) 50% 100% / 22px 16px no-repeat;
+  mask: radial-gradient(circle at 50% 22%, #000 0 7px, transparent 7.5px), linear-gradient(#000, #000) 50% 100% / 22px 16px no-repeat; }
+.D.az.lb.lbn .lb-banner.todos { background-color: transparent; }
+.D.az.lb.lbn .lb-banner-n, .D.az.lb.lbn .lb-banner-t { font-style: italic; text-shadow: 2px 3px 0 #1a1030; }
+.D.az.lb.lbn .lb-banner-s { flex-basis: auto; }
+
+/* Sellos bajo el pedestal: «¡TODO LISTO!» blanco a rojo con orilla oscura y «AÚN NO» blanco. */
+.D.az.lb.lbn .lb-sello { rotate: -3deg; gap: 0; }
+.D.az.lb.lbn .lb-sello img { display: none; }
+.D.az.lb.lbn .lb-sello span { font: italic 400 clamp(22px, 2.4vw, 44px)/1 var(--f-titulo); text-transform: uppercase; letter-spacing: .01em;
+  background: linear-gradient(180deg, #fff 30%, #ff8a8a 62%, #d8202a); -webkit-background-clip: text; background-clip: text; color: transparent;
+  text-shadow: none; -webkit-text-stroke: 1.5px #2a0a12; filter: drop-shadow(2px 3px 0 #14060c); }
+.D.az.lb.lbn .lb-aun { font-style: italic; color: #fff; text-shadow: 2px 3px 0 #14060c; -webkit-text-stroke: 1px #14060c; }
+
+/* «● J1» pintado al frente del pedestal. */
+.D .lb-jn { display: none; }
+.D.az.lb.lbn .lb-escenario:has(.lb-cab) .lb-jn { position: absolute; left: 50%; translate: -50% 0; z-index: 2; display: inline-flex; align-items: center; gap: .25em;
+  padding: .12em .45em; border-radius: 6px; font: italic 400 clamp(14px, 6cqw, 30px)/1 var(--f-titulo); color: #1a1a24;
+  background: linear-gradient(180deg, #f4f5f7, #c9ccd3); box-shadow: inset 0 -2px 0 rgba(0, 0, 0, .15); }
+.D.az.lb.lbn .lb-jn i { width: .75em; height: .75em; border-radius: 50%; background: var(--pj, #e8343a); box-shadow: inset 0 -2px 0 rgba(0, 0, 0, .3); }
+.D.az.lb.lb2 .lb-escenario:has(.lb-cab) .lb-jn { top: calc(var(--piso) + 22cqw - 13cqw); }
+.D.az.lb.lb3 .lb-escenario:has(.lb-cab) .lb-jn { top: calc(var(--piso) + max(230cqw, var(--piso) / var(--fl)) * (var(--fb) - var(--fl)) + 5cqw - 12cqw); }
+
+/* Tu panel: caja verde de bloques con flecha amarilla arriba, píldora amarilla y charola gris. */
+.D.az.lb.lbn .lb-panel { padding: 14px 14px 14px; gap: 10px; border-radius: 26px; border: 0;
+  background:
+    linear-gradient(90deg, transparent calc(25% - 1px), rgba(0, 0, 0, .14) calc(25% - 1px) 25%, transparent 25% calc(50% - 1px), rgba(0, 0, 0, .14) calc(50% - 1px) 50%, transparent 50% calc(75% - 1px), rgba(0, 0, 0, .14) calc(75% - 1px) 75%, transparent 75%),
+    linear-gradient(180deg, #6aaa62, #4f8c4b); box-shadow: 0 8px 0 #2f5a2e, 0 16px 26px rgba(0, 0, 0, .45); }
+.D.az.lb.lbn .lb-panel::before { content: ""; position: absolute; left: 50%; top: -20px; translate: -50% 0; width: 34px; height: 24px; background: #f2b632;
+  clip-path: polygon(0 0, 100% 0, 50% 100%); filter: drop-shadow(0 2px 0 #1a1a24); }
+.D.az.lb.lbn .lb-panel .lb-listo { order: -1; max-width: none; border-radius: 999px; border: 0; color: #1a1a24; font-style: italic;
+  background: linear-gradient(180deg, #f6dc55, #eacb3a); box-shadow: inset 0 -4px 0 rgba(0, 0, 0, .12), 0 3px 0 rgba(0, 0, 0, .25); }
+.D.az.lb.lbn .lb-panel .lb-listo img { display: none; }
+.D.az.lb.lbn .lb-panel .lb-listo.quitar { color: #fff; background: linear-gradient(180deg, #5b6aa8, #333f7a); }
+.D.az.lb.lbn .lb-panel .lb-figs, .D.az.lb.lbn .lb-panel > .lb-mini { padding: 10px; border-radius: 4px; background: #c3c6c9; box-shadow: inset 0 2px 0 rgba(255, 255, 255, .5), 0 3px 0 rgba(0, 0, 0, .2); }
+.D.az.lb.lbn .lb-panel > .lb-mini { width: 100%; min-height: 48px; font-weight: 800; color: #1a1a24; border: 0; }
+.D.az.lb.lbn .lb-panel .lb-mini-fig { border-radius: 50%; border: 4px solid #e4e6e8; background: #fff; }
+.D.az.lb.lbn .lb-panel .lb-mini-fig.activa { border-color: #f2b632; }
+.D.az.lb.lbn .lb-panel .lb-flecha { width: 30px; height: 36px; color: #1a1a24; background: #fff; border: 2px solid #1a1a24; border-radius: 6px; }
+.D.az.lb.lbn .lb-panel .lb-figs small { color: #2a2d36; }
+/* B: la base pintada es más chica (≈56 % del ancho), el pedestal blanco también. */
+.D.az.lb.lb3b .lb-escenario:has(.lb-cab) .lb-ped { width: 48cqw;
+  top: calc(var(--piso) + max(230cqw, var(--piso) / var(--fl)) * (var(--fb) - var(--fl)) + 5cqw - 22.3cqw); }
+
+/* =====================================================================
+   PRUEBA ?lobby=a v2 (Elías, 25 nov): la A por piezas (generar_a.py). El cuarto trae el zoclo oscuro y el piso de la
+   A: zoclo del 39.75 % (--zt) al 63.5 % (--piso) de 1536×1024. La cabina es solo la pared (termina en --zt, así la
+   división y los rectángulos de metal son los del cuarto), la base de color sobre el piso, columnas oscuras a los
+   lados con sombra que se apaga en el piso, y la figura de la pared centrada en la cabeza del personaje.
+   Base: 90 % del ancho, alto 0.19 W, tapa al 39.5 % de su alto, 0.114 W bajo el zoclo → tapa en --piso + .114 W.
+   El pedestal blanco se apoya 0.05 W más abajo (--pb). La cabeza queda ≈ 1 W arriba de --pb.
+   ===================================================================== */
+.D.az.lb.lb3a .lb-escenario:has(.lb-cab) .lb-pedestales.fiesta { --zt: calc(50dvh - 105 * var(--escala)); --pb: calc(var(--piso) + var(--lb-w) * .164); }
+.D.az.lb.lb3a .lb-escenario:has(.lb-cab) .a-sala-col.lb-cab {
+  background: var(--pj-base) center calc(var(--piso) + var(--lb-w) * .039) / 90% auto no-repeat,
+    linear-gradient(180deg, transparent var(--piso), color-mix(in srgb, var(--pj, #8a90a8) 14%, transparent) var(--piso), transparent calc(var(--piso) + var(--lb-w) * .7)); }
+.D.az.lb.lb3a .lb-escenario:has(.lb-cab) .a-sala-col.lb-cab::before { content: ""; display: block; opacity: 1; clip-path: none; mix-blend-mode: normal; width: auto; translate: none; transform: none;
+  filter: none; animation: none; border-radius: 0; position: absolute; inset: 0 0 auto; height: var(--zt);
+  background: var(--pj-forma, none) center calc(min(var(--piso) - 83.6cqw, var(--zt) - 30cqw) - 28cqw) / 56cqw auto no-repeat, var(--pj-pared) center bottom / cover no-repeat; }
+.D.az.lb.lb3a .lb-escenario:has(.lb-cab) .a-sala-col.lb-cab::after { content: ""; display: block; opacity: 1; clip-path: none; mix-blend-mode: normal; width: auto; translate: none; transform: none;
+  filter: none; animation: none; border-radius: 0; position: absolute; inset: 0 0 auto; height: calc(var(--piso) + 14cqw); pointer-events: none;
+  background: linear-gradient(90deg, #07070c 0 3.2%, rgba(255, 255, 255, .1) 3.2% 3.7%, rgba(0, 0, 0, .55) 3.7%, transparent 13%, transparent 87%, rgba(0, 0, 0, .55) 96.3%, rgba(255, 255, 255, .1) 96.3% 96.8%, #07070c 96.8%);
+  -webkit-mask-image: linear-gradient(180deg, #000 var(--piso), transparent); mask-image: linear-gradient(180deg, #000 var(--piso), transparent); }
+.D.az.lb.lb3a .lb-escenario:has(.lb-cab) .lb-ped { width: 58cqw; top: calc(var(--piso) + 16.4cqw - 27cqw); }
+.D.az.lb.lb3a .lb-escenario:has(.lb-cab) .lb-jn { top: calc(var(--piso) + 16.4cqw - 12cqw); }
+
+/* Letrero pegado al borde de arriba (computadora). */
+.D.az.lb.lbn.wide .lb-banner { position: fixed; top: 0; left: 50%; translate: -50% 0; margin: 0; z-index: 6; }
+/* Panel y «¡TODO LISTO!» del color de cada cabina. */
+.D.az.lb.lbn .lb-panel {
+  background:
+    linear-gradient(90deg, transparent calc(25% - 1px), rgba(0, 0, 0, .14) calc(25% - 1px) 25%, transparent 25% calc(50% - 1px), rgba(0, 0, 0, .14) calc(50% - 1px) 50%, transparent 50% calc(75% - 1px), rgba(0, 0, 0, .14) calc(75% - 1px) 75%, transparent 75%),
+    linear-gradient(180deg, color-mix(in srgb, var(--pj, #4f8c4b) 80%, #fff), var(--pj, #4f8c4b));
+  box-shadow: 0 8px 0 var(--pj-oscuro, #2f5a2e), 0 16px 26px rgba(0, 0, 0, .45); }
+.D.az.lb.lbn .lb-sello span { background: linear-gradient(180deg, #fff 28%, var(--pj-claro, #ff8a8a) 60%, var(--pj, #d8202a));
+  -webkit-background-clip: text; background-clip: text; -webkit-text-stroke-color: color-mix(in srgb, var(--pj-oscuro, #2a0a12) 60%, #000); }
+
+/* Barra de nombres abajo (lobby nuevo): un tramo del color de cada jugador con «♛ ● J1 · Nombre»; los nombres
+   ya no van arriba. El panel y «Agregar jugador» suben lo que mide la barra. */
+.D .lb-barra { display: none; }
+.D.az.lb.lbn .lb-escenario:has(.lb-cab) .lb-barra { --alto-barra: clamp(30px, 4.4dvh, 42px); position: absolute; left: 0; right: 0; bottom: 0; z-index: 3; display: flex; align-items: center; justify-content: center; gap: .35em;
+  height: var(--alto-barra); padding: 0 .6em; overflow: hidden; white-space: nowrap; color: var(--pj-texto, #fff); background: var(--pj, #444);
+  box-shadow: inset 0 3px 0 rgba(255, 255, 255, .22), inset 0 -3px 0 rgba(0, 0, 0, .18); font: italic 400 clamp(15px, 1.35vw, 22px)/1 var(--f-titulo); }
+.D.az.lb.lbn .lb-barra img { width: 1.1em; height: auto; filter: drop-shadow(1px 1px 0 rgba(0, 0, 0, .5)); }
+.D.az.lb.lbn .lb-barra i { flex: none; width: .8em; height: .8em; border-radius: 50%; background: var(--pj, #e8343a); box-shadow: 0 0 0 2px #fff, inset 0 -2px 0 rgba(0, 0, 0, .3); }
+.D.az.lb.lbn .lb-barra b { font-weight: 400; }
+.D.az.lb.lbn .lb-barra-nom { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.D.az.lb.lbn .lb-barra-nom * { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.D.az.lb.lbn .lb-escenario:has(.lb-cab) .lb-etq { display: none; }
+.D.az.lb.lbn .lb-escenario:has(.lb-cab) .lb-abajo { bottom: calc(clamp(30px, 4.4dvh, 42px) + 12px); }
+.D.az.lb.lbn .lb-escenario.lb-carrusel:has(.lb-cab) .lb-abajo { bottom: calc(clamp(30px, 4.4dvh, 42px) + max(12px, env(safe-area-inset-bottom))); }
+.D.az.lb.lbn .lb-escenario.lb-carrusel:has(.lb-cab) .lb-barra { bottom: env(safe-area-inset-bottom); }
+.D.az.lb.lbn .lb-puntos-cel { bottom: calc(clamp(30px, 4.4dvh, 42px) + 4px); }
+
+/* Lugar libre del lobby nuevo (Elías, 25 nov): ya con el color del siguiente, pared más oscura, solo la tapa del
+   pedestal blanco (como hundido; «crece» cuando entra alguien), luz de su color hacia arriba y cruz blanca
+   semitransparente flotando. La tapa ocupa el 45 % de arriba de la imagen del pedestal (27cqw de alto a 58cqw). */
+.D.az.lb.lbn .lb-escenario:has(.lb-cab) .a-sala-col.lb-cab.vacia::before { filter: brightness(.62) saturate(.85); }
+.D.az.lb.lbn .lb-escenario:has(.lb-cab) .lb-tapa { clip-path: inset(0 0 55% 0); animation: none;
+  filter: drop-shadow(0 0 10px color-mix(in srgb, var(--pj, #fff) 80%, transparent)) brightness(1.05); }
+.D.az.lb.lb3a .lb-escenario:has(.lb-cab) .lb-tapa { top: calc(var(--piso) + 11.4cqw - 12cqw + 1cqw); }
+.D.az.lb.lb2 .lb-escenario:has(.lb-cab) .lb-tapa { top: calc(var(--piso) + 22cqw - 12cqw); }
+.D.az.lb.lb3b .lb-escenario:has(.lb-cab) .lb-tapa { top: calc(var(--piso) + max(230cqw, var(--piso) / var(--fl)) * (var(--fb) - var(--fl)) + 5cqw - 10cqw); }
+.D .lb-haz, .D .lb-cruz { display: none; }
+.D.az.lb.lbn .lb-escenario:has(.lb-cab) .lb-haz { display: block; position: absolute; left: 50%; top: 0; translate: -50% 0; width: 62cqw;
+  height: calc(var(--piso) + 6cqw); pointer-events: none; mix-blend-mode: screen; opacity: .8;
+  background: linear-gradient(0deg, color-mix(in srgb, var(--pj-claro, #fff) 75%, #fff) 0%, color-mix(in srgb, var(--pj, #fff) 70%, transparent) 30%, color-mix(in srgb, var(--pj, #fff) 25%, transparent) 75%, transparent);
+  clip-path: polygon(8% 0, 92% 0, 74% 100%, 26% 100%); filter: blur(4px); animation: lbHaz 3.2s ease-in-out infinite; }
+@keyframes lbHaz { 50% { opacity: .6; } }
+.D.az.lb.lbn .lb-escenario:has(.lb-cab) .lb-cruz { display: block; position: absolute; left: 50%; translate: -50% 0; width: 50cqw; height: auto; pointer-events: none;
+  top: calc(var(--piso) - 76cqw); opacity: .82; filter: drop-shadow(0 0 14px color-mix(in srgb, var(--pj, #fff) 70%, transparent)); animation: lbCruz 3.2s ease-in-out infinite; }
+@keyframes lbCruz { 50% { translate: -50% -3cqw; } }
+.D.az.lb.lbn .lb-escenario:has(.lb-cab) .a-sala-col.lb-cab.vacia { box-shadow: none; }
+@media (prefers-reduced-motion: reduce) { .D.az.lb.lbn .lb-haz, .D.az.lb.lbn .lb-cruz { animation: none; } }
+
+/* =====================================================================
+   A v3 (Elías, 25 nov, tarde): zoclo a la cintura de la figura (cuarto: zoclo del 51.6 % al 63.5 %), plataforma
+   blanca nueva más ancha (72 % del ancho, alto 0.445 de su ancho, centro de la tapa al 17.7 % de su alto; se apoya
+   0.02 W bajo la tapa de la base → --pb = --piso + .134 W; pies a 0.263 W sobre --pb), tapa sola en los libres
+   (alto 0.27 de su ancho), figura de la pared más grande y a la mitad de la pared (casi cuadrada), y la cruz más
+   grande, teñida del color de la cabina.
+   ===================================================================== */
+.D.az.lb.lb3a .lb-escenario:has(.lb-cab) .lb-pedestales.fiesta { --zt: calc(50dvh + 16 * var(--escala)); --pb: calc(var(--piso) + var(--lb-w) * .134); }
+.D.az.lb.lb3a .lb-escenario:has(.lb-cab) .a-sala-col.lb-cab::before {
+  background: var(--pj-forma, none) center calc(var(--zt) / 2 - 36cqw) / 72cqw auto no-repeat, var(--pj-pared) center bottom / cover no-repeat; }
+.D.az.lb.lb3a .lb-escenario:has(.lb-cab) .lb-ped { width: 72cqw; top: calc(var(--piso) + 13.4cqw - 32cqw); filter: drop-shadow(0 6px 8px rgba(0, 0, 0, .5)); }
+.D.az.lb.lb3a .lb-escenario:has(.lb-cab) .lb-tapa { width: 72cqw; clip-path: none; top: calc(var(--piso) + 13.4cqw - 19.5cqw);
+  filter: drop-shadow(0 0 12px color-mix(in srgb, var(--pj, #fff) 70%, transparent)); }
+.D.az.lb.lb3a .lb-escenario:has(.lb-cab) .a-sala-3d { top: calc(var(--pb) - var(--lb-w) * (.263 + .783 * 1.8)); }
+.D.az.lb.lb3a .lb-escenario.lb-carrusel:has(.lb-cab) .a-sala-3d { top: calc(var(--pb) - var(--lb-w) * (.263 + .783 * 1.3)); }
+.D.az.lb.lb3a .lb-escenario:has(.lb-cab) .lb-jn { top: calc(var(--piso) + 13.4cqw - 32cqw + 16cqw); }
+.D.az.lb.lb3a .lb-escenario:has(.lb-cab) .lb-sello, .D.az.lb.lb3a .lb-escenario:has(.lb-cab) .lb-aun { top: calc(var(--pb) + var(--lb-w) * .1); }
+.D.az.lb.lbn .lb-escenario:has(.lb-cab) .lb-cruz { width: 64cqw; aspect-ratio: 360 / 416; top: calc(var(--piso) - 70cqw); opacity: .9;
+  background: var(--cruz) center / contain no-repeat; filter: drop-shadow(0 0 16px color-mix(in srgb, var(--pj, #fff) 75%, transparent)); }
+.D.az.lb.lbn .lb-escenario:has(.lb-cab) .lb-cruz::after { content: ""; position: absolute; inset: 0; mix-blend-mode: multiply;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--pj-claro, #fff) 70%, #fff), var(--pj, #fff));
+  -webkit-mask: var(--cruz) center / contain no-repeat; mask: var(--cruz) center / contain no-repeat; }
+
+/* ---------- Lugar libre v2 (Elías, 25 nov): cruz un poco más chica, centrada justo bajo la pared; la luz fuerte
+   viene de arriba (cono que se apaga hacia la cruz) y la de abajo es corta, solo alumbra la parte baja. ---------- */
+.D.az.lb.lbn .lb-escenario:has(.lb-cab) .lb-cruz { width: 50cqw; top: calc(var(--zt) - 22cqw); }
+.D.az.lb.lbn .lb-escenario:has(.lb-cab) .lb-haz { width: 92cqw; height: calc(var(--zt) + 26cqw); opacity: .9;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--pj-claro, #fff) 70%, #fff) 0%, color-mix(in srgb, var(--pj, #fff) 75%, transparent) 30%, color-mix(in srgb, var(--pj, #fff) 30%, transparent) 70%, transparent);
+  clip-path: polygon(32% 0, 68% 0, 92% 100%, 8% 100%); filter: blur(6px); }
+.D .lb-haz-abajo { display: none; }
+.D.az.lb.lbn .lb-escenario:has(.lb-cab) .lb-haz-abajo { display: block; position: absolute; left: 50%; translate: -50% 0; width: 46cqw; height: 24cqw; pointer-events: none;
+  top: calc(var(--piso) + 13.4cqw - 30cqw); mix-blend-mode: screen; opacity: .75; filter: blur(5px);
+  background: linear-gradient(0deg, color-mix(in srgb, var(--pj-claro, #fff) 70%, #fff), color-mix(in srgb, var(--pj, #fff) 55%, transparent) 45%, transparent);
+  clip-path: polygon(14% 0, 86% 0, 100% 100%, 0 100%); }
+
+/* ---------- Botones del lobby nuevo con el estilo de caja de bloques (como «AÑADIR CPU»), del color de su cabina:
+   caja de color con flecha amarilla arriba, píldora más clara con letra blanca cursiva con orilla oscura, y charola
+   gris con letra del color. ---------- */
+.D.az.lb.lbn .lb-panel .lb-listo, .D.az.lb.lbn .lb-panel .lb-continuar {
+  width: 100%; max-width: none; min-height: 52px; padding: 8px 18px; border: 0; border-radius: 999px; cursor: pointer;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--pj, #f6dc55) 45%, #fff), color-mix(in srgb, var(--pj, #f6dc55) 70%, #fff));
+  box-shadow: inset 0 -4px 0 rgba(0, 0, 0, .12), 0 3px 0 rgba(0, 0, 0, .25);
+  color: #fff; font: italic 400 clamp(20px, 1.8vw, 30px)/1 var(--f-titulo); text-transform: uppercase; letter-spacing: .01em;
+  -webkit-text-stroke: 1.5px #1a1a24; paint-order: stroke fill; text-shadow: 2px 3px 0 #1a1a24; }
+.D.az.lb.lbn .lb-panel .lb-continuar { order: -1; min-height: 60px; display: flex; flex-direction: column; gap: 2px; }
+.D.az.lb.lbn .lb-panel .lb-continuar span { font: inherit; }
+.D.az.lb.lbn .lb-panel .lb-continuar small { font: 800 12px/1.1 var(--f-texto); -webkit-text-stroke: 0; text-shadow: none; color: #1a1a24; text-transform: none; }
+.D.az.lb.lbn .lb-panel .lb-listo.quitar { background: linear-gradient(180deg, #8d93a8, #6b7189); }
+.D.az.lb.lbn .lb-panel > .lb-mini, .D.az.lb.lbn .lb-panel .lb-figs { border-radius: 4px; background: #c3c6c9; }
+.D.az.lb.lbn .lb-panel > .lb-mini { color: var(--pj, #f2b632); font: italic 400 clamp(17px, 1.4vw, 24px)/1 var(--f-titulo); text-transform: uppercase;
+  -webkit-text-stroke: 1.5px #1a1a24; paint-order: stroke fill; text-shadow: 2px 2px 0 #1a1a24; }
+.D.az.lb.lbn .lb-panel .lb-quitar-listo { order: 1; }
+
+/* «Agregar jugador»: la misma caja, del color del lugar libre. */
+.D.az.lb.lbn .lb-agregar { position: relative; display: flex; width: 100%; min-height: 0; padding: 12px; border: 0; border-radius: 22px; cursor: pointer; color: #fff;
+  background:
+    linear-gradient(90deg, transparent calc(25% - 1px), rgba(0, 0, 0, .14) calc(25% - 1px) 25%, transparent 25% calc(50% - 1px), rgba(0, 0, 0, .14) calc(50% - 1px) 50%, transparent 50% calc(75% - 1px), rgba(0, 0, 0, .14) calc(75% - 1px) 75%, transparent 75%),
+    linear-gradient(180deg, color-mix(in srgb, var(--pj, #f2b632) 80%, #fff), var(--pj, #f2b632));
+  box-shadow: 0 8px 0 var(--pj-oscuro, #8a6400), 0 16px 26px rgba(0, 0, 0, .45); }
+.D.az.lb.lbn .lb-agregar::before { content: ""; position: absolute; left: 50%; top: -20px; translate: -50% 0; width: 34px; height: 24px; background: #f2b632;
+  clip-path: polygon(0 0, 100% 0, 50% 100%); filter: drop-shadow(0 2px 0 #1a1a24); }
+.D.az.lb.lbn .lb-agregar b { flex: 1; display: flex; align-items: center; justify-content: center; gap: .45em; min-height: 52px; padding: 8px 14px; border-radius: 999px;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--pj, #f6dc55) 45%, #fff), color-mix(in srgb, var(--pj, #f6dc55) 70%, #fff));
+  box-shadow: inset 0 -4px 0 rgba(0, 0, 0, .12), 0 3px 0 rgba(0, 0, 0, .25);
+  font: italic 400 clamp(18px, 1.6vw, 28px)/1 var(--f-titulo); text-transform: uppercase; -webkit-text-stroke: 1.5px #1a1a24; paint-order: stroke fill; text-shadow: 2px 3px 0 #1a1a24; }
+.D.az.lb.lbn .lb-agregar b span { display: grid; place-items: center; width: 1.3em; height: 1.3em; border-radius: 50%; font-size: .9em; font-style: normal;
+  background: #2c2f38; box-shadow: 0 0 0 2px #fff; -webkit-text-stroke: 0; text-shadow: none; }
+.D.az.lb.lbn .lb-agregar:active { transform: translateY(3px); }
+.D.az.lb.lbn .lb-panel .lb-continuar small { display: none; }
+.D.az.lb.lbn .lb-panel > .lb-mini { min-height: 40px; font-size: clamp(14px, 1.15vw, 20px); white-space: nowrap; }
+.D.az.lb.lbn .lb-panel .lb-continuar, .D.az.lb.lbn .lb-panel .lb-listo { font-size: clamp(17px, 1.6vw, 28px); white-space: nowrap; }
+.D.az.lb.lbn .lb-panel > .lb-mini { white-space: normal; line-height: 1.05; padding: 6px 8px; }
+
+/* Lobby nuevo en celular (Elías, 25 nov): letrero de una línea pegado arriba a la derecha (sin subtítulo) y letras
+   del panel más grandes. */
+.D.az.lb.lbn:not(.wide) .lb-banner { position: fixed; top: 0; right: max(8px, env(safe-area-inset-right)); left: auto; translate: none; margin: 0; z-index: 6;
+  flex-wrap: nowrap; white-space: nowrap; gap: 8px; padding: 8px 34px 10px; clip-path: polygon(0 0, 100% 0, calc(100% - 12px) 100%, 12px 100%);
+  background:
+    radial-gradient(circle at 18px 32%, #8e6ad4 0 6px, #5a3a9c 7px 8px, transparent 9px),
+    radial-gradient(circle at 18px 74%, #8e6ad4 0 6px, #5a3a9c 7px 8px, transparent 9px),
+    radial-gradient(circle at calc(100% - 18px) 32%, #8e6ad4 0 6px, #5a3a9c 7px 8px, transparent 9px),
+    radial-gradient(circle at calc(100% - 18px) 74%, #8e6ad4 0 6px, #5a3a9c 7px 8px, transparent 9px),
+    linear-gradient(180deg, #7a52c4, #6340ad); }
+.D.az.lb.lbn:not(.wide) .lb-banner::before { width: 18px; height: 20px; }
+.D.az.lb.lbn:not(.wide) .lb-banner-s { display: none; }
+.D.az.lb.lbn:not(.wide) .lb-banner-n { font-size: 22px; }
+.D.az.lb.lbn:not(.wide) .lb-banner-t { font-size: 17px; }
+.D.az.lb.lbn:not(.wide) .lb-panel .lb-listo, .D.az.lb.lbn:not(.wide) .lb-panel .lb-continuar { font-size: 26px; min-height: 56px; }
+.D.az.lb.lbn:not(.wide) .lb-panel > .lb-mini { font-size: 19px; min-height: 46px; }
+.D.az.lb.lbn:not(.wide) .lb-agregar b { font-size: 24px; }
+/* La cruz nunca baja hasta la tapa (en celular la columna es ancha y crecería encima). */
+.D.az.lb.lbn .lb-escenario:has(.lb-cab) .lb-cruz { top: min(calc(var(--zt) - 22cqw), calc(var(--piso) - 70cqw)); }

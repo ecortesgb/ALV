@@ -5,9 +5,10 @@ import { claveArchivo, varsColor, type ColorJugador } from "../../app/colorJugad
 import { apodoDe, semillaDe, useFoto } from "../../app/figura3d";
 import type { FiguraV2 } from "../../content/personaje";
 import { urlArte } from "../comun";
+import { carpetaLobby } from "./version";
 
 /** Fondo de la ficha: la cabina del color (sin color, la vacía). */
-export const cabinaDe = (c: ColorJugador | null) => urlArte(`lobby/cabina-${c ? claveArchivo(c) : "vacia"}.webp`);
+export const cabinaDe = (c: ColorJugador | null) => urlArte(`${carpetaLobby}/cabina-${c ? claveArchivo(c) : "vacia"}.webp`);
 
 export function FichaJugador({ id, figura, nombre, color, tamano = 64, className = "", yo, soloCara, children }: {
   id: string; figura: FiguraV2 | null | undefined; nombre: string; color: ColorJugador | null; tamano?: number; className?: string; yo?: boolean;

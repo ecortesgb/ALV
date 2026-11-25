@@ -20,6 +20,7 @@ import "../azotea/azotea.css";
 import "../perfil/perfil.css";
 import "./lobby.css";
 import { FondoCuarto } from "./Cuarto";
+import { claseLobby } from "./version";
 
 /** Cabinas por color con pedestal (Elías aprobó el 22 nov; las cápsulas viejas se quitaron el 23 nov). */
 const PRUEBA_ESCENARIOS = true;
@@ -72,7 +73,11 @@ export function Lobby({ sala, miembros, yo, soyAnfitrion, final, red, refrescar,
   const miPanel = (m: Miembro) => m.id !== yo ? null : (
     <div className="lb-panel">
       {soyAnfitrion && p.todos ? (
-        <button type="button" className="lb-continuar" onClick={() => ir("configurar", sala.codigo)}><span>Continuar</span><small>Todos listos: arma la partida</small></button>
+        <>
+          <button type="button" className="lb-continuar" onClick={() => ir("configurar", sala.codigo)}><span>Continuar</span><small>Todos listos: arma la partida</small></button>
+          {/* Con «Continuar» a la vista el administrador también puede quitarse el listo (Elías, 25 nov). */}
+          <button type="button" className="lb-mini lb-quitar-listo" onClick={() => listo(m)}>Ya no estoy listo</button>
+        </>
       ) : (<>
         {local ? <button type="button" className="lb-mini" onClick={() => setEditar({ tipo: "figura", m })}>Cambiar figura</button>
           : <ElegirFigura uid={yo} alCambiar={refrescar} bloqueado={m.listo} />}
@@ -86,7 +91,7 @@ export function Lobby({ sala, miembros, yo, soyAnfitrion, final, red, refrescar,
 
   // Local: «Agregar jugador» en el primer lugar libre (hasta 8).
   const libreLocal = local && soyAnfitrion ? (i: number) => (i === miembros.length && miembros.length < CUPO_LOBBY
-    ? <button type="button" className="lb-agregar" onClick={() => setEditar({ tipo: "nuevo" })}><span>＋</span>Agregar jugador</button> : null) : undefined;
+    ? <button type="button" className="lb-agregar" onClick={() => setEditar({ tipo: "nuevo" })}><b><span>＋</span>Agregar jugador</b></button> : null) : undefined;
   const guardarPersonaje = (d: DatosPersonaje) => {
     if (editar?.tipo === "nuevo") { if (!modoLocal.agregar(sala, d)) aviso("No se pudo agregar (máximo 8)."); }
     else if (editar?.tipo === "figura") modoLocal.figura(sala, editar.m.id, d.figura);
@@ -94,7 +99,7 @@ export function Lobby({ sala, miembros, yo, soyAnfitrion, final, red, refrescar,
   };
 
   return (
-    <Marco clase="az lb" fondo={<FondoCuarto />}>
+    <Marco clase={"az lb" + claseLobby} fondo={<FondoCuarto />}>
       <div className="lb-caja">
         <header className="lb-top">
           <button type="button" className="pf-atras" onClick={alSalir}><span aria-hidden="true">◀</span>{local ? "Terminar" : soyAnfitrion ? "Cerrar" : "Salir"}</button>

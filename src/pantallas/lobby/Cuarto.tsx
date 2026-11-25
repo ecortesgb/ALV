@@ -4,11 +4,12 @@ import { Marco, urlArte } from "../comun";
 import "../azotea/azotea.css";
 import "./lobby.css";
 import "./partida.css";
+import { LOBBY_NUEVO, VARIANTE_LOBBY } from "./version";
 
 export function FondoCuarto({ oscuro }: { oscuro?: boolean }) {
   return (
     <div className={"lb-fondo" + (oscuro ? " oscuro" : "")} aria-hidden="true">
-      <span className="lb-cuarto" style={{ "--lb-fondo-g": urlArte("lobby/fondo-cuarto-1920.webp"), "--lb-fondo-c": urlArte("lobby/fondo-cuarto-1100.webp") } as CSSProperties} />
+      <span className="lb-cuarto" style={{ "--lb-fondo-g": urlArte(VARIANTE_LOBBY === "a" ? "lobby/v3/a/fondo-1920.webp" : LOBBY_NUEVO ? "lobby/v2/fondo-1920.webp" : "lobby/fondo-cuarto-1920.webp"), "--lb-fondo-c": urlArte(VARIANTE_LOBBY === "a" ? "lobby/v3/a/fondo-1100.webp" : LOBBY_NUEVO ? "lobby/v2/fondo-1100.webp" : "lobby/fondo-cuarto-1100.webp") } as CSSProperties} />
     </div>
   );
 }

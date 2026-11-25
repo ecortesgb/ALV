@@ -65,6 +65,14 @@ const PREFERIDOS: Record<GeneroColor, ClaveColor[]> = {
 /** Orden de respaldo: primarios y después secundarios. */
 const RESPALDO: ClaveColor[] = ["azul", "amarillo", "verde", "naranja", "rosa", "morado", "cafe"];
 
+/** Colores de los lugares libres del lobby: los que nadie tiene, en el orden en que se reparten (rojo primero si
+ *  falta, luego primarios y secundarios). `desde` = cuántos lugares ya están ocupados (para la etiqueta). */
+export function coloresLibres(usados: readonly { nombre: string }[], desde: number): ColorJugador[] {
+  const tomados = new Set(usados.map(u => u.nombre));
+  return (["rojo", ...RESPALDO] as ClaveColor[]).map(k => PALETA_SALA[k]).filter(t => !tomados.has(t.nombre))
+    .map((t, j) => ({ ...t, n: desde + j + 1, etiqueta: `P${desde + j + 1}` }));
+}
+
 /** Ids en el orden de los lugares: el anfitrión primero y los demás por orden de entrada. */
 export function ordenSala(ids: readonly string[], anfitrion: string | null | undefined): string[] {
   return anfitrion && ids.includes(anfitrion) ? [anfitrion, ...ids.filter(i => i !== anfitrion)] : [...ids];
