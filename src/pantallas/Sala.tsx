@@ -22,7 +22,8 @@ import { AnuncioDiscusion, PapelNave, useAnuncioDiscusion } from "../juegos/impo
 import { esFinalDeJuego } from "../juegos/general/Copas";
 import { useSala } from "../roles/sala";
 import { Marco, aviso, confirmar } from "./comun";
-import { colorDe } from "../app/colorJugador";
+import { colorDe, varsColor } from "../app/colorJugador";
+import { MedallonJugador } from "./azotea/Cabecera";
 import { Lobby } from "./lobby/Lobby";
 import { useColoresSala } from "./lobby/colores";
 import { BotonCast } from "./lobby/Cast";
@@ -310,11 +311,13 @@ export function Sala({ codigo }: { codigo: string }) {
 function PasaTelefono({ nombre, id, figura, color, alListo }: { nombre: string; id: string; figura: FiguraV2 | null; color: ColorJugador | null; alListo: () => void }) {
   return (
     <Marco clase="az lb pt-aviso" fondo={<FondoCuarto oscuro />}>
-      <div className="a-pasa-caja" style={{ "--pj": color?.base ?? "#ffc21a" } as React.CSSProperties}>
-        <span className="dsp ol a-t2">Pásale el teléfono a</span>
-        <FichaJugador className="pt-pasa-ficha" id={id} figura={figura} nombre={nombre} color={color} tamano={120} />
-        <p className="a-suave">Que nadie más vea la pantalla.</p>
-        <button type="button" className="lb-listo" onClick={alListo}>Soy {nombre}</button>
+      {/* Caja de bloques del lobby del color del jugador, con el medallón del HUB (Elías, 25 nov). */}
+      <div className="a-pasa-caja pasa-n" style={varsColor(color)}>
+        <span className="pasa-t">Pásale el teléfono a</span>
+        <MedallonJugador id={id} figura={figura} estrella={color?.etiqueta?.replace(/\D/g, "") || undefined} tamano="clamp(120px, 24dvh, 180px)" />
+        <b className="pasa-nom">{nombre}</b>
+        <p className="pasa-nota">Que nadie más vea la pantalla.</p>
+        <button type="button" className="pasa-btn" onClick={alListo}>Soy {nombre}</button>
       </div>
     </Marco>
   );

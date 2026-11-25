@@ -337,11 +337,19 @@ export const etapaImpostor = (e: EstadoPartida): EtapaImpostor => e.naveEtapa ??
 const siguienteEnHablar = (e: EstadoPartida, pistas: Record<string, string>) => ordenVuelta(e).find(j => !(j in pistas));
 const esImpostor = (e: EstadoPartida, j: string) => (e.privado[j] as { rol?: string } | undefined)?.rol === "impostor";
 
+/** Palabras que pueden salir de un tema: las de siempre y, con más Temperatura, las de ese nivel y los de abajo. */
+export function palabrasDeTema(t: TemaImpostor, temperatura: number): string[] {
+  if (temperatura < 2 || !t.porNivel) return t.palabras;
+  return [...t.palabras, ...(t.porNivel[2] ?? []), ...(temperatura >= 3 ? t.porNivel[3] ?? [] : [])];
+}
+
 /** Elige el tema según las opciones: uno fijo, el del escenario o al azar entre los permitidos. */
 function temaElegido(e: EstadoPartida, c: Contenido, azar: ReturnType<typeof crearAzar>): TemaImpostor {
   // Las categorías de la nave solo las sortean las partidas con papeles; las demás, nunca (partidas guardadas iguales).
   const nave = !!e.cfg.impostor?.papeles;
-  const permitido = (t: TemaImpostor) => (!t.adulto || e.cfg.adulto) && !!t.soloNave === nave;
+  // En la nave lo adulto lo abre solo la Temperatura en Extremo (el Voltaje es para los castigos; Elías, 25 nov).
+  const adulto = nave && e.cfg.ejes ? e.cfg.ejes.temperatura === 3 : e.cfg.adulto;
+  const permitido = (t: TemaImpostor) => (!t.adulto || adulto) && !!t.soloNave === nave;
   const pedido = e.cfg.impostor?.tema;
   const fijo = pedido === "escenario" ? c.temas.find(t => t.escenario === e.cfg.escenario && permitido(t)) : c.temas.find(t => t.id === pedido && permitido(t));
   if (fijo) return fijo;
@@ -356,7 +364,7 @@ const impostorEliminacion: Mecanica = {
     if (e.ronda === 1 || Object.keys(privado).length === 0) {
       // El secreto se reparte una sola vez: misma palabra y mismos impostores toda la partida.
       const tema = temaElegido(e, c, azar);
-      const palabra = azar.elegir(tema.palabras);
+      const palabra = azar.elegir(palabrasDeTema(tema, e.cfg.ejes?.temperatura ?? 1));
       const cuantos = Math.min(Math.max(1, Math.floor(e.cfg.impostor?.cantidad ?? 1)), maxImpostores(ids(e).length));
       const impostores = azar.mezclar(ids(e)).slice(0, cuantos);
       privado = {};
@@ -442,7 +450,12 @@ const EN_PAPELES = new Set(["visto", "discutir", "comenzar", "terminar", "pausar
 function castigosNave(e: EstadoPartida, c: Contenido, fin: "civiles" | "impostores"): Record<string, { texto: string; trago: boolean }> {
   const perdedores = ids(e).filter(j => esImpostor(e, j) === (fin === "civiles"));
   const permitidas = cartasPermitidas(e.cfg, c.cartas, ["castigo-nave"]);
-  const delTipo = permitidas.filter(x => x.drunk === !!e.cfg.drunk);
+  // Voltaje (Elías, 25 nov): cada nivel saca sus castigos; si no hay de ese nivel, los del nivel de abajo.
+  const voltaje = e.cfg.ejes?.voltaje ?? 1;
+  const nivelDe = (x: { nivel?: number }) => x.nivel ?? 1;
+  const hay = (n: number) => permitidas.some(x => nivelDe(x) === n && x.drunk === !!e.cfg.drunk);
+  const nivel = [voltaje, 2, 1].find(n => n <= voltaje && hay(n)) ?? 1;
+  const delTipo = permitidas.filter(x => x.drunk === !!e.cfg.drunk && nivelDe(x) === nivel);
   const pool = crearAzar(e.semilla * 53 + 4099).mezclar(delTipo.length ? delTipo : permitidas.filter(x => !x.drunk));
   const out: Record<string, { texto: string; trago: boolean }> = {};
   if (!pool.length) return out;

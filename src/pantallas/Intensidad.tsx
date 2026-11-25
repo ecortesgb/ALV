@@ -22,11 +22,25 @@ export const DESCRIPCION_NIVEL: Record<Eje, Record<NivelEje, string>> = {
   },
 };
 
-/** Qué ejes usa un juego: los de sus mazos. El impostor usa Temperatura (sus temas adultos); Dados HOT, Voltaje. */
+/** El impostor (Elías, 25 nov): la Temperatura sube las palabras de cada categoría y el Voltaje, los castigos al que pierde. */
+export const DESCRIPCION_IMPOSTOR: Record<Eje, Record<NivelEje, string>> = {
+  temperatura: {
+    1: "Palabras para todo público en cada categoría.",
+    2: "Se suman palabras subidas de tono: películas, series y canciones para mayores.",
+    3: "Se suman palabras para adultos (películas clasificación R y más) y se abre la categoría Adultos.",
+  },
+  voltaje: {
+    1: "Castigos leves y chistosos para quien pierde.",
+    2: "Castigos vergonzosos: imitar, actuar, exponerse un poco.",
+    3: "Castigos fuertes de atrevimiento y exposición. Sin contacto con nadie.",
+  },
+};
+
+/** Qué ejes usa un juego: los de sus mazos. El impostor usa los dos (palabras y castigos); Dados HOT, Voltaje. */
 export function ejesDeJuego(juego: string): Eje[] {
   const def = JUEGOS.find(j => j.id === juego);
   if (!def) return [];
-  if (def.motor === "rol-secreto") return ["temperatura"];
+  if (def.motor === "rol-secreto") return ["temperatura", "voltaje"];
   if (def.motor === "dados") return ["voltaje"];
   const ejes = new Set((def.mazo ?? "").split("+").map(m => EJE_DE_MAZO[m]).filter((x): x is Eje => !!x));
   return (["temperatura", "voltaje"] as const).filter(e => ejes.has(e));
@@ -56,18 +70,20 @@ function Instrumento({ eje, nivel }: { eje: Eje; nivel: NivelEje }) {
   return <span className="in-barra">{[3, 2, 1].map(n => <i key={n} className={n <= nivel ? "on" : ""} style={{ "--m": n } as CSSProperties} />)}</span>;
 }
 
-function Medidor({ eje, nivel, alCambiar, apagado, minimo }: { eje: Eje; nivel: NivelEje; alCambiar: (n: NivelEje) => void; apagado?: boolean; minimo: NivelEje }) {
+function Medidor({ eje, nivel, alCambiar, apagado, minimo, impostor, sinUso }: { eje: Eje; nivel: NivelEje; alCambiar: (n: NivelEje) => void; apagado?: boolean; minimo: NivelEje;
+  /** El impostor: palabras y castigos en vez de preguntas y retos. */ impostor?: boolean; /** Por qué no se usa (si `apagado`). */ sinUso?: string }) {
   const termo = eje === "temperatura";
+  const que = impostor ? (termo ? "palabras" : "castigos") : termo ? "preguntas" : "retos";
   return (
-    <section className={`in-medidor in-${eje} in-n${nivel}` + (apagado ? " apagado" : "")} aria-label={termo ? "Temperatura de las preguntas" : "Voltaje de los retos"}>
+    <section className={`in-medidor in-${eje} in-n${nivel}` + (apagado ? " apagado" : "")} aria-label={termo ? `Temperatura de las ${que}` : `Voltaje de los ${que}`}>
       <div className="in-instrumento" aria-hidden="true">
         <Instrumento eje={eje} nivel={nivel} />
       </div>
       <div className="in-info">
-        <span className="in-eje">{termo ? "Temperatura · preguntas" : "Voltaje · retos"}</span>
+        <span className="in-eje">{termo ? "Temperatura" : "Voltaje"} · {que}</span>
         <b className="in-nombre">{NIVELES_EJE[eje][nivel]}</b>
         <span className="in-num">Nivel {nivel} de 3</span>
-        <p className="in-desc">{apagado ? (termo ? "Este juego no usa preguntas." : "Este juego no usa retos.") : DESCRIPCION_NIVEL[eje][nivel]}</p>
+        <p className="in-desc">{apagado ? sinUso ?? `Este juego no usa ${que}.` : (impostor ? DESCRIPCION_IMPOSTOR : DESCRIPCION_NIVEL)[eje][nivel]}</p>
       </div>
       <div className="in-pasos" role="radiogroup" aria-label={termo ? "Temperatura" : "Voltaje"}>
         {NIVELES.map(n => (
@@ -94,21 +110,24 @@ export function Interruptor({ titulo, texto, icono, encendido, alCambiar }: { ti
 export interface ValorIntensidad { temperatura: NivelEje; voltaje: NivelEje; drunk: boolean }
 
 /** Sección «¿Hasta dónde quieren llegar?» del configurador. `cuenta` dice cuántas cartas hay con lo elegido. */
-export function SeccionIntensidad({ juego, valor, alCambiar, cuenta }: {
+export function SeccionIntensidad({ juego, valor, alCambiar, cuenta, sinCastigo }: {
   juego: string; valor: ValorIntensidad; alCambiar: (v: ValorIntensidad) => void; cuenta?: { preguntas: number; retos: number };
+  /** El impostor sin «Castigo al que pierde»: el Voltaje no se usa. */ sinCastigo?: boolean;
 }) {
-  const usa = ejesDeJuego(juego);
+  const impostor = JUEGOS.find(j => j.id === juego)?.motor === "rol-secreto";
+  const usa = ejesDeJuego(juego).filter(e => !(impostor && sinCastigo && e === "voltaje"));
   const fijar = (eje: Eje) => (n: NivelEje) => alCambiar({ ...valor, [eje]: n });
   return (
     <div className="in-seccion">
       <p className="in-lead">El nivel es para toda la partida. Nadie está obligado: quien no quiera, usa un comodín o, con Drunk, toma algo.</p>
       <div className="in-medidores">
-        <Medidor eje="temperatura" nivel={valor.temperatura} alCambiar={fijar("temperatura")} apagado={!usa.includes("temperatura")} minimo={nivelMinimo(juego, "temperatura")} />
-        <Medidor eje="voltaje" nivel={valor.voltaje} alCambiar={fijar("voltaje")} apagado={!usa.includes("voltaje")} minimo={nivelMinimo(juego, "voltaje")} />
+        <Medidor eje="temperatura" nivel={valor.temperatura} alCambiar={fijar("temperatura")} apagado={!usa.includes("temperatura")} minimo={nivelMinimo(juego, "temperatura")} impostor={impostor} />
+        <Medidor eje="voltaje" nivel={valor.voltaje} alCambiar={fijar("voltaje")} apagado={!usa.includes("voltaje")} minimo={nivelMinimo(juego, "voltaje")} impostor={impostor}
+          sinUso={impostor ? "Sin «Castigo al que pierde»: el voltaje no se usa. Enciéndelo en Opciones del juego." : undefined} />
       </div>
       <Interruptor titulo="Modo Drunk" icono="drunk" encendido={valor.drunk} alCambiar={drunk => alCambiar({ ...valor, drunk })}
         texto={valor.drunk ? "Hay cartas con trago y quien no quiera hacer algo puede tomar. Agua o refresco cuentan." : "Sin cartas de trago. Quien no quiera hacer algo usa un comodín."} />
-      {cuenta && usa.length > 0 && (
+      {cuenta && usa.length > 0 && !impostor && (
         <p className="in-cuenta" aria-live="polite">
           Hay {usa.includes("temperatura") ? `${cuenta.preguntas} preguntas` : ""}{usa.length === 2 ? " y " : ""}{usa.includes("voltaje") ? `${cuenta.retos} retos` : ""} para esta partida.
         </p>

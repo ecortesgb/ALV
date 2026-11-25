@@ -53,6 +53,8 @@ export interface TemaImpostor {
   soloNave?: boolean;
   /** Pista de una palabra por cada palabra (palabra → pista), para el impostor si la sala la enciende. */
   pistas?: Record<string, string>;
+  /** Palabras que se suman con más Temperatura (Elías, 25 nov): «2» desde Caliente, «3» en Extremo. Sus pistas van en `pistas`. */
+  porNivel?: { 2?: string[]; 3?: string[] };
 }
 
 /** Tipo de partida: solo cambia cómo se suman los puntos y quién gana (una persona, una pareja o un equipo). */

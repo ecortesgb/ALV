@@ -1,14 +1,13 @@
 // El impostor en la nave: papeles en la mesa (Elías, 24 nov). Se configura en «Modo de juego» (categorías con imagen);
 // después de la carga, la partida nace con los papeles repartidos: cada quien ve el suyo con la huella y, cuando todos lo
 // vieron, el administrador abre la discusión. Solo leen la vista pública y, en el papel, lo privado de cada quien.
-import { useEffect, useRef, useState, type CSSProperties } from "react";
-import { Escaner } from "../../ds";
+import { useEffect, useRef, useState, type CSSProperties, type KeyboardEvent, type ReactNode } from "react";
+import { Icono } from "../../ds";
 import { colorDe, varsColor } from "../../app/colorJugador";
-import { Escena3D, enEscena } from "../../app/figura3d";
 import { sonar } from "../../app/sonido";
 import { CONTENIDO } from "../../content";
-import { Burbuja } from "../../pantallas/Identidad";
 import { srcArte } from "../../pantallas/TarjetasConfig";
+import { MedallonJugador } from "../../pantallas/azotea/Cabecera";
 import type { Miembro } from "../../servicios/enlace";
 import { nombreDe, type Publico } from "../general/texto";
 import { arteNave } from "./nave";
@@ -59,14 +58,18 @@ export function PapelNave({ v, mio, miembros, yo, vi, alVisto, soyAnfitrion, alD
     return (
       <section className="ns-papel espera" aria-label="Papeles">
         <span className="ns-kick">Papeles repartidos</span>
-        <span className="ns-t2 dsp ol">{faltan.length ? "Esperando a que todos vean su papel" : "Todos vieron su papel"}</span>
+        <span className="ns-t2">{faltan.length ? "Esperando a que todos vean su papel" : "Todos vieron su papel"}</span>
         <ul className="ns-vistos" aria-label="Quién ya vio su papel">
-          {ids.map(id => <li key={id} className={vistos.includes(id) ? "si" : ""}><Burbuja p={{ ...persona(v, miembros, id), insignia: vistos.includes(id) ? "✓" : undefined }} tamano="2.6em" conNombre /></li>)}
+          {ids.map((id, i) => { const p = persona(v, miembros, id); return (
+            <li key={id} className={vistos.includes(id) ? "si" : ""} style={varsColor(p.color)}>
+              <MedallonJugador id={id} figura={p.figura} estrella={i + 1} tamano="var(--ns-v)" />
+              <span className="ns-v-nom">{p.nombre}</span>{vistos.includes(id) && <span className="ns-v-ok" aria-label="Ya lo vio">✓</span>}
+            </li>); })}
         </ul>
         {soyAnfitrion ? (
           <>
             {faltan.length > 0 && <small className="ns-nota">Faltan: {faltan.map(id => nombreDe(v, id)).join(", ")}. {local ? "" : "Puedes empezar sin esperar."}</small>}
-            <button type="button" className="lb-listo ns-discutir" disabled={!!local && faltan.length > 0} onClick={alDiscutir}>¡A discutir!</button>
+            <button type="button" className="ns-bloque ns-discutir" disabled={!!local && faltan.length > 0} onClick={alDiscutir}><b>¡A discutir!</b></button>
           </>
         ) : <p className="ns-espera a-pulso" role="status">El administrador abre la discusión en cuanto todos lo vean.</p>}
       </section>
@@ -75,26 +78,52 @@ export function PapelNave({ v, mio, miembros, yo, vi, alVisto, soyAnfitrion, alD
   const imp = mio.rol === "impostor";
   const comp = mio.companeros ?? [];
   const yoP = persona(v, miembros, yo);
-  // Una sola pantalla (Elías): tu figura 3D flotando en el espacio con el brillo de tu bando, el papel en grande,
-  // la huella para ver la palabra y «Ya lo vi» siempre a la vista. En pantalla ancha, figura a la izquierda.
+  // Como desbloquear el celular (Elías, 25 nov): tu burbuja arriba y el lector abajo. Por fuera nada dice si eres
+  // impostor o civil (mismo color y brillo para todos); el papel sale solo dentro del círculo mientras mantienes el dedo.
   return (
-    <section className={"ns-papel " + (imp ? "imp" : "civil")} aria-label="Tu papel" style={{ ...varsColor(yoP.color), "--espacio": arteNave("espacio") } as CSSProperties}>
-      <div className="ns-p-fig" aria-hidden="true">
-        <span className="ns-p-halo" />
-        <Escena3D figuras={[enEscena(yo, yoP.figura ?? null)]} sinPedestal className="ns-p-3d" />
+    <section className="ns-papel ns-lector-pant" aria-label="Tu papel" style={{ ...varsColor(yoP.color), "--espacio": arteNave("espacio") } as CSSProperties}>
+      <div className="ns-yo">
+        <MedallonJugador id={yo} figura={yoP.figura} estrella={ids.indexOf(yo) + 1} tamano="var(--ns-b)" />
+        <b className="ns-yo-nom">{yoP.nombre}</b>
       </div>
-      <div className="ns-p-info">
-        <span className="ns-p-quien">{yoP.nombre} · tu papel</span>
-        <span className="ns-rol dsp">{imp ? "Impostor" : "Civil"}</span>
+      <LectorHuella>
         {imp ? (
-          comp.length ? <div className="ns-comp"><small>{comp.length === 1 ? "Tu compañero" : "Tus compañeros"}</small><ul>{comp.map(id => <li key={id}><Burbuja p={persona(v, miembros, id)} tamano="2.4em" conNombre /></li>)}</ul></div>
-            : <p className="ns-papel-sub">Eres el único impostor. Que no te descubran.</p>
-        ) : <p className="ns-papel-sub">Hay {total} {total === 1 ? "impostor" : "impostores"} a bordo. Descubre quién.</p>}
-        <Escaner secreto={imp ? mio.pista ?? (mio.tema ?? "") : mio.palabra ?? "…"} encabezado={imp ? (mio.pista ? "TU PISTA" : "CATEGORÍA") : "PALABRA SECRETA"}
-          detalle={`Categoría: ${mio.tema ?? ""}`} style={{ minHeight: "0", width: "100%" }} />
-        <button type="button" className="lb-listo ns-p-listo" onClick={alVisto}>Ya lo vi</button>
-      </div>
+          <>
+            <span className="ns-l-kick">Tu papel</span>
+            <b className="ns-l-imp">Impostor</b>
+            <span className="ns-l-det">{mio.pista ? <>Pista: <b>{mio.pista}</b></> : <>Categoría: <b>{mio.tema}</b></>}</span>
+            {mio.pista && <span className="ns-l-det">Categoría: {mio.tema}</span>}
+            <span className="ns-l-det chico">{comp.length ? `Con ${comp.map(id => nombreDe(v, id)).join(" y ")}` : "Eres el único. Que no te descubran."}</span>
+          </>
+        ) : (
+          <>
+            <span className="ns-l-kick">Tu palabra</span>
+            <b className="ns-l-pal" style={{ "--n": Math.max(5, ...(mio.palabra ?? "").split(/\s+/).map(x => x.length)) } as CSSProperties}>{mio.palabra}</b>
+            <span className="ns-l-det">Categoría: <b>{mio.tema}</b></span>
+          </>
+        )}
+      </LectorHuella>
+      <p className="ns-l-ayuda">Hay {total} {total === 1 ? "impostor" : "impostores"} a bordo. Que nadie más vea la pantalla.</p>
+      <button type="button" className="ns-bloque" onClick={alVisto}><b>Ya lo vi</b></button>
     </section>
+  );
+}
+
+/** Lector de huella redondo: el secreto (los hijos) se ve dentro del círculo solo mientras se mantiene el dedo, Espacio o Enter. */
+function LectorHuella({ children }: { children: ReactNode }) {
+  const [on, setOn] = useState(false);
+  const tecla = (e: KeyboardEvent, valor: boolean) => { if (e.key === " " || e.key === "Enter") { e.preventDefault(); setOn(valor); } };
+  return (
+    <div className="ns-lector-caja">
+      <div className={"ns-lector" + (on ? " on" : "")} role="button" tabIndex={0} aria-pressed={on} aria-label="Mantén el dedo para ver tu papel"
+        onPointerDown={() => setOn(true)} onPointerUp={() => setOn(false)} onPointerLeave={() => setOn(false)} onPointerCancel={() => setOn(false)}
+        onContextMenu={e => e.preventDefault()} onBlur={() => setOn(false)} onKeyDown={e => tecla(e, true)} onKeyUp={e => tecla(e, false)}>
+        <span className="ns-l-anillo" aria-hidden="true" />
+        <span className="ns-l-tapa" aria-hidden={on}><Icono id="finger" /><span className="ns-l-raya" /></span>
+        <span className="ns-l-secreto" aria-hidden={!on} aria-live="polite">{on ? children : null}</span>
+      </div>
+      <span className="ns-l-pide" aria-hidden="true">{on ? "Suelta para ocultar" : "Mantén el dedo para ver"}</span>
+    </div>
   );
 }
 

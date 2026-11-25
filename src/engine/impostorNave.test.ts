@@ -111,11 +111,43 @@ describe("puntos y castigos de la nave", () => {
     for (const c of nave.filter(x => x.drunk)) expect(c.texto).toMatch(/lo que (tengas|estés tomando|haya)|con o sin alcohol|agua/i);
     for (const c of nave) expect(c.contacto ?? false).toBe(false);
   });
+  it("el Voltaje sube los castigos: cada nivel saca los suyos (Elías, 25 nov)", () => {
+    const nivelDe = (voltaje: 1 | 2 | 3, drunk: boolean) => {
+      let e = partida(4, 31, {}, { ejes: { temperatura: 1, voltaje, drunk } });
+      e = hablan(e);
+      const imp = impostores(e)[0]!;
+      e = votan(e, j => (j === imp ? ["j0", "j1", "j2", "j3"].find(x => x !== imp)! : imp));
+      const texto = Object.values((e.revelado as { castigos: Record<string, { texto: string }> }).castigos)[0]!.texto;
+      return CONTENIDO.cartas.find(c => c.mazo === "castigo-nave" && c.texto === texto)!.nivel;
+    };
+    for (const v of [1, 2, 3] as const) for (const d of [false, true]) expect(nivelDe(v, d), `voltaje ${v} drunk ${d}`).toBe(v);
+  });
   it("sin castigo no se reparte nada", () => {
     let e = hablan(partida(4, 31, { castigo: false }));
     const imp = impostores(e)[0]!;
     e = votan(e, j => (j === imp ? ["j0", "j1", "j2", "j3"].find(x => x !== imp)! : imp));
     expect((e.revelado as { castigos?: unknown }).castigos).toBeUndefined();
+  });
+});
+
+describe("Temperatura de las palabras (Elías, 25 nov)", () => {
+  const palabra = (e: EstadoPartida) => Object.values(e.privado).map(p => (p as { palabra?: string }).palabra).find(Boolean)!;
+  const temaDe = (e: EstadoPartida) => CONTENIDO.temas.find(t => `tema-${t.id}` === e.carta?.id)!;
+  it("en Frío solo salen las de siempre; en Extremo también las de nivel 2 y 3", () => {
+    const vistas = { 1: new Set<string>(), 3: new Set<string>() };
+    for (const temp of [1, 3] as const) for (let s = 1; s <= 400; s++) {
+      const e = partida(4, s, { papeles: true, tema: "s-pel" }, { ejes: { temperatura: temp, voltaje: 1, drunk: false } });
+      vistas[temp].add(palabra(e));
+    }
+    const pel = CONTENIDO.temas.find(t => t.id === "s-pel")!;
+    for (const p of vistas[1]) expect(pel.palabras).toContain(p);
+    expect([...vistas[3]].some(p => pel.porNivel![2]!.includes(p))).toBe(true);
+    expect([...vistas[3]].some(p => pel.porNivel![3]!.includes(p))).toBe(true);
+  });
+  it("la categoría Adultos la abre la Temperatura en Extremo, no el Voltaje", () => {
+    const con = (temperatura: 1 | 3, voltaje: 1 | 3) => temaDe(partida(4, 9, { papeles: true, tema: "s-adu" }, { ejes: { temperatura, voltaje, drunk: false } })).id;
+    expect(con(3, 1)).toBe("s-adu");
+    expect(con(1, 3)).not.toBe("s-adu");
   });
 });
 

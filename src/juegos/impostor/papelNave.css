@@ -15,38 +15,11 @@
 .D .ns-cat-emoji { display: grid; place-items: center; width: 100%; aspect-ratio: 1; border-radius: 12px; font-size: 2.2em; background: radial-gradient(circle at 50% 40%, #2b3e74, #0c1638); }
 .D .ns-cat-nom { max-width: 100%; font: 400 .85em/1.05 var(--f-titulo, var(--letra-display)); text-align: center; text-wrap: balance; }
 
-/* Tu papel (Elías, 24 nov): una sola pantalla. Fondo de espacio con el brillo del bando (rojo impostor, turquesa civil),
-   tu figura 3D flotando arriba (a la izquierda en pantalla ancha), el papel en grande, la huella y «Ya lo vi» a la vista. */
-.D .ns-papel { position: relative; justify-items: center; padding: 1.1em .9em 1em; border-radius: 22px; overflow: hidden; text-align: center;
-  background: linear-gradient(180deg, rgba(5, 8, 28, .35), rgba(5, 8, 28, .75)), var(--espacio, none) center / cover no-repeat, #070b24; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .14), 0 14px 30px rgba(0, 0, 0, .5); }
-.D .ns-papel.civil { --tinta: #2ee6d6; --brillo: rgba(46, 230, 214, .34); }
-.D .ns-papel.imp { --tinta: #ff3b4e; --brillo: rgba(255, 40, 60, .42); }
-.D .ns-papel:is(.civil, .imp) { grid-template-rows: minmax(0, 1fr) auto; gap: .5em; padding: .7em .8em .9em;
-  box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--tinta) 55%, transparent), 0 0 44px color-mix(in srgb, var(--tinta) 25%, transparent); }
-.D .pt-caja > .ns-papel:is(.civil, .imp) { height: 100%; min-height: 0; }
-.D .ns-p-fig { position: relative; width: 100%; min-height: 9em; }
-.D .ns-p-halo { position: absolute; left: 50%; top: 50%; width: min(100%, 22em); aspect-ratio: 1; translate: -50% -50%; border-radius: 50%;
-  background: radial-gradient(circle, var(--brillo) 0, transparent 66%); animation: nsHalo 3.2s ease-in-out infinite alternate; }
-.D .ns-p-3d { position: absolute; inset: 0; }
-.D .ns-p-info { display: grid; justify-items: center; gap: .45em; width: 100%; min-width: 0; }
-.D .ns-p-quien { font: 800 .74em/1 var(--f-texto, var(--letra-cuerpo)); letter-spacing: .16em; text-transform: uppercase; color: #b9c4e8; }
-.D .ns-rol { font: 400 3em/.95 var(--f-titulo, var(--letra-display)); letter-spacing: .06em; text-transform: uppercase; color: var(--tinta);
-  text-shadow: 0 0 18px color-mix(in srgb, var(--tinta) 60%, transparent), 0 3px 0 rgba(0, 0, 0, .5); animation: nsSale .6s cubic-bezier(.2, 1.4, .4, 1) backwards; }
-.D .ns-papel-sub { margin: 0; font: 600 .92em/1.3 var(--f-texto, var(--letra-cuerpo)); color: #e2e8ff; text-wrap: balance; }
-.D .ns-comp { display: grid; gap: .3em; justify-items: center; }
-.D .ns-comp small { font: 700 .74em/1 var(--f-texto, var(--letra-cuerpo)); letter-spacing: .1em; text-transform: uppercase; color: #ffb0b8; }
-.D .ns-comp ul, .D .ns-vistos { display: flex; flex-wrap: wrap; justify-content: center; gap: .5em; margin: 0; padding: 0; list-style: none; }
-.D .ns-p-info > .hold { height: clamp(8.5em, 24dvh, 13em); }
-.D .ns-p-listo { width: min(100%, 16em); }
+.D .ns-vistos { display: flex; flex-wrap: wrap; justify-content: center; gap: .5em; margin: 0; padding: 0; list-style: none; }
 .D .ns-vistos li { opacity: .5; transition: opacity .3s; }
 .D .ns-vistos li.si { opacity: 1; }
 .D .ns-papel.espera { gap: .8em; }
 .D .pt-caja > .ns-papel.espera { align-content: center; min-height: min(100%, 36em); }
-/* Pantalla ancha: figura a la izquierda, papel a la derecha. */
-.D.wide .ns-papel:is(.civil, .imp) { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); align-items: center; gap: 1.2em; padding: 1.2em 1.6em; }
-.D.wide .pt-caja > .ns-papel:is(.civil, .imp) { height: min(36em, calc(100dvh - 4em)); }
-.D.wide .ns-p-fig { height: 100%; }
-.D.wide .ns-rol { font-size: clamp(2.6em, 4.4vw, 3.6em); }
 @keyframes nsHalo { to { scale: 1.12; opacity: .75; } }
 @keyframes nsSale { from { scale: .5; opacity: 0; } }
 
@@ -62,5 +35,71 @@
 @keyframes nsAnuncio { 0% { opacity: 0; } 10% { opacity: 1; } 85% { opacity: 1; } 100% { opacity: 0; } }
 
 @media (prefers-reduced-motion: reduce) {
-  .D .ns-rol, .D .ns-p-halo, .D .ns-anuncio, .D .ns-anuncio-boton, .D .ns-anuncio-t { animation: none; }
 }
+
+/* Tu papel como desbloquear el celular (Elías, 25 nov): tu burbuja arriba, el lector redondo abajo y «Ya lo vi» con la
+   caja de bloques del lobby. Por fuera todo se ve igual para civiles e impostores; el papel sale dentro del círculo. */
+.D .ns-lector-pant { --f-titulo: "Lilita One", "Bangers", system-ui, sans-serif; --ns-b: clamp(72px, 15dvh, 128px); --ns-l: min(74vw, 40dvh, 340px);
+  height: 100%; min-height: 0; grid-template-rows: auto minmax(0, 1fr) auto auto; align-content: center; justify-items: center; gap: clamp(8px, 1.8dvh, 18px);
+  padding: clamp(14px, 3dvh, 28px) 16px clamp(18px, 3dvh, 30px); }
+.D .ns-yo { display: grid; justify-items: center; gap: 8px; }
+.D .ns-yo-nom, .D .ns-l-pide { color: #fff; font: italic 400 clamp(22px, 3.6dvh, 34px)/1 var(--f-titulo); text-transform: uppercase; letter-spacing: .01em;
+  -webkit-text-stroke: 1.5px #1a1a24; paint-order: stroke fill; text-shadow: 2px 3px 0 #1a1a24; }
+.D .ns-l-pide { font-size: clamp(16px, 2.4dvh, 22px); color: #f6dc55; }
+.D .ns-lector-caja { display: grid; justify-items: center; align-content: center; gap: clamp(8px, 1.6dvh, 14px); min-height: 0; }
+.D .ns-lector { position: relative; display: grid; place-items: center; width: var(--ns-l); aspect-ratio: 1; border-radius: 50%; cursor: pointer; overflow: hidden;
+  container-type: inline-size; touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;
+  background: radial-gradient(circle at 50% 42%, #1c2a5c, #0a1030 70%); box-shadow: inset 0 0 0 3px rgba(120, 200, 255, .35), inset 0 8px 30px rgba(0, 0, 0, .6), 0 0 34px rgba(80, 170, 255, .22), 0 10px 26px rgba(0, 0, 0, .5);
+  transition: box-shadow .2s, transform .15s; }
+.D .ns-lector:focus-visible { outline: 3px solid #fff; outline-offset: 4px; }
+.D .ns-lector.on { transform: scale(.985); background: radial-gradient(circle at 50% 40%, #fffbe8, #f2e6c0 72%);
+  box-shadow: inset 0 0 0 4px #f6dc55, inset 0 6px 24px rgba(120, 90, 0, .25), 0 0 40px rgba(246, 220, 85, .4); }
+.D .ns-l-anillo { position: absolute; inset: 7%; border-radius: 50%; border: 2px dashed rgba(120, 200, 255, .55); animation: nsGira 14s linear infinite; }
+.D .ns-lector.on .ns-l-anillo { border-color: rgba(26, 26, 36, .18); }
+.D .ns-l-tapa { position: absolute; inset: 0; display: grid; place-items: center; }
+.D .ns-l-tapa .ic { width: 38%; height: 38%; fill: none; stroke: #79c8ff; stroke-width: 1.6; stroke-linecap: round; filter: drop-shadow(0 0 10px rgba(80, 170, 255, .7)); }
+.D .ns-l-raya { position: absolute; left: 18%; right: 18%; top: 22%; height: 3px; border-radius: 3px; background: #79c8ff; box-shadow: 0 0 12px #79c8ff; animation: nsRaya 2.2s ease-in-out infinite alternate; }
+.D .ns-lector.on .ns-l-tapa { display: none; }
+.D .ns-l-secreto { position: relative; display: grid; justify-items: center; align-content: center; gap: 3cqw; width: 78%; max-height: 80%; text-align: center; color: #1a1a24; }
+.D .ns-l-secreto:empty { display: none; }
+.D .ns-l-kick { font: 800 5cqw/1 var(--f-texto, var(--letra-cuerpo)); letter-spacing: .14em; text-transform: uppercase; color: #6b6f80; }
+.D .ns-l-pal { max-width: 100%; font: 400 min(17cqw, calc(118cqw / var(--n, 8)))/1 var(--f-titulo); text-transform: uppercase; text-wrap: balance; overflow-wrap: anywhere; color: #1a1a24; }
+.D .ns-l-imp { font: 400 15cqw/1 var(--f-titulo); text-transform: uppercase; color: #e8343a; text-shadow: 0 3px 0 rgba(0, 0, 0, .15); }
+.D .ns-l-det { font: 700 5.6cqw/1.2 var(--f-texto, var(--letra-cuerpo)); color: #3a3e4e; text-wrap: balance; }
+.D .ns-l-det b { color: #1a1a24; font-weight: 900; }
+.D .ns-l-det.chico { font-size: 4.6cqw; color: #6b6f80; }
+.D .ns-l-ayuda { margin: 0; max-width: 26em; font: 700 clamp(13px, 1.9dvh, 16px)/1.3 var(--f-texto, var(--letra-cuerpo)); color: #c9d3f2; text-align: center; text-wrap: balance; }
+@keyframes nsGira { to { rotate: 1turn; } }
+@keyframes nsRaya { to { top: 74%; } }
+
+/* Botón con la caja de bloques del lobby: caja del color del jugador con la flecha amarilla y la píldora clara. */
+.D .ns-bloque { --f-titulo: "Lilita One", "Bangers", system-ui, sans-serif; position: relative; display: flex; width: min(100%, 22em); padding: 10px; border: 0; border-radius: 22px; cursor: pointer; color: #fff;
+  background:
+    linear-gradient(90deg, transparent calc(25% - 1px), rgba(0, 0, 0, .14) calc(25% - 1px) 25%, transparent 25% calc(50% - 1px), rgba(0, 0, 0, .14) calc(50% - 1px) 50%, transparent 50% calc(75% - 1px), rgba(0, 0, 0, .14) calc(75% - 1px) 75%, transparent 75%),
+    linear-gradient(180deg, color-mix(in srgb, var(--pj, #6aaa62) 80%, #fff), var(--pj, #6aaa62));
+  box-shadow: 0 7px 0 var(--pj-oscuro, #2f5a2e), 0 14px 24px rgba(0, 0, 0, .45); transition: transform .12s; }
+.D .ns-bloque::before { content: ""; position: absolute; left: 50%; top: -18px; translate: -50% 0; width: 30px; height: 20px; background: #f2b632;
+  clip-path: polygon(0 0, 100% 0, 50% 100%); filter: drop-shadow(0 2px 0 #1a1a24); }
+.D .ns-bloque b { flex: 1; display: grid; place-items: center; min-height: 50px; padding: 6px 14px; border-radius: 999px;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--pj, #f6dc55) 45%, #fff), color-mix(in srgb, var(--pj, #f6dc55) 70%, #fff));
+  box-shadow: inset 0 -4px 0 rgba(0, 0, 0, .12), 0 3px 0 rgba(0, 0, 0, .25);
+  font: italic 400 clamp(22px, 3.4dvh, 30px)/1 var(--f-titulo); text-transform: uppercase; -webkit-text-stroke: 1.5px #1a1a24; paint-order: stroke fill; text-shadow: 2px 3px 0 #1a1a24; }
+.D .ns-bloque:active:not(:disabled) { transform: translateY(3px); }
+.D .ns-bloque:disabled { filter: grayscale(.7) brightness(.8); cursor: not-allowed; }
+.D .ns-bloque:focus-visible { outline: 3px solid #fff; outline-offset: 4px; }
+.D .ns-discutir { --pj: #f2b632; --pj-oscuro: #8a6400; }
+@media (prefers-reduced-motion: reduce) { .D .ns-l-anillo, .D .ns-l-raya { animation: none; } }
+.D .ns-lector-pant .ns-bloque, .D .ns-papel.espera .ns-bloque { margin-top: 14px; }
+.D .ns-bloque b { font-family: "Lilita One", "Bangers", system-ui, sans-serif; font-weight: 400; }
+/* Espera de papeles con los medallones del HUB y la letra del lobby (Elías, 25 nov) */
+.D .ns-papel.espera { --f-titulo: "Lilita One", "Bangers", system-ui, sans-serif; --ns-v: clamp(64px, 11dvh, 96px); height: 100%; align-content: center; gap: clamp(12px, 2.4dvh, 22px); }
+.D .ns-papel.espera .ns-t2 { color: #fff; font: italic 400 clamp(24px, 4dvh, 36px)/1.05 var(--f-titulo); text-transform: uppercase; -webkit-text-stroke: 1.5px #1a1a24; paint-order: stroke fill; text-shadow: 2px 3px 0 #1a1a24; }
+.D .ns-papel.espera .ns-kick { font-size: 13px; }
+.D .ns-vistos { gap: 14px 18px; }
+.D .ns-vistos li { position: relative; display: grid; justify-items: center; gap: 6px; }
+.D .ns-v-nom { color: #fff; font: italic 400 clamp(14px, 2dvh, 18px)/1 var(--f-titulo); text-transform: uppercase; -webkit-text-stroke: 1px #1a1a24; paint-order: stroke fill; text-shadow: 1px 2px 0 #1a1a24; }
+.D .ns-v-ok { position: absolute; top: -4px; left: -4px; z-index: 3; display: grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; background: #3fe06a; color: #0b1440; font: 900 15px/1 system-ui; box-shadow: 0 0 0 2px #0b1440; }
+.D .ns-papel.espera .ns-nota, .D .ns-papel.espera .ns-espera { font-size: 15px; }
+.D .ns-vistos li { gap: calc(var(--ns-v) * .2); }
+.D .pt-caja > .ns-papel.espera { min-height: calc(100dvh - 48px); }
+.D .ns-papel.espera .ns-kick { justify-self: center; }

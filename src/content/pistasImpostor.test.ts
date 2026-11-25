@@ -5,6 +5,8 @@ import { CONTENIDO } from ".";
 
 const IDS_SALA = ["s-pel", "s-vid", "s-ser", "s-can", "s-sup", "s-ani", "s-cel", "s-fut", "s-adu", "s-obj"];
 const sala = CONTENIDO.temas.filter(t => t.soloNave);
+/** Todas las palabras del tema: las de siempre y las que suma la Temperatura (Elías, 25 nov). */
+const todas = (t: (typeof sala)[number]) => [...t.palabras, ...(t.porNivel?.[2] ?? []), ...(t.porNivel?.[3] ?? [])];
 const plano = (s: string) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
 
 describe("categorías de la nave", () => {
@@ -16,7 +18,7 @@ describe("categorías de la nave", () => {
   });
 
   it("cada palabra tiene pista", () => {
-    for (const t of sala) expect(Object.keys(t.pistas ?? {}).sort(), t.id).toEqual([...t.palabras].sort());
+    for (const t of sala) expect(Object.keys(t.pistas ?? {}).sort(), t.id).toEqual(todas(t).sort());
   });
 
   it("la pista es una sola palabra corta", () => {
@@ -37,10 +39,18 @@ describe("categorías de la nave", () => {
 
   it("palabras y pistas únicas por tema", () => {
     for (const t of sala) {
-      expect(new Set(t.palabras.map(plano)).size, t.id).toBe(t.palabras.length);
+      expect(new Set(todas(t).map(plano)).size, t.id).toBe(todas(t).length);
       const ps = Object.values(t.pistas ?? {}).map(plano);
       expect(new Set(ps).size, t.id).toBe(ps.length);
     }
+  });
+
+  it("con más Temperatura cada categoría suma palabras (menos Adultos, que ya es de Extremo)", () => {
+    for (const t of sala.filter(x => !x.adulto)) {
+      expect(t.porNivel?.[2]?.length ?? 0, t.id).toBeGreaterThanOrEqual(6);
+      expect(t.porNivel?.[3]?.length ?? 0, t.id).toBeGreaterThanOrEqual(6);
+    }
+    expect(sala.find(x => x.adulto)!.porNivel).toBeUndefined();
   });
 
   it("los temas viejos siguen iguales", () => {

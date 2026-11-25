@@ -230,3 +230,125 @@
   .D.az.cfg-pagina .cfg-titulo, .D.az.cfg-pagina .cfg-cuerpo, .D.az.cfg-pagina .tc-tipo.on, .D .cfg-sig.principal { animation: none !important; }
   .D.az.cfg-pagina .cfg-avance li, .D .cfg-sig, .D .cfg-chip, .D.az.cfg-pagina .cfg-tema, .D.az.cfg-pagina .cfg-casilla, .D .in-img img { transition: none; }
 }
+
+/* ---------- Resumen «¡Todo listo!» (Elías, 25 nov): título al centro y panel de vidrio con el juego grande ----------
+   Cabe en una pantalla: el panel toma el alto que queda y las imágenes se encogen; nada se baja. */
+.D .cfg-cab-titulo[hidden] { display: none; }
+.D.az.cfg-pagina .cfg-cuerpo:has(> .rz) { display: flex; flex-direction: column; overflow: hidden; padding-top: 0; padding-bottom: 22px; }
+.D .rz { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: clamp(8px, 1.8vh, 18px); width: min(100%, 78em); margin-inline: auto; }
+.D .rz-titulo { margin: 0; text-align: center; font: 400 clamp(24px, 4.6vh, 46px)/1.05 var(--f-titulo); letter-spacing: .01em; text-transform: uppercase; transform: skewX(-8deg);
+  color: #eaf6ff; background: linear-gradient(180deg, #fff 25%, #c4e8ff 62%, #79c4ff); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+  text-shadow: none; filter: drop-shadow(0 3px 0 #13285a) drop-shadow(0 0 16px rgba(90, 190, 255, .5)); animation: czTitulo .35s cubic-bezier(.2, .8, .2, 1) backwards; }
+.D .rz-titulo small { font-size: 1em; }
+.D .rz-panel { position: relative; flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: clamp(10px, 1.5vw, 18px);
+  padding: clamp(12px, 1.8vw, 22px); border-radius: 28px; border: 1px solid rgba(170, 210, 255, .3);
+  background: linear-gradient(160deg, rgba(52, 72, 128, .55), rgba(12, 16, 44, .72) 52%, rgba(24, 28, 66, .68));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .28), 0 22px 50px rgba(0, 0, 0, .5), 0 0 0 7px rgba(10, 14, 40, .35), 0 0 0 8px rgba(170, 210, 255, .12);
+  -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); }
+/* Luz en el borde: turquesa arriba a la izquierda, naranja abajo a la derecha */
+.D .rz-panel::before { content: ""; position: absolute; inset: -1px; border-radius: inherit; padding: 2px; pointer-events: none; opacity: .75;
+  background: linear-gradient(125deg, rgba(46, 230, 214, .95), transparent 20%, transparent 72%, rgba(255, 140, 40, .95));
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask-composite: exclude; }
+/* La barra metálica debajo del panel */
+.D .rz-panel::after { content: ""; position: absolute; left: 16%; right: 16%; bottom: -15px; height: 12px; border-radius: 0 0 16px 16px; pointer-events: none;
+  background: linear-gradient(180deg, #5a6180, #20253a); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .3), 0 6px 14px rgba(0, 0, 0, .5), 0 4px 22px rgba(255, 170, 60, .3); }
+.D.az.cfg-pagina .rz .cfg-casilla { min-height: 0; border-radius: 18px; border-color: rgba(190, 220, 255, .22);
+  background: linear-gradient(180deg, rgba(255, 255, 255, .09), rgba(255, 255, 255, .02)), rgba(8, 12, 36, .45); }
+.D.az.cfg-pagina .rz .cfg-casilla-t { font: 400 clamp(14px, 2.3vh, 20px)/1 var(--f-titulo); letter-spacing: .03em; color: var(--cz-turquesa); text-shadow: 0 0 12px rgba(46, 230, 214, .45); }
+.D.az.cfg-pagina .rz .cfg-casilla-img { height: auto; min-height: 0; border-radius: 14px; border-color: rgba(190, 220, 255, .2); background: rgba(0, 0, 0, .35); box-shadow: inset 0 2px 10px rgba(0, 0, 0, .5); }
+.D.az.cfg-pagina .rz .cfg-cambiar { padding: 6px 12px; font-size: clamp(11px, 1.7vh, 14px); }
+.D.az.cfg-pagina .rz .cfg-cambiar::after { content: " ›"; }
+/* El juego, grande */
+.D.az.cfg-pagina .rz-juego { grid-template-rows: auto minmax(0, 1fr) auto auto; align-content: stretch; gap: clamp(6px, 1.2vh, 12px); padding: clamp(12px, 1.6vw, 18px); }
+.D.az.cfg-pagina .rz-juego .cfg-casilla-img img { object-position: center; }
+.D.az.cfg-pagina .rz-juego b { font-size: clamp(22px, 4vh, 38px); }
+.D.az.cfg-pagina .rz-juego small { font: 700 clamp(14px, 2.4vh, 20px)/1.2 var(--f-texto); }
+/* A la derecha: las casillas chicas y los jugadores */
+.D .rz-lado { min-height: 0; display: grid; grid-template-rows: minmax(0, 1fr) auto; gap: clamp(10px, 1.5vw, 18px); }
+.D .rz-chicas { min-height: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-rows: minmax(0, 1fr); gap: clamp(10px, 1.5vw, 16px); }
+.D.az.cfg-pagina .rz-chicas .cfg-casilla { grid-template-rows: auto minmax(0, 1fr) auto auto; align-content: stretch; gap: clamp(4px, .8vh, 8px); }
+.D.az.cfg-pagina .rz-chicas .cfg-casilla-img { min-height: 2.6em; }
+.D.az.cfg-pagina .rz-chicas .cfg-casilla b { font-size: clamp(16px, 2.8vh, 24px); }
+.D.az.cfg-pagina .rz-chicas .cfg-casilla small { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-size: clamp(12px, 1.9vh, 15px); }
+.D.az.cfg-pagina .rz-chicas .cfg-cambiar { padding: 4px 10px; font-size: 0; }
+.D.az.cfg-pagina .rz-chicas .cfg-cambiar::after { content: "›"; font-size: 18px; line-height: 1; }
+.D .rz-doble { position: absolute; inset: 0; display: grid; grid-template-columns: 1fr 1fr; }
+.D.az.cfg-pagina .rz-doble img { position: absolute; inset: 11% 8%; width: 84%; height: 78%; }
+.D .rz-doble > * { position: relative; }
+.D.az.cfg-pagina .rz-gente { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 10px 12px; cursor: default; padding: clamp(10px, 1.4vw, 16px); }
+.D.az.cfg-pagina .rz-gente .cfg-casilla-t { grid-column: 1 / -1; }
+.D.az.cfg-pagina .rz-gente .cp-jugadores { gap: 8px; }
+.D .rz-editar { min-height: 44px; padding: 0 18px; border-radius: 14px; cursor: pointer; color: #eef4ff; font: 400 clamp(14px, 2vh, 17px)/1 var(--f-titulo); text-transform: uppercase; letter-spacing: .03em;
+  border: 1px solid rgba(220, 230, 255, .4); background: linear-gradient(180deg, #6b7391, #3a405a 55%, #2b3046);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .45), inset 0 -2px 0 rgba(0, 0, 0, .3), 0 6px 14px rgba(0, 0, 0, .4); transition: transform .15s, filter .15s; }
+.D .rz-editar:active { transform: scale(.96); }
+.D .rz-editar:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+@media (hover: hover) and (pointer: fine) { .D .rz-editar:hover { filter: brightness(1.15); } }
+.D .rz-motivo { margin: 0; text-align: center; }
+/* Pie del resumen: la barra de la predeterminada junto a «¡Comenzar!» */
+.D.az.cfg-pagina .cfg-pie:has(.rz-pred) { align-items: stretch; }
+.D.az.cfg-pagina .rz-pred { flex: 1; min-width: 0; margin: 0; padding: 8px 10px 8px 18px; border-radius: 18px; background: rgba(10, 14, 40, .72); border-color: rgba(190, 220, 255, .2); }
+.D.az.cfg-pagina .rz-pred .cfg-pred-txt { gap: 10px; color: #dfe8ff; }
+.D .rz-alt { font: 700 15px/1 var(--f-texto); }
+.D .rz-cargar { display: inline-flex; align-items: center; gap: 12px; min-height: 40px; padding: 0 12px; border-radius: 10px; cursor: pointer; color: #fff; font: 700 15px/1 var(--f-texto);
+  border: 1px solid rgba(220, 230, 255, .35); background: linear-gradient(180deg, #1c2340, #0e1328); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .12); }
+.D .rz-cargar i { font-style: normal; padding-left: 10px; border-left: 1px solid rgba(255, 255, 255, .25); }
+.D .rz-cargar:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+/* Celular: todo en una columna; el juego más bajo y la barra de la predeterminada arriba del botón */
+.D.az.cfg-pagina:not(.wide) .rz-titulo small { display: none; }
+.D.az.cfg-pagina:not(.wide) .rz-panel { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, .9fr) minmax(0, 1.25fr); border-radius: 22px; }
+.D.az.cfg-pagina:not(.wide) .rz-panel::after { bottom: -13px; height: 10px; }
+.D.az.cfg-pagina:not(.wide) .cfg-pie:has(.rz-pred) { flex-wrap: wrap; }
+.D.az.cfg-pagina:not(.wide) .rz-pred { flex: 1 1 100%; padding: 6px 8px 6px 12px; }
+.D.az.cfg-pagina:not(.wide) .rz-pred .cfg-pred-btn { min-height: 36px; padding: 0 12px; font-size: 13px; }
+.D.az.cfg-pagina:not(.wide) .rz-alt { display: none; }
+.D.az.cfg-pagina:not(.wide) .cfg-pie:has(.rz-pred) .cfg-sig { flex: 1 1 100%; max-width: none; }
+.D.az.cfg-pagina:not(.wide) .rz-gente { grid-template-columns: minmax(0, 1fr); }
+.D.az.cfg-pagina:not(.wide) .rz-editar { grid-column: 1; justify-self: start; min-height: 38px; }
+@media (prefers-reduced-motion: reduce) { .D .rz-titulo { animation: none; } }
+/* Celular: las casillas chicas en renglón (ícono a la izquierda, texto a la derecha) para que no se aplasten */
+.D.az.cfg-pagina:not(.wide) .rz-chicas .cfg-casilla { grid-template-columns: clamp(44px, 13vw, 64px) minmax(0, 1fr); grid-template-rows: auto auto minmax(0, auto); align-content: center; column-gap: 10px; padding: 10px; }
+.D.az.cfg-pagina:not(.wide) .rz-chicas .cfg-casilla-t { grid-column: 1 / -1; }
+.D.az.cfg-pagina:not(.wide) .rz-chicas .cfg-casilla-img { grid-column: 1; grid-row: 2 / 4; align-self: center; aspect-ratio: 1; min-height: 0; }
+.D.az.cfg-pagina:not(.wide) .rz-chicas .cfg-casilla b, .D.az.cfg-pagina:not(.wide) .rz-chicas .cfg-casilla small { grid-column: 2; }
+.D.az.cfg-pagina:not(.wide) .rz-chicas .cfg-casilla b { font-size: clamp(15px, 4.4vw, 19px); }
+.D.az.cfg-pagina:not(.wide) .rz-chicas .cfg-casilla small { font-size: 12px; }
+.D.az.cfg-pagina:not(.wide) .rz .cfg-cambiar { top: 8px; right: 8px; }
+.D.az.cfg-pagina:not(.wide) .rz-juego .cfg-casilla-img { min-height: 70px; }
+.D.az.cfg-pagina:not(.wide) .rz-panel { grid-template-rows: minmax(0, 1fr) auto; }
+.D.az.cfg-pagina:not(.wide) .rz-lado, .D.az.cfg-pagina:not(.wide) .rz-chicas { grid-template-rows: auto; grid-auto-rows: auto; }
+.D.az.cfg-pagina:not(.wide) .rz-chicas .cfg-casilla-t { padding-right: 34px; }
+.D.az.cfg-pagina:not(.wide) .rz-gente { position: relative; }
+.D.az.cfg-pagina:not(.wide) .rz-editar { position: absolute; top: 8px; right: 8px; min-height: 30px; padding: 0 10px; border-radius: 10px; font-size: 12px; }
+.D.az.cfg-pagina:not(.wide) .rz-pred { flex-wrap: nowrap; }
+.D.az.cfg-pagina:not(.wide) .rz-pred .cfg-pred-txt { font-size: 12.5px; }
+.D.az.cfg-pagina:not(.wide) .rz-pred .cfg-pred-btn { flex: none; white-space: nowrap; }
+.D.az.cfg-pagina:not(.wide) .rz-cargar { min-height: 34px; padding: 0 8px; gap: 6px; font-size: 12.5px; }
+.D.az.cfg-pagina:not(.wide) .rz-act { display: none; }
+/* Jugadores como en el lobby: la burbuja redonda con la cabina de su color y el nombre abajo */
+.D .rz-gente { --rz-b: clamp(44px, 7.4vh, 64px); }
+.D .rz-burbujas { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 8px 16px; margin: 0; padding: 0 4px; list-style: none; min-width: 0; }
+.D .rz-burbujas .ide-b-nom { font: 400 clamp(13px, 1.9vh, 16px)/1 var(--f-titulo); }
+.D .rz-chicas.n3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.D.az.cfg-pagina:not(.wide) .rz-chicas.n3 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.D.az.cfg-pagina:not(.wide) .rz-chicas.n3 > :last-child { grid-column: 1 / -1; }
+.D.az.cfg-pagina:not(.wide) .rz-gente { --rz-b: 46px; }
+.D.az.cfg-pagina .rz-chicas .cfg-casilla-t { padding-right: 30px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.D.az.cfg-pagina:not(.wide) .rz-juego { grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr) minmax(0, 1fr); column-gap: 12px; }
+.D.az.cfg-pagina:not(.wide) .rz-juego .cfg-casilla-t { grid-column: 1 / -1; }
+.D.az.cfg-pagina:not(.wide) .rz-juego .cfg-casilla-img { grid-column: 1; grid-row: 2 / 4; min-height: 72px; }
+.D.az.cfg-pagina:not(.wide) .rz-juego b { grid-column: 2; grid-row: 2; align-self: end; font-size: 21px; }
+.D.az.cfg-pagina:not(.wide) .rz-juego small { grid-column: 2; grid-row: 3; align-self: start; font-size: 14px; }
+.D.az.cfg-pagina .cfg-casilla-ico .rz-doble img { position: static; inset: auto; width: 100%; height: 100%; min-height: 0; padding: 12% 4%; box-sizing: border-box; object-fit: contain; }
+/* Cuatro casillas (juegos con modo y escenario): en renglón, ícono a la izquierda */
+.D.az.cfg-pagina .rz-chicas.n4 .cfg-casilla { grid-template-columns: clamp(48px, 9vh, 84px) minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr) minmax(0, 1fr); align-content: stretch; column-gap: 12px; }
+.D.az.cfg-pagina .rz-chicas.n4 .cfg-casilla-t { grid-column: 1 / -1; }
+.D.az.cfg-pagina .rz-chicas.n4 .cfg-casilla-img { grid-column: 1; grid-row: 2 / 4; align-self: center; aspect-ratio: 1; min-height: 0; max-height: 100%; }
+.D.az.cfg-pagina .rz-chicas.n4 .cfg-casilla b { grid-column: 2; grid-row: 2; align-self: end; }
+.D.az.cfg-pagina .rz-chicas.n4 .cfg-casilla small { grid-column: 2; grid-row: 3; align-self: start; }
+/* Jugadores con el medallón del HUB (Elías, 25 nov) y su nombre con la letra del lobby */
+.D .rz-burbujas li { display: grid; justify-items: center; gap: 6px; }
+.D .rz-nom { max-width: calc(var(--rz-b) * 1.3); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #fff;
+  font: italic 400 clamp(13px, 1.9vh, 16px)/1 var(--f-titulo); text-transform: uppercase; -webkit-text-stroke: 1px #1a1a24; paint-order: stroke fill; text-shadow: 1px 2px 0 #1a1a24; }
+.D .rz-gente { --rz-b: clamp(54px, 9vh, 76px); }
+.D.az.cfg-pagina:not(.wide) .rz-gente { --rz-b: 54px; }

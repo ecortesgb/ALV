@@ -34,10 +34,10 @@ import { useTransmitirConfig, type EstadoConfig } from "./ConfigEnVivo";
 import { BotonCast } from "./lobby/Cast";
 import { usePantalla } from "./Sala";
 import { ArteCfg, CartaEscenario, CartaTipo, SinArte, srcArte } from "./TarjetasConfig";
-import { Marco, NombreJugador, Retrato, Vacio, aviso, confirmar } from "./comun";
+import { Marco, Vacio, aviso, confirmar } from "./comun";
 import { FondoEscenario } from "./Fondos";
 import { useRecursos } from "./Recursos";
-import { RecursosAzotea, arteHub } from "./azotea/Cabecera";
+import { MedallonJugador, RecursosAzotea, arteHub } from "./azotea/Cabecera";
 import { EscenarioFondo } from "./azotea/Escenario";
 import { useMomentoAzotea } from "./azotea/HubAzotea";
 import { escenarioActual } from "./azotea/paquetes";
@@ -262,6 +262,8 @@ export function ConfigurarPartida({ miembros, alIniciar, alCancelar, iniciando, 
     if (tipo === "sexos" && generos) setGrupos(g => bandosIniciales(ids, generos, g));
   }, [tipo, ids, generos]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { if (impostores > maxImp) setImpostores(maxImp); }, [maxImp, impostores]);
+  // La categoría Adultos solo con Temperatura en Extremo: si baja, se vuelve «Al azar».
+  useEffect(() => { if (ejes.temperatura < 3 && tema && CONTENIDO.temas.find(t => t.id === tema)?.adulto) setTema(null); }, [ejes.temperatura, tema]);
   // El juego manda: si no admite el modo elegido, se pasa al primero que sí admite y sirve con quienes están.
   useEffect(() => {
     if (admite(juego, tipo)) return;
@@ -323,6 +325,18 @@ export function ConfigurarPartida({ miembros, alIniciar, alCancelar, iniciando, 
     if (k <= 0) alCancelar?.(); else setSec(orden[k - 1]!);
   };
   const juegoAlEditar = useRef(juego);
+  // «Cargar la predeterminada» desde el resumen: pone todo como en la guardada (lo mismo que hace `inicial` al abrir).
+  const cargar = (c: PartidaConfigurada) => {
+    const o = c.opciones, imp = o.impostor;
+    setJuego(c.juego); setEjes(c.ejes ?? EJES_INICIALES); setRondas(c.rondas);
+    setTipo(o.modalidad ?? "individual"); setGrupos(o.grupos ?? {}); setNombres(o.nombres ?? {}); setEscenario(o.escenario);
+    setInstrumento((INSTRUMENTOS[c.juego] ?? []).find(x => (o.herramienta && x.herramienta === o.herramienta) || (o.turno && x.turno === o.turno))?.id);
+    setTemporizador(o.temporizador ?? null);
+    setImpostores(imp?.cantidad ?? 1);
+    setTema(typeof imp?.tema === "string" && CONTENIDO.temas.some(t => t.id === imp.tema && t.soloNave) ? imp.tema : null);
+    setVotosNave(imp?.votos === "secretos" ? "secretos" : "visibles"); setRevelarNave(imp?.revelar !== false);
+    setPistaNave(imp?.pista === true); setCastigoNave(imp?.castigo !== false);
+  };
   const editar = (s: Seccion) => { juegoAlEditar.current = juego; if (s === "juego") setFiltro(catDe(juego)); setDesdeResumen(true); setSec(s); };
   // Elegir y seguir (Elías, 24 nov): en pasos de una sola elección, tocar la tarjeta avanza sola tras una pausa corta.
   const [avanzar, setAvanzar] = useState(0);
@@ -345,7 +359,7 @@ export function ConfigurarPartida({ miembros, alIniciar, alCancelar, iniciando, 
   let contenido: ReactNode;
   if (sec === "tipo" && esImpostor(j)) {
     // El impostor solo se juega individual (Maestro 6A.12): aquí van sus opciones y la categoría con imagen (Elías, 24 nov).
-    contenido = <OpcionesNave jugadores={n} maxImpostores={maxImp} adulto={adulto} drunk={ejes.drunk} impostores={impostores} alImpostores={setImpostores}
+    contenido = <OpcionesNave jugadores={n} maxImpostores={maxImp} adulto={ejes.temperatura === 3} drunk={ejes.drunk} impostores={impostores} alImpostores={setImpostores}
       tema={tema} alTema={setTema} votos={votosNave} alVotos={setVotosNave} revelar={revelarNave} alRevelar={setRevelarNave}
       pista={pistaNave} alPista={setPistaNave} castigo={castigoNave} alCastigo={setCastigoNave} />;
   } else if (sec === "tipo") {
@@ -368,7 +382,7 @@ export function ConfigurarPartida({ miembros, alIniciar, alCancelar, iniciando, 
           alElegir={id => { if (id !== juego) { setJuego(id); setInstrumento(undefined); } setAvanzar(x => x + 1); }} />
       : <Categorias categorias={cats} actual={cats.find(c => c.juegos.includes(juego))?.id} alElegir={setFiltro} />;
   } else if (sec === "intensidad") {
-    contenido = <SeccionIntensidad juego={juego} valor={ejes} alCambiar={setEjes} cuenta={cuenta} />;
+    contenido = <SeccionIntensidad juego={juego} valor={ejes} alCambiar={setEjes} cuenta={cuenta} sinCastigo={!castigoNave} />;
   } else if (sec === "opciones") {
     contenido = (
       <div className="cfg-opciones">
@@ -430,35 +444,47 @@ export function ConfigurarPartida({ miembros, alIniciar, alCancelar, iniciando, 
       </div>
     );
   } else {
+    // Resumen estilo «panel de vidrio» (Elías, 25 nov): el juego grande a la izquierda; a la derecha nivel, opciones
+    // (y modo y escenario en los juegos que los usan) y abajo los jugadores con «Editar jugadores».
     const m = MODALIDADES.find(x => x.id === tipo)!;
     const esc = ESCENARIOS.find(e => e.id === escenario);
+    const usa = ejesDeJuego(juego).filter(e => !(esImpostor(j) && !castigoNave && e === "voltaje"));
+    const chicas = [
+      <Casilla key="nivel" titulo="Nivel" valor={usa.map(x => NIVELES_EJE[x][ejes[x]]).join(" · ") || "Sin nivel"}
+        detalle={(ejes.drunk ? "Drunk encendido" : "Drunk apagado") + (cuenta && usa.length && !esImpostor(j) ? ` · ${[usa.includes("temperatura") ? `${cuenta.preguntas} preguntas` : "", usa.includes("voltaje") ? `${cuenta.retos} retos` : ""].filter(Boolean).join(" y ")}` : "")}
+        ico={usa.length === 2
+          ? <span className="rz-doble"><ArteCfg nombre={`termometro-${ejes.temperatura}`} alterno={arteHub("xp")} /><ArteCfg nombre={`voltimetro-${ejes.voltaje}`} alterno={arteHub("xp")} /></span>
+          : <ArteCfg nombre={usa[0] === "voltaje" ? `voltimetro-${ejes.voltaje}` : `termometro-${ejes.temperatura}`} alterno={arteHub("xp")} />}
+        alTocar={() => editar("intensidad")} />,
+      <Casilla key="opc" titulo={esImpostor(j) ? "Opciones" : "Herramienta"} valor={esImpostor(j) ? `${Math.min(impostores, maxImp)} ${Math.min(impostores, maxImp) === 1 ? "impostor" : "impostores"}` : inst?.nombre ?? "—"}
+        detalle={esImpostor(j) ? `${nombreCategoria(tema)} · votos ${votosNave === "visibles" ? "a la vista" : "secretos"}${revelarNave ? "" : " · sin revelar"}${pistaNave ? " · con pista" : ""}${castigoNave ? " · con castigo" : ""}` : `${rondas} rondas${temporizador && conTemporizador ? ` · ⏱ ${temporizador} s` : ""}`}
+        ico={<ArteCfg nombre={esImpostor(j) ? "sec-herramienta" : `herr-${inst?.id ?? "cartas"}`} alterno={arteHub("ajustes")} />} alTocar={() => editar(esImpostor(j) ? "tipo" : "opciones")} />,
+      // Herramientas de El impostor (Elías, 25 nov): se ve aunque no se use el temporizador.
+      ...(esImpostor(j) && conTemporizador ? [
+        <Casilla key="herr" titulo="Herramientas" valor={temporizador ? `${temporizador} s por turno` : "Sin temporizador"}
+          detalle={temporizador ? "Si se acaba, el turno pasa al siguiente" : "Cada quien se toma su tiempo"}
+          ico={<ArteCfg nombre="herr-tiempo" alterno={arteHub("ajustes")} />} alTocar={() => editar("opciones")} />,
+      ] : []),
+      ...(esImpostor(j) ? [] : [
+        <Casilla key="modo" titulo="Modo" valor={m.nombre} detalle={conGrupos ? (gruposOk ? "Equipos listos" : "Falta armar equipos") : m.gana} img={srcArte(ARTE_TIPOS[tipo])} alTocar={() => editar("tipo")} />,
+        <Casilla key="esc" titulo="Escenario" valor={esc ? esc.nombre : "Ciudad ALV"} detalle={esc ? esc.ambientacion : "Sin escenario"} img={ARTE_ESCENARIOS[escenario ?? "ciudad"] ? srcArte(ARTE_ESCENARIOS[escenario ?? "ciudad"]!) : undefined} alTocar={() => editar("escenario")} />,
+      ]),
+    ];
     contenido = (
-      <div className="cfg-resumen">
-        <div className="cfg-tablero">
-          {!esImpostor(j) && <Casilla titulo="Modo" valor={m.nombre} detalle={conGrupos ? (gruposOk ? "Equipos listos" : "Falta armar equipos") : m.gana} img={srcArte(ARTE_TIPOS[tipo])} alTocar={() => editar("tipo")} />}
-          <Casilla titulo="Juego" valor={j?.nombre ?? "—"} detalle={j ? `${gente(j)} jugadores` : undefined} arte={<ArteJuego id={juego} />} alTocar={() => editar("juego")} ancha />
-          <Casilla titulo="Nivel" valor={ejesDeJuego(juego).map(x => NIVELES_EJE[x][ejes[x]]).join(" · ") || "Sin nivel"}
-            detalle={(ejes.drunk ? "Drunk encendido" : "Drunk apagado") + (cuenta && ejesDeJuego(juego).length ? ` · ${[ejesDeJuego(juego).includes("temperatura") ? `${cuenta.preguntas} preguntas` : "", ejesDeJuego(juego).includes("voltaje") ? `${cuenta.retos} retos` : ""].filter(Boolean).join(" y ")}` : "")}
-            ico={<ArteCfg nombre={ejesDeJuego(juego).includes("temperatura") || !ejesDeJuego(juego).length ? `termometro-${ejes.temperatura}` : `voltimetro-${ejes.voltaje}`} alterno={arteHub("xp")} />} alTocar={() => editar("intensidad")} />
-          <Casilla titulo={esImpostor(j) ? "Opciones" : "Herramienta"} valor={esImpostor(j) ? `${Math.min(impostores, maxImp)} ${Math.min(impostores, maxImp) === 1 ? "impostor" : "impostores"}` : inst?.nombre ?? "—"}
-            detalle={esImpostor(j) ? `${nombreCategoria(tema)} · votos ${votosNave === "visibles" ? "a la vista" : "secretos"}${revelarNave ? "" : " · sin revelar"}${pistaNave ? " · con pista" : ""}${castigoNave ? " · con castigo" : ""}` + (temporizador && conTemporizador ? ` · ⏱ ${temporizador} s` : "") : `${rondas} rondas${temporizador && conTemporizador ? ` · ⏱ ${temporizador} s` : ""}`}
-            ico={<ArteCfg nombre={esImpostor(j) ? "sec-herramienta" : `herr-${inst?.id ?? "cartas"}`} alterno={arteHub("ajustes")} />} alTocar={() => editar(esImpostor(j) ? "tipo" : "opciones")} />
-          {!esImpostor(j) && <Casilla titulo="Escenario" valor={esc ? esc.nombre : "Ciudad ALV"} detalle={esc ? esc.ambientacion : "Sin escenario"} img={ARTE_ESCENARIOS[escenario ?? "ciudad"] ? srcArte(ARTE_ESCENARIOS[escenario ?? "ciudad"]!) : undefined} alTocar={() => editar("escenario")} />}
-          <div className="cfg-casilla cfg-gente">
-            <span className="cfg-casilla-t dsp">{n} jugadores</span>
-            <ul className="cp-jugadores" aria-label="Jugadores">{miembros.map(x => <li key={x.id}><Persona m={x} c={color(x.id)} /></li>)}</ul>
+      <div className="rz">
+        <h2 className="rz-titulo dsp"><span>¡Todo listo!</span><small> – Configuración del juego</small></h2>
+        <div className="rz-panel">
+          <Casilla titulo="Juego" valor={j?.nombre ?? "—"} detalle={j ? `${gente(j)} jugadores` : undefined} arte={<ArteJuego id={juego} />} alTocar={() => editar("juego")} grande />
+          <div className="rz-lado">
+            <div className={"rz-chicas n" + chicas.length}>{chicas}</div>
+            <div className="cfg-casilla rz-gente">
+              <span className="cfg-casilla-t dsp">Jugadores<span className="rz-act"> activos</span></span>
+              <ul className="rz-burbujas" aria-label={`${n} jugadores`}>{miembros.map(x => <li key={x.id} style={varsColor(color(x.id))}><MedallonJugador id={x.id} figura={x.figura} estrella={ids.indexOf(x.id) + 1} tamano="var(--rz-b)" /><span className="rz-nom">{x.nombre}</span></li>)}</ul>
+              {alCancelar && <button type="button" className="rz-editar dsp" onClick={alCancelar}>Editar jugadores</button>}
+            </div>
           </div>
         </div>
-        {predeterminada && (
-          <div className="cfg-pred">
-            {mismaPartida(config, predeterminada.actual)
-              ? <><span className="cfg-pred-txt"><ArteCfg nombre="sec-resumen" alterno={LOBBY("ico-listo")} className="cfg-pred-ico" />Es tu partida predeterminada</span>
-                <button type="button" className="cfg-pred-btn" disabled={predeterminada.guardando} onClick={predeterminada.alQuitar}>Quitar</button></>
-              : <><span className="cfg-pred-txt">{predeterminada.actual ? "Tienes otra partida predeterminada" : "Sin partida predeterminada"}</span>
-                <button type="button" className="cfg-pred-btn on" disabled={predeterminada.guardando || !!motivo} onClick={() => predeterminada.alGuardar(config)}>{predeterminada.guardando ? "Guardando…" : "Guardar como predeterminada"}</button></>}
-          </div>
-        )}
-        {motivo && <p className="a-error" role="alert">{motivo}</p>}
+        {motivo && <p className="a-error rz-motivo" role="alert">{motivo}</p>}
       </div>
     );
   }
@@ -486,7 +512,7 @@ export function ConfigurarPartida({ miembros, alIniciar, alCancelar, iniciando, 
           {cabExtra}
           <RecursosAzotea monedas={r.monedas} puntos={r.puntos} />
         </div>
-        <div className="cfg-cab-titulo">
+        <div className="cfg-cab-titulo" hidden={sec === "resumen"}>
           <h2 className="pf-tit cfg-titulo" key={sec}><span><ArteCfg nombre={`sec-${sec === "grupos" ? "equipos" : sec === "opciones" ? "herramienta" : sec}`} alterno={ICONO_SECCION[sec]} className="cfg-tit-ico" /><span className="cfg-tit-txt">{TITULO[sec]}</span></span></h2>
           <ol className="cfg-avance" aria-label={`Paso ${k + 1} de ${orden.length}`}>{orden.map((s, x) => <li key={s} className={x === k ? "on" : x < k ? "hecho" : ""} />)}</ol>
         </div>
@@ -494,8 +520,21 @@ export function ConfigurarPartida({ miembros, alIniciar, alCancelar, iniciando, 
       <div className="cfg-cuerpo" ref={cuerpo} key={sec}>{contenido}</div>
       <footer className="cfg-pie">
         {sec === "tipo" && !esImpostor(j) && <p className="cfg-pie-info" aria-live="polite"><b className="dsp">{MODALIDADES.find(x => x.id === tipo)!.nombre}:</b> {MODALIDADES.find(x => x.id === tipo)!.gana}</p>}
+        {sec === "resumen" && predeterminada && (
+          // Partida predeterminada (solo administrador): cargarla si hay otra, guardarla o quitarla.
+          <div className="cfg-pred rz-pred">
+            {mismaPartida(config, predeterminada.actual)
+              ? <><span className="cfg-pred-txt"><ArteCfg nombre="sec-resumen" alterno={LOBBY("ico-listo")} className="cfg-pred-ico" />Es tu partida predeterminada</span>
+                <button type="button" className="cfg-pred-btn" disabled={predeterminada.guardando} onClick={predeterminada.alQuitar}>Quitar</button></>
+              : <>{predeterminada.actual
+                  ? <span className="cfg-pred-txt"><span className="rz-alt">Alternativas:</span>
+                    <button type="button" className="rz-cargar" onClick={() => cargar(predeterminada.actual!)}>Cargar la predeterminada<i aria-hidden="true">▾</i></button></span>
+                  : <span className="cfg-pred-txt">Sin partida predeterminada</span>}
+                <button type="button" className="cfg-pred-btn on" disabled={predeterminada.guardando || !!motivo} onClick={() => predeterminada.alGuardar(config)}>{predeterminada.guardando ? "Guardando…" : "Guardar como predeterminada"}</button></>}
+          </div>
+        )}
         {sec === "resumen"
-          ? <BotonPie principal texto={iniciando ? "Iniciando…" : "¡Iniciar!"} sub={motivo ?? `${j?.nombre ?? ""} · ${n} jugadores`} desactivado={!!motivo || !!iniciando} onClick={() => { marcarJugado(juego); alIniciar(config); }} />
+          ? <BotonPie principal texto={iniciando ? "Iniciando…" : "¡Comenzar!"} sub={motivo ?? `${j?.nombre ?? ""} · ${n} jugadores`} desactivado={!!motivo || !!iniciando} onClick={() => { marcarJugado(juego); alIniciar(config); }} />
           : soloTocar ? null // tocar la tarjeta ya elige y sigue
           : <BotonPie listo={desdeResumen} texto={desdeResumen ? "Listo" : "Siguiente"} sub={falta(sec) ?? undefined} desactivado={!!falta(sec)} onClick={siguiente} />}
       </footer>
@@ -505,9 +544,9 @@ export function ConfigurarPartida({ miembros, alIniciar, alCancelar, iniciando, 
 
 /** Una casilla del resumen: se toca para cambiar esa parte. */
 
-function Casilla({ titulo, valor, detalle, img, arte, ico, ancha, alTocar }: { titulo: string; valor: string; detalle?: string; img?: string; arte?: ReactNode; ico?: ReactNode; ancha?: boolean; alTocar: () => void }) {
+function Casilla({ titulo, valor, detalle, img, arte, ico, grande, alTocar }: { titulo: string; valor: string; detalle?: string; img?: string; arte?: ReactNode; ico?: ReactNode; /** La del juego: grande, a la izquierda. */ grande?: boolean; alTocar: () => void }) {
   return (
-    <button type="button" className={"cfg-casilla" + (ancha ? " ancha" : "")} onClick={alTocar} aria-label={`${titulo}: ${valor}. Cambiar`}>
+    <button type="button" className={"cfg-casilla" + (grande ? " rz-juego" : "")} onClick={alTocar} aria-label={`${titulo}: ${valor}. Cambiar`}>
       <span className="cfg-casilla-t dsp">{titulo}</span>
       <span className="cfg-casilla-img">{img ? <img src={img} alt="" draggable={false} /> : arte ?? <span className="cfg-casilla-ico" aria-hidden="true">{ico}</span>}</span>
       <b className="dsp ol">{valor}</b>
@@ -527,16 +566,6 @@ function BotonPie({ texto, sub, principal, listo, desactivado, onClick }: { text
   );
 }
 
-/** Ficha chica de un jugador con su color: P1, retrato y nombre. */
-function Persona({ m, c }: { m: MiembroConfig; c: ReturnType<typeof colorJugador> }) {
-  return (
-    <span className="cp-persona" style={varsColor(c)}>
-      <span className="cp-pn dsp">{c.etiqueta}</span>
-      <Retrato id={m.id} figura={m.figura} nombre={m.nombre} size={32} />
-      <NombreJugador nombre={m.nombre} figura={m.figura} clase="" />
-    </span>
-  );
-}
 
 /**
  * #/configurar/código: el anfitrión configura y arranca la partida de su sala; al iniciar vuelve a la sala.

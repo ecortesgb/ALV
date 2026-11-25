@@ -42,6 +42,26 @@ export function CabeceraJugador({ id, nombre, figura, nivel, xp, costo, compacta
   );
 }
 
+/**
+ * El medallón del HUB para cualquier jugador (Elías, 25 nov): marco, busto de su figura que asoma sobre el aro, la
+ * estrella (con su número de jugador o su nivel) y el punto verde. `--pj` tiñe el fondo del círculo.
+ */
+export function MedallonJugador({ id, figura, estrella, tamano = 120, className = "", style }: {
+  id: string; figura: FiguraV2 | null | undefined; estrella?: number | string; tamano?: number | string; className?: string; style?: CSSProperties;
+}) {
+  const foto = useFoto(figura ?? null, figura ? undefined : semillaDe(id), "busto");
+  return (
+    <span className={"azc-medallon azm " + className} aria-hidden="true" style={{ "--m": typeof tamano === "number" ? `${tamano}px` : tamano, ...style } as CSSProperties}>
+      <span className="azc-fondo" />
+      {foto ? <span className="azc-dentro"><img className="azc-foto" src={foto} alt="" draggable={false} /></span> : <span className="azc-cargando" />}
+      <img className="azc-marco" src={arteHub("marco-avatar")} alt="" draggable={false} />
+      {foto && <span className="azc-asoma"><img className="azc-foto" src={foto} alt="" draggable={false} /></span>}
+      {estrella != null && <span className="azc-nivel"><img src={arteHub("insignia-nivel")} alt="" draggable={false} /><b>{estrella}</b></span>}
+      <i className="azc-punto" />
+    </span>
+  );
+}
+
 /** Barra de XP fina: rayo 3D, riel de vidrio, relleno turquesa con brillo y la cifra encima a la derecha. */
 export function BarraXPAzotea({ xp, costo, nivel }: { xp: number; costo: number; nivel: number }) {
   const pct = costo > 0 ? Math.max(0, Math.min(1, xp / costo)) : 0;

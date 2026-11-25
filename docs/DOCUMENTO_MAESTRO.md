@@ -1,7 +1,7 @@
 # ALV — Amigos Legendarios Verdaderos
 ## Documento Maestro del Producto
-**Versión:** 1.60  
-**Última actualización:** 24 de noviembre de 2026  
+**Versión:** 1.61  
+**Última actualización:** 25 de noviembre de 2026  
 **Estado:** Documento vivo de producto; decisiones y propuestas identificadas por separado.
 
 ---
@@ -1095,6 +1095,8 @@ Todos reciben una palabra o concepto, excepto uno. El impostor desconoce la pala
 
 **DECISIÓN (v1.60, Elías, 24 de noviembre) — Pantallas de El impostor en la nave.** Elías las revisó una por una. (1) Regla para toda la app: cada sección cabe en una pantalla, sin bajar ni ir a los lados; botones siempre a la vista; deslizar en vez de buscar. (2) «Opciones del juego» a la mitad: a la izquierda un carrusel con las imágenes de 1, 2 o 3 impostores y una rueda de categorías (la del centro es la elegida); a la derecha interruptores (votos secretos, decir si era impostor, pista, castigo). (3) El papel: tu figura 3D en el espacio, IMPOSTOR en rojo o CIVIL en turquesa, la huella y «Ya lo vi». (4) Vuelta de palabras: el cuarto de la nave visto desde arriba a toda la pantalla, la mesa 3D con las figuras sentadas y la palabra de cada quien en un globo sobre su cabeza; desde la vuelta 2, un botón con las palabras de cada vuelta. (5) Votación: una pizarra que se abre solo al votar y ocupa casi toda la pantalla (figura, nombre, palabra y las de antes, sello «Votó», tachados los que salieron, «Nadie, todavía»). (6) Expulsión: espacio negro con estrellas; la figura cruza de izquierda a derecha girando, empujada por la nave, y a su paso se escribe «X no era el impostor.» o «X era el impostor.» con «impostor» en rojo, y luego cuántos impostores quedan. (7) Si se acaba, pantalla de Victoria (de los civiles o de los impostores) con los ganadores como minifiguras de frente; luego el final en páginas que se deslizan (resultado, castigo, posiciones). (8) La TV usa lo mismo en grande. (9) «Terminar» y «Cerrar» solo en la barra del anfitrión; los invitados en línea no tienen botón para salir durante la partida. Se siguen llamando «civiles» (Elías lo pidió así por ahora). Imágenes de Elías: 1, 2 y 3 impostores y el cuarto de la nave.
 
+**DECISIÓN (v1.61, Elías, 25 de noviembre) — Intensidad de El impostor y resumen del configurador.** (1) En El impostor la Temperatura es para las palabras: en Frío solo las de siempre; en Caliente se suman palabras subidas de tono en cada categoría; en Extremo también las de adultos (películas clasificación R y más) y se abre la categoría Adultos. El Voltaje ya no abre lo adulto en El impostor. (2) El Voltaje es para los castigos al que pierde: cada nivel saca sus castigos (más fuertes al subir), siempre sin contacto con nadie y los de trago «de lo que tengas». Sin «Castigo al que pierde», el Voltaje no se usa. (3) El resumen «¡Todo listo!» se ve como la imagen de Elías: título al centro, panel de vidrio con el juego grande a la izquierda; a la derecha Nivel, Opciones y Herramientas (aunque no haya temporizador), y Modo y Escenario en los juegos que los usan; abajo los jugadores con la burbuja del lobby y «Editar jugadores» (regresa al lobby); al pie la partida predeterminada («Cargar la predeterminada» si hay otra) junto a «¡Comenzar!». (4) El papel ya no se anuncia por fuera (reemplaza el punto 3 de v1.60): como desbloquear el celular, arriba el medallón del HUB (marco, busto, estrella con el número de jugador y punto verde) y el nombre, y abajo un lector de huella redondo; mientras se mantiene el dedo, dentro del círculo sale la palabra (civil) o «Impostor» con la pista o la categoría y los compañeros. Por fuera todo se ve igual para todos y no hay figura 3D. «Ya lo vi» y «¡A discutir!» con la caja de bloques y la letra del lobby. El mismo medallón va en los jugadores del resumen, en la espera de papeles y en «Pásale el teléfono» (Local), que también usa la caja de bloques del color del jugador. **PROPUESTA:** las palabras por nivel con sus pistas (`ALV_PISTAS_IMPOSTOR.md`) y las 32 cartas nuevas de `castigo-nave` (nivel 2 y 3).
+
 ### Quién lo haría
 **DECISIÓN (v1.4):** es el mismo juego que el clásico «¿Quién es más probable?» (16.8). Queda como un solo juego.
 
@@ -1722,6 +1724,9 @@ Decisiones del usuario del 12 de noviembre de 2026:
 
 ## v1.6
 - Primeros logros (14.2), con ámbito de sesión o histórico (ver DECISIÓN v1.6 en 14.2).
+
+## v1.61
+- 25 nov 2026. El impostor: Temperatura para las palabras (nivel 2 y 3 por categoría) y Voltaje para los castigos (32 cartas nuevas). Resumen del configurador con panel de vidrio. El papel de El impostor se ve solo dentro del lector de huella.
 
 ## v1.60
 - 24 nov 2026. Pantallas de El impostor en la nave (16.2): regla de una pantalla sin bajar para toda la app, opciones a la mitad, papel, mesa 3D con globos de palabra, pizarra de votación, expulsión con letras al paso, Victoria, TV igual; terminar solo para el anfitrión. Código publicado.
