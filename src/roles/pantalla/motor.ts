@@ -56,10 +56,12 @@ export function useMotor(sala: SalaV | null, partida: PartidaPub | null, activo:
         // P-03: ya contestó alguien pero no todos. Desde ese momento corren 20 s; pasados, el celular del anfitrión ofrece esperar o seguir sin el ausente.
         if (!hayEspera) yo.espera = null;
         else if (yo.espera?.clave !== claveEspera) yo.espera = { clave: claveEspera, fin: Date.now() + ESPERA_MS };
-        if (e.version > yo.publicada || partida.version < e.version) {
+        // Solo lo que este aparato no ha publicado (o lo que falló). No se compara con `partida.version`: dentro de una
+        // repetición la `partida` de este cierre es vieja y, con el respaldo Local (sin pausas entre avisos), publicaba sin fin
+        // y congelaba la pantalla al iniciar (Elías, 24 nov).
+        if (e.version > yo.publicada) {
           const { publico, privados } = paraPublicar(e, e.fase === "contestando" ? yo.reloj?.fin ?? null : null, yo.espera?.fin ?? null, yo.turno?.fin ?? null);
-          await enlace.publicar(partida.id, e.version, publico, privados);
-          yo.publicada = e.version;
+          if (await enlace.publicar(partida.id, e.version, publico, privados)) yo.publicada = e.version;
         }
         // Todos contestaron: 2 s de suspenso y la revelación sale sola (decisión 1 de §21.4).
         clearTimeout(yo.suspenso);

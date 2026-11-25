@@ -44,7 +44,8 @@ export interface Enlace {
   crearPartida(sala: SalaV, juego: string): Promise<string | null>;
   enviar(partida: string, id: string, tipo: TipoFila, datos: Record<string, unknown>): Promise<boolean>;
   acciones(partida: string): Promise<FilaAccion[]>;
-  publicar(partida: string, version: number, estado: unknown, privados: Record<string, unknown>): Promise<void>;
+  /** true si quedó publicada (o ya había una más nueva); false si falló y hay que reintentar. */
+  publicar(partida: string, version: number, estado: unknown, privados: Record<string, unknown>): Promise<boolean>;
   terminar(partida: string, juego: string, jugadores: number, resultados: ResultadoFinal[]): Promise<void>;
   /** Guarda los ganadores de la noche y termina la partida «copas» (sin XP ni monedas). */
   guardarCopas(partida: string, copas: CopasParaGuardar): Promise<void>;
@@ -192,7 +193,7 @@ const nube: Enlace = {
     } catch (e) { log("acciones", e); return []; }
   },
   async publicar(partida, version, estado, privados) {
-    try { const r = await cliente!.rpc("publicar_partida", { p_partida: partida, p_version: version, p_estado: estado, p_privados: privados }); if (r.error) log("publicar", r.error); } catch (e) { log("publicar", e); }
+    try { const r = await cliente!.rpc("publicar_partida", { p_partida: partida, p_version: version, p_estado: estado, p_privados: privados }); if (r.error) { log("publicar", r.error); return false; } return true; } catch (e) { log("publicar", e); return false; }
   },
   async terminar(partida, juego, jugadores, resultados) {
     try { const r = await cliente!.rpc("terminar_partida_sala", { p_partida: partida, p_juego: juego, p_jugadores: jugadores, p_resultados: resultados }); if (r.error) log("terminar", r.error); } catch (e) { log("terminar", e); }
@@ -313,6 +314,7 @@ function crearRespaldo(clave: string, canal: string | null, quien: () => { id: s
     async acciones(partida) { return porPartida(leer(), partida)?.p.acciones ?? []; },
     async publicar(partida, version, estado, privados) {
       cambiar(t => { const x = porPartida(t, partida); if (!x || x.p.version > version) return; x.p.version = version; x.p.estado = estado as Record<string, unknown>; x.p.privados = privados as PartidaLocal["privados"]; });
+      return true;
     },
     async terminar(partida) { cambiar(t => { const x = porPartida(t, partida); if (x) x.p.terminada = true; }); },
     async guardarCopas() { /* sin servidor las copas solo se ven en la ceremonia */ },
