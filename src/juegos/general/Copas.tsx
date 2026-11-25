@@ -73,7 +73,9 @@ export function PodioJuego({ v, miembros, modo }: { v: Publico; miembros: Miembr
   const grupo = v.grupos?.[0];
   const empateGrupo = !!v.grupos && v.grupos.length > 1 && v.grupos[1]!.puntos === grupo?.puntos;
   const [ver, setVer] = useState(modo === "celular");
-  useEffect(() => { if (modo !== "tv") return; const t = setTimeout(() => setVer(true), 3500); return () => clearTimeout(t); }, [modo]);
+  // El impostor en la nave: antes del podio van la expulsión y el final con castigos.
+  const retraso = v.impostor?.nave ? 17000 : 3500;
+  useEffect(() => { if (modo !== "tv") return; const t = setTimeout(() => setVer(true), retraso); return () => clearTimeout(t); }, [modo, retraso]);
   const { ancla, raiz } = useRaiz();
   const banda = grupo && <p className="pj-grupo dsp ol">{empateGrupo ? "¡Empate entre grupos!" : `¡Gana ${grupo.nombre}!`} <small>{grupo.puntos} pts</small></p>;
   if (modo === "celular") {

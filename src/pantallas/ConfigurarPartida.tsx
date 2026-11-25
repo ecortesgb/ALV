@@ -44,6 +44,8 @@ import { escenarioActual } from "./azotea/paquetes";
 import "./azotea/azotea.css";
 import "./perfil/perfil.css";
 import "./configurar.css";
+import { nombreCategoria } from "../juegos/impostor/papelNave";
+import { OpcionesNave } from "../juegos/impostor/OpcionesNave";
 import "./configurar-az.css";
 
 export interface MiembroConfig { id: string; nombre: string; figura?: FiguraV2 | null }
@@ -108,9 +110,17 @@ export function candadoEscenario(esc: EscenarioId | undefined, j?: DefinicionJue
   return lugar && !j.lugares.includes(lugar) ? "No en este lugar" : null;
 }
 
-/** Temas que puede elegir El impostor (los de adulto, con Extremo o Sobrecarga). */
-export function temasImpostor(adulto: boolean) {
-  return CONTENIDO.temas.filter(t => t.escenario === null && (!t.adulto || adulto)).map(t => ({ id: t.id, nombre: t.nombre }));
+/**
+ * Pasos del configurador (Elías, 24 nov): juego → modo (si hay más de uno) → equipos → herramientas → intensidad →
+ * escenario → resumen. El impostor pone en «Modo de juego» sus opciones y la categoría, y no pide escenario (la nave).
+ */
+export function ordenPasos(juego: string, conGrupos: boolean): Seccion[] {
+  const imp = esImpostor(defJuego(juego));
+  const conModo = imp || (MODALIDADES_JUEGO[juego]?.length ?? 1) > 1;
+  const conHerramientas = !imp || JUEGOS_CON_TEMPORIZADOR.includes(juego);
+  const conNivel = ejesDeJuego(juego).length > 0;
+  return ["juego", ...(conModo ? ["tipo" as const] : []), ...(conGrupos ? ["grupos" as const] : []), ...(conHerramientas ? ["opciones" as const] : []),
+    ...(conNivel ? ["intensidad" as const] : []), ...(imp ? [] : ["escenario" as const]), "resumen"];
 }
 
 /** Revisa la configuración completa. Devuelve la razón por la que no se puede iniciar, o null. */
@@ -199,8 +209,8 @@ export function ConfigurarPartida({ miembros, alIniciar, alCancelar, iniciando, 
   const n = miembros.length;
   const r = useRecursos();
   const ids = useMemo(() => miembros.map(m => m.id), [miembros]);
-  // Orden (Elías, 24 nov): escenario → juego → opciones del juego (modo u opciones propias) → equipos → herramientas → intensidad → resumen.
-  const [sec, setSec] = useState<Seccion>(inicial && abrirEnResumen ? "resumen" : "escenario");
+  // Orden (Elías, 24 nov): juego → modo → equipos → herramientas → intensidad → escenario → resumen (ver `ordenPasos`).
+  const [sec, setSec] = useState<Seccion>(inicial && abrirEnResumen ? "resumen" : "juego");
   // Si se entró a una sección desde el resumen, «Listo» regresa al resumen.
   const [desdeResumen, setDesdeResumen] = useState(false);
   const cuerpo = useRef<HTMLDivElement>(null);
@@ -218,14 +228,20 @@ export function ConfigurarPartida({ miembros, alIniciar, alCancelar, iniciando, 
   const [instrumento, setInstrumento] = useState<string | undefined>(() => (INSTRUMENTOS[inicial?.juego ?? ""] ?? [])
     .find(x => (inicial?.opciones.herramienta && x.herramienta === inicial.opciones.herramienta) || (inicial?.opciones.turno && x.turno === inicial.opciones.turno))?.id);
   const [impostores, setImpostores] = useState(inicial?.opciones.impostor?.cantidad ?? 1);
-  const [tema, setTema] = useState<string | null>(inicial?.opciones.impostor?.tema ?? null);
+  // El impostor en la nave (Elías, 24 nov): categoría de la nave, votos a la vista o secretos, revelar al expulsar,
+  // pista para el impostor y castigo al bando que pierde. De la vez pasada solo sirven las categorías de la nave.
+  const impInicial = inicial?.opciones.impostor;
+  const [tema, setTema] = useState<string | null>(typeof impInicial?.tema === "string" && CONTENIDO.temas.some(t => t.id === impInicial.tema && t.soloNave) ? impInicial.tema : null);
+  const [votosNave, setVotosNave] = useState<"visibles" | "secretos">(impInicial?.votos === "secretos" ? "secretos" : "visibles");
+  const [revelarNave, setRevelarNave] = useState(impInicial?.revelar !== false);
+  const [pistaNave, setPistaNave] = useState(impInicial?.pista === true);
+  const [castigoNave, setCastigoNave] = useState(impInicial?.castigo !== false);
   const [escenario, setEscenario] = useState<EscenarioId | undefined>(inicial?.opciones.escenario);
   // Categoría abierta en «Elige el juego» (null: las tarjetas de categoría). En Físico abre directo la de competencias.
   const cats = useMemo(() => categoriasDe(id => id in MODALIDADES_JUEGO), []);
   const catDe = (id: string) => cats.find(c => c.juegos.includes(id))?.id ?? null;
   const [filtro, setFiltro] = useState<string | null>(() => (modoFisico ? catDe(JUEGOS_FISICO[0]!) : null));
-  // Desde el primer paso la página toma el fondo del escenario elegido (sin escenario: la azotea).
-  useEffect(() => { alFondo?.(escenario); }, [escenario, alFondo]);
+
   // Temporizador por turno (herramienta opcional, 6A.11 C6). null: sin tiempo.
   const [temporizador, setTemporizador] = useState<number | null>(inicial?.opciones.temporizador ?? null);
   const conTemporizador = JUEGOS_CON_TEMPORIZADOR.includes(juego);
@@ -257,10 +273,10 @@ export function ConfigurarPartida({ miembros, alIniciar, alCancelar, iniciando, 
     modalidad: tipo,
     ...(conGrupos ? { grupos: Object.fromEntries(ids.filter(id => grupos[id]).map(id => [id, grupos[id]!])) } : {}),
     ...(conGrupos && Object.values(nombres).some(x => x.trim()) ? { nombres: Object.fromEntries(Object.entries(nombres).filter(([, x]) => x.trim()).map(([g, x]) => [g, x.trim()])) } : {}),
-    ...(escenario ? { escenario } : {}),
+    ...(escenario && !esImpostor(j) ? { escenario } : {}),
     ...(inst?.turno ? { turno: inst.turno } : {}),
     ...(inst?.herramienta ? { herramienta: inst.herramienta } : {}),
-    ...(esImpostor(j) ? { impostor: { cantidad: Math.min(impostores, maxImp), tema } } : {}),
+    ...(esImpostor(j) ? { impostor: { cantidad: Math.min(impostores, maxImp), tema, nave: true, papeles: true, votos: votosNave, revelar: revelarNave, pista: pistaNave, castigo: castigoNave } } : {}),
     ...(explicarFinal ? { explicar: true } : {}),
     ...(temporizador && conTemporizador ? { temporizador } : {}),
     ejes,
@@ -270,14 +286,16 @@ export function ConfigurarPartida({ miembros, alIniciar, alCancelar, iniciando, 
   const motivo = motivoConfig(config, miembros);
   const gruposOk = !!armarGrupos(conParejas(miembros), opciones);
 
-  // Pasos sin nada que elegir se saltan: modo si el juego solo admite uno (salvo El impostor, que pone ahí sus opciones),
-  // herramientas si no hay instrumento, temporizador ni rondas, e intensidad si el juego no usa Temperatura ni Voltaje.
-  const conModo = esImpostor(j) || (MODALIDADES_JUEGO[juego]?.length ?? 1) > 1;
-  const conHerramientas = !esImpostor(j) || conTemporizador;
-  const conNivel = ejesDeJuego(juego).length > 0;
-  const orden: Seccion[] = ["escenario", "juego", ...(conModo ? ["tipo" as const] : []), ...(conGrupos ? ["grupos" as const] : []),
-    ...(conHerramientas ? ["opciones" as const] : []), ...(conNivel ? ["intensidad" as const] : []), "resumen"];
+  // Pasos sin nada que elegir se saltan (modo con uno solo, herramientas sin nada, intensidad sin ejes); El impostor
+  // no pide modo ni escenario.
+  const orden = ordenPasos(juego, conGrupos);
   const k = Math.max(0, orden.indexOf(sec));
+  // El fondo de la página es la azotea hasta el paso Escenario; desde ahí, el escenario elegido.
+  const kEsc = orden.indexOf("escenario");
+  const fondoEsc = kEsc >= 0 && k >= kEsc ? escenario ?? null : undefined;
+  useEffect(() => { alFondo?.(fondoEsc); }, [fondoEsc, alFondo]);
+  // Un escenario que ya no sirve con el juego (o El impostor, que juega en la nave) se quita.
+  useEffect(() => { if (escenario && (esImpostor(j) || candadoEscenario(escenario, j))) setEscenario(undefined); }, [juego]); // eslint-disable-line react-hooks/exhaustive-deps
   const falta = (s: Seccion): string | null => {
     if (s === "tipo") return candadoTipo(tipo, n);
     if (s === "grupos" && tipo === "equipos") {
@@ -285,7 +303,8 @@ export function ConfigurarPartida({ miembros, alIniciar, alCancelar, iniciando, 
       if (GRUPOS_EQUIPOS.slice(0, cuantosEquipos).some(g => !ids.some(id => grupos[id] === g.id))) return "Cada equipo necesita al menos una persona";
     }
     if (s === "grupos") return gruposOk ? null : tipo === "sexos" ? (generos ? "Toca Ellas o Ellos en cada quien" : "Acomodando bandos…") : tipo === "parejas" ? "Cada pareja necesita dos" : "Cada equipo necesita gente";
-    if (s === "juego") return j ? candadoJuego(j, n) ?? candadoModo(juego, n) ?? candadoEscenario(escenario, j) : "Elige un juego";
+    if (s === "juego") return j ? candadoJuego(j, n) ?? candadoModo(juego, n) : "Elige un juego";
+    if (s === "escenario") return candadoEscenario(escenario, j);
     if (s === "intensidad") return faltaNivel(juego, ejes);
     return null;
   };
@@ -325,31 +344,10 @@ export function ConfigurarPartida({ miembros, alIniciar, alCancelar, iniciando, 
 
   let contenido: ReactNode;
   if (sec === "tipo" && esImpostor(j)) {
-    // El impostor solo se juega individual (Maestro 6A.12): aquí van sus opciones propias.
-    contenido = (
-      <div className="cfg-opciones">
-        <div className="cfg-opciones-arte" style={{ "--tc": colorDe(juego) } as CSSProperties}>
-          <ArteJuego id={juego} className="cfg-opciones-img" />
-          <span className="cfg-cinta dsp ol">{j?.nombre}</span>
-        </div>
-        <div className="a-pila cfg-opciones-lado">
-          <section className="a-pila"><span className="cfg-sub dsp ol">¿Cuántos impostores?</span>
-            <div className="a-fila a-envuelve">{[1, 2, 3].map(x => (
-              <button key={x} type="button" className={"cp-num dsp ol" + (impostores === x ? " on" : "")} aria-pressed={impostores === x} disabled={x > maxImp} onClick={() => setImpostores(x)}>{x}</button>
-            ))}</div>
-            <p className="a-nota">{maxImp < 3 ? `Con ${n} jugadores caben hasta ${maxImp}: siempre hay más civiles que impostores.` : "Siempre hay más civiles que impostores."}</p>
-          </section>
-          <section className="a-pila"><span className="cfg-sub dsp ol">Categoría de las palabras</span>
-            <div className="cfg-temas">
-              {[{ id: null as string | null, nombre: "Al azar" }, { id: "escenario", nombre: "Del escenario" }, ...temasImpostor(adulto)].map(t => (
-                <button key={t.id ?? "azar"} type="button" className={"cfg-tema" + (tema === t.id ? " on" : "")} aria-pressed={tema === t.id} onClick={() => setTema(t.id)}>{t.nombre}</button>
-              ))}
-            </div>
-          </section>
-          <p className="a-nota">Se juega por vueltas hasta atrapar a todos los impostores, o hasta que ellos igualen a los civiles.</p>
-        </div>
-      </div>
-    );
+    // El impostor solo se juega individual (Maestro 6A.12): aquí van sus opciones y la categoría con imagen (Elías, 24 nov).
+    contenido = <OpcionesNave jugadores={n} maxImpostores={maxImp} adulto={adulto} drunk={ejes.drunk} impostores={impostores} alImpostores={setImpostores}
+      tema={tema} alTema={setTema} votos={votosNave} alVotos={setVotosNave} revelar={revelarNave} alRevelar={setRevelarNave}
+      pista={pistaNave} alPista={setPistaNave} castigo={castigoNave} alCastigo={setCastigoNave} />;
   } else if (sec === "tipo") {
     // Solo los modos que admite el juego elegido (Maestro 6A.12). Tocar uno elige y sigue.
     contenido = (
@@ -366,7 +364,7 @@ export function ConfigurarPartida({ miembros, alIniciar, alCancelar, iniciando, 
     // Categorías y vitrinas giratorias (Elías, 24 nov). Con candado los juegos que no sirven con quienes están o en el escenario.
     const categoria = cats.find(c => c.id === filtro);
     contenido = categoria
-      ? <Vitrinas categoria={categoria} elegido={juego} candado={d => candadoJuego(d, n) ?? candadoModo(d.id, n) ?? candadoEscenario(escenario, d)}
+      ? <Vitrinas categoria={categoria} elegido={juego} candado={d => candadoJuego(d, n) ?? candadoModo(d.id, n)}
           alElegir={id => { if (id !== juego) { setJuego(id); setInstrumento(undefined); } setAvanzar(x => x + 1); }} />
       : <Categorias categorias={cats} actual={cats.find(c => c.juegos.includes(juego))?.id} alElegir={setFiltro} />;
   } else if (sec === "intensidad") {
@@ -425,9 +423,9 @@ export function ConfigurarPartida({ miembros, alIniciar, alCancelar, iniciando, 
       <div className="cfg-escs">
         <CartaEscenario id="ciudad" nombre="Ciudad ALV" texto="Sin escenario: cartas de cualquier lugar." emoji="🌃" color="#5fb4ff" elegida={!escenario} onClick={() => { setEscenario(undefined); setAvanzar(x => x + 1); }} />
         {ESCENARIOS.filter(e => e.activo && (!e.adulto || adulto)).map(e => (
-          // Primer paso: ningún escenario se bloquea (el juego se elige después). Desde el resumen sí, por el juego ya elegido.
+          // El juego ya está elegido: los escenarios donde no se juega salen con candado y la razón.
           <CartaEscenario key={e.id} id={e.id} nombre={e.nombre} texto={e.ambientacion} emoji={e.emoji} color={e.color} elegida={escenario === e.id}
-            bloqueada={desdeResumen ? candadoEscenario(e.id, j) : null} onClick={() => { setEscenario(e.id); setAvanzar(x => x + 1); }} />
+            bloqueada={candadoEscenario(e.id, j)} onClick={() => { setEscenario(e.id); setAvanzar(x => x + 1); }} />
         ))}
       </div>
     );
@@ -437,15 +435,15 @@ export function ConfigurarPartida({ miembros, alIniciar, alCancelar, iniciando, 
     contenido = (
       <div className="cfg-resumen">
         <div className="cfg-tablero">
-          <Casilla titulo="Modo" valor={m.nombre} detalle={conGrupos ? (gruposOk ? "Equipos listos" : "Falta armar equipos") : m.gana} img={srcArte(ARTE_TIPOS[tipo])} alTocar={() => editar("tipo")} />
+          {!esImpostor(j) && <Casilla titulo="Modo" valor={m.nombre} detalle={conGrupos ? (gruposOk ? "Equipos listos" : "Falta armar equipos") : m.gana} img={srcArte(ARTE_TIPOS[tipo])} alTocar={() => editar("tipo")} />}
           <Casilla titulo="Juego" valor={j?.nombre ?? "—"} detalle={j ? `${gente(j)} jugadores` : undefined} arte={<ArteJuego id={juego} />} alTocar={() => editar("juego")} ancha />
           <Casilla titulo="Nivel" valor={ejesDeJuego(juego).map(x => NIVELES_EJE[x][ejes[x]]).join(" · ") || "Sin nivel"}
             detalle={(ejes.drunk ? "Drunk encendido" : "Drunk apagado") + (cuenta && ejesDeJuego(juego).length ? ` · ${[ejesDeJuego(juego).includes("temperatura") ? `${cuenta.preguntas} preguntas` : "", ejesDeJuego(juego).includes("voltaje") ? `${cuenta.retos} retos` : ""].filter(Boolean).join(" y ")}` : "")}
             ico={<ArteCfg nombre={ejesDeJuego(juego).includes("temperatura") || !ejesDeJuego(juego).length ? `termometro-${ejes.temperatura}` : `voltimetro-${ejes.voltaje}`} alterno={arteHub("xp")} />} alTocar={() => editar("intensidad")} />
           <Casilla titulo={esImpostor(j) ? "Opciones" : "Herramienta"} valor={esImpostor(j) ? `${Math.min(impostores, maxImp)} ${Math.min(impostores, maxImp) === 1 ? "impostor" : "impostores"}` : inst?.nombre ?? "—"}
-            detalle={esImpostor(j) ? (tema === null ? "Palabras al azar" : tema === "escenario" ? "Palabras del escenario" : temasImpostor(adulto).find(t => t.id === tema)?.nombre ?? "") + (temporizador && conTemporizador ? ` · ⏱ ${temporizador} s` : "") : `${rondas} rondas${temporizador && conTemporizador ? ` · ⏱ ${temporizador} s` : ""}`}
-            ico={<ArteCfg nombre={esImpostor(j) ? "sec-herramienta" : `herr-${inst?.id ?? "cartas"}`} alterno={arteHub("ajustes")} />} alTocar={() => editar("opciones")} />
-          <Casilla titulo="Escenario" valor={esc ? esc.nombre : "Ciudad ALV"} detalle={esc ? esc.ambientacion : "Sin escenario"} img={ARTE_ESCENARIOS[escenario ?? "ciudad"] ? srcArte(ARTE_ESCENARIOS[escenario ?? "ciudad"]!) : undefined} alTocar={() => editar("escenario")} />
+            detalle={esImpostor(j) ? `${nombreCategoria(tema)} · votos ${votosNave === "visibles" ? "a la vista" : "secretos"}${revelarNave ? "" : " · sin revelar"}${pistaNave ? " · con pista" : ""}${castigoNave ? " · con castigo" : ""}` + (temporizador && conTemporizador ? ` · ⏱ ${temporizador} s` : "") : `${rondas} rondas${temporizador && conTemporizador ? ` · ⏱ ${temporizador} s` : ""}`}
+            ico={<ArteCfg nombre={esImpostor(j) ? "sec-herramienta" : `herr-${inst?.id ?? "cartas"}`} alterno={arteHub("ajustes")} />} alTocar={() => editar(esImpostor(j) ? "tipo" : "opciones")} />
+          {!esImpostor(j) && <Casilla titulo="Escenario" valor={esc ? esc.nombre : "Ciudad ALV"} detalle={esc ? esc.ambientacion : "Sin escenario"} img={ARTE_ESCENARIOS[escenario ?? "ciudad"] ? srcArte(ARTE_ESCENARIOS[escenario ?? "ciudad"]!) : undefined} alTocar={() => editar("escenario")} />}
           <div className="cfg-casilla cfg-gente">
             <span className="cfg-casilla-t dsp">{n} jugadores</span>
             <ul className="cp-jugadores" aria-label="Jugadores">{miembros.map(x => <li key={x.id}><Persona m={x} c={color(x.id)} /></li>)}</ul>
@@ -506,6 +504,7 @@ export function ConfigurarPartida({ miembros, alIniciar, alCancelar, iniciando, 
 }
 
 /** Una casilla del resumen: se toca para cambiar esa parte. */
+
 function Casilla({ titulo, valor, detalle, img, arte, ico, ancha, alTocar }: { titulo: string; valor: string; detalle?: string; img?: string; arte?: ReactNode; ico?: ReactNode; ancha?: boolean; alTocar: () => void }) {
   return (
     <button type="button" className={"cfg-casilla" + (ancha ? " ancha" : "")} onClick={alTocar} aria-label={`${titulo}: ${valor}. Cambiar`}>

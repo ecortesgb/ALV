@@ -80,9 +80,12 @@ function tarjetaEscenario(id: EscenarioId): Tarjeta | null {
  * Pantalla de carga (Elías, 24 nov): UNA tarjeta del juego (de qué se trata y cómo se gana) y después una por herramienta,
  * el temporizador y el escenario. Pasan solas mientras carga la partida.
  */
-export function tarjetasCarga(o: { juegoId: string; modalidad?: Modalidad; herramienta?: string; temporizador?: number; escenario?: EscenarioId }): Tarjeta[] {
+export function tarjetasCarga(o: { juegoId: string; modalidad?: Modalidad; herramienta?: string; temporizador?: number; escenario?: EscenarioId;
+  /** El impostor en la nave: su propia carga (Elías, 24 nov). */
+  nave?: { votos: "visibles" | "secretos"; revelar: boolean; castigo: boolean } }): Tarjeta[] {
   const j = JUEGOS.find(x => x.id === o.juegoId);
   if (!j?.motor) return [];
+  if (o.nave) return [...cargaNave(o.nave), ...tarjetasInicio({ ...o, explicar: false })];
   const r = REGLAS[j.motor];
   const mod = o.modalidad ?? "individual";
   const juego: Tarjeta = { grupo: "juego", titulo: j.nombre, texto: r.objetivo, consejo: mod === "individual" ? r.gana : GANA[mod], icono: "🎯", imagen: ARTE_JUEGOS[j.id] };
@@ -103,3 +106,19 @@ export function tarjetasInicio(o: { juegoId: string; modalidad?: Modalidad; expl
   if (esc) out.push(esc);
   return out;
 }
+
+/** Carga de El impostor en la nave: la nave, la asamblea y cómo termina (textos PROPUESTA). */
+function cargaNave(n: { votos: "visibles" | "secretos"; revelar: boolean; castigo: boolean }): Tarjeta[] {
+  return [
+    { grupo: "juego", titulo: "El impostor", icono: "🚀", imagen: "impostor/nave-carga.webp",
+      texto: "Todos a bordo reciben la misma palabra secreta, menos los impostores. Por turnos, cada quien dice una palabra que tenga que ver, sin decir la secreta.",
+      consejo: "Mantén el dedo en el lector para ver tu palabra." },
+    { grupo: "juego", titulo: "Asamblea en la nave", icono: "🗳️", imagen: "impostor/nave-mesa.webp",
+      texto: `Al terminar la vuelta, cada quien vota en su celular quién se baja de la nave, o «Nadie». ${n.votos === "visibles" ? "Cada voto cae con el color de quien votó." : "Los votos son secretos: solo se ve cuántos tuvo cada quien."} El más votado sale volando; si hay empate, nadie sale.`,
+      consejo: n.revelar ? "Al expulsar se dice si era impostor." : "Si era impostor, se sabrá hasta el final." },
+    { grupo: "juego", titulo: "¿Quién gana?", icono: "🏆", imagen: "impostor/nave-ganan-civiles.webp",
+      texto: "Si sacan a todos los impostores, la nave está a salvo. Si los impostores igualan a los civiles, se quedan con la nave.",
+      consejo: `Votar por un impostor +1 · impostor que sobrevive una votación +1 · al final +3 a cada civil o +5 a cada impostor.${n.castigo ? " El bando que pierde recibe un castigo." : ""}` },
+  ];
+}
+

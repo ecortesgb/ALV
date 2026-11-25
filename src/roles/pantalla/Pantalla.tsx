@@ -74,7 +74,7 @@ export function PantallaTv({ codigo }: { codigo: string }) {
     return marco(<>
       <header className="a-tv-top">
         {!copas && <div className="lb-banner pt-banner tv-banner">
-          <span className="lb-banner-n">{v.impostor ? `Vuelta ${v.ronda}` : `${v.ronda}/${v.totalRondas}`}</span>
+          <span className="lb-banner-n">{v.impostor?.etapa === "papeles" ? "La nave" : v.impostor ? `Vuelta ${v.ronda}` : `${v.ronda}/${v.totalRondas}`}</span>
           <span className="lb-banner-t">{nombreJuego(v.juegoId)}</span>
         </div>}
         <Conexion red={s.red} />
@@ -94,7 +94,7 @@ export function PantallaTv({ codigo }: { codigo: string }) {
       {v.pausada && <div className="a-tv-velo"><span className="tv-pausa">Pausa</span></div>}
       {ruleta && <div className="a-tv-velo" onClick={() => setRuleta(null)}><div className="d-pnl a-tv-ruleta"><img className="tv-ruleta-ico" src={`${import.meta.env.BASE_URL}arte/ui/configurar/herr-ruleta.webp`} alt="" /><span className="lb-banner-t">Ruleta de castigos</span><span className="dsp ol a-tv-t1">{ruleta.quien}</span><span className="a-tv-sub">{ruleta.texto}</span></div></div>}
       {tengoControl && copas && <div className="a-tv-respaldo" aria-label="Controles de respaldo"><button type="button" onClick={() => void cerrar()}>Cerrar sala</button></div>}
-      {tengoControl && !copas && (
+      {tengoControl && !copas && v.impostor?.etapa !== "papeles" && (
         <div className="a-tv-respaldo" aria-label="Controles de respaldo">
           <button type="button" onClick={() => void control(pid, v.pausada ? "reanudar" : "pausar")}>{v.pausada ? "Seguir" : "Pausar"}</button>
           {v.fase === "contestando" ? <button type="button" onClick={() => void control(pid, "saltar")}>Saltar</button>

@@ -107,6 +107,7 @@ export function desenlaceImpostor(v: Publico): { titular: string; detalle?: stri
   const palabra = r.palabra ? `La palabra era «${r.palabra}». ` : "";
   const quienes = lista((r.impostores ?? []).map(j => nombreDe(v, j)));
   const varios = (r.impostores ?? []).length > 1;
+  if (v.impostor?.nave) return desenlaceNave(v, palabra, quienes, varios);
   if (r.fin === "civiles") return { titular: "¡Ganan los civiles!", detalle: `${palabra}${varios ? "Los impostores eran" : "El impostor era"} ${quienes}.` };
   if (r.fin === "impostores") {
     const sale = r.eliminado ? `${nombreDe(v, r.eliminado)} salió y ` : "";
@@ -116,4 +117,17 @@ export function desenlaceImpostor(v: Publico): { titular: string; detalle?: stri
   const nombre = nombreDe(v, r.eliminado);
   if (r.eraImpostor) return { titular: `¡${nombre} era impostor!`, detalle: r.quedan === 1 ? "Queda uno más. Otra vuelta." : `Quedan ${r.quedan ?? 0}. Otra vuelta.` };
   return { titular: `${nombre} no era el impostor`, detalle: "Sale de escena. El impostor sigue entre ustedes." };
+}
+
+/** El impostor en la nave (Elías, 24 nov): textos propios de la nave; con «Guardar el secreto» no se dice si era impostor. */
+function desenlaceNave(v: Publico, palabra: string, quienes: string, varios: boolean): { titular: string; detalle?: string } {
+  const r = (v.revelado ?? {}) as { eliminado?: string | null; eraImpostor?: boolean; secreto?: boolean; empate?: boolean; saltos?: number; quedan?: number; fin?: "civiles" | "impostores" | null };
+  const quienEra = `${varios ? "Los impostores eran" : "El impostor era"} ${quienes}.`;
+  if (r.fin === "civiles") return { titular: "¡La nave está a salvo!", detalle: `${palabra}${quienEra}` };
+  if (r.fin === "impostores") return { titular: varios ? "¡Los impostores se quedaron con la nave!" : "¡El impostor se quedó con la nave!", detalle: `${palabra}${quienEra}` };
+  if (!r.eliminado) return { titular: "Nadie sale esta vez", detalle: r.empate && (r.saltos ?? 0) > 0 && !Object.values((v.revelado as { votos?: Record<string, number> }).votos ?? {}).some(n => n > (r.saltos ?? 0)) ? "Ganó «Nadie». Otra vuelta." : r.empate ? "Hubo empate. Otra vuelta." : "Nadie votó. Otra vuelta." };
+  const nombre = nombreDe(v, r.eliminado);
+  if (r.secreto) return { titular: `¡${nombre} salió volando!`, detalle: "Si era impostor, se sabrá al final. Otra vuelta." };
+  if (r.eraImpostor) return { titular: `¡${nombre} salió volando y era impostor!`, detalle: r.quedan === 1 ? "Queda 1 impostor a bordo. Otra vuelta." : `Quedan ${r.quedan ?? 0} impostores a bordo. Otra vuelta.` };
+  return { titular: `¡${nombre} salió volando!`, detalle: `Era civil. ${r.quedan === 1 ? "Queda 1 impostor" : `Quedan ${r.quedan ?? 0} impostores`} a bordo.` };
 }

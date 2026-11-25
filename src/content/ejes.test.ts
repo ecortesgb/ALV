@@ -52,7 +52,8 @@ describe("Temperatura + Voltaje", () => {
     };
     const pool = cartasPermitidas(todo, cartas, MAZOS);
     expect(pool.some(c => c.soloEjes)).toBe(false);
-    expect(cartas.filter(c => !c.soloEjes)).toHaveLength(283);
+    // Los castigos de la nave (mazo propio, Elías 24 nov) no los ve ningún juego de antes.
+    expect(cartas.filter(c => !c.soloEjes && c.mazo !== "castigo-nave")).toHaveLength(283);
   });
 
   it("ids únicos", () => {

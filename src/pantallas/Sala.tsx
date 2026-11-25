@@ -2,7 +2,7 @@
 // El papel es del aparato: aquí siempre se juega. A quien tiene el control le sale además la barra del anfitrión.
 // Sin pantalla (modo mesa), el celular del anfitrión también corre el motor y se queda encendido.
 import { useEffect, useState } from "react";
-import { Chip, Panel, Reloj } from "../ds";
+import { Chip, Escaner, Panel, Reloj } from "../ds";
 import { ir } from "../app/rutas";
 import { refrescarSesion, useSesion } from "../app/sesion";
 import { sonar } from "../app/sonido";
@@ -17,6 +17,7 @@ import type { PresenciaPantalla } from "../servicios/tiempoReal";
 import { HerramientaCelular, type MiVista } from "../juegos/general/celular";
 import { esPublico, marcador, nombreJuego, quedan, type Publico } from "../juegos/general/texto";
 import { control, entregarCopas, jugada, useMotor } from "../roles/pantalla/motor";
+import { AnuncioDiscusion, PapelNave, useAnuncioDiscusion } from "../juegos/impostor/papelNave";
 import { esFinalDeJuego } from "../juegos/general/Copas";
 import { useSala } from "../roles/sala";
 import { Marco, aviso, confirmar } from "./comun";
@@ -102,8 +103,14 @@ export function Sala({ codigo }: { codigo: string }) {
   const [enMano, setEnMano] = useState("");
   // Local: la pantalla de carga se ve una vez por partida, antes de pasar el teléfono.
   const [cargaVista, setCargaVista] = useState("");
+  // Local, El impostor en la nave: quiénes ya vieron su palabra antes de la primera vuelta (Elías, 24 nov).
+  // «Ya la vi» nunca va al motor; se guarda en la sesión del navegador para que una recarga no repita la ronda.
+  const [vistos, setVistos] = useState<{ pid: string; ids: string[] }>({ pid: "", ids: [] });
   const v = s.partida && !s.partida.terminada && esPublico(s.partida.estado) ? s.partida.estado : null;
   const final = s.partida?.terminada && esPublico(s.partida.estado) ? s.partida.estado : null;
+  // El impostor en la nave, papeles en la mesa (Elías, 24 nov): «Ya lo vi» se marca al instante y «¡A discutir!» se anuncia.
+  const [vistoYo, setVistoYo] = useState("");
+  const anuncioNave = useAnuncioDiscusion(v);
   // Relevo: con pantalla, el motor corre en la TV. Si el anfitrión termina la partida, su celular también la procesa,
   // así la partida se cierra aunque la TV se haya apagado o desconectado (antes se quedaba trabada).
   const [relevo, setRelevo] = useState(false);
@@ -155,16 +162,59 @@ export function Sala({ codigo }: { codigo: string }) {
     // Local: a quién le toca el teléfono. Mientras alguien deba contestar, a él; si no, al anfitrión.
     const anf = sala.anfitrionId;
     const pendientes = v.fase === "contestando" ? v.esperados.filter(j => !v.contestaron.includes(j)) : [];
-    const sigue = pendientes[0] ?? anf;
     const mano = enMano || anf;
     const idPartida = s.partida?.id ?? "";
-    if (local && tocaExplicar(v) && cargaVista !== idPartida) {
-      return <Marco clase="az pt" fondo={v.escenario ? <FondoEscenario escenario={v.escenario} /> : <FondoCuarto oscuro />}><ComoJugar v={v} modo="celular" alCerrar={() => { setCargaVista(idPartida); void control(idPartida, "comenzar"); }} /></Marco>;
+    const yaVieron = vistos.pid === idPartida ? vistos.ids : leerVistos(idPartida);
+    const naveSala = !!v.impostor?.palabras;
+    // Local: «¡A discutir!» se ve antes de pasar el teléfono al primer turno.
+    if (local && naveSala && anuncioNave) return <Marco clase="az pt ns-marco" fondo={<FondoCuarto oscuro />}><AnuncioDiscusion modo="celular" /></Marco>;
+    const etapaNave = naveSala ? v.impostor!.etapa : null;
+    const verPalabra = local && !!v.impostor?.nave && !naveSala && v.ronda === 1 && v.fase === "contestando" && v.impostor.etapa === "pistas" && Object.keys(v.pistas).length === 0;
+    const faltaVer = verPalabra ? v.jugadores.map(j => j.id).find(id => !yaVieron.includes(id)) : undefined;
+    // Local, papeles de la nave: el teléfono pasa por cada quien que no ha visto su papel.
+    const faltaPapel = local && etapaNave === "papeles" ? v.jugadores.map(j => j.id).find(id => !(v.impostor!.vistos ?? []).includes(id)) : undefined;
+    const sigue = faltaPapel ?? faltaVer ?? pendientes[0] ?? anf;
+    // Pantalla de carga: en Local siempre aquí; con la sala de espera de la nave también en línea (antes de la sala).
+    if ((local || (naveSala && !(conPantalla && !soyAnfitrion))) && tocaExplicar(v) && cargaVista !== idPartida) {
+      return <Marco clase="az pt" fondo={v.escenario ? <FondoEscenario escenario={v.escenario} /> : <FondoCuarto oscuro />}><ComoJugar v={v} modo="celular" alCerrar={() => { setCargaVista(idPartida); if (soyAnfitrion) void control(idPartida, "comenzar"); }} /></Marco>;
     }
     if (local && mano !== sigue && v.juegoId !== "copas") {
       const m = s.miembros.find(x => x.id === sigue);
       return <PasaTelefono nombre={m?.nombre ?? "el siguiente"} id={sigue} figura={m?.figura ?? null} color={colorDe(sigue, v.jugadores.map(j => j.id))}
         alListo={() => { modoLocal.pasarA(sigue === anf ? "" : sigue); setEnMano(sigue === anf ? "" : sigue); s.refrescar(); }} />;
+    }
+    // Papeles de la nave: cada quien ve el suyo (en Local, por turnos); luego el anfitrión abre la discusión.
+    if (etapaNave === "papeles" && (!local || mano === (faltaPapel ?? anf))) {
+      const quien = local ? mano : ses.uid;
+      const sec = (s.secreto ?? {}) as { mio?: { rol?: string; tema?: string; palabra?: string; companeros?: string[]; pista?: string } | null };
+      const vi = (v.impostor!.vistos ?? []).includes(quien) || vistoYo === `${idPartida}:${quien}`;
+      return (
+        <Marco clase="az pt ns-marco" fondo={<FondoCuarto oscuro />}>
+          <div className="pt-caja">
+            <PapelNave v={v} mio={sec.mio ?? null} miembros={s.miembros} yo={quien} vi={vi} local={local}
+              alVisto={() => { setVistoYo(`${idPartida}:${quien}`); void jugada(idPartida, "carta", { que: "visto" }); }}
+              soyAnfitrion={soyAnfitrion && (!local || quien === anf)} alDiscutir={() => void control(idPartida, "discutir")} />
+          </div>
+        </Marco>
+      );
+    }
+    if (faltaVer && mano === faltaVer) {
+      const m = s.miembros.find(x => x.id === mano);
+      const sec = (s.secreto ?? {}) as { mio?: { rol?: string; palabra?: string; tema?: string } | null };
+      const mio = sec.mio ?? null;
+      const imp = mio?.rol === "impostor";
+      const listo = () => { const ids = [...yaVieron, mano]; guardarVistos(idPartida, ids); setVistos({ pid: idPartida, ids }); };
+      return (
+        <Marco clase="az lb pt-aviso" fondo={v.escenario ? <FondoEscenario escenario={v.escenario} /> : <FondoCuarto oscuro />}>
+          <div className="a-pasa-caja nv-ver" style={{ "--pj": colorDe(mano, v.jugadores.map(j => j.id))?.base ?? "#ffc21a" } as React.CSSProperties}>
+            <span className="nv-ver-t dsp ol">{m?.nombre ?? "Tu turno"}: tu palabra secreta</span>
+            {mio ? <Escaner secreto={imp ? "Eres el impostor" : mio.palabra ?? "…"} encabezado={imp ? "TU PAPEL" : "PALABRA CLASIFICADA"} detalle={`Tema: ${mio.tema ?? v.carta?.texto ?? ""}`} />
+              : <p className="a-suave">Cargando…</p>}
+            <p className="a-suave">Mantén el dedo para verla. Cuando la memorices, suelta y toca «Ya la vi».</p>
+            <button type="button" className="lb-listo" disabled={!mio} onClick={listo}>Ya la vi</button>
+          </div>
+        </Marco>
+      );
     }
     const yo = local ? mano : ses.uid;
     const yoNombre = s.miembros.find(x => x.id === yo)?.nombre ?? ses.nombre;
@@ -187,6 +237,9 @@ export function Sala({ codigo }: { codigo: string }) {
             <button type="button" className="pt-hb" onClick={() => void (v.fase === "contestando" ? control(pid, "saltar") : control(pid, "siguiente"))}><img src={ico("configurar/omitir")} alt="" /><small>Saltar</small></button>
             <button type="button" className="pt-hb" onClick={() => void control(pid, "ruleta")}><img src={ico("configurar/herr-ruleta")} alt="" /><small>Ruleta</small></button>
             {!local && <button type="button" className="pt-hb" onClick={() => setXpReto(true)}><img src={ico("hub/xp")} alt="" /><small>XP reto</small></button>}
+            {/* Terminar y salir solo en el celular del anfitrión (Elías, 24 nov): ya no van abajo del juego para todos. */}
+            <button type="button" className="pt-hb" onClick={() => void terminarPartida()}><b className="pt-hb-txt">⏹</b><small>Terminar</small></button>
+            <button type="button" className="pt-hb peligro" onClick={() => void salir()}><b className="pt-hb-txt">✕</b><small>{local ? "Cerrar" : "Cerrar sala"}</small></button>
           </div>
         </nav>
       ) : undefined}>
@@ -222,16 +275,15 @@ export function Sala({ codigo }: { codigo: string }) {
           {(() => {
             const juego = estoy ? <div className={"pt-juego" + (sinPantalla ? " a-espera-tv" : "")} {...inerte(sinPantalla)}><HerramientaCelular v={v} mi={mi} miembros={s.miembros} sinCarga={local || (conPantalla && !soyAnfitrion)} alComenzar={soyAnfitrion ? () => void control(pid, "comenzar") : undefined} mandar={async (t, d) => !sinPantalla && jugada(pid, t, d)} /></div>
               : <div className="pt-aviso"><b>Juegas en la siguiente</b><p>Llegaste con la partida empezada. Mira la pantalla.</p></div>;
-            return !copas && !conPantalla ? <MesaJuego v={v} miembros={s.miembros} yo={yo} modo="celular">{juego}</MesaJuego> : juego;
+            // El impostor con papeles en la mesa ya muestra a todos en su tablero: sin la mesa de los lados (Elías, 24 nov).
+            return !copas && !conPantalla && !v.impostor?.palabras ? <MesaJuego v={v} miembros={s.miembros} yo={yo} modo="celular">{juego}</MesaJuego> : juego;
           })()}
           {/* Con pantalla externa, el marcador y la tarjeta grande se ven en la TV: aquí solo lo tuyo. */}
           {conPantalla && !copas && <p className="pt-mira" role="status"><span aria-hidden="true">📺</span> Mira la pantalla: aquí solo va lo tuyo.</p>}
-          <div className="pt-salidas">
-            {copas && <button type="button" className="lb-listo" onClick={() => void salir()}>{local ? "Terminar sesión" : soyAnfitrion ? "Cerrar sala" : "Salir de la sala"}</button>}
-            {/* Siempre hay salida: terminar funciona sin TV (relevo) y cualquiera puede salir o cerrar la sala. */}
-            {soyAnfitrion && !copas && <button type="button" className="lb-sec" onClick={() => void terminarPartida()}>Terminar partida</button>}
-            {!copas && <button type="button" className="lb-sec peligro" onClick={() => void salir()}>{local ? "Terminar sesión" : soyAnfitrion ? "Cerrar sala" : "Salir de la sala"}</button>}
-          </div>
+          {/* En la partida, terminar y salir van en la barra del anfitrión; solo la ceremonia de copas cierra aquí. */}
+          {copas && <div className="pt-salidas">
+            <button type="button" className="lb-listo" onClick={() => void salir()}>{local ? "Terminar sesión" : soyAnfitrion ? "Cerrar sala" : "Salir de la sala"}</button>
+          </div>}
         </div>
         {xpReto && <XpReto v={v} cerrar={() => setXpReto(false)} alDar={(j, x) => { void enlace.darXp(sala, j, x).then(ok => { if (ok) { void control(pid, "xp-reto", { jugador: j, xp: x }); aviso(`+${x} XP para ${v.jugadores.find(p => p.id === j)?.nombre ?? ""}`); } else aviso("No se pudo dar la XP."); }); }} />}
       </Marco>
@@ -265,3 +317,9 @@ function PasaTelefono({ nombre, id, figura, color, alListo }: { nombre: string; 
     </Marco>
   );
 }
+
+const claveVistos = (pid: string) => `alv-vistos-${pid}`;
+function leerVistos(pid: string): string[] {
+  try { const x = JSON.parse(sessionStorage.getItem(claveVistos(pid)) ?? "[]"); return Array.isArray(x) ? x.filter((i): i is string => typeof i === "string") : []; } catch { return []; }
+}
+function guardarVistos(pid: string, ids: string[]) { try { sessionStorage.setItem(claveVistos(pid), JSON.stringify(ids)); } catch { /* sin almacenamiento: se recuerda mientras siga abierta */ } }

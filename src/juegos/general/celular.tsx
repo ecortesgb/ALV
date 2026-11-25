@@ -33,7 +33,8 @@ export function HerramientaCelular(p: { v: Publico; mi: MiVista; miembros: Miemb
   // Al final del juego, su podio abajo del resultado.
   const podio = esFinalDeJuego(p.v) && <PodioJuego v={p.v} miembros={p.miembros} modo="celular" />;
   // El impostor con eliminación (Maestro v1.44) tiene su propia pantalla.
-  if (p.v.motor === "rol-secreto" && p.v.impostor) return <>{reglas}<CelularImpostor {...p} />{podio}</>;
+  // Con papeles en la mesa, las posiciones van en una página de su final (Elías, 24 nov).
+  if (p.v.motor === "rol-secreto" && p.v.impostor) return <>{reglas}<CelularImpostor {...p} />{!p.v.impostor.palabras && podio}</>;
   if (p.v.motor === "turnos-cartas" && p.v.verdadReto) return <>{reglas}<CelularVerdadReto {...p} />{podio}</>;
   if (p.v.motor === "fisico") return <>{reglas}<CelularFisico {...p} />{podio}</>;
   return <>{reglas}<HerramientaGeneral {...p} />{podio}</>;

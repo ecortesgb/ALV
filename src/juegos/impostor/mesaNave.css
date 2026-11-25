@@ -1,0 +1,102 @@
+/* El impostor en la nave, celular (Elías, 24 nov): mesa 3D con globos de palabra sobre las cabezas, pizarra para votar
+   (se abre encima de la mesa solo al votar) y palabras de cada vuelta. Todo cabe en una pantalla. */
+.D .nm-cel .nv-cel-cab { grid-template-columns: minmax(0, 1fr) auto auto; }
+.D .nm-cel .nv-cel-cab > .nv-mia { grid-column: 1 / 3; }
+.D .nm-ver-vueltas { align-self: stretch; min-height: 0; margin: 0; padding: 0 .8em; border: 0; border-radius: 14px; cursor: pointer; white-space: nowrap;
+  font: 800 .78em/1 var(--f-texto, var(--letra-cuerpo)); color: #ffe6a0; background: rgba(255, 194, 26, .12); box-shadow: inset 0 0 0 1.5px rgba(255, 194, 26, .5); }
+
+/* Pantalla completa (Elías, 24 nov): el cuarto de la nave visto desde arriba cubre toda la pantalla; encima la mesa 3D con
+   las figuras (también a pantalla completa); arriba tu palabra y abajo lo que te toca, flotando. Al votar, la pizarra
+   ocupa casi toda la pantalla. El letrero de la vuelta y la barra del anfitrión quedan por encima. */
+.D .nv-cel.nm-cel, .D.wide .nv-cel.nm-cel { position: fixed; inset: 0; z-index: 2; display: grid; grid-template-rows: auto minmax(0, 1fr) auto; gap: .5em; margin: 0; border-radius: 0; box-shadow: none;
+  padding: calc(env(safe-area-inset-top) + 58px) max(.6em, calc(50% - 30em)) calc(env(safe-area-inset-bottom) + .6em);
+  background: radial-gradient(75% 60% at 50% 50%, transparent 40%, rgba(2, 4, 14, .55)), var(--cuarto, none) center / cover no-repeat, #0b1220; }
+.D:has(.pt-host) .nv-cel.nm-cel { padding-bottom: calc(env(safe-area-inset-bottom) + 96px); }
+.D:has(.pt-host .pt-momento) .nv-cel.nm-cel { padding-bottom: calc(env(safe-area-inset-bottom) + 158px); }
+.D:has(.nm-cel) .pt-top { position: relative; z-index: 3; }
+.D .nm-cel > .nv-cel-cab, .D .nm-cel > .nv-accion { position: relative; z-index: 1; }
+.D .nm-cel > .nv-cel-cab { grid-row: 1; padding: .45em .5em; border-radius: 16px; background: rgba(6, 10, 30, .72); backdrop-filter: blur(4px); }
+.D .nm-cel > .nv-accion { grid-row: 3; background: rgba(8, 12, 36, .86); backdrop-filter: blur(4px); }
+.D .nm-mesa { position: absolute; inset: 0; z-index: 0; }
+.D .nm-3d { position: absolute; inset: 0; }
+
+/* Globo de palabra sobre la cabeza: del color de quien la dijo; el del turno late con «…». */
+.D .nm-globos { position: absolute; inset: 0; margin: 0; padding: 0; list-style: none; pointer-events: none; }
+.D .nm-globo { position: absolute; translate: -50% -100%; display: grid; justify-items: center; max-width: 9em; padding: .22em .55em .26em; border-radius: 10px;
+  background: #fff; color: #10142e; box-shadow: 0 0 0 2px var(--pj, #8a93a8), 0 4px 10px rgba(0, 0, 0, .45); }
+.D .nm-globo::after { content: ""; position: absolute; left: 50%; bottom: -6px; width: 10px; height: 10px; translate: -50% 0; rotate: 45deg; background: #fff;
+  box-shadow: 2px 2px 0 0 var(--pj, #8a93a8); }
+.D .nm-globo b { position: relative; z-index: 1; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: .95em; line-height: 1.05;
+  animation: nmPalabra .45s cubic-bezier(.2, 1.6, .4, 1); }
+.D .nm-globo small { position: relative; z-index: 1; font: 800 .58em/1 var(--f-texto, var(--letra-cuerpo)); color: color-mix(in srgb, var(--pj, #555) 75%, #000); }
+.D .nm-globo.turno { background: #ffc21a; animation: nmLate 1.1s ease-in-out infinite; }
+.D .nm-globo.turno::after { background: #ffc21a; }
+@keyframes nmPalabra { from { scale: .4; opacity: 0; } }
+@keyframes nmLate { 50% { scale: 1.08; } }
+
+/* Pizarra: tablero claro con marco, dos columnas, sello «Votó», tachados los que salieron y «Nadie» abajo. */
+.D .nm-pizarra { position: relative; z-index: 3; grid-row: 2 / 4; display: grid; min-height: 0; animation: nmAbre .45s cubic-bezier(.2, 1.2, .4, 1); }
+@keyframes nmAbre { from { translate: 0 30%; opacity: 0; } }
+.D .nm-piz-marco { display: grid; height: 100%; grid-template-rows: auto minmax(0, 1fr) auto; gap: .45em; min-height: 0; padding: .55em; border-radius: 18px;
+  background: linear-gradient(180deg, #dfeaf7, #c6d6ea); box-shadow: inset 0 0 0 3px #8796ab, 0 0 0 5px #4f5a6c, 0 14px 30px rgba(0, 0, 0, .55); color: #1b2236; }
+.D .nm-piz-t { text-align: center; font-size: 1.25em; line-height: 1; color: #2a3350; }
+.D .nm-filas { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-rows: minmax(0, 1fr); gap: .35em; min-height: 0; margin: 0; padding: 0; list-style: none; }
+.D .nm-fila { position: relative; display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: .4em; min-width: 0; min-height: 0; padding: .25em .4em .25em .3em;
+  border-radius: 10px; background: #f7fbff; box-shadow: inset 4px 0 0 var(--pj, #8a93a8), 0 2px 0 rgba(30, 40, 70, .25); transition: transform .15s, box-shadow .2s; }
+.D .nm-fila.elegible { cursor: pointer; }
+.D .nm-fila.elegible:active { transform: scale(.97); }
+.D .nm-fila.sel { background: #fff6d6; box-shadow: inset 4px 0 0 var(--pj, #8a93a8), 0 0 0 3px #ffb703, 0 4px 12px rgba(255, 183, 3, .45); }
+.D .nm-fila.yo:not(.fuera) { background: #eef3fa; }
+.D .nm-fila.fuera { background: #a9b3c2; filter: grayscale(.9); }
+.D .nm-fila.fuera .nm-cara::after { content: "✕"; position: absolute; inset: 0; display: grid; place-items: center; font: 900 1.9em/1 var(--f-texto, var(--letra-cuerpo)); color: #c0263a; }
+.D .nm-cara { position: relative; display: grid; }
+.D .nm-sello { position: absolute; left: -.35em; top: -.4em; padding: .12em .32em; border-radius: 6px; rotate: -14deg; font-size: .55em; color: #fff; background: #d92c42;
+  box-shadow: 0 0 0 1.5px #fff, 0 2px 4px rgba(0, 0, 0, .35); animation: nmPalabra .35s cubic-bezier(.2, 1.6, .4, 1); }
+.D .nm-txt { display: grid; gap: .05em; min-width: 0; }
+.D .nm-nom { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 800 .74em/1.1 var(--f-texto, var(--letra-cuerpo)); color: #48526b; }
+.D .nm-nom small { color: #8a6d00; }
+.D .nm-palabra { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 1.02em; line-height: 1.05; color: #10142e; }
+.D .nm-antes { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 700 .62em/1.2 var(--f-texto, var(--letra-cuerpo)); color: #6a7590; }
+.D .nm-votos { position: absolute; right: .3em; bottom: .25em; display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 2px; max-width: 45%; }
+.D .nm-votos i { width: .7em; height: .7em; border-radius: 3px; background: var(--pj, #8a93a8); box-shadow: inset 0 -2px 0 rgba(0, 0, 0, .25); }
+.D .nm-votos b { font-size: .8em; color: #2a3350; }
+.D .nm-fila.nadie { grid-column: 1 / -1; background: #e9eef6; box-shadow: 0 2px 0 rgba(30, 40, 70, .25); }
+.D .nm-fila.nadie.sel { box-shadow: 0 0 0 3px #ffb703, 0 4px 12px rgba(255, 183, 3, .45); }
+.D .nm-nadie-ico { display: grid; place-items: center; width: 1.9em; height: 1.9em; border-radius: 50%; font-size: 1.1em; background: #c9d3e2; }
+.D .nm-votar { height: 46px; margin: 0; border: 0; border-radius: 999px; cursor: pointer; font-size: 1.1em; color: #2a1a00;
+  background: linear-gradient(180deg, #ffd65a, #ffb703); box-shadow: inset 0 -4px 0 rgba(0, 0, 0, .2), 0 4px 12px rgba(255, 183, 3, .35); }
+.D .nm-votar:disabled { cursor: default; color: #5a6480; background: #b9c4d6; box-shadow: none; font-size: .9em; }
+.D .nm-votar.listo { animation: nmLate 1.3s ease-in-out infinite; }
+.D .nm-estado { margin: 0; text-align: center; font: 700 .8em/1.3 var(--f-texto, var(--letra-cuerpo)); color: #3b4560; }
+
+/* Palabras de cada vuelta: tabla en una hoja encima. */
+.D .nm-hist { position: fixed; inset: 0; z-index: 70; display: grid; place-items: center; padding: 1em; background: rgba(2, 4, 14, .7); }
+.D .nm-hist-caja { width: min(100%, 34em); max-height: 90dvh; overflow: auto; padding: .7em; border-radius: 18px; color: #1b2236;
+  background: linear-gradient(180deg, #dfeaf7, #c6d6ea); box-shadow: inset 0 0 0 3px #8796ab, 0 0 0 5px #4f5a6c; }
+.D .nm-hist-caja header { display: flex; align-items: center; justify-content: space-between; gap: .5em; margin-bottom: .5em; }
+.D .nm-hist-x { width: 34px; height: 34px; min-height: 0; margin: 0; padding: 0; border: 0; border-radius: 50%; cursor: pointer; font-weight: 800; background: #b9c4d6; color: #1b2236; }
+.D .nm-hist table { width: 100%; border-collapse: separate; border-spacing: 0 .25em; font: 700 .85em/1.2 var(--f-texto, var(--letra-cuerpo)); }
+.D .nm-hist th, .D .nm-hist td { padding: .25em .35em; text-align: left; }
+.D .nm-hist thead th { font-size: .8em; color: #5a6480; }
+.D .nm-hist tbody th { display: flex; align-items: center; gap: .35em; border-radius: 8px 0 0 8px; background: #f7fbff; box-shadow: inset 4px 0 0 var(--pj, #8a93a8); white-space: nowrap; }
+.D .nm-hist tbody td { background: #f7fbff; font-family: var(--f-titulo, var(--letra-display)); font-weight: 400; color: #10142e; }
+.D .nm-hist tbody td:last-child { border-radius: 0 8px 8px 0; }
+.D .nm-hist tr.fuera th, .D .nm-hist tr.fuera td { opacity: .5; }
+
+.D.wide .nm-filas { gap: .45em .6em; }
+@media (prefers-reduced-motion: reduce) { .D .nm-globo.turno, .D .nm-votar.listo, .D .nm-pizarra, .D .nm-globo b { animation: none; } }
+
+/* TV con papeles (Elías, 24 nov): el cuarto a toda la pantalla, la mesa 3D encima, la franja de arriba y la pizarra grande. */
+.D .nv-tv.nm-tv { position: fixed; inset: 0; z-index: 1; display: block; overflow: hidden; border: 0; border-radius: 0; box-shadow: none; padding: 0; background: radial-gradient(75% 65% at 50% 52%, transparent 45%, rgba(2, 4, 14, .6)), var(--cuarto, none) center / cover no-repeat, #0b1220; }
+.D .nv-tv.nm-tv::before { display: none; }
+.D .nm-tv .nm-mesa { inset: 0; }
+.D .nm-mesa.tv .nm-globo { font-size: 1.7em; max-width: 8em; }
+.D .nm-tv-cab { position: absolute; z-index: 2; top: 5.2em; left: 50%; translate: -50% 0; display: grid; justify-items: center; gap: .25em; width: min(92%, 56em); padding: .7em 1.4em;
+  border-radius: 22px; text-align: center; background: rgba(6, 10, 30, .74); backdrop-filter: blur(6px); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .14), 0 10px 28px rgba(0, 0, 0, .45); }
+.D .nm-tv-t { font: 400 2.4em/1.05 var(--f-titulo, var(--letra-display)); color: var(--oro, #ffc21a); text-wrap: balance; }
+.D .nm-tv-cab .reloj-turno, .D .nm-tv-cab > :last-child:not(span) { position: absolute; right: .8em; top: 50%; translate: 0 -50%; }
+.D .nm-tv-vistos { position: absolute; z-index: 2; left: 50%; bottom: 1.4em; translate: -50% 0; width: min(94%, 70em); padding: .8em 1em; border-radius: 22px;
+  background: rgba(6, 10, 30, .74); backdrop-filter: blur(6px); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .14); }
+.D .nm-pizarra.tv { position: absolute; z-index: 3; inset: 33vh 9% 9vh; font-size: 1.55em; }
+.D .nm-pizarra.tv .nm-piz-t { font-size: 1.15em; }
+.D .nm-pizarra.tv .nm-filas { grid-template-columns: repeat(2, minmax(0, 1fr)); }

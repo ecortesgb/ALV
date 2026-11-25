@@ -66,6 +66,13 @@ export interface EstadoPartida {
   usadas?: string[];
   /** Pantalla de carga (cfg.explicar): el anfitrión ya tocó «¡Iniciar!». Antes de eso no corre ningún reloj. */
   comenzada?: boolean;
+  /** Papeles en la mesa (cfg.impostor.papeles): «papeles» = repartidos, cada quien ve el suyo antes de la discusión.
+   * Sin valor, la vuelta de palabras de siempre. */
+  naveEtapa?: "papeles";
+  /** Papeles: quienes ya tocaron «Ya lo vi». */
+  vistos?: string[];
+  /** Papeles: las palabras que dijo cada quien en las vueltas ya cerradas, en orden. */
+  palabrasVueltas?: Record<string, string[]>;
   accionesVistas: string[];
   bitacora: EventoMotor[];
 }
@@ -97,7 +104,11 @@ export type Accion =
   /** Se acabó el tiempo del turno (temporizador): el turno pasa al siguiente. Lo manda quien corre el motor. */
   | { id: string; tipo: "tiempo" }
   /** El anfitrión cerró la pantalla de carga: empieza la partida (y sus relojes) para todos. */
-  | { id: string; tipo: "comenzar" };
+  | { id: string; tipo: "comenzar" }
+  /** Papeles: un jugador ya vio su papel («Ya lo vi»). */
+  | { id: string; tipo: "visto"; jugador: string }
+  /** Papeles: el anfitrión abre la discusión (empieza la vuelta de palabras). */
+  | { id: string; tipo: "discutir" };
 
 export const MAX_PISTA = 40;
 
@@ -120,7 +131,8 @@ interface Mecanica {
   /** Quién debe contestar en esta ronda. */
   quienes(e: EstadoPartida): string[];
   valida(e: EstadoPartida, jugador: string, valor: unknown): boolean;
-  puntuar(e: EstadoPartida): Puntuacion;
+  /** `c` solo lo usan las mecánicas que sacan cartas al revelar (castigos de la nave). */
+  puntuar(e: EstadoPartida, c?: Contenido): Puntuacion;
 }
 
 const ids = (e: EstadoPartida) => e.cfg.jugadores.map(j => j.id);
@@ -320,18 +332,21 @@ export const maxImpostores = (n: number) => Math.max(1, Math.floor((n - 1) / 2))
 export const vivos = (e: EstadoPartida) => ids(e).filter(j => !(e.eliminados ?? []).includes(j));
 const ordenVuelta = (e: EstadoPartida) => ((e.seleccion?.orden ?? []) as string[]);
 /** «pistas» mientras alguien del orden no ha dicho su palabra; luego «votar». */
-export const etapaImpostor = (e: EstadoPartida): "pistas" | "votar" => (ordenVuelta(e).some(j => !(j in (e.pistas ?? {}))) ? "pistas" : "votar");
+export type EtapaImpostor = "papeles" | "pistas" | "votar";
+export const etapaImpostor = (e: EstadoPartida): EtapaImpostor => e.naveEtapa ?? (ordenVuelta(e).some(j => !(j in (e.pistas ?? {}))) ? "pistas" : "votar");
 const siguienteEnHablar = (e: EstadoPartida, pistas: Record<string, string>) => ordenVuelta(e).find(j => !(j in pistas));
 const esImpostor = (e: EstadoPartida, j: string) => (e.privado[j] as { rol?: string } | undefined)?.rol === "impostor";
 
 /** Elige el tema según las opciones: uno fijo, el del escenario o al azar entre los permitidos. */
 function temaElegido(e: EstadoPartida, c: Contenido, azar: ReturnType<typeof crearAzar>): TemaImpostor {
-  const permitido = (t: TemaImpostor) => !t.adulto || e.cfg.adulto;
+  // Las categorías de la nave solo las sortean las partidas con papeles; las demás, nunca (partidas guardadas iguales).
+  const nave = !!e.cfg.impostor?.papeles;
+  const permitido = (t: TemaImpostor) => (!t.adulto || e.cfg.adulto) && !!t.soloNave === nave;
   const pedido = e.cfg.impostor?.tema;
   const fijo = pedido === "escenario" ? c.temas.find(t => t.escenario === e.cfg.escenario && permitido(t)) : c.temas.find(t => t.id === pedido && permitido(t));
   if (fijo) return fijo;
   const pool = c.temas.filter(t => permitido(t) && (t.escenario === null || t.escenario === e.cfg.escenario));
-  return azar.elegir(pool.length ? pool : c.temas.filter(t => !t.adulto));
+  return azar.elegir(pool.length ? pool : c.temas.filter(t => !t.adulto && !!t.soloNave === nave));
 }
 
 const impostorEliminacion: Mecanica = {
@@ -346,8 +361,9 @@ const impostorEliminacion: Mecanica = {
       const impostores = azar.mezclar(ids(e)).slice(0, cuantos);
       privado = {};
       for (const j of ids(e)) {
+        const pista = e.cfg.impostor?.pista ? tema.pistas?.[palabra] : undefined;
         privado[j] = impostores.includes(j)
-          ? { rol: "impostor", tema: tema.nombre, companeros: impostores.filter(x => x !== j) }
+          ? { rol: "impostor", tema: tema.nombre, companeros: impostores.filter(x => x !== j), ...(pista ? { pista } : {}) }
           : { rol: "civil", tema: tema.nombre, palabra };
       }
       carta = { id: `tema-${tema.id}`, texto: tema.nombre };
@@ -358,15 +374,21 @@ const impostorEliminacion: Mecanica = {
     const orden = [...quedan.slice(inicio), ...quedan.slice(0, inicio)];
     return { privado, carta, turnoDe: orden[0], seleccion: { orden } };
   },
-  quienes: e => (etapaImpostor(e) === "pistas" ? (e.turnoDe ? [e.turnoDe] : []) : vivos(e)),
-  valida: (e, j, v) => etapaImpostor(e) === "votar" && typeof v === "string" && v !== j && vivos(e).includes(v),
-  puntuar(e) {
-    const quedan = vivos(e);
+  quienes: e => (e.naveEtapa ? [] : etapaImpostor(e) === "pistas" ? (e.turnoDe ? [e.turnoDe] : []) : vivos(e)),
+  valida: (e, j, v) => etapaImpostor(e) === "votar" && typeof v === "string" && ((enNave(e) && v === SALTAR_VOTO) || (v !== j && vivos(e).includes(v))),
+  puntuar(e, c) {
+    const quedan = vivos(e), nave = enNave(e);
     const votos: Record<string, number> = {};
-    for (const j of quedan) { const v = e.respuestas[j] as string | undefined; if (v) votos[v] = (votos[v] ?? 0) + 1; }
+    let saltos = 0;
+    for (const j of quedan) {
+      const v = e.respuestas[j] as string | undefined;
+      if (v === SALTAR_VOTO && nave) saltos++;
+      else if (v) votos[v] = (votos[v] ?? 0) + 1;
+    }
     const max = Math.max(0, ...Object.values(votos));
     const masVotados = Object.keys(votos).filter(k => votos[k] === max);
-    const eliminado = max > 0 && masVotados.length === 1 ? masVotados[0]! : null; // empate: nadie sale
+    // Empate entre personas, o «Nadie» con tantos votos o más que el más votado: nadie sale.
+    const eliminado = max > 0 && masVotados.length === 1 && max > saltos ? masVotados[0]! : null;
     const eliminados = eliminado ? [...(e.eliminados ?? []), eliminado] : [...(e.eliminados ?? [])];
     const siguen = ids(e).filter(j => !eliminados.includes(j));
     const impostoresVivos = siguen.filter(j => esImpostor(e, j)).length;
@@ -380,21 +402,59 @@ const impostorEliminacion: Mecanica = {
       else if (voto && esImpostor(e, voto)) p += 1; // votar por un impostor
       puntos[j] = p;
     }
-    if (fin) for (const j of ids(e)) if ((fin === "impostores") === esImpostor(e, j)) puntos[j] = (puntos[j] ?? 0) + (fin === "impostores" ? 3 : 2);
+    // Premio final: en la nave +5 a cada impostor o +3 a cada civil (Elías, 24 nov); antes +3 / +2.
+    const premio = fin === "impostores" ? (nave ? 5 : 3) : (nave ? 3 : 2);
+    if (fin) for (const j of ids(e)) if ((fin === "impostores") === esImpostor(e, j)) puntos[j] = (puntos[j] ?? 0) + premio;
     const civil = ids(e).find(j => !esImpostor(e, j));
     const final = fin ? { palabra: (e.privado[civil ?? ""] as { palabra?: string } | undefined)?.palabra ?? "", impostores: ids(e).filter(j => esImpostor(e, j)) } : {};
+    if (!nave) {
+      return {
+        puntos, eliminados,
+        revelado: { votos, eliminado, eraImpostor: eliminado ? esImpostor(e, eliminado) : false, empate: masVotados.length > 1, quedan: impostoresVivos, fin, ...final },
+      };
+    }
+    // «No revelar hasta descubrir a todos»: mientras la partida sigue, no se dice si el expulsado era impostor ni cuántos quedan.
+    const secreto = e.cfg.impostor?.revelar === false && !fin;
+    const castigos = fin && e.cfg.impostor?.castigo && c ? castigosNave(e, c, fin) : undefined;
     return {
       puntos, eliminados,
-      revelado: { votos, eliminado, eraImpostor: eliminado ? esImpostor(e, eliminado) : false, empate: masVotados.length > 1, quedan: impostoresVivos, fin, ...final },
+      revelado: {
+        votos, saltos, eliminado, empate: masVotados.length > 1 || (max > 0 && saltos >= max), fin,
+        ...(secreto ? { secreto: true } : { eraImpostor: eliminado ? esImpostor(e, eliminado) : false, quedan: impostoresVivos }),
+        ...final, ...(castigos ? { castigos } : {}),
+      },
     };
   },
 };
+
+/** Valor del voto «Nadie» (saltar el voto) en la nave. */
+export const SALTAR_VOTO = "saltar";
+/** ¿Esta partida juega El impostor con las reglas de la nave? */
+export const enNave = (e: Pick<EstadoPartida, "motor" | "cfg">) => conEliminacion(e) && !!e.cfg.impostor?.nave;
+/** ¿Esta partida de la nave reparte papeles en la mesa antes de la primera vuelta? */
+export const conPapeles = (e: Pick<EstadoPartida, "motor" | "cfg">) => enNave(e) && !!e.cfg.impostor?.papeles;
+
+/** Acciones que valen mientras cada quien ve su papel. */
+const EN_PAPELES = new Set(["visto", "discutir", "comenzar", "terminar", "pausar", "reanudar", "xp-reto", "pasar-control"]);
+
+/** Castigo de la nave: a cada civil si ganan los impostores, o a cada impostor si pierden. Con Drunk, cartas de trago
+ * (siempre «de lo que tengas»); sin Drunk, castigos leves. Sale con la semilla de la partida: se reconstruye igual. */
+function castigosNave(e: EstadoPartida, c: Contenido, fin: "civiles" | "impostores"): Record<string, { texto: string; trago: boolean }> {
+  const perdedores = ids(e).filter(j => esImpostor(e, j) === (fin === "civiles"));
+  const permitidas = cartasPermitidas(e.cfg, c.cartas, ["castigo-nave"]);
+  const delTipo = permitidas.filter(x => x.drunk === !!e.cfg.drunk);
+  const pool = crearAzar(e.semilla * 53 + 4099).mezclar(delTipo.length ? delTipo : permitidas.filter(x => !x.drunk));
+  const out: Record<string, { texto: string; trago: boolean }> = {};
+  if (!pool.length) return out;
+  perdedores.forEach((j, i) => { const x = pool[i % pool.length]!; out[j] = { texto: x.texto, trago: x.drunk }; });
+  return out;
+}
 
 /** El impostor: todos ven la palabra menos uno. Votan a quién creen impostor. */
 const rolSecretoClasico: Mecanica = {
   preparar(e, c) {
     const azar = azarDeRonda(e);
-    const clasicos = c.temas.filter(t => !t.soloConfig);
+    const clasicos = c.temas.filter(t => !t.soloConfig && !t.soloNave);
     const temas = clasicos.filter(t => (!t.adulto || e.cfg.adulto) && (t.escenario === null || t.escenario === e.cfg.escenario));
     const tema = azar.elegir(temas.length ? temas : clasicos.filter(t => !t.adulto));
     const palabra = azar.elegir(tema.palabras);
@@ -707,12 +767,14 @@ export function crearPartida(juego: DefinicionJuego, cfg: Configuracion, semilla
     manos: Object.fromEntries(cfg.jugadores.map(j => [j.id, [] as string[]])), cambios: 0, accionesVistas: [],
     bitacora: [{ n: 1, tipo: "partida-creada", datos: { juego: juego.id, semilla } }],
   };
+  // Papeles en la mesa: nace con los papeles repartidos; «discutir» abre la primera vuelta.
+  if (cfg.impostor?.papeles && juego.motor === "rol-secreto") return { ...prepararRonda(base, contenido), naveEtapa: "papeles", vistos: [], palabrasVueltas: {} };
   return anotarCarta(undefined, prepararRonda(base, contenido));
 }
 
 /** Pasa la ronda a «revelada». Los `ausentes` (si hay) no contestaron: no puntúan ni ganan retos esa ronda. */
-function revelarRonda(e: EstadoPartida, ausentes: string[]): EstadoPartida {
-  const p = mecanica(e).puntuar(e);
+function revelarRonda(e: EstadoPartida, ausentes: string[], contenido?: Contenido): EstadoPartida {
+  const p = mecanica(e).puntuar(e, contenido);
   const puntos = { ...e.puntos }, retos = { ...e.retos };
   for (const [j, v] of Object.entries(p.puntos)) if (!ausentes.includes(j)) puntos[j] = (puntos[j] ?? 0) + v;
   let manos = e.manos;
@@ -733,6 +795,8 @@ export function aplicar(e: EstadoPartida, a: Accion, contenido: Contenido): Esta
   const m = mecanica(e);
   const visto = [...e.accionesVistas, a.id];
   const sube = (n: EstadoPartida): EstadoPartida => anotarCarta(e, { ...n, version: e.version + 1, accionesVistas: visto });
+  // Papeles: solo pasan sus propias acciones y las del anfitrión que no tocan la ronda.
+  if (e.naveEtapa && !EN_PAPELES.has(a.tipo)) return e;
 
   switch (a.tipo) {
     case "contestar": {
@@ -763,13 +827,13 @@ export function aplicar(e: EstadoPartida, a: Accion, contenido: Contenido): Esta
     }
     case "revelar": {
       if (e.fase !== "contestando" || !m.quienes(e).every(j => j in e.respuestas)) return e;
-      return sube(revelarRonda(e, []));
+      return sube(revelarRonda(e, [], contenido));
     }
     case "seguir-sin": {
       const quienes = m.quienes(e), faltan = quienes.filter(j => !(j in e.respuestas));
       // Solo con al menos una respuesta y al menos una falta. Si nadie contestó, la salida es «saltar».
       if (e.fase !== "contestando" || faltan.length === 0 || faltan.length === quienes.length) return e;
-      return sube(revelarRonda(e, faltan));
+      return sube(revelarRonda(e, faltan, contenido));
     }
     case "esperar": {
       if (e.fase !== "contestando") return e;
@@ -779,7 +843,9 @@ export function aplicar(e: EstadoPartida, a: Accion, contenido: Contenido): Esta
       if (e.fase !== "revelada") return e;
       const acaba = conEliminacion(e) ? !!(e.revelado as { fin?: unknown } | undefined)?.fin || e.ronda >= e.totalRondas : e.ronda >= e.totalRondas;
       if (acaba) return sube({ ...e, fase: "terminada", bitacora: registrar(e, "terminada") });
-      const n = prepararRonda({ ...e, ronda: e.ronda + 1, cambios: 0 }, contenido);
+      // Papeles: las palabras de la vuelta que se cierra quedan en el tablero.
+      const palabrasVueltas = conPapeles(e) ? Object.fromEntries(ids(e).map(j => [j, [...(e.palabrasVueltas?.[j] ?? []), ...(e.pistas?.[j] ? [e.pistas[j]!] : [])]])) : undefined;
+      const n = prepararRonda({ ...e, ronda: e.ronda + 1, cambios: 0, ...(palabrasVueltas ? { palabrasVueltas } : {}) }, contenido);
       return sube({ ...n, bitacora: registrar(e, "ronda", undefined, { ronda: e.ronda + 1 }) });
     }
     case "terminar":
@@ -843,6 +909,14 @@ export function aplicar(e: EstadoPartida, a: Accion, contenido: Contenido): Esta
         return sube({ ...e, respuestas: { ...e.respuestas, [s.responde]: "tiempo" }, bitacora: registrar(e, "tiempo", s.responde) });
       }
       return e;
+    }
+    case "visto": {
+      if (e.naveEtapa !== "papeles" || !ids(e).includes(a.jugador) || (e.vistos ?? []).includes(a.jugador)) return e;
+      return sube({ ...e, vistos: [...(e.vistos ?? []), a.jugador], bitacora: registrar(e, "visto", a.jugador) });
+    }
+    case "discutir": {
+      if (e.naveEtapa !== "papeles") return e;
+      return sube({ ...e, naveEtapa: undefined, bitacora: registrar(e, "discusion") });
     }
     case "comenzar":
       return !e.cfg.explicar || e.comenzada ? e : sube({ ...e, comenzada: true, bitacora: registrar(e, "comenzada") });

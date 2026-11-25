@@ -22,7 +22,7 @@ const CARGA_MS = 2600;
 const ETIQUETA: Record<GrupoTarjeta, string> = { juego: "Cómo se juega", herramienta: "Herramienta", escenario: "Escenario" };
 
 export function ComoJugar({ v, modo, alCerrar }: { v: Publico; modo: "tv" | "celular"; alCerrar?: () => void }) {
-  const tarjetas = tarjetasCarga({ juegoId: v.juegoId, modalidad: v.modalidad, herramienta: v.verdadReto?.herramienta, temporizador: v.temporizador, escenario: v.escenario });
+  const tarjetas = tarjetasCarga({ juegoId: v.juegoId, modalidad: v.modalidad, herramienta: v.verdadReto?.herramienta, temporizador: v.temporizador, escenario: v.escenario, nave: v.impostor?.nave });
   const total = tarjetas.length;
   const [i, setI] = useState(0);
   const [vuelta, setVuelta] = useState(0); // reinicia la barra de la tarjeta actual

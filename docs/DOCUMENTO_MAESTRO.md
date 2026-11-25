@@ -1,7 +1,7 @@
 # ALV — Amigos Legendarios Verdaderos
 ## Documento Maestro del Producto
-**Versión:** 1.56  
-**Última actualización:** 23 de noviembre de 2026  
+**Versión:** 1.60  
+**Última actualización:** 24 de noviembre de 2026  
 **Estado:** Documento vivo de producto; decisiones y propuestas identificadas por separado.
 
 ---
@@ -1087,6 +1087,13 @@ Todos reciben una palabra o concepto, excepto uno. El impostor desconoce la pala
 
 **DECISIÓN (v1.44, Elías, 18 de noviembre) — El impostor con eliminación:** puede haber varios impostores (lo elige el anfitrión). Por vueltas: cada quien, en orden, dice su palabra en voz alta y la escribe en el pizarrón de su celular; la TV muestra solo los personajes con su color de jugador y la palabra de cada quien. Al final de la vuelta todos votan; el más votado queda eliminado y su personaje sale de escena. Si atraparon a todos los impostores, termina; si no, sigue otra vuelta con la misma palabra. En el celular, la minifigura va a un lado del lector de huella y abajo el pizarrón. Sustituye a las rondas sueltas (una palabra nueva por ronda), que solo quedan para reconstruir partidas guardadas antes.
 **DECISIÓN (v1.44, Elías aprobó los puntos, 18 de noviembre):** el punto (c) queda aprobado. **PROPUESTA (v1.44, el resto falta aprobarlo):** (a) empate en la votación: nadie sale; (b) los impostores ganan si igualan a los civiles en juego o si se acaban las vueltas (una por jugador); (c) puntos: votar por un impostor +1, impostor que sobrevive a una votación +1, al final +2 a cada civil si ganan los civiles o +3 a cada impostor si ganan ellos; (d) con varios impostores, cada uno sabe quién es su cómplice; (e) máximo de impostores: siempre menos que los civiles (con 4 jugadores, 1; con 5 o 6, 2; con 7 u 8, 3); (f) la palabra no se revela hasta el final; (g) quien sale ya no habla ni vota.
+**DECISIÓN (v1.57, Elías, 24 de noviembre) — El impostor en la nave.** Misma mecánica de vueltas y eliminación, ambientada en una nave con identidad de ALV (sin copiar ningún juego existente): las minifiguras de los jugadores sentadas alrededor de una mesa con el botón para votar al centro y la pantalla de votaciones arriba (TV); el expulsado sale volando al espacio. (1) Siempre se puede votar «Nadie»; si «Nadie» gana o empata, o hay empate entre personas, nadie sale. (2) Puntos de las partidas nuevas: votar por un impostor +1; impostor que sobrevive cada votación +1; al final +5 a cada impostor si ganan, +3 a cada civil si ganan. Saltar no da nada. Las partidas de antes conservan +2/+3. (3) Castigo: si ganan los impostores, a todos los civiles (también expulsados); si pierden, solo a los impostores. Con Drunk, un trago de lo que cada quien tenga (el agua cuenta); sin Drunk, un castigo leve. No da ni quita puntos ni XP. (4) Los expulsados no saben quién es el impostor hasta que acaba la partida. (5) Opciones del juego: votación a la vista (cada voto con el color de quien votó) o secreta; «Decir si era impostor» o «Guardar el secreto» hasta el final (si ya no quedan impostores, la partida acaba). (6) En Local, antes de la primera vuelta el teléfono pasa por todos para ver la palabra. **PROPUESTA:** valores por defecto (votos a la vista, decir si era impostor, castigo encendido), textos de la nave y las 16 cartas del mazo `castigo-nave`.
+
+**DECISIÓN (v1.58, Elías, 24 de noviembre) — Sala de espera de la nave.** Se toma el flujo del género, no el aspecto de ningún juego. (1) Al elegir El impostor, el configurador no pide «Modo de juego» ni escenario; sí Herramientas, Intensidad y Resumen. Después de la pantalla de carga (solo la primera partida) se entra a la sala de espera de la nave: las minifiguras de pie y el administrador configura ahí cuántos impostores, la categoría (con imagen), votación a la vista o secreta, decir o no si el expulsado era impostor, pista para el impostor y castigo. (2) Al iniciar, cada quien ve su papel con la huella: civil con la palabra; impostor con quiénes son los otros impostores y la pista (si está encendida) o la categoría; en Local el teléfono pasa por todos. Las figuras caminan a la mesa. Cuando todos vieron (en línea, el administrador puede seguir sin esperar), «¡A discutir!». (3) En el tablero, la palabra de cada quien va a la derecha de su figura y los votos debajo (color de quien votó o gris si es secreta). (4) La figura expulsada sale girando al espacio. (5) Al terminar, «Volver a la sala de espera» abre la siguiente partida con las mismas opciones; «Salir de la nave» regresa al lobby. En la sala de espera se ven los puntos de la noche. Quien entra o sale lo hace en la sala de espera (el administrador saca a alguien; en Local agrega jugadores). (6) Categorías de la nave: Películas, Videojuegos, Series, Cantantes, Superhéroes, Personajes animados, Celebridades, Fútbol, Adultos (solo con Temperatura alta), Objetos y «Al azar». Las categorías anteriores quedan solo para partidas guardadas. (7) En el configurador, el escenario se elige al final para todos los juegos (antes del Resumen), con candado en los escenarios donde no se juega el juego elegido. **PROPUESTA:** las 250 palabras y sus pistas (`ALV_PISTAS_IMPOSTOR.md`), los textos de la sala de espera y los valores por omisión (1 impostor, al azar, a la vista, decir, sin pista, con castigo).
+
+**DECISIÓN (v1.59, Elías, 24 de noviembre) — Sin sala de espera.** Reemplaza los puntos (1), (5) y parte de (6) de v1.58: no hay sala de espera de la nave; el lobby de siempre basta. Las opciones de El impostor (cuántos impostores, categoría con imagen, votación, al expulsar, pista y castigo) vuelven a «Modo de juego» del configurador (sin escenario). Al iniciar, después de la pantalla de carga, las figuras ya están sentadas en la mesa y empiezan los papeles con la huella; luego «¡A discutir!». Al terminar se regresa al lobby como en los demás juegos. Siguen igual: papeles con compañeros y pista, palabra a la derecha de cada figura, votos de color o grises, expulsión con la figura 3D girando, las 10 categorías de la nave y el escenario al final del configurador para los demás juegos.
+
+**DECISIÓN (v1.60, Elías, 24 de noviembre) — Pantallas de El impostor en la nave.** Elías las revisó una por una. (1) Regla para toda la app: cada sección cabe en una pantalla, sin bajar ni ir a los lados; botones siempre a la vista; deslizar en vez de buscar. (2) «Opciones del juego» a la mitad: a la izquierda un carrusel con las imágenes de 1, 2 o 3 impostores y una rueda de categorías (la del centro es la elegida); a la derecha interruptores (votos secretos, decir si era impostor, pista, castigo). (3) El papel: tu figura 3D en el espacio, IMPOSTOR en rojo o CIVIL en turquesa, la huella y «Ya lo vi». (4) Vuelta de palabras: el cuarto de la nave visto desde arriba a toda la pantalla, la mesa 3D con las figuras sentadas y la palabra de cada quien en un globo sobre su cabeza; desde la vuelta 2, un botón con las palabras de cada vuelta. (5) Votación: una pizarra que se abre solo al votar y ocupa casi toda la pantalla (figura, nombre, palabra y las de antes, sello «Votó», tachados los que salieron, «Nadie, todavía»). (6) Expulsión: espacio negro con estrellas; la figura cruza de izquierda a derecha girando, empujada por la nave, y a su paso se escribe «X no era el impostor.» o «X era el impostor.» con «impostor» en rojo, y luego cuántos impostores quedan. (7) Si se acaba, pantalla de Victoria (de los civiles o de los impostores) con los ganadores como minifiguras de frente; luego el final en páginas que se deslizan (resultado, castigo, posiciones). (8) La TV usa lo mismo en grande. (9) «Terminar» y «Cerrar» solo en la barra del anfitrión; los invitados en línea no tienen botón para salir durante la partida. Se siguen llamando «civiles» (Elías lo pidió así por ahora). Imágenes de Elías: 1, 2 y 3 impostores y el cuarto de la nave.
 
 ### Quién lo haría
 **DECISIÓN (v1.4):** es el mismo juego que el clásico «¿Quién es más probable?» (16.8). Queda como un solo juego.
@@ -1716,6 +1723,18 @@ Decisiones del usuario del 12 de noviembre de 2026:
 ## v1.6
 - Primeros logros (14.2), con ámbito de sesión o histórico (ver DECISIÓN v1.6 en 14.2).
 
+## v1.60
+- 24 nov 2026. Pantallas de El impostor en la nave (16.2): regla de una pantalla sin bajar para toda la app, opciones a la mitad, papel, mesa 3D con globos de palabra, pizarra de votación, expulsión con letras al paso, Victoria, TV igual; terminar solo para el anfitrión. Código publicado.
+
+## v1.59
+- 24 nov 2026. El impostor sin sala de espera: los papeles se reparten en la mesa al terminar la carga; categorías y opciones en «Opciones del juego».
+
+## v1.58
+- 24 nov 2026. Sala de espera de la nave (reemplazada en v1.59), 10 categorías nuevas con pista de una palabra y escenario al final del configurador para todos los juegos.
+
+## v1.57
+- 24 nov 2026. El impostor en la nave: mesa con botón, votar «Nadie», votos visibles o secretos, revelar o no, castigo opcional, +5/+3 al final.
+
 ## v1.56
 - 23 nov 2026. Ranking y Logros, etapa 3 (14.3): temporada mensual con foto fija y «Campeón de temporada», Salón de la Fama con «Jugador retirado», 8 récords con el fiestero ocultable. Migración 044 aplicada; código publicado.
 
@@ -1899,5 +1918,5 @@ Decisiones del usuario del 12 de noviembre de 2026:
 
 ---
 
-**Fin del Documento Maestro ALV v1.56**  
+**Fin del Documento Maestro ALV v1.60**  
 Este documento debe actualizarse de forma incremental y conservar la distinción entre decisiones aprobadas, propuestas, pendientes y descartadas.

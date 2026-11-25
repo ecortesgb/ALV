@@ -49,6 +49,10 @@ export interface TemaImpostor {
   palabras: string[];
   /** Tema agregado para el configurador (Maestro v1.44): el modo clásico no lo sortea, así las partidas guardadas se reconstruyen igual. */
   soloConfig?: boolean;
+  /** Categoría de la nave (Elías, 24 nov): solo la sortean las partidas con `cfg.impostor.papeles`. */
+  soloNave?: boolean;
+  /** Pista de una palabra por cada palabra (palabra → pista), para el impostor si la sala la enciende. */
+  pistas?: Record<string, string>;
 }
 
 /** Tipo de partida: solo cambia cómo se suman los puntos y quién gana (una persona, una pareja o un equipo). */
@@ -59,6 +63,20 @@ export interface OpcionesImpostor {
   cantidad: number;
   /** Id del tema, «escenario» (el tema del escenario elegido) o null (al azar). */
   tema: string | null;
+  /** El impostor en la nave (Elías, 24 nov): se puede saltar el voto, al final +5 a impostores o +3 a civiles y las opciones de abajo.
+   * Sin esto, las reglas de v1.44 tal cual (partidas guardadas iguales). */
+  nave?: boolean;
+  /** Solo con `nave`. «visibles»: se ve en vivo quién vota a quién; «secretos»: solo cuántos votos tuvo cada quien. */
+  votos?: "visibles" | "secretos";
+  /** Solo con `nave`. false: al expulsar no se dice si era impostor hasta que acaba la partida. */
+  revelar?: boolean;
+  /** Papeles en la mesa (Elías, 24 nov): la partida nace con los papeles repartidos; cada quien ve el suyo con la huella
+   * y el anfitrión abre la discusión. Usa las categorías de la nave. Implica `nave`. */
+  papeles?: boolean;
+  /** Solo con `papeles`: el impostor ve una pista de una palabra además de la categoría. */
+  pista?: boolean;
+  /** Solo con `nave`. Castigo al final: a todos los civiles si ganan los impostores, o a los impostores si pierden. */
+  castigo?: boolean;
 }
 
 /** Lo que devuelve el configurador de partida, además del juego, las rondas y el nivel. */

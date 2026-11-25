@@ -48,6 +48,7 @@
 .D .pt-hb-txt { display: grid; place-items: center; width: 36px; height: 36px; font: 400 22px/1 var(--f-titulo); color: #ffe14a; }
 .D .pt-hb small { font: 800 12px/1 var(--f-texto); }
 .D .pt-hb:active { transform: translateY(2px) scale(.97); }
+.D .pt-hb.peligro .pt-hb-txt { color: #ff6b78; }
 .D .pt-hb:focus-visible, .D .pt-momento:focus-visible { outline: 3px solid #fff; outline-offset: 2px; }
 .D .pt-momento { width: 100%; min-height: 54px; cursor: pointer; border-radius: 14px; border: 2.5px solid var(--az-tinta); color: var(--az-tinta);
   font: 400 24px/1 var(--f-titulo); text-transform: uppercase; letter-spacing: .04em; background: linear-gradient(180deg, #ffe066, #ffb000); box-shadow: 0 5px 0 #c77700; }
@@ -74,8 +75,9 @@
 .D .pt-pasa-ficha .fj-nom { font-size: clamp(28px, 7vw, 42px); color: var(--pj, #ffe14a); }
 
 @media (max-width: 520px) {
-  .D .pt-host-fila { grid-template-columns: repeat(4, 1fr); }
-  .D .pt-hb { min-height: 58px; }
+  .D .pt-host-fila { grid-template-columns: none; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 6px; }
+  .D .pt-hb { min-height: 56px; padding: 5px 2px; }
+  .D .pt-hb small { font-size: 11px; white-space: nowrap; }
   .D .pt-hb img, .D .pt-hb-txt { width: 30px; height: 30px; }
 }
 @media (prefers-reduced-motion: reduce) { .D .pt-hb { transition: none; } }

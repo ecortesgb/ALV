@@ -14,6 +14,8 @@
 // Modo sala (escena.html?modo=sala, la sala de espera): una columna por lugar, cada una con su pedestal del color del jugador.
 //   En «figuras» cada figura trae `color` ("#rrggbb") y `columna` (0…), y el mensaje trae `columnas` (lugares, con vacíos).
 //   Los lugares sin figura muestran un pedestal apagado; ALV dibuja encima el «+» y el nombre.
+// Modo nave (escena.html?modo=nave, El impostor): figuras sentadas alrededor de una mesa con el botón para votar al centro.
+//   Igual que la sala (`columna`, `columnas`, `color`) más `asientos` (colores) y los mensajes «nave» y «expulsar» (ver su bloque).
 // Modo azotea (escena.html?modo=azotea, prototipo del HUB nuevo «La Azotea»): una figura sobre la Plataforma ALV,
 //   en el piso de la azotea. &llegada=1 → la figura llega con la animación de energía (ALV decide si es la primera de la sesión).
 //   {tipo:"mirar", x, y, activa}  → la figura voltea hacia un punto (x: -1 izquierda … 1 derecha; y: -1 arriba … 1 abajo)
@@ -426,7 +428,156 @@
   const sombraGeo = new THREE.CircleGeometry(0.62, 40), sombraMat = new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: TOON ? 0.32 : 0.5, depthWrite: false,
     map: TOON ? null : (function () { const cv = document.createElement("canvas"); cv.width = cv.height = 64; const g = cv.getContext("2d"), r = g.createRadialGradient(32, 32, 2, 32, 32, 32); r.addColorStop(0, "rgba(255,255,255,1)"); r.addColorStop(0.55, "rgba(255,255,255,.55)"); r.addColorStop(1, "rgba(255,255,255,0)"); g.fillStyle = r; g.fillRect(0, 0, 64, 64); return new THREE.CanvasTexture(cv); })() });
   // Sin pedestal (marcador de la TV, listas): un piso invisible recibe la sombra.
-  if (!TOON && !pedestal && !SALA && !AZOTEA) scene.add(pisoSombra(14));
+  // Vuelo (expulsión de El impostor): una sola figura girando en el espacio, sin piso.
+  const VUELO = MODO === "vuelo";
+  if (!TOON && !pedestal && !SALA && !AZOTEA && !VUELO) scene.add(pisoSombra(14));
+
+  // ---------- Nave (El impostor, Elías 24 nov): mesa redonda con el botón para votar al centro y una silla por lugar ----------
+  // Las figuras se sientan alrededor de la mesa mirando al centro. En «figuras» cada una trae `columna` (su asiento 0…) y
+  // `color`; el mensaje trae `columnas` (asientos, también los vacíos de quien ya salió) y `asientos` (color de cada uno).
+  //   {tipo:"nave", boton:"votar"|"quieto"|"golpe"}  → el botón late (se vota), se apaga o lo aprietan
+  //   {tipo:"expulsar", id}                          → esa figura se levanta, gira y sale volando hacia arriba
+  const NAVE = MODO === "nave";
+  const NV = { n: 0, R: 1.5, S: 1.9, mesa: null, sillas: [], colores: [], boton: "quieto", golpe: -9, sueltos: [] };
+  const QUIETO = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const MESA_Y = 1.02, SILLA_Y = 0.52;
+  const linN = c => new THREE.Color(c).convertSRGBToLinear();
+  const matN = (c, r, m) => TOON ? new THREE.MeshToonMaterial({ color: linN(c), gradientMap: tonos }) : new THREE.MeshStandardMaterial({ color: linN(c), roughness: r == null ? 0.35 : r, metalness: m == null ? 0.2 : m });
+  const brilloN = NAVE ? (function () { const cv = document.createElement("canvas"); cv.width = cv.height = 128; const g = cv.getContext("2d"), r = g.createRadialGradient(64, 64, 4, 64, 64, 64); r.addColorStop(0, "rgba(255,255,255,1)"); r.addColorStop(0.45, "rgba(255,255,255,.4)"); r.addColorStop(1, "rgba(255,255,255,0)"); g.fillStyle = r; g.fillRect(0, 0, 128, 128); return new THREE.CanvasTexture(cv); })() : null;
+  const haloN = (tam, color) => { const m = new THREE.Mesh(new THREE.PlaneGeometry(tam, tam), new THREE.MeshBasicMaterial({ map: brilloN, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, color })); m.rotation.x = -Math.PI / 2; m.userData.sinSombra = true; return m; };
+  function quitarN(o) { if (!o) return; scene.remove(o); o.traverse(m => { if (m.geometry) m.geometry.dispose(); const ms = Array.isArray(m.material) ? m.material : m.material ? [m.material] : []; ms.forEach(x => x.dispose()); }); }
+  function armarMesa(R) {
+    const g = new THREE.Group();
+    const pz = (geo, m, x, y, z) => { const o = new THREE.Mesh(geo, m); o.position.set(x, y, z); g.add(o); return o; };
+    // Cubierta gris con canto dorado, anillo turquesa de luz y studs dorados en la orilla.
+    pz(new THREE.CylinderGeometry(R, R * 0.98, 0.14, 72), matN(0xc3c9d3, 0.3, 0.1), 0, MESA_Y - 0.07, 0);
+    pz(new THREE.CylinderGeometry(R * 0.66, R * 0.66, 0.012, 64), new THREE.MeshBasicMaterial({ color: linN(0x1d6f86) }), 0, MESA_Y + 0.002, 0);
+    const aro = pz(new THREE.TorusGeometry(R * 0.66, 0.025, 8, 96), new THREE.MeshBasicMaterial({ color: linN(0x2ee6d6) }), 0, MESA_Y + 0.01, 0); aro.rotation.x = Math.PI / 2;
+    const canto = pz(new THREE.TorusGeometry(R, 0.045, 10, 96), matN(0xffc21a, 0.25, 0.7), 0, MESA_Y - 0.02, 0); canto.rotation.x = Math.PI / 2;
+    const nS = Math.max(12, Math.floor(2 * Math.PI * (R - 0.2) / 0.36));
+    const studs = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.075, 0.075, 0.06, 16), matN(0xffc21a, 0.25, 0.7), nS);
+    const mx = new THREE.Matrix4();
+    for (let i = 0; i < nS; i++) { const a = i / nS * Math.PI * 2; mx.makeTranslation(Math.sin(a) * (R - 0.2), MESA_Y + 0.03, Math.cos(a) * (R - 0.2)); studs.setMatrixAt(i, mx); }
+    g.add(studs);
+    // Pata central y base en el piso.
+    pz(new THREE.CylinderGeometry(0.42, 0.55, MESA_Y - 0.14, 32), matN(0x2a3140, 0.3, 0.6), 0, (MESA_Y - 0.14) / 2, 0);
+    pz(new THREE.CylinderGeometry(0.95, 1.05, 0.08, 48), matN(0x232833, 0.3, 0.6), 0, 0.04, 0);
+    // Botón: base oscura, domo dorado y anillo turquesa que late cuando se vota.
+    pz(new THREE.CylinderGeometry(0.4, 0.46, 0.16, 40), matN(0x232833, 0.25, 0.7), 0, MESA_Y + 0.08, 0);
+    const domo = pz(new THREE.SphereGeometry(0.3, 40, 20, 0, Math.PI * 2, 0, Math.PI / 2), TOON ? matN(0xffc21a) : new THREE.MeshStandardMaterial({ color: linN(0xffc21a), roughness: 0.18, metalness: 0.55, emissive: linN(0x7a4a00), emissiveIntensity: 0.25 }), 0, MESA_Y + 0.16, 0);
+    domo.scale.y = 0.75;
+    const anillo = pz(new THREE.TorusGeometry(0.44, 0.035, 10, 64), new THREE.MeshBasicMaterial({ color: linN(0x2ee6d6) }), 0, MESA_Y + 0.17, 0); anillo.rotation.x = Math.PI / 2;
+    const halo = haloN(1.9, linN(0x2ee6d6)); halo.position.y = MESA_Y + 0.02; g.add(halo);
+    g.traverse(o => { if (o.isMesh && !o.userData.sinSombra && !(o.material && o.material.isMeshBasicMaterial)) { o.castShadow = true; o.receiveShadow = true; } });
+    scene.add(g);
+    return { g, domo, anillo, halo };
+  }
+  function armarSilla() {
+    const g = new THREE.Group();
+    const pz = (geo, m, x, y, z) => { const o = new THREE.Mesh(geo, m); o.position.set(x, y, z); o.castShadow = o.receiveShadow = true; g.add(o); return o; };
+    const cuerpo = matN(0x2b3a5c, 0.35, 0.25), tira = new THREE.MeshBasicMaterial({ color: 0x5aa6f0 });
+    pz(new THREE.BoxGeometry(0.92, 0.12, 0.78), cuerpo, 0, SILLA_Y - 0.06, -0.04);
+    pz(new THREE.BoxGeometry(0.92, 0.6, 0.12), cuerpo, 0, SILLA_Y + 0.28, -0.46);
+    const t = pz(new THREE.BoxGeometry(0.94, 0.09, 0.14), tira, 0, SILLA_Y + 0.6, -0.46); t.castShadow = false;
+    pz(new THREE.CylinderGeometry(0.07, 0.07, SILLA_Y - 0.12, 12), matN(0x8d96a8, 0.2, 0.8), 0, (SILLA_Y - 0.12) / 2, -0.04);
+    pz(new THREE.CylinderGeometry(0.34, 0.38, 0.05, 24), matN(0x232833, 0.3, 0.6), 0, 0.025, -0.04);
+    const halo = haloN(1.5, 0x5aa6f0); halo.position.set(0, 0.02, -0.04); g.add(halo);
+    scene.add(g);
+    return { g, tira, halo };
+  }
+  // Ángulo del asiento i de n: el 0 queda al fondo, de frente a la cámara, y siguen alrededor.
+  const anguloN = (i, n) => Math.PI + (i - (n - 1) / 2) * (Math.PI * 2 / n);
+  function acomodarNave() {
+    const n = Math.max(3, lugares());
+    const R = 1.05 + n * 0.13;
+    if (!NV.mesa || NV.n !== n) { quitarN(NV.mesa && NV.mesa.g); NV.mesa = armarMesa(R); NV.n = n; NV.R = R; NV.S = R + 0.42; }
+    while (NV.sillas.length < n) NV.sillas.push(armarSilla());
+    const colorDe = new Map();
+    orden.forEach(id => { const e = figuras.get(id); colorDe.set(e.columna, e.color); });
+    NV.sillas.forEach((s, i) => {
+      s.g.visible = i < n; if (i >= n) return;
+      const a = anguloN(i, n);
+      s.g.position.set(Math.sin(a) * NV.S, 0, Math.cos(a) * NV.S); s.g.rotation.y = a + Math.PI;
+      const c = colorValido(colorDe.get(i) || NV.colores[i]);
+      s.tira.color.copy(linN(c || "#4a5687"));
+      s.halo.material.color.copy(linN(c || "#4a5687"));
+    });
+    orden.forEach(id => {
+      const e = figuras.get(id), a = anguloN(e.columna, n);
+      if (e.vuela != null) return;
+      e.obj.position.set(Math.sin(a) * NV.S, SILLA_Y, Math.cos(a) * NV.S); e.obj.rotation.set(0, a + Math.PI, 0); e.obj.scale.setScalar(1);
+    });
+  }
+  // Sentada: las piernas al frente (90°) y la cadera baja hasta el asiento. Encima va lo que haga el momento.
+  function sentar(e) {
+    const J = e.obj.userData.j; if (!J) return;
+    if (J.piernasArt) { J.legR.rotation.x = -Math.PI / 2; J.legL.rotation.x = -Math.PI / 2; }
+    if (J.pivotY) J.root.position.y = Math.max(-(J.pivotY - 8 / LD), J.root.position.y * 0.35 - (J.pivotY - 8 / LD));
+  }
+  // Dónde queda la cabeza de cada figura sentada (fracción del lienzo, y desde arriba): ALV pone ahí la palabra que dijo.
+  // Se mide sobre la pose real (sentada) dos veces por segundo y solo se manda si cambió.
+  const cajaCab = new THREE.Box3(), vCab = new THREE.Vector3();
+  let ultCab = "", tCab = -9;
+  function cabezasNave(t) {
+    if (t - tCab < 0.5) return; tCab = t;
+    const pos = {};
+    orden.forEach(id => {
+      const e = figuras.get(id); if (!e || e.vuela != null) return;
+      cajaCab.setFromObject(e.obj);
+      vCab.set((cajaCab.min.x + cajaCab.max.x) / 2, cajaCab.max.y + 0.08, (cajaCab.min.z + cajaCab.max.z) / 2).project(camera);
+      pos[id] = [Math.round((vCab.x + 1) * 500) / 1000, Math.round((1 - vCab.y) * 500) / 1000];
+    });
+    const firma = JSON.stringify(pos);
+    if (firma !== ultCab) { ultCab = firma; enviar({ tipo: "cabezas", pos }); }
+  }
+  function animarNave(t) {
+    if (!NV.mesa) return;
+    const m = NV.mesa, b = NV.boton;
+    const late = b === "votar" ? 0.55 + 0.45 * Math.sin(t * 4.2) : b === "golpe" ? 1 : 0.18;
+    m.halo.material.opacity = late; m.anillo.material.color.setRGB(0.18 * (0.4 + late), 0.9 * (0.4 + late), 0.84 * (0.4 + late));
+    const g = t - NV.golpe; m.domo.scale.y = g < 0.35 ? 0.75 - Math.sin(g / 0.35 * Math.PI) * 0.35 : 0.75;
+    const foco = new Set(orden.filter(id => figuras.get(id).foco).map(id => figuras.get(id).columna));
+    NV.sillas.forEach((s, i) => { s.halo.material.opacity = foco.has(i) ? 0.75 + 0.25 * Math.sin(t * 5) : 0.22; });
+    // Expulsión: se levanta de la silla, gira y sale volando hacia arriba en 2.4 s; luego desaparece.
+    figuras.forEach(e => {
+      if (e.vuela == null) return;
+      const d = (t - e.vuela) / 2.4;
+      if (d >= 1) { e.obj.visible = false; return; }
+      const k = d * d, a = anguloN(e.columna, Math.max(3, lugares()));
+      e.obj.position.set(Math.sin(a) * NV.S * (1 + d * 0.6), SILLA_Y + 0.6 * Math.min(1, d * 4) + k * 9, Math.cos(a) * NV.S * (1 + d * 0.6));
+      e.obj.rotation.set(d * 3, a + Math.PI + d * 14, d * 2);
+      e.obj.scale.setScalar(Math.max(0.05, 1 - k * 0.8));
+    });
+  }
+  // Vuelo (expulsión de El impostor, Elías 24 nov): la nave la avienta desde la izquierda; cruza la pantalla por en medio
+  // girando sobre su centro y sale por la derecha. Empuje: arranca rápido y va perdiendo velocidad (sin detenerse); los
+  // giros también se van frenando. La misma curva `uVuelo` la usa ALV para escribir las letras al paso (nave.tsx).
+  const DUR_VUELO = 5, MEDIO_FIG = 0.72, DIST_VUELO = 15, vGiro = new THREE.Vector3();
+  const uVuelo = d => -0.18 + 1.36 * (0.55 * d + 0.45 * (1 - Math.pow(1 - d, 2)));
+  function volar(e, t) {
+    const d = Math.min(1, Math.max(0, (t - (e.t0v ?? t)) / DUR_VUELO));
+    // Avisa a ALV dónde va (para escribir las letras justo al paso de la figura).
+    if (e.dEnviado !== 1 && (e.dEnviado == null || d >= 1 || t - (e.tEnvio ?? 0) > 0.03)) { enviar({ tipo: "vuelo", d }); e.dEnviado = d >= 1 ? 1 : d; e.tEnvio = t; }
+    const hw = Math.tan(camera.fov * Math.PI / 360) * DIST_VUELO * camera.aspect;
+    const frena = 1 - Math.pow(1 - d, 2);
+    if (!QUIETO) e.obj.rotation.set(Math.sin(d * 5) * 0.5, frena * 5.5, -(0.35 * d + 0.65 * frena) * 11);
+    else e.obj.rotation.set(0, 0, 0);
+    // Gira sobre su centro: se corrige la posición del origen (los pies) según la rotación.
+    vGiro.set(0, MEDIO_FIG, 0).applyEuler(e.obj.rotation);
+    const cx = (uVuelo(d) * 2 - 1) * hw, cy = 1.35 + Math.sin(d * Math.PI) * 0.22 - d * 0.1;
+    e.obj.position.set(cx - vGiro.x, cy - vGiro.y, -vGiro.z);
+    e.obj.scale.setScalar(1);
+  }
+  function encuadrarNave() {
+    const tv = Math.tan(camera.fov * Math.PI / 360), th = tv * camera.aspect;
+    const vertical = camera.aspect < 0.9, ang = vertical ? 1.05 : 0.74;
+    const ext = NV.S + 0.75, ancho = 2 * ext;
+    const prof = 2 * ext * Math.sin(ang) + 3.1 * Math.cos(ang);
+    const d = Math.max((ancho / 2) / th, (prof / 2) / tv) * 0.98;
+    const y0 = 1.05;
+    camera.position.set(0, y0 + d * Math.sin(ang), d * Math.cos(ang)); camera.lookAt(0, y0, 0); camera.updateProjectionMatrix();
+    if (!TOON) { const sc = luz.shadow.camera, a = ext + 1.2; sc.left = -a; sc.right = a; sc.top = a; sc.bottom = -a; sc.updateProjectionMatrix(); luz.position.set(-3.5, 8, 5); luz.target.position.set(0, 0.6, 0); }
+  }
   if (SIN_PLAT && !TOON) scene.add(pisoSombra(1.6));
   // Celular sin plataforma: tampoco mapa de sombras (queda la sombra de contacto bajo los pies).
   if (SIN_PLAT && TACTIL && new URLSearchParams(location.search).get("sombras") !== "1") { luz.castShadow = false; renderer.shadowMap.enabled = false; }
@@ -618,8 +769,9 @@
   }
   function dispose(o) { o.traverse(m => { if (m.geometry && !m.userData.compartida && m.geometry !== sombraGeo) m.geometry.dispose(); const ms = Array.isArray(m.material) ? m.material : m.material ? [m.material] : []; ms.forEach(x => { if (x === sombraMat || x === contorno) return; ["map", "emissiveMap"].forEach(k => x[k] && x[k].dispose()); x.dispose(); }); }); }
 
-  function ponerFiguras(lista, cols) {
-    if (SALA) columnas = Math.max(0, Math.min(12, cols | 0));
+  function ponerFiguras(lista, cols, asientos) {
+    if (SALA || NAVE) columnas = Math.max(0, Math.min(12, cols | 0));
+    if (NAVE && Array.isArray(asientos)) NV.colores = asientos.slice(0, 12).map(colorValido);
     if (PRUEBA) lista = lista.slice(0, 1).map(x => ({ id: x.id, foco: x.foco, figura: figuraPrueba() }));
     const ids = new Set(lista.map(x => String(x.id)));
     [...figuras.keys()].forEach(id => { if (!ids.has(id)) quitar(id); });
@@ -644,7 +796,7 @@
         if (EDITOR && habia) polvo(reloj.getElapsedTime());
       }
       e.foco = !!x.foco; orden.push(id);
-      if (SALA) { e.columna = Number.isInteger(x.columna) && x.columna >= 0 ? x.columna : orden.length - 1; e.color = colorValido(x.color); }
+      if (SALA || NAVE) { e.columna = Number.isInteger(x.columna) && x.columna >= 0 ? x.columna : orden.length - 1; e.color = colorValido(x.color); }
     });
     acomodar();
   }
@@ -654,6 +806,8 @@
   let paso = 1.55;
   function acomodar() {
     if (EDITOR) { tamano(); orden.forEach(id => figuras.get(id).obj.position.set(0, 0, 0)); return; }
+    if (NAVE) { tamano(); acomodarNave(); encuadrarNave(); return; }
+    if (VUELO) { tamano(); camera.position.set(0, 1.35, DIST_VUELO); camera.lookAt(0, 1.35, 0); camera.updateProjectionMatrix(); orden.forEach(id => { const e = figuras.get(id); if (e.t0v == null) e.t0v = reloj.getElapsedTime(); }); return; }
     encuadrar();
     cajaSombra((SALA ? lugares() : Math.max(1, orden.length)) * paso);
     if (SALA) { acomodarSala(); return; }
@@ -1034,6 +1188,8 @@
       mezclar(e, t);
       inclinar(J, e.lx, e.lz);
       cuidarCuello(J);
+      if (NAVE) sentar(e);
+      if (VUELO) volar(e, t);
       if (EDITOR) {
         e.obj.rotation.y = cam.giro;
         // Al cambiar una pieza, la figura da un saltito.
@@ -1047,6 +1203,7 @@
       }
     });
     if (AZOTEA) animarAzotea(t);
+    if (NAVE) { animarNave(t); cabezasNave(t); }
     medirContorno(renderer);
     renderer.render(scene, camera);
     if (AO.activo) dibujarAO();
@@ -1085,7 +1242,11 @@
   }
 
   function atender(d) {
-    if (d.tipo === "figuras" && Array.isArray(d.lista)) ponerFiguras(d.lista.slice(0, 12), d.columnas);
+    if (d.tipo === "figuras" && Array.isArray(d.lista)) ponerFiguras(d.lista.slice(0, 12), d.columnas, d.asientos);
+    else if (NAVE && d.tipo === "nave") {
+      if ("boton" in d) { const b = String(d.boton || "quieto"); NV.boton = b === "votar" || b === "golpe" ? b : "quieto"; if (b === "golpe") NV.golpe = reloj.getElapsedTime(); }
+    }
+    else if (NAVE && d.tipo === "expulsar") { const e = figuras.get(String(d.id)); if (e && e.vuela == null) e.vuela = reloj.getElapsedTime(); }
     else if (d.tipo === "momento") momento(d.id, d.cual);
     else if (d.tipo === "foto" || d.tipo === "miniatura") {
       let url = null;

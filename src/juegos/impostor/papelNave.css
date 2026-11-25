@@ -1,0 +1,66 @@
+/* El impostor en la nave: categorías con imagen (configurador), papeles y anuncio de la discusión (Elías, 24 nov). */
+.D .ns-papel { --oro: #ffc21a; --azul-nave: #2ee6d6; display: grid; gap: .75em; color: #fff; }
+.D .ns-kick { font: 700 .78em/1 var(--f-texto, var(--letra-cuerpo)); letter-spacing: .14em; text-transform: uppercase; color: var(--azul-nave); }
+.D .ns-t2 { font: 400 1.6em/1.05 var(--f-titulo, var(--letra-display)); color: var(--oro, #ffc21a); text-align: center; text-wrap: balance; }
+.D .ns-nota { font: 600 .82em/1.3 var(--f-texto, var(--letra-cuerpo)); color: #aeb9dc; text-align: center; text-wrap: balance; }
+.D .ns-espera { margin: 0; text-align: center; font: 600 1em/1.3 var(--f-texto, var(--letra-cuerpo)); color: #dfe6ff; }
+
+/* Categorías: tarjetas con imagen y etiqueta. */
+.D .ns-cats { display: grid; grid-template-columns: repeat(auto-fill, minmax(6.2em, 1fr)); gap: .45em; }
+.D .ns-cat { display: grid; justify-items: center; align-content: start; gap: .3em; min-width: 0; padding: .4em .3em .5em; border: 0; border-radius: 16px; color: #fff; cursor: pointer;
+  background: linear-gradient(180deg, rgba(46, 230, 214, .14), rgba(8, 14, 40, .9)); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .14); transition: transform .15s, box-shadow .2s; }
+.D .ns-cat:active { transform: scale(.96); }
+.D .ns-cat.on { box-shadow: inset 0 0 0 3px var(--oro, #ffc21a), 0 0 18px rgba(255, 194, 26, .35); background: linear-gradient(180deg, rgba(255, 194, 26, .22), rgba(8, 14, 40, .92)); }
+.D .ns-cat-img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 12px; }
+.D .ns-cat-emoji { display: grid; place-items: center; width: 100%; aspect-ratio: 1; border-radius: 12px; font-size: 2.2em; background: radial-gradient(circle at 50% 40%, #2b3e74, #0c1638); }
+.D .ns-cat-nom { max-width: 100%; font: 400 .85em/1.05 var(--f-titulo, var(--letra-display)); text-align: center; text-wrap: balance; }
+
+/* Tu papel (Elías, 24 nov): una sola pantalla. Fondo de espacio con el brillo del bando (rojo impostor, turquesa civil),
+   tu figura 3D flotando arriba (a la izquierda en pantalla ancha), el papel en grande, la huella y «Ya lo vi» a la vista. */
+.D .ns-papel { position: relative; justify-items: center; padding: 1.1em .9em 1em; border-radius: 22px; overflow: hidden; text-align: center;
+  background: linear-gradient(180deg, rgba(5, 8, 28, .35), rgba(5, 8, 28, .75)), var(--espacio, none) center / cover no-repeat, #070b24; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .14), 0 14px 30px rgba(0, 0, 0, .5); }
+.D .ns-papel.civil { --tinta: #2ee6d6; --brillo: rgba(46, 230, 214, .34); }
+.D .ns-papel.imp { --tinta: #ff3b4e; --brillo: rgba(255, 40, 60, .42); }
+.D .ns-papel:is(.civil, .imp) { grid-template-rows: minmax(0, 1fr) auto; gap: .5em; padding: .7em .8em .9em;
+  box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--tinta) 55%, transparent), 0 0 44px color-mix(in srgb, var(--tinta) 25%, transparent); }
+.D .pt-caja > .ns-papel:is(.civil, .imp) { height: 100%; min-height: 0; }
+.D .ns-p-fig { position: relative; width: 100%; min-height: 9em; }
+.D .ns-p-halo { position: absolute; left: 50%; top: 50%; width: min(100%, 22em); aspect-ratio: 1; translate: -50% -50%; border-radius: 50%;
+  background: radial-gradient(circle, var(--brillo) 0, transparent 66%); animation: nsHalo 3.2s ease-in-out infinite alternate; }
+.D .ns-p-3d { position: absolute; inset: 0; }
+.D .ns-p-info { display: grid; justify-items: center; gap: .45em; width: 100%; min-width: 0; }
+.D .ns-p-quien { font: 800 .74em/1 var(--f-texto, var(--letra-cuerpo)); letter-spacing: .16em; text-transform: uppercase; color: #b9c4e8; }
+.D .ns-rol { font: 400 3em/.95 var(--f-titulo, var(--letra-display)); letter-spacing: .06em; text-transform: uppercase; color: var(--tinta);
+  text-shadow: 0 0 18px color-mix(in srgb, var(--tinta) 60%, transparent), 0 3px 0 rgba(0, 0, 0, .5); animation: nsSale .6s cubic-bezier(.2, 1.4, .4, 1) backwards; }
+.D .ns-papel-sub { margin: 0; font: 600 .92em/1.3 var(--f-texto, var(--letra-cuerpo)); color: #e2e8ff; text-wrap: balance; }
+.D .ns-comp { display: grid; gap: .3em; justify-items: center; }
+.D .ns-comp small { font: 700 .74em/1 var(--f-texto, var(--letra-cuerpo)); letter-spacing: .1em; text-transform: uppercase; color: #ffb0b8; }
+.D .ns-comp ul, .D .ns-vistos { display: flex; flex-wrap: wrap; justify-content: center; gap: .5em; margin: 0; padding: 0; list-style: none; }
+.D .ns-p-info > .hold { height: clamp(8.5em, 24dvh, 13em); }
+.D .ns-p-listo { width: min(100%, 16em); }
+.D .ns-vistos li { opacity: .5; transition: opacity .3s; }
+.D .ns-vistos li.si { opacity: 1; }
+.D .ns-papel.espera { gap: .8em; }
+.D .pt-caja > .ns-papel.espera { align-content: center; min-height: min(100%, 36em); }
+/* Pantalla ancha: figura a la izquierda, papel a la derecha. */
+.D.wide .ns-papel:is(.civil, .imp) { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); align-items: center; gap: 1.2em; padding: 1.2em 1.6em; }
+.D.wide .pt-caja > .ns-papel:is(.civil, .imp) { height: min(36em, calc(100dvh - 4em)); }
+.D.wide .ns-p-fig { height: 100%; }
+.D.wide .ns-rol { font-size: clamp(2.6em, 4.4vw, 3.6em); }
+@keyframes nsHalo { to { scale: 1.12; opacity: .75; } }
+@keyframes nsSale { from { scale: .5; opacity: 0; } }
+
+/* ¡A discutir!: el botón dorado se hunde, destello y el texto (sobre todo). */
+.D .ns-anuncio { position: fixed; inset: 0; z-index: 70; display: grid; place-content: center; justify-items: center; gap: .5em; padding: 1em; text-align: center; color: #fff;
+  background: radial-gradient(circle at 50% 45%, rgba(255, 194, 26, .35), rgba(6, 10, 30, .94) 60%); animation: nsAnuncio 2.4s ease both; pointer-events: none; }
+.D .ns-anuncio.tv { position: absolute; font-size: 1.6em; }
+.D .ns-anuncio-boton { width: 6em; height: 6em; border-radius: 50%; background: radial-gradient(circle at 38% 32%, #fff3b8, #ffc21a 45%, #a86a00 100%);
+  box-shadow: 0 0 0 .5em #232833, 0 0 0 .75em #2ee6d6, 0 0 60px rgba(255, 194, 26, .7); animation: nsHunde .5s ease .25s both; }
+.D .ns-anuncio-t { font: 400 3em/1 var(--f-titulo, var(--letra-display)); color: var(--oro, #ffc21a); animation: nsSale .5s cubic-bezier(.2, 1.4, .4, 1) .45s backwards; }
+.D .ns-anuncio small { font: 600 1em/1.3 var(--f-texto, var(--letra-cuerpo)); color: #e6ecff; max-width: 22em; }
+@keyframes nsHunde { 40% { scale: 1 .7; } 100% { scale: 1; } }
+@keyframes nsAnuncio { 0% { opacity: 0; } 10% { opacity: 1; } 85% { opacity: 1; } 100% { opacity: 0; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .D .ns-rol, .D .ns-p-halo, .D .ns-anuncio, .D .ns-anuncio-boton, .D .ns-anuncio-t { animation: none; }
+}

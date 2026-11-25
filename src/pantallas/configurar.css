@@ -108,6 +108,9 @@
 .D .cfg-sub { font-size: 1.5em; text-transform: uppercase; }
 .D .cfg-temas { display: grid; gap: 8px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 9em), 1fr)); }
 .D .cfg-temas.grandes { grid-template-columns: 1fr; }
+.D .cfg-temas.cfg-doble { grid-template-columns: repeat(auto-fit, minmax(min(100%, 12em), 1fr)); }
+.D .cfg-doble .cfg-tema { text-align: left; }
+.D .cfg-doble .cfg-tema span { display: grid; gap: 2px; }
 .D .cfg-tema { display: flex; align-items: center; gap: 10px; padding: 10px 12px; text-align: left; border: 3px solid var(--tinta); border-radius: 12px; cursor: pointer; color: var(--tinta);
   background: #eef2fb; font: 800 15px/1.1 var(--letra-cuerpo); box-shadow: 0 4px 0 var(--tinta); transition: translate .15s; }
 .D .cfg-tema > span:first-child { font-size: 1.5em; }

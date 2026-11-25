@@ -1,0 +1,346 @@
+/* El impostor en la nave (Elías, 24 nov): TV (nv-tv), tablero de votos, expulsión y final. Color del jugador en --pj.
+   El arte llega por variables con url absoluta (arteNave → urlArte); si la imagen aún no existe, queda el respaldo en CSS. */
+
+.D .nv-tv { --oro: #ffc21a; --turq: #2ee6d6; position: relative; isolation: isolate; width: 100%; height: 100%; min-height: 0; align-self: stretch; justify-self: stretch;
+  display: grid; grid-template-rows: auto minmax(0, 1fr); gap: .3em; overflow: hidden; border-radius: 22px; padding: .7em .9em 0;
+  border: 2px solid color-mix(in srgb, var(--oro) 55%, transparent); box-shadow: 0 0 0 5px rgba(8, 12, 32, .7), 0 20px 60px rgba(0, 0, 0, .55);
+  /* Mientras llega el cuarto sin mesa (nave-cuarto): ventanal al espacio arriba y piso de paneles abajo. */
+  background: radial-gradient(60% 45% at 50% 88%, rgba(46, 230, 214, .2), transparent 70%),
+    radial-gradient(1.5px 1.5px at 12% 18%, #fff 60%, transparent), radial-gradient(1.5px 1.5px at 78% 12%, #fff 60%, transparent), radial-gradient(1px 1px at 55% 22%, #cfe 60%, transparent),
+    repeating-linear-gradient(90deg, rgba(255, 255, 255, .04) 0 2px, transparent 2px 9em),
+    linear-gradient(180deg, #0c1230 0%, #15204a 40%, #26314f 41%, #3c4664 100%); }
+.D .nv-tv::before { content: ""; position: absolute; z-index: -1; inset: 0 0 56% 0; pointer-events: none;
+  background: repeating-linear-gradient(90deg, transparent 0 calc(20% - 14px), #1b2236 calc(20% - 14px) 20%), var(--ventana) center 40% / cover no-repeat, #070a1e;
+  box-shadow: inset 0 -10px 0 rgba(255, 194, 26, .55), inset 0 -22px 0 #1b2236, inset 0 30px 40px rgba(0, 0, 0, .6); }
+.D .nv-tv.alarma::after { content: ""; position: absolute; inset: 0; z-index: 4; pointer-events: none; background: radial-gradient(80% 80% at 50% 50%, transparent 40%, rgba(255, 40, 60, .35));
+  animation: nvAlarma 1.4s ease-in-out infinite; }
+@keyframes nvAlarma { 50% { opacity: .35; } }
+
+/* ---------- Pantalla de la asamblea (arriba) ---------- */
+.D .nv-pantalla { position: relative; z-index: 2; width: min(100%, 74em); justify-self: center; display: grid; gap: .5em; padding: .6em 1.1em .8em; border-radius: 20px;
+  color: #fff; background: linear-gradient(180deg, rgba(10, 24, 64, .9), rgba(6, 12, 36, .94));
+  border: 3px solid var(--oro); box-shadow: 0 0 0 6px rgba(16, 22, 50, .92), 0 0 34px rgba(46, 230, 214, .28), inset 0 0 28px rgba(46, 230, 214, .14); }
+.D .nv-pantalla::before { content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; opacity: .5;
+  background: repeating-linear-gradient(180deg, rgba(255, 255, 255, .035) 0 2px, transparent 2px 5px); }
+.D .nv-pant-cab { position: relative; display: grid; justify-items: center; gap: .1em; text-align: center; padding-right: 4.5em; padding-left: 4.5em; }
+.D .nv-pant-cab .rt, .D .nv-pant-cab > :last-child:not(span) { position: absolute; right: 0; top: 0; }
+.D .nv-kick { font: 700 .95em/1.2 var(--f-texto, var(--letra-cuerpo)); letter-spacing: .04em; text-transform: uppercase; color: var(--turq); }
+.D .nv-pant-t { font: 400 2.3em/1 var(--f-titulo, var(--letra-display)); color: var(--oro); text-wrap: balance; }
+.D .nv-pant-sub { font: 600 1.05em/1.25 var(--f-texto, var(--letra-cuerpo)); color: #d6e2ff; text-wrap: balance; }
+
+/* Palabras de la vuelta */
+.D .nv-palabras { display: flex; flex-wrap: wrap; justify-content: center; gap: .5em; margin: 0; padding: 0; list-style: none; }
+.D .nv-palabras li { display: flex; align-items: center; gap: .5em; min-width: 0; max-width: 17em; padding: .25em .9em .25em .3em; border-radius: 999px;
+  background: color-mix(in srgb, var(--pj) 22%, rgba(8, 14, 40, .9)); box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--pj) 70%, transparent); transition: box-shadow .3s, transform .3s; }
+.D .nv-palabras li > span { display: grid; min-width: 0; }
+.D .nv-palabras b { font: 400 1.05em/1 var(--f-titulo, var(--letra-display)); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.D .nv-palabras em { font: italic 400 1.35em/1.05 var(--f-titulo, var(--letra-display)); color: var(--papel-evidencia, #fff3c4); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-height: 1em; }
+.D .nv-palabras li.turno { transform: scale(1.08); box-shadow: inset 0 0 0 3px var(--oro), 0 0 22px color-mix(in srgb, var(--oro) 55%, transparent); animation: aPulso 1.6s ease-in-out infinite; }
+.D .nv-palabras li.dijo em { animation: nvAparece .4s cubic-bezier(.2, 1.5, .4, 1) backwards; }
+@keyframes nvAparece { from { scale: .4; opacity: 0; } }
+
+/* ---------- Tablero de votos ---------- */
+.D .nv-tablero { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 8.6em), 1fr)); gap: .55em; margin: 0; padding: 0; list-style: none; }
+.D .nv-tj { position: relative; display: grid; justify-items: center; align-content: start; gap: .3em; min-width: 0; padding: .55em .4em .6em; border-radius: 16px;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--pj, #5a6585) 34%, rgba(10, 18, 48, .9)), rgba(8, 14, 40, .92));
+  box-shadow: inset 0 3px 0 var(--pj, #8a93a8), inset 0 0 0 1px rgba(255, 255, 255, .12); transition: box-shadow .3s, filter .4s; }
+.D .nv-tj.yo { box-shadow: inset 0 3px 0 var(--pj), inset 0 0 0 2px var(--oro); }
+.D .nv-tj.sale { box-shadow: inset 0 3px 0 var(--rojo-fbi), 0 0 0 3px var(--rojo-fbi), 0 0 26px rgba(255, 61, 74, .55); }
+.D .nv-tj.nadie { --pj: #8a93a8; background: linear-gradient(180deg, rgba(120, 132, 160, .22), rgba(8, 14, 40, .92)); }
+.D .nv-tj-nom { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 400 1.15em/1 var(--f-titulo, var(--letra-display)); }
+.D .nv-tj-nom small { font: 600 .7em/1 var(--f-texto, var(--letra-cuerpo)); color: var(--oro); }
+.D .nv-nadie { display: block; width: 4.6em; height: 4.6em; border-radius: 50%;
+  background: var(--arte) center / 92% no-repeat, radial-gradient(circle at 35% 30%, #e9edf6, #9aa3b8 55%, #59627a); box-shadow: 0 0 0 3px rgba(255, 255, 255, .25), 0 6px 14px rgba(0, 0, 0, .4); }
+.D .nv-tablero.compacto .nv-nadie { width: 2.9em; height: 2.9em; }
+.D .nv-bloques { display: flex; flex-wrap: wrap; justify-content: center; gap: .22em; min-height: 1.1em; max-width: 100%; }
+/* Un bloque de construcción por voto, del color de quien votó, que cae sobre la tarjeta. */
+.D .nv-bloque { position: relative; display: block; width: 1.25em; height: .8em; margin-top: .25em; border-radius: 3px; background: var(--pj, #8a93a8);
+  box-shadow: inset 0 -.14em 0 rgba(0, 0, 0, .28), inset 0 .1em 0 rgba(255, 255, 255, .35), 0 2px 4px rgba(0, 0, 0, .4);
+  animation: nvCae .55s cubic-bezier(.3, 1.5, .5, 1) backwards; animation-delay: calc(var(--i, 0) * 70ms); }
+.D .nv-bloque::before, .D .nv-bloque::after { content: ""; position: absolute; top: -.2em; width: .36em; height: .22em; border-radius: 2px 2px 0 0; background: inherit;
+  box-shadow: inset 0 .06em 0 rgba(255, 255, 255, .4); }
+.D .nv-bloque::before { left: .14em; } .D .nv-bloque::after { right: .14em; }
+.D .nv-bloque.gris { --pj: #8a93a8; }
+@keyframes nvCae { from { translate: 0 -2.4em; opacity: 0; } 60% { opacity: 1; } }
+.D .nv-cuenta { position: absolute; top: .3em; right: .4em; min-width: 1.4em; padding: .05em .35em; border-radius: 999px; font-size: 1.15em; text-align: center; color: #0a1030; background: var(--oro); }
+.D .nv-tablero.muchos { grid-template-columns: repeat(auto-fit, minmax(min(100%, 7.4em), 1fr)); }
+.D .nv-tablero.compacto { gap: .4em; grid-template-columns: repeat(auto-fit, minmax(min(100%, 5.6em), 1fr)); }
+.D .nv-tablero.compacto .nv-tj { padding: .4em .25em .45em; border-radius: 12px; }
+.D .nv-tablero.compacto .nv-tj-nom { font-size: .95em; }
+.D .nv-tablero.compacto .nv-bloque { width: 1em; height: .65em; }
+
+/* ---------- Mesa en 3D (abajo) ---------- */
+.D .nv-3d { position: relative; z-index: 1; width: 100%; height: 100%; min-height: 12em; }
+.D .nv-fuera { position: absolute; z-index: 3; left: 1em; bottom: .6em; margin: 0; padding: .25em .8em; border-radius: 999px; font: 600 .95em/1.2 var(--f-texto, var(--letra-cuerpo));
+  color: #d6e2ff; background: rgba(8, 14, 40, .75); }
+
+/* ---------- Expulsión: compuerta y espacio ---------- */
+.D .nv-exp { --oro: #ffc21a; position: absolute; inset: 0; z-index: 20; display: grid; place-items: center; overflow: hidden; border-radius: inherit;
+  animation: nvEntra .6s ease 1.6s backwards, nvSale .6s ease 6.15s forwards; }
+.D .nv-exp.celular { position: fixed; z-index: 60; border-radius: 0; animation-delay: .2s, 6.15s; }
+@keyframes nvEntra { from { opacity: 0; } }
+@keyframes nvSale { to { opacity: 0; visibility: hidden; } }
+.D .nv-espacio { position: absolute; inset: 0; background: var(--arte) center / cover no-repeat,
+  radial-gradient(50% 40% at 70% 30%, rgba(139, 61, 255, .45), transparent 70%), radial-gradient(45% 45% at 20% 75%, rgba(47, 123, 255, .35), transparent 70%), #070a1e; }
+.D .nv-espacio i { position: absolute; inset: -50%; opacity: .8; animation: nvEstrellas 9s linear infinite;
+  background: radial-gradient(1.5px 1.5px at 10% 20%, #fff 60%, transparent), radial-gradient(1px 1px at 30% 70%, #fff 60%, transparent), radial-gradient(2px 2px at 70% 40%, #dff 60%, transparent),
+    radial-gradient(1px 1px at 85% 85%, #fff 60%, transparent), radial-gradient(1.5px 1.5px at 50% 10%, #fff 60%, transparent); background-size: 18em 18em; }
+.D .nv-espacio i:nth-child(2) { animation-duration: 14s; background-size: 11em 11em; opacity: .5; }
+.D .nv-espacio i:nth-child(3) { animation-duration: 5s; background-size: 27em 27em; opacity: .9; }
+@keyframes nvEstrellas { to { translate: -18em 9em; } }
+/* La compuerta (arte de Elías, ya entreabierta) entra girando; sin expulsado se queda opaca y tiembla. */
+.D .nv-compuerta { position: absolute; top: 42%; left: 50%; width: min(28em, 72vmin); aspect-ratio: 1; translate: -50% -50%; border-radius: 50%;
+  background: var(--arte) center / contain no-repeat;
+  filter: drop-shadow(0 0 40px rgba(255, 170, 40, .35)); animation: nvAbre 1.1s cubic-bezier(.2, 1.2, .4, 1) 1.9s backwards; }
+@keyframes nvAbre { from { scale: .6; rotate: -40deg; opacity: 0; } }
+.D .nv-exp.cerrada .nv-compuerta { filter: brightness(.7) saturate(.6); animation: nvAbre 1.1s cubic-bezier(.2, 1.2, .4, 1) 1.9s backwards, nvTiembla .45s ease 3s 2; }
+@keyframes nvTiembla { 25% { translate: calc(-50% - .3em) -50%; } 75% { translate: calc(-50% + .3em) -50%; } }
+/* La figura sale girando y se pierde entre las estrellas. */
+.D .nv-vuela { position: absolute; top: 42%; left: 50%; translate: -50% -50%; z-index: 2; animation: nvVuela 3.2s cubic-bezier(.45, 0, .7, 1) 2.7s both; }
+@keyframes nvVuela { 0% { transform: scale(1) rotate(0); opacity: 1; } 15% { transform: scale(1.08) rotate(-20deg); }
+  100% { transform: translate(38vw, -34vh) scale(.06) rotate(900deg); opacity: 0; } }
+.D .nv-exp-txt { position: absolute; z-index: 3; left: 0; right: 0; bottom: 8%; display: grid; justify-items: center; gap: .35em; padding: 0 1em; text-align: center;
+  animation: nvEntra .5s ease 3.3s backwards; }
+.D .nv-exp-t { font: 400 3em/1 var(--f-titulo, var(--letra-display)); color: var(--oro); text-wrap: balance; text-shadow: 0 4px 0 #0a1030, 0 0 30px rgba(0, 0, 0, .6); }
+.D .nv-exp-txt p { margin: 0; font: 600 1.3em/1.3 var(--f-texto, var(--letra-cuerpo)); color: #e6ecff; text-wrap: balance; text-shadow: 0 2px 6px #000; }
+.D .nv-marca { padding: .1em .8em; border-radius: 999px; font-size: 1.6em; color: #0a1030; background: #8ff0e6; box-shadow: 0 4px 0 #0a1030; animation: nvAparece .45s cubic-bezier(.2, 1.6, .4, 1) 3.9s backwards; }
+.D .nv-marca.imp { color: #fff; background: var(--rojo-fbi); }
+.D .nv-exp.celular .nv-espacio { background-position: 88% center, 0 0, 0 0, 0 0; }
+.D .nv-exp.celular .nv-exp-t { font-size: 2.1em; }
+.D .nv-exp.celular .nv-exp-txt p { font-size: 1.05em; }
+
+/* ---------- Final de la nave ---------- */
+.D .nv-fin { --oro: #ffc21a; display: grid; justify-items: center; gap: .55em; text-align: center; color: #fff; }
+.D .nv-fin.tv { position: absolute; inset: 4% 6%; z-index: 15; align-content: center; padding: 1.2em 1.6em; border-radius: 26px; overflow: auto;
+  background: linear-gradient(180deg, rgba(8, 18, 52, .94), rgba(6, 10, 30, .96)); border: 3px solid var(--oro); box-shadow: 0 0 0 7px rgba(16, 22, 50, .9), 0 30px 80px rgba(0, 0, 0, .6);
+  animation: nvAparece .6s cubic-bezier(.2, 1.3, .4, 1) backwards; }
+.D .nv-fin.rojo { --oro: #ff5a66; }
+.D .nv-fin.celular { padding: 1em .8em; border-radius: 18px; background: linear-gradient(180deg, rgba(8, 18, 52, .92), rgba(6, 10, 30, .95)); border: 2px solid var(--oro); }
+.D .nv-fin-arte { width: 7em; height: 7em; background: var(--arte) center / contain no-repeat; filter: drop-shadow(0 8px 16px rgba(0, 0, 0, .5)); }
+.D .nv-fin.celular .nv-fin-arte { width: 4.5em; height: 4.5em; }
+.D .nv-fin-t { font: 400 2.8em/1 var(--f-titulo, var(--letra-display)); color: var(--oro); text-wrap: balance; }
+.D .nv-fin.celular .nv-fin-t { font-size: 1.8em; }
+.D .nv-fin-ganan { display: flex; flex-wrap: wrap; justify-content: center; gap: .8em; margin: 0; padding: 0; list-style: none; }
+.D .nv-fin-ganan li { animation: nvSalta 1.2s ease-in-out infinite; animation-delay: calc(var(--n, 0) * 120ms); }
+@keyframes nvSalta { 50% { translate: 0 -.25em; } }
+.D .nv-fin-det { margin: 0; max-width: 46em; font: 600 1.2em/1.35 var(--f-texto, var(--letra-cuerpo)); color: #d6e2ff; text-wrap: balance; }
+.D .nv-fin.celular .nv-fin-det { font-size: .98em; }
+.D .nv-castigos { display: grid; gap: .45em; width: min(100%, 52em); padding: .7em .9em; border-radius: 16px; background: rgba(255, 255, 255, .05); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .12); }
+.D .nv-castigos-t { font: 400 1.4em/1 var(--f-titulo, var(--letra-display)); color: var(--oro); }
+.D .nv-castigos ul { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 18em), 1fr)); gap: .45em; margin: 0; padding: 0; list-style: none; }
+.D .nv-castigos li { display: flex; align-items: center; gap: .6em; padding: .35em .7em .35em .35em; border-radius: 14px; text-align: left;
+  background: color-mix(in srgb, var(--pj) 20%, rgba(8, 14, 40, .9)); box-shadow: inset 4px 0 0 var(--pj); }
+.D .nv-castigos li.yo { box-shadow: inset 4px 0 0 var(--pj), 0 0 0 2px var(--oro); }
+.D .nv-castigos li > span:last-child { display: grid; gap: .1em; min-width: 0; }
+.D .nv-castigos b { font: 400 1.1em/1 var(--f-titulo, var(--letra-display)); }
+.D .nv-castigos small { font: 600 1em/1.25 var(--f-texto, var(--letra-cuerpo)); color: #f3f6ff; }
+.D .nv-castigo-ico { flex: none; width: 2.6em; height: 2.6em; margin-left: auto; background: var(--arte) center / contain no-repeat; }
+.D .nv-castigos-nota { font: 600 .85em/1.2 var(--f-texto, var(--letra-cuerpo)); color: #9fb0d8; }
+
+/* ---------- Celular: votar con el botón al centro ---------- */
+.D .nv-votar { display: grid; gap: .6em; justify-items: center; }
+.D .nv-votar-t { font: 400 1.5em/1 var(--f-titulo, var(--letra-display)); color: #ffc21a; text-align: center; }
+.D .nv-boton { display: grid; place-items: center; width: 6.6em; height: 6.6em; padding: 0; border: 0; border-radius: 50%; cursor: pointer; color: #0a1030;
+  background: radial-gradient(circle at 35% 28%, #fff4b8, #ffc21a 45%, #c98a00 80%); box-shadow: 0 0 0 .3em #232833, 0 0 0 .5em #2ee6d6, 0 .55em 0 .3em #12161f, 0 0 26px rgba(46, 230, 214, .6);
+  font: 400 1.25em/1 var(--f-titulo, var(--letra-display)); transition: transform .12s, box-shadow .12s, filter .2s; }
+.D .nv-boton:active:not(:disabled) { transform: translateY(.3em); box-shadow: 0 0 0 .3em #232833, 0 0 0 .5em #2ee6d6, 0 .2em 0 .3em #12161f; }
+.D .nv-boton:disabled { cursor: default; filter: grayscale(.8) brightness(.75); }
+.D .nv-boton.listo { animation: nvLate 1.3s ease-in-out infinite; }
+@keyframes nvLate { 50% { box-shadow: 0 0 0 .3em #232833, 0 0 0 .5em #2ee6d6, 0 .55em 0 .3em #12161f, 0 0 46px rgba(46, 230, 214, .95); } }
+.D .nv-boton small { display: block; max-width: 5.4em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 700 .55em/1.1 var(--f-texto, var(--letra-cuerpo)); }
+.D .nv-centro { display: grid; place-items: center; width: 100%; height: 100%; background: var(--arte) center / 115% no-repeat; }
+.D .nv-votar .nv-boton { width: 74%; height: auto; aspect-ratio: 1; font-size: .95em; }
+.D .nv-saltar { min-height: 44px; padding: .4em 1.2em; border-radius: 999px; cursor: pointer; color: #e6ecff; font: 700 1em/1 var(--f-texto, var(--letra-cuerpo));
+  background: rgba(255, 255, 255, .08); border: 1px solid rgba(255, 255, 255, .28); }
+.D .nv-saltar[aria-pressed="true"] { border-color: #2ee6d6; background: rgba(46, 230, 214, .18); }
+
+/* Local: ver la palabra pasando el teléfono */
+.D .nv-ver { display: grid; gap: .8em; justify-items: stretch; }
+.D .nv-ver-t { text-align: center; font: 400 1.6em/1.05 var(--f-titulo, var(--letra-display)); color: #ffc21a; }
+
+@media (prefers-reduced-motion: reduce) {
+  .D .nv-bloque, .D .nv-palabras li.turno, .D .nv-palabras li.dijo em, .D .nv-fin-ganan li, .D .nv-tv.alarma::after, .D .nv-espacio i, .D .nv-boton.listo { animation: none !important; }
+  .D .nv-vuela { animation: nvSaleSuave 1s ease 2.7s both; }
+  @keyframes nvSaleSuave { to { opacity: 0; } }
+}
+
+/* ---------- Sala de espera (Elías, 24 nov): la palabra a la derecha de cada figura, turno y expulsados ---------- */
+.D .nv-tablero.con-palabras { grid-template-columns: repeat(auto-fit, minmax(min(100%, 13em), 1fr)); }
+.D .nv-tablero.con-palabras.compacto { grid-template-columns: repeat(auto-fit, minmax(min(100%, 9.6em), 1fr)); }
+.D .nv-tj.ancha { grid-template-columns: auto 1fr; justify-items: start; align-items: center; column-gap: .55em; text-align: left; }
+.D .nv-tj.ancha .nv-bloques { grid-column: 1 / -1; justify-content: flex-start; }
+.D .nv-tj-txt { display: grid; gap: .15em; min-width: 0; }
+.D .nv-tj-palabra { display: block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-height: 1em;
+  font: 400 1.35em/1 var(--f-titulo, var(--letra-display)); color: var(--oro, #ffc21a); animation: nvAparece .4s cubic-bezier(.2, 1.4, .4, 1) backwards; }
+.D .nv-tablero.compacto .nv-tj-palabra { font-size: 1.05em; }
+.D .nv-tj-antes { font: 600 .72em/1.2 var(--f-texto, var(--letra-cuerpo)); color: rgba(220, 228, 255, .55); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.D .nv-tj.turno { box-shadow: inset 0 3px 0 var(--pj), 0 0 0 3px var(--oro, #ffc21a), 0 0 22px rgba(255, 194, 26, .45); animation: nvTurno 1.6s ease-in-out infinite; }
+@keyframes nvTurno { 50% { box-shadow: inset 0 3px 0 var(--pj), 0 0 0 3px var(--oro, #ffc21a), 0 0 34px rgba(255, 194, 26, .7); } }
+.D .nv-tj.fuera { filter: grayscale(1) brightness(.6); }
+.D .nv-tj.fuera .nv-tj-palabra { color: #9aa3b8; font-size: .9em; }
+/* Expulsión con la figura 3D: el contenedor no se mueve (la figura gira y se aleja dentro de la escena). */
+.D .nv-vuela.tres { top: 8%; right: 0; bottom: 22%; left: 0; translate: none; animation: nvVuela3d .5s ease 2.6s both; }
+.D .nv-vuela-3d { position: absolute; inset: 0; }
+@keyframes nvVuela3d { from { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .D .nv-tj.turno { animation: none; } }
+/* TV: configuración de la sala de espera y quién ya vio su papel. */
+.D .nv-config-tv { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .6em; margin: 0; padding: 0; list-style: none; }
+.D .nv-config-tv li { display: grid; justify-items: center; gap: .2em; padding: .6em .4em; border-radius: 16px; text-align: center;
+  background: linear-gradient(180deg, rgba(46, 230, 214, .16), rgba(8, 14, 40, .9)); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .14); }
+.D .nv-config-tv b { font: 400 1.6em/1.05 var(--f-titulo, var(--letra-display)); color: #ffc21a; text-wrap: balance; }
+.D .nv-config-tv small { font: 700 .8em/1 var(--f-texto, var(--letra-cuerpo)); letter-spacing: .12em; text-transform: uppercase; color: #9fe9e2; }
+.D .nv-vistos-tv { display: flex; flex-wrap: wrap; justify-content: center; gap: 1em; margin: 0; padding: .4em 0; list-style: none; }
+.D .nv-vistos-tv li { opacity: .45; transition: opacity .4s, scale .4s; }
+.D .nv-vistos-tv li.si { opacity: 1; scale: 1.06; }
+
+/* Celular con papeles en la mesa (Elías, 24 nov): una sola pantalla. Arriba tu palabra (huella), al centro el tablero
+   (ahí mismo se vota) y abajo lo que te toca hacer, siempre a la vista. */
+.D .nv-cel { --oro: #ffc21a; display: grid; gap: .6em; padding: .6em; border-radius: 20px; color: #fff;
+  background: linear-gradient(180deg, rgba(5, 8, 28, .45), rgba(5, 8, 28, .8)), var(--espacio, none) center / cover no-repeat, #070b24;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .14), 0 12px 28px rgba(0, 0, 0, .45); }
+.D .nv-cel-cab { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: .3em .6em; }
+.D .nv-cel-k { font: 800 .74em/1.2 var(--f-texto, var(--letra-cuerpo)); letter-spacing: .12em; text-transform: uppercase; color: #2ee6d6; }
+.D .nv-cel-cab > .nv-mia { grid-column: 1 / -1; }
+.D .nv-mia { display: grid; place-items: center; min-height: 3em; width: 100%; margin: 0; padding: .35em .8em; border: 0; border-radius: 14px; cursor: pointer; color: #fff;
+  user-select: none; -webkit-user-select: none; touch-action: none; background: rgba(46, 230, 214, .1); box-shadow: inset 0 0 0 1.5px rgba(46, 230, 214, .5); transition: background .2s, box-shadow .2s; }
+.D .nv-mia-tapa { display: flex; align-items: center; gap: .5em; font: 800 .82em/1.2 var(--f-texto, var(--letra-cuerpo)); color: #bdf6f0; }
+.D .nv-mia.on { background: rgba(46, 230, 214, .22); box-shadow: inset 0 0 0 2px #2ee6d6, 0 0 18px rgba(46, 230, 214, .35); }
+.D .nv-mia.imp.on { background: rgba(255, 59, 78, .2); box-shadow: inset 0 0 0 2px #ff3b4e, 0 0 18px rgba(255, 59, 78, .4); }
+.D .nv-mia-txt { display: grid; justify-items: center; gap: .1em; min-width: 0; }
+.D .nv-mia-txt b { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 1.35em; line-height: 1; color: #fff; }
+.D .nv-mia.imp .nv-mia-txt b { color: #ff5a66; }
+.D .nv-mia-txt small { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 700 .7em/1.2 var(--f-texto, var(--letra-cuerpo)); color: #c9d3f2; }
+
+/* Tablero en el celular: dos columnas compactas. Al votar, las tarjetas se pueden tocar y la elegida brilla en dorado. */
+.D .nv-cel .nv-tablero.con-palabras.compacto { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .4em; }
+.D .nv-cel .nv-tj { padding: .35em .45em; }
+.D .nv-cel .nv-tj.nadie { grid-template-columns: auto 1fr; justify-items: start; align-items: center; column-gap: .55em; }
+.D .nv-cel .nv-tablero.compacto .nv-nadie { width: 2.6em; height: 2.6em; }
+.D .nv-tj.elegible { cursor: pointer; transition: transform .15s, box-shadow .2s; }
+.D .nv-tj.elegible:active { transform: scale(.97); }
+.D .nv-tablero.eligiendo .nv-tj:not(.elegible) { opacity: .55; }
+.D .nv-tj.sel { box-shadow: inset 0 3px 0 var(--pj, #8a93a8), 0 0 0 3px var(--oro, #ffc21a), 0 0 20px rgba(255, 194, 26, .5); transform: translateY(-2px); }
+
+/* Lo que te toca: turno con tu palabra, a quién le toca, votar o tu voto. */
+.D .nv-accion { display: grid; padding: .6em .7em; border-radius: 16px; background: rgba(10, 14, 40, .75); box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--pj, #2ee6d6) 60%, transparent); }
+.D .nv-ac-k { display: block; font: 800 .72em/1.2 var(--f-texto, var(--letra-cuerpo)); letter-spacing: .08em; text-transform: uppercase; color: #c9d3f2; }
+.D .nv-ac-turno { display: grid; gap: .4em; }
+.D .nv-ac-fila { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: .5em; }
+.D .nv-ac-input { min-width: 0; height: 48px; padding: 0 .8em; border: 0; border-radius: 12px; outline: none; color: #fff; font: 400 1.25em/1 var(--f-titulo, var(--letra-display));
+  background: rgba(255, 255, 255, .08); box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--pj, #2ee6d6) 70%, transparent); }
+.D .nv-ac-input:focus { box-shadow: inset 0 0 0 2px var(--oro); }
+.D .nv-ac-input::placeholder { color: rgba(220, 228, 255, .4); }
+.D .nv-ac-btn { height: 48px; min-height: 0; margin: 0; padding: 0 1em; white-space: nowrap; }
+.D .nv-ac-espera { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: .2em .7em; }
+.D .nv-ac-espera b { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 1.3em; line-height: 1.05; color: var(--oro); }
+.D .nv-ac-espera small { grid-column: 1 / -1; font: 600 .78em/1.3 var(--f-texto, var(--letra-cuerpo)); color: #aeb9dc; }
+.D .nv-ac-voto { display: grid; gap: .45em; justify-items: center; text-align: center; }
+.D .nv-ac-votar { width: 100%; height: 52px; border: 0; border-radius: 999px; cursor: pointer; font: 400 1.2em/1 var(--f-titulo, var(--letra-display)); color: #2a1a00;
+  background: linear-gradient(180deg, #ffd65a, #ffb703); box-shadow: inset 0 -4px 0 rgba(0, 0, 0, .2), 0 6px 16px rgba(255, 183, 3, .35); transition: transform .15s, filter .2s; }
+.D .nv-ac-votar:disabled { cursor: default; filter: grayscale(.85) brightness(.65); box-shadow: none; }
+.D .nv-ac-votar.listo { animation: nvLate 1.3s ease-in-out infinite; }
+.D .nv-ac-votar:active:not(:disabled) { transform: translateY(2px); }
+.D .nv-ac-t { display: grid; gap: .2em; margin: 0; font-size: 1.2em; line-height: 1.05; color: var(--oro); text-align: center; }
+.D .nv-ac-t small { font: 600 .62em/1.3 var(--f-texto, var(--letra-cuerpo)); color: #c9d3f2; }
+.D.wide .nv-cel .nv-tablero.con-palabras.compacto { grid-template-columns: repeat(auto-fit, minmax(10.5em, 1fr)); }
+@media (prefers-reduced-motion: reduce) { .D .nv-ac-votar.listo { animation: none; } }
+/* Compacto para que quepa: sin la fila de votos vacía y con las salidas de la partida en un renglón chico. */
+.D .nv-cel .nv-bloques:empty { display: none; }
+.D .nv-cel .nv-tj.ancha { row-gap: .2em; }
+.D:has(.nv-cel) .pt-salidas { flex-wrap: nowrap; gap: 8px; }
+.D:has(.nv-cel) .pt-salidas > button { min-height: 36px; height: 36px; margin: 0; padding: 0 .9em; font-size: .78em; white-space: nowrap; }
+/* Pantalla ancha: el tablero más grande (Local en laptop). */
+.D.wide .nv-cel { font-size: 1.18em; gap: .8em; padding: .9em 1em; }
+.D.wide .nv-cel .nv-tj { padding: .55em .65em; }
+.D.wide .nv-cel .nv-tablero.con-palabras.compacto { gap: .6em; }
+
+/* Revelación con papeles en el celular (Elías, 24 nov). Si la partida sigue: quién salió y el tablero con los votos.
+   Si acabó: páginas que se deslizan (resultado, castigo, posiciones) en vez de bajar. */
+.D .nv-salio { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: .7em; padding: .55em .7em; border-radius: 16px;
+  background: rgba(10, 14, 40, .75); box-shadow: inset 0 0 0 1.5px rgba(46, 230, 214, .5); }
+.D .nv-salio.imp { box-shadow: inset 0 0 0 2px #ff3b4e, 0 0 20px rgba(255, 59, 78, .35); }
+.D .nv-salio-txt { display: grid; justify-items: start; gap: .25em; min-width: 0; }
+.D .nv-salio-txt b { font-size: 1.25em; line-height: 1.05; color: #fff; text-wrap: balance; }
+.D .nv-salio-txt small { font: 600 .78em/1.3 var(--f-texto, var(--letra-cuerpo)); color: #c9d3f2; }
+.D .nv-salio .nv-marca { font-size: .9em; padding: .2em .7em; }
+.D .nv-nadie.grande { width: 3.4em; height: 3.4em; }
+
+.D .nv-cel-fin { padding: .5em; }
+.D .nv-pags { display: grid; gap: .45em; min-width: 0; }
+.D .nv-pags-tabs { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 4px; padding: 3px; border-radius: 999px; background: rgba(0, 0, 0, .45); }
+.D .nv-pags-tabs button { height: 32px; min-height: 0; margin: 0; padding: 0 .4em; border: 0; border-radius: 999px; cursor: pointer; white-space: nowrap;
+  font: 800 .74em/1 var(--f-texto, var(--letra-cuerpo)); color: #c9d3f2; background: none; transition: background .2s, color .2s; }
+.D .nv-pags-tabs button.on { color: #2a1a00; background: linear-gradient(180deg, #ffd65a, #ffb703); }
+.D .nv-pags-caja { display: grid; grid-auto-flow: column; grid-auto-columns: 100%; overflow-x: auto; overflow-y: hidden; scroll-snap-type: x mandatory; overscroll-behavior-x: contain;
+  scrollbar-width: none; height: clamp(17em, calc(100dvh - 385px), 34em); }
+.D .nv-pags-caja::-webkit-scrollbar { display: none; }
+.D .nv-pag { display: grid; align-content: center; min-width: 0; min-height: 0; overflow: hidden; padding: .2em .3em; scroll-snap-align: start; }
+.D .nv-pags-pista { justify-self: center; font: 700 .7em/1 var(--f-texto, var(--letra-cuerpo)); letter-spacing: .06em; color: #9aa6cc; }
+.D .nv-pag .nv-fin.celular { gap: .4em; padding: 0; border: 0; background: none; }
+.D .nv-pag .nv-fin.celular .nv-fin-arte { width: 3.6em; height: 3.6em; }
+.D .nv-pag .nv-fin.celular .nv-fin-t { font-size: 1.6em; }
+.D .nv-pag .nv-fin-ganan { gap: .45em; }
+.D .nv-pag .nv-fin-ganan .burbuja, .D .nv-pag .nv-fin-ganan > li { font-size: .82em; }
+.D .nv-pag .nv-fin.celular .nv-fin-det { font-size: .88em; }
+.D .nv-gane { justify-self: center; margin: .3em 0 0; padding: .3em 1em; border-radius: 999px; font-size: 1.15em; color: #c9d3f2; background: rgba(255, 255, 255, .08); }
+.D .nv-gane.si { color: #2a1a00; background: linear-gradient(180deg, #ffd65a, #ffb703); box-shadow: 0 4px 14px rgba(255, 183, 3, .4); }
+.D .nv-gane small { font: 700 .62em/1 var(--f-texto, var(--letra-cuerpo)); opacity: .8; }
+.D .nv-pag .nv-castigos { width: 100%; padding: .6em; }
+.D .nv-pag .nv-castigos ul { grid-template-columns: 1fr; }
+.D .nv-pag .pos { margin: 0; }
+.D .nv-pag .pos { gap: .3em; font-size: .86em; align-content: center; }
+.D .nv-pag .pos li { padding-block: .18em; }
+.D .nv-pag .pos-lugar { min-width: 2.2em; padding: .15em .3em; }
+.D .nv-pag .pos:has(li:nth-child(6)) { grid-template-columns: 1fr 1fr; gap: .35em; }
+.D .nv-salio { padding: .45em .6em; gap: .6em; }
+.D .nv-salio-txt b { font-size: 1.1em; }
+.D .nv-nadie.grande { width: 2.8em; height: 2.8em; }
+.D .nv-cel > p.nv-accion { padding: .45em .6em; font-size: 1.05em; }
+
+/* Expulsión con papeles (Elías, 24 nov, cuadros de referencia): espacio negro con estrellas; la figura chica cruza a la
+   altura del texto y deja escritas las letras (sencillas y blancas; «impostor» en rojo si lo era). */
+.D .nv-xe, .D .nv-vic { position: absolute; inset: 0; z-index: 20; overflow: hidden; color: #fff; background: #020308; border-radius: inherit; }
+.D .nv-xe { animation: nvEntra .35s ease backwards, nvSale .45s ease 7.7s forwards; }
+.D :is(.nv-xe, .nv-vic).celular { position: fixed; z-index: 60; border-radius: 0; }
+/* Dos capas de estrellas que se mueven muy despacio (parallax). */
+.D .nv-xe-cielo { position: absolute; inset: 0; pointer-events: none; }
+.D .nv-xe-cielo b { position: absolute; inset: -20%; animation: nvDeriva 40s linear infinite;
+  background: radial-gradient(1.6px 1.6px at 12% 18%, #fff 60%, transparent), radial-gradient(1.2px 1.2px at 28% 64%, #fff 60%, transparent),
+    radial-gradient(2px 2px at 67% 32%, #eef 60%, transparent), radial-gradient(1.2px 1.2px at 84% 82%, #fff 60%, transparent),
+    radial-gradient(1.4px 1.4px at 52% 9%, #fff 60%, transparent), radial-gradient(1px 1px at 40% 40%, #fff 60%, transparent),
+    radial-gradient(1.8px 1.8px at 91% 22%, #fff 60%, transparent), radial-gradient(1.2px 1.2px at 6% 90%, #fff 60%, transparent);
+  background-size: 15em 15em, 11em 11em, 19em 19em, 13em 13em, 17em 17em, 9em 9em, 23em 23em, 12em 12em; opacity: .9; }
+.D .nv-xe-cielo b:last-child { animation-duration: 70s; background-size: 21em 21em, 16em 16em, 27em 27em, 18em 18em, 24em 24em, 13em 13em, 31em 31em, 17em 17em; opacity: .55; }
+@keyframes nvDeriva { to { translate: -6em 0; } }
+.D .nv-xe-fig { position: absolute; inset: 0; z-index: 3; pointer-events: none; }
+.D .nv-xe-3d { position: absolute; inset: 0; }
+.D .nv-xe-3d .escena3d-cargando, .D .nv-vic-3d .escena3d-cargando { display: none; }
+.D .nv-xe-txt { position: absolute; z-index: 2; left: 0; right: 0; top: 50%; translate: 0 -50%; margin: 0; padding: 0 .8em; text-align: center;
+  font: 500 clamp(1.15em, 5.2vw, 2.6em)/1.3 var(--f-texto, var(--letra-cuerpo)); color: #e9ecf3; }
+.D .nv-xe-txt .rojo { color: #ff2b3d; font-weight: 800; text-shadow: 0 0 14px rgba(255, 43, 61, .6); }
+.D .nv-xe-txt i { font-style: normal; display: inline-block; opacity: 0; }
+.D .nv-xe-txt i.on { opacity: 1; transition: opacity .06s linear; }
+.D .nv-xe-txt .rojo i.on { animation: nvRojo .5s cubic-bezier(.2, 1.6, .4, 1); }
+@keyframes nvRojo { from { scale: 1.6; } }
+.D .nv-xe.tv .nv-xe-txt { font-size: 3.4em; }
+
+/* Victoria: letrero arriba y los ganadores como minifiguras de frente sobre un piso que brilla. */
+.D .nv-vic { --tono: #39e6ff; display: grid; align-content: center; justify-items: center; gap: 1.2vh; padding: 4vh 1em; cursor: pointer;
+  animation: nvEntra .5s ease backwards; }
+.D .nv-vic.rojo { --tono: #ff2b3d; }
+.D .nv-vic-t { position: relative; z-index: 2; display: grid; justify-items: center; gap: .1em; text-align: center; }
+.D .nv-vic-t b { font-size: clamp(2.8em, 13vw, 6em); line-height: 1; letter-spacing: .06em; text-transform: uppercase; color: var(--tono);
+  text-shadow: 0 0 24px color-mix(in srgb, var(--tono) 55%, transparent); animation: nvSale2 .7s cubic-bezier(.2, 1.4, .4, 1) .2s backwards; }
+.D .nv-vic-t small { font: 800 clamp(.85em, 3.6vw, 1.5em)/1.2 var(--f-texto, var(--letra-cuerpo)); letter-spacing: .18em; text-transform: uppercase; color: #dfe6ff; }
+@keyframes nvSale2 { from { scale: .6; opacity: 0; } }
+.D .nv-vic-piso { position: absolute; left: 50%; bottom: -6%; width: 120%; height: 45%; translate: -50% 0; pointer-events: none;
+  background: radial-gradient(50% 40% at 50% 70%, color-mix(in srgb, var(--tono) 45%, transparent), transparent 70%); filter: blur(4px); }
+.D .nv-vic-figs { position: relative; z-index: 1; width: 100%; height: clamp(11em, 34vh, 30em); }
+.D.wide .nv-vic-figs, .D .nv-vic.tv .nv-vic-figs { height: 52vh; }
+.D .nv-vic-3d { position: absolute; inset: 0; }
+.D .nv-vic-nombres { position: relative; z-index: 2; display: flex; flex-wrap: wrap; justify-content: center; gap: .3em .8em; margin: .4em 0 0; padding: 0; list-style: none; }
+.D .nv-vic-nombres li { font: 800 clamp(.8em, 3.4vw, 1.3em)/1.2 var(--f-texto, var(--letra-cuerpo)); color: var(--pj, #fff); text-shadow: 0 2px 6px #000; }
+.D .nv-vic-toca { position: relative; z-index: 2; margin-top: .6em; font: 700 .75em/1 var(--f-texto, var(--letra-cuerpo)); letter-spacing: .12em; text-transform: uppercase; color: #8d97b5;
+  animation: nvLatido 1.6s ease-in-out infinite alternate; }
+@keyframes nvLatido { to { opacity: .4; } }
+@media (prefers-reduced-motion: reduce) { .D .nv-xe-cielo b, .D .nv-vic-toca { animation: none; } }

@@ -1,7 +1,7 @@
 // Qué puede ver cada interfaz. La Pantalla (TV) y el Anfitrión reciben la vista pública;
 // cada celular recibe además solo lo suyo. En producción el servidor arma estas vistas
 // y la base de datos (RLS) impide leer lo privado de otro; esto define exactamente qué sale.
-import { conEliminacion, conVerdadReto, etapaImpostor, etapaVR, seleccionVR, porGrupos, puntosPorEquipo, quienesContestan, type EstadoPartida } from "./partida";
+import { conEliminacion, conPapeles, enNave, type EtapaImpostor, conVerdadReto, etapaImpostor, etapaVR, seleccionVR, porGrupos, puntosPorEquipo, quienesContestan, type EstadoPartida } from "./partida";
 import type { EscenarioId, Modalidad } from "./types";
 
 export interface VistaPublica {
@@ -46,7 +46,15 @@ export interface VistaPublica {
   modalidad?: Modalidad;
   grupos?: { id: string; nombre: string; jugadores: string[]; puntos: number }[];
   /** El impostor con eliminación: cuántos impostores hay, quiénes ya salieron, en qué etapa va la vuelta y el orden para hablar. */
-  impostor?: { total: number; eliminados: string[]; etapa: "pistas" | "votar"; orden: string[] };
+  impostor?: { total: number; eliminados: string[]; etapa: EtapaImpostor; orden: string[];
+    /** Papeles en la mesa (Elías, 24 nov), etapa «papeles»: quiénes ya vieron su papel (sin decir cuál). */
+    vistos?: string[];
+    /** Papeles en la mesa: las palabras que dijo cada quien, de la primera vuelta a la actual. */
+    palabras?: Record<string, string[]>;
+    /** Reglas de la nave (Elías, 24 nov): se puede saltar el voto, cómo se ven los votos, si se revela al expulsar y si hay castigo. */
+    nave?: { votos: "visibles" | "secretos"; revelar: boolean; castigo: boolean };
+    /** Nave con votos a la vista: quién votó a quién mientras se vota («saltar» = Nadie). Con votos secretos nunca sale. */
+    votosEnVivo?: Record<string, string> };
   /** El anfitrión pidió explicar las reglas («Cómo jugar») antes de la primera ronda. */
   explicar?: boolean;
   /** Segundos por turno, si el anfitrión eligió temporizador. */
@@ -86,7 +94,9 @@ export function vistaPublica(e: EstadoPartida): VistaPublica {
     esperados: quienesContestan(e),
     ausentes: [...(e.ausentes ?? [])],
     esperas: e.esperas ?? 0,
+    // Nave con votos secretos: al revelar solo sale el conteo, nunca quién votó a quién.
     votosDe: e.fase !== "contestando" && (e.motor === "rol-secreto" || e.motor === "senalar") && !(e.revelado as { saltada?: boolean } | undefined)?.saltada
+      && !(enNave(e) && e.cfg.impostor?.votos === "secretos")
       ? Object.fromEntries(Object.entries(e.respuestas).map(([j, v]) => [j, String(v)])) : undefined,
     ...(e.cfg.escenario ? { escenario: e.cfg.escenario } : {}),
     ...(e.cfg.modalidad ? { modalidad: e.cfg.modalidad } : {}),
@@ -103,6 +113,16 @@ export function vistaPublica(e: EstadoPartida): VistaPublica {
       // Cuántos impostores hay es público (lo eligió el anfitrión, ya ajustado al número de jugadores); quiénes, no.
       total: Object.values(e.privado).filter(p => (p as { rol?: string }).rol === "impostor").length,
       eliminados: [...(e.eliminados ?? [])], etapa: etapaImpostor(e), orden: [...((e.seleccion?.orden ?? []) as string[])],
+      ...(enNave(e) ? {
+        nave: { votos: e.cfg.impostor?.votos === "secretos" ? "secretos" as const : "visibles" as const, revelar: e.cfg.impostor?.revelar !== false, castigo: !!e.cfg.impostor?.castigo },
+        ...(e.cfg.impostor?.votos !== "secretos" && e.fase === "contestando" && etapaImpostor(e) === "votar"
+          ? { votosEnVivo: Object.fromEntries(Object.entries(e.respuestas).map(([j, v]) => [j, String(v)])) } : {}),
+      } : {}),
+      ...(conPapeles(e) ? {
+        ...(e.naveEtapa === "papeles" ? { vistos: [...(e.vistos ?? [])] } : {}),
+        // Vueltas cerradas + la palabra de esta vuelta (si ya la dijo).
+        palabras: Object.fromEntries(e.cfg.jugadores.map(x => x.id).map(j => [j, [...(e.palabrasVueltas?.[j] ?? []), ...(e.pistas?.[j] && !e.naveEtapa ? [e.pistas[j]!] : [])]]).filter(([, l]) => (l as string[]).length > 0)),
+      } : {}),
     } } : {}),
   };
 }

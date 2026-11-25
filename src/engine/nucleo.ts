@@ -18,7 +18,7 @@ export interface Arranque { semilla: number; juego: string; rondas: number; cfg:
 export const SUSPENSO_MS = 2000;
 /** P-03: sin respuesta de alguien, a los 20 s el anfitrión elige esperar o seguir sin él. «Esperar» rearma el mismo intervalo. */
 export const ESPERA_MS = 20000;
-export const CONTROL_SIMPLE = new Set(["pausar", "reanudar", "saltar", "seguir-sin", "esperar", "revelar", "siguiente", "terminar", "ruleta", "tiempo", "comenzar"]);
+export const CONTROL_SIMPLE = new Set(["pausar", "reanudar", "saltar", "seguir-sin", "esperar", "revelar", "siguiente", "terminar", "ruleta", "tiempo", "comenzar", "discutir"]);
 
 /** Parejas por orden de llegada (1 con 2, 3 con 4…). Solo si son pares. */
 export function conParejas(miembros: { id: string; nombre: string }[]) {
@@ -127,6 +127,17 @@ export function armarArranque(miembros: { id: string; nombre: string }[], juego:
     cfg.impostor = {
       cantidad: Math.min(Math.max(1, Math.floor(op.impostor?.cantidad ?? 1)), maxImpostores(miembros.length)),
       tema: typeof op.impostor?.tema === "string" ? op.impostor.tema.slice(0, 40) : null,
+      // Reglas de la nave (Elías, 24 nov): solo si el configurador las pide; sin ellas, la partida es la de v1.44.
+      ...(op.impostor?.nave ? {
+        nave: true, votos: op.impostor.votos === "secretos" ? "secretos" as const : "visibles" as const,
+        revelar: op.impostor.revelar !== false, castigo: op.impostor.castigo !== false,
+      } : {}),
+      // Papeles en la mesa (Elías, 24 nov): implica la nave; usa las categorías de la nave.
+      ...(op.impostor?.papeles ? {
+        nave: true, papeles: true, pista: op.impostor.pista === true,
+        votos: op.impostor.votos === "secretos" ? "secretos" as const : "visibles" as const,
+        revelar: op.impostor.revelar !== false, castigo: op.impostor.castigo !== false,
+      } : {}),
     };
     // Se juega hasta atrapar a los impostores: una vuelta por jugador alcanza (cada vuelta sale uno, salvo empate).
     return { semilla, juego, rondas: Math.max(3, miembros.length), cfg };
@@ -138,6 +149,8 @@ export function armarArranque(miembros: { id: string; nombre: string }[], juego:
 export function aAccion(f: FilaAccion, controlan: string[]): Accion | null {
   const d = f.datos, id = f.id;
   if (f.tipo === "contestar") return { id, tipo: "contestar", jugador: f.jugador, valor: d.valor };
+  // Papeles en la mesa: «Ya lo vi» viaja como fila `carta` (tipo que la base ya acepta, sin migración).
+  if (f.tipo === "carta" && d.que === "visto") return { id, tipo: "visto", jugador: f.jugador };
   if (f.tipo === "carta" && typeof d.carta === "string") return { id, tipo: "usar-carta", jugador: f.jugador, carta: d.carta };
   if (f.tipo === "pista" && typeof d.texto === "string") return { id, tipo: "pista", jugador: f.jugador, texto: d.texto };
   if (f.tipo !== "control" || !controlan.includes(f.jugador)) return null;
@@ -185,11 +198,11 @@ export function paraPublicar(e: EstadoPartida, relojFin: number | null, esperaFi
  */
 export function relojLogico(e: EstadoPartida) {
   const vp = vistaPublica(e);
-  const listos = e.fase === "contestando" && !e.pausada && vp.esperados.every(j => vp.contestaron.includes(j));
+  const listos = e.fase === "contestando" && !e.pausada && !e.naveEtapa && vp.esperados.every(j => vp.contestaron.includes(j));
   const hayEspera = e.fase === "contestando" && !e.pausada && !listos && vp.contestaron.length > 0;
   return {
     claveReloj: `${e.ronda}-${e.cambios}`,
-    conReloj: !!(e.segundos && e.fase === "contestando" && !enCarga(e)),
+    conReloj: !!(e.segundos && e.fase === "contestando" && !enCarga(e) && !e.naveEtapa),
     listos,
     hayEspera,
     claveEspera: `${e.ronda}-${e.cambios}-${e.esperas ?? 0}`,
@@ -200,7 +213,7 @@ export function relojLogico(e: EstadoPartida) {
 
 /** Clave del turno que corre con temporizador (quién habla en El impostor, o la etapa en Verdad o reto). null: no corre tiempo. */
 export function claveTurno(e: EstadoPartida): string | null {
-  if (!e.cfg.temporizador || e.fase !== "contestando" || e.pausada || enCarga(e)) return null;
+  if (!e.cfg.temporizador || e.fase !== "contestando" || e.pausada || enCarga(e) || e.naveEtapa) return null;
   if (conEliminacion(e) && etapaImpostor(e) === "pistas" && e.turnoDe) return `${e.ronda}-i-${e.turnoDe}-${e.esperas ?? 0}`;
   if (conVerdadReto(e) && etapaVR(e) !== "listo") return `${e.ronda}-vr-${etapaVR(e)}-${e.cambios}`;
   return null;
