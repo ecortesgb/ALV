@@ -1,0 +1,71 @@
+{
+  "version": 1,
+  "nota": "Perfiles de personalidad (ALV_PLAN_ANIMATION_LIBRARY.md, etapa 2). Solo ids y números: ningún movimiento. Cada perfil es CONDUCTA: cada cuánto actúa solo (intervalo, s), qué tan probable es que actúe en vez de quedarse quieto (actuar), a qué velocidad e intensidad se mueve, cuánto varía cada vez (variacion) y qué prefiere hacer (preferencias con peso). Las animaciones «lib:» vienen de la Animation Library (privada); si no está cargada se usa el respaldo, que siempre es de ALV. «dur» = segundos para las que van en bucle. El perfil no depende de la apariencia.",
+  "perfiles": {
+    "alegre": {
+      "nombre": "Alegre", "descripcion": "Inquieto y contento: saluda, festeja y casi nunca se queda quieto.",
+      "espera": { "lib": "lib:personality_look_around", "respaldo": "respirar" },
+      "intervalo": [5, 9], "actuar": 0.85, "velocidad": 1.12, "intensidad": 1.1, "variacion": 0.1,
+      "preferencias": [
+        { "lib": "lib:gesture_wave", "respaldo": "saludar", "peso": 3 },
+        { "lib": "lib:celebration_joyful", "respaldo": "salto-puno", "peso": 3 },
+        { "lib": "lib:celebration_arms_up", "respaldo": "puno-arriba", "peso": 2 },
+        { "anim": "baile", "peso": 1 }
+      ]
+    },
+    "heroico": {
+      "nombre": "Heroico", "descripcion": "Firme y seguro: pocos gestos, amplios y decididos; vigila a su alrededor.",
+      "espera": { "lib": "lib:personality_idle", "respaldo": "respirar" },
+      "intervalo": [10, 16], "actuar": 0.6, "velocidad": 1.0, "intensidad": 1.0, "variacion": 0.06,
+      "preferencias": [
+        { "lib": "lib:celebration_arms_up", "respaldo": "puno-arriba", "peso": 3 },
+        { "anim": "puno-arriba", "peso": 2 },
+        { "lib": "lib:personality_look_around", "respaldo": "respirar", "peso": 2, "dur": [4, 6] },
+        { "anim": "flexionar", "peso": 1, "dur": [3, 4] }
+      ]
+    },
+    "comico": {
+      "nombre": "Cómico", "descripcion": "Exagerado e impredecible: se confunde, baila, se marea; todo un poco más rápido y más grande.",
+      "espera": { "lib": "lib:personality_restless", "respaldo": "respirar" },
+      "intervalo": [4, 8], "actuar": 0.9, "velocidad": 1.22, "intensidad": 1.2, "variacion": 0.18,
+      "preferencias": [
+        { "lib": "lib:reaction_confused", "respaldo": "mareo", "peso": 3, "dur": [3, 5] },
+        { "anim": "baile", "peso": 3 },
+        { "anim": "mareo", "peso": 2 },
+        { "lib": "lib:celebration_joyful", "respaldo": "salto-puno", "peso": 1 },
+        { "lib": "lib:gesture_wave", "respaldo": "saludar", "peso": 1 }
+      ]
+    },
+    "timido": {
+      "nombre": "Tímido", "descripcion": "Reservado: actúa poco, despacio y con gestos chicos; mira de reojo y duda.",
+      "espera": { "lib": "lib:personality_idle", "respaldo": "respirar" },
+      "intervalo": [14, 22], "actuar": 0.4, "velocidad": 0.82, "intensidad": 0.62, "variacion": 0.05,
+      "preferencias": [
+        { "lib": "lib:personality_look_around", "respaldo": "respirar", "peso": 3, "dur": [3, 5] },
+        { "lib": "lib:reaction_confused", "respaldo": "cabeza-baja", "peso": 2, "dur": [2.5, 4] },
+        { "lib": "lib:gesture_wave", "respaldo": "saludar", "peso": 1 }
+      ]
+    },
+    "agresivo": {
+      "nombre": "Agresivo", "descripcion": "Tenso y rápido: presume fuerza, levanta el puño y no se está quieto.",
+      "espera": { "lib": "lib:personality_restless", "respaldo": "respirar" },
+      "intervalo": [7, 11], "actuar": 0.75, "velocidad": 1.15, "intensidad": 1.15, "variacion": 0.08,
+      "preferencias": [
+        { "anim": "flexionar", "peso": 3, "dur": [3, 4.5] },
+        { "anim": "puno-arriba", "peso": 3 },
+        { "lib": "lib:celebration_arms_up", "respaldo": "puno-arriba", "peso": 1 },
+        { "anim": "pisoton", "peso": 1 }
+      ]
+    },
+    "elegante": {
+      "nombre": "Elegante", "descripcion": "Pausado y medido: gestos suaves y poco frecuentes, saluda con calma.",
+      "espera": { "lib": "lib:personality_look_around", "respaldo": "respirar" },
+      "intervalo": [12, 18], "actuar": 0.5, "velocidad": 0.86, "intensidad": 0.82, "variacion": 0.04,
+      "preferencias": [
+        { "lib": "lib:gesture_wave", "respaldo": "saludar", "peso": 3 },
+        { "anim": "saludar", "peso": 2 },
+        { "lib": "lib:personality_idle", "respaldo": "respirar", "peso": 1, "dur": [4, 6] }
+      ]
+    }
+  }
+}

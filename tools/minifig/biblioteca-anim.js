@@ -65,5 +65,8 @@
       } catch (e) { /* una tabla mala no detiene a las demás */ }
     }));
     estado.listo = true;
+    // Avisa a ALV cuáles quedaron (para que pida las «lib:» solo si existen; si no, usa su respaldo).
+    const padre = window.parent;
+    if (padre && padre !== window && padre.postMessage) padre.postMessage({ origen: "minifig", tipo: "biblioteca", registradas: estado.registradas.slice() }, location.origin);
   }).catch(e => { estado.error = String(e && e.message || e); estado.listo = true; });
 })();

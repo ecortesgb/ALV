@@ -205,7 +205,7 @@ export function Libro({ vez, capsula, etiqueta, figura, semilla, cambiar, soltad
       <div className="p-hojas">
         <section className="p-pag p-pag-izq" aria-label="Tu figura">
           <span className="p-pag-etiqueta dsp">{etiqueta}</span>
-          <FiguraViva figura={figura} semilla={semilla} zona={zona} mando={mando} />
+          <FiguraViva figura={figura} semilla={semilla} zona={zona} mando={mando} vida="editor" />
           <div className="p-mandos" role="group" aria-label="Mover la figura">
             <button type="button" onClick={() => mando.current?.girar(-0.8)} aria-label="Girar a la izquierda">⟲</button>
             <button type="button" onClick={() => mando.current?.acercar(0.8)} aria-label="Alejar">−</button>

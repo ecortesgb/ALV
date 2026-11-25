@@ -15,6 +15,7 @@ import { esOriginal } from "../content/sagas";
 import { estilosDe } from "./look";
 import { MarcaRareza, infoPieza, pedirDesbloqueo } from "./Desbloqueo";
 import { aviso } from "./comun";
+import { DATOS as PERFIL, PERFILES, perfilDe, ponerPersonalidad, type Perfil } from "../app/perfiles";
 import { cumple } from "../app/retos";
 import { NOMBRE_RAREZA, RETOS, hoyMexico, rarezaDe, retoDelDia, type Reto } from "../content/rarezas";
 import { claveReto, libre, reclamar, usePiezas } from "../servicios/piezas";
@@ -98,6 +99,7 @@ function Momentos({ f, poner, mando }: { f: Figura; poner: (g: Figura) => void; 
         );
       })}
     </div>
+    <Personalidad f={f} poner={poner} />
     <section className="p-bloque">
       <h3 className="p-bloque-titulo">Ver en la figura</h3>
       <div className="p-opciones">
@@ -106,6 +108,24 @@ function Momentos({ f, poner, mando }: { f: Figura; poner: (g: Figura) => void; 
     </section>
     <p className="p-nota">Así se mueve tu figura en la sala y en la TV cuando espera, anota un punto, gana o pierde.</p>
   </>;
+}
+
+// ---------- Personalidad: cómo se comporta sola (perfiles.ts); no cambia piezas ni momentos ----------
+function Personalidad({ f, poner }: { f: Figura; poner: (g: Figura) => void }) {
+  const actual = perfilDe(f);
+  const elegir = (p: Perfil | null) => { sonar("clic"); poner(ponerPersonalidad(f, p) as Figura); };
+  return (
+    <section className="p-bloque p-personalidad">
+      <h3 className="p-bloque-titulo">Personalidad</h3>
+      <div className="p-opciones">
+        <button type="button" className={"p-opcion" + (actual === null ? " on" : "")} aria-pressed={actual === null} onClick={() => elegir(null)}>Ninguna</button>
+        {PERFILES.map(p => (
+          <button key={p} type="button" className={"p-opcion" + (actual === p ? " on" : "")} aria-pressed={actual === p} onClick={() => elegir(p)}>{PERFIL[p].nombre}</button>
+        ))}
+      </div>
+      <p className="p-nota">{actual ? PERFIL[actual].descripcion + " Mírala unos segundos: se mueve sola." : "Sin personalidad tu figura solo respira. Elige una para que se mueva sola a su manera."}</p>
+    </section>
+  );
 }
 
 // ---------- Nombre: apodo de la figura; el nombre de la cuenta no cambia ----------

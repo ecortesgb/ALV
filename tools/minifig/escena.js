@@ -688,7 +688,7 @@
     const m = AZ.mira, a = AZ.acc, r = Math.min(1, dt * 7);
     m.w += ((m.activa ? 1 : 0) - m.w) * Math.min(1, dt * 5); m.ax += (m.x - m.ax) * r; m.ay += (m.y - m.ay) * r;
     a.k = Math.max(0, Math.min(1, a.k + (a.cual ? dt : -dt) / 0.22));
-    if (!a.cual && a.k === 0 && a.sale) { if (a.sale === "flexionar") { cambio(e, t); e.mom = e.momentos.espera || "respirar"; e.t0 = t; } a.sale = null; }
+    if (!a.cual && a.k === 0 && a.sale) { if (a.sale === "flexionar") { cambio(e, t); e.mom = esperaDe(e); e.t0 = t; } a.sale = null; }
     const w = m.w, k = a.k * a.k * (3 - 2 * a.k), cual = a.cual || a.sale;
     // Giro del jugador con inercia; al señalar un botón o hacer un gesto, la figura vuelve a quedar de frente para reaccionar.
     if (Math.abs(AZ.vel) > 0.001) { AZ.usuario += AZ.vel * dt; AZ.vel *= Math.exp(-4 * dt); } else AZ.vel = 0;
@@ -800,6 +800,14 @@
       const tb = EDITOR || !GestosALV.TALLAS[an.talla] ? "normal" : String(an.talla);
       if (e.tallaBase !== tb) { e.tallaBase = tb; if (!e.espEst) e.tallaMeta = tb; if (!e.esc) e.esc = GestosALV.talla(tb).escala.slice(); }
       e.esp = GestosALV.especial(an.especial, fx.momentos && fx.momentos.paquete);
+      // Perillas base que manda ALV (p. ej. de un perfil): espera, velocidad e intensidad. Sin ellas, como siempre.
+      e.velBase = acotar(an.vel, 0.6, 1.5, 1); e.intBase = acotar(an.int, 0.4, 1.4, 1);
+      const esp = typeof an.espera === "string" && Momentos.info(an.espera) ? an.espera : null;
+      if (e.esperaPerfil !== esp) {
+        const enEspera = !(e.prio > 0) && !e.durMom && e.mom === esperaDe(e);
+        e.esperaPerfil = esp;
+        if (enEspera) { cambio(e, reloj.getElapsedTime()); e.mom = esperaDe(e); e.t0 = reloj.getElapsedTime(); }
+      }
       // Piel de la persona bajo la máscara (la cara del especial se pinta con ella, no con el color de la careta).
       e.pielReal = fx.identidad && /^#[0-9a-f]{6}$/i.test(fx.identidad.piel || "") ? fx.identidad.piel : null;
       e.foco = !!x.foco; orden.push(id);
@@ -874,8 +882,13 @@
   const PRIO = { espera: 0, saludar: 1, punto: 1, victoria: 1, derrota: 1, bailar: 1, especial: 2 };
   const ENFRIAR = 0.6, DUR_SALUDO = 2.5;
   const tallaDe = e => GestosALV.talla(EDITOR ? "normal" : e.tallaMeta || e.tallaBase);
-  function momento(id, cual, prio) {
+  // Perillas genéricas (las usa ALV para la vida automática de un perfil; el motor no sabe de perfiles):
+  //   vel: velocidad de esta animación · int: intensidad (escala la pose hacia la postura neutral)
+  //   dur: segundos para una animación en bucle: la hace ese tiempo y vuelve al reposo.
+  const acotar = (v, a, b, d) => (Number.isFinite(v) ? Math.max(a, Math.min(b, v)) : d);
+  function momento(id, cual, prio, op) {
     const e = figuras.get(String(id)); if (!e) return;
+    op = op || {};
     const t = reloj.getElapsedTime(), p = Number.isFinite(prio) ? prio : PRIO[cual] != null ? PRIO[cual] : 1;
     const sonando = (e.prio || 0) > 0 && t < e.hasta;
     if ((sonando && (p < e.prio || e.cual === cual)) || t - (e.ultG == null ? -9 : e.ultG) < ENFRIAR) { enviar({ tipo: "gesto", id: e.id, cual, ok: false }); return; }
@@ -890,9 +903,11 @@
     cambio(e, t);
     e.mom = m; e.t0 = t;
     const i = Momentos.info(m);
+    e.velMom = acotar(op.vel, 0.5, 1.6, 1); e.intMom = acotar(op.int, 0.4, 1.4, 1); e.durMom = 0;
     if (cual === "especial" && e.esp) e.espEst = { en: false, vuelve: false };
+    if (i.bucle && op.dur > 0) { e.durMom = acotar(op.dur, 0.5, 20, 3); fin(e.durMom, m); return; }
     if (i.bucle) { e.prio = 0; e.cual = null; e.hasta = 0; return; }
-    fin(i.dur / tallaDe(e).vel, m);
+    fin(i.dur / (tallaDe(e).vel * e.velMom * (e.velBase || 1)), m);
   }
   // Especial: a su tiempo cambia una pieza (cara, pelo, capa) o la talla, y al final todo vuelve como estaba.
   // Solo cambia la figura dibujada, nunca la guardada del jugador.
@@ -1102,6 +1117,16 @@
     e.ult = cur;
   }
   function cambio(e, t) { if (e.ult) { e.snap = e.ult.slice(); e.tCambio = t; } }
+  // Intensidad: escala la pose recién aplicada hacia la postura neutral (1 = sin cambio). Genérica: vale para
+  // cualquier animación, no sabe de perfiles.
+  function intensidad(J, k) {
+    if (k === 1 || !J) return;
+    J.head.rotation.y *= k; J.armR.rotation.x *= k; J.armL.rotation.x *= k; J.wristR.rotation.y *= k; J.wristL.rotation.y *= k;
+    if (J.piernasArt) { J.legR.rotation.x *= k; J.legL.rotation.x *= k; }
+    J.root.position.y *= k; J.root.position.z *= k; J.root.rotation.x *= k; J.root.rotation.y *= k;
+  }
+  // Reposo de la figura: el que manda ALV (perfil) si existe; si no, el de su paquete de momentos; si no, respirar.
+  function esperaDe(e) { return e.esperaPerfil || e.momentos.espera || "respirar"; }
 
   // ---------- Modo editor ----------
   // Zonas de la figura (unidades de la escena; pies en y = 0, lo más alto de un casco ≈ 2.75).
@@ -1258,10 +1283,11 @@
       const i = Momentos.info(e.mom), tl = tallaDe(e);
       // La talla cambia la velocidad (el reloj de la pose) y, en androide, la pose avanza a saltos como un robot.
       // El avance se suma cuadro a cuadro: si la talla cambia a media animación (Hulk crece), no brinca hacia atrás.
-      if (e.t0v !== e.t0) { e.t0v = e.t0; e.el = (t - e.t0) * tl.vel; } else e.el += dt * tl.vel;
+      const vel = tl.vel * (e.velMom || 1) * (e.velBase || 1);
+      if (e.t0v !== e.t0) { e.t0v = e.t0; e.el = (t - e.t0) * vel; } else e.el += dt * vel;
       let el = e.el;
-      if (i && !i.bucle && el > i.dur + 0.4) {
-        cambio(e, t); e.mom = e.momentos.espera || "respirar"; e.t0 = t; e.t0v = t; e.el = 0; el = 0;
+      if ((i && !i.bucle && el > i.dur + 0.4) || (e.durMom && t >= e.hasta)) {
+        cambio(e, t); e.mom = esperaDe(e); e.t0 = t; e.t0v = t; e.el = 0; el = 0; e.velMom = 1; e.intMom = 1; e.durMom = 0;
         if (e.espEst) terminarEspecial(e, t);
         if (e.prio > 0 && e.cual !== "saludar") { enviar({ tipo: "termino", id: e.id, cual: e.cual }); e.prio = 0; e.cual = null; }
       }
@@ -1269,6 +1295,7 @@
       if (e.espEst) avanzarEspecial(e, t, el);
       e.lx = 0; e.lz = 0; e.saludoK = 0;
       window.MOM_T0 = 0; animar(e.obj, "mom:" + e.mom, tl.pasos ? Math.floor(el * tl.pasos) / tl.pasos : el);
+      intensidad(J, (e.intBase || 1) * (e.intMom || 1));
       const enBucle = !(i && !i.bucle);
       if (enBucle && tl.reposo > 0) reposo(e, t, dt, tl);
       aplicarTalla(e, tl, dt);
@@ -1340,7 +1367,7 @@
       if ("boton" in d) { const b = String(d.boton || "quieto"); NV.boton = b === "votar" || b === "golpe" ? b : "quieto"; if (b === "golpe") NV.golpe = reloj.getElapsedTime(); }
     }
     else if (NAVE && d.tipo === "expulsar") { const e = figuras.get(String(d.id)); if (e && e.vuela == null) e.vuela = reloj.getElapsedTime(); }
-    else if (d.tipo === "momento") momento(d.id, String(d.cual), Number(d.prio));
+    else if (d.tipo === "momento") momento(d.id, String(d.cual), Number(d.prio), d);
     else if (d.tipo === "foto" || d.tipo === "miniatura") {
       let url = null;
       // `vista` {y, alto, giro, x}: encuadre a la medida (herramientas de revisión, p. ej. tools/miniaturas/agarre.html).
@@ -1383,7 +1410,7 @@
     else if (d.tipo === "girar" && Number.isFinite(d.cuanto)) { cam.meta += Math.max(-7, Math.min(7, d.cuanto)); cam.vel = 0; }
     else if (d.tipo === "acercar" && Number.isFinite(d.cuanto) && d.cuanto > 0) cam.zoom = Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, cam.zoom / d.cuanto));
     else if (d.tipo === "gesto") figuras.forEach(e => gesto(e, d.cual, reloj.getElapsedTime()));
-    else if (d.tipo === "probar" && Momentos.info(String(d.cual))) figuras.forEach(e => { cambio(e, reloj.getElapsedTime()); e.mom = String(d.cual); e.t0 = reloj.getElapsedTime(); });
+    else if (d.tipo === "probar" && Momentos.info(String(d.cual))) figuras.forEach(e => { cambio(e, reloj.getElapsedTime()); e.mom = String(d.cual); e.t0 = reloj.getElapsedTime(); e.velMom = 1; e.intMom = 1; e.durMom = 0; e.prio = 0; e.cual = null; });
   }
   window.addEventListener("message", e => {
     if (e.origin !== location.origin || !e.data || e.data.origen !== "alv") return;

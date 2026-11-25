@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Comparar perfiles</title>
+<style>
+:root { --fondo: #12141c; --tinta: #eef0f6; --suave: #9aa3b8; --borde: #3c4360; --acento: #ffc83d; }
+html, body { margin: 0; background: var(--fondo); color: var(--tinta); font: 13px/1.35 system-ui, sans-serif; }
+h1 { font-size: 16px; margin: 10px 14px 4px; }
+p.nota { margin: 0 14px 8px; color: var(--suave); }
+.escena { position: relative; height: 56vh; min-height: 320px; }
+.escena iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+.cols { position: absolute; left: 0; right: 0; top: 6px; display: grid; grid-template-columns: repeat(6, 1fr); pointer-events: none; text-align: center; }
+.cols b { display: block; font-size: 14px; }
+.cols small { color: var(--suave); white-space: pre-line; }
+.cols .ahora { color: var(--acento); font-weight: 700; min-height: 1.3em; }
+table { border-collapse: collapse; margin: 8px 14px 18px; width: calc(100% - 28px); }
+th, td { border-bottom: 1px solid var(--borde); padding: 5px 7px; text-align: left; vertical-align: top; }
+th { color: var(--suave); font-weight: 600; }
+td.n { text-align: right; font-variant-numeric: tabular-nums; }
+</style>
+</head>
+<body>
+<h1>Comparar los seis perfiles (solo desarrollo, no se publica)</h1>
+<p class="nota">Seis figuras iguales; solo cambia el perfil. Arriba: en vivo (deja correr un par de minutos). Abajo: simulación de 10 minutos con azar fijo.</p>
+<div class="escena"><iframe id="esc" title="Seis figuras"></iframe><div class="cols" id="cols"></div></div>
+<table id="vivo"></table>
+<table id="sim"></table>
+<script type="module">
+import { DATOS, PERFILES, crearDirector, azarSembrado, PRIORIDAD_VIDA } from "/src/app/perfiles.ts";
+import { paramsEscena } from "/src/app/preferencias.ts";
+
+const esc = document.getElementById("esc");
+esc.src = "/minifig/escena.html?modo=sala" + paramsEscena();
+const enviar = m => esc.contentWindow.postMessage({ origen: "alv", ...m }, location.origin);
+let bib = new Set(), listo = false;
+const hay = n => bib.has(n);
+const conteo = Object.fromEntries(PERFILES.map(p => [p, { veces: 0, ultima: "", lista: {} }]));
+const inicio = Date.now();
+
+function animDe(p) { const d = DATOS[p]; return { espera: d.espera.lib && hay(d.espera.lib) ? d.espera.lib : d.espera.respaldo, vel: d.velocidad, int: d.intensidad }; }
+function mandarFiguras() {
+  enviar({ tipo: "figuras", columnas: 6, lista: PERFILES.map((p, i) => ({ id: p, semilla: 4242, columna: i, color: ["#ffb02e", "#4a90e2", "#ff5fa2", "#8fa3bf", "#e5484d", "#b58cff"][i], anim: animDe(p) })) });
+}
+addEventListener("message", e => {
+  if (e.source !== esc.contentWindow || e.data?.origen !== "minifig") return;
+  if (e.data.tipo === "listo") { listo = true; mandarFiguras(); arrancar(); }
+  if (e.data.tipo === "biblioteca" && Array.isArray(e.data.registradas)) { bib = new Set(e.data.registradas); if (listo) mandarFiguras(); }
+});
+
+function arrancar() {
+  for (const p of PERFILES) {
+    const dir = crearDirector(p, Math.random, hay);
+    const turno = () => {
+      const a = dir.decidir();
+      if (a) {
+        enviar({ tipo: "momento", id: p, cual: a.cual, prio: a.prio, vel: a.vel, int: a.int, ...(a.dur ? { dur: a.dur } : {}) });
+        const c = conteo[p]; c.veces++; c.ultima = `${a.cual}  ×${a.vel} vel · ${a.int} int` + (a.dur ? ` · ${a.dur}s` : "");
+        c.lista[a.cual] = (c.lista[a.cual] || 0) + 1; c.t = Date.now();
+      }
+      setTimeout(turno, dir.espera());
+    };
+    setTimeout(turno, dir.espera());
+  }
+  setInterval(pintarVivo, 500);
+}
+function pintarVivo() {
+  const min = Math.max(1 / 60, (Date.now() - inicio) / 60000);
+  document.getElementById("cols").innerHTML = PERFILES.map(p => {
+    const c = conteo[p], reciente = c.t && Date.now() - c.t < 3500;
+    return `<div><b>${DATOS[p].nombre}</b><small>${(c.veces / min).toFixed(1)} acciones/min</small><div class="ahora">${reciente ? c.ultima.split("  ")[0] : ""}</div></div>`;
+  }).join("");
+  document.getElementById("vivo").innerHTML = `<tr><th>En vivo (${((Date.now() - inicio) / 1000).toFixed(0)} s)</th>${PERFILES.map(p => `<th>${DATOS[p].nombre}</th>`).join("")}</tr>` +
+    `<tr><td>Acciones</td>${PERFILES.map(p => `<td class="n">${conteo[p].veces}</td>`).join("")}</tr>` +
+    `<tr><td>Última</td>${PERFILES.map(p => `<td>${conteo[p].ultima || "—"}</td>`).join("")}</tr>`;
+}
+
+// Simulación: 10 minutos de directores con azar sembrado (mismo resultado cada vez).
+function simular(p, minutos = 10, semilla = 7) {
+  const dir = crearDirector(p, azarSembrado(semilla + p.length), () => true);
+  let t = 0, acciones = 0; const elegidas = {}, vels = [], ints = [], huecos = [];
+  let ultimo = 0;
+  while (t < minutos * 60000) {
+    t += dir.espera();
+    const a = dir.decidir();
+    if (a) { acciones++; elegidas[a.cual] = (elegidas[a.cual] || 0) + 1; vels.push(a.vel); ints.push(a.int); huecos.push((t - ultimo) / 1000); ultimo = t; }
+  }
+  const prom = v => (v.reduce((x, y) => x + y, 0) / Math.max(1, v.length));
+  const rep = Object.entries(elegidas).sort((a, b) => b[1] - a[1]).map(([k, v]) => `${k.replace("lib:", "")} ${v}`).join(", ");
+  return { acciones, porMin: acciones / minutos, hueco: prom(huecos), vel: [Math.min(...vels), Math.max(...vels)], int: [Math.min(...ints), Math.max(...ints)], rep, distintas: Object.keys(elegidas).length };
+}
+const S = Object.fromEntries(PERFILES.map(p => [p, simular(p)]));
+window.__sim = S;
+const fila = (t, f) => `<tr><td>${t}</td>${PERFILES.map(p => `<td class="n">${f(p)}</td>`).join("")}</tr>`;
+document.getElementById("sim").innerHTML = `<tr><th>Simulación 10 min (azar fijo)</th>${PERFILES.map(p => `<th>${DATOS[p].nombre}</th>`).join("")}</tr>` +
+  fila("Oportunidad cada (s)", p => DATOS[p].intervalo.join("–")) +
+  fila("Probabilidad de actuar", p => Math.round(DATOS[p].actuar * 100) + " %") +
+  fila("Acciones por minuto", p => S[p].porMin.toFixed(1)) +
+  fila("Segundos entre acciones (prom.)", p => S[p].hueco.toFixed(1)) +
+  fila("Velocidad (mín–máx)", p => S[p].vel.map(x => x.toFixed(2)).join("–")) +
+  fila("Intensidad (mín–máx)", p => S[p].int.map(x => x.toFixed(2)).join("–")) +
+  fila("Animaciones distintas", p => S[p].distintas) +
+  `<tr><td>Qué hizo (veces)</td>${PERFILES.map(p => `<td>${S[p].rep}</td>`).join("")}</tr>`;
+</script>
+</body>
+</html>
