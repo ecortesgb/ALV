@@ -138,6 +138,6 @@ describe("motor: gestos.js", () => {
     expect(Object.keys(G.TALLAS).sort()).toEqual(["androide", "grande", "normal", "pequeno"]);
   });
   it("public/minifig tiene la misma copia que tools/minifig", () => {
-    for (const f of ["escena.js", "gestos.js", "escena.html"]) expect(readFileSync(`public/minifig/${f}`, "utf8"), f).toBe(readFileSync(`tools/minifig/${f}`, "utf8"));
+    for (const f of ["escena.js", "gestos.js", "escena.html", "biblioteca-anim.js"]) expect(readFileSync(`public/minifig/${f}`, "utf8"), f).toBe(readFileSync(`tools/minifig/${f}`, "utf8"));
   });
 });
