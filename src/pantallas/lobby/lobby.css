@@ -655,3 +655,11 @@
 .D.az.lb.lbn:not(.wide) .lb-agregar b { font-size: 24px; }
 /* La cruz nunca baja hasta la tapa (en celular la columna es ancha y crecería encima). */
 .D.az.lb.lbn .lb-escenario:has(.lb-cab) .lb-cruz { top: min(calc(var(--zt) - 22cqw), calc(var(--piso) - 70cqw)); }
+
+/* Con muchos jugadores (más de 4 lugares) las columnas son angostas (Elías, 25 nov, 8 jugadores): los sellos se
+   miden con el ancho de la cabina y no con la pantalla, y la figura baja a 1.5 W para no salirse de su cabina. */
+.D.az.lb.lbn .lb-escenario:has(.lb-cab) .lb-sello span { font-size: clamp(14px, min(2.4vw, calc(var(--lb-w) * .135)), 44px); }
+.D.az.lb.lbn .lb-escenario:has(.lb-cab) .lb-aun { font-size: clamp(13px, min(2.3vw, calc(var(--lb-w) * .12)), 42px); }
+.D.az.lb.lb3a .lb-escenario:has(.lb-cab) .a-sala-escenario.muchos .a-sala-3d { height: calc(var(--lb-w) * 1.5); top: calc(var(--pb) - var(--lb-w) * (.263 + .783 * 1.5)); }
+.D.az.lb.lbn .lb-escenario:has(.lb-cab) .a-sala-escenario.muchos .lb-barra { font-size: clamp(12px, calc(var(--lb-w) * .085), 22px); }
+.D.az.lb.lbn .lb-escenario:has(.lb-cab) .a-sala-escenario.muchos .lb-panel > .lb-mini { font-size: clamp(12px, calc(var(--lb-w) * .07), 20px); }
