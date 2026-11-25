@@ -1,0 +1,66 @@
+/* Menú de gestos: botones redondos de bloque, uno por gesto. Columna por defecto; .mg-fila los pone en renglón. */
+.D .mg { display: flex; flex-direction: column; gap: 8px; align-items: center; pointer-events: auto; }
+.D .mg.mg-fila { flex-direction: row; gap: 10px; }
+.D .mg-b {
+  --tam: 54px;
+  position: relative; display: grid; justify-items: center; gap: 3px; padding: 0; border: 0; background: none; cursor: pointer;
+  font: inherit; color: #fff; -webkit-tap-highlight-color: transparent; touch-action: manipulation;
+}
+.D .mg-ico {
+  position: relative; display: grid; place-items: center; width: var(--tam); height: var(--tam); border-radius: 50%;
+  background: radial-gradient(circle at 34% 28%, rgba(255, 255, 255, .55), transparent 42%), linear-gradient(160deg, var(--c1), var(--c2));
+  border: 3px solid #1a1440;
+  box-shadow: 0 4px 0 #1a1440, inset 0 -5px 0 rgba(0, 0, 0, .22), inset 0 3px 0 rgba(255, 255, 255, .35);
+  transition: transform .14s cubic-bezier(.3, 1.6, .5, 1), box-shadow .14s, filter .2s;
+}
+.D .mg-ico svg { width: 58%; height: 58%; filter: drop-shadow(0 2px 0 rgba(26, 20, 64, .55)); }
+.D .mg-txt {
+  font-size: 13px; letter-spacing: .02em; color: #fff; paint-order: stroke; -webkit-text-stroke: 3px #1a1440;
+  text-shadow: 0 2px 0 #1a1440; line-height: 1;
+}
+.D .mg-b:hover .mg-ico { transform: translateY(-2px) scale(1.04); }
+.D .mg-b:active .mg-ico { transform: translateY(3px) scale(.96); box-shadow: 0 1px 0 #1a1440, inset 0 -3px 0 rgba(0, 0, 0, .22), inset 0 3px 0 rgba(255, 255, 255, .35); }
+.D .mg-b:focus-visible { outline: none; }
+.D .mg-b:focus-visible .mg-ico { outline: 3px solid #fff; outline-offset: 3px; }
+
+/* Sonando: aro de luz que late. */
+.D .mg-b.suena .mg-ico::after {
+  content: ""; position: absolute; inset: -7px; border-radius: 50%; border: 3px solid var(--c1);
+  box-shadow: 0 0 14px var(--c1); animation: mgAro 1s ease-in-out infinite;
+}
+/* Mientras suena algo más importante (el Especial), los demás se apagan un poco. */
+.D .mg-b.bloqueado .mg-ico { filter: saturate(.25) brightness(.8); }
+.D .mg-b.rebota .mg-ico { animation: mgRebota .42s cubic-bezier(.3, 1.6, .5, 1); }
+.D .mg-b.tiembla .mg-ico { animation: mgTiembla .32s ease-in-out; }
+
+@keyframes mgAro { 0%, 100% { opacity: .9; transform: scale(1); } 50% { opacity: .35; transform: scale(1.08); } }
+@keyframes mgRebota { 0% { transform: scale(.82); } 55% { transform: scale(1.14); } 100% { transform: scale(1); } }
+@keyframes mgTiembla { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-4px) rotate(-6deg); } 75% { transform: translateX(4px) rotate(6deg); } }
+
+@media (max-width: 420px) { .D .mg-b { --tam: 46px; } .D .mg-txt { font-size: 11px; } .D .mg { gap: 6px; } }
+@media (prefers-reduced-motion: reduce) {
+  .D .mg-b.rebota .mg-ico, .D .mg-b.tiembla .mg-ico, .D .mg-b.suena .mg-ico::after { animation: none; }
+}
+
+/* En el HUB y el Perfil: renglón abajo al centro, a los pies de la figura (sin tapar los retos ni el chat). */
+.D .az-escena > .mg, .D .pf-gestos { position: absolute; z-index: 6; left: 50%; bottom: 10px; transform: translateX(-50%); flex-direction: row; gap: 10px; }
+
+/* Plegable (lobby y mesa en el teléfono): un botón «Gestos» que abre los cuatro en renglón. */
+.D .mg-abrir { --c1: #ff7ad9; --c2: #7b3fe4; --tam: 42px; position: relative; display: inline-grid; justify-items: center; gap: 2px; padding: 0; border: 0;
+  background: none; cursor: pointer; font: inherit; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+.D .mg-abrir .mg-ico { width: var(--tam); height: var(--tam); }
+.D .mg-abrir.suena .mg-ico::after { content: ""; position: absolute; inset: -6px; border-radius: 50%; border: 3px solid var(--c1); animation: mgAro 1s ease-in-out infinite; }
+.D .mg.mg-plegable { flex-direction: row; gap: 8px; padding: 8px 10px 6px; border-radius: 999px; background: rgba(16, 12, 48, .82);
+  border: 2px solid #1a1440; box-shadow: 0 6px 18px rgba(0, 0, 0, .45); animation: mgAbre .22s cubic-bezier(.2, 1.4, .4, 1); transform-origin: left center; }
+.D .mg-plegable .mg-b { --tam: 42px; }
+.D .mg-plegable .mg-txt { font-size: 11px; }
+.D .mg-cerrar { align-self: center; width: 26px; height: 26px; border-radius: 50%; border: 2px solid #1a1440; background: #fff; color: #1a1440;
+  font: 800 13px/1 system-ui, sans-serif; cursor: pointer; padding: 0; }
+@keyframes mgAbre { from { opacity: 0; transform: scale(.6); } to { opacity: 1; transform: scale(1); } }
+
+/* Lobby: dentro de tu panel, debajo de «¡Listo!». Mesa: esquina de abajo a la izquierda, encima de todo. */
+.D .lb-gestos { margin-top: 6px; }
+.D .mg-abrir.lb-gestos { align-self: center; }
+/* Abierto, flota encima de tu panel (sobre la cabina) para no hacerlo crecer ni salirse de la pantalla. */
+.D .mg.lb-gestos { position: absolute; z-index: 20; left: 0; bottom: calc(100% + 8px); margin: 0; transform-origin: left bottom; }
+.D .ms-gestos { position: fixed; z-index: 40; left: max(10px, env(safe-area-inset-left)); bottom: max(40px, calc(env(safe-area-inset-bottom) + 30px)); }

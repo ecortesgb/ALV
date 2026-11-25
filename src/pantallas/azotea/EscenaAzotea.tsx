@@ -1,7 +1,8 @@
 // La figura 3D del HUB sobre la Plataforma ALV (modo «azotea» de tools/minifig/escena.js, el mismo motor de siempre).
 // Desde aquí se le pide que voltee, que haga una pose breve, que llegue o que deje de dibujar.
 import { useEffect, useImperativeHandle, useRef, useState, forwardRef } from "react";
-import { huella, semillaDe } from "../../app/figura3d";
+import { avisoDelMotor, huella, semillaDe } from "../../app/figura3d";
+import { alPedirGesto, animacionDe } from "../../app/animaciones";
 import { calidadAzotea, movimientoReducido } from "../../app/preferencias";
 import type { FiguraV2 } from "../../content/personaje";
 import type { Ambiente, Anclaje, ColoresPlataforma } from "./paquetes";
@@ -30,6 +31,7 @@ export const EscenaAzotea = forwardRef<MandoAzotea, { id: string; figura: Figura
   function EscenaAzotea({ id, figura, ambiente, plataforma, className, llegada = true }, mando) {
     const ref = useRef<HTMLIFrameElement>(null);
     const [listo, setListo] = useState(false);
+    const listoRef = useRef(false);
     // La dirección se calcula una sola vez: cambiarla recargaría la escena.
     const anclaje = ambiente.pedestal;
     // Calidad y movimiento salen de Configuración → Mi experiencia (al volver a esta pantalla ya se ven).
@@ -47,18 +49,21 @@ export const EscenaAzotea = forwardRef<MandoAzotea, { id: string; figura: Figura
       const d = datos.current;
       enviar({ tipo: "plataforma", colores: d.plataforma });
       enviar({ tipo: "ambiente", brillo: d.ambiente.brillo, ranura: d.plataforma.ranura, ...d.ambiente.luz });
-      enviar({ tipo: "figuras", lista: [d.figura ? { id: d.id, figura: d.figura } : { id: d.id, semilla: semillaDe(d.id) }] });
+      enviar({ tipo: "figuras", lista: [d.figura ? { id: d.id, figura: d.figura, anim: animacionDe(d.figura) } : { id: d.id, semilla: semillaDe(d.id) }] });
     };
     useEffect(() => {
       const f = (e: MessageEvent) => {
         if (e.origin !== location.origin || e.source !== ref.current?.contentWindow || e.data?.origen !== "minifig") return;
-        if (e.data.tipo === "listo") { setListo(true); mandarTodo(); }
+        if (e.data.tipo === "listo") { listoRef.current = true; setListo(true); mandarTodo(); }
+        avisoDelMotor(e.data);
         if (e.data.tipo === "pies" && [e.data.x, e.data.y, e.data.alto].every(Number.isFinite) && e.data.alto > 0.1) {
           pies.current = { x: e.data.x, y: e.data.y, alto: e.data.alto }; colocar.current();
         }
       };
       addEventListener("message", f);
-      return () => removeEventListener("message", f);
+      // Gestos de la tienda global (MenuGestos, la sala): solo los de esta figura.
+      const fuera = alPedirGesto(g => { if (listoRef.current && g.jugador === datos.current.id) enviar({ tipo: "momento", id: g.jugador, cual: g.gesto, prio: g.prioridad }); });
+      return () => { removeEventListener("message", f); fuera(); };
     }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
     // Recolocar al cambiar el tamaño de la ventana o cuando el fondo ya tiene su tamaño.

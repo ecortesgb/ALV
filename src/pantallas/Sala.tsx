@@ -28,6 +28,7 @@ import { Lobby } from "./lobby/Lobby";
 import { useColoresSala } from "./lobby/colores";
 import { BotonCast } from "./lobby/Cast";
 import { MesaJuego } from "./MesaJuego";
+import { useGestosSala } from "../servicios/gestosSala";
 
 /** Mantiene la pantalla encendida mientras `activo` (la Pantalla y el celular que hace de Pantalla). */
 export function useDespierta(activo: boolean) {
@@ -99,6 +100,8 @@ export function Sala({ codigo }: { codigo: string }) {
   const s = useSala(codigo, ses.uid);
   // Colores del lobby (anfitrión P1 rojo; los demás por entrada y género) y los miembros en orden de lugares.
   const ordenados = useColoresSala(s.sala, s.miembros);
+  // Gestos de la figura (MenuGestos): los ve toda la sala y la TV.
+  useGestosSala(s.sala?.id, ses.uid, s.miembros);
   const soyAnfitrion = !!s.sala && s.sala.anfitrionId === ses.uid;
   // Modo Local: un solo teléfono. Juega quien lo tiene en la mano (`enMano`); vacío = el anfitrión.
   const local = esLocal(s.sala?.id);

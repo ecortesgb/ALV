@@ -23,11 +23,14 @@ import { useColoresSala } from "../../pantallas/lobby/colores";
 import { useSala } from "../sala";
 import { AvisoLogro } from "../../pantallas/AvisoLogro";
 import { control, useMotor } from "./motor";
+import { useGestosSala } from "../../servicios/gestosSala";
 
 export function PantallaTv({ codigo }: { codigo: string }) {
   const ses = useSesion();
   const s = useSala(codigo, ses.uid);
   const ordenados = useColoresSala(s.sala, s.miembros);
+  // La TV solo escucha los gestos de los jugadores (no tiene figura propia).
+  useGestosSala(s.sala?.id, "", s.miembros);
   const tengoControl = !!s.sala && s.sala.anfitrionId === ses.uid;
   // El motor corre siempre en el celular del anfitrión (Elías, 24 nov); la Pantalla solo muestra. Las salas viejas
   // «con pantalla» (modo tv) siguen corriéndolo aquí.

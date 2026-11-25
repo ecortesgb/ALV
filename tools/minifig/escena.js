@@ -14,6 +14,8 @@
 // Modo sala (escena.html?modo=sala, la sala de espera): una columna por lugar, cada una con su pedestal del color del jugador.
 //   En «figuras» cada figura trae `color` ("#rrggbb") y `columna` (0…), y el mensaje trae `columnas` (lugares, con vacíos).
 //   Los lugares sin figura muestran un pedestal apagado; ALV dibuja encima el «+» y el nombre.
+// Modo nave (escena.html?modo=nave, El impostor): figuras sentadas alrededor de una mesa con el botón para votar al centro.
+//   Igual que la sala (`columna`, `columnas`, `color`) más `asientos` (colores) y los mensajes «nave» y «expulsar» (ver su bloque).
 // Modo azotea (escena.html?modo=azotea, prototipo del HUB nuevo «La Azotea»): una figura sobre la Plataforma ALV,
 //   en el piso de la azotea. &llegada=1 → la figura llega con la animación de energía (ALV decide si es la primera de la sesión).
 //   {tipo:"mirar", x, y, activa}  → la figura voltea hacia un punto (x: -1 izquierda … 1 derecha; y: -1 arriba … 1 abajo)
@@ -426,7 +428,156 @@
   const sombraGeo = new THREE.CircleGeometry(0.62, 40), sombraMat = new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: TOON ? 0.32 : 0.5, depthWrite: false,
     map: TOON ? null : (function () { const cv = document.createElement("canvas"); cv.width = cv.height = 64; const g = cv.getContext("2d"), r = g.createRadialGradient(32, 32, 2, 32, 32, 32); r.addColorStop(0, "rgba(255,255,255,1)"); r.addColorStop(0.55, "rgba(255,255,255,.55)"); r.addColorStop(1, "rgba(255,255,255,0)"); g.fillStyle = r; g.fillRect(0, 0, 64, 64); return new THREE.CanvasTexture(cv); })() });
   // Sin pedestal (marcador de la TV, listas): un piso invisible recibe la sombra.
-  if (!TOON && !pedestal && !SALA && !AZOTEA) scene.add(pisoSombra(14));
+  // Vuelo (expulsión de El impostor): una sola figura girando en el espacio, sin piso.
+  const VUELO = MODO === "vuelo";
+  if (!TOON && !pedestal && !SALA && !AZOTEA && !VUELO) scene.add(pisoSombra(14));
+
+  // ---------- Nave (El impostor, Elías 24 nov): mesa redonda con el botón para votar al centro y una silla por lugar ----------
+  // Las figuras se sientan alrededor de la mesa mirando al centro. En «figuras» cada una trae `columna` (su asiento 0…) y
+  // `color`; el mensaje trae `columnas` (asientos, también los vacíos de quien ya salió) y `asientos` (color de cada uno).
+  //   {tipo:"nave", boton:"votar"|"quieto"|"golpe"}  → el botón late (se vota), se apaga o lo aprietan
+  //   {tipo:"expulsar", id}                          → esa figura se levanta, gira y sale volando hacia arriba
+  const NAVE = MODO === "nave";
+  const NV = { n: 0, R: 1.5, S: 1.9, mesa: null, sillas: [], colores: [], boton: "quieto", golpe: -9, sueltos: [] };
+  const QUIETO = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const MESA_Y = 1.02, SILLA_Y = 0.52;
+  const linN = c => new THREE.Color(c).convertSRGBToLinear();
+  const matN = (c, r, m) => TOON ? new THREE.MeshToonMaterial({ color: linN(c), gradientMap: tonos }) : new THREE.MeshStandardMaterial({ color: linN(c), roughness: r == null ? 0.35 : r, metalness: m == null ? 0.2 : m });
+  const brilloN = NAVE ? (function () { const cv = document.createElement("canvas"); cv.width = cv.height = 128; const g = cv.getContext("2d"), r = g.createRadialGradient(64, 64, 4, 64, 64, 64); r.addColorStop(0, "rgba(255,255,255,1)"); r.addColorStop(0.45, "rgba(255,255,255,.4)"); r.addColorStop(1, "rgba(255,255,255,0)"); g.fillStyle = r; g.fillRect(0, 0, 128, 128); return new THREE.CanvasTexture(cv); })() : null;
+  const haloN = (tam, color) => { const m = new THREE.Mesh(new THREE.PlaneGeometry(tam, tam), new THREE.MeshBasicMaterial({ map: brilloN, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, color })); m.rotation.x = -Math.PI / 2; m.userData.sinSombra = true; return m; };
+  function quitarN(o) { if (!o) return; scene.remove(o); o.traverse(m => { if (m.geometry) m.geometry.dispose(); const ms = Array.isArray(m.material) ? m.material : m.material ? [m.material] : []; ms.forEach(x => x.dispose()); }); }
+  function armarMesa(R) {
+    const g = new THREE.Group();
+    const pz = (geo, m, x, y, z) => { const o = new THREE.Mesh(geo, m); o.position.set(x, y, z); g.add(o); return o; };
+    // Cubierta gris con canto dorado, anillo turquesa de luz y studs dorados en la orilla.
+    pz(new THREE.CylinderGeometry(R, R * 0.98, 0.14, 72), matN(0xc3c9d3, 0.3, 0.1), 0, MESA_Y - 0.07, 0);
+    pz(new THREE.CylinderGeometry(R * 0.66, R * 0.66, 0.012, 64), new THREE.MeshBasicMaterial({ color: linN(0x1d6f86) }), 0, MESA_Y + 0.002, 0);
+    const aro = pz(new THREE.TorusGeometry(R * 0.66, 0.025, 8, 96), new THREE.MeshBasicMaterial({ color: linN(0x2ee6d6) }), 0, MESA_Y + 0.01, 0); aro.rotation.x = Math.PI / 2;
+    const canto = pz(new THREE.TorusGeometry(R, 0.045, 10, 96), matN(0xffc21a, 0.25, 0.7), 0, MESA_Y - 0.02, 0); canto.rotation.x = Math.PI / 2;
+    const nS = Math.max(12, Math.floor(2 * Math.PI * (R - 0.2) / 0.36));
+    const studs = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.075, 0.075, 0.06, 16), matN(0xffc21a, 0.25, 0.7), nS);
+    const mx = new THREE.Matrix4();
+    for (let i = 0; i < nS; i++) { const a = i / nS * Math.PI * 2; mx.makeTranslation(Math.sin(a) * (R - 0.2), MESA_Y + 0.03, Math.cos(a) * (R - 0.2)); studs.setMatrixAt(i, mx); }
+    g.add(studs);
+    // Pata central y base en el piso.
+    pz(new THREE.CylinderGeometry(0.42, 0.55, MESA_Y - 0.14, 32), matN(0x2a3140, 0.3, 0.6), 0, (MESA_Y - 0.14) / 2, 0);
+    pz(new THREE.CylinderGeometry(0.95, 1.05, 0.08, 48), matN(0x232833, 0.3, 0.6), 0, 0.04, 0);
+    // Botón: base oscura, domo dorado y anillo turquesa que late cuando se vota.
+    pz(new THREE.CylinderGeometry(0.4, 0.46, 0.16, 40), matN(0x232833, 0.25, 0.7), 0, MESA_Y + 0.08, 0);
+    const domo = pz(new THREE.SphereGeometry(0.3, 40, 20, 0, Math.PI * 2, 0, Math.PI / 2), TOON ? matN(0xffc21a) : new THREE.MeshStandardMaterial({ color: linN(0xffc21a), roughness: 0.18, metalness: 0.55, emissive: linN(0x7a4a00), emissiveIntensity: 0.25 }), 0, MESA_Y + 0.16, 0);
+    domo.scale.y = 0.75;
+    const anillo = pz(new THREE.TorusGeometry(0.44, 0.035, 10, 64), new THREE.MeshBasicMaterial({ color: linN(0x2ee6d6) }), 0, MESA_Y + 0.17, 0); anillo.rotation.x = Math.PI / 2;
+    const halo = haloN(1.9, linN(0x2ee6d6)); halo.position.y = MESA_Y + 0.02; g.add(halo);
+    g.traverse(o => { if (o.isMesh && !o.userData.sinSombra && !(o.material && o.material.isMeshBasicMaterial)) { o.castShadow = true; o.receiveShadow = true; } });
+    scene.add(g);
+    return { g, domo, anillo, halo };
+  }
+  function armarSilla() {
+    const g = new THREE.Group();
+    const pz = (geo, m, x, y, z) => { const o = new THREE.Mesh(geo, m); o.position.set(x, y, z); o.castShadow = o.receiveShadow = true; g.add(o); return o; };
+    const cuerpo = matN(0x2b3a5c, 0.35, 0.25), tira = new THREE.MeshBasicMaterial({ color: 0x5aa6f0 });
+    pz(new THREE.BoxGeometry(0.92, 0.12, 0.78), cuerpo, 0, SILLA_Y - 0.06, -0.04);
+    pz(new THREE.BoxGeometry(0.92, 0.6, 0.12), cuerpo, 0, SILLA_Y + 0.28, -0.46);
+    const t = pz(new THREE.BoxGeometry(0.94, 0.09, 0.14), tira, 0, SILLA_Y + 0.6, -0.46); t.castShadow = false;
+    pz(new THREE.CylinderGeometry(0.07, 0.07, SILLA_Y - 0.12, 12), matN(0x8d96a8, 0.2, 0.8), 0, (SILLA_Y - 0.12) / 2, -0.04);
+    pz(new THREE.CylinderGeometry(0.34, 0.38, 0.05, 24), matN(0x232833, 0.3, 0.6), 0, 0.025, -0.04);
+    const halo = haloN(1.5, 0x5aa6f0); halo.position.set(0, 0.02, -0.04); g.add(halo);
+    scene.add(g);
+    return { g, tira, halo };
+  }
+  // Ángulo del asiento i de n: el 0 queda al fondo, de frente a la cámara, y siguen alrededor.
+  const anguloN = (i, n) => Math.PI + (i - (n - 1) / 2) * (Math.PI * 2 / n);
+  function acomodarNave() {
+    const n = Math.max(3, lugares());
+    const R = 1.05 + n * 0.13;
+    if (!NV.mesa || NV.n !== n) { quitarN(NV.mesa && NV.mesa.g); NV.mesa = armarMesa(R); NV.n = n; NV.R = R; NV.S = R + 0.42; }
+    while (NV.sillas.length < n) NV.sillas.push(armarSilla());
+    const colorDe = new Map();
+    orden.forEach(id => { const e = figuras.get(id); colorDe.set(e.columna, e.color); });
+    NV.sillas.forEach((s, i) => {
+      s.g.visible = i < n; if (i >= n) return;
+      const a = anguloN(i, n);
+      s.g.position.set(Math.sin(a) * NV.S, 0, Math.cos(a) * NV.S); s.g.rotation.y = a + Math.PI;
+      const c = colorValido(colorDe.get(i) || NV.colores[i]);
+      s.tira.color.copy(linN(c || "#4a5687"));
+      s.halo.material.color.copy(linN(c || "#4a5687"));
+    });
+    orden.forEach(id => {
+      const e = figuras.get(id), a = anguloN(e.columna, n);
+      if (e.vuela != null) return;
+      e.obj.position.set(Math.sin(a) * NV.S, SILLA_Y, Math.cos(a) * NV.S); e.obj.rotation.set(0, a + Math.PI, 0); e.obj.scale.setScalar(1);
+    });
+  }
+  // Sentada: las piernas al frente (90°) y la cadera baja hasta el asiento. Encima va lo que haga el momento.
+  function sentar(e) {
+    const J = e.obj.userData.j; if (!J) return;
+    if (J.piernasArt) { J.legR.rotation.x = -Math.PI / 2; J.legL.rotation.x = -Math.PI / 2; }
+    if (J.pivotY) J.root.position.y = Math.max(-(J.pivotY - 8 / LD), J.root.position.y * 0.35 - (J.pivotY - 8 / LD));
+  }
+  // Dónde queda la cabeza de cada figura sentada (fracción del lienzo, y desde arriba): ALV pone ahí la palabra que dijo.
+  // Se mide sobre la pose real (sentada) dos veces por segundo y solo se manda si cambió.
+  const cajaCab = new THREE.Box3(), vCab = new THREE.Vector3();
+  let ultCab = "", tCab = -9;
+  function cabezasNave(t) {
+    if (t - tCab < 0.5) return; tCab = t;
+    const pos = {};
+    orden.forEach(id => {
+      const e = figuras.get(id); if (!e || e.vuela != null) return;
+      cajaCab.setFromObject(e.obj);
+      vCab.set((cajaCab.min.x + cajaCab.max.x) / 2, cajaCab.max.y + 0.08, (cajaCab.min.z + cajaCab.max.z) / 2).project(camera);
+      pos[id] = [Math.round((vCab.x + 1) * 500) / 1000, Math.round((1 - vCab.y) * 500) / 1000];
+    });
+    const firma = JSON.stringify(pos);
+    if (firma !== ultCab) { ultCab = firma; enviar({ tipo: "cabezas", pos }); }
+  }
+  function animarNave(t) {
+    if (!NV.mesa) return;
+    const m = NV.mesa, b = NV.boton;
+    const late = b === "votar" ? 0.55 + 0.45 * Math.sin(t * 4.2) : b === "golpe" ? 1 : 0.18;
+    m.halo.material.opacity = late; m.anillo.material.color.setRGB(0.18 * (0.4 + late), 0.9 * (0.4 + late), 0.84 * (0.4 + late));
+    const g = t - NV.golpe; m.domo.scale.y = g < 0.35 ? 0.75 - Math.sin(g / 0.35 * Math.PI) * 0.35 : 0.75;
+    const foco = new Set(orden.filter(id => figuras.get(id).foco).map(id => figuras.get(id).columna));
+    NV.sillas.forEach((s, i) => { s.halo.material.opacity = foco.has(i) ? 0.75 + 0.25 * Math.sin(t * 5) : 0.22; });
+    // Expulsión: se levanta de la silla, gira y sale volando hacia arriba en 2.4 s; luego desaparece.
+    figuras.forEach(e => {
+      if (e.vuela == null) return;
+      const d = (t - e.vuela) / 2.4;
+      if (d >= 1) { e.obj.visible = false; return; }
+      const k = d * d, a = anguloN(e.columna, Math.max(3, lugares()));
+      e.obj.position.set(Math.sin(a) * NV.S * (1 + d * 0.6), SILLA_Y + 0.6 * Math.min(1, d * 4) + k * 9, Math.cos(a) * NV.S * (1 + d * 0.6));
+      e.obj.rotation.set(d * 3, a + Math.PI + d * 14, d * 2);
+      e.obj.scale.setScalar(Math.max(0.05, 1 - k * 0.8));
+    });
+  }
+  // Vuelo (expulsión de El impostor, Elías 24 nov): la nave la avienta desde la izquierda; cruza la pantalla por en medio
+  // girando sobre su centro y sale por la derecha. Empuje: arranca rápido y va perdiendo velocidad (sin detenerse); los
+  // giros también se van frenando. La misma curva `uVuelo` la usa ALV para escribir las letras al paso (nave.tsx).
+  const DUR_VUELO = 5, MEDIO_FIG = 0.72, DIST_VUELO = 15, vGiro = new THREE.Vector3();
+  const uVuelo = d => -0.18 + 1.36 * (0.55 * d + 0.45 * (1 - Math.pow(1 - d, 2)));
+  function volar(e, t) {
+    const d = Math.min(1, Math.max(0, (t - (e.t0v ?? t)) / DUR_VUELO));
+    // Avisa a ALV dónde va (para escribir las letras justo al paso de la figura).
+    if (e.dEnviado !== 1 && (e.dEnviado == null || d >= 1 || t - (e.tEnvio ?? 0) > 0.03)) { enviar({ tipo: "vuelo", d }); e.dEnviado = d >= 1 ? 1 : d; e.tEnvio = t; }
+    const hw = Math.tan(camera.fov * Math.PI / 360) * DIST_VUELO * camera.aspect;
+    const frena = 1 - Math.pow(1 - d, 2);
+    if (!QUIETO) e.obj.rotation.set(Math.sin(d * 5) * 0.5, frena * 5.5, -(0.35 * d + 0.65 * frena) * 11);
+    else e.obj.rotation.set(0, 0, 0);
+    // Gira sobre su centro: se corrige la posición del origen (los pies) según la rotación.
+    vGiro.set(0, MEDIO_FIG, 0).applyEuler(e.obj.rotation);
+    const cx = (uVuelo(d) * 2 - 1) * hw, cy = 1.35 + Math.sin(d * Math.PI) * 0.22 - d * 0.1;
+    e.obj.position.set(cx - vGiro.x, cy - vGiro.y, -vGiro.z);
+    e.obj.scale.setScalar(1);
+  }
+  function encuadrarNave() {
+    const tv = Math.tan(camera.fov * Math.PI / 360), th = tv * camera.aspect;
+    const vertical = camera.aspect < 0.9, ang = vertical ? 1.05 : 0.74;
+    const ext = NV.S + 0.75, ancho = 2 * ext;
+    const prof = 2 * ext * Math.sin(ang) + 3.1 * Math.cos(ang);
+    const d = Math.max((ancho / 2) / th, (prof / 2) / tv) * 0.98;
+    const y0 = 1.05;
+    camera.position.set(0, y0 + d * Math.sin(ang), d * Math.cos(ang)); camera.lookAt(0, y0, 0); camera.updateProjectionMatrix();
+    if (!TOON) { const sc = luz.shadow.camera, a = ext + 1.2; sc.left = -a; sc.right = a; sc.top = a; sc.bottom = -a; sc.updateProjectionMatrix(); luz.position.set(-3.5, 8, 5); luz.target.position.set(0, 0.6, 0); }
+  }
   if (SIN_PLAT && !TOON) scene.add(pisoSombra(1.6));
   // Celular sin plataforma: tampoco mapa de sombras (queda la sombra de contacto bajo los pies).
   if (SIN_PLAT && TACTIL && new URLSearchParams(location.search).get("sombras") !== "1") { luz.castShadow = false; renderer.shadowMap.enabled = false; }
@@ -613,13 +764,14 @@
   }
   function quitar(id) {
     const x = figuras.get(id); if (!x) return;
-    if (x.cara) { x.cara.malla.material.map = x.cara.base; [x.cara.parpadeo, x.cara.sonrisa].forEach(t => t && t.dispose()); }
+    if (x.cara) { x.cara.malla.material.map = x.cara.base; [x.cara.parpadeo, x.cara.sonrisa, x.cara.especial].forEach(t => t && t.dispose()); }
     scene.remove(x.obj); dispose(x.obj); figuras.delete(id);
   }
   function dispose(o) { o.traverse(m => { if (m.geometry && !m.userData.compartida && m.geometry !== sombraGeo) m.geometry.dispose(); const ms = Array.isArray(m.material) ? m.material : m.material ? [m.material] : []; ms.forEach(x => { if (x === sombraMat || x === contorno) return; ["map", "emissiveMap"].forEach(k => x[k] && x[k].dispose()); x.dispose(); }); }); }
 
-  function ponerFiguras(lista, cols) {
-    if (SALA) columnas = Math.max(0, Math.min(12, cols | 0));
+  function ponerFiguras(lista, cols, asientos) {
+    if (SALA || NAVE) columnas = Math.max(0, Math.min(12, cols | 0));
+    if (NAVE && Array.isArray(asientos)) NV.colores = asientos.slice(0, 12).map(colorValido);
     if (PRUEBA) lista = lista.slice(0, 1).map(x => ({ id: x.id, foco: x.foco, figura: figuraPrueba() }));
     const ids = new Set(lista.map(x => String(x.id)));
     [...figuras.keys()].forEach(id => { if (!ids.has(id)) quitar(id); });
@@ -643,8 +795,15 @@
         if (AZOTEA) { if (AZ.pendiente) { AZ.pendiente = false; iniciarLlegada(t, true); } else if (habia) iniciarLlegada(t, false); AZ.saludo = t + 6; }
         if (EDITOR && habia) polvo(reloj.getElapsedTime());
       }
+      // Talla y especial que manda ALV (`anim`, aparte de la figura): cambian sin volver a armarla.
+      const an = x.anim && typeof x.anim === "object" ? x.anim : {};
+      const tb = EDITOR || !GestosALV.TALLAS[an.talla] ? "normal" : String(an.talla);
+      if (e.tallaBase !== tb) { e.tallaBase = tb; if (!e.espEst) e.tallaMeta = tb; if (!e.esc) e.esc = GestosALV.talla(tb).escala.slice(); }
+      e.esp = GestosALV.especial(an.especial, fx.momentos && fx.momentos.paquete);
+      // Piel de la persona bajo la máscara (la cara del especial se pinta con ella, no con el color de la careta).
+      e.pielReal = fx.identidad && /^#[0-9a-f]{6}$/i.test(fx.identidad.piel || "") ? fx.identidad.piel : null;
       e.foco = !!x.foco; orden.push(id);
-      if (SALA) { e.columna = Number.isInteger(x.columna) && x.columna >= 0 ? x.columna : orden.length - 1; e.color = colorValido(x.color); }
+      if (SALA || NAVE) { e.columna = Number.isInteger(x.columna) && x.columna >= 0 ? x.columna : orden.length - 1; e.color = colorValido(x.color); }
     });
     acomodar();
   }
@@ -654,6 +813,8 @@
   let paso = 1.55;
   function acomodar() {
     if (EDITOR) { tamano(); orden.forEach(id => figuras.get(id).obj.position.set(0, 0, 0)); return; }
+    if (NAVE) { tamano(); acomodarNave(); encuadrarNave(); return; }
+    if (VUELO) { tamano(); camera.position.set(0, 1.35, DIST_VUELO); camera.lookAt(0, 1.35, 0); camera.updateProjectionMatrix(); orden.forEach(id => { const e = figuras.get(id); if (e.t0v == null) e.t0v = reloj.getElapsedTime(); }); return; }
     encuadrar();
     cajaSombra((SALA ? lugares() : Math.max(1, orden.length)) * paso);
     if (SALA) { acomodarSala(); return; }
@@ -682,11 +843,15 @@
     // Medidas reales de una figura armada: 2.6–2.75 de alto con pelo o casco, 1.6–1.9 de ancho con brazos y objeto.
     // HUB: cabe también el pedestal (de y = -0.34 a 0) y queda aire arriba para que la figura no se vea gigante.
     // Azotea: de la base de las patas (y ≈ -0.94 con aire) a lo más alto de un casco, con la figura a ~57 % del alto.
-    const n = SALA ? lugares() : Math.max(1, orden.length), alto = SALA ? 5.3 : SIN_PLAT ? 3.3 : AZOTEA ? 4.9 : MODO === "hub" ? 4.5 : 3.3, minimo = SIN_PLAT ? 2.0 : AZOTEA ? 2.8 : n * 1.9 + 0.3;
+    const n = SALA ? lugares() : Math.max(1, orden.length), alto = (SALA ? 5.3 : SIN_PLAT ? 3.3 : AZOTEA ? 4.9 : MODO === "hub" ? 4.5 : 3.3) * (SALA ? 1 : crecer()), minimo = SIN_PLAT ? 2.0 : AZOTEA ? 2.8 : n * 1.9 + 0.3;
+    // Sala: el lienzo es muy ancho (hasta 8 columnas); con 30° las figuras de las orillas se estiraban y se veían más
+    // grandes que las del centro (Elías, 25 nov). Con 6° y la cámara más lejos casi no hay perspectiva: todas iguales.
+    if (SALA && camera.fov !== 6) camera.fov = 6;
     const tv = Math.tan(camera.fov * Math.PI / 360), th = tv * camera.aspect;
     // Primero que quepa de alto; si así no caben a lo ancho, se aleja hasta que quepan.
     let d = (alto / 2) / tv;
     if (2 * d * th < minimo) d = (minimo / 2) / th;
+    if (SALA) { camera.near = Math.max(0.3, d - 12); camera.far = d + 12; }
     paso = (2 * d * th) / n;
     // Pantalla alta (celular vertical): sobra cielo; se mira más arriba para que los pies queden abajo, sobre el piso.
     // Sala: queda aire abajo para el nombre y arriba para el «¡LISTO!».
@@ -702,15 +867,82 @@
     }
   }
 
-  function momento(id, cual) {
+  // ---------- Gestos con prioridad (ALV_PLAN_ANIMACIONES.md) ----------
+  // Cada figura lleva su propio estado: dos figuras iguales en la sala animan cada una a su ritmo.
+  // Entra si su prioridad es mayor o igual a la que suena y no es la misma; enfriamiento de 0.6 s contra toques repetidos.
+  // ALV manda la prioridad (src/app/animaciones.ts); sin ella se usa esta tabla. Al terminar avisa {tipo:"termino"}.
+  const PRIO = { espera: 0, saludar: 1, punto: 1, victoria: 1, derrota: 1, bailar: 1, especial: 2 };
+  const ENFRIAR = 0.6, DUR_SALUDO = 2.5;
+  const tallaDe = e => GestosALV.talla(EDITOR ? "normal" : e.tallaMeta || e.tallaBase);
+  function momento(id, cual, prio) {
     const e = figuras.get(String(id)); if (!e) return;
-    // Gestos del lobby: saludar (la mano libre, una vez) y bailar (vuelta rápida).
-    if (cual === "saludar") { e.saluda = reloj.getElapsedTime(); return; }
-    cambio(e, reloj.getElapsedTime());
-    if (cual === "bailar") cual = "vuelta-rapida";
-    const m = e.momentos[cual] || (Momentos.info(cual) ? cual : null) || (cual === "espera" ? "respirar" : null); if (!m || !Momentos.info(m)) return;
-    e.mom = m; e.t0 = reloj.getElapsedTime();
+    const t = reloj.getElapsedTime(), p = Number.isFinite(prio) ? prio : PRIO[cual] != null ? PRIO[cual] : 1;
+    const sonando = (e.prio || 0) > 0 && t < e.hasta;
+    if ((sonando && (p < e.prio || e.cual === cual)) || t - (e.ultG == null ? -9 : e.ultG) < ENFRIAR) { enviar({ tipo: "gesto", id: e.id, cual, ok: false }); return; }
+    if (e.espEst) terminarEspecial(e, t);
+    const fin = (dur, m) => { e.prio = p; e.cual = cual; e.ultG = t; e.hasta = t + dur; enviar({ tipo: "gesto", id: e.id, cual, ok: true, mom: m, dur }); };
+    // Saludar: la mano libre, una vez, encima de la espera.
+    if (cual === "saludar") { e.saluda = t; fin(DUR_SALUDO, "saludar"); return; }
+    let m;
+    if (cual === "especial") m = e.esp ? e.esp.anim : "baile";
+    else m = e.momentos[cual === "bailar" ? "" : cual] || (cual === "bailar" ? "vuelta-rapida" : Momentos.info(cual) ? cual : null) || (cual === "espera" ? "respirar" : null);
+    if (!m || !Momentos.info(m)) { enviar({ tipo: "gesto", id: e.id, cual, ok: false }); return; }
+    cambio(e, t);
+    e.mom = m; e.t0 = t;
+    const i = Momentos.info(m);
+    if (cual === "especial" && e.esp) e.espEst = { en: false, vuelve: false };
+    if (i.bucle) { e.prio = 0; e.cual = null; e.hasta = 0; return; }
+    fin(i.dur / tallaDe(e).vel, m);
   }
+  // Especial: a su tiempo cambia una pieza (cara, pelo, capa) o la talla, y al final todo vuelve como estaba.
+  // Solo cambia la figura dibujada, nunca la guardada del jugador.
+  function avanzarEspecial(e, t, el) {
+    const s = e.espEst, x = e.esp; if (!s || !x) return;
+    if (!s.en && el >= x.en && (x.cambia || x.pieza)) {
+      s.en = true;
+      const pos = e.obj.position; polvo(t, pos.x, pos.z);
+      if (x.cambia && x.cambia.talla) e.tallaMeta = x.cambia.talla;
+      if (x.pieza) ponerPieza(e, x.pieza, true);
+    }
+    if (s.en && !s.vuelve && x.vuelve > x.en && el >= x.vuelve) { s.vuelve = true; const pos = e.obj.position; polvo(t, pos.x, pos.z); quitarCambios(e); }
+  }
+  function ponerPieza(e, pz, si) {
+    const J = e.obj.userData.j;
+    if (pz.ocultar === "cabello" && J.hairG) J.hairG.visible = !si;
+    if (pz.ocultar === "capa" && J.cape) J.cape.visible = !si;
+    if (pz.rostro) {
+      const c = caraDe(e); if (!c) return;
+      if (si) { try { if (!c.especial) c.especial = conImagen(c.base, caraConPiel(pz.rostro, e)); c.malla.material.map = c.especial; e.caraFija = true; } catch (err) { console.error("escena: cara del especial", err); } }
+      else { c.malla.material.map = c.base; c.hasta = 0; e.caraFija = false; }
+    }
+  }
+  // La cara es una calcomanía transparente sobre la cabeza. Con careta la cabeza es del color de la careta: se pinta
+  // primero la piel de la persona (la forma de la careta abierta) y encima la cara nueva, en el lienzo de 512×256 de drawFace.
+  function caraConPiel(rostro, e) {
+    const cara = drawFace(rostro, Object.assign({}, e.plano, e.pielReal ? { piel: e.pielReal } : {}));
+    if (!e.pielReal) return cara;
+    const cv = document.createElement("canvas"); cv.width = cara.width; cv.height = cara.height;
+    const g = cv.getContext("2d"), k = cara.width / 512;
+    g.setTransform(k, 0, 0, k * cara.height / 256 / (cara.width / 512), 0, 0);
+    g.fillStyle = e.pielReal; g.beginPath(); g.moveTo(170, 20); g.lineTo(342, 20); g.lineTo(336, 170);
+    g.quadraticCurveTo(300, 250, 256, 252); g.quadraticCurveTo(212, 250, 176, 170); g.closePath(); g.fill();
+    g.setTransform(1, 0, 0, 1, 0, 0); g.drawImage(cara, 0, 0);
+    return cv;
+  }
+  function quitarCambios(e) { if (e.esp && e.esp.pieza) ponerPieza(e, e.esp.pieza, false); e.tallaMeta = e.tallaBase; }
+  function terminarEspecial(e, t) { if (e.espEst && e.espEst.en && !e.espEst.vuelve) { const pos = e.obj.position; polvo(t, pos.x, pos.z); } quitarCambios(e); e.espEst = null; }
+  // Personalidad de la talla encima de la pose: brincos, giros de brazos y tamaño (el tamaño se acerca suave).
+  function aplicarTalla(e, tl, dt) {
+    const J = e.obj.userData.j, R = J.root;
+    if (R.position.y > 0) R.position.y *= tl.salto;
+    if (tl.brazos !== 1) { J.armR.rotation.x *= tl.brazos; J.armL.rotation.x *= tl.brazos; }
+    const meta = tl.escala, k = Math.min(1, dt * 5);
+    if (!e.esc) e.esc = meta.slice();
+    e.esc[0] += (meta[0] - e.esc[0]) * k; e.esc[1] += (meta[1] - e.esc[1]) * k;
+    R.scale.set(e.esc[0], e.esc[1], e.esc[0]);
+  }
+  // Cuánto puede crecer alguna figura (su talla o la de su especial): la cámara deja ese aire arriba.
+  const crecer = () => { let m = 1; figuras.forEach(e => { m = Math.max(m, GestosALV.talla(e.tallaBase).escala[1], e.esp && e.esp.cambia ? GestosALV.talla(e.esp.cambia.talla).escala[1] : 1); }); return EDITOR ? 1 : m; };
 
   // Objetos en la mano: ese brazo no sube más allá del hombro en ningún momento (festejos, derrotas, esperas),
   // así la espada, el escudo o la escoba no atraviesan la cabeza. Festeja con el otro brazo y con el cuerpo.
@@ -805,9 +1037,11 @@
     }
   }
   // Movimiento de reposo: cambio de peso de un pie al otro, respiración y la mirada que busca cosas.
-  function reposo(e, t, dt) {
+  function reposo(e, t, dt, tl) {
     const J = e.obj.userData.j, V = J.vida; if (!V || MENOS_MOVIMIENTO) return;
-    const f = e.fase, amp = EDITOR ? 0.5 : 1;
+    const f = e.fase, amp = (EDITOR ? 0.5 : 1) * (tl ? tl.reposo : 1);
+    // Pequeños: de vez en cuando un saltito en su lugar.
+    if (tl && tl.saltitos) { const ph = (t + f) % 4.2; if (ph < 0.34) { const k = ph / 0.34; J.root.position.y += 4 * k * (1 - k) * 0.09; } }
     const w = Math.sin(t * 0.75 + f), d = w * 0.035 * amp;
     J.root.position.x += d;
     if (J.piernasArt) { const a = -d / V.largo; J.legR.rotation.z += a; J.legL.rotation.z += a; }
@@ -974,6 +1208,7 @@
     }
   }
   function gestosSolos(e, t) {
+    if (e.caraFija) return; // un especial tiene puesta otra cara
     const c = caraDe(e);
     if (c && c.hasta && t > c.hasta) { c.malla.material.map = c.base; c.hasta = 0; }
     if (t > e.parpadeo) { if (!(c && c.hasta)) gesto(e, "parpadeo", t); e.parpadeo = t + 2.4 + Math.random() * 3.2; }
@@ -986,12 +1221,13 @@
     g.fillStyle = "#0b0f24"; g.beginPath(); g.arc(32, 32, 30, 0, 7); g.fill(); g.fillStyle = "#ffffff"; g.beginPath(); g.arc(32, 32, 22, 0, 7); g.fill();
     return new THREE.CanvasTexture(cv); })();
   const polvos = [];
-  function polvo(t) {
+  function polvo(t, ox, oz) {
     if (MENOS_MOVIMIENTO) return;
+    ox = ox || 0; oz = oz || 0;
     const n = 16, pos = new Float32Array(n * 3), col = new Float32Array(n * 3), vel = [];
     for (let i = 0; i < n; i++) {
       const a = Math.random() * Math.PI * 2, y = 0.3 + Math.random() * 2.2;
-      pos.set([Math.cos(a) * 0.45, y, Math.sin(a) * 0.45 + 0.3], i * 3);
+      pos.set([ox + Math.cos(a) * 0.45, y, oz + Math.sin(a) * 0.45 + 0.3], i * 3);
       vel.push([Math.cos(a) * (0.9 + Math.random()), (Math.random() - 0.3) * 0.8, Math.sin(a) * 0.6]);
       const c = Math.random() < 0.5 ? [1, 1, 1] : [1, 0.82, 0.25]; col.set(c, i * 3);
     }
@@ -1015,16 +1251,27 @@
     // Azotea en pantalla táctil y en reposo: un cuadro sí y uno no (30 por segundo) para cuidar la batería.
     if (AZOTEA && TACTIL && AZ.quieto && (AZ.salto = !AZ.salto)) return;
     const t = reloj.getElapsedTime(), bruto = t - antes, dt = Math.min(0.1, bruto); antes = t;
-    if (EDITOR) { moverCamara(dt); moverPolvo(t, dt); }
-    else if (AZOTEA) moverPolvo(t, dt);
+    if (EDITOR) moverCamara(dt);
+    moverPolvo(t, dt);
     figuras.forEach(e => {
       const J = e.obj.userData.j; if (!J) return;
-      const i = Momentos.info(e.mom);
-      if (i && !i.bucle && t - e.t0 > i.dur + 0.4) { cambio(e, t); e.mom = e.momentos.espera || "respirar"; e.t0 = t; }
+      const i = Momentos.info(e.mom), tl = tallaDe(e);
+      // La talla cambia la velocidad (el reloj de la pose) y, en androide, la pose avanza a saltos como un robot.
+      // El avance se suma cuadro a cuadro: si la talla cambia a media animación (Hulk crece), no brinca hacia atrás.
+      if (e.t0v !== e.t0) { e.t0v = e.t0; e.el = (t - e.t0) * tl.vel; } else e.el += dt * tl.vel;
+      let el = e.el;
+      if (i && !i.bucle && el > i.dur + 0.4) {
+        cambio(e, t); e.mom = e.momentos.espera || "respirar"; e.t0 = t; e.t0v = t; e.el = 0; el = 0;
+        if (e.espEst) terminarEspecial(e, t);
+        if (e.prio > 0 && e.cual !== "saludar") { enviar({ tipo: "termino", id: e.id, cual: e.cual }); e.prio = 0; e.cual = null; }
+      }
+      if (e.cual === "saludar" && t >= e.hasta) { enviar({ tipo: "termino", id: e.id, cual: "saludar" }); e.prio = 0; e.cual = null; }
+      if (e.espEst) avanzarEspecial(e, t, el);
       e.lx = 0; e.lz = 0; e.saludoK = 0;
-      window.MOM_T0 = e.t0; animar(e.obj, "mom:" + e.mom, t);
+      window.MOM_T0 = 0; animar(e.obj, "mom:" + e.mom, tl.pasos ? Math.floor(el * tl.pasos) / tl.pasos : el);
       const enBucle = !(i && !i.bucle);
-      if (enBucle) reposo(e, t, dt);
+      if (enBucle && tl.reposo > 0) reposo(e, t, dt, tl);
+      aplicarTalla(e, tl, dt);
       if (AZOTEA && enBucle && !AZ.acc.cual && !AZ.mira.activa && !AZ.llegada && t > AZ.saludo && e.saluda == null) { e.saluda = t; AZ.saludo = t + 11 + Math.random() * 5; }
       if (MODO === "hub" && enBucle) saludo(e, t);
       else if (e.saluda != null) { const d = t - e.saluda; if (d < 2.5) saludo(e, d); else e.saluda = null; }
@@ -1034,6 +1281,8 @@
       mezclar(e, t);
       inclinar(J, e.lx, e.lz);
       cuidarCuello(J);
+      if (NAVE) sentar(e);
+      if (VUELO) volar(e, t);
       if (EDITOR) {
         e.obj.rotation.y = cam.giro;
         // Al cambiar una pieza, la figura da un saltito.
@@ -1047,6 +1296,7 @@
       }
     });
     if (AZOTEA) animarAzotea(t);
+    if (NAVE) { animarNave(t); cabezasNave(t); }
     medirContorno(renderer);
     renderer.render(scene, camera);
     if (AO.activo) dibujarAO();
@@ -1085,8 +1335,12 @@
   }
 
   function atender(d) {
-    if (d.tipo === "figuras" && Array.isArray(d.lista)) ponerFiguras(d.lista.slice(0, 12), d.columnas);
-    else if (d.tipo === "momento") momento(d.id, d.cual);
+    if (d.tipo === "figuras" && Array.isArray(d.lista)) ponerFiguras(d.lista.slice(0, 12), d.columnas, d.asientos);
+    else if (NAVE && d.tipo === "nave") {
+      if ("boton" in d) { const b = String(d.boton || "quieto"); NV.boton = b === "votar" || b === "golpe" ? b : "quieto"; if (b === "golpe") NV.golpe = reloj.getElapsedTime(); }
+    }
+    else if (NAVE && d.tipo === "expulsar") { const e = figuras.get(String(d.id)); if (e && e.vuela == null) e.vuela = reloj.getElapsedTime(); }
+    else if (d.tipo === "momento") momento(d.id, String(d.cual), Number(d.prio));
     else if (d.tipo === "foto" || d.tipo === "miniatura") {
       let url = null;
       // `vista` {y, alto, giro, x}: encuadre a la medida (herramientas de revisión, p. ej. tools/miniaturas/agarre.html).

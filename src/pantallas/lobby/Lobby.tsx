@@ -21,6 +21,7 @@ import "../perfil/perfil.css";
 import "./lobby.css";
 import { FondoCuarto } from "./Cuarto";
 import { claseLobby, LOBBY_NUEVO } from "./version";
+import { MenuGestos } from "../gestos/MenuGestos";
 
 /** Cabinas por color con pedestal (Elías aprobó el 22 nov; las cápsulas viejas se quitaron el 23 nov). */
 const PRUEBA_ESCENARIOS = true;
@@ -86,6 +87,7 @@ export function Lobby({ sala, miembros, yo, soyAnfitrion, final, red, refrescar,
         </button>
       </>)}
       {soyAnfitrion && <OpcionesAdmin copando={copando} alCopas={alCopas} alCerrar={alSalir} />}
+      <MenuGestos jugador={m.id} figura={m.figura} plegable className="lb-gestos" />
     </div>
   );
 

@@ -18,6 +18,7 @@ import { PanelChat } from "../Vivo";
 import { CabeceraJugador, RecursosAzotea } from "./Cabecera";
 import { EscenarioFondo } from "./Escenario";
 import { EscenaAzotea, type AccionFigura, type MandoAzotea } from "./EscenaAzotea";
+import { MenuGestos } from "../gestos/MenuGestos";
 import { IconoIlustrado, type IconoHub } from "./Iconos";
 import { escenarioActual, type MomentoAzotea } from "./paquetes";
 import "./azotea.css";
@@ -118,6 +119,7 @@ export function HubAzotea() {
           </div>
           <span className="az-reflector" aria-hidden="true" /><span className="az-reflector dos" aria-hidden="true" />
           <EscenaAzotea ref={mando} id={s.uid} figura={f} ambiente={amb} plataforma={esc.plataforma} />
+          <MenuGestos jugador={s.uid} figura={f} />
           {!ancho && <BotonChat mando={mando} />}
         </section>
 

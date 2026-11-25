@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "nota": "Animaciones por personaje (ALV_PLAN_ANIMACIONES.md). La clave es el id del traje en trajes-figura.json y `nombre` es el nombre de su figura (así se reconoce una figura ya guardada). Todo es opcional: sin talla es normal; sin especial se usa uno según su poder (fuerza: furia, araña: pose arácnida) o el baile. Especial: un nombre de animación o {anim, cambia: {talla}, pieza: {rostro | ocultar: cabello | capa}, en, vuelve} (segundos).",
+  "personajes": {
+    "hulk": { "nombre": "Hulk", "talla": "grande", "especial": "furia" },
+    "iron-man": { "nombre": "Iron Man", "especial": { "anim": "visor", "pieza": { "rostro": "sonrisa-grande" }, "en": 0.55, "vuelve": 2.25 } },
+    "spider-man": { "nombre": "Spider-Man", "especial": "pose-arana" },
+    "iron-spider": { "nombre": "Spider-Man (Iron Spider)", "especial": "pose-arana" },
+    "spider-man-pelicula": { "nombre": "Spider-Man (película)", "especial": "pose-arana" },
+    "yoda": { "nombre": "Yoda", "talla": "pequeno", "especial": "salto-jedi" },
+    "wolverine": { "nombre": "Wolverine", "especial": "furia" }
+  }
+}
