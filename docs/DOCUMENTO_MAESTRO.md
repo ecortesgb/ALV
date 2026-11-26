@@ -1471,7 +1471,7 @@ Además:
 
 ## 21.4 La partida en tres aparatos — DECISIÓN (v1.22)
 
-**DECISIÓN (v1.22, Elías aprobó la Fase 4 completa, 15 de noviembre).** Referencia con simulador (El impostor, ¿Quién es más probable? y Verdad o reto en 12 momentos, con TV, computadora y sin pantalla): página «ALV Fase 4 Multipantalla» (https://claude.ai/artifact/UL3rgCv2HCXXnGYu7xtBdZ, fuente `alv2ase4\` fuera del repo).
+**DECISIÓN (v1.22, Elías aprobó la Fase 4 completa, 15 de noviembre).** Referencia con simulador (El impostor, ¿Quién es más probable? y Verdad o reto en 12 momentos, con TV, computadora y sin pantalla): página «ALV Fase 4 Multipantalla» (https://claude.ai/artifact/UL3rgCv2HCXXnGYu7xtBdZ, fuente `alv2\fase4\` fuera del repo).
 
 Reglas:
 - El papel es del aparato, no de la cuenta. La Pantalla se anuncia como pantalla; el celular del anfitrión es un jugador más con su `vistaJugador` y la barra de control (Pausar, Saltar, Ruleta, XP reto y el botón del momento: Revelar ya, Siguiente ronda).
