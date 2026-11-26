@@ -19,6 +19,11 @@
 --  5) El guardián de piezas (033) se queda solo para figuras v2: con v3 no hace nada (lectores v2 separados).
 -- Tablas, adquisiciones (piezas_jugador), retos_jugador e historial no se tocan: se conservan para la reversión.
 -- RLS, permisos y activar_capsula() no cambian.
+--
+-- TODO en UNA transacción (el aplicador de migraciones de Supabase ya la abre; en el editor SQL, envolver en begin; … commit;).
+-- Lo primero es bloquear las tablas: ninguna escritura puede colarse entre la copia y el borrado (Codex, paso5-r1).
+
+lock table public.figuras_jugador, public.retos_figura in access exclusive mode;
 
 -- 1) Respaldo dentro de la base
 create table privado.figuras_jugador_v2 (
@@ -46,14 +51,14 @@ alter table public.figuras_jugador drop constraint figuras_jugador_figura_check;
 alter table public.figuras_jugador add constraint figuras_jugador_figura_v3 check (coalesce(
   jsonb_typeof(figura) = 'object'
   and jsonb_typeof(figura -> 'version') = 'number' and figura ->> 'version' = '3'
-  and (figura ->> 'familia') ~ '^[a-z0-9][a-z0-9-]{1,59}$'
+  and jsonb_typeof(figura -> 'familia') = 'string' and (figura ->> 'familia') ~ '^[a-z0-9][a-z0-9-]{1,59}$'
   and jsonb_typeof(figura -> 'origen') = 'object'
   and (
     figura #>> '{origen,tipo}' = 'creado'
     or (
       figura #>> '{origen,tipo}' = 'catalogo'
-      and (figura #>> '{origen,personaje}') ~ '^[a-z0-9][a-z0-9-]{1,59}$'
-      and (figura #>> '{origen,version}') ~ '^[a-z0-9][a-z0-9-]{1,59}$'
+      and jsonb_typeof(figura #> '{origen,personaje}') = 'string' and (figura #>> '{origen,personaje}') ~ '^[a-z0-9][a-z0-9-]{1,59}$'
+      and jsonb_typeof(figura #> '{origen,version}') = 'string' and (figura #>> '{origen,version}') ~ '^[a-z0-9][a-z0-9-]{1,59}$'
       and jsonb_typeof(figura #> '{origen,revision}') = 'number'
       and (figura #>> '{origen,revision}') ~ '^[0-9]{1,9}$'
     )
@@ -61,6 +66,10 @@ alter table public.figuras_jugador add constraint figuras_jugador_figura_v3 chec
   and jsonb_typeof(figura -> 'piezas') = 'object'
   and jsonb_typeof(figura -> 'momentos') = 'object'
   and jsonb_typeof(figura -> 'extensiones') = 'object'
+  -- Tamaño: 8192 bytes del jsonb guardado (binario). La app limita la figura v3 a 8192 caracteres de JSON compacto
+  -- (src/personajes/figura.ts, TOPE_JSON_CARACTERES): con acentos o muchos campos pueden no coincidir cerca del límite; si
+  -- la base rechaza, el guardado se queda pendiente en el aparato (src/app/capsulasPendientes.ts). Las figuras reales pesan
+  -- menos de 1 KB.
   and pg_column_size(figura) <= 8192,
   false));
 

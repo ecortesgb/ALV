@@ -95,10 +95,29 @@ const rotas = {
   "origen desconocido": v3({ origen: { tipo: "otro" } }),
   "piezas como lista": v3({ piezas: [] }),
   "más de 8 KB": v3({ extensiones: { relleno: "x".repeat(9000) } }),
+  "familia número": v3({ familia: 12 }),
+  "familia booleano": v3({ familia: true }),
+  "personaje número": v3({ origen: { tipo: "catalogo", personaje: 12, version: "base", revision: 1 } }),
+  "versión booleano": v3({ origen: { tipo: "catalogo", personaje: "iron-man", version: true, revision: 1 } }),
 };
 for (const [nombre, f] of Object.entries(rotas)) {
   await prueba(`v3 rota no entra: ${nombre}`, async () => { await como(C); await falla("insert into public.figuras_jugador (jugador, capsula, figura) values ($1, 3, $2)", [C, JSON.stringify(f)], "figuras_jugador_figura_v3"); });
 }
+// Límites de tamaño (Codex, paso5-r1): la base mide bytes del jsonb; la app, caracteres del JSON compacto.
+const largoJS = f => JSON.stringify(f).length;
+const tamano = async (nombre, f, entra) => prueba(`tamaño: ${nombre} (JSON ${largoJS(f)} caracteres) ${entra ? "entra" : "no entra"}`, async () => {
+  await como(C);
+  if (entra) { await poner(C, 3, f); await db.query("delete from public.figuras_jugador where jugador = $1 and capsula = 3", [C]); }
+  else await falla("insert into public.figuras_jugador (jugador, capsula, figura) values ($1, 3, $2)", [C, JSON.stringify(f)], "figuras_jugador_figura_v3");
+});
+await tamano("ASCII de 7 000", v3({ extensiones: { relleno: "x".repeat(7000) } }), true);
+await tamano("Unicode de 3 000 «é» (6 000 bytes)", v3({ extensiones: { relleno: "é".repeat(3000) } }), true);
+// La app la aceptaría (5 000 caracteres < 8 192) y la base no (10 000 bytes): se queda pendiente en el aparato.
+await tamano("Unicode de 5 000 «é» (10 000 bytes)", v3({ extensiones: { relleno: "é".repeat(5000) } }), false);
+// Muchos campos: el jsonb binario pesa más que el JSON compacto (cabeceras por campo). 200 sí; 500 (5 541 caracteres, la app
+// los acepta) ya pasan de 8 KB en la base: también se quedaría pendiente. Las figuras reales tienen unas decenas de campos.
+await tamano("200 campos pequeños", v3({ extensiones: Object.fromEntries(Array.from({ length: 200 }, (_, k) => ["k" + k, k])) }), true);
+await tamano("500 campos pequeños", v3({ extensiones: Object.fromEntries(Array.from({ length: 500 }, (_, k) => ["k" + k, k])) }), false);
 await prueba("RLS: B no escribe por A; C no ve las de A; B (comparte sala) sí; anon nada", async () => {
   await como(B); await falla("insert into public.figuras_jugador (jugador, capsula, figura) values ($1, 3, $2)", [A, JSON.stringify(v3())], "row-level security");
   await como(C); igual((await uno("select count(*)::int n from public.figuras_jugador where jugador = $1", [A])).n, 0);
@@ -126,7 +145,20 @@ await prueba("los respaldos de privado no se leen desde la app", async () => {
 
 await admin();
 const v3Antes = (await uno("select count(*)::int n from public.figuras_jugador")).n;
-await aplicar("pendientes/046_figuras_v3_reversion.sql");
+// La reversión en dos partes para comprobar que a la mitad nadie puede escribir (Codex, paso5-r1).
+const rev = readFileSync(join(RAIZ, "pendientes/046_figuras_v3_reversion.sql"), "utf8"), corte = rev.indexOf("-- 2) Exportar");
+console.log("Aplicando reversión, paso 1 (detener escrituras)");
+await db.exec(rev.slice(0, corte));
+await prueba("a la mitad de la reversión: ni insertar, ni editar (permiso de columna), ni borrar, ni activar_capsula", async () => {
+  await como(A);
+  await falla("insert into public.figuras_jugador (jugador, capsula, figura) values ($1, 3, $2)", [A, JSON.stringify(v3())], "permission denied");
+  await falla("update public.figuras_jugador set nombre = 'z' where jugador = $1", [A], "permission denied");
+  await falla("delete from public.figuras_jugador where jugador = $1", [A], "permission denied");
+  await falla("select public.activar_capsula(1::smallint)", [], "permission denied");
+});
+await admin();
+console.log("Aplicando reversión, resto");
+await db.exec(rev.slice(corte));
 
 console.log("Después de la reversión:");
 await prueba("las v3 quedan retiradas en privado y las v2 vuelven con su activa", async () => {
@@ -147,7 +179,8 @@ await prueba("vuelve el guardián de la 033 (bloquea una pieza activa que no tie
   await como(B); await falla("update public.figuras_jugador set figura = $2 where jugador = $1 and capsula = 1", [B, JSON.stringify({ version: 2, x: { id: p } })], "pieza bloqueada");
   await admin(); await db.query("update public.piezas_figura set activo = false where id = $1", [p]);
 });
-await prueba("se reabren las escrituras (permisos de la 015 y 016)", async () => {
+await prueba("se reabren las escrituras (permisos de la 015 y 016) y activar_capsula", async () => {
+  await como(A); await db.query("select public.activar_capsula(1::smallint)");
   await como(B); await poner(B, 2, { version: 2 }); await db.query("update public.figuras_jugador set nombre = 'n' where jugador = $1 and capsula = 2", [B]);
   await db.query("delete from public.figuras_jugador where jugador = $1 and capsula = 2", [B]);
 });

@@ -39,6 +39,11 @@ insert into public.perfiles (id, nombre) select x, 'prueba_' || left(x::text, 6)
 --  5) El guardián de piezas (033) se queda solo para figuras v2: con v3 no hace nada (lectores v2 separados).
 -- Tablas, adquisiciones (piezas_jugador), retos_jugador e historial no se tocan: se conservan para la reversión.
 -- RLS, permisos y activar_capsula() no cambian.
+--
+-- TODO en UNA transacción (el aplicador de migraciones de Supabase ya la abre; en el editor SQL, envolver en begin; … commit;).
+-- Lo primero es bloquear las tablas: ninguna escritura puede colarse entre la copia y el borrado (Codex, paso5-r1).
+
+lock table public.figuras_jugador, public.retos_figura in access exclusive mode;
 
 -- 1) Respaldo dentro de la base
 create table privado.figuras_jugador_v2 (
@@ -66,14 +71,14 @@ alter table public.figuras_jugador drop constraint figuras_jugador_figura_check;
 alter table public.figuras_jugador add constraint figuras_jugador_figura_v3 check (coalesce(
   jsonb_typeof(figura) = 'object'
   and jsonb_typeof(figura -> 'version') = 'number' and figura ->> 'version' = '3'
-  and (figura ->> 'familia') ~ '^[a-z0-9][a-z0-9-]{1,59}$'
+  and jsonb_typeof(figura -> 'familia') = 'string' and (figura ->> 'familia') ~ '^[a-z0-9][a-z0-9-]{1,59}$'
   and jsonb_typeof(figura -> 'origen') = 'object'
   and (
     figura #>> '{origen,tipo}' = 'creado'
     or (
       figura #>> '{origen,tipo}' = 'catalogo'
-      and (figura #>> '{origen,personaje}') ~ '^[a-z0-9][a-z0-9-]{1,59}$'
-      and (figura #>> '{origen,version}') ~ '^[a-z0-9][a-z0-9-]{1,59}$'
+      and jsonb_typeof(figura #> '{origen,personaje}') = 'string' and (figura #>> '{origen,personaje}') ~ '^[a-z0-9][a-z0-9-]{1,59}$'
+      and jsonb_typeof(figura #> '{origen,version}') = 'string' and (figura #>> '{origen,version}') ~ '^[a-z0-9][a-z0-9-]{1,59}$'
       and jsonb_typeof(figura #> '{origen,revision}') = 'number'
       and (figura #>> '{origen,revision}') ~ '^[0-9]{1,9}$'
     )
@@ -81,6 +86,10 @@ alter table public.figuras_jugador add constraint figuras_jugador_figura_v3 chec
   and jsonb_typeof(figura -> 'piezas') = 'object'
   and jsonb_typeof(figura -> 'momentos') = 'object'
   and jsonb_typeof(figura -> 'extensiones') = 'object'
+  -- Tamaño: 8192 bytes del jsonb guardado (binario). La app limita la figura v3 a 8192 caracteres de JSON compacto
+  -- (src/personajes/figura.ts, TOPE_JSON_CARACTERES): con acentos o muchos campos pueden no coincidir cerca del límite; si
+  -- la base rechaza, el guardado se queda pendiente en el aparato (src/app/capsulasPendientes.ts). Las figuras reales pesan
+  -- menos de 1 KB.
   and pg_column_size(figura) <= 8192,
   false));
 
@@ -142,8 +151,15 @@ $$;
 -- guardadas en privado.figuras_jugador_v3_retiradas) y exportarlas también FUERA del repo.
 -- Las cachés locales de los aparatos que tengan v3 no pueden volver a subirlas: el CHECK restaurado solo acepta version 2.
 
--- 1) Detener escrituras de los jugadores mientras se revierte
+-- TODO en UNA transacción (en el editor SQL: begin; … commit;). App: al revertir se vuelve a publicar la versión que guarda
+-- v2 (la última publicada antes del cambio «v3 directo»; anotar su commit en ALV_PLAN_FASE5.md al aplicar la 046).
+
+-- 1) Detener TODAS las escrituras mientras se revierte (Codex, paso5-r1): bloqueo de las tablas antes de copiar, y fuera
+--    los permisos de la tabla, los de columna (015/016) y activar_capsula().
+lock table public.figuras_jugador, public.retos_figura in access exclusive mode;
 revoke insert, update, delete on public.figuras_jugador from authenticated;
+revoke update (nombre, figura, actualizado, jugador, capsula) on public.figuras_jugador from authenticated;
+revoke execute on function public.activar_capsula(smallint) from authenticated;
 
 -- 2) Exportar las v3 (respaldo dentro de la base)
 create table if not exists privado.figuras_jugador_v3_retiradas (
@@ -190,6 +206,7 @@ insert into public.figuras_jugador (jugador, capsula, nombre, figura, activa, ac
 -- 8) Reabrir escrituras con los permisos de la 015 y la 016
 grant insert, delete on public.figuras_jugador to authenticated;
 grant update (nombre, figura, actualizado, jugador, capsula) on public.figuras_jugador to authenticated;
+grant execute on function public.activar_capsula(smallint) to authenticated;
 
 -- Las tablas privado.figuras_jugador_v2, privado.retos_figura_corte_v3 y privado.figuras_jugador_v3_retiradas se quedan
 -- (respaldo). Para un corte nuevo después de esta reversión, borrar antes privado.figuras_jugador_v2 y

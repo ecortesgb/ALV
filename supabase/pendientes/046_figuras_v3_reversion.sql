@@ -3,8 +3,15 @@
 -- guardadas en privado.figuras_jugador_v3_retiradas) y exportarlas también FUERA del repo.
 -- Las cachés locales de los aparatos que tengan v3 no pueden volver a subirlas: el CHECK restaurado solo acepta version 2.
 
--- 1) Detener escrituras de los jugadores mientras se revierte
+-- TODO en UNA transacción (en el editor SQL: begin; … commit;). App: al revertir se vuelve a publicar la versión que guarda
+-- v2 (la última publicada antes del cambio «v3 directo»; anotar su commit en ALV_PLAN_FASE5.md al aplicar la 046).
+
+-- 1) Detener TODAS las escrituras mientras se revierte (Codex, paso5-r1): bloqueo de las tablas antes de copiar, y fuera
+--    los permisos de la tabla, los de columna (015/016) y activar_capsula().
+lock table public.figuras_jugador, public.retos_figura in access exclusive mode;
 revoke insert, update, delete on public.figuras_jugador from authenticated;
+revoke update (nombre, figura, actualizado, jugador, capsula) on public.figuras_jugador from authenticated;
+revoke execute on function public.activar_capsula(smallint) from authenticated;
 
 -- 2) Exportar las v3 (respaldo dentro de la base)
 create table if not exists privado.figuras_jugador_v3_retiradas (
@@ -51,6 +58,7 @@ insert into public.figuras_jugador (jugador, capsula, nombre, figura, activa, ac
 -- 8) Reabrir escrituras con los permisos de la 015 y la 016
 grant insert, delete on public.figuras_jugador to authenticated;
 grant update (nombre, figura, actualizado, jugador, capsula) on public.figuras_jugador to authenticated;
+grant execute on function public.activar_capsula(smallint) to authenticated;
 
 -- Las tablas privado.figuras_jugador_v2, privado.retos_figura_corte_v3 y privado.figuras_jugador_v3_retiradas se quedan
 -- (respaldo). Para un corte nuevo después de esta reversión, borrar antes privado.figuras_jugador_v2 y

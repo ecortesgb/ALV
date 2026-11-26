@@ -3,7 +3,10 @@ import { familia } from "./familias";
 import { esId, esParte, type Ficha, type FiguraV3, type PiezaPuesta } from "./tipos";
 
 const MOMENTOS_BASE: FiguraV3["momentos"] = { paquete: null, espera: "respirar", victoria: "salto-puno", derrota: "cabeza-baja", punto: "puno-arriba" };
-const TOPE_BYTES = 8192;
+// Tope de la figura v3: 8192 caracteres de JSON compacto (unidades UTF-16 de JS). La base (046, si se aplica) limita
+// 8192 BYTES del jsonb guardado (pg_column_size): con acentos o muchos campos pueden no coincidir cerca del límite; si la
+// base la rechaza, el guardado se queda pendiente en el aparato. Las figuras reales pesan menos de 1 KB.
+const TOPE_JSON_CARACTERES = 8192;
 
 /** Figura nueva a partir de un personaje del catálogo, sin tocar el estilo de movimiento que ya tenía el jugador. */
 export function deCatalogo(ficha: Ficha, antes?: FiguraV3 | null, version = "base"): FiguraV3 {
@@ -30,7 +33,7 @@ export function leerFigura(x: unknown): FiguraV3 | null {
   if (!x || typeof x !== "object") return null;
   let s: string;
   try { s = JSON.stringify(x); } catch { return null; }
-  if (s.length > TOPE_BYTES) return null;
+  if (s.length > TOPE_JSON_CARACTERES) return null;
   const f = x as Record<string, unknown>;
   if (f.version !== 3 || !esId(f.familia) || !familia(f.familia)) return null;
   const o = f.origen as Record<string, unknown> | null;
