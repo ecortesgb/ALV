@@ -1,7 +1,8 @@
 /* «Modos de juego» (ModosJuego.tsx). Mismos tokens que el HUB «La Azotea» (.D.az en azotea.css).
-   Las tarjetas son las ilustraciones de Elías tal cual: aquí solo van luz, movimiento y marcas. */
-/* Alto de la carta: cabe a lo alto y las 3 caben a lo ancho (628×1024 → ancho × 1.63). */
-.D.az.mj { --mj-alto: min(calc(100dvh - 250px), 660px, calc((100vw - 150px) / 3 * 1.63)); }
+   Las ilustraciones de Elías van tal cual; Modo libre usa un sustituto CSS mientras llega su arte. */
+/* Alto de la carta: caben 4 a lo ancho, con 3 huecos, el padding del HUB y 30 px por lema (628×1024). */
+.D.az.mj { --mj-gap: clamp(18px, 3vw, 56px); --mj-alto-ancho: calc((100vw - var(--az-pad) * 2 - var(--mj-gap) * 3 - 120px) / 4 * 1024 / 628);
+  --mj-alto: min(calc(100dvh - 250px), 660px, var(--mj-alto-ancho)); }
 .D .mj-caja { position: relative; flex: 1 0 auto; min-height: 100%; display: flex; flex-direction: column; align-items: center; gap: clamp(10px, 2vh, 22px); }
 .D .mj-top { align-self: stretch; display: flex; align-items: center; justify-content: space-between; gap: 12px; z-index: 3; }
 
@@ -12,14 +13,22 @@
   -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); text-shadow: 0 3px 0 var(--az-tinta), 0 6px 14px rgba(0, 0, 0, .4); }
 
 /* ---------- Tarjetas ---------- */
-.D .mj-pista { display: flex; align-items: flex-start; justify-content: center; gap: clamp(18px, 3vw, 56px); width: 100%; }
+.D .mj-pista { display: flex; align-items: flex-start; justify-content: center; gap: var(--mj-gap); width: 100%; }
 .D .mj-hueco { flex: none; display: flex; flex-direction: column; align-items: center; gap: 10px;
   animation: mjEntra .55s cubic-bezier(.2, .8, .2, 1) calc(var(--i) * 90ms) backwards; }
+.D.az.mj.wide .mj-hueco { width: calc(var(--mj-alto) * 628 / 1024 + 30px); }
 @keyframes mjEntra { from { opacity: 0; transform: translateY(26px) scale(.96); } }
 .D .mj-carta { position: relative; display: block; height: var(--mj-alto); aspect-ratio: 628 / 1024; padding: 0; border: 0; border-radius: 22px; cursor: pointer;
   background: transparent; transform: translateZ(0); transition: transform .28s cubic-bezier(.2, .8, .2, 1), filter .28s ease, opacity .28s ease;
   filter: drop-shadow(0 18px 26px rgba(4, 8, 30, .55)); -webkit-tap-highlight-color: transparent; }
-.D .mj-carta img { display: block; width: 100%; height: 100%; border-radius: 22px; user-select: none; }
+.D .mj-carta img, .D .mj-sustituto { display: block; width: 100%; height: 100%; border-radius: 22px; user-select: none; }
+.D .mj-sustituto { position: relative; aspect-ratio: 628 / 1024;
+  background: radial-gradient(ellipse at 50% 20%, rgba(93, 130, 214, .3), transparent 65%), linear-gradient(155deg, #273e78, var(--az-tinta) 75%); }
+.D .mj-sustituto::before { content: ""; position: absolute; inset: 4% 6%; border: 3px solid var(--az-oro); border-radius: 16px;
+  box-shadow: 0 0 0 1px #ffe8a0, inset 0 0 0 2px var(--az-tinta), inset 0 0 24px rgba(255, 194, 26, .15); }
+.D .mj-sustituto > span { position: absolute; top: 9%; left: 10%; right: 10%; text-align: center;
+  font: 400 clamp(22px, 2.5vw, 44px)/1.1 var(--f-titulo); text-transform: uppercase; color: #fff;
+  text-shadow: 0 3px 0 var(--az-tinta), 0 6px 14px var(--az-tinta); }
 /* Luz dorada que respira detrás del marco */
 .D .mj-brillo { position: absolute; inset: 3% 5%; border-radius: 26px; z-index: -1; opacity: 0; transition: opacity .28s ease;
   box-shadow: 0 0 34px 10px rgba(255, 210, 80, .55), 0 0 90px 24px rgba(255, 170, 40, .28); }
@@ -43,7 +52,7 @@
 .D .mj-carta.elegida::after { opacity: 1; animation: mjReflejo .45s ease-out; }
 
 /* Próximamente: la carta se ve, un poco más quieta */
-.D .mj-carta.pronto img { filter: saturate(.8) brightness(.9); }
+.D .mj-carta.pronto img, .D .mj-carta.pronto .mj-sustituto { filter: saturate(.8) brightness(.9); }
 .D .mj-pronto { position: absolute; left: 50%; top: 46%; transform: translate(-50%, -50%) rotate(-6deg); padding: 6px 16px; border-radius: 10px; white-space: nowrap;
   font: 400 clamp(16px, 1.3vw, 22px)/1 var(--f-titulo); text-transform: uppercase; letter-spacing: .05em; color: var(--az-tinta);
   background: linear-gradient(180deg, #ffe066, #ffb000); border: 2.5px solid var(--az-tinta); box-shadow: 0 4px 0 var(--az-tinta), 0 10px 18px rgba(0, 0, 0, .35); }
@@ -69,9 +78,9 @@
 @media (max-width: 430px) { .D.az.mj .azr-puntos, .D.az.mj .azr-ajustes { display: none; } }
 .D.az.mj:not(.wide) .mj-pista { justify-content: flex-start; gap: 14px; margin: 0 calc(var(--az-pad) * -1); width: calc(100% + var(--az-pad) * 2);
   overflow-x: auto; overscroll-behavior-x: contain; scroll-snap-type: x mandatory; scrollbar-width: none;
-  padding: 18px calc((100% - var(--mj-ancho)) / 2) 8px; }
+  padding: 18px calc((100% + var(--az-pad) * 2 - var(--mj-ancho)) / 2) 8px; }
 .D.az.mj:not(.wide) .mj-pista::-webkit-scrollbar { display: none; }
-.D.az.mj:not(.wide) .mj-hueco { scroll-snap-align: center; }
+.D.az.mj:not(.wide) .mj-hueco { width: var(--mj-ancho); scroll-snap-align: center; }
 .D.az.mj:not(.wide) .mj-carta { height: auto; width: var(--mj-ancho); }
 .D.az.mj:not(.wide) .mj-lema { font-size: 13px; }
 .D.az.mj:not(.wide) .pf-atras { height: 42px; padding: 0 12px; font-size: 17px; }
@@ -80,7 +89,7 @@
 .D .mj-puntos button.si { width: 26px; background: var(--az-oro); }
 
 /* Computadora baja: tarjetas un poco más chicas */
-@media (max-height: 700px) { .D.az.mj.wide { --mj-alto: calc(100dvh - 210px); } .D .mj-titulo { font-size: 26px; } }
+@media (max-height: 700px) { .D.az.mj.wide { --mj-alto: min(calc(100dvh - 210px), 660px, var(--mj-alto-ancho)); } .D .mj-titulo { font-size: 26px; } }
 
 @media (prefers-reduced-motion: reduce) {
   .D .mj-hueco { animation: none; }
