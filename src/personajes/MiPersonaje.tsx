@@ -33,7 +33,9 @@ export interface MiPersonajeProps {
 }
 
 const BASE = import.meta.env.BASE_URL;
-const ESCENA = `${BASE}tools/personajes/escena.html?fondo=no`;
+// La escena y el estudio publicados (copias de tools/personajes en public/personajes): tools/ no entra al build, y en lo
+// publicado esa ruta no existía (lo halló el ensayo del corte, 2026-11-26).
+const ESCENA = `${BASE}personajes/escena.html?fondo=no`;
 type Vista = { cual: "inicio" } | { cual: "galeria" } | { cual: "crear"; figura: FiguraV3 };
 const TEXTO: Record<ResultadoGuardar, (n: string) => string> = {
   sincronizado: n => `${n}: guardado`,

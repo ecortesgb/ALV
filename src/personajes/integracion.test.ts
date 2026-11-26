@@ -94,8 +94,8 @@ describe("fase 5: resolución central", () => {
 });
 
 describe("fase 5: copias para la escena vieja", () => {
-  it("public/personajes tiene la misma copia del motor nuevo que tools/personajes (la carga la escena vieja)", () => {
-    for (const f of ["motor-personajes.js", "logicas.js"]) expect(readFileSync(`public/personajes/${f}`, "utf8"), f).toBe(readFileSync(`tools/personajes/${f}`, "utf8"));
+  it("public/personajes tiene la misma copia del motor nuevo, la escena y el estudio que tools/personajes (lo publicado)", () => {
+    for (const f of ["motor-personajes.js", "logicas.js", "escena.html", "estudio.html", "escena-personajes.js", "estudio-personajes.js"]) expect(readFileSync(`public/personajes/${f}`, "utf8"), f).toBe(readFileSync(`tools/personajes/${f}`, "utf8"));
   });
 });
 
