@@ -11,6 +11,8 @@
   const lienzo = document.getElementById("lienzo");
   // ?fondo=no → fondo transparente (la página de arriba pone el suyo) y sin piso grande.
   const SIN_FONDO = new URLSearchParams(location.search).get("fondo") === "no";
+  // ?cerca=1 → encuadre más cerrado para una sola figura en un cuadro bajo (el constructor en celular).
+  const CERCA = new URLSearchParams(location.search).get("cerca") === "1";
   if (SIN_FONDO) document.documentElement.style.background = document.body.style.background = "transparent";
   const renderer = new THREE.WebGLRenderer({ canvas: lienzo, antialias: true, alpha: SIN_FONDO });
   renderer.outputEncoding = THREE.sRGBEncoding;
@@ -42,11 +44,13 @@
     let alto = 0;
     figuras.forEach(f => { alto = Math.max(alto, f.p.alto()); });
     alto = alto || 2.6;
-    const ancho = Math.max(alto, total + 0.6);
+    const cerca = CERCA && camera.aspect > 1; // solo en cuadros anchos y bajos; en uno alto cortaría la cabeza
+    const ancho = cerca ? Math.max(alto * 0.8, total + 0.3) : Math.max(alto, total + 0.6);
     // Que quepan a lo alto y a lo ancho según la forma de la ventana (con 10 % de margen).
     const tanV = Math.tan((camera.fov * Math.PI) / 360), tanH = tanV * camera.aspect;
-    const dist = 1.1 * Math.max((alto * 0.62) / tanV, (ancho * 0.5) / tanH) + 1;
-    camera.position.set(0, alto * 0.62, dist); camera.lookAt(0, alto * 0.5, 0);
+    const dist = cerca ? 1.02 * Math.max((alto * 0.53) / tanV, (ancho * 0.5) / tanH) + 0.15
+      : 1.1 * Math.max((alto * 0.62) / tanV, (ancho * 0.5) / tanH) + 1;
+    camera.position.set(0, alto * 0.62, dist); camera.lookAt(0, alto * (cerca ? 0.465 : 0.5), 0);
     piso.scale.setScalar(Math.max(ancho, alto) * 1.2);
     clave.position.set(alto * 2, alto * 4, alto * 3);
     Object.assign(clave.shadow.camera, { left: -ancho, right: ancho, top: alto * 2, bottom: -alto, near: 0.1, far: alto * 12 });

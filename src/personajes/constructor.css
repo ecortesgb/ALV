@@ -61,6 +61,8 @@
 /* Figura y gestos */
 .D .pz-escena { grid-area: escena; position: relative; min-height: 0; display: grid; grid-template-rows: minmax(0, 1fr) auto; }
 .D .pz-vista { position: relative; min-height: 0; }
+/* Celular: la figura empieza debajo del recuadro «Mientras tanto…» (Codex D3: ≥ 8 px entre cabeza y letrero). */
+@media (max-width: 859px) { .D .pz-vista { margin-top: 26px; } }
 .D .pz-vista iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; display: block; }
 .D .pz-vista .gal-cargando { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); font: 400 16px var(--f-titulo); color: #dfe6ff; }
 .D .pz-gestos { justify-content: center; padding-bottom: 4px; }
@@ -101,6 +103,8 @@
 .D .pz-pieza.on { border-color: #ffb000; box-shadow: 0 0 0 3px #ffb000; }
 .D .pz-pieza img { width: 100%; height: 100%; object-fit: contain; min-height: 0; pointer-events: none; }
 .D .pz-pieza span:last-child { font: 800 11px/1.1 var(--f-texto); text-align: center; padding-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.D .pz-espera { width: 34%; aspect-ratio: 1; place-self: center; border-radius: 50%; border: 4px solid #d5dbea; border-top-color: #ffb000; animation: pzGira .8s linear infinite; }
+@keyframes pzGira { to { transform: rotate(360deg); } }
 .D .pz-sin { display: grid; place-items: center; font: 400 28px var(--f-titulo); color: #9aa3c0; }
 .D .pz-vacio { grid-column: 1 / -1; align-self: center; text-align: center; color: #3a4470; margin: 0; }
 .D .pz-paginas { display: flex; align-items: center; justify-content: center; gap: 12px; }
@@ -116,7 +120,12 @@
 .D .pz-acciones .az-losa::after { display: none; }
 .D .pz-guardar .az-losa-txt b { font-size: clamp(22px, 2.4vw, 34px); }
 .D .pz-regresar .az-losa-txt b { font-size: clamp(14px, 1.3vw, 18px); }
-.D .pz-regresar:disabled, .D .pz-guardar:disabled { opacity: .5; cursor: default; }
+/* Texto centrado como ¡Jugar! (en el HUB el texto ocupa todo el ancho: flex 1). */
+.D .pz-acciones .az-losa-txt { flex: 0 1 auto; align-items: center; text-align: center; }
+/* Apagado se ve gris (no hay nada que regresar / la figura aún se arma), no azul deslavado. */
+/* Decidió Codex (encargo 2026-11-25-constructor-diseno-r3, D1 A): gris a opacidad completa, sin respuesta al cursor. */
+.D .pz-regresar:disabled, .D .pz-guardar:disabled { --c1: #c3c9d8; --c2: #8f98b0; --lab: #5f6880; filter: saturate(.4); pointer-events: none; transform: none; }
+.D .pz-regresar:disabled .az-losa-txt b, .D .pz-guardar:disabled .az-losa-txt b { color: #eef1f8; }
 .D .pz-aviso { position: absolute; left: 50%; top: 8px; transform: translateX(-50%); z-index: 3; padding: 8px 14px; border-radius: 12px; border: 2.5px solid var(--az-tinta);
   background: #ff3b5c; color: #fff; font: 400 15px/1 var(--f-titulo); box-shadow: 0 4px 0 var(--az-tinta); white-space: nowrap; }
 .D .pz-losa .az-losa-txt b, .D .pz-pill, .D .pz-placa { font-family: var(--f-titulo); }

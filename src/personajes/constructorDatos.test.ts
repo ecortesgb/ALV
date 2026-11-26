@@ -63,3 +63,13 @@ describe("armar y teñir", () => {
     expect(planoConstructor("yo", f, cat, piezas)!.piezas).toEqual([]);
   });
 });
+
+describe("piezas fuera (lista revisada a la vista)", () => {
+  it("una pieza de la lista no se ofrece y las demás sí", async () => {
+    const { PIEZAS_FUERA } = await import("./constructorDatos");
+    const pz = (id: string) => ({ id, nombre: id, parte: "cara" as const, glb: "x.glb", ranuras: ["face"], foto: null, donante: id.split("--")[0]!, familia: "minifig" });
+    const mapa = new Map([["loki--cara", pz("loki--cara")], ["thor--cara", pz("thor--cara")]]);
+    expect(PIEZAS_FUERA.has("loki--cara")).toBe(true);
+    expect(piezasDe(mapa, "cara").map(p => p.id)).toEqual(["thor--cara"]);
+  });
+});

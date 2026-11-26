@@ -76,9 +76,15 @@ export const deFamilia = (pz: PiezaCons, familia: Id) => pz.familia === null || 
 /** Solo se personaliza una familia que tiene piezas (hoy solo minifigura; Hulk y los grandes no). */
 export const sePuedePersonalizar = (piezas: Piezas, familia: Id) => [...piezas.values()].some(p => p.familia === familia);
 
+/** Piezas que no se ofrecen en el constructor, revisadas a la vista una por una (Codex, encargo
+ *  2026-11-25-constructor-diseno-r3, D2 B: lista explícita, no medición por píxel). Hoja: capturas-personalizador/r3-caras-todas.png. */
+export const PIEZAS_FUERA: ReadonlyMap<Id, string> = new Map([
+  ["loki--cara", "la cara sola sale con un recuadro blanco encima"],
+]);
+
 /** Piezas de una parte para esa familia, ordenadas por nombre, con «Sin …» primero si la parte es opcional. */
 export function piezasDe(piezas: Piezas, parte: Parte, familia: Id = "minifig"): PiezaCons[] {
-  const l = [...piezas.values()].filter(p => p.parte === parte && deFamilia(p, familia));
+  const l = [...piezas.values()].filter(p => p.parte === parte && deFamilia(p, familia) && !PIEZAS_FUERA.has(p.id));
   return l.sort((a, b) => (a.donante ? 1 : 0) - (b.donante ? 1 : 0) || a.nombre.localeCompare(b.nombre, "es"));
 }
 

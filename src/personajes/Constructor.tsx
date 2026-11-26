@@ -10,6 +10,7 @@ import { PALETAS, PALETA_DE_PARTE, piezasDe, planoConstructor, ponerPieza, teñi
 import { caben, paginas } from "./galeriaDatos";
 import type { Catalogo } from "./plano";
 import { PESTANAS_BASICO, type FiguraV3, type Parte } from "./tipos";
+import { useMiniaturas } from "./useMiniaturas";
 import { Vista3D } from "./Vista3D";
 import "../pantallas/azotea/azotea.css";
 import "../pantallas/perfil/perfil.css";
@@ -62,11 +63,17 @@ export interface ConstructorProps {
   onSalir?: () => void;
   /** Imagen de la página que se voltea al entrar y al salir (el HUB). null = sin volteo. */
   paginaAnterior?: string | null;
+  /** Estudio de miniaturas de piezas sueltas; null = usar la foto del personaje que dona la pieza. */
+  estudioUrl?: string | null;
+  /** Encuadre más cerrado de la figura (la figura se ve más grande en la viñeta). */
+  figuraCerca?: boolean;
 }
 
 const sinMovimiento = () => typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-export function Constructor({ catalogo, piezas, inicial, escenaUrl, onGuardar, onSalir, paginaAnterior = `${ARTE}azotea-pedestal-noche-1920.webp` }: ConstructorProps) {
+export function Constructor({ catalogo, piezas, inicial, escenaUrl, onGuardar, onSalir, paginaAnterior = `${ARTE}azotea-pedestal-noche-1920.webp`,
+  estudioUrl = escenaUrl.replace(/escena\.html.*$/, "estudio.html"), figuraCerca = true }: ConstructorProps) {
+  const mini = useMiniaturas(estudioUrl, catalogo);
   const [figura, setFigura] = useState(inicial);
   const [historia, setHistoria] = useState<FiguraV3[]>([]);
   const [pestana, setPestana] = useState<Pestana>("cabeza");
@@ -115,6 +122,8 @@ export function Constructor({ catalogo, piezas, inicial, escenaUrl, onGuardar, o
   const base = figura.origen.tipo === "catalogo" ? figura.origen.personaje : null;
   const visible = (pz: PiezaCons) => pz.id === puesta || (!puesta && pz.donante === base);
   const losa = LOSAS.find(l => l.id === pestana)!;
+  // Pide las fotos de las piezas de la página que se ve (las demás, cuando se llegue a ellas).
+  useEffect(() => { pags[p]?.forEach(mini.pedir); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [mini.listo, pags, p]);
 
   const cambiar = (nueva: FiguraV3) => { setHistoria(h => [...h.slice(-29), figura]); setFigura(nueva); setGuardado(false); };
   // Respuesta de la escena al plano de la figura actual (las viejas ya las descartó Vista3D). Si una pieza no encaja,
@@ -156,7 +165,7 @@ export function Constructor({ catalogo, piezas, inicial, escenaUrl, onGuardar, o
 
       <div className="pz-escena">
         <p className="pz-cartela" aria-hidden="true">Mientras tanto, en el vestidor…</p>
-        <Vista3D url={escenaUrl} plano={plano} alLlegar={llego ? null : "entrada"} className="pz-vista" momento={momento} onArmado={alArmar} />
+        <Vista3D url={figuraCerca ? escenaUrl + (escenaUrl.includes("?") ? "&" : "?") + "cerca=1" : escenaUrl} plano={plano} alLlegar={llego ? null : "entrada"} className="pz-vista" momento={momento} onArmado={alArmar} />
         {aviso && <div className="pz-aviso" role="status">{aviso}</div>}
         <div className="mg mg-fila pz-gestos" role="group" aria-label="Probar tu figura">
           {GESTOS.map(g => (
@@ -196,7 +205,13 @@ export function Constructor({ catalogo, piezas, inicial, escenaUrl, onGuardar, o
           style={{ gridTemplateColumns: `repeat(${caja.columnas}, minmax(0, 1fr))`, gridTemplateRows: `repeat(${caja.filas}, minmax(0, 1fr))` }}>
           {pags[p]!.map(pz => (
             <button key={pz.id} type="button" className={"pz-pieza" + (visible(pz) ? " on" : "")} aria-pressed={visible(pz)} onClick={() => cambiar(ponerPieza(figura, pz))}>
-              {pz.foto ? <img src={pz.foto} alt="" draggable={false} loading="lazy" /> : <span className="pz-sin" aria-hidden="true">—</span>}
+              {(() => {
+                if (!pz.glb) return <span className="pz-sin" aria-hidden="true">—</span>;
+                const m = mini.foto(pz);
+                if (m) return <img src={m} alt="" draggable={false} />;
+                if (m === undefined) return <span className="pz-espera" aria-hidden="true" />;
+                return pz.foto ? <img src={pz.foto} alt="" draggable={false} loading="lazy" /> : <span className="pz-sin" aria-hidden="true">—</span>;
+              })()}
               <span>{pz.glb ? pz.nombre : "Ninguno"}</span>
             </button>
           ))}
@@ -210,13 +225,14 @@ export function Constructor({ catalogo, piezas, inicial, escenaUrl, onGuardar, o
       </section>
 
       <div className="pz-acciones">
-        <button type="button" className="az-losa pz-regresar" onClick={regresar} disabled={!historia.length} style={{ "--c1": "#6fb6ff", "--c2": "#1f5fd6", "--lab": "#123e9c" } as CSSProperties}>
+        <button type="button" className="az-losa pz-regresar" onClick={regresar} disabled={!historia.length} title={historia.length ? "Deshacer el último cambio" : "Aún no hay cambios que regresar"}>
           <span className="az-losa-txt"><b>↶ Regresar</b></span>
         </button>
         <button type="button" className="az-losa az-jugar pz-guardar" disabled={!sePuedeGuardar} onClick={() => { if (sePuedeGuardar) { onGuardar(figura); setGuardado(true); } }}>
           <span className="az-losa-txt"><b>{guardado ? "¡Guardado!" : "¡Guardar!"}</b></span>
         </button>
       </div>
+      {mini.marco}
       {volteo && paginaAnterior && (
         <div className={"pz-volteo " + volteo} aria-hidden="true" onAnimationEnd={finVolteo}>
           <div className="pz-hoja" style={{ backgroundImage: `url(${paginaAnterior})` }} />
