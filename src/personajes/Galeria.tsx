@@ -21,12 +21,14 @@ export interface GaleriaProps {
   actual?: Id | null;
   onUsar: (figura: FiguraV3, t: Tarjeta) => void;
   onPersonalizar?: (figura: FiguraV3, t: Tarjeta) => void;
+  /** Qué familias se pueden personalizar (las que tienen piezas). Sin esto, todas. */
+  personalizable?: (familia: Id) => boolean;
   onSalir?: () => void;
 }
 
 const iniciales = (n: string) => n.split(/\s+/).map(p => p[0]).join("").slice(0, 2).toUpperCase();
 
-export function Galeria({ catalogo, pruebas, jugador, escenaUrl, actual, onUsar, onPersonalizar, onSalir }: GaleriaProps) {
+export function Galeria({ catalogo, pruebas, jugador, escenaUrl, actual, onUsar, onPersonalizar, personalizable, onSalir }: GaleriaProps) {
   const todas = useMemo(() => tarjetas(catalogo, { conBorradores: !!pruebas?.size, pruebas }), [catalogo, pruebas]);
   const [favs, setFavs] = useState(() => leerFavoritos(jugador));
   const [filtro, setFiltro] = useState<Filtro>(SIN_FILTRO);
@@ -147,7 +149,9 @@ export function Galeria({ catalogo, pruebas, jugador, escenaUrl, actual, onUsar,
             </div>
             <div className="gal-acciones">
               <Boton color="amarillo" texto={hecho === t.id || actual === t.id ? "¡Es tu personaje!" : "Usar"} icono="play" onClick={usar} />
-              {onPersonalizar && <Boton color="azul" texto="Personalizar" icono="shirt" onClick={() => { const en = catalogo.get(t.id); if (en) onPersonalizar(deCatalogo(en.ficha), t); }} />}
+              {onPersonalizar && (!personalizable || personalizable(t.familia)
+                ? <Boton color="azul" texto="Personalizar" icono="shirt" onClick={() => { const en = catalogo.get(t.id); if (en) onPersonalizar(deCatalogo(en.ficha), t); }} />
+                : <span className="gal-nota">{t.nombre} todavía no se puede personalizar: aún no hay piezas de su tamaño.</span>)}
             </div>
           </div>
         ) : <p className="gal-vacio">Elige un personaje.</p>}

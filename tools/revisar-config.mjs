@@ -35,6 +35,30 @@ const permitidos = new Set(JSON.parse(readFileSync("src/personajes/archivos-3d.j
     if (MODELOS.test(n) && !permitidos.has(ruta.split("\\").join("/"))) { console.error(`Modelo 3D sin permiso en public/ (${ruta}). Agrégalo a src/personajes/archivos-3d.json solo si su licencia es pública. Build detenido.`); process.exit(1); }
   }
 })("public");
+// Imágenes privadas (Codex O8, 2026-11-25): las fotos de tarjeta y busto y las miniaturas de piezas salen de un juego.
+// Se frenan por nombre en public/ y src/, y por contenido: si existe ../personajes-privado (build en esta PC), ninguna
+// imagen de public/ o src/ puede ser idéntica (SHA256) a una de ahí.
+import { createHash } from "node:crypto";
+import { existsSync } from "node:fs";
+const IMAGENES = /\.(webp|png|jpe?g|avif|gif)$/i;
+const NOMBRE_PRIVADO = /-(tarjeta|busto)\.(webp|png|jpe?g|avif)$/i;
+const huella = r => createHash("sha256").update(readFileSync(r)).digest("hex");
+function imagenes(dir, fuera = []) {
+  if (!existsSync(dir)) return fuera;
+  for (const n of readdirSync(dir)) {
+    const ruta = join(dir, n);
+    if (statSync(ruta).isDirectory()) { if (n !== "node_modules") imagenes(ruta, fuera); continue; }
+    if (IMAGENES.test(n)) fuera.push(ruta);
+  }
+  return fuera;
+}
+const publicables = [...imagenes("public"), ...imagenes("src")];
+for (const r of publicables) if (NOMBRE_PRIVADO.test(r)) { console.error(`Foto de personaje privada en ${r} (tarjeta/busto salen del juego). Build detenido.`); process.exit(1); }
+const privada = process.env.ALV_PERSONAJES_PRIVADO ?? "../personajes-privado";
+if (existsSync(privada)) {
+  const prohibidas = new Set(imagenes(privada).map(huella));
+  for (const r of publicables) if (prohibidas.has(huella(r))) { console.error(`Imagen idéntica a una de personajes-privado en ${r}. Lo del juego no se publica. Build detenido.`); process.exit(1); }
+}
 const bib = process.env.VITE_ANIM_BIBLIOTECA_URL ?? "";
 if (bib && !/^https?:\/\/[^\s"'<>]+$/.test(bib)) { console.error("VITE_ANIM_BIBLIOTECA_URL no es una dirección http(s). Build detenido."); process.exit(1); }
 console.log(url ? "config ok: con servidor" : "config ok: sin servidor (modo local)");

@@ -43,6 +43,8 @@ export interface PiezaCons {
   ranuras: string[];
   foto: string | null;
   donante: Id | null;
+  /** Familia del esqueleto de la pieza; null en «Sin …» (sirve a cualquiera). Codex O1: no se mezclan familias. */
+  familia: Id | null;
 }
 export type Piezas = ReadonlyMap<Id, PiezaCons>;
 
@@ -53,7 +55,7 @@ export const BASE_CREAR = "peter-parker";
 /** Piezas sacadas del catálogo: una por cada parte que el personaje trae (según `ranuras` del índice). */
 export function piezasDeCatalogo(catalogo: Catalogo, ranuras: ReadonlyMap<Id, readonly string[]>): Map<Id, PiezaCons> {
   const fuera = new Map<Id, PiezaCons>();
-  for (const p of OPCIONALES) fuera.set(sinId(p), { id: sinId(p), nombre: "Sin " + p, parte: p, glb: "", ranuras: [RANURA[p]!], foto: null, donante: null });
+  for (const p of OPCIONALES) fuera.set(sinId(p), { id: sinId(p), nombre: "Sin " + p, parte: p, glb: "", ranuras: [RANURA[p]!], foto: null, donante: null, familia: null });
   for (const { ficha: f, base } of catalogo.values()) {
     if (f.familia !== "minifig") continue;
     const tiene = new Set(ranuras.get(f.id) ?? []);
@@ -63,15 +65,20 @@ export function piezasDeCatalogo(catalogo: Catalogo, ranuras: ReadonlyMap<Id, re
       if (!tiene.has(ranura)) continue;
       const id = `${f.id}--${parte}`;
       fuera.set(id, { id, nombre: f.nombre, parte, glb, ranuras: [ranura], foto: parte === "cabeza" || parte === "cara" || parte === "cabello" || parte === "sombrero" ? foto
-        : (/\.(webp|png|jpg)$/i.test(f.fotos.tarjeta) && !/no-hay/.test(f.fotos.tarjeta) ? new URL(f.fotos.tarjeta, base).href : null), donante: f.id });
+        : (/\.(webp|png|jpg)$/i.test(f.fotos.tarjeta) && !/no-hay/.test(f.fotos.tarjeta) ? new URL(f.fotos.tarjeta, base).href : null), donante: f.id, familia: f.familia });
     }
   }
   return fuera;
 }
 
-/** Piezas de una parte, ordenadas por nombre, con «Sin …» primero si la parte es opcional. */
-export function piezasDe(piezas: Piezas, parte: Parte): PiezaCons[] {
-  const l = [...piezas.values()].filter(p => p.parte === parte);
+/** ¿La pieza sirve a esa familia? («Sin …» sirve a todas.) */
+export const deFamilia = (pz: PiezaCons, familia: Id) => pz.familia === null || pz.familia === familia;
+/** Solo se personaliza una familia que tiene piezas (hoy solo minifigura; Hulk y los grandes no). */
+export const sePuedePersonalizar = (piezas: Piezas, familia: Id) => [...piezas.values()].some(p => p.familia === familia);
+
+/** Piezas de una parte para esa familia, ordenadas por nombre, con «Sin …» primero si la parte es opcional. */
+export function piezasDe(piezas: Piezas, parte: Parte, familia: Id = "minifig"): PiezaCons[] {
+  const l = [...piezas.values()].filter(p => p.parte === parte && deFamilia(p, familia));
   return l.sort((a, b) => (a.donante ? 1 : 0) - (b.donante ? 1 : 0) || a.nombre.localeCompare(b.nombre, "es"));
 }
 
@@ -84,6 +91,7 @@ export function figuraInicial(catalogo: Catalogo, antes?: FiguraV3 | null): Figu
 
 /** Pone una pieza (o «Sin …»), quitando la que estorba; conserva los tintes de esa parte. */
 export function ponerPieza(f: FiguraV3, pz: PiezaCons): FiguraV3 {
+  if (!deFamilia(pz, f.familia)) return f; // otra familia: no se pone
   const piezas = { ...f.piezas };
   const antes = piezas[pz.parte];
   piezas[pz.parte] = antes?.tintes ? { id: pz.id, tintes: { ...antes.tintes } } : { id: pz.id };
@@ -106,12 +114,19 @@ export function planoConstructor(id: string, f: FiguraV3, catalogo: Catalogo, pi
   const fuera: PiezaPlano[] = [];
   for (const [parte, puesta] of Object.entries(f.piezas) as [Parte, { id: Id; tintes?: Record<string, Id> }][]) {
     const pz = piezas.get(puesta.id);
-    if (!pz || pz.parte !== parte) continue;
+    if (!pz || pz.parte !== parte || !deFamilia(pz, f.familia)) continue;
     const tintes = Object.entries(puesta.tintes ?? {}).flatMap(([paleta, color]) => {
       const c = PALETAS[paleta as NombrePaleta]?.find(x => x.id === color);
       return c ? [{ material: "*", hex: c.hex }] : [];
     });
-    fuera.push({ glb: pz.glb, ranuras: [...pz.ranuras], tintes });
+    const carga = pz.donante ? catalogo.get(pz.donante)?.ficha.carga : undefined;
+    fuera.push(carga ? { glb: pz.glb, ranuras: [...pz.ranuras], tintes, carga: { ...carga, metal: [...carga.metal] } } : { glb: pz.glb, ranuras: [...pz.ranuras], tintes });
   }
   return { ...base, piezas: fuera };
+}
+
+/** Piezas de la figura que no se pueden resolver (no están en el registro, son de otra parte o de otra familia).
+ *  Para avisar en vez de perderlas en silencio (Codex O4). */
+export function referenciasAusentes(f: FiguraV3, piezas: Piezas): Id[] {
+  return Object.entries(f.piezas).filter(([parte, p]) => { const pz = piezas.get(p.id); return !pz || pz.parte !== parte || !deFamilia(pz, f.familia); }).map(([, p]) => p.id);
 }

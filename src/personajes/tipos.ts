@@ -123,4 +123,6 @@ export interface Plano {
 
 /** Cómo se tiñe una pieza: `material` = nombre de material (o "*" = todos los de la pieza); `hex` ya resuelto. */
 export interface TintePlano { material: string; hex: string }
-export interface PiezaPlano { glb: string; ranuras: string[]; tintes: TintePlano[] }
+export interface PiezaPlano { glb: string; ranuras: string[]; tintes: TintePlano[];
+  /** Acabado del GLB de la pieza (el de su donante), si es distinto del base. */
+  carga?: Carga }

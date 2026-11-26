@@ -3,12 +3,18 @@
 import { useEffect, useRef, useState } from "react";
 import type { Plano } from "./tipos";
 
-export function Vista3D({ url, plano, alLlegar = "saludo", className = "gal-vista" }: { url: string; plano: Plano | null; alLlegar?: string | null; className?: string }) {
+export function Vista3D({ url, plano, alLlegar = "saludo", className = "gal-vista", momento, onArmado }: { url: string; plano: Plano | null; alLlegar?: string | null; className?: string;
+  /** Cada vez que cambia `n`, la figura hace `cual` (gestos Saludar, Ganar, Perder, Especial). */
+  momento?: { cual: string; n: number } | null;
+  /** Resultado de armar cada plano: ok, o los errores (pieza que no encaja). La escena conserva la figura anterior. */
+  onArmado?: (ok: boolean, errores: string[]) => void }) {
   const ref = useRef<HTMLIFrameElement>(null);
   const [listo, setListo] = useState(false);
   const [cargando, setCargando] = useState(false);
   const llegar = useRef(alLlegar);
   llegar.current = alLlegar;
+  const avisar = useRef(onArmado);
+  avisar.current = onArmado;
   const enviar = (m: object) => ref.current?.contentWindow?.postMessage({ origen: "alv", ...m }, location.origin);
   useEffect(() => {
     const f = (e: MessageEvent) => {
@@ -16,6 +22,8 @@ export function Vista3D({ url, plano, alLlegar = "saludo", className = "gal-vist
       if (e.data.tipo === "listo") setListo(true);
       if (e.data.tipo === "armadas") {
         setCargando(false);
+        const errores = Array.isArray(e.data.errores) ? e.data.errores.filter((x: unknown): x is string => typeof x === "string") : [];
+        avisar.current?.(errores.length === 0, errores);
         if (llegar.current && Array.isArray(e.data.ids) && e.data.ids[0]) enviar({ tipo: "momento", id: e.data.ids[0], cual: llegar.current });
       }
     };
@@ -29,6 +37,10 @@ export function Vista3D({ url, plano, alLlegar = "saludo", className = "gal-vist
     enviar({ tipo: "planos", lista: plano ? [plano] : [] });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [listo, firma]);
+  useEffect(() => {
+    if (listo && plano && momento && momento.n > 0) enviar({ tipo: "momento", id: plano.id, cual: momento.cual });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [listo, momento?.n]);
   return (
     <div className={className}>
       <iframe ref={ref} src={url} title="Personaje en 3D: arrastra para girarlo" />

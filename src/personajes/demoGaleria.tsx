@@ -6,7 +6,7 @@ import { createRoot } from "react-dom/client";
 import { Boton, FondoCiudad, Panel, RaizDS } from "../ds";
 import { figuraActiva, guardarColeccion, leerColeccion, ponerEnColeccion } from "./coleccion";
 import { Constructor } from "./Constructor";
-import { figuraInicial, piezasDeCatalogo } from "./constructorDatos";
+import { figuraInicial, piezasDeCatalogo, sePuedePersonalizar } from "./constructorDatos";
 import { Galeria } from "./Galeria";
 import { cargarIndice, type Indice } from "./indice";
 import type { FiguraV3 } from "./tipos";
@@ -35,8 +35,8 @@ function Demo() {
   (window as unknown as { __galeria: unknown }).__galeria = { ind, coleccion, piezas, vista };
 
   return (
-    <RaizDS ancho={ancho} style={{ position: "fixed", inset: 0, overflow: "hidden" }}>
-      <div className="d-bg"><FondoCiudad /></div>
+    <RaizDS ancho={ancho} className={vista.cual === "crear" ? "az" : ""} style={{ position: "fixed", inset: 0, overflow: "hidden" }}>
+      {vista.cual !== "crear" && <div className="d-bg"><FondoCiudad /></div>}
       {error && <p style={{ position: "absolute", inset: "auto 16px 16px", color: "#fff" }}>No responde el servidor de personajes ({FUENTE}): {error}</p>}
       {ind && vista.cual === "inicio" && (
         <div className="gal" style={{ gridTemplateRows: "auto minmax(0,1fr)", gridTemplateAreas: '"top" "lista"', gridTemplateColumns: "1fr" }}>
@@ -60,6 +60,7 @@ function Demo() {
           actual={activa?.origen.tipo === "catalogo" && !Object.keys(activa.piezas).length ? activa.origen.personaje : null}
           onUsar={(f, t) => guardar(f, `${t.nombre} es tu personaje`)}
           onPersonalizar={f => setVista({ cual: "crear", figura: { ...f, momentos: activa?.momentos ?? f.momentos } })}
+          personalizable={fam => sePuedePersonalizar(piezas, fam)}
           onSalir={() => setVista({ cual: "inicio" })} />
       )}
       {ind && vista.cual === "crear" && (

@@ -55,52 +55,86 @@
     return cache.get(url);
   }
 
-  /** Tiñe una malla con su propio material (no toca el compartido). Reemplaza el color: para piezas lisas (piel, pelo). */
+  /** Tiñe una malla con su propio material (no toca el compartido). Reemplaza el color: para piezas lisas (piel, pelo).
+   *  Devuelve los materiales nuevos para liberarlos al quitar la figura (Codex O7). */
   function teñir(malla, tintes) {
-    if (!tintes || !tintes.length) return;
+    const nuevos = [];
+    if (!tintes || !tintes.length) return nuevos;
     const uno = m => {
       const t = tintes.find(x => x.material === "*" || x.material === m.name);
       if (!t) return m;
       const c = m.clone();
       // r128: los colores del material son lineales; el hex de la paleta es sRGB (sin convertir sale deslavado).
       c.color.set(t.hex).convertSRGBToLinear(); c.map = null; c.vertexColors = false; c.needsUpdate = true;
+      nuevos.push(c);
       return c;
     };
     malla.material = Array.isArray(malla.material) ? malla.material.map(uno) : uno(malla.material);
+    return nuevos;
   }
+
+  const TOLERANCIA_ENLACE = 1e-3;
+  const iguales = (a, b) => a.elements.every((v, i) => Math.abs(v - b.elements[i]) <= TOLERANCIA_ENLACE);
 
   /**
    * Piezas del constructor (CONTRATO-ENTREGA.md §6): por cada pieza se esconden las mallas del cuerpo base de esas
-   * ranuras (extras.slot) y se pegan las del GLB de la pieza, unidas a los huesos del base por nombre. Si la pieza trae
-   * un esqueleto distinto (falta un hueso), no se pega y se avisa en la consola.
+   * ranuras (extras.slot) y se pegan las del GLB de la pieza, unidas a los huesos del base por nombre.
+   * Primero se valida TODO (Codex O2/O3): que la pieza traiga mallas en sus ranuras, que tenga todos los huesos y que su
+   * enlace (inversa de cada hueso) sea igual al del base. Si algo falla, se lanza un error y no se toca nada: la escena
+   * conserva la figura anterior. Cada pieza usa el acabado de su donante (Codex O7).
    */
   async function ponerPiezas(obj, plano) {
     const piezas = plano.piezas || [];
-    if (!piezas.length) return;
-    const huesos = new Map();
-    obj.traverse(o => { if (o.isBone) huesos.set(o.name, o); });
-    const mallasBase = [];
-    obj.traverse(o => { if (o.isMesh) mallasBase.push(o); });
+    if (!piezas.length) return [];
+    const huesos = new Map(), inversaBase = new Map(), mallasBase = [];
+    obj.traverse(o => {
+      if (o.isBone) huesos.set(o.name, o);
+      if (o.isMesh) mallasBase.push(o);
+      if (o.isSkinnedMesh) o.skeleton.bones.forEach((h, i) => { if (!inversaBase.has(h.name)) inversaBase.set(h.name, o.skeleton.boneInverses[i]); });
+    });
+    // 1) Preparar y validar.
+    const listas = [];
     for (const pz of piezas) {
       const ran = new Set(pz.ranuras || []);
-      mallasBase.forEach(m => { if (ran.has(m.userData.slot)) m.visible = false; });
-      if (!pz.glb) continue; // «Sin pelo», «Sin casco»: solo se esconde
-      const g = await bajar(pz.glb, plano.carga);
-      const donantes = [];
-      g.scene.traverse(o => { if (o.isMesh && ran.has(o.userData.slot)) donantes.push(o); });
-      for (const m of donantes) {
+      if (!pz.glb) { listas.push({ ran, mallas: [], tintes: [] }); continue; } // «Sin pelo», «Sin casco»: solo se esconde
+      const g = await bajar(pz.glb, pz.carga || plano.carga);
+      const donantes = [], inversaPieza = new Map();
+      g.scene.traverse(o => {
+        if (o.isMesh && ran.has(o.userData.slot)) donantes.push(o);
+        if (o.isSkinnedMesh) o.skeleton.bones.forEach((h, i) => { if (!inversaPieza.has(h.name)) inversaPieza.set(h.name, o.skeleton.boneInverses[i]); });
+      });
+      if (!donantes.length) throw new Error("la pieza no trae mallas en " + [...ran].join(", ") + " (" + pz.glb + ")");
+      const mallas = donantes.map(m => {
         const c = m.clone();
         if (m.isSkinnedMesh) {
-          const propios = m.skeleton.bones.map(b => huesos.get(b.name));
-          if (propios.some(h => !h)) { console.warn("pieza con otro esqueleto:", pz.glb, m.name); continue; }
+          const propios = m.skeleton.bones.map(h => huesos.get(h.name));
+          const falta = m.skeleton.bones.find((h, i) => !propios[i]);
+          if (falta) throw new Error("la pieza usa el hueso «" + falta.name + "», que este cuerpo no tiene (" + pz.glb + ")");
+          const distinto = m.skeleton.bones.find((h, i) => inversaBase.has(h.name) && !iguales(m.skeleton.boneInverses[i], inversaBase.get(h.name)));
+          if (distinto) throw new Error("la pieza está enlazada a un esqueleto distinto (hueso «" + distinto.name + "», " + pz.glb + ")");
           c.bind(new T.Skeleton(propios, m.skeleton.boneInverses.map(x => x.clone())), m.bindMatrix.clone());
         }
-        const padre = (m.parent && m.parent.name && obj.getObjectByName(m.parent.name)) || obj;
-        padre.add(c);
-        c.visible = true; c.userData.pieza = true;
-        teñir(c, pz.tintes);
-      }
+        // Malla rígida pegada a un hueso (las caras del juego): ese hueso tiene que existir y estar en la misma pose de
+        // unión que en el base, comparando con el enlace que trae el GLB de la pieza (Codex O3: la cara de Hulk no entra).
+        let padre = obj;
+        if (!m.isSkinnedMesh && m.parent && m.parent.isBone) {
+          padre = huesos.get(m.parent.name);
+          if (!padre) throw new Error("la pieza va pegada al hueso «" + m.parent.name + "», que este cuerpo no tiene (" + pz.glb + ")");
+          const inv = inversaPieza.get(m.parent.name);
+          if (!inv || !inversaBase.has(m.parent.name)) throw new Error("no se puede comprobar el enlace del hueso «" + m.parent.name + "» (" + pz.glb + ")");
+          if (!iguales(inv, inversaBase.get(m.parent.name))) throw new Error("la pieza está enlazada a un esqueleto distinto (hueso «" + m.parent.name + "», " + pz.glb + ")");
+        } else if (m.parent && m.parent.name) padre = obj.getObjectByName(m.parent.name) || obj;
+        return { c, padre };
+      });
+      listas.push({ ran, mallas, tintes: pz.tintes });
     }
+    // 2) Todo es válido: esconder las del base y pegar las nuevas.
+    const propios = [];
+    for (const { ran, mallas, tintes } of listas) {
+      mallasBase.forEach(m => { if (ran.has(m.userData.slot)) m.visible = false; });
+      for (const { c, padre } of mallas) { padre.add(c); c.visible = true; c.userData.pieza = true; propios.push(...teñir(c, tintes)); }
+    }
+    return propios;
   }
 
   async function crear(plano) {
@@ -109,7 +143,7 @@
     obj.name = "personaje:" + plano.id;
     obj.scale.setScalar(plano.escala || 1);
     obj.userData.plano = plano;
-    await ponerPiezas(obj, plano);
+    const materialesPropios = await ponerPiezas(obj, plano);
     const mixer = new T.AnimationMixer(obj);
     const porNombre = new Map(g.animations.map(c => [c.name, c]));
     const acciones = new Map();
@@ -165,7 +199,7 @@
       /** Ancho en reposo (para acomodar varias figuras sin que se encimen). */
       ancho: () => ancho0,
       hueso: logico => { const n = plano.huesos && plano.huesos[logico]; return n ? obj.getObjectByName(n) : null; },
-      quitar: () => { mixer.stopAllAction(); mixer.uncacheRoot(obj); if (obj.parent) obj.parent.remove(obj); },
+      quitar: () => { mixer.stopAllAction(); mixer.uncacheRoot(obj); if (obj.parent) obj.parent.remove(obj); materialesPropios.forEach(m => m.dispose()); },
     };
   }
 

@@ -52,9 +52,10 @@ describe("armar y teñir", () => {
     f = teñir(f, "cabeza", "piel", "morena");
     const p = planoConstructor("yo", f, cat, piezas)!;
     expect(p.glb).toBe(`http://x/catalogo/${BASE_CREAR}/${BASE_CREAR}.glb`);
+    // Cada pieza lleva el acabado (carga) de su donante (Codex O7).
     expect(p.piezas).toEqual([
-      { glb: "http://x/catalogo/iron-man/iron-man.glb", ranuras: ["torso"], tintes: [] },
-      { glb: `http://x/catalogo/${BASE_CREAR}/${BASE_CREAR}.glb`, ranuras: ["head"], tintes: [{ material: "*", hex: "#aa7d55" }] },
+      { glb: "http://x/catalogo/iron-man/iron-man.glb", ranuras: ["torso"], tintes: [], carga: cat.get("iron-man")!.ficha.carga },
+      { glb: `http://x/catalogo/${BASE_CREAR}/${BASE_CREAR}.glb`, ranuras: ["head"], tintes: [{ material: "*", hex: "#aa7d55" }], carga: cat.get(BASE_CREAR)!.ficha.carga },
     ]);
   });
   it("una pieza que no existe o de otra parte se ignora", () => {

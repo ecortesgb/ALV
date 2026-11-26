@@ -1,38 +1,123 @@
-/* «Crear mi personaje». Reusa las piezas visuales de la galería (galeria.css). Cabe en una pantalla: sin bajar. */
-.D .cons {
-  position: absolute; inset: 0; color: #fff; font: var(--cuerpo);
-  display: grid; gap: 8px; padding: 10px 12px 12px;
+/* «Crear mi personaje», diseño A2: usa las losas del HUB (azotea.css), el «Atrás» del Perfil (perfil.css), el panel del
+   lobby (lobby.css) y los gestos (menu-gestos.css). Aquí solo el acomodo y lo propio del constructor. Cabe sin bajar. */
+.D .pz {
+  position: absolute; inset: 0; overflow: hidden; color: #fff; font-family: var(--f-texto);
+  display: grid; gap: 10px; padding: max(10px, env(safe-area-inset-top)) 12px max(10px, env(safe-area-inset-bottom));
   grid-template-columns: minmax(0, 1fr);
-  grid-template-rows: auto minmax(0, 0.8fr) minmax(0, 1.2fr);
-  grid-template-areas: "top" "vista" "panel";
+  grid-template-rows: auto minmax(0, .9fr) auto minmax(0, 1.1fr) auto;
+  grid-template-areas: "top" "escena" "losas" "panel" "acciones";
 }
 @media (min-width: 860px) {
-  .D .cons {
+  .D .pz {
     padding: 18px 24px 22px; gap: 12px 24px;
-    grid-template-columns: minmax(300px, 0.9fr) minmax(0, 1.25fr);
-    grid-template-rows: auto minmax(0, 1fr);
-    grid-template-areas: "top panel" "vista panel";
+    grid-template-columns: minmax(0, 1fr) minmax(430px, .95fr);
+    grid-template-rows: auto auto minmax(0, 1fr) auto;
+    grid-template-areas: "top losas" "escena losas" "escena panel" "escena acciones";
   }
 }
-.D .cons-top { grid-area: top; }
-.D .cons-vista { grid-area: vista; display: grid; overflow: hidden; min-height: 0; }
-.D .cons-vista .gal-vista { min-height: 0; }
-.D .cons-panel { grid-area: panel; display: flex; flex-direction: column; gap: 8px; min-height: 0; }
-.D .cons-panel > * { flex: none; }
-.D .cons-panel > .cons-rejilla { flex: 1 1 0; }
-.D .cons-panel .d-tabs { overflow-x: auto; scrollbar-width: none; }
-.D .cons-panel .d-tab { color: #fff; cursor: pointer; font-size: 15px; }
-.D .cons-panel .d-tab.on { color: var(--ink); }
-.D .cons-partes:empty { display: none; }
-.D .cons-colores { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font: var(--cuerpo-chico); color: var(--mut); }
-.D .cons-colores > span { margin-right: 2px; }
-.D .cons-color {
-  width: 34px; height: 34px; border-radius: 50%; border: 2.5px solid var(--ink); cursor: pointer;
-  box-shadow: inset 0 .12em 0 rgba(255, 255, 255, .45), 0 .16em 0 var(--ink);
+/* Página de cómic (escenario elegido por Elías). Papel, dos viñetas con borde de tinta que siguen la rejilla (así caben
+   en cualquier pantalla) y el arte de Elías dentro de la viñeta grande (--arte-h / --arte-v, url absoluta que pone Constructor.tsx); sin arte, líneas de acción y trama en CSS. */
+.D .pz { --tinta: #0a1030; --papel: #f6eedb; }
+.D .pz-fondo { position: absolute; inset: 0; background: radial-gradient(circle, rgba(10, 16, 48, .07) 1px, transparent 1.4px) 0 0 / 7px 7px, var(--papel); }
+.D .pz > :not(.pz-fondo):not(.pz-volteo) { position: relative; }
+.D .pz-vin { margin: -6px; border: 4px solid var(--tinta); border-radius: 4px; box-shadow: 4px 5px 0 rgba(10, 16, 48, .28); pointer-events: none; }
+.D .pz-vin-accion { grid-row: 1 / 3; grid-column: 1;
+  background: var(--arte-h, none) center / cover no-repeat,
+              radial-gradient(circle, rgba(150, 60, 0, .35) 1.3px, transparent 1.8px) 0 0 / 9px 9px,
+              repeating-conic-gradient(from 0deg at 50% 55%, #ffd23f 0 4deg, #ffb000 4deg 8deg); }
+.D .pz-vin-accion { margin-bottom: -1px; }
+.D .pz-vin-piezas { margin-top: -1px; }
+.D .pz-vin-piezas { grid-row: 3 / 6; grid-column: 1;
+  background: radial-gradient(circle, rgba(31, 95, 214, .2) 1.3px, transparent 1.8px) 0 0 / 9px 9px, #e6eeff; }
+.D .pz-cartela { position: absolute; z-index: 2; left: 2px; top: 0; margin: 0; padding: 5px 9px; background: #ffd23f; color: var(--tinta);
+  border: 3px solid var(--tinta); box-shadow: 3px 3px 0 var(--tinta); font: 400 11px/1 var(--f-titulo); text-transform: uppercase; letter-spacing: .02em; }
+@media (min-width: 860px) {
+  .D .pz { column-gap: 44px; }
+  .D .pz-vin, .D .pz-vin-accion, .D .pz-vin-piezas { margin: -10px; }
+  .D .pz-vin-accion { grid-row: 1 / -1; grid-column: 1;
+    background-image: var(--arte-v, none),
+                      radial-gradient(circle, rgba(150, 60, 0, .35) 1.3px, transparent 1.8px),
+                      repeating-conic-gradient(from 0deg at 50% 58%, #ffd23f 0 4deg, #ffb000 4deg 8deg); }
+  .D .pz-vin-piezas { grid-row: 1 / -1; grid-column: 2; }
+  .D .pz-cartela { left: 6px; top: 6px; font-size: 15px; padding: 7px 12px; }
 }
-.D .cons-color.on { outline: 3px solid var(--yel); outline-offset: 2px; }
-.D .cons-rejilla { min-height: 0; }
-.D .cons-pieza .gal-nombre { font-size: 13px; }
-.D .cons-acciones { display: flex; gap: 12px; }
-.D .cons-acciones .d-btn { flex: 1; justify-content: center; font-size: 17px; }
-.D .cons-acciones .d-btn.is-off { opacity: .45; pointer-events: none; }
+
+/* Volteo de página: la hoja del HUB gira sobre su orilla izquierda como página de cómic. */
+.D .pz-volteo { position: absolute; inset: 0; z-index: 20; perspective: 1800px; pointer-events: none; }
+.D .pz-volteo.sale { pointer-events: auto; }
+.D .pz-hoja { position: absolute; inset: 0; background: center / cover no-repeat #0d1a45; transform-origin: left center; backface-visibility: hidden;
+  box-shadow: 0 0 40px rgba(0, 0, 0, .45); }
+.D .pz-hoja::after { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, rgba(0, 0, 0, 0) 60%, rgba(0, 0, 0, .35)); }
+.D .pz-volteo.entra .pz-hoja { animation: pzHojaSe .75s cubic-bezier(.55, .05, .35, 1) both; }
+.D .pz-volteo.sale .pz-hoja { animation: pzHojaSe .65s cubic-bezier(.55, .05, .35, 1) reverse both; }
+@keyframes pzHojaSe { from { transform: rotateY(0); } to { transform: rotateY(180deg); } }
+
+/* Arriba: «Atrás» y la placa del título, como Modos */
+.D .pz-top { grid-area: top; display: flex; align-items: center; gap: 12px; min-width: 0; animation: azBaja .45s cubic-bezier(.2, .8, .2, 1) both; }
+.D .pz-placa { padding: 8px 20px; border-radius: 12px; background: rgba(10, 14, 40, .88); border: 2px solid rgba(255, 255, 255, .35);
+  font: 400 clamp(17px, 1.7vw, 24px)/1 var(--f-titulo); text-transform: uppercase; letter-spacing: .03em; white-space: nowrap; box-shadow: 0 6px 18px rgba(0, 0, 0, .4); }
+.D .pz:not(:has(.pf-atras)) .pz-placa { margin: 0 auto; }
+
+/* Figura y gestos */
+.D .pz-escena { grid-area: escena; position: relative; min-height: 0; display: grid; grid-template-rows: minmax(0, 1fr) auto; }
+.D .pz-vista { position: relative; min-height: 0; }
+.D .pz-vista iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; display: block; }
+.D .pz-vista .gal-cargando { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); font: 400 16px var(--f-titulo); color: #dfe6ff; }
+.D .pz-gestos { justify-content: center; padding-bottom: 4px; }
+.D .pz-gestos .mg-b { --tam: 44px; }
+@media (min-width: 860px) { .D .pz-gestos .mg-b { --tam: 50px; } }
+
+/* Las 4 losas (mismas del HUB, con su ícono a la izquierda) */
+.D .pz-losas { grid-area: losas; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+@media (min-width: 860px) { .D .pz-losas { grid-template-columns: 1fr 1fr; gap: 12px; } }
+.D .pz-losa { min-height: 50px; padding: 6px 8px; gap: 8px; animation: azEntraLosa .4s cubic-bezier(.2, .8, .2, 1) both; }
+.D .pz-losa:nth-child(2) { animation-delay: .05s; } .D .pz-losa:nth-child(3) { animation-delay: .1s; } .D .pz-losa:nth-child(4) { animation-delay: .15s; }
+.D .pz-losa .az-ico { position: static; order: -1; flex: none; width: 40px; height: 40px; top: auto; right: auto; transform: none; }
+.D .pz-losa .az-losa-txt b { font-size: clamp(15px, 1.5vw, 22px); }
+.D .pz-losa .az-losa-txt small { font-size: 11px; }
+.D .pz-losa.on { outline: 4px solid #fff; outline-offset: 3px; }
+.D .pz-ico-vacio { display: block; border-radius: 12px; border: 2px dashed rgba(255, 255, 255, .7); background: rgba(10, 16, 48, .2); }
+@media (max-width: 859px) {
+  .D .pz-losa { justify-content: center; padding: 4px; min-height: 44px; }
+  .D .pz-losa .az-ico, .D .pz-losa .az-losa-txt small { display: none; }
+  .D .pz-losa .az-losa-txt b { font-size: 12px; }
+  .D .pz-losa.on { outline-width: 3px; outline-offset: 1px; }
+}
+
+/* Panel del lobby con las piezas */
+.D .pz-panel { grid-area: panel; min-height: 0; align-items: stretch; gap: 8px; padding: 10px; border-width: 3px; }
+.D .pz-pills { display: flex; gap: 6px; }
+.D .pz-pill { flex: 1; min-height: 36px; border-radius: 12px; border: 2.5px solid var(--az-tinta); cursor: pointer; font: 400 15px/1 var(--f-titulo); text-transform: uppercase;
+  color: var(--az-tinta); background: #eef1f8; box-shadow: 0 4px 0 #b9c1d8; transition: transform .12s; }
+.D .pz-pill.on { background: linear-gradient(#fff09a, #ffc21a); box-shadow: 0 4px 0 #c77700; }
+.D .pz-pill:active { transform: translateY(3px); box-shadow: 0 1px 0 #b9c1d8; }
+.D .pz-colores { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font: 800 12px/1 var(--f-texto); color: #3a4470; text-transform: uppercase; }
+.D .pz-color { width: 30px; height: 30px; border-radius: 50%; border: 2.5px solid var(--az-tinta); box-shadow: 0 2px 0 var(--az-tinta); cursor: pointer; }
+.D .pz-color.on { outline: 3px solid #ffb000; outline-offset: 2px; }
+.D .pz-rejilla { flex: 1 1 0; min-height: 0; display: grid; gap: 8px; touch-action: pan-y; user-select: none; }
+.D .pz-pieza { position: relative; min-height: 0; display: grid; grid-template-rows: minmax(0, 1fr) auto; padding: 4px; cursor: pointer; border-radius: 12px;
+  border: 2px solid #c9d0e3; background: radial-gradient(ellipse at 50% 30%, #fff, #dfe5f3); color: #3a4470; transition: transform .12s; }
+.D .pz-pieza:hover { transform: translateY(-2px); }
+.D .pz-pieza.on { border-color: #ffb000; box-shadow: 0 0 0 3px #ffb000; }
+.D .pz-pieza img { width: 100%; height: 100%; object-fit: contain; min-height: 0; pointer-events: none; }
+.D .pz-pieza span:last-child { font: 800 11px/1.1 var(--f-texto); text-align: center; padding-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.D .pz-sin { display: grid; place-items: center; font: 400 28px var(--f-titulo); color: #9aa3c0; }
+.D .pz-vacio { grid-column: 1 / -1; align-self: center; text-align: center; color: #3a4470; margin: 0; }
+.D .pz-paginas { display: flex; align-items: center; justify-content: center; gap: 12px; }
+.D .pz-flecha { width: 30px; height: 30px; border-radius: 50%; border: 2px solid var(--az-tinta); background: var(--pj, #2f7cf0); color: #fff; font: 400 18px/1 var(--f-titulo); cursor: pointer; }
+.D .pz-flecha:disabled { opacity: .35; cursor: default; }
+.D .pz-puntos { display: flex; gap: 6px; }
+.D .pz-puntos i { width: 10px; height: 6px; border-radius: 99px; background: #c4cbe0; }
+.D .pz-puntos i.on { width: 22px; background: #ffb000; }
+
+/* Regresar y ¡Guardar! (como ¡Jugar!) */
+.D .pz-acciones { grid-area: acciones; display: grid; grid-template-columns: minmax(0, .45fr) minmax(0, 1fr); gap: 12px; }
+.D .pz-acciones .az-losa { min-height: 54px; justify-content: center; padding: 6px 10px; }
+.D .pz-acciones .az-losa::after { display: none; }
+.D .pz-guardar .az-losa-txt b { font-size: clamp(22px, 2.4vw, 34px); }
+.D .pz-regresar .az-losa-txt b { font-size: clamp(14px, 1.3vw, 18px); }
+.D .pz-regresar:disabled, .D .pz-guardar:disabled { opacity: .5; cursor: default; }
+.D .pz-aviso { position: absolute; left: 50%; top: 8px; transform: translateX(-50%); z-index: 3; padding: 8px 14px; border-radius: 12px; border: 2.5px solid var(--az-tinta);
+  background: #ff3b5c; color: #fff; font: 400 15px/1 var(--f-titulo); box-shadow: 0 4px 0 var(--az-tinta); white-space: nowrap; }
+.D .pz-losa .az-losa-txt b, .D .pz-pill, .D .pz-placa { font-family: var(--f-titulo); }
+@media (prefers-reduced-motion: reduce) { .D .pz-top, .D .pz-losa, .D .pz-hoja { animation: none; } }

@@ -84,6 +84,7 @@
 .D .gal-cabeza p { margin: 4px 0 0; font: var(--cuerpo-chico); color: var(--mut); }
 .D .gal-acciones { display: flex; gap: 12px; flex-wrap: wrap; }
 .D .gal-acciones .d-btn { flex: 1 1 140px; justify-content: center; font-size: 17px; }
+.D .gal-nota { flex: 1 1 140px; align-self: center; font: var(--cuerpo-chico); color: var(--mut); }
 .D .gal-cerrar { display: none; position: absolute; top: 10px; left: 10px; z-index: 2; }
 .D .gal-cerrar .ic { transform: rotate(-90deg); }
 
