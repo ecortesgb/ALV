@@ -128,6 +128,9 @@ function mismosClips(ca, cb) {
   return [!mal.length, mal.length ? mal.slice(0, 4).join(" · ") : ca.length + " clips iguales por dentro"];
 }
 
+// Excepciones aceptadas (CONTRATO-ENTREGA.md §7.1; Codex, encargo 2026-11-26-especiales-modok-r1). Solo esos ids.
+const EXCEPCIONES = { modok: { altura: 6.21, bytes: 3214052, porque: "silla flotante (altura ≈ 6.21, GLB 3 214 052 bytes)" } };
+
 async function verificar(W, ent) {
   const ch = [], bien = (nombre, ok, detalle = "") => ch.push({ nombre, ok: !!ok, detalle });
   const r = leerFicha(ent.ficha, { rutasLibres: !!ent.prueba });
@@ -177,7 +180,11 @@ async function verificar(W, ent) {
     avanzar(p, dur + 1.2);
     bien("vuelve a reposo tras " + quien + " (" + dur.toFixed(2) + " s)", p.estado().logica === "reposo", p.estado().logica + "/" + p.estado().clip);
   }
-  bien("altura en escena ≈ " + p.alto().toFixed(2), p.alto() > 1.5 && p.alto() < 6);
+  // Excepciones aceptadas por personaje (CONTRATO-ENTREGA.md §7.1): la medida se sigue tomando y la falla se muestra,
+  // pero no reprueba si queda dentro de lo aceptado. Solo para ese id; los límites generales no cambian.
+  const exc = EXCEPCIONES[f.id], alto = p.alto(), altoOk = alto > 1.5 && alto < 6;
+  if (!altoOk && exc && exc.altura && Math.abs(alto - exc.altura) <= 0.1) bien("altura en escena ≈ " + alto.toFixed(2), true, "falla aceptada como excepción: " + exc.porque);
+  else bien("altura en escena ≈ " + alto.toFixed(2), altoOk);
   // Control negativo: un clip inerte (sin pistas) puesto como «especial» debe reprobar la medición de movimiento.
   const g = await W.MotorPersonajes.bajar(glbUrl, f.carga);
   if (!g.animations.some(a => a.name === "__INERTE__")) g.animations.push(new W.THREE.AnimationClip("__INERTE__", 1.5, []));
