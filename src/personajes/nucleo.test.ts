@@ -161,6 +161,13 @@ describe("lógicas del motor (tools/personajes/logicas.js)", () => {
   vm.createContext(ctx);
   vm.runInContext(readFileSync("tools/personajes/logicas.js", "utf8"), ctx);
   const L = ctx.LogicasALV as { logicaDe(c: unknown): string; LOGICAS: string[]; velocidadClip(v?: unknown): number };
+  it("una acción que ya terminó se reinicia aunque todavía se esté apagando; a media animación sube desde su peso (E3)", () => {
+    const R = (ctx.LogicasALV as { debeReiniciar(esActual: boolean, peso: number, terminada: boolean): boolean }).debeReiniciar;
+    expect(R(false, 0.6, true)).toBe(true);   // WAVE pedido a 0.1 s de terminar: antes se quedaba en su último cuadro
+    expect(R(false, 0.6, false)).toBe(false); // se apagaba a media animación: sigue desde su tiempo y su peso
+    expect(R(false, 0, false)).toBe(true);    // sin peso: desde el principio
+    expect(R(true, 1, false)).toBe(true);     // la misma que suena (lógica de bucle): como siempre
+  });
   it("los clips del juego van siempre a velocidad 1, aunque el perfil o el gesto pidan otra (cómico 1.22, tímido 0.82)", () => {
     for (const v of [1.22, 1.15, 0.82, 0.5, 1.6, undefined, NaN]) expect(L.velocidadClip(v)).toBe(1);
     // Las dos escenas que dibujan figuras v3 la usan (app: adaptador de escena.js; galería y «Mi personaje»: escena-personajes.js).
@@ -295,7 +302,8 @@ describe("motor: repetición, reentrada y retorno automático", () => {
   class Accion {
     time = 0; weight = 1; enabled = true; paused = false; activa = false; clampWhenFinished = false;
     reinicios = 0; paradas = 0; vel = 1; loop = 0;
-    constructor(readonly nombre: string) {}
+    constructor(readonly nombre: string, readonly clip: { name: string; duration?: number } = { name: nombre, duration: 1 }) {}
+    getClip() { return { duration: 1, ...this.clip }; }
     reset() { this.time = 0; this.paused = false; this.enabled = true; this.reinicios++; return this; }
     play() { this.activa = true; return this; }
     stop() { this.activa = false; this.paradas++; return this.reset(); }
@@ -310,7 +318,7 @@ describe("motor: repetición, reentrada y retorno automático", () => {
     let finished: (e: { action: Accion }) => void = () => {};
     class Mixer {
       clipAction(c: { name: string }) {
-        if (!acciones.has(c.name)) acciones.set(c.name, new Accion(c.name));
+        if (!acciones.has(c.name)) acciones.set(c.name, new Accion(c.name, c));
         return acciones.get(c.name)!;
       }
       addEventListener(_nombre: string, fn: typeof finished) { finished = fn; }
@@ -380,15 +388,16 @@ describe("motor: repetición, reentrada y retorno automático", () => {
     p.tocar("saludo", { mezcla: 0 });
     expect(p.estado().tiempo).toBe(0); // al volver desde peso 0 sí reinicia
   });
-  it("recuperar un clip terminado que aún pesa conserva su tiempo y permite volver a emitir finished", async () => {
+  it("pedir otra vez un clip que ya terminó y todavía pesa lo reinicia desde su peso y el gesto se ve completo", async () => {
     const { p, acciones } = await preparar();
     p.tocar("saludo", { mezcla: 0 }); p.update(1); p.update(0.14);
     const a = acciones.get("Wave")!, reinicios = a.reinicios;
     expect(a.paused).toBe(true);
     p.tocar("saludo");
-    expect(a.time).toBe(1); expect(a.reinicios).toBe(reinicios);
+    // Antes se quedaba en su último cuadro, emitía «finished» al instante y volvía a reposo: el gesto no se veía.
+    expect(a.time).toBe(0); expect(a.reinicios).toBe(reinicios + 1);
     expect(a.weight).toBeCloseTo(0.6); expect(a.paused).toBe(false);
     p.update(0.01);
-    expect(p.estado().logica).toBe("reposo");
+    expect(p.estado().logica).toBe("saludo");
   });
 });

@@ -213,7 +213,8 @@
 
     function iniciar(a, bucle, mezcla, vel) {
       const inicial = pesos.get(a) || 0;
-      if (a === actual || inicial === 0) a.reset();
+      const terminada = !bucle && a.time >= a.getClip().duration - 1e-4;
+      if (L.debeReiniciar(a === actual, inicial, terminada)) a.reset();
       a.enabled = true; a.paused = false;
       a.setEffectiveTimeScale(vel || 1);
       a.setLoop(bucle ? T.LoopRepeat : T.LoopOnce, Infinity);

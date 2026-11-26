@@ -61,6 +61,13 @@
     const avance = t < mezcla ? Math.abs(delta) : Math.abs(delta) * Math.min(1, paso * 6);
     return { valor: valor + Math.sign(delta) * Math.min(avance, limite), logica, velocidad, t: t + paso };
   }
-  const api = { LOGICAS, logicaDe, EN_BUCLE, velocidadClip, pasoCruce, pasoCompensacion };
+  /** Si una acción que se vuelve a pedir arranca desde el principio. Sí: la que ya suena (repetir una lógica de bucle), la
+   *  que no tiene peso y la que ya llegó a su final aunque todavía se esté apagando (si no, se queda en su último cuadro,
+   *  termina al instante y el gesto pedido no se ve; medido el 2026-11-26 con WAVE pedido a 0.1 s de haber terminado).
+   *  No: la que se está apagando a media animación, que sube desde su peso sin saltar (E3). */
+  function debeReiniciar(esActual, pesoInicial, terminada) {
+    return !!esActual || !(pesoInicial > 0) || !!terminada;
+  }
+  const api = { LOGICAS, logicaDe, EN_BUCLE, velocidadClip, pasoCruce, pasoCompensacion, debeReiniciar };
   if (typeof module !== "undefined" && module.exports) module.exports = api; else raiz.LogicasALV = api;
 })(typeof self !== "undefined" ? self : this);
