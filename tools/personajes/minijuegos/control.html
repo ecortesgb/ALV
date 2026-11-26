@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>ALV · control</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Nunito:wght@600;700;800;900&display=swap">
+<style>
+:root{--noche:#0a1030;--borde:#0a1030;--amarillo:#ffcf2e;--suave:#c9d2ff;--yo:#e8343a;--yo-texto:#fff;--yo-oscuro:#8f1420}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;overflow:hidden;background:radial-gradient(120% 90% at 50% 0%,#2a2f7a,#141a3a 60%,#0a1030);color:#fff;
+  font:700 16px/1.3 Nunito,system-ui,sans-serif;user-select:none;-webkit-user-select:none;touch-action:none;overscroll-behavior:none}
+main{position:fixed;inset:0;display:flex;flex-direction:column;padding:14px 16px calc(14px + env(safe-area-inset-bottom))}
+h1{margin:0;font:400 26px/1 "Lilita One",sans-serif;text-shadow:0 3px 0 var(--borde)}
+.top{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.chip{font:400 15px/1 "Lilita One",sans-serif;padding:6px 10px 7px;border:3px solid var(--borde);border-radius:12px;background:var(--yo);color:var(--yo-texto);box-shadow:0 3px 0 var(--borde)}
+.suave{color:var(--suave);font-weight:700}
+input{font:800 18px Nunito,sans-serif;padding:10px 12px;border-radius:12px;border:3px solid var(--borde);width:100%;margin:10px 0}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;flex:1;min-height:0;overflow:hidden;align-content:start}
+.carta{position:relative;border:3px solid var(--borde);border-radius:14px;background:#2a3170;aspect-ratio:4/5;overflow:hidden;box-shadow:0 4px 0 var(--borde)}
+.carta img{width:100%;height:100%;object-fit:contain}
+.carta span{position:absolute;left:0;right:0;bottom:0;font:400 13px/1.1 "Lilita One",sans-serif;background:rgba(10,16,48,.75);padding:3px 4px;text-align:center}
+.carta.si{outline:4px solid var(--amarillo);outline-offset:-1px}
+.carta.fallo img{filter:grayscale(1) opacity(.5)}
+.grande{font:400 26px/1 "Lilita One",sans-serif;color:var(--noche);background:var(--amarillo);border:4px solid var(--borde);border-radius:18px;padding:14px;
+  box-shadow:0 6px 0 var(--borde);margin-top:12px;width:100%}
+.grande:active{transform:translateY(4px);box-shadow:0 2px 0 var(--borde)}
+#salto{flex:1;margin-top:14px;border-radius:28px;border:5px solid var(--borde);background:radial-gradient(circle at 50% 35%,var(--yo),color-mix(in srgb,var(--yo) 55%,#000));
+  color:var(--yo-texto);font:400 clamp(44px,15vw,90px)/1 "Lilita One",sans-serif;text-shadow:0 5px 0 var(--borde);box-shadow:0 10px 0 var(--borde);
+  display:flex;align-items:center;justify-content:center;flex-direction:column;gap:10px}
+#salto.toca{transform:translateY(8px);box-shadow:0 2px 0 var(--borde)}
+#salto small{font:800 16px Nunito,sans-serif;text-shadow:none;opacity:.85}
+#salto.fuera{filter:grayscale(1) brightness(.6)}
+#salto.espera{filter:saturate(.3) brightness(.75)}
+.girar{position:absolute;left:0;right:0;top:4px;text-align:center;color:var(--suave);font-weight:800;font-size:14px}
+.estado{margin-top:10px;font:400 22px/1.1 "Lilita One",sans-serif;text-align:center;min-height:26px}
+.diag{position:fixed;right:8px;bottom:4px;font:700 10px ui-monospace,monospace;color:var(--suave);opacity:.7;white-space:pre;text-align:right}
+/* Mando del cuarto */
+#mando{flex:1;position:relative;margin-top:10px}
+.zona-palanca{position:absolute;left:0;top:0;bottom:0;width:58%}
+.palanca{position:absolute;width:140px;height:140px;margin:-70px 0 0 -70px;border-radius:50%;border:4px solid rgba(255,255,255,.5);background:rgba(10,16,48,.45)}
+.palanca i{position:absolute;left:50%;top:50%;width:62px;height:62px;margin:-31px 0 0 -31px;border-radius:50%;background:var(--yo);border:4px solid var(--borde);box-shadow:0 4px 0 var(--borde)}
+.botones{position:absolute;right:4px;bottom:20px;width:min(48vw,240px);height:min(48vw,240px)}
+.botones button{position:absolute;border-radius:50%;border:4px solid var(--borde);box-shadow:0 6px 0 var(--borde);font:400 18px/1 "Lilita One",sans-serif;color:var(--noche)}
+.botones button:active,.botones button.toca{transform:translateY(5px);box-shadow:0 1px 0 var(--borde)}
+.b-saltar{background:var(--amarillo);width:50%;height:50%;right:0;bottom:0;font-size:22px!important}
+.b-golpe{background:#ff8a1f;width:40%;height:40%;left:0;bottom:4%}
+.b-festejo{background:#8cf09a;width:34%;height:34%;right:8%;top:0}
+/* Sala de Físico */
+#fisico{flex:1;display:flex;flex-direction:column;gap:8px;min-height:0;margin-top:8px}
+.mis-pts{font:400 20px/1 "Lilita One",sans-serif;text-align:center}
+.gestos{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.gestos button,.anf button,.anf select{font:400 14px/1 "Lilita One",sans-serif;border:3px solid var(--borde);border-radius:12px;padding:8px 4px;box-shadow:0 3px 0 var(--borde);color:var(--noche);background:#fff}
+.gestos button:active,.anf button:active{transform:translateY(3px);box-shadow:0 0 0 var(--borde)}
+.g-saludo{background:#8cf09a!important}.g-festejo{background:var(--amarillo)!important}.g-derrota{background:#7cc0ff!important}.g-especial{background:#ff8a1f!important}
+.anf{flex:1;min-height:0;display:flex;flex-direction:column;gap:6px;background:rgba(10,16,48,.55);border:3px solid var(--borde);border-radius:16px;padding:8px}
+.anf .secreta{font:400 26px/1 "Lilita One",sans-serif;color:var(--amarillo);text-align:center;text-shadow:0 3px 0 var(--borde)}
+.anf .fila{display:flex;gap:6px;flex-wrap:wrap}
+.anf .fila>*{flex:1}
+.lista{flex:1;min-height:0;overflow:auto;display:flex;flex-direction:column;gap:6px}
+.jug{display:grid;grid-template-columns:1fr auto auto auto;gap:4px;align-items:center;background:rgba(255,255,255,.06);border-radius:12px;padding:5px}
+.jug b{font:400 15px/1.1 "Lilita One",sans-serif}
+.jug .sel{grid-column:1/-1;display:grid;grid-template-columns:auto minmax(0,1fr) minmax(0,1fr);gap:4px}
+.jug .sel select{min-width:0;width:100%}
+.consent{position:fixed;inset:0;background:rgba(5,8,25,.82);display:flex;align-items:center;justify-content:center;padding:20px;z-index:5}
+.consent>div{background:#1b2160;border:4px solid var(--borde);border-radius:20px;padding:18px;text-align:center;box-shadow:0 6px 0 var(--borde);max-width:340px}
+.consent p{font:400 24px/1.15 "Lilita One",sans-serif;margin:6px 0 4px}
+.consent small{display:block;color:var(--suave);margin-bottom:12px}
+.consent button{width:100%;margin-top:8px;font:400 20px "Lilita One",sans-serif;border:4px solid var(--borde);border-radius:14px;padding:10px;box-shadow:0 4px 0 var(--borde)}
+.oculto{display:none!important}
+</style>
+</head>
+<body>
+<!-- Control del celular para Mini-Juegos y el cuarto de Físico (prototipo, zona aparte). ?sala=ABCD (de la TV),
+     ?nombre=, ?personaje=, ?entrar=1 (entra directo), ?mando=flotante (fija por omisión), ?lat=&jit= (latencia simulada), ?desfase=ms (reloj corrido). -->
+<main>
+  <div class="top"><h1 id="titulo">ALV</h1><span class="chip oculto" id="chip">P1</span></div>
+  <section id="unirse" style="display:flex;flex-direction:column;flex:1;min-height:0">
+    <div class="suave" id="sala-txt">Sala ----</div>
+    <input id="nombre" maxlength="16" placeholder="Tu nombre" autocomplete="off">
+    <div class="suave" style="margin-bottom:6px">Elige tu personaje</div>
+    <div class="grid" id="grid"></div>
+    <button class="grande" id="entrar">¡Entrar!</button>
+  </section>
+  <section id="espera" class="oculto" style="display:flex;flex-direction:column;flex:1">
+    <div class="estado" id="espera-txt">Ya estás en la fila. Mira la TV.</div>
+    <div style="flex:1"></div>
+    <button class="grande oculto" id="empezar">¡Empezar!</button>
+    <button class="grande oculto" id="otra">Otra vez</button>
+  </section>
+  <button id="salto" class="oculto">SALTA<small id="salto-txt">Toca cuando llegue la bala</small></button>
+  <div id="mando" class="oculto">
+    <div class="girar oculto" id="girar">Gira tu celular para jugar más cómodo ⟳</div>
+    <div class="zona-palanca" id="zona"><div class="palanca" id="palanca"><i id="bolita"></i></div></div>
+    <div class="botones">
+      <button class="b-festejo" data-b="festejo">¡Eh!</button>
+      <button class="b-golpe" data-b="golpe">Golpe</button>
+      <button class="b-saltar" data-b="saltar">Salta</button>
+    </div>
+  </div>
+  <section id="fisico" class="oculto">
+    <div class="mis-pts" id="mis-pts">0 pts</div>
+    <div class="gestos">
+      <button class="g-saludo" data-g="saludo">Saludar</button><button class="g-festejo" data-g="festejo">¡Festeja!</button>
+      <button class="g-derrota" data-g="derrota">Triste</button><button class="g-especial" data-g="especial">Especial</button>
+    </div>
+    <div class="anf oculto" id="anf">
+      <div class="suave" style="text-align:center">Eres el anfitrión · palabra secreta:</div>
+      <div class="secreta" id="secreta">—</div>
+      <div class="fila"><select id="cat"></select><button id="b-ronda">Nueva palabra</button></div>
+      <div class="fila"><button id="b-revelar">Revelar</button><button id="b-ver">TV: palabra visible</button><select id="esc"></select></div>
+      <div class="lista" id="lista"></div>
+    </div>
+  </section>
+  <div class="estado" id="estado"></div>
+</main>
+<div class="consent oculto" id="consent"><div>
+  <div class="suave">Te tocó</div><p id="consent-txt"></p><small>Es de contacto: solo si tú quieres.</small>
+  <button id="consent-si" style="background:#8cf09a">Sí, acepto</button><button id="consent-no" style="background:#fff">No, dame otro</button>
+</div></div>
+<div class="diag" id="diag"></div>
+<script type="module" src="control.js"></script>
+</body>
+</html>
