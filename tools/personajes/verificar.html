@@ -117,6 +117,31 @@ async function verificar(W, ent) {
   bien("control: un clip inerte NO pasa como movimiento", !movioInerte && pi.estado().clip !== undefined, detInerte);
   pi.quitar();
   g.animations.splice(g.animations.findIndex(a => a.name === "__INERTE__"), 1);
+  // Bloque opcional «juego» (CONTRATO-ENTREGA.md §3.1): el archivo existe, pesa ≤ 5 000 000 bytes, trae el mismo
+  // esqueleto y los clips del catálogo, y cada acción apunta a un clip que existe y mueve el esqueleto.
+  if (f.juego) {
+    const jUrl = new URL(f.juego.glb, base).href, jr = await fetch(jUrl, { cache: "no-store" });
+    bien("juego: " + f.juego.glb + " existe", jr.ok, jr.ok ? "" : "HTTP " + jr.status);
+    if (jr.ok) {
+      const jb = await jr.arrayBuffer();
+      huellas.juego = await hex(jb); huellas.juegoBytes = jb.byteLength;
+      bien("juego: peso ≤ 5 000 000 bytes", jb.byteLength <= 5000000, (jb.byteLength / 1e6).toFixed(2) + " MB" + (jb.byteLength > 3.5e6 ? " (pasa del objetivo de 3.5 MB)" : ""));
+      const acciones = Object.entries(f.juego.clips);
+      const pj = await W.MotorPersonajes.crear({ ...plano, id: "juego", glb: jUrl, vida: [...(plano.vida || []), ...acciones.map(([, c]) => c)] });
+      const cj = new Set(pj.nombresClips()), hj = huesos(pj);
+      bien("juego: mismo esqueleto (" + hj.length + " huesos)", hj.length === hs.length);
+      const faltan = [...clips].filter(c => !cj.has(c));
+      bien("juego: incluye los clips del catálogo", !faltan.length, faltan.length ? "faltan " + faltan.join(", ") : clips.size + " clips");
+      for (const [accion, c] of acciones) {
+        const existe = cj.has(c);
+        bien("juego." + accion + " = " + c + " existe", existe);
+        if (!existe) continue;
+        pj.tocar("reposo", { mezcla: 0 }); pj.update(0.05); pj.tocar(c, { mezcla: 0 }); pj.update(0.05);
+        bien("juego." + accion + " mueve huesos", ...moverMientras(pj, hj, c, Math.min(4, pj.duracion(c))));
+      }
+      pj.quitar();
+    }
+  }
   p.quitar();
   return { id: f.id, familia: f.familia, calidad: f.calidad.estado, huellas, clips: clips.size, ok: ch.every(c => c.ok), checks: ch };
 }
