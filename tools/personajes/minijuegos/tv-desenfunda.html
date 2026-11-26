@@ -8,9 +8,15 @@
 <link rel="stylesheet" href="tv.css">
 <style>
 .puntos-ronda{font:400 20px/1.2 "Lilita One",sans-serif;color:var(--amarillo);text-shadow:0 2px 2px var(--noche)}
-.centro{text-align:center;width:96%;pointer-events:none}
-.centro.chico{white-space:normal}
-.centro.ya{color:#8cf09a}
+/* O4: todo el texto y los controles terminan 12 px antes de franja(); la escena queda debajo. */
+.franja-tv{position:fixed;top:max(140px,13vh);left:20px;right:20px;height:calc(var(--franja-tv) - max(140px,13vh) - 12px);display:flex;flex-direction:column;align-items:center;gap:8px}
+.franja-tv .marcador{position:static;flex:none;font-size:22px;padding:4px 16px}
+.franja-tv .centro{position:static;transform:none;flex:1;min-height:0;width:100%;display:flex;align-items:center;justify-content:center;text-align:center;pointer-events:none;font-size:clamp(54px,12vh,120px);line-height:1;white-space:normal;overflow-wrap:anywhere}
+.franja-tv .centro.chico{font-size:clamp(34px,7vh,80px)}
+.franja-tv .centro.ya{font-size:clamp(64px,14vh,140px);color:#8cf09a}
+.franja-tv .podio{position:static;transform:none;flex:none;width:100%;display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);gap:6px;padding:6px}
+.franja-tv .podio div{font-size:16px;line-height:1.1;padding:4px 6px;text-align:center;overflow-wrap:anywhere}
+.franja-tv .boton-tv{position:static;transform:none;flex:none;font-size:24px;padding:8px 24px}
 </style>
 </head>
 <body>
@@ -19,12 +25,14 @@
 <div class="capa" id="capa"></div>
 <div class="titulo">¡Desenfunda!</div>
 <div class="sub" id="sub">Entra desde tu celular</div>
-<div class="marcador oculto" id="marcador">Ronda <span id="ronda">1</span> / 5</div>
 <div class="sala" id="sala"><small>Sala</small><b id="codigo">----</b><small id="como">Abre el control en otra pestaña</small>
   <a id="abrir" target="_blank" rel="noopener">+ Celular de prueba</a></div>
-<div class="centro oculto" id="centro" role="status"></div>
-<div class="podio oculto" id="podio"></div>
-<button class="boton-tv" id="empezar" disabled>¡Empezar!</button>
+<div class="franja-tv">
+  <div class="marcador oculto" id="marcador">Ronda <span id="ronda">1</span> / 5</div>
+  <div class="centro oculto" id="centro" role="status"></div>
+  <div class="podio oculto" id="podio"></div>
+  <button class="boton-tv" id="empezar" disabled>¡Empezar!</button>
+</div>
 <div class="aviso-red" id="red"></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>

@@ -17,6 +17,28 @@ const SIN_SENAL_MS = 15000;
 // Solo para pruebas: ?fallar=hulk,thor hace que esos personajes «no carguen» en la TV (prueba de Codex O7).
 const FALLAR = new Set((q.get("fallar") || "").split(",").filter(Boolean));
 
+/** Franjas de Física (O4): texto arriba, cabezas + 62 px de etiqueta abajo; pies a 24 px del borde. */
+export function crearEncuadreFranjas(escena) {
+  const ETIQUETA = 62, v3 = new THREE.Vector3();
+  function franja() { return Math.round(innerHeight * 0.13 + Math.min(260, innerHeight * 0.36)); }
+  function encuadrar(ancho, alto) {
+    const c = escena.camera, H = innerHeight, fondo = H - 24;
+    const tanV = Math.tan((c.fov * Math.PI) / 360), tanH = tanV * c.aspect;
+    const yPant = y => { v3.set(0, y, 0).project(c); return ((1 - v3.y) / 2) * H; };
+    let d = Math.max(12, (ancho / 2) / tanH);
+    for (let i = 0; i < 60; i++, d *= 1.04) {
+      let lo = -alto * 3, hi = alto * 4, mira = 0;
+      for (let k = 0; k < 30; k++) { // dónde mirar para que los pies queden en «fondo»
+        mira = (lo + hi) / 2;
+        c.position.set(0, alto * 0.6, d); c.lookAt(0, mira, 0); c.updateMatrixWorld(true);
+        if (yPant(0) > fondo) hi = mira; else lo = mira;
+      }
+      if (yPant(alto) - ETIQUETA >= franja()) break;
+    }
+  }
+  return { franja, encuadrar };
+}
+
 export function crearTV({ juego, escena, alUnirse, alMensaje, alSalir, alDesconectar, alAnfitrion, topeEtiquetas = 118 }) {
   const sala = (q.get("sala") || salaNueva()).toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 8);
   if (!q.get("sala")) { q.set("sala", sala); history.replaceState(null, "", "?" + q.toString()); }
