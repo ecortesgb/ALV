@@ -39,6 +39,10 @@
   let orden = [];
   const HUECO = 0.45; // espacio entre figuras, en unidades de la escena (las de ALV miden ~2.6)
 
+  // {tipo:"correr", x, ms} recorre la cámara de lado (x en fracción del ancho visible; + = la figura se ve más a la
+  // izquierda) en ms milisegundos con desaceleración, sin rebote; lo usa el constructor para que la rueda de gestos no
+  // tape a la figura en celular (Codex, encargo 2026-11-26-rueda-gestos-r2).
+  let vista = null, corre = 0, tramo = null;
   function acomodar() {
     // De izquierda a derecha, cada una con su propio ancho (Hulk ocupa más que una minifigura).
     const lista = orden.map(id => figuras.get(id)).filter(Boolean);
@@ -56,6 +60,7 @@
     const dist = cerca ? 1.02 * Math.max((alto * 0.53) / tanV, (ancho * 0.5) / tanH) + 0.15
       : 1.1 * Math.max((alto * 0.62) / tanV, (ancho * 0.5) / tanH) + 1;
     camera.position.set(0, alto * 0.62, dist); camera.lookAt(0, alto * (cerca ? 0.465 : 0.5), 0);
+    vista = { dist, mira: alto * (cerca ? 0.465 : 0.5), ancho: 2 * dist * tanH };
     piso.scale.setScalar(Math.max(ancho, alto) * 1.2);
     clave.position.set(alto * 2, alto * 4, alto * 3);
     Object.assign(clave.shadow.camera, { left: -ancho, right: ancho, top: alto * 2, bottom: -alto, near: 0.1, far: alto * 12 });
@@ -99,6 +104,10 @@
     if (e.origin !== location.origin || !e.data || e.data.origen !== "alv") return;
     const d = e.data;
     if (d.tipo === "planos") ponerPlanos(d.lista, d.rev);
+    if (d.tipo === "correr" && typeof d.x === "number") {
+      const meta = Math.max(-0.5, Math.min(0.5, d.x)), ms = typeof d.ms === "number" ? Math.max(0, Math.min(1000, d.ms)) : 200;
+      tramo = QUIETO || !ms ? { de: meta, a: meta, t0: 0, dur: 1 } : { de: corre, a: meta, t0: performance.now(), dur: ms };
+    }
     if (d.tipo === "momento" && figuras.has(d.id)) figuras.get(d.id).p.tocar(d.cual, { vel: d.vel });
     if (d.tipo === "todos") figuras.forEach(f => f.p.tocar(d.cual));
     if (d.tipo === "medir") {
@@ -169,6 +178,15 @@
     const dt = Math.min(reloj.getDelta(), 0.1);
     const t0 = performance.now();
     figuras.forEach(f => f.p.update(dt));
+    if (vista && (tramo || corre)) {
+      if (tramo) {
+        const k = Math.min(1, (performance.now() - tramo.t0) / tramo.dur);
+        corre = tramo.de + (tramo.a - tramo.de) * (1 - Math.pow(1 - k, 3));
+        if (k >= 1) { corre = tramo.a; tramo = null; }
+      }
+      const cx = corre * vista.ancho;
+      camera.position.x = cx; camera.lookAt(cx, vista.mira, 0);
+    }
     if (FRENTE) figuras.forEach(f => alFrente(f, dt));
     figuras.forEach(f => {
       if (!f.pulso) return;

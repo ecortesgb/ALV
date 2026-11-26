@@ -33,8 +33,8 @@ export function RuedaGestos({ gestos, x, y, centro, onElegir, onCerrar }: {
     addEventListener("keydown", tecla);
     return () => { clearTimeout(t); removeEventListener("pointerdown", fuera, true); removeEventListener("keydown", tecla); };
   }, [onCerrar]);
-  // Late 100 ms, se cierra en 120 ms y el gesto empieza cuando la rueda ya no está, para ver su comienzo (Codex).
-  const elegir = (cual: string) => { if (sale) return; setSale(cual); setTimeout(() => { onCerrar(); onElegir(cual); }, 220); };
+  // Avisa la elección al momento (quien la usa decide cuándo empieza el gesto); late 100 ms y se cierra en 120 ms.
+  const elegir = (cual: string) => { if (sale) return; setSale(cual); onElegir(cual); setTimeout(onCerrar, 220); };
   const mover = (e: KeyboardEvent, i: number) => {
     const sig = { ArrowLeft: 0, ArrowUp: 1, ArrowRight: 2, ArrowDown: 3 }[e.key as "ArrowLeft"];
     if (sig !== undefined) { e.preventDefault(); setFoco(sig); botones.current[sig]?.focus(); }

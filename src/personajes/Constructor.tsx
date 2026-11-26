@@ -166,11 +166,20 @@ export function Constructor({ catalogo, piezas, inicial, escenaUrl, onGuardar, o
     if (innerWidth >= 860) {
       x = rv.left - re.left + nx * rv.width + (nx < 0.5 ? 1 : -1) * radio * 1.15;
       y = Math.max(rv.top - re.top + ny * rv.height, rv.top - re.top + rv.height * 0.5); // de la cintura para abajo: libre la cara
-    } else { x = re.width - borde; y = rv.bottom - re.top - borde; }
+    } else { x = re.width - borde; y = rv.bottom - re.top - borde; setCorrer({ x: 0.24, ms: 220 }); } // celular: la figura se hace a la izquierda (Codex r2, C)
     setRueda({ x: Math.max(borde, Math.min(re.width - borde, x)), y: Math.max(borde, Math.min(re.height - borde, y)) });
     if (pista) { setPista(false); try { localStorage.setItem("alv-pista-rueda", "vista"); } catch { /* sin almacenamiento */ } }
   };
-  const cerrarRueda = useCallback(() => setRueda(null), []);
+  // Celular: mientras la rueda está abierta la cámara corre la figura a la izquierda. Al elegir: late 100 ms, la figura
+  // regresa al centro en 180 ms mientras la rueda se cierra, y el gesto empieza cuando ya regresó (Codex r2).
+  const [correr, setCorrer] = useState<{ x: number; ms: number } | undefined>(undefined);
+  const corrida = useRef(false);
+  corrida.current = !!correr && correr.x !== 0;
+  const cerrarRueda = useCallback(() => { setRueda(null); if (corrida.current) setCorrer({ x: 0, ms: 180 }); }, []);
+  const elegirGesto = (cual: string) => {
+    if (corrida.current) { setTimeout(() => setCorrer({ x: 0, ms: 180 }), 100); setTimeout(() => gesto(cual), 280); }
+    else setTimeout(() => gesto(cual), 220);
+  };
   const teclaFigura = (ev: { key: string; preventDefault: () => void }) => { if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); tocar(0.5, 0.45); } };
 
   // Pasar de página deslizando de lado (como el carrusel del lobby).
@@ -197,10 +206,10 @@ export function Constructor({ catalogo, piezas, inicial, escenaUrl, onGuardar, o
       <div className="pz-escena" ref={escena}>
         <p className="pz-cartela" aria-hidden="true">Mientras tanto, en el vestidor…</p>
         <div className="pz-toca" tabIndex={0} role="button" aria-label="Tu personaje: Enter para elegir una animación" onKeyDown={teclaFigura}>
-        <Vista3D url={escenaUrl + (escenaUrl.includes("?") ? "&" : "?") + [figuraCerca ? "cerca=1" : "", frente ? "frente=" + frente : ""].filter(Boolean).join("&")} plano={plano} alLlegar={llego ? null : "entrada"} className="pz-vista" momento={momento} onArmado={alArmar} onToque={tocar} />
+        <Vista3D url={escenaUrl + (escenaUrl.includes("?") ? "&" : "?") + [figuraCerca ? "cerca=1" : "", frente ? "frente=" + frente : ""].filter(Boolean).join("&")} plano={plano} alLlegar={llego ? null : "entrada"} className="pz-vista" momento={momento} onArmado={alArmar} onToque={tocar} correr={correr} />
         </div>
         {pista && !rueda && <p className="pz-pista" aria-hidden="true">Toca a tu personaje</p>}
-        {rueda && <RuedaGestos gestos={RUEDA} x={rueda.x} y={rueda.y} centro={`${ARTE}ui/personalizar/ico-cabeza.webp`} onElegir={gesto} onCerrar={cerrarRueda} />}
+        {rueda && <RuedaGestos gestos={RUEDA} x={rueda.x} y={rueda.y} centro={`${ARTE}ui/personalizar/ico-cabeza.webp`} onElegir={elegirGesto} onCerrar={cerrarRueda} />}
         {aviso && <div className="pz-aviso" role="status">{aviso}</div>}
       </div>
 

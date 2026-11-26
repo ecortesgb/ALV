@@ -3,14 +3,16 @@
 import { useEffect, useRef, useState } from "react";
 import type { Plano } from "./tipos";
 
-export function Vista3D({ url, plano, alLlegar = "saludo", className = "gal-vista", momento, onArmado, onToque }: { url: string; plano: Plano | null; alLlegar?: string | null; className?: string;
+export function Vista3D({ url, plano, alLlegar = "saludo", className = "gal-vista", momento, onArmado, onToque, correr }: { url: string; plano: Plano | null; alLlegar?: string | null; className?: string;
   /** Cada vez que cambia `n`, la figura hace `cual` (gestos Saludar, Ganar, Perder, Especial). */
   momento?: { cual: string; n: number } | null;
   /** Resultado de armar el ÚLTIMO plano mandado: ok, o los errores (pieza que no encaja). La escena conserva la figura
    *  anterior. Las respuestas a planos viejos se descartan. */
   onArmado?: (ok: boolean, errores: string[]) => void;
   /** Se tocó la figura sin arrastrar; x/y de 0 a 1 dentro de la vista. */
-  onToque?: (x: number, y: number) => void }) {
+  onToque?: (x: number, y: number) => void;
+  /** Recorre la cámara de lado (fracción del ancho; + = la figura se ve más a la izquierda) en `ms` milisegundos. */
+  correr?: { x: number; ms: number } }) {
   const ref = useRef<HTMLIFrameElement>(null);
   const [listo, setListo] = useState(false);
   const [cargando, setCargando] = useState(false);
@@ -52,6 +54,7 @@ export function Vista3D({ url, plano, alLlegar = "saludo", className = "gal-vist
     if (listo && plano && momento && momento.n > 0) enviar({ tipo: "momento", id: plano.id, cual: momento.cual });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [listo, momento?.n]);
+  useEffect(() => { if (listo && correr) enviar({ tipo: "correr", x: correr.x, ms: correr.ms }); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [listo, correr?.x, correr?.ms]);
   return (
     <div className={className}>
       <iframe ref={ref} src={url} title="Personaje en 3D: arrastra para girarlo" />
