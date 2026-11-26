@@ -1,0 +1,62 @@
+/* Movimiento de interfaz del HUB, el lobby y la TV (app/movimiento.ts). Pedido de Elías, 2026-11-26: «animaciones más
+   dinámicas en todas las pantallas».
+   Decidió Codex (encargo herramientas-locales/encargos-codex/2026-11-26-movimiento-pantallas-r1.md): entradas breves,
+   compresión al presionar sin retrasar la acción, el número del letrero late solo cuando cambia, una sola celebración
+   al quedar todos listos, y nada en bucle en los controles (el ambiente del fondo se queda).
+   Solo desplazamiento, escala y opacidad. Se usan las propiedades sueltas `translate` y `scale` para no pisar el
+   `transform` que ya usan el paso del cursor y el `:active` de cada botón. Con «reducir movimiento» (sistema o
+   Configuración) todo queda en su estado final: lo cubren las reglas globales de componentes.css y preferencias.css. */
+
+@keyframes movSube { from { opacity: 0; translate: 0 8px; } }
+@keyframes movBaja { from { opacity: 0; translate: 0 -8px; } }
+@keyframes movVuelve { from { opacity: 0; translate: 0 6px; } }
+@keyframes movBajaLetrero { from { opacity: 0; transform: translateY(-10px); } }
+@keyframes movAparece { from { opacity: 0; translate: 0 12px; } }
+@keyframes movLate { from { scale: 1.16; } }
+@keyframes movCelebra { 0% { scale: 1; } 40% { scale: 1.06; } 100% { scale: 1; } }
+@keyframes movAviso { 0% { scale: .6; opacity: 0; } 60% { scale: 1.08; opacity: 1; } 100% { scale: 1; } }
+@keyframes movConfeti { 0% { opacity: 1; translate: calc(var(--x) * .75) 0; scale: .3; } 70% { opacity: 1; } 100% { opacity: 0; translate: var(--x) var(--y); scale: 1; } }
+
+/* ---------- HUB «La Azotea» ---------- */
+/* M1: primera entrada de la sesión, breve y escalonada como en el constructor (sin la espera de 0.55 s de antes). */
+:root .D .az-caja.entra .az-top { animation: movBaja .22s cubic-bezier(.2, .8, .2, 1) backwards; }
+:root .D .az-caja.entra .az-letrero { animation: movBaja .22s cubic-bezier(.2, .8, .2, 1) 40ms backwards; }
+:root .D .az-caja.entra .az-losa { animation: movSube .22s cubic-bezier(.2, .8, .2, 1) calc(60ms + var(--i, 0) * 25ms) backwards; }
+/* M2: al volver de otra pantalla solo entran las losas, todas juntas y más rápido. */
+:root .D .az-caja.vuelve .az-losa { animation: movVuelve .17s cubic-bezier(.2, .8, .2, 1) backwards; }
+/* M10: avisos que aparecen con un pulso y después quedan quietos. */
+:root .D .az-alerta, :root .D .az-nuevo, :root .D .az-badge { animation: movAviso .22s cubic-bezier(.2, .8, .2, 1) backwards; }
+/* M10: fuera los bucles de los controles (barrido de ¡Jugar! y de los retos, salto del regalo, «Nuevo» y punto que
+   laten, rayo y brillo de la XP). Reflectores, foquitos y letrero del fondo se quedan. */
+:root .D .az-barrido::after, :root .D .az-reto::after { animation: none; opacity: 0; }
+:root .D .az-reto-regalo, :root .D .az-alerta i, :root .D .azc-xp-ico, :root .D .azc-relleno::after { animation: none; }
+:root .D .az-reto:hover .az-reto-regalo { animation: none; }
+
+/* ---------- Lobby (Local, En línea, Físico) y TV: comparten letrero, cabinas y botones ---------- */
+/* M4: entradas cortas sin rebote. */
+:root .D .lb-banner { animation: movBajaLetrero .22s cubic-bezier(.2, .8, .2, 1) backwards; }
+:root .D .lb-panel { animation: movSube .22s cubic-bezier(.2, .8, .2, 1) backwards; }
+:root .D .lb-continuar { animation: movAparece .17s cubic-bezier(.2, .8, .2, 1) backwards; }
+/* M5 y M9: solo el número late cuando cambia (no al montar la pantalla); el texto no se mueve. */
+:root .D .lb-banner-n { display: inline-block; }
+:root .D .lb-banner-n.mov-late { animation: movLate .18s cubic-bezier(.2, .8, .2, 1); }
+/* M6: «¡Todos listos!» se celebra una vez, al pasar de faltar alguien a todos listos (no al abrir o recargar). */
+/* La entrada sigue en la lista para que no vuelva a correr cuando se quita la clase. */
+:root .D .lb-banner.mov-celebra { animation: movBajaLetrero .22s cubic-bezier(.2, .8, .2, 1) backwards, movCelebra .28s cubic-bezier(.2, .8, .2, 1); }
+:root .D .lb-banner.mov-celebra .lb-banner-n { animation: none; }
+/* Papelitos detrás del letrero (que tiene clip-path y por eso no los contiene), dentro de los primeros 120 px. */
+:root .D .mov-confeti { position: fixed; left: 50%; top: 26px; width: 0; height: 0; pointer-events: none; z-index: 5; }
+:root .D .mov-confeti i { position: absolute; left: -5px; top: -4px; width: 10px; height: 8px; border-radius: 2px; background: var(--c);
+  animation: movConfeti .5s cubic-bezier(.15, .7, .3, 1) var(--d, 0ms) both; }
+/* M10: fuera la cruz que flota en los lugares libres, la luz que late en el listo y la mano de «Pásale el teléfono».
+   Los haces de luz del fondo, los puntitos de espera y el sello de listo se quedan. */
+:root .D.az.lb.lbn .lb-cruz, :root .D .a-pasa-ico { animation: none; }
+:root .D .lb-luz { animation: lbLuz .5s ease-out backwards; }
+
+/* Botones: se comprimen al presionar y recuperan (M3 y M7) sin retrasar la acción; lo hace app/movimiento.ts. */
+
+@media (prefers-reduced-motion: reduce) {
+  :root .D :is(.az-top, .az-letrero, .az-losa, .az-alerta, .az-nuevo, .az-badge, .lb-banner, .lb-banner-n, .lb-panel, .lb-continuar) { animation: none !important; }
+  :root .D .mov-confeti { display: none; }
+}
+html.alv-quieto .mov-confeti { display: none !important; }

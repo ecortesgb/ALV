@@ -20,6 +20,7 @@ import "../../pantallas/lobby/cast.css";
 import { colorDe, varsColor } from "../../app/colorJugador";
 import { CUPO_LOBBY, Pedestales, TodosListos, lugaresSala, preparados } from "../../pantallas/SalaEspera";
 import { claseLobby, LOBBY_NUEVO } from "../../pantallas/lobby/version";
+import { Confeti, NumeroLetrero, useCelebracion } from "../../pantallas/LetreroVivo";
 import "../../pantallas/azotea/azotea.css";
 import "../../pantallas/perfil/perfil.css";
 import "../../pantallas/lobby/lobby.css";
@@ -63,6 +64,8 @@ export function PantallaTv({ codigo }: { codigo: string }) {
   const vivoTv = useConfigEnVivo(s.sala?.id, !v);
   // Dejar de proyectar (Elías, 24 nov): este aparato vuelve a ser normal. También si el anfitrión lo pide desde su celular.
   const dejar = () => ir(s.sala ? "sala" : "inicio", s.sala?.codigo);
+  // «¡Todos listos!» se celebra solo al pasar a todos listos, no al abrir la TV con todos listos.
+  const fiesta = useCelebracion(s.sala && s.miembros.length ? preparados(s.miembros).todos : null);
   useEffect(() => { if (!s.sala) return; return escucharSalirPantalla(s.sala.id, dejar); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [s.sala?.id]);
   const marco = (hijos: React.ReactNode) => <RaizDS ancho className={"alv a-tv az pt" + (escPartida ? " pt-esc" : "")}>{escPartida ? <FondoEscenario escenario={escPartida} /> : <FondoCuarto oscuro />}{hijos}
     <button type="button" className="cs-boton on tv-dejar" onClick={dejar} aria-label="Dejar de proyectar"><span aria-hidden="true">✕</span> Dejar de proyectar</button>
@@ -81,7 +84,8 @@ export function PantallaTv({ codigo }: { codigo: string }) {
     return marco(<>
       <header className="a-tv-top">
         {!copas && <div className="lb-banner pt-banner tv-banner">
-          <span className="lb-banner-n">{v.impostor?.etapa === "papeles" ? "La nave" : v.impostor ? `Vuelta ${v.ronda}` : `${v.ronda}/${v.totalRondas}`}</span>
+          {/* Late al cambiar de ronda (LetreroVivo, movimiento.css). */}
+          <NumeroLetrero valor={v.ronda + (v.impostor?.etapa ?? "")}>{v.impostor?.etapa === "papeles" ? "La nave" : v.impostor ? `Vuelta ${v.ronda}` : `${v.ronda}/${v.totalRondas}`}</NumeroLetrero>
           <span className="lb-banner-t">{nombreJuego(v.juegoId)}</span>
         </div>}
         <Conexion red={s.red} />
@@ -121,11 +125,12 @@ export function PantallaTv({ codigo }: { codigo: string }) {
         <FondoCuarto />
         <div className="a-scroll"><div className="lb-caja">
           <header className="lb-top">
-            <div className={"lb-banner" + (pr.todos ? " todos" : "")} role="status" aria-live="polite">
-              <span className="lb-banner-n">{s.miembros.length}/{CUPO_LOBBY}</span>
+            <div className={"lb-banner" + (pr.todos ? " todos" : "") + (fiesta ? " mov-celebra" : "")} role="status" aria-live="polite">
+              <NumeroLetrero valor={s.miembros.length} conocido={s.miembros.length > 0}>{s.miembros.length}/{CUPO_LOBBY}</NumeroLetrero>
               <span className="lb-banner-t">{pr.todos ? "¡Todos listos!" : `${pr.listos} listo${pr.listos === 1 ? "" : "s"}`}</span>
               <small className="lb-banner-s">{pr.todos ? "El administrador arma la partida" : "Abre ALV en tu celular y toca «¡Jugar!»"}</small>
             </div>
+            {fiesta && <Confeti />}
             <span className="lb-red"><Conexion red={s.red} /></span>
           </header>
           <section className="lb-escenario" style={{ "--lugares": lugaresSala(ordenados.length) } as React.CSSProperties}>

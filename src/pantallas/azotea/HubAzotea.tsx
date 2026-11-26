@@ -68,7 +68,9 @@ export function HubAzotea() {
   const raiz = useRef<HTMLDivElement>(null);
   const vivo = useHubVivo();
   // Coreografía de entrada solo la primera vez de la sesión.
-  const [entra] = useState(() => { try { if (sessionStorage.getItem("alv-azotea-entrada")) return false; sessionStorage.setItem("alv-azotea-entrada", "1"); return !MENOS_MOV; } catch { return false; } });
+  // La marca se pone en un efecto: en desarrollo StrictMode corre dos veces el inicializador y la segunda ya la veía.
+  const [entra] = useState(() => { try { return !sessionStorage.getItem("alv-azotea-entrada") && !MENOS_MOV; } catch { return false; } });
+  useEffect(() => { try { sessionStorage.setItem("alv-azotea-entrada", "1"); } catch { /* sin almacenamiento */ } }, []);
 
   const [sala, setSala] = useState<SalaV | null>(null);
   useEffect(() => { let v = true; void enlace.miSala().then(x => { if (v) setSala(x); }); return () => { v = false; }; }, [s.uid]);
@@ -104,7 +106,7 @@ export function HubAzotea() {
 
   return (
     <Marco clase={`az m-${momento}`} fondo={<EscenarioFondo ambiente={amb} momento={momento} velo={esc.velo} />}>
-      <div ref={raiz} className={"az-caja" + (entra ? " entra" : "")} style={{ "--az-acento": esc.acento } as CSSProperties}>
+      <div ref={raiz} className={"az-caja" + (entra ? " entra" : " vuelve")} style={{ "--az-acento": esc.acento } as CSSProperties}>
         <header className="az-top">
           <CabeceraJugador id={s.uid} nombre={s.nombre} figura={f} nivel={r.nivel} xp={r.xp} costo={r.costo} compacta={!ancho || bajo} />
           <RecursosAzotea monedas={r.monedas} puntos={r.puntos} />

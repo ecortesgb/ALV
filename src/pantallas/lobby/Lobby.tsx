@@ -23,6 +23,7 @@ import { FondoCuarto } from "./Cuarto";
 import { claseLobby, LOBBY_NUEVO } from "./version";
 import { MenuGestos } from "../gestos/MenuGestos";
 import { useVidaPropia } from "../../app/vidaPerfil";
+import { Confeti, NumeroLetrero, useCelebracion } from "../LetreroVivo";
 
 /** Cabinas por color con pedestal (Elías aprobó el 22 nov; las cápsulas viejas se quitaron el 23 nov). */
 const PRUEBA_ESCENARIOS = true;
@@ -37,6 +38,7 @@ export interface PropsLobby {
 export function Lobby({ sala, miembros, yo, soyAnfitrion, final, red, refrescar, alSalir, alCopas, copando, pantalla = "desconocida" }: PropsLobby) {
   const ancho = useAncho();
   const p = preparados(miembros);
+  const fiesta = useCelebracion(miembros.length ? p.todos : null);
   // Vida automática de TU figura (etapa 3): solo este aparato la decide y la manda a la sala; las demás llegan por la red.
   useVidaPropia({ activo: true, jugador: yo, figura: miembros.find(m => m.id === yo)?.figura ?? null, contexto: "lobby" });
   const hayAdmin = miembros.some(m => m.anfitrion);
@@ -110,12 +112,14 @@ export function Lobby({ sala, miembros, yo, soyAnfitrion, final, red, refrescar,
       <div className="lb-caja">
         <header className="lb-top">
           <button type="button" className={"pf-atras" + (soyAnfitrion ? " lb-atras-anf" : "")} onClick={alSalir}><span aria-hidden="true">◀</span>{local ? "Terminar" : soyAnfitrion ? "Cerrar" : "Salir"}</button>
-          <div className={"lb-banner" + (p.todos ? " todos" : "")} role="status" aria-live="polite">
-            <span className="lb-banner-n">{miembros.length}/{CUPO_LOBBY}</span>
+          <div className={"lb-banner" + (p.todos ? " todos" : "") + (fiesta ? " mov-celebra" : "")} role="status" aria-live="polite">
+            {/* El número late cuando entra o sale alguien (LetreroVivo, movimiento.css). */}
+            <NumeroLetrero valor={miembros.length}>{miembros.length}/{CUPO_LOBBY}</NumeroLetrero>
             <span className="lb-banner-t">{p.todos ? "¡Todos listos!" : `${p.listos} listo${p.listos === 1 ? "" : "s"}`}</span>
             {local && <small className="lb-banner-s">Modo local · un solo teléfono</small>}
             {!soyAnfitrion && <small className="lb-banner-s">{!hayAdmin ? "Esperando al administrador" : p.todos ? "El administrador arma la partida" : "Elige tu figura y da ¡Listo!"}</small>}
           </div>
+          {fiesta && <Confeti />}
           <span className="lb-red">{red === "vivo" ? "" : red === "respaldo" ? "Reconectando…" : "Conectando…"}</span>
           {soyAnfitrion && !local && <BotonCast sala={sala} pantalla={pantalla} className="lb-cast" />}
         </header>
