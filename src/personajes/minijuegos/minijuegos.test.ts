@@ -1,9 +1,134 @@
 // Pruebas del prototipo de Mini-Juegos (zona aparte): reloj, juicio del salto, rondas, contrato del canal y cuarto.
 import { describe, expect, it } from "vitest";
+import * as desenfunda from "./desenfunda";
 import { acotarToque, estimar, muestra, relojListo } from "./reloj";
 import { aireDe, avanzar, crearPartida, empezar, enElAire, llegada, posBala, ranking, saltar, CONFIG_BALA, type Bala, type EstadoBala, type Evento } from "./bala";
 import { crearCuarto, entrar, mandar, pasoCuarto } from "./cuarto";
 import { crearSecuencias, deLaTv, leer, validarDeCelular } from "./canal";
+
+describe("¡Desenfunda!", () => {
+  function preparar() {
+    const e = desenfunda.crearPartida([{ id: "a" }, { id: "b" }, { id: "c" }], {}, 7);
+    desenfunda.empezar(e, 1000);
+    return e;
+  }
+  it("el adelantado queda fuera solo esa ronda y vuelve a participar en la siguiente", () => {
+    const e = preparar();
+    expect(desenfunda.tocar(e, "a", e.ya - 100)).toContainEqual({ tipo: "adelantado", ronda: 1, id: "a" });
+    desenfunda.avanzar(e, e.ya);
+    desenfunda.tocar(e, "a", e.ya + 80);
+    desenfunda.tocar(e, "b", e.ya + 100);
+    expect(desenfunda.avanzar(e, e.juicio!)).toContainEqual({ tipo: "gana", ronda: 1, ids: ["b"], reaccionMs: 100 });
+    desenfunda.avanzar(e, e.finFase);
+    expect(e.adelantados.size).toBe(0);
+    desenfunda.avanzar(e, e.ya);
+    desenfunda.tocar(e, "a", e.ya + 90);
+    expect(desenfunda.avanzar(e, e.juicio!)).toContainEqual({ tipo: "gana", ronda: 2, ids: ["a"], reaccionMs: 90 });
+  });
+  it("gana el menor tiempo válido, aunque llegue después por la red dentro del juicio", () => {
+    const e = preparar(); desenfunda.avanzar(e, e.ya);
+    desenfunda.tocar(e, "a", e.ya + 220, e.ya + 230);
+    expect(desenfunda.avanzar(e, e.ya + 479).some(x => x.tipo === "gana")).toBe(false);
+    desenfunda.tocar(e, "b", e.ya + 120, e.ya + 470);
+    expect(e.juicio).toBe(e.ya + 480);
+    expect(desenfunda.avanzar(e, e.juicio!)).toContainEqual({ tipo: "gana", ronda: 1, ids: ["b"], reaccionMs: 120 });
+  });
+  it("un toque que llega al cerrar el juicio ya no cambia el resultado", () => {
+    const e = preparar(); desenfunda.avanzar(e, e.ya);
+    desenfunda.tocar(e, "a", e.ya + 200);
+    expect(desenfunda.tocar(e, "b", e.ya + 100, e.juicio!)).toContainEqual({ tipo: "gana", ronda: 1, ids: ["a"], reaccionMs: 200 });
+    expect(e.toques.has("b")).toBe(false);
+  });
+  it("empate exacto: ambos suman la ronda", () => {
+    const e = preparar(); desenfunda.avanzar(e, e.ya);
+    desenfunda.tocar(e, "a", e.ya + 123);
+    desenfunda.tocar(e, "b", e.ya + 123, e.ya + 200);
+    expect(desenfunda.avanzar(e, e.juicio!)).toContainEqual({ tipo: "gana", ronda: 1, ids: ["a", "b"], reaccionMs: 123 });
+    expect(desenfunda.ranking(e).filter(x => x.lugar === 1).map(x => x.id)).toEqual(["a", "b"]);
+  });
+  it("el margen favorece al jugador hasta 70 ms; las reacciones toleradas son cero", () => {
+    const e = preparar();
+    expect(desenfunda.tocar(e, "a", e.ya - 71)).toContainEqual({ tipo: "adelantado", ronda: 1, id: "a" });
+    expect(desenfunda.tocar(e, "b", e.ya - 70)).not.toContainEqual({ tipo: "adelantado", ronda: 1, id: "b" });
+    desenfunda.avanzar(e, e.ya);
+    desenfunda.tocar(e, "c", e.ya);
+    expect(desenfunda.avanzar(e, e.juicio!)).toContainEqual({ tipo: "gana", ronda: 1, ids: ["b", "c"], reaccionMs: 0 });
+  });
+  it("sin toque válido en 3 s se cierra sin ganador, incluso si todos se adelantaron", () => {
+    for (const todos of [false, true]) {
+      const e = preparar();
+      if (todos) e.jugadores.forEach(j => desenfunda.tocar(e, j.id, e.ya - 500));
+      desenfunda.avanzar(e, e.ya);
+      expect(desenfunda.avanzar(e, e.ya + 2999)).toEqual([]);
+      expect(desenfunda.avanzar(e, e.ya + 3000)).toEqual([{ tipo: "sinGanador", ronda: 1 }]);
+      expect(desenfunda.ranking(e).every(x => x.rondas === 0)).toBe(true);
+    }
+  });
+  it("un toque al final de los 3 s conserva sus 250 ms completos de juicio", () => {
+    const e = preparar(); desenfunda.avanzar(e, e.ya);
+    desenfunda.tocar(e, "a", e.ya + 2990);
+    expect(desenfunda.avanzar(e, e.ya + 3000)).toEqual([]);
+    expect(desenfunda.avanzar(e, e.juicio!)).toContainEqual({ tipo: "gana", ronda: 1, ids: ["a"], reaccionMs: 2990 });
+  });
+  it("son exactamente 5 rondas y el ranking permite empates por rondas ganadas", () => {
+    const e = preparar(); const ev: desenfunda.Evento[] = [];
+    for (const ids of [["a"], ["b"], ["a"], ["b"], ["c"]]) {
+      desenfunda.avanzar(e, e.ya);
+      ids.forEach(id => desenfunda.tocar(e, id, e.ya + 100));
+      ev.push(...desenfunda.avanzar(e, e.juicio!));
+      if (e.fase === "pausa") ev.push(...desenfunda.avanzar(e, e.finFase));
+    }
+    expect(e.fase).toBe("fin"); expect(e.ronda).toBe(5);
+    expect(ev.filter(x => x.tipo === "fin")).toEqual([{ tipo: "fin", ranking: [
+      { id: "a", rondas: 2, lugar: 1 }, { id: "b", rondas: 2, lugar: 1 }, { id: "c", rondas: 1, lugar: 3 },
+    ] }]);
+    expect(desenfunda.avanzar(e, e.ya + 100000)).toEqual([]);
+    expect(desenfunda.empezar(e, 0)).toEqual([]);
+  });
+  it("ignora un segundo toque, jugadores ajenos y horas inválidas o de otra ronda", () => {
+    const e = preparar(); desenfunda.avanzar(e, e.ya);
+    desenfunda.tocar(e, "a", e.ya + 150);
+    desenfunda.tocar(e, "a", e.ya + 90, e.ya + 170);
+    desenfunda.tocar(e, "ajeno", e.ya + 80);
+    desenfunda.tocar(e, "b", NaN);
+    desenfunda.tocar(e, "b", e.inicioRonda - 1, e.ya + 180);
+    expect([...e.toques]).toEqual([["a", e.ya + 150]]);
+  });
+  it("la semilla es repetible y acepta un generador inyectado", () => {
+    expect(preparar().amagos).toEqual(preparar().amagos);
+    const e = desenfunda.crearPartida([{ id: "a" }], {}, () => 0);
+    desenfunda.empezar(e, 0);
+    expect(e.ya).toBe(1500); expect(e.amagos).toHaveLength(1);
+  });
+  it("emite de 1 a 3 amagos espaciados y nunca revela el YA ni su horario antes de tiempo", () => {
+    const cantidades = new Set<number>();
+    for (let semilla = 0; semilla < 100; semilla++) {
+      const e = desenfunda.crearPartida([{ id: "a" }], {}, semilla);
+      const ev = desenfunda.empezar(e, 1000);
+      expect(ev).toEqual([{ tipo: "ronda", ronda: 1 }]);
+      expect(e.ya - 1000).toBeGreaterThanOrEqual(1500); expect(e.ya - 1000).toBeLessThanOrEqual(4000);
+      cantidades.add(e.amagos.length);
+      let anterior = 1000;
+      for (const amago of [...e.amagos]) {
+        expect(amago.t - anterior).toBeGreaterThanOrEqual(700 - 1e-9);
+        expect(amago.t - anterior).toBeLessThanOrEqual(1400 + 1e-9);
+        expect(amago.t).toBeLessThan(e.ya);
+        ev.push(...desenfunda.avanzar(e, amago.t)); anterior = amago.t;
+      }
+      ev.push(...desenfunda.avanzar(e, e.ya - 1));
+      expect(ev.every(x => x.tipo !== "ya" && !("t" in x) && !("ya" in x))).toBe(true);
+      expect(desenfunda.avanzar(e, e.ya)).toContainEqual({ tipo: "ya", ronda: 1, t: e.ya });
+    }
+    expect([...cantidades].sort()).toEqual([1, 2, 3]);
+  });
+  it("si la TV se retrasa, el YA y la ventana de reacción empiezan cuando se muestra", () => {
+    const e = preparar(); const real = e.ya + 400;
+    expect(desenfunda.avanzar(e, real)).toContainEqual({ tipo: "ya", ronda: 1, t: real });
+    expect(e.ya).toBe(real);
+    desenfunda.tocar(e, "a", real - 100, real + 20);
+    expect(e.adelantados.has("a")).toBe(true);
+  });
+});
 
 describe("reloj compartido", () => {
   it("con viaje simétrico encuentra el desfase exacto", () => {
