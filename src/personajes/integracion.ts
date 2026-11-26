@@ -97,18 +97,20 @@ export function proyectar(v3: FiguraV3): FiguraV2Puente {
 }
 
 /** Lo que llega de la base (o de otro aparato) a la forma interna. v3 válida → puente proyectado (sin depender del catálogo
- *  ni del GLB: si faltan recursos se ve el respaldo y los datos se conservan); v2 → igual que siempre; lo demás → null. */
-export function desdeBase(f: unknown): FiguraV2Puente | null {
+ *  ni del GLB: si faltan recursos se ve el respaldo y los datos se conservan); v2 → igual que siempre, SALVO con el corte: ahí
+ *  una v2 de la base (las que quedan durante la ventana de mantenimiento, antes de la 046) no cuenta como figura y se ignora;
+ *  lo demás → null. */
+export function desdeBase(f: unknown, corte: boolean = modoCorteV3()): FiguraV2Puente | null {
   if (!f || typeof f !== "object" || Array.isArray(f)) return null;
   const v = (f as { version?: unknown }).version;
-  if (v === 2) return f as FiguraV2Puente;
+  if (v === 2) return corte ? null : (f as FiguraV2Puente);
   if (v === 3) { const v3 = leerFigura(f); return v3 ? proyectar(v3) : null; }
   return null;
 }
 
 /** Filas de una RPC con `figura` (ranking, salón, récords, torneos): cada figura pasa por la frontera. */
 export function conFiguras<T extends { figura?: unknown }>(filas: T[]): T[] {
-  return filas.map(r => ("figura" in r ? { ...r, figura: desdeBase(r.figura) } : r));
+  return filas.map(r => ("figura" in r ? { ...r, figura: desdeBase(r.figura) } : r)); // con el corte, las v2 quedan en null
 }
 
 const momentosValidos = (m: unknown): m is FiguraV3["momentos"] => {

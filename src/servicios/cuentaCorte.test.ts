@@ -33,10 +33,12 @@ describe("cápsulas en la nube con y sin corte", () => {
   beforeEach(() => { db.filas = []; db.llamadas = []; mem.clear(); });
   afterEach(() => { vi.unstubAllEnvs(); });
 
-  it("con corte: lo que llega v3 directo entra como puente; lo inválido no entra", async () => {
+  it("con corte: lo que llega v3 directo entra como puente; lo inválido y las v2 no entran", async () => {
     vi.stubEnv("VITE_CORTE_V3", "1");
-    db.filas = [{ jugador: "u1", capsula: 1, nombre: "Thor", figura: v3, activa: true }, { jugador: "u1", capsula: 2, nombre: "Rota", figura: { version: 3, familia: 7 } }];
+    db.filas = [{ jugador: "u1", capsula: 1, nombre: "Thor", figura: v3, activa: true }, { jugador: "u1", capsula: 2, nombre: "Rota", figura: { version: 3, familia: 7 } },
+      { jugador: "u1", capsula: 3, nombre: "Vieja", figura: { version: 2 } }];
     const e = (await cargarCapsulasNube())!;
+    expect(e.slots[2]).toBeNull(); // una v2 de la base (antes de la 046) no cuenta con el corte
     expect((e.slots[0]!.figura as unknown as { extensiones: { alv: { v3: unknown } } }).extensiones.alv.v3).toEqual(v3);
     expect(e.slots[1]).toBeNull();
     expect(e.activa).toBe(0);

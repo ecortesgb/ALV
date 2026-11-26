@@ -127,6 +127,11 @@ describe("fase 5: corte a v3 (Codex, v3-directo-r1)", () => {
     expect(haciaBase({ version: 2, cabello: "x" }, false)).toEqual({ tipo: "subir", figura: { version: 2, cabello: "x" } });
     expect(haciaBase({ version: 3 }, false)).toEqual({ tipo: "error" });
   });
+  it("con corte, una v2 que llega de la base no cuenta como figura (ventana antes de la 046)", async () => {
+    const { desdeBase } = await import("./integracion");
+    expect(desdeBase({ version: 2, cabello: "x" }, true)).toBeNull();
+    expect(desdeBase(v3, true)!.version).toBe(2);
+  });
   it("con corte: una v2 sin v3 se OMITE (no se sube ni se borra); un puente roto es error", async () => {
     const { haciaBase } = await import("./integracion");
     expect(haciaBase({ version: 2, cabello: "x" }, true)).toEqual({ tipo: "omitir" });
