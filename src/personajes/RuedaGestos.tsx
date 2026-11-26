@@ -1,7 +1,7 @@
 // Rueda de gestos: aparece al tocar al personaje (referencia de Elías: menú radial de 4 gajos con la cabeza al centro).
 // Semitransparente para no tapar la figura; abre con rebote y cada gajo entra uno tras otro. Se cierra al elegir, al
 // tocar fuera o con Esc. Con teclado: flechas para moverse, Enter para elegir.
-import { useEffect, useRef, useState, type CSSProperties, type KeyboardEvent } from "react";
+import React, { useEffect, useRef, useState, type CSSProperties, type KeyboardEvent } from "react";
 import "./rueda-gestos.css";
 
 export interface GestoRueda { cual: string; txt: string; c1: string; c2: string; dibujo: JSX.Element }
@@ -19,7 +19,9 @@ const ANGULOS = [180, 270, 0, 90];
 export function RuedaGestos({ gestos, x, y, centro, onElegir, onCerrar }: {
   /** 4 gestos en orden: izquierda, arriba, derecha, abajo. */
   gestos: GestoRueda[]; x: number; y: number; centro?: string | null;
-  onElegir: (cual: string) => void; onCerrar: () => void;
+  onElegir: (cual: string) => void;
+  /** «elegir» o «tecla» (Esc): quien la abrió devuelve el foco al personaje; «fuera»: el foco se queda donde fue. */
+  onCerrar: (motivo: "elegir" | "tecla" | "fuera") => void;
 }) {
   const [sale, setSale] = useState<string | null>(null); // gesto elegido: animación de salida antes de cerrar
   const [foco, setFoco] = useState(0);
@@ -27,21 +29,23 @@ export function RuedaGestos({ gestos, x, y, centro, onElegir, onCerrar }: {
   const botones = useRef<(SVGGElement | null)[]>([]);
   useEffect(() => { botones.current[0]?.focus({ preventScroll: true }); }, []);
   useEffect(() => {
-    const fuera = (e: PointerEvent) => { if (!caja.current?.contains(e.target as Node)) onCerrar(); };
-    const tecla = (e: globalThis.KeyboardEvent) => { if (e.key === "Escape") onCerrar(); };
+    const fuera = (e: PointerEvent) => { if (!caja.current?.contains(e.target as Node)) onCerrar("fuera"); };
+    const tecla = (e: globalThis.KeyboardEvent) => { if (e.key === "Escape") onCerrar("tecla"); };
     const t = setTimeout(() => addEventListener("pointerdown", fuera, true), 0);
     addEventListener("keydown", tecla);
     return () => { clearTimeout(t); removeEventListener("pointerdown", fuera, true); removeEventListener("keydown", tecla); };
   }, [onCerrar]);
   // Avisa la elección al momento (quien la usa decide cuándo empieza el gesto); late 100 ms y se cierra en 120 ms.
-  const elegir = (cual: string) => { if (sale) return; setSale(cual); onElegir(cual); setTimeout(onCerrar, 220); };
+  const elegir = (cual: string) => { if (sale) return; setSale(cual); onElegir(cual); setTimeout(() => onCerrar("elegir"), 220); };
+  // Si el foco sale de la rueda (Tab, Mayús+Tab), se cierra sin moverlo (Codex, cierre-r1).
+  const salioFoco = (e: React.FocusEvent) => { if (!sale && !caja.current?.contains(e.relatedTarget as Node | null) && e.relatedTarget) onCerrar("fuera"); };
   const mover = (e: KeyboardEvent, i: number) => {
     const sig = { ArrowLeft: 0, ArrowUp: 1, ArrowRight: 2, ArrowDown: 3 }[e.key as "ArrowLeft"];
     if (sig !== undefined) { e.preventDefault(); setFoco(sig); botones.current[sig]?.focus(); }
     if (e.key === "Enter" || e.key === " ") { e.preventDefault(); elegir(gestos[i]!.cual); }
   };
   return (
-    <div ref={caja} className={"rg" + (sale ? " rg-sale" : "")} style={{ left: x, top: y }} role="menu" aria-label="Animaciones de tu personaje">
+    <div ref={caja} className={"rg" + (sale ? " rg-sale" : "")} style={{ left: x, top: y }} role="menu" aria-label="Animaciones de tu personaje" onBlur={salioFoco}>
       <span className="rg-vidrio" aria-hidden="true" />
       <svg viewBox="-100 -100 200 200" className="rg-svg">
         {gestos.slice(0, 4).map((g, i) => {

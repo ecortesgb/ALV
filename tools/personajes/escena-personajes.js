@@ -4,7 +4,9 @@
 //   {tipo:"momento", id, cual, vel?} → esa figura toca una lógica, un momento o gesto de siempre, o un clip de vida
 //   {tipo:"todos", cual}             → todas a la vez
 // Responde {origen:"minifig", tipo:"listo"} al cargar, {tipo:"armadas", ids, errores, rev}, {tipo:"medida", …} y
-// {tipo:"toque", id, x, y} cuando se toca una figura sin arrastrar.
+// {tipo:"toque", id, x, y} cuando se toca una figura sin arrastrar y {tipo:"presion"} al empezar cualquier toque en la
+// escena (la página de arriba no ve los toques dentro del iframe: así cierra lo que tenga abierto).
+// {tipo:"error", texto} si falta algo para dibujar.
 (function () {
   "use strict";
   const enviar = m => { try { if (window.parent !== window) window.parent.postMessage(Object.assign({ origen: "minifig" }, m), location.origin); } catch (e) { /* sin ventana */ } };
@@ -43,6 +45,39 @@
   // izquierda) en ms milisegundos con desaceleración, sin rebote; lo usa el constructor para que la rueda de gestos no
   // tape a la figura en celular (Codex, encargo 2026-11-26-rueda-gestos-r2).
   let vista = null, corre = 0, tramo = null;
+  // {tipo:"enfocar", zona:"cabeza"|"cuerpo"}: la cámara se acerca de frente a la cabeza de la primera figura (con margen
+  // para casco, pelo u orejas) y la figura pasa a reposo; «cuerpo» regresa. {tipo:"cara", n}: deja ver solo la expresión
+  // n de la cara (las mallas de la ranura «face», sin la máscara) y congela la figura para revisarla; n = null la suelta.
+  // {tipo:"restablecer"}: giro 0, cuerpo completo, sin expresión fija. Lo usa el modo revisión (Codex, modo-revision-r1).
+  let foco = "cuerpo";
+  const vc = new THREE.Vector3(), cajaC = new THREE.Box3();
+  function enfocarCabeza() {
+    const f = figuras.get(orden[0]);
+    const cab = f && f.p.hueso("cabeza");
+    if (!cab) return;
+    f.p.obj.updateMatrixWorld(true);
+    cajaC.makeEmpty();
+    f.p.obj.traverse(o => {
+      if (!o.isMesh || !o.visible || o.userData.alvOclusor || !/^(head|face|hair|headgear)$/.test(o.userData.slot || "")) return;
+      const pos = o.geometry.attributes.position;
+      for (let i = 0; i < pos.count; i += 3) { vc.fromBufferAttribute(pos, i); if (o.isSkinnedMesh) o.boneTransform(i, vc); vc.applyMatrix4(o.matrixWorld); cajaC.expandByPoint(vc); }
+    });
+    if (cajaC.isEmpty()) cab.getWorldPosition(vc), cajaC.setFromCenterAndSize(vc, new THREE.Vector3(0.6, 0.6, 0.6));
+    const c = cajaC.getCenter(new THREE.Vector3()), t = cajaC.getSize(new THREE.Vector3());
+    const r = Math.max(t.x, t.y) * 0.5 * 1.35, tanV = Math.tan((camera.fov * Math.PI) / 360);
+    const d = r / Math.min(tanV, tanV * camera.aspect);
+    camera.position.set(c.x, c.y, c.z + d); camera.lookAt(c);
+  }
+  function caraFija(n) {
+    const f = figuras.get(orden[0]);
+    if (!f) return 0;
+    const caras = [];
+    f.p.obj.traverse(o => { if (o.isMesh && o.userData.slot === "face" && !o.userData.alvOclusor) caras.push(o); });
+    if (n == null) { f.caraFija = null; return caras.length; }
+    f.caraFija = Math.max(0, Math.min(caras.length - 1, n));
+    caras.forEach((o, i) => { o.visible = i === f.caraFija; });
+    return caras.length;
+  }
   function acomodar() {
     // De izquierda a derecha, cada una con su propio ancho (Hulk ocupa más que una minifigura).
     const lista = orden.map(id => figuras.get(id)).filter(Boolean);
@@ -61,6 +96,7 @@
       : 1.1 * Math.max((alto * 0.62) / tanV, (ancho * 0.5) / tanH) + 1;
     camera.position.set(0, alto * 0.62, dist); camera.lookAt(0, alto * (cerca ? 0.465 : 0.5), 0);
     vista = { dist, mira: alto * (cerca ? 0.465 : 0.5), ancho: 2 * dist * tanH };
+    if (foco === "cabeza") enfocarCabeza();
     piso.scale.setScalar(Math.max(ancho, alto) * 1.2);
     clave.position.set(alto * 2, alto * 4, alto * 3);
     Object.assign(clave.shadow.camera, { left: -ancho, right: ancho, top: alto * 2, bottom: -alto, near: 0.1, far: alto * 12 });
@@ -90,7 +126,7 @@
         // encargo 2026-11-25-constructor-diseno-r5); sin él conserva el giro.
         if (FRENTE) { giro = 0; aplicarGiro(); }
         p.obj.rotation.y = giro;
-        scene.add(p.obj); figuras.set(plano.id, { p, firma, pulso });
+        scene.add(p.obj); figuras.set(plano.id, { p, firma, pulso, ultimaL: "reposo" });
       } catch (e) { errores.push(plano.id + ": " + (e && e.message ? e.message : e)); }
     }));
     if (mio !== turno) return;
@@ -104,6 +140,14 @@
     if (e.origin !== location.origin || !e.data || e.data.origen !== "alv") return;
     const d = e.data;
     if (d.tipo === "planos") ponerPlanos(d.lista, d.rev);
+    if (d.tipo === "enfocar") {
+      foco = d.zona === "cabeza" ? "cabeza" : "cuerpo";
+      const f = figuras.get(orden[0]);
+      if (f && foco === "cabeza") f.p.tocar("reposo", { mezcla: 0.2 });
+      acomodar();
+    }
+    if (d.tipo === "cara") enviar({ tipo: "caras", n: caraFija(typeof d.n === "number" ? d.n : null) });
+    if (d.tipo === "restablecer") { foco = "cuerpo"; giro = 0; aplicarGiro(); caraFija(null); acomodar(); }
     if (d.tipo === "correr" && typeof d.x === "number") {
       const meta = Math.max(-0.5, Math.min(0.5, d.x)), ms = typeof d.ms === "number" ? Math.max(0, Math.min(1000, d.ms)) : 200;
       tramo = QUIETO || !ms ? { de: meta, a: meta, t0: 0, dur: 1 } : { de: corre, a: meta, t0: performance.now(), dur: ms };
@@ -119,7 +163,11 @@
   // Girar arrastrando (con una sola figura, como la ficha de la galería) o con {tipo:"girar", cuanto} en radianes.
   let giro = 0, arrastre = null;
   const aplicarGiro = () => figuras.forEach(f => { f.p.obj.rotation.y = giro; });
-  lienzo.addEventListener("pointerdown", e => { arrastre = { x: e.clientX, y: e.clientY, g: giro, t: performance.now() }; lienzo.setPointerCapture(e.pointerId); });
+  lienzo.addEventListener("pointerdown", e => {
+    arrastre = { x: e.clientX, y: e.clientY, g: giro, t: performance.now() };
+    enviar({ tipo: "presion" });
+    try { lienzo.setPointerCapture(e.pointerId); } catch (err) { /* puntero que ya no existe */ }
+  });
   lienzo.addEventListener("pointermove", e => { if (!arrastre) return; giro = arrastre.g + (e.clientX - arrastre.x) * 0.012; aplicarGiro(); });
   // Un toque (sin arrastrar) sobre una figura se avisa arriba: {tipo:"toque", id, x, y} con x/y de 0 a 1 en el lienzo.
   // La figura se mide por sus huesos proyectados en pantalla, con un poco de margen (las mallas con huesos no se
@@ -151,7 +199,7 @@
 
   // Medición: tiempo de mover huesos y de dibujar, promedio de los últimos 60 cuadros.
   const M = { cuadros: 0, mover: 0, dibujar: 0, llamadas: 0, triangulos: 0 };
-  window.__escena = { figuras, M, renderer, scene, camera };
+  window.__escena = { figuras, M, renderer, scene, camera, giro: () => giro };
   const reloj = new THREE.Clock();
   // Gira la figura entera en sentido contrario a lo que la cadera se aparta del frente de más; suave, para no saltar al
   // pasar de reposo a un gesto (los gestos se ven completos, sin compensar).
@@ -177,7 +225,18 @@
     }
     const dt = Math.min(reloj.getDelta(), 0.1);
     const t0 = performance.now();
-    figuras.forEach(f => f.p.update(dt));
+    // «Reducir movimiento»: en reposo y vida la figura se queda en una pose estable (deja de animarse 0.4 s después de
+    // volver a reposo, para terminar la mezcla); los gestos que se piden sí se ven (Codex, cierre-r1).
+    const ahora = performance.now();
+    figuras.forEach(f => {
+      if (f.caraFija != null) return; // expresión fija para revisarla: la figura se queda quieta
+      if (QUIETO) {
+        const l = f.p.estado().logica;
+        if (l !== f.ultimaL) { f.ultimaL = l; f.desde = ahora; }
+        if ((l === "reposo" || l === "vida") && (f.desde === undefined || ahora - f.desde > 400)) return;
+      }
+      f.p.update(dt);
+    });
     if (vista && (tramo || corre)) {
       if (tramo) {
         const k = Math.min(1, (performance.now() - tramo.t0) / tramo.dur);

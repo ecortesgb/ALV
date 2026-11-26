@@ -65,9 +65,7 @@ function Demo() {
       )}
       {ind && vista.cual === "crear" && (
         <Constructor catalogo={ind.catalogo} piezas={piezas} inicial={vista.figura} escenaUrl={ESCENA}
-          onGuardar={f => guardar(f, "Guardado en tu colección")} onSalir={() => setVista({ cual: "inicio" })}
-          estudioUrl={q.get("minis") === "no" ? null : undefined} figuraCerca={q.get("cerca") !== "no"}
-          frente={q.has("frente") ? Number(q.get("frente")) || 0 : undefined} />
+          onGuardar={f => guardar(f, "Guardado en tu colección")} onSalir={() => setVista({ cual: "inicio" })} />
       )}
       {aviso && <div role="status" style={{ position: "absolute", left: "50%", top: 16, transform: "translateX(-50%)", zIndex: 9, background: "var(--yel)", color: "var(--ink)",
         font: "800 italic 18px/1 var(--letra-display)", padding: "10px 16px", borderRadius: 99, border: "2.5px solid var(--ink)", boxShadow: "0 .2em 0 var(--ink)", whiteSpace: "nowrap" }}>{aviso}</div>}

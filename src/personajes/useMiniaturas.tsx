@@ -15,6 +15,10 @@ export function useMiniaturas(url: string | null, catalogo: Catalogo) {
   const [listo, setListo] = useState(false);
   const [, setVersion] = useState(0);
   const pedidas = useRef(new Set<string>());
+  // Si el estudio no dice «listo» en 10 s, o una foto no llega en 8 s, se usa la foto del donante (Codex, cierre-r1):
+  // nada se queda esperando para siempre.
+  const [caido, setCaido] = useState(false);
+  useEffect(() => { if (!url || listo) return; const t = setTimeout(() => setCaido(true), 10000); return () => clearTimeout(t); }, [url, listo]);
   useEffect(() => {
     const f = (e: MessageEvent) => {
       if (e.origin !== location.origin || e.source !== ref.current?.contentWindow || e.data?.origen !== "minifig") return;
@@ -35,10 +39,11 @@ export function useMiniaturas(url: string | null, catalogo: Catalogo) {
     const plano = en ? resolver("foto", deCatalogo(en.ficha), catalogo) : null;
     if (!plano) { fotos.set(pz.id, null); return; }
     pedidas.current.add(pz.id);
+    setTimeout(() => { if (!fotos.has(pz.id)) { fotos.set(pz.id, null); setVersion(v => v + 1); } }, 8000);
     ref.current?.contentWindow?.postMessage({ origen: "alv", tipo: "foto", clave: pz.id, plano, ver: ranurasFoto(pz), tam: 192 }, location.origin);
   };
   /** url lista, null si falló (usar la foto del donante) o undefined si aún no llega. */
-  const foto = (pz: PiezaCons): string | null | undefined => (url ? fotos.get(pz.id) : null);
+  const foto = (pz: PiezaCons): string | null | undefined => (!url || (caido && !listo) ? fotos.get(pz.id) ?? null : fotos.get(pz.id));
   const marco = url ? (
     <iframe ref={ref} src={url} title="Estudio de miniaturas" aria-hidden="true" tabIndex={-1}
       style={{ position: "absolute", left: 0, top: 0, width: 1, height: 1, opacity: 0, border: 0, pointerEvents: "none" }} />

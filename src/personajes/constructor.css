@@ -103,13 +103,18 @@
 /* Panel del lobby con las piezas */
 .D .pz-panel { grid-area: panel; min-height: 0; align-items: stretch; gap: 8px; padding: 10px; border-width: 3px; }
 .D .pz-pills { display: flex; gap: 6px; }
-.D .pz-pill { flex: 1; min-height: 36px; border-radius: 12px; border: 2.5px solid var(--az-tinta); cursor: pointer; font: 400 15px/1 var(--f-titulo); text-transform: uppercase;
+.D .pz-pill { flex: 1; min-height: 44px; border-radius: 12px; border: 2.5px solid var(--az-tinta); cursor: pointer; font: 400 15px/1 var(--f-titulo); text-transform: uppercase;
   color: var(--az-tinta); background: #eef1f8; box-shadow: 0 4px 0 #b9c1d8; transition: transform .12s; }
 .D .pz-pill.on { background: linear-gradient(#fff09a, #ffc21a); box-shadow: 0 4px 0 #c77700; }
 .D .pz-pill:active { transform: translateY(3px); box-shadow: 0 1px 0 #b9c1d8; }
 .D .pz-colores { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font: 800 12px/1 var(--f-texto); color: #3a4470; text-transform: uppercase; }
-.D .pz-color { width: 30px; height: 30px; border-radius: 50%; border: 2.5px solid var(--az-tinta); box-shadow: 0 2px 0 var(--az-tinta); cursor: pointer; }
-.D .pz-color.on { outline: 3px solid #ffb000; outline-offset: 2px; }
+/* Colores y flechas: se ven de 30 px pero se tocan en 44 × 44 (el círculo es un ::before; Codex, cierre-r1). */
+.D .pz-colores { gap: 0 2px; }
+.D .pz-color { position: relative; width: 44px; height: 44px; padding: 0; border: 0; background: none; cursor: pointer; }
+.D .pz-color::before { content: ""; position: absolute; inset: 7px; border-radius: 50%; background: var(--c); border: 2.5px solid var(--az-tinta); box-shadow: 0 2px 0 var(--az-tinta); }
+.D .pz-color.on::before { outline: 3px solid #ffb000; outline-offset: 2px; }
+.D .pz-color:focus-visible { outline: none; }
+.D .pz-color:focus-visible::before { outline: 3px solid var(--az-tinta); outline-offset: 2px; }
 .D .pz-rejilla { flex: 1 1 0; min-height: 0; display: grid; gap: 8px; touch-action: pan-y; user-select: none; }
 .D .pz-pieza { position: relative; min-height: 0; display: grid; grid-template-rows: minmax(0, 1fr) auto; padding: 4px; cursor: pointer; border-radius: 12px;
   border: 2px solid #c9d0e3; background: radial-gradient(ellipse at 50% 30%, #fff, #dfe5f3); color: #3a4470; transition: transform .12s; }
@@ -121,8 +126,11 @@
 @keyframes pzGira { to { transform: rotate(360deg); } }
 .D .pz-sin { display: grid; place-items: center; font: 400 28px var(--f-titulo); color: #9aa3c0; }
 .D .pz-vacio { grid-column: 1 / -1; align-self: center; text-align: center; color: #3a4470; margin: 0; }
-.D .pz-paginas { display: flex; align-items: center; justify-content: center; gap: 12px; }
-.D .pz-flecha { width: 30px; height: 30px; border-radius: 50%; border: 2px solid var(--az-tinta); background: var(--pj, #2f7cf0); color: #fff; font: 400 18px/1 var(--f-titulo); cursor: pointer; }
+.D .pz-paginas { display: flex; align-items: center; justify-content: center; gap: 4px; }
+.D .pz-flecha { position: relative; width: 44px; height: 44px; padding: 0; border: 0; background: none; color: #fff; font: 400 18px/1 var(--f-titulo); cursor: pointer; }
+.D .pz-flecha::before { content: ""; position: absolute; inset: 7px; border-radius: 50%; border: 2px solid var(--az-tinta); background: var(--pj, #2f7cf0); z-index: 0; }
+.D .pz-flecha-t { position: relative; z-index: 1; }
+.D .pz-flecha:focus-visible { outline: 3px solid var(--az-tinta); outline-offset: -4px; border-radius: 50%; }
 .D .pz-flecha:disabled { opacity: .35; cursor: default; }
 .D .pz-puntos { display: flex; gap: 6px; }
 .D .pz-puntos i { width: 10px; height: 6px; border-radius: 99px; background: #c4cbe0; }
@@ -151,4 +159,4 @@
 /* ¡Guardar!: se comprime y recupera al guardar (E5.4). */
 .D .pz-guardar.guarda { animation: pzGuarda .18s cubic-bezier(.34, 1.56, .64, 1); }
 @keyframes pzGuarda { 40% { transform: scale(.94); } to { transform: none; } }
-@media (prefers-reduced-motion: reduce) { .D .pz-top, .D .pz-losa, .D .pz-pista, .D .pz-rejilla > *, .D .pz-guardar.guarda { animation: none; } .D .pz .pz-volteo { display: none; } }
+@media (prefers-reduced-motion: reduce) { .D .pz-top, .D .pz-losa, .D .pz-pista, .D .pz-rejilla > *, .D .pz-guardar.guarda, .D .pz-espera { animation: none; } .D .pz .pz-volteo { display: none; } }

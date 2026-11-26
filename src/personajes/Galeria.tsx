@@ -2,7 +2,7 @@
 // Lista a la izquierda (páginas que se pasan de lado, sin bajar) y ficha con el personaje en 3D a la derecha; en
 // celular la ficha sube desde abajo. El 3D es el iframe de tools/personajes/escena.html: aquí solo se le mandan planos.
 import { useEffect, useMemo, useRef, useState, type PointerEvent as PE } from "react";
-import { Boton, Chip, Icono, Panel } from "../ds";
+import { Boton, Chip, Icono } from "../ds";
 import { deCatalogo } from "./figura";
 import { SIN_FILTRO, caben, categorias, filtrar, guardarFavoritos, leerFavoritos, nombreSaga, paginas, tarjetas, type Filtro, type Tarjeta } from "./galeriaDatos";
 import { resolver, type Catalogo } from "./plano";
@@ -65,7 +65,31 @@ export function Galeria({ catalogo, pruebas, jugador, escenaUrl, actual, onUsar,
     guardarFavoritos(jugador, s);
     return s;
   });
-  const elegir = (id: Id) => { setElegido(id); setAbierta(true); setHecho(null); };
+  // Celular: la ficha sube desde abajo. Cerrada queda fuera del teclado y de los lectores de pantalla (inert); abierta
+  // recibe el foco, lo de atrás queda inerte y Escape la cierra devolviendo el foco a la tarjeta (Codex, cierre-r1).
+  const [celular, setCelular] = useState(() => typeof matchMedia === "function" && matchMedia("(max-width: 859px)").matches);
+  useEffect(() => {
+    if (typeof matchMedia !== "function") return;
+    const m = matchMedia("(max-width: 859px)"), f = () => setCelular(m.matches);
+    m.addEventListener("change", f); return () => m.removeEventListener("change", f);
+  }, []);
+  const ficha = useRef<HTMLElement>(null), atras = useRef<HTMLDivElement>(null), cerrar = useRef<HTMLButtonElement>(null);
+  const deDonde = useRef<HTMLElement | null>(null);
+  useEffect(() => {
+    const fichaOculta = celular && !abierta, fondoInerte = celular && abierta;
+    ficha.current?.toggleAttribute("inert", fichaOculta);
+    ficha.current?.setAttribute("aria-hidden", String(fichaOculta));
+    atras.current?.toggleAttribute("inert", fondoInerte);
+    if (fondoInerte) cerrar.current?.focus({ preventScroll: true });
+  }, [celular, abierta]);
+  const cerrarFicha = () => { setAbierta(false); setTimeout(() => deDonde.current?.focus({ preventScroll: true }), 0); };
+  useEffect(() => {
+    if (!(celular && abierta)) return;
+    const f = (e: KeyboardEvent) => { if (e.key === "Escape") cerrarFicha(); };
+    addEventListener("keydown", f); return () => removeEventListener("keydown", f);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [celular, abierta]);
+  const elegir = (id: Id, de?: HTMLElement) => { setElegido(id); setAbierta(true); setHecho(null); if (de) deDonde.current = de; };
   const usar = () => {
     if (!t) return;
     const en = catalogo.get(t.id);
@@ -86,6 +110,7 @@ export function Galeria({ catalogo, pruebas, jugador, escenaUrl, actual, onUsar,
 
   return (
     <div className={"gal" + (abierta ? " gal-ficha-abierta" : "")}>
+      <div className="gal-atrasde" ref={atras}>
       <header className="gal-top">
         {onSalir && <button type="button" className="gal-atras" onClick={onSalir} aria-label="Regresar"><Icono id="back" /></button>}
         <h1 className="dsp ol gal-titulo">Elegir personaje</h1>
@@ -110,7 +135,7 @@ export function Galeria({ catalogo, pruebas, jugador, escenaUrl, actual, onUsar,
           style={{ gridTemplateColumns: `repeat(${caja.columnas}, minmax(0, 1fr))`, gridTemplateRows: `repeat(${caja.filas}, minmax(0, 1fr))` }}>
           {pags[p]!.map(x => (
             <div key={x.id} className={"gal-tarj" + (x.id === elegido ? " on" : "") + (x.id === actual ? " usado" : "")}>
-              <button type="button" className="gal-tarj-boton" onClick={() => elegir(x.id)} aria-pressed={x.id === elegido}>
+              <button type="button" className="gal-tarj-boton" onClick={e => elegir(x.id, e.currentTarget)} aria-pressed={x.id === elegido}>
                 <span className="gal-foto">
                   {x.foto ? <img src={x.foto} alt="" draggable={false} loading="lazy" /> : <span className="gal-ini dsp">{iniciales(x.nombre)}</span>}
                 </span>
@@ -133,9 +158,10 @@ export function Galeria({ catalogo, pruebas, jugador, escenaUrl, actual, onUsar,
           <button type="button" className="gal-flecha der" onClick={() => setPagina(Math.min(pags.length - 1, p + 1))} disabled={p >= pags.length - 1} aria-label="Página siguiente"><Icono id="back" /></button>
         </div>
       </section>
+      </div>
 
-      <Panel className="gal-ficha" como="section">
-        <button type="button" className="gal-cerrar" onClick={() => setAbierta(false)} aria-label="Cerrar ficha"><Icono id="back" /></button>
+      <section className="d-pnl gal-ficha" ref={ficha} aria-label={t ? "Ficha de " + t.nombre : "Ficha"}>
+        <button type="button" className="gal-cerrar" ref={cerrar} onClick={cerrarFicha} aria-label="Cerrar ficha"><Icono id="back" /></button>
         <Vista3D url={escenaUrl} plano={planoFicha} />
         {t ? (
           <div className="gal-datos">
@@ -155,7 +181,7 @@ export function Galeria({ catalogo, pruebas, jugador, escenaUrl, actual, onUsar,
             </div>
           </div>
         ) : <p className="gal-vacio">Elige un personaje.</p>}
-      </Panel>
+      </section>
     </div>
   );
 }

@@ -1,0 +1,5 @@
+/* Error del visor 3D con reintento (Vista3D.tsx). */
+.D .v3d-error { position: absolute; inset: auto 12px 12px; z-index: 3; display: flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap;
+  padding: 10px 12px; border-radius: 12px; background: rgba(10, 16, 48, .88); color: #fff; font: 800 14px/1.2 var(--f-texto, system-ui); text-align: center; }
+.D .v3d-error button { min-height: 44px; padding: 0 16px; border-radius: 12px; border: 2.5px solid #0a1030; cursor: pointer;
+  background: linear-gradient(#fff09a, #ffc21a); color: #0a1030; font: 400 15px/1 var(--f-titulo, system-ui); text-transform: uppercase; }

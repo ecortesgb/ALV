@@ -1,6 +1,9 @@
-/* Galería «Elegir personaje». Usa los tokens del Design System (.D). Cabe en una pantalla: sin bajar. */
+/* Galería «Elegir personaje». Usa los tokens del Design System (.D). Cabe en una pantalla: sin bajar.
+   Tipografía del HUB y del constructor (decidió Codex, encargo 2026-11-26-cierre-constructor-r1, A2): Lilita One en
+   títulos, chips, nombres y acciones; Nunito en textos. Solo dentro de la galería: el Design System global no cambia. */
 .D .gal {
-  position: absolute; inset: 0; color: #fff; font: var(--cuerpo);
+  --f-titulo: "Lilita One", "Bangers", system-ui, sans-serif; --f-texto: "Nunito", "Barlow", system-ui, sans-serif;
+  position: absolute; inset: 0; color: #fff; font: var(--cuerpo); font-family: var(--f-texto);
   display: grid; gap: 10px; padding: 12px 14px 14px;
   grid-template-columns: minmax(0, 1fr);
   grid-template-rows: auto auto minmax(0, 1fr);
@@ -15,12 +18,17 @@
   }
 }
 
+/* Envoltura de lo que queda detrás de la ficha en celular (se vuelve inerte); no afecta la rejilla. */
+.D .gal-atrasde { display: contents; }
+
 /* Arriba */
 .D .gal-top { grid-area: top; display: flex; align-items: center; gap: 10px; min-width: 0; }
 .D .gal-titulo { margin: 0; font-size: clamp(26px, 4.2vw, 40px); color: var(--yel); transform: rotate(-2deg); }
-.D .gal-cuenta { margin-left: auto; font: var(--chip); color: var(--mut); white-space: nowrap; }
+.D .gal-cuenta { margin-left: auto; font: var(--chip); font-family: var(--f-texto); font-weight: 800; color: var(--mut); white-space: nowrap; }
+.D .gal .dsp, .D .gal .d-chip, .D .gal .d-btn { font-family: var(--f-titulo); font-weight: 400; font-style: normal; letter-spacing: .02em; }
+.D .gal .dsp { line-height: 1; }
 .D .gal-atras, .D .gal-cerrar, .D .gal-flecha {
-  display: grid; place-items: center; width: 40px; height: 40px; flex: none; color: #fff; cursor: pointer;
+  display: grid; place-items: center; width: 44px; height: 44px; flex: none; color: #fff; cursor: pointer; /* 44 × 44 de toque (Codex) */
   background: linear-gradient(180deg, #7fb5ff, #2f7bff 55%, #1a4fc4); border: 2.5px solid var(--ink); border-radius: 50%;
   box-shadow: inset 0 .14em 0 rgba(255, 255, 255, .45), 0 .22em 0 var(--ink); font-size: 20px;
 }
@@ -31,7 +39,7 @@
 .D .gal-filtros { grid-area: filtros; display: grid; gap: 7px; min-width: 0; }
 .D .gal-fila { display: flex; gap: 6px; align-items: center; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
 .D .gal-fila::-webkit-scrollbar { display: none; }
-.D .gal-fila .d-chip { flex: none; font-size: 13px; padding: .4em .9em; color: #fff; cursor: pointer; }
+.D .gal-fila .d-chip { flex: none; font-size: 13px; padding: .4em .9em; min-height: 44px; color: #fff; cursor: pointer; }
 .D .gal-fila .d-chip.on { color: var(--ink); }
 .D .gal-sep { width: 2px; height: 20px; background: rgba(95, 180, 255, .4); flex: none; margin: 0 4px; }
 
@@ -52,20 +60,29 @@
 .D .gal-foto { display: grid; place-items: center; min-height: 0; overflow: hidden; }
 .D .gal-foto img { width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 6px 6px rgba(0, 0, 0, .45)); pointer-events: none; }
 .D .gal-ini { font-size: 42px; color: rgba(255, 255, 255, .55); }
-.D .gal-nombre { font-size: clamp(14px, 1.6vw, 18px); line-height: 1; -webkit-text-stroke: .06em var(--ink); paint-order: stroke fill; overflow: hidden;
-  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow-wrap: anywhere; }
+.D .gal-tarj-boton { container-type: inline-size; }
+/* Nombres: solo se cortan entre palabras (con Lilita, «ABOMINACIÓN» se partía a media palabra); la letra se ajusta al
+   ancho de la tarjeta (unidades cqw del contenedor). */
+.D .gal-nombre { font-size: clamp(11px, 13cqw, 18px); line-height: 1; -webkit-text-stroke: .06em var(--ink); paint-order: stroke fill; overflow: hidden;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow-wrap: normal; word-break: normal; hyphens: none; letter-spacing: 0; }
 .D .gal-prueba { position: absolute; left: 8px; top: 8px; font: var(--chip); background: rgba(10, 16, 48, .7); padding: 2px 6px; border-radius: 99px; color: var(--mut); }
 .D .gal-tarj.usado .gal-tarj-boton::after {
-  content: "TUYO"; position: absolute; left: 8px; bottom: 30px; font: 800 italic 12px/1 var(--letra-display);
+  content: "TUYO"; position: absolute; left: 8px; bottom: 30px; font: 400 12px/1 var(--f-titulo);
   background: var(--yel); color: var(--ink); padding: 3px 7px; border-radius: 99px; border: 2px solid var(--ink);
 }
+/* Favorito: se ve de 32 px pero se toca en 44 × 44 (el círculo es un ::before; Codex). */
 .D .gal-estrella {
-  position: absolute; top: 6px; right: 6px; width: 32px; height: 32px; display: grid; place-items: center; cursor: pointer;
-  background: rgba(10, 16, 48, .65); border: 1.5px solid rgba(95, 180, 255, .55); border-radius: 50%; color: #fff; font-size: 17px;
+  position: absolute; top: 0; right: 0; width: 44px; height: 44px; display: grid; place-items: center; cursor: pointer;
+  background: none; border: 0; padding: 0; color: #fff; font-size: 17px;
 }
-.D .gal-estrella.on { color: var(--yel); background: rgba(10, 16, 48, .85); border-color: var(--yel); }
+.D .gal-estrella::before { content: ""; position: absolute; inset: 6px; border-radius: 50%; background: rgba(10, 16, 48, .65); border: 1.5px solid rgba(95, 180, 255, .55); }
+.D .gal-estrella .ic { position: relative; }
+.D .gal-estrella:focus-visible { outline: 3px solid var(--yel); outline-offset: -2px; border-radius: 50%; }
+.D .gal-estrella.on { color: var(--yel); }
+.D .gal-estrella.on::before { background: rgba(10, 16, 48, .85); border-color: var(--yel); }
 .D .gal-estrella.on .ic { fill: var(--yel); }
-.D .gal-estrella.grande { position: static; width: 44px; height: 44px; font-size: 22px; flex: none; }
+.D .gal-estrella.grande { position: relative; width: 48px; height: 48px; font-size: 22px; flex: none; }
+.D .gal-estrella.grande::before { inset: 2px; }
 .D .gal-vacio { grid-column: 1 / -1; align-self: center; text-align: center; color: var(--mut); margin: 0; }
 .D .gal-paginas { display: flex; align-items: center; justify-content: center; gap: 14px; }
 .D .gal-puntos { display: flex; gap: 6px; }
@@ -81,10 +98,10 @@
 .D .gal-cabeza { display: flex; align-items: center; gap: 10px; }
 .D .gal-cabeza > div { flex: 1; min-width: 0; }
 .D .gal-cabeza h2 { margin: 0; font-size: clamp(24px, 3vw, 34px); }
-.D .gal-cabeza p { margin: 4px 0 0; font: var(--cuerpo-chico); color: var(--mut); }
+.D .gal-cabeza p { margin: 4px 0 0; font: var(--cuerpo-chico); font-family: var(--f-texto); font-weight: 700; color: var(--mut); }
 .D .gal-acciones { display: flex; gap: 12px; flex-wrap: wrap; }
 .D .gal-acciones .d-btn { flex: 1 1 140px; justify-content: center; font-size: 17px; }
-.D .gal-nota { flex: 1 1 140px; align-self: center; font: var(--cuerpo-chico); color: var(--mut); }
+.D .gal-nota { flex: 1 1 140px; align-self: center; font: var(--cuerpo-chico); font-family: var(--f-texto); font-weight: 700; color: var(--mut); }
 .D .gal-cerrar { display: none; position: absolute; top: 10px; left: 10px; z-index: 2; }
 .D .gal-cerrar .ic { transform: rotate(-90deg); }
 

@@ -68,8 +68,6 @@ export interface ConstructorProps {
   paginaAnterior?: string | null;
   /** Estudio de miniaturas de piezas sueltas; null = usar la foto del personaje que dona la pieza. */
   estudioUrl?: string | null;
-  /** Encuadre más cerrado de la figura (la figura se ve más grande en la viñeta). */
-  figuraCerca?: boolean;
   /** Grados máximos que el cuerpo se aparta del frente en reposo (0 = como venga el clip). Decidió Codex: 10° (encargo
    *  2026-11-25-constructor-diseno-r5). */
   frente?: number;
@@ -78,7 +76,7 @@ export interface ConstructorProps {
 const sinMovimiento = () => typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 export function Constructor({ catalogo, piezas, inicial, escenaUrl, onGuardar, onSalir, paginaAnterior = `${ARTE}azotea-pedestal-noche-1920.webp`,
-  estudioUrl = escenaUrl.replace(/escena\.html.*$/, "estudio.html"), figuraCerca = true, frente = 10 }: ConstructorProps) {
+  estudioUrl = escenaUrl.replace(/escena\.html.*$/, "estudio.html"), frente = 10 }: ConstructorProps) {
   const mini = useMiniaturas(estudioUrl, catalogo);
   const [figura, setFigura] = useState(inicial);
   const [historia, setHistoria] = useState<FiguraV3[]>([]);
@@ -175,12 +173,22 @@ export function Constructor({ catalogo, piezas, inicial, escenaUrl, onGuardar, o
   const [correr, setCorrer] = useState<{ x: number; ms: number } | undefined>(undefined);
   const corrida = useRef(false);
   corrida.current = !!correr && correr.x !== 0;
-  const cerrarRueda = useCallback(() => { setRueda(null); if (corrida.current) setCorrer({ x: 0, ms: 180 }); }, []);
+  const toca = useRef<HTMLDivElement>(null);
+  const cerrarRueda = useCallback((motivo?: "elegir" | "tecla" | "fuera") => {
+    setRueda(null);
+    if (corrida.current) setCorrer({ x: 0, ms: 180 });
+    if (motivo === "elegir" || motivo === "tecla") toca.current?.focus({ preventScroll: true }); // el foco vuelve al personaje (Codex)
+  }, []);
+  // Girar con el teclado: con el personaje enfocado y la rueda cerrada, ← y → (Codex, cierre-r1).
+  const [giro, setGiro] = useState<{ n: number; cuanto: number } | null>(null);
   const elegirGesto = (cual: string) => {
     if (corrida.current) { setTimeout(() => setCorrer({ x: 0, ms: 180 }), 100); setTimeout(() => gesto(cual), 280); }
     else setTimeout(() => gesto(cual), 220);
   };
-  const teclaFigura = (ev: { key: string; preventDefault: () => void }) => { if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); tocar(0.5, 0.45); } };
+  const teclaFigura = (ev: { key: string; preventDefault: () => void }) => {
+    if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); tocar(0.5, 0.45); }
+    if (!rueda && (ev.key === "ArrowLeft" || ev.key === "ArrowRight")) { ev.preventDefault(); setGiro(g => ({ n: (g?.n ?? 0) + 1, cuanto: ev.key === "ArrowLeft" ? -0.35 : 0.35 })); }
+  };
 
   // Pasar de página deslizando de lado (como el carrusel del lobby).
   const toque = useRef<{ x: number; y: number } | null>(null);
@@ -205,8 +213,9 @@ export function Constructor({ catalogo, piezas, inicial, escenaUrl, onGuardar, o
 
       <div className="pz-escena" ref={escena}>
         <p className="pz-cartela" aria-hidden="true">Mientras tanto, en el vestidor…</p>
-        <div className="pz-toca" tabIndex={0} role="button" aria-label="Tu personaje: Enter para elegir una animación" onKeyDown={teclaFigura}>
-        <Vista3D url={escenaUrl + (escenaUrl.includes("?") ? "&" : "?") + [figuraCerca ? "cerca=1" : "", frente ? "frente=" + frente : ""].filter(Boolean).join("&")} plano={plano} alLlegar={llego ? null : "entrada"} className="pz-vista" momento={momento} onArmado={alArmar} onToque={tocar} correr={correr} />
+        <div className="pz-toca" ref={toca} tabIndex={0} role="button" aria-label="Tu personaje: Enter para elegir una animación; flechas izquierda y derecha para girarlo" onKeyDown={teclaFigura}>
+        <Vista3D url={escenaUrl + (escenaUrl.includes("?") ? "&" : "?") + ["cerca=1", frente ? "frente=" + frente : ""].filter(Boolean).join("&")} plano={plano} alLlegar={llego ? null : "entrada"} className="pz-vista" momento={momento} onArmado={alArmar} onToque={tocar} correr={correr} giro={giro}
+          onPresion={() => { if (rueda) cerrarRueda("fuera"); }} />
         </div>
         {pista && !rueda && <p className="pz-pista" aria-hidden="true">Toca a tu personaje</p>}
         {rueda && <RuedaGestos gestos={RUEDA} x={rueda.x} y={rueda.y} centro={`${ARTE}ui/personalizar/ico-cabeza.webp`} onElegir={elegirGesto} onCerrar={cerrarRueda} />}
@@ -233,7 +242,7 @@ export function Constructor({ catalogo, piezas, inicial, escenaUrl, onGuardar, o
           <div className="pz-colores" role="group" aria-label={NOMBRE_PALETA[paleta]}>
             <span>{NOMBRE_PALETA[paleta]}</span>
             {PALETAS[paleta].map(c => (
-              <button key={c.id} type="button" className={"pz-color" + (tinte === c.id ? " on" : "")} style={{ background: c.hex }} aria-label={c.nombre} aria-pressed={tinte === c.id}
+              <button key={c.id} type="button" className={"pz-color" + (tinte === c.id ? " on" : "")} style={{ "--c": c.hex } as CSSProperties} aria-label={c.nombre} aria-pressed={tinte === c.id}
                 title={c.nombre} onClick={() => cambiar(teñir(figura, parte, paleta, c.id))} />
             ))}
           </div>
@@ -255,9 +264,9 @@ export function Constructor({ catalogo, piezas, inicial, escenaUrl, onGuardar, o
           {!lista.length && <p className="pz-vacio">Todavía no hay piezas de este tipo.</p>}
         </div>
         <div className="pz-paginas">
-          <button type="button" className="pz-flecha" onClick={() => irA(p - 1)} disabled={p === 0} aria-label="Página anterior">‹</button>
+          <button type="button" className="pz-flecha" onClick={() => irA(p - 1)} disabled={p === 0} aria-label="Página anterior"><span className="pz-flecha-t">‹</span></button>
           <span className="pz-puntos" aria-label={`Página ${p + 1} de ${pags.length}`}>{pags.map((_, i) => <i key={i} className={i === p ? "on" : ""} />)}</span>
-          <button type="button" className="pz-flecha" onClick={() => irA(p + 1)} disabled={p >= pags.length - 1} aria-label="Página siguiente">›</button>
+          <button type="button" className="pz-flecha" onClick={() => irA(p + 1)} disabled={p >= pags.length - 1} aria-label="Página siguiente"><span className="pz-flecha-t">›</span></button>
         </div>
       </section>
 

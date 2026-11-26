@@ -12,9 +12,10 @@ export interface Tarjeta {
 }
 
 export const NOMBRE_SAGA: Record<string, string> = {
-  marvel: "Marvel", dc: "DC", "star-wars": "Star Wars", "harry-potter": "Harry Potter", piratas: "Piratas", otros: "Otros",
+  marvel: "Marvel", dc: "DC", "star-wars": "Star Wars", "harry-potter": "Harry Potter", piratas: "Piratas",
+  "senor-de-los-anillos": "El Señor de los Anillos", otros: "Otros",
 };
-const ORDEN_SAGA = ["marvel", "dc", "star-wars", "harry-potter", "piratas", "otros"];
+const ORDEN_SAGA = ["marvel", "dc", "star-wars", "harry-potter", "senor-de-los-anillos", "piratas", "otros"];
 export const nombreSaga = (s: string) => NOMBRE_SAGA[s] ?? s.replace(/-/g, " ").replace(/^./, c => c.toUpperCase());
 
 /** Qué estados de calidad salen en la galería (los «borrador» solo en pruebas). */
