@@ -63,6 +63,8 @@
 .D .pz-vista { position: relative; min-height: 0; }
 /* Celular: la figura empieza debajo del recuadro «Mientras tanto…» (Codex D3: ≥ 8 px entre cabeza y letrero). */
 @media (max-width: 859px) { .D .pz-vista { margin-top: 26px; } }
+/* Computadora: igual, la figura empieza debajo del recuadro (6 px + ~34 px del recuadro + 8 px de aire): ni saludando lo toca. */
+@media (min-width: 860px) { .D .pz-vista { margin-top: 48px; } }
 .D .pz-vista iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; display: block; }
 .D .pz-vista .gal-cargando { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); font: 400 16px var(--f-titulo); color: #dfe6ff; }
 .D .pz-gestos { justify-content: center; padding-bottom: 4px; }
@@ -81,9 +83,18 @@
 .D .pz-ico-vacio { display: block; border-radius: 12px; border: 2px dashed rgba(255, 255, 255, .7); background: rgba(10, 16, 48, .2); }
 @media (max-width: 859px) {
   .D .pz-losa { justify-content: center; padding: 4px; min-height: 44px; }
-  .D .pz-losa .az-ico, .D .pz-losa .az-losa-txt small { display: none; }
-  .D .pz-losa .az-losa-txt b { font-size: 12px; }
+  .D .pz-losa .az-losa-txt small { display: none; }
   .D .pz-losa.on { outline-width: 3px; outline-offset: 1px; }
+  /* Decidió Codex (encargo 2026-11-25-constructor-diseno-r4): D5 B, ícono de 24 px, 3 px de separación, texto de 11 px,
+     4 px a los lados, «PIERNAS» completo. D6 B: gestos en columna a la derecha (como en el HUB), botones de 40 px con
+     área de toque de 44 × 44; la figura usa todo el alto de la viñeta. */
+  .D .pz-losa { gap: 3px; padding: 4px; }
+  .D .pz-losa .az-ico { width: 24px; height: 24px; }
+  .D .pz-losa .az-losa-txt { flex: 0 1 auto; min-width: 0; }
+  .D .pz-losa .az-losa-txt b { font-size: 11px; letter-spacing: 0; white-space: nowrap; overflow: visible; }
+  .D .pz-escena { grid-template-rows: minmax(0, 1fr); grid-template-columns: minmax(0, 1fr) auto; }
+  .D .pz-gestos.mg-fila { flex-direction: column; gap: 2px; padding: 0 2px 0 0; align-self: center; }
+  .D .pz-gestos .mg-b { --tam: 40px; min-width: 44px; min-height: 44px; }
 }
 
 /* Panel del lobby con las piezas */
