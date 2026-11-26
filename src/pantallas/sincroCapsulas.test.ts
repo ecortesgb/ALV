@@ -3,7 +3,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mem = new Map<string, string>();
-(globalThis as { localStorage?: unknown }).localStorage = { getItem: (k: string) => mem.get(k) ?? null, setItem: (k: string, v: string) => void mem.set(k, v), removeItem: (k: string) => void mem.delete(k) };
+(globalThis as { localStorage?: unknown }).localStorage = { getItem: (k: string) => mem.get(k) ?? null, setItem: (k: string, v: string) => void mem.set(k, v), removeItem: (k: string) => void mem.delete(k), key: (i: number) => [...mem.keys()][i] ?? null, get length() { return mem.size; } };
 
 type Estado = { version: 1; activa: number | null; slots: ({ nombre: string; figura: unknown; actualizado: string } | null)[] };
 const nube: { estado: Estado | null; leeBien: boolean; subeBien: boolean; subidas: Estado[]; retener: Promise<void> | null } = { estado: null, leeBien: true, subeBien: true, subidas: [], retener: null };
@@ -84,12 +84,53 @@ describe("guardar figura nueva con la nube (simulada)", () => {
     expect(leerPendientes(U)).toEqual([]);
   });
 
-  it("tras revertir el corte la primera sincronización toma la nube tal cual (aunque esté vacía) y no sube nada", async () => {
-    escribirCapsulas(U, { version: 1, activa: 0, slots: [{ nombre: "Local", figura: { version: 2 }, actualizado: "" }, null, null] } as never);
-    nube.estado = null; // nube vacía
-    expect(await sincronizar(U, { desdeNube: true })).toBe(true);
+  // Tras revertir el corte (Codex, v3-directo-verif): la marca «corte» la dejó un build con corte en este aparato.
+  const local = (nombre: string) => ({ version: 1, activa: 0, slots: [{ nombre, figura: { version: 2 }, actualizado: "" }, null, null] } as never);
+  it("tras revertir, cada cuenta se rehace desde la nube (aunque esté vacía) y no sube lo de antes", async () => {
+    mem.set("alv-epoca-figuras", "corte");
+    escribirCapsulas(U, local("Local viejo"));
+    expect(await sincronizar(U)).toBe(true);
     expect(nube.subidas).toEqual([]);
     expect(leerCapsulas(U).slots.every(s => !s)).toBe(true);
+  });
+  it("tras revertir, si la primera lectura falla y se recarga, sigue sin subir lo de antes", async () => {
+    mem.set("alv-epoca-figuras", "corte");
+    escribirCapsulas(U, local("Local viejo"));
+    nube.leeBien = false;
+    expect(await sincronizar(U)).toBe(false);
+    expect(leerCapsulas(U).slots[0]?.nombre).toBe("Local viejo");
+    // «Recarga»: el estado vive en localStorage, no en el módulo.
+    nube.leeBien = true;
+    expect(await sincronizar(U)).toBe(true);
+    expect(nube.subidas).toEqual([]);
+    expect(leerCapsulas(U).slots.every(s => !s)).toBe(true);
+    // Ya restaurada: vuelve la regla normal (nube vacía → lo de aquí sube completo).
+    escribirCapsulas(U, local("Nuevo"));
+    expect(await sincronizar(U)).toBe(true);
+    expect(nube.subidas).toHaveLength(1);
+  });
+  it("tras revertir, también la segunda cuenta del aparato se rehace desde la nube", async () => {
+    mem.set("alv-epoca-figuras", "corte");
+    escribirCapsulas("ana", local("De Ana"));
+    escribirCapsulas("beto", local("De Beto"));
+    expect(await sincronizar("ana")).toBe(true);
+    nube.estado = null;
+    expect(await sincronizar("beto")).toBe(true);
+    expect(nube.subidas).toEqual([]);
+    expect(leerCapsulas("beto").slots.every(s => !s)).toBe(true);
+  });
+  it("tras revertir, lo guardado DESPUÉS de revertir sí sube; lo de antes no", async () => {
+    mem.set("alv-epoca-figuras", "corte");
+    mem.set("alv-capsulas-pendientes-" + U, JSON.stringify({ 0: "viejo" })); // pendiente de antes del corte
+    escribirCapsulas(U, local("Local viejo"));
+    nube.leeBien = false;
+    expect(await guardarFiguraNueva(U, 1, v3("hulk"), "Hulk")).toBe("local");
+    expect(leerPendientes(U)).toEqual([1]);
+    nube.leeBien = true;
+    expect(await sincronizar(U)).toBe(true);
+    expect(nube.subidas).toHaveLength(1);
+    expect(nube.estado!.slots[0]).toBeNull();
+    expect(personaje(nube.estado, 1)).toBe("hulk");
   });
 
   it("dos guardados seguidos van en fila y los dos llegan", async () => {

@@ -6,25 +6,40 @@ import type { EstadoCapsulas } from "./figura3d";
 import { modoCorteV3 } from "../personajes/integracion";
 
 const PREFIJO = "alv-capsulas-pendientes-", PREFIJO_CORTE = "alv-capsulas-pendientes-c3-";
-const clave = (jugador: string) => (modoCorteV3() ? PREFIJO_CORTE : PREFIJO) + (jugador.replace(/[^a-zA-Z0-9_-]/g, "").slice(0, 64) || "local");
+const clave = (jugador: string) => (modoCorteV3() ? PREFIJO_CORTE : PREFIJO) + idJugador(jugador);
 
-/** Época de las figuras en este aparato («corte» o «v2»). Si un build SIN corte encuentra la marca «corte» (se revirtió),
- *  borra los pendientes de antes del corte y devuelve true: la siguiente sincronización toma lo de la nube TAL CUAL, aunque
- *  esté vacía, sin subir nada de este aparato (Codex, v3-directo-r1).
- *  Lo de la época del corte vive en sus propias claves y un build sin corte no lo lee. */
-export function prepararEpoca(corte: boolean = modoCorteV3()): boolean {
-  let reinicio = false;
+/** Época de las figuras en este aparato: «corte», «v2» o «revertido:<id>» (Codex, v3-directo-r1 y -verif).
+ *  Un build SIN corte que encuentra «corte» (se revirtió) borra los pendientes de antes del corte y abre una reversión con id
+ *  nuevo. Desde ahí CADA cuenta de este aparato se rehace una vez desde la nube (`debeRestaurar`), aunque la nube esté vacía y
+ *  aunque falle la primera lectura o se recargue la página: la marca por cuenta solo se pone al terminar bien
+ *  (`marcarRestaurada`). Lo de la época del corte vive en sus propias claves y un build sin corte no lo lee. */
+const MARCA = "alv-epoca-figuras", RESTAURADA = "alv-epoca-restaurada-";
+export function prepararEpoca(corte: boolean = modoCorteV3()): void {
   try {
-    const MARCA = "alv-epoca-figuras", antes = localStorage.getItem(MARCA);
-    if (!corte && antes === "corte") {
+    const antes = localStorage.getItem(MARCA);
+    if (corte) { if (antes !== "corte") localStorage.setItem(MARCA, "corte"); return; }
+    if (antes === "corte") {
       const borrar: string[] = [];
       for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k && k.startsWith(PREFIJO) && !k.startsWith(PREFIJO_CORTE)) borrar.push(k); }
       borrar.forEach(k => localStorage.removeItem(k));
-      reinicio = true;
-    }
-    localStorage.setItem(MARCA, corte ? "corte" : "v2");
+      localStorage.setItem(MARCA, "revertido:" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 8));
+    } else if (antes == null) localStorage.setItem(MARCA, "v2");
   } catch { /* sin almacenamiento */ }
-  return reinicio;
+}
+const idJugador = (jugador: string) => jugador.replace(/[^a-zA-Z0-9_-]/g, "").slice(0, 64) || "local";
+/** La reversión que esta cuenta todavía no rehace desde la nube (null = nada que rehacer). */
+export function debeRestaurar(jugador: string, corte: boolean = modoCorteV3()): string | null {
+  if (corte) return null;
+  prepararEpoca(corte);
+  try {
+    const m = localStorage.getItem(MARCA);
+    if (!m || !m.startsWith("revertido:")) return null;
+    return localStorage.getItem(RESTAURADA + idJugador(jugador)) === m ? null : m;
+  } catch { return null; }
+}
+/** La cuenta ya se rehizo desde la nube tras la reversión `marca` (si mientras tanto no empezó otra época). */
+export function marcarRestaurada(jugador: string, marca: string) {
+  try { if (localStorage.getItem(MARCA) === marca) localStorage.setItem(RESTAURADA + idJugador(jugador), marca); } catch { /* sin almacenamiento */ }
 }
 const valido = (i: unknown): i is number => Number.isInteger(i) && (i as number) >= 0 && (i as number) < 3;
 
@@ -47,6 +62,7 @@ function escribir(jugador: string, s: Sellos) {
 let serie = 0;
 export function marcarPendiente(jugador: string, i: number) {
   if (!valido(i)) return;
+  prepararEpoca(); // si recién se revirtió, los pendientes viejos se borran ANTES de anotar este
   escribir(jugador, { ...leerSellos(jugador), [i]: Date.now().toString(36) + "-" + (++serie).toString(36) + "-" + Math.random().toString(36).slice(2, 8) });
 }
 /** Quita solo las marcas cuyo sello sigue siendo el que se subió. */

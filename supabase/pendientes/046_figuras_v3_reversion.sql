@@ -3,8 +3,10 @@
 -- guardadas en privado.figuras_jugador_v3_retiradas) y exportarlas también FUERA del repo.
 -- Las cachés locales de los aparatos que tengan v3 no pueden volver a subirlas: el CHECK restaurado solo acepta version 2.
 
--- TODO en UNA transacción (en el editor SQL: begin; … commit;). App: al revertir se vuelve a publicar la versión que guarda
--- v2 (la última publicada antes del cambio «v3 directo»; anotar su commit en ALV_PLAN_FASE5.md al aplicar la 046).
+-- TODO en UNA transacción (en el editor SQL: begin; … commit;). App: al revertir se publica el MISMO commit del corte SIN la
+-- variable VITE_CORTE_V3 (guarda v2 y trae la protección de reversión: cada cuenta se rehace desde la nube). NUNCA un commit
+-- anterior a «v3 directo»: no la trae y subiría figuras retiradas. Ese commit se prueba con el corte apagado y se anota en
+-- ALV_PLAN_FASE5.md ANTES de empezar el mantenimiento (Codex, v3-directo-verif).
 
 -- 1) Detener TODAS las escrituras mientras se revierte (Codex, paso5-r1): bloqueo de las tablas antes de copiar, y fuera
 --    los permisos de la tabla, los de columna (015/016) y activar_capsula().

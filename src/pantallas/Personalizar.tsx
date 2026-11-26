@@ -4,7 +4,7 @@ import { Suspense, lazy, useEffect, useRef } from "react";
 import type { FiguraV2 } from "../content/personaje";
 import { FotoFigura, N_CAPSULAS, escribirCapsulas, huella, leerCapsulas, useCapsulas, type EstadoCapsulas } from "../app/figura3d";
 import { atras, ir } from "../app/rutas";
-import { combinar, leerPendientes, leerSellos, marcarPendiente, prepararEpoca, quitarPendientes } from "../app/capsulasPendientes";
+import { combinar, debeRestaurar, leerPendientes, leerSellos, marcarPendiente, marcarRestaurada, prepararEpoca, quitarPendientes } from "../app/capsulasPendientes";
 import { banderaV3, empaquetarV3, leerV3, modoCorteV3, proyectar, sinV3, useEstadoCatalogoV3, type FiguraV2Puente, type FiguraV3 } from "../personajes/integracion";
 import { useSesion } from "../app/sesion";
 import { sonar } from "../app/sonido";
@@ -23,20 +23,20 @@ let fila: Promise<unknown> = Promise.resolve();
 function enFila<T>(f: () => Promise<T>, siFalla: T): Promise<T> { const p = fila.then(f).catch(() => siFalla); fila = p; return p; }
 
 /** Lee la nube, combina (manda la nube salvo los pendientes de aquí), lo deja aquí y lo sube. true = igual en los dos lados. */
-export function sincronizar(uid: string, opciones: { desdeNube?: boolean } = {}): Promise<boolean> {
+export function sincronizar(uid: string): Promise<boolean> {
   return enFila(async () => {
     const nube = await cargarCapsulasNube();
     if (!nube) return false;
-    // Tras revertir el corte: lo de este aparato no se sube; se queda lo de la nube (aunque esté vacía).
-    if (opciones.desdeNube) { escribirCapsulas(uid, nube); return true; }
+    // Tras revertir el corte (hasta que esta cuenta lo termine bien): manda la nube aunque esté vacía; de aquí solo suben
+    // los pendientes guardados DESPUÉS de revertir (los de antes se borraron al detectar la reversión).
+    const restaurar = debeRestaurar(uid);
     const sellos = leerSellos(uid), pend = Object.keys(sellos).map(Number), aqui = leerCapsulas(uid);
-    // Nube vacía: lo de este aparato sube completo (cuentas que guardaron antes de tener nube).
-    const base = nube.slots.some(Boolean) ? combinar(nube, aqui, pend) : aqui;
+    // Nube vacía: lo de este aparato sube completo (cuentas que guardaron antes de tener nube), salvo al restaurar.
+    const base = nube.slots.some(Boolean) || restaurar ? combinar(nube, aqui, pend) : aqui;
     if (huella(base) !== huella(aqui)) escribirCapsulas(uid, base);
-    if (!base.slots.some(Boolean) || huella(base) === huella(nube)) { quitarPendientes(uid, sellos); return true; }
-    const ok = await guardarCapsulasNube(base);
-    if (ok) quitarPendientes(uid, sellos);
-    return ok;
+    const listo = () => { quitarPendientes(uid, sellos); if (restaurar) marcarRestaurada(uid, restaurar); return true; };
+    if (!base.slots.some(Boolean) || huella(base) === huella(nube)) return listo();
+    return (await guardarCapsulasNube(base)) ? listo() : false;
   }, false);
 }
 
@@ -51,12 +51,12 @@ export function SincroCapsulas() {
   const ultima = useRef<{ uid: string; e: EstadoCapsulas } | null>(null);
   useEffect(() => {
     if (!hayNube || fase !== "dentro" || !uid) return;
-    let desdeNube = prepararEpoca();
+    prepararEpoca();
     let vivo = true;
-    const intentar = () => void sincronizar(uid, { desdeNube }).then(ok => { if (ok) desdeNube = false; if (vivo && ok) ultima.current = { uid, e: leerCapsulas(uid) }; });
+    const intentar = () => void sincronizar(uid).then(ok => { if (vivo && ok) ultima.current = { uid, e: leerCapsulas(uid) }; });
     intentar();
-    // Reintentos de lo pendiente: al recuperar la conexión y al volver a la app.
-    const otraVez = () => { if (leerPendientes(uid).length && document.visibilityState === "visible") intentar(); };
+    // Reintentos de lo pendiente (o de la restauración tras revertir): al recuperar la conexión y al volver a la app.
+    const otraVez = () => { if ((leerPendientes(uid).length || debeRestaurar(uid)) && document.visibilityState === "visible") intentar(); };
     addEventListener("online", otraVez); document.addEventListener("visibilitychange", otraVez);
     return () => { vivo = false; removeEventListener("online", otraVez); document.removeEventListener("visibilitychange", otraVez); };
   }, [uid, fase]);

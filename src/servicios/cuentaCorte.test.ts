@@ -23,7 +23,7 @@ vi.mock("./cliente", () => ({
 const { cargarCapsulasNube, guardarCapsulasNube } = await import("./cuenta");
 const { proyectar } = await import("../personajes/integracion");
 const { claveCapsulas } = await import("../app/figura3d");
-const { prepararEpoca, marcarPendiente, leerPendientes } = await import("../app/capsulasPendientes");
+const { prepararEpoca, marcarPendiente, leerPendientes, debeRestaurar, marcarRestaurada } = await import("../app/capsulasPendientes");
 
 const v3 = { version: 3 as const, familia: "minifig", origen: { tipo: "catalogo" as const, personaje: "thor", version: "base", revision: 1 }, piezas: {},
   momentos: { paquete: null, espera: "respirar", victoria: "salto-puno", derrota: "cabeza-baja", punto: "puno-arriba" }, extensiones: {} };
@@ -68,8 +68,23 @@ describe("cápsulas en la nube con y sin corte", () => {
     prepararEpoca();
     vi.unstubAllEnvs();
     expect(leerPendientes("ana")).toEqual([1]);
-    prepararEpoca(); // build sin corte después de uno con corte: vuelve a empezar desde la nube
+    prepararEpoca(); // build sin corte después de uno con corte: abre la reversión y borra los pendientes de antes
     expect(leerPendientes("ana")).toEqual([]);
-    expect(mem.get("alv-epoca-figuras")).toBe("v2");
+    const marca = mem.get("alv-epoca-figuras")!;
+    expect(marca.startsWith("revertido:")).toBe(true);
+    expect(debeRestaurar("ana")).toBe(marca);
+    expect(debeRestaurar("beto")).toBe(marca);
+    marcarRestaurada("ana", marca);
+    expect(debeRestaurar("ana")).toBeNull();
+    expect(debeRestaurar("beto")).toBe(marca);
+    prepararEpoca(); // otra carga sin corte: la reversión sigue abierta (no vuelve a «v2»)
+    expect(mem.get("alv-epoca-figuras")).toBe(marca);
+    vi.stubEnv("VITE_CORTE_V3", "1");
+    prepararEpoca();
+    expect(debeRestaurar("beto")).toBeNull(); // con corte no hay nada que rehacer
+    vi.unstubAllEnvs();
+    prepararEpoca(); // nueva reversión: id nuevo, Ana vuelve a rehacerse
+    expect(mem.get("alv-epoca-figuras")).not.toBe(marca);
+    expect(debeRestaurar("ana")).not.toBeNull();
   });
 });
