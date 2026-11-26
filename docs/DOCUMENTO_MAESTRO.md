@@ -1,7 +1,7 @@
 # ALV — Amigos Legendarios Verdaderos
 ## Documento Maestro del Producto
-**Versión:** 1.61  
-**Última actualización:** 25 de noviembre de 2026  
+**Versión:** 1.63  
+**Última actualización:** 26 de noviembre de 2026  
 **Estado:** Documento vivo de producto; decisiones y propuestas identificadas por separado.
 
 ---
@@ -400,6 +400,35 @@ Estado de lo construido: la XP se calcula en `economia.ts` (terminar la partida,
 - Termina cuando empieza oficialmente la sesión de minijuegos.
 - Estado: **sin construir.** Antecedentes: la sigla GTA ya dice «Misiones secretas» (1.4) y `economia.ts` tiene un valor de XP sin usar para «misión validada».
 
+### E. Mini-Juegos (modo) — DECISIÓN (v1.63, Elías, 26 de noviembre)
+«Mini-Juegos» es un modo de juego nuevo con partidas cortas de reflejos: los personajes 3D de cada jugador compiten en la TV y cada celular es un control de uno o pocos botones. Usa los personajes del sistema nuevo (D3 v1.62), con sus animaciones de caminar, saltar, golpe y caída. Los modelos son privados: no entran al repo ni a una página pública.
+
+Lista inicial, en este orden: Esquiva la bala, ¡Desenfunda!, Martillazo, Alto total y Paracaídas. Cada uno se define con la plantilla 6A.8 antes de construirse.
+
+### F. Esquiva la bala — DECISIÓN (v1.63)
+1. **Modalidades:** Individual (todos contra todos). Parejas y Equipos: **PENDIENTE**.
+2. **Herramientas:** ninguna.
+3. **Opciones del anfitrión:** ninguna en la primera versión.
+4. **Fases:** fila (cada jugador entra con su personaje; se empieza cuando todos cargaron) → cuenta 3-2-1 → rondas (aviso del lado por donde viene, pasa la bala, cada quien salta) → fin con podio → «Otra vez». TV: la fila, la bala, quién cae, el marcador y el podio. Celular: un botón SALTA del color del jugador, gris al quedar fuera, y el resultado al final.
+5. **Puntos:** lugar por orden de eliminación; el último en pie gana; los que caen en la misma ronda empatan.
+6. **XP y monedas:** **PENDIENTE** (C7: la regla de 5 rondas no aplica igual a este juego).
+7. **Comodines:** ninguno por ahora (**PROPUESTA:** «Escudo» aguanta una bala).
+8. **Fin:** queda uno, o se acaban los 60 s (los que siguen en pie empatan). La bala acelera cada ronda, el tiempo en el aire baja de 650 a 450 ms en las primeras 10 y desde la ronda 3 pueden venir dos balas seguidas. Mismo ancho de cuerpo para todos los personajes.
+9. **Desconexión:** al empezar se congelan los participantes; quien se desconecta sigue en la fila y cae con la siguiente bala.
+10. **Seguridad:** solo toques en la pantalla; sin contacto ni trago.
+11. **Justicia con la red:** cada celular mide el reloj de la TV antes de jugar y manda la hora de su toque; la TV juzga con esa hora y un margen de 70 ms, espera 250 ms a los toques atrasados y rechaza los de otra partida, repetidos o con un reloj poco confiable.
+- Estado: prototipo en una zona aparte del código, sin conectar a la app ni publicar.
+
+### G. Físico (modo) — DECISIÓN (v1.63, Elías, 26 de noviembre; resuelve C15)
+Físico sigue siendo de retos en persona. En la TV es una sala con los personajes de frente, sobre el fondo del escenario elegido; los personajes se animan (gestos, festejo, derrota). El anfitrión arbitra y asigna a mano puntos, castigos y retos según cumplan o no. Desde la sala se elige un juego físico que pone en la TV lo que haga falta (datos, palabras, preguntas o herramientas). Los puntos de Físico se guardan en la nube (la migración 038 ya está aplicada desde el 23 de noviembre; si hace falta algo más, va en una migración nueva con autorización expresa, D-002).
+
+Primer juego físico, **«Palabra prohibida»** (resuelve C16): en la TV salen los personajes, una categoría (por ejemplo «Personajes de Scooby-Doo») y la palabra secreta (por ejemplo «Shaggy»), tapada por omisión. Las personas, sentadas, dicen por turno una palabra de la categoría; quien diga la secreta pierde. Castigo, por ejemplo, un globo de agua o beber algo: cada quien elige qué tomar, nunca se exige alcohol y tomar no da XP; los retos de contacto solo con el consentimiento de las personas involucradas y, si alguien no acepta, sale otro sin contacto. El juego que antes se llamaba «Palabra prohibida» (describir sin decir 3 palabras tachadas) **se llama ahora «Descríbelo sin decirlo»**.
+- Estado: prototipo en una zona aparte del código, sin conectar a la app ni publicar.
+
+### H. Modo libre — DECISIÓN (v1.63, Elías, 26 de noviembre)
+Modo aparte donde los personajes entran a un cuarto para probar sus trajes, poderes y saltos, interactuar y divertirse sin reglas ni puntos. Se controla desde el celular (palanca, saltar, golpe y festejo) y se ve en la TV. Es la **cuarta tarjeta** de la pantalla Modos, junto a Local, En línea y Físico.
+- Estado: prototipo en una zona aparte del código, sin conectar a la app ni publicar.
+
 ## 6A.7 Compatibilidad por juego
 
 I = Individual, P = Parejas, E = Equipos, AV = ALVersus. «Por definir» quiere decir que el juego todavía no declara sus modalidades ni sus herramientas.
@@ -788,6 +817,20 @@ Reglas propuestas:
 **DECISIÓN (v1.50, Elías, 19 de noviembre) — D3, tres modos:** el switch Básico / Completo se reemplaza por **tres modos** sobre la misma figura del espacio: **Básico** (piel, rostro, pelo, ropa normal y piernas, en 5 pasos; todas las cabezas cambian de color, solo cambia el rostro), **Personaje original** (catálogo saga → grupo → personaje → versión; «Ponerme todo» o «Solo el traje») y **Avanzado** («Piezas comunes» sin piezas de personaje y «Piezas originales» por saga, con piezas sueltas de cada personaje). Al abrir un espacio el libro muestra las 3 tarjetas grandes (portadas de Elías) y unos separadores cambian de modo en cualquier página. Lo hecho en un modo se ve en los otros. Antes de **quitar** algo, de cambiar dos partes o más a la vez o de **reemplazar una pieza original** sale un aviso con lo que se va y lo que llega; los cambios simples no preguntan, y «Regresar» deshace el último paso (hasta 30). El libro de cómic (muro, libro, vuelta de página, figura viva) se mantiene. Sagas iniciales: Marvel (Avengers: Iron Man, Capitán América, Thor, Hulk, Spider-Man; X-Men: Wolverine, Cíclope, Gambito, Magneto, Tormenta), DC Comics (Batman, Superman, Wonder Woman, Flash, Joker), Star Wars (Darth Vader, Luke Skywalker, Yoda, Mandalorian, Boba Fett) y Harry Potter (Harry, Hermione, Ron, Voldemort, Snape); versiones: Spider-Man (clásico, Iron Spider, película), Batman (Dark Knight, The Batman), Iron Man (clásico, Mark 7), Capitán América (clásico, con casco), Thor (clásico, capa roja). Los demás personajes y los oficios no se muestran por ahora (siguen en la biblioteca). Sustituye en lo que choque a D3 v1.41 (switch Básico / Completo).
 **DECISIÓN (v1.50, Elías, 19 de noviembre) — piezas libres por ahora:** todas las piezas, trajes, personajes y accesorios van libres hasta que Elías entregue el catálogo de qué va bloqueado, libre, en sobres o en tienda. **PENDIENTE:** en la nube la 033 sigue aplicada y su guardián rechaza figuras con piezas bloqueadas; liberarlas de verdad requiere la migración 037 (`037_piezas_libres.sql`: deja inactivas las piezas de la 033 sin borrar nada y pausa los sobres que traen piezas; el de comodines sigue), probada en local y en remoto y **APLICADA el 19 de noviembre** con autorización de Elías: hoy ninguna pieza está bloqueada y solo se vende el sobre de comodines. Para volver a bloquear, se reactivan piezas y sobres (instrucciones en la propia migración).
 **DECISIÓN (v1.26, Elías, 15 de noviembre) — D3:** el modo Avanzado también está en celular. Sustituye la decisión 6 de la tanda 4 (v1.20), que lo dejaba solo en tablet o computadora.
+
+**DECISIÓN (v1.62, Elías, aprobada el 26 de noviembre) — D3, sistema de personajes y personalizador nuevos.** El sistema de personajes se rehace desde cero; se conservan el motor 3D (escenas, cámaras, red, vida automática, perfiles y gestos) y el resto del juego. Sustituye a D3 v1.25, v1.26, v1.41 y v1.50 en todo lo que choque. Formato completo en `ALV_FORMATO_PERSONAJES_V3.md` (fuera del repo), con sus valores por defecto: colección de 3 espacios, Big Fig sin «Crear» al inicio y sin lados distintos salvo como pieza o variante.
+1. **Pantalla «Mi personaje»** con dos entradas, **Elegir personaje** y **Crear mi personaje**, y la colección de 3 espacios (el activo es el que sale en HUB, lobby y TV).
+2. **Elegir personaje:** galería de personajes completos con vista 3D, categorías por saga, filtros sencillos (bando y tamaño) y favoritos. Desde la ficha: «Usar» o «Personalizar a partir de él».
+3. **Crear mi personaje (básico):** cuatro categorías, Cabeza, Torso, Brazos y manos, y Piernas. Galería de miniaturas, cambio inmediato con la figura en 3D, guardar y salir. Sin sliders, escalas, colores sueltos ni ajustes técnicos. Solo aparecen piezas compatibles.
+4. **Avanzado (opcional y aparte):** cabello, sombreros y cascos, máscaras y visores, capas, mochilas, armaduras, accesorios, armas, efectos, y variantes de color y estampado preparadas para cada pieza. Lo que no cabe se ve en gris con su motivo; si poner algo quita otra cosa, se avisa antes. «Regresar» deshace.
+5. **Familias de cuerpo:** minifigura, Big Fig, corta (Yoda) y droide (R2-D2); se pueden sumar otras sin rehacer el sistema. Cada familia usa su propio esqueleto y sus animaciones.
+6. **Calidad en dos niveles:** ningún personaje entra solo porque se pudo construir; Elías lo revisa antes. **Versión jugable:** las piezas que distinguen al personaje, reposo, saludo o entrada, victoria, derrota y especial en algunos. **Versión pulida:** la lista completa de calidad, con Iron Man y Hulk del laboratorio como referencia. Primero se juega, después se pule.
+7. **Producción privada:** los personajes y las piezas se arman con Figure Forge a partir de los juegos LEGO de PC de Elías. Lo que sale de un juego nunca va al repo ni a una página pública; se sirve solo desde almacenamiento privado. La app es de uso personal con amigos.
+8. **Personajes antiguos:** los 49 personajes y el personalizador de libro de cómic salen de la app y se conservan como respaldo. Las figuras guardadas por los jugadores se respaldan y salen con la migración de la fase 5, que se presenta antes con su procedimiento y plan de reversión (D-002).
+9. **Primera tanda real:** 123 personajes de LEGO Marvel Super Heroes (126 exportados; Legolas, Aragorn y Gandalf salen del catálogo por ahora porque el juego no trae sus texturas). Todos siguen «sin revisar» hasta que Elías los apruebe a la vista. Los personajes de otros juegos (DC, Star Wars, Harry Potter, Piratas, Sonic) quedan para tandas siguientes.
+10. **Cómo se ve (decisiones de Elías del 25 y 26 de noviembre):** dirección A, con el estilo cómic del HUB y del lobby (tipografía, íconos, botones y dinámica). El personalizador es una **página de cómic** («Mientras tanto, en el vestidor…»): al entrar, el HUB se voltea como hoja y al salir regresa. Los gestos salen en una **rueda** al tocar al personaje (Saludar, Ganar, Especial, Perder), en lugar de botones. Íconos y fondos generados por Elías. Las caras conservan sus gestos del juego, salvo cuatro personajes con cara fija.
+
+Estado (26 de noviembre): fases 1 y 2 cerradas; galería y constructor básico construidos en una zona aparte del código (`src/personajes/`, `tools/personajes/`), sin conectar a HUB, lobby ni TV (eso es la fase 5) y sin publicar en la app, porque el catálogo es privado y el repo es público.
 
 Interacciones exploradas:
 - Sonido «snap/click» al equipar una pieza.
@@ -1725,6 +1768,12 @@ Decisiones del usuario del 12 de noviembre de 2026:
 ## v1.6
 - Primeros logros (14.2), con ámbito de sesión o histórico (ver DECISIÓN v1.6 en 14.2).
 
+## v1.63
+- 26 nov 2026. Modo Mini-Juegos con su lista inicial y la ficha de «Esquiva la bala» (6A.6 E y F); Físico como sala de personajes de frente con puntos, castigos y retos que da el anfitrión y juegos físicos en la TV (6A.6 G, resuelve C15); «Palabra prohibida» pasa a ser el primer juego de Físico y el juego viejo con ese nombre se llama ahora «Descríbelo sin decirlo» (resuelve C16); Modo libre como cuarta tarjeta de Modos (6A.6 H). Prototipos en una zona aparte del código, sin publicar. Sin cambios de base (la 038 ya estaba aplicada).
+
+## v1.62
+- 26 nov 2026. D3 (sección 10): sistema de personajes y personalizador nuevos, aprobado por Elías. «Mi personaje» con Elegir y Crear, básico de 4 categorías, avanzado aparte con reglas de compatibilidad, familias de cuerpo, calidad en dos niveles, producción privada con Figure Forge y recursos de juegos solo en almacenamiento privado. Primera tanda real: 123 personajes de LEGO Marvel Super Heroes, sin revisar todavía. Personalizador en estilo cómic, en una página de cómic, con rueda de gestos. Los 49 personajes viejos se conservan como respaldo. Formato en `ALV_FORMATO_PERSONAJES_V3.md`. Sin cambios de base.
+
 ## v1.61
 - 25 nov 2026. El impostor: Temperatura para las palabras (nivel 2 y 3 por categoría) y Voltaje para los castigos (32 cartas nuevas). Resumen del configurador con panel de vidrio. El papel de El impostor se ve solo dentro del lector de huella.
 
@@ -1923,5 +1972,5 @@ Decisiones del usuario del 12 de noviembre de 2026:
 
 ---
 
-**Fin del Documento Maestro ALV v1.60**  
+**Fin del Documento Maestro ALV v1.63**  
 Este documento debe actualizarse de forma incremental y conservar la distinción entre decisiones aprobadas, propuestas, pendientes y descartadas.

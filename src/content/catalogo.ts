@@ -103,7 +103,7 @@ export const JUEGOS: DefinicionJuego[] = [
   { id: "mimica", seccion: "qpm", nombre: "Mímica", descripcion: "60 segundos sin hablar. Cada palabra suma.",
     mecanicas: ["temporizador", "duelo"], motor: "conteo", segundos: 60, minJugadores: 2, maxJugadores: 8, lugares: ["interior", "terraza", "fogata", "campo"], intensidadMin: 1, intensidadMax: 2, mazo: "palabra",
     modoCorto: "Con 2 o 3 es cooperativo: suman juntos contra el reloj." },
-  { id: "prohibida", seccion: "qpm", nombre: "Palabra prohibida", descripcion: "Descríbela sin decir las 3 palabras tachadas.",
+  { id: "prohibida", seccion: "qpm", nombre: "Descríbelo sin decirlo", descripcion: "Descríbela sin decir las 3 palabras tachadas.",
     mecanicas: ["temporizador", "cartas"], motor: "conteo", segundos: 60, minJugadores: 2, maxJugadores: 8, lugares: [], intensidadMin: 1, intensidadMax: 2, mazo: "palabra",
     modoCorto: "Con 2 o 3 es cooperativo." },
   { id: "impostor", seccion: "ntp", nombre: "El impostor", sigla: "FBI", descripcion: "Todos saben la palabra menos uno. Voten quién es.",
