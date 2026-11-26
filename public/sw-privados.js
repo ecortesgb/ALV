@@ -37,11 +37,14 @@ const indices = new Map(); // sello → { huellas }
 let cuentaGuardada = null;
 let salidas = 0; // sube solo al salir: descarta las sesiones recibidas ANTES de esa salida (Codex r7b, O2)
 const listo = (async () => {
+  const s0 = salidas, g0 = gen;
   try {
     const r = await (await caches.open(CACHE)).match(LLAVE_CUENTA);
-    cuentaGuardada = r ? await r.text() : null;
+    const leida = r ? await r.text() : null;
+    if (s0 !== salidas || g0 !== gen) return; // hubo una salida o un cambio mientras se leía: manda lo nuevo (r8, D2)
+    cuentaGuardada = leida;
     if (!r) await caches.delete(CACHE);
-  } catch { cuentaGuardada = null; }
+  } catch { /* sin caché legible: se queda sin cuenta */ }
 })();
 
 const prefijo = () => new URL("privado/", self.registration.scope).pathname;

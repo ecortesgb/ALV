@@ -325,6 +325,19 @@ describe("service worker de personajes privados", () => {
     expect(await (await caja.match("/__alv__/cuenta"))?.text()).toBe(CUENTA_A);
   });
 
+  it("salir mientras se lee la marca al despertar: al volver a entrar se escribe la marca (Codex r8, D2)", async () => {
+    const puerta = abrirPuerta(); puertas.match = puerta.p;
+    const sw = montar({ permitidos: new Set(["a"]), objetos: objetos(), indice, marca: CUENTA_A });
+    await sw.mensaje({ tipo: "salir" });
+    puerta.abrir();
+    await new Promise(r => setTimeout(r, 5));
+    await sw.mensaje(sesion("a", CUENTA_A));
+    expect((await sw.pedir(P + "catalogo/hulk/hulk.glb"))!.status).toBe(200);
+    await new Promise(r => setTimeout(r, 5));
+    const caja = sw.almacen.get("alv-privados-v1")!;
+    expect(await (await caja.match("/__alv__/cuenta"))?.text()).toBe(CUENTA_A);
+  });
+
   it("al despertar, una caché sin marca de cuenta se borra entera", async () => {
     const sw = montar({ permitidos: new Set(), objetos: objetos(), indice });
     await new Promise(r => setTimeout(r, 5));
