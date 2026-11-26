@@ -951,7 +951,7 @@
         else enviar({ tipo: "gesto", id: e.id, cual, ok: false });
         return;
       }
-      const vel = acotar(op.vel, 0.5, 1.6, 1);
+      const vel = Lg && Lg.velocidadClip ? Lg.velocidadClip(op.vel) : 1; // clips del juego: siempre a velocidad 1
       if (!e.v3.tocar(l, { vel })) { enviar({ tipo: "gesto", id: e.id, cual, ok: false }); return; }
       fin(Math.max(0.5, e.v3.duracion(e.v3.estado().clip) / vel), l);
       return;

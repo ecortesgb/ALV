@@ -33,6 +33,10 @@
   }
   /** Las que se repiten solas (las demás se tocan una vez y vuelven a reposo). */
   const EN_BUCLE = { reposo: true };
-  const api = { LOGICAS, logicaDe, EN_BUCLE };
+  /** Velocidad de un clip del juego: siempre 1, como en el juego (coordinación, 2026-11-26: «lo hacen muy rápido»). La
+   *  velocidad y la intensidad de los perfiles de vida y de los gestos eran para las tablas rígidas del motor viejo; en las
+   *  figuras nuevas la personalidad se nota en qué clips elige y cada cuánto, no en acelerarlos. */
+  const velocidadClip = () => 1;
+  const api = { LOGICAS, logicaDe, EN_BUCLE, velocidadClip };
   if (typeof module !== "undefined" && module.exports) module.exports = api; else raiz.LogicasALV = api;
 })(typeof self !== "undefined" ? self : this);

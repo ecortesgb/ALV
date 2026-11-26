@@ -154,7 +154,8 @@
       const meta = Math.max(-0.5, Math.min(0.5, d.x)), ms = typeof d.ms === "number" ? Math.max(0, Math.min(1000, d.ms)) : 200;
       tramo = QUIETO || !ms ? { de: meta, a: meta, t0: 0, dur: 1 } : { de: corre, a: meta, t0: performance.now(), dur: ms };
     }
-    if (d.tipo === "momento" && figuras.has(d.id)) figuras.get(d.id).p.tocar(d.cual, { vel: d.vel });
+    // Clips del juego: siempre a velocidad 1 (logicas.js velocidadClip), aunque el mensaje traiga la de un perfil.
+    if (d.tipo === "momento" && figuras.has(d.id)) figuras.get(d.id).p.tocar(d.cual, { vel: window.LogicasALV && window.LogicasALV.velocidadClip ? window.LogicasALV.velocidadClip(d.vel) : 1 });
     if (d.tipo === "todos") figuras.forEach(f => f.p.tocar(d.cual));
     if (d.tipo === "medir") {
       const m = {}; figuras.forEach((f, id) => { m[id] = { alto: f.p.alto(), escala: f.p.obj.scale.x }; });

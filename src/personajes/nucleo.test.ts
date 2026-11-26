@@ -160,7 +160,14 @@ describe("lógicas del motor (tools/personajes/logicas.js)", () => {
   ctx.self = ctx;
   vm.createContext(ctx);
   vm.runInContext(readFileSync("tools/personajes/logicas.js", "utf8"), ctx);
-  const L = ctx.LogicasALV as { logicaDe(c: unknown): string; LOGICAS: string[] };
+  const L = ctx.LogicasALV as { logicaDe(c: unknown): string; LOGICAS: string[]; velocidadClip(v?: unknown): number };
+  it("los clips del juego van siempre a velocidad 1, aunque el perfil o el gesto pidan otra (cómico 1.22, tímido 0.82)", () => {
+    for (const v of [1.22, 1.15, 0.82, 0.5, 1.6, undefined, NaN]) expect(L.velocidadClip(v)).toBe(1);
+    // Las dos escenas que dibujan figuras v3 la usan (app: adaptador de escena.js; galería y «Mi personaje»: escena-personajes.js).
+    // (El camino v2 de escena.js conserva su velocidad: es para las tablas rígidas del motor viejo.)
+    for (const f of ["tools/minifig/escena.js", "public/minifig/escena.js"]) expect(readFileSync(f, "utf8"), f).toMatch(/const vel = Lg && Lg\.velocidadClip \? Lg\.velocidadClip\(op\.vel\) : 1;[^\n]*\n\s*if \(!e\.v3\.tocar\(l, \{ vel \}\)\)/);
+    for (const f of ["tools/personajes/escena-personajes.js", "public/personajes/escena-personajes.js"]) expect(readFileSync(f, "utf8"), f).toMatch(/p\.tocar\(d\.cual, \{ vel: window\.LogicasALV && window\.LogicasALV\.velocidadClip \? window\.LogicasALV\.velocidadClip\(d\.vel\) : 1 \}\)/);
+  });
   it("traduce momentos, gestos y vida", () => {
     expect(["espera", "punto", "victoria", "derrota", "saludar", "especial"].map(L.logicaDe)).toEqual(["reposo", "victoria", "victoria", "derrota", "saludo", "especial"]);
     expect(L.logicaDe("lib:gesture_wave")).toBe("saludo");
