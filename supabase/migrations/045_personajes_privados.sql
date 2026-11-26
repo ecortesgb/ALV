@@ -1,5 +1,8 @@
 -- 045 · Personajes 3D privados (`ALV_PLAN_PERSONAJES_PRIVADOS.md`, fuera del repo). Necesita 012 y 028.
--- ESCRITA, SIN APLICAR. Aplicarla es decisión de Elías (D-002). Plan acordado con Codex (encargos
+-- APLICADA en ngwxxptydgbhkyznjngt el 2026-11-26 con autorización de Elías («Sí, aplícala»), registrada como
+-- 045_personajes_privados. Antes: esta migración + `supabase/pruebas/045_remota_prueba.sql` en una sola ejecución deshecha,
+-- todo como lo esperado y nada persistido. Asesor después: de 58 a 65 WARN RPC y de 8 a 10 INFO (lo esperado, sin avisos
+-- de otro tipo). Plan acordado con Codex (encargos
 -- `herramientas-locales\encargos-codex\2026-11-26-personajes-privados-r1/r2/r3.md`).
 -- Qué hace:
 -- 1) Bucket PRIVADO `personajes-privados` (GLB, fotos webp e índices JSON; 8 MB por archivo). Arriba hay
