@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { combinar, leerPendientes, marcarPendiente, quitarPendientes } from "./capsulasPendientes";
+import { combinar, leerPendientes, leerSellos, marcarPendiente, quitarPendientes } from "./capsulasPendientes";
 import type { EstadoCapsulas } from "./figura3d";
 import type { FiguraV2 } from "../content/personaje";
 
@@ -24,12 +24,14 @@ describe("cápsulas pendientes (fase 5, Codex paso4-r1)", () => {
     expect(combinar(est(["N1", "N2", null], 1), est(["A1", "A2", null], 0), []).activa).toBe(1);
     expect(combinar(est(["N1", null, null], 0), est([null, null, "A3"], 2), [2]).activa).toBe(2);
   });
-  it("marcar y quitar: solo se quitan los que se subieron", () => {
-    marcarPendiente("ana", 1); marcarPendiente("ana", 1); marcarPendiente("ana", 2); marcarPendiente("ana", 7);
+  it("marcar y quitar: solo se quita la marca del guardado que se subió", () => {
+    marcarPendiente("ana", 1); marcarPendiente("ana", 2); marcarPendiente("ana", 7);
     expect(leerPendientes("ana")).toEqual([1, 2]);
-    quitarPendientes("ana", [1]);
+    const subidos = leerSellos("ana");
+    marcarPendiente("ana", 2); // se guarda otra vez el espacio 2 mientras subía
+    quitarPendientes("ana", subidos);
     expect(leerPendientes("ana")).toEqual([2]);
-    quitarPendientes("ana", [2]);
+    quitarPendientes("ana", leerSellos("ana"));
     expect(leerPendientes("ana")).toEqual([]);
     expect(leerPendientes("beto")).toEqual([]);
   });

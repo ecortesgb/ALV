@@ -4,7 +4,7 @@ import { Suspense, lazy, useEffect, useRef } from "react";
 import type { FiguraV2 } from "../content/personaje";
 import { FotoFigura, N_CAPSULAS, escribirCapsulas, huella, leerCapsulas, useCapsulas, type EstadoCapsulas } from "../app/figura3d";
 import { atras, ir } from "../app/rutas";
-import { combinar, leerPendientes, marcarPendiente, quitarPendientes } from "../app/capsulasPendientes";
+import { combinar, leerPendientes, leerSellos, marcarPendiente, quitarPendientes } from "../app/capsulasPendientes";
 import { banderaV3, empaquetarV3, leerV3, sinV3, useCatalogoV3, type FiguraV2Puente, type FiguraV3 } from "../personajes/integracion";
 import { useSesion } from "../app/sesion";
 import { sonar } from "../app/sonido";
@@ -27,13 +27,13 @@ export function sincronizar(uid: string): Promise<boolean> {
   return enFila(async () => {
     const nube = await cargarCapsulasNube();
     if (!nube) return false;
-    const pend = leerPendientes(uid), aqui = leerCapsulas(uid);
+    const sellos = leerSellos(uid), pend = Object.keys(sellos).map(Number), aqui = leerCapsulas(uid);
     // Nube vacía: lo de este aparato sube completo (cuentas que guardaron antes de tener nube).
     const base = nube.slots.some(Boolean) ? combinar(nube, aqui, pend) : aqui;
     if (huella(base) !== huella(aqui)) escribirCapsulas(uid, base);
-    if (!base.slots.some(Boolean) || huella(base) === huella(nube)) { quitarPendientes(uid, pend); return true; }
+    if (!base.slots.some(Boolean) || huella(base) === huella(nube)) { quitarPendientes(uid, sellos); return true; }
     const ok = await guardarCapsulasNube(base);
-    if (ok) quitarPendientes(uid, pend);
+    if (ok) quitarPendientes(uid, sellos);
     return ok;
   }, false);
 }

@@ -6,11 +6,11 @@ const mem = new Map<string, string>();
 (globalThis as { localStorage?: unknown }).localStorage = { getItem: (k: string) => mem.get(k) ?? null, setItem: (k: string, v: string) => void mem.set(k, v), removeItem: (k: string) => void mem.delete(k) };
 
 type Estado = { version: 1; activa: number | null; slots: ({ nombre: string; figura: unknown; actualizado: string } | null)[] };
-const nube: { estado: Estado | null; leeBien: boolean; subeBien: boolean; subidas: Estado[] } = { estado: null, leeBien: true, subeBien: true, subidas: [] };
+const nube: { estado: Estado | null; leeBien: boolean; subeBien: boolean; subidas: Estado[]; retener: Promise<void> | null } = { estado: null, leeBien: true, subeBien: true, subidas: [], retener: null };
 vi.mock("../servicios/cliente", () => ({ hayNube: true }));
 vi.mock("../servicios/cuenta", () => ({
   cargarCapsulasNube: async () => (nube.leeBien ? structuredClone(nube.estado ?? { version: 1, activa: null, slots: [null, null, null] }) : null),
-  guardarCapsulasNube: async (e: Estado) => { if (!nube.subeBien) return false; nube.subidas.push(structuredClone(e)); nube.estado = structuredClone(e); return true; },
+  guardarCapsulasNube: async (e: Estado) => { if (nube.retener) await nube.retener; if (!nube.subeBien) return false; nube.subidas.push(structuredClone(e)); nube.estado = structuredClone(e); return true; },
 }));
 vi.mock("../servicios/enlace", () => ({ enlace: { activarCapsula: async () => {} } }));
 vi.mock("./Personalizador", () => ({ Personalizador: () => null }));
@@ -26,7 +26,7 @@ const personaje = (e: Estado | null, i: number) => (e?.slots[i]?.figura as { ext
 const U = "ana";
 
 describe("guardar figura nueva con la nube (simulada)", () => {
-  beforeEach(() => { mem.clear(); nube.estado = null; nube.leeBien = true; nube.subeBien = true; nube.subidas = []; });
+  beforeEach(() => { mem.clear(); nube.estado = null; nube.leeBien = true; nube.subeBien = true; nube.subidas = []; nube.retener = null; });
 
   it("si la lectura de la nube falla NO se sube nada: queda aquí y pendiente", async () => {
     nube.estado = { version: 1, activa: 2, slots: [null, null, { nombre: "Otro aparato", figura: { version: 2 }, actualizado: "" }] };
@@ -68,6 +68,20 @@ describe("guardar figura nueva con la nube (simulada)", () => {
     expect(await sincronizar(U)).toBe(true);
     expect(leerCapsulas(U).slots[0]?.nombre).toBe("De la nube");
     expect(nube.subidas).toEqual([]);
+  });
+
+  it("otro guardado del MISMO espacio mientras sube el primero no se pierde (Codex, paso4-verif)", async () => {
+    let soltar!: () => void;
+    nube.retener = new Promise<void>(r => { soltar = r; });
+    const a = guardarFiguraNueva(U, 0, v3("thor"), "Thor");
+    await new Promise(r => setTimeout(r, 0)); // A ya leyó la nube y está subiendo (retenida)
+    const b = guardarFiguraNueva(U, 0, v3("hulk"), "Hulk");
+    expect(personaje(leerCapsulas(U), 0)).toBe("hulk");
+    soltar(); nube.retener = null;
+    expect(await Promise.all([a, b])).toEqual(["sincronizado", "sincronizado"]);
+    expect(personaje(nube.estado, 0)).toBe("hulk");
+    expect(personaje(leerCapsulas(U), 0)).toBe("hulk");
+    expect(leerPendientes(U)).toEqual([]);
   });
 
   it("dos guardados seguidos van en fila y los dos llegan", async () => {
