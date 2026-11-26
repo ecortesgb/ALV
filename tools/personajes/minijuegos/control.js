@@ -141,6 +141,7 @@ function estado(d) {
   $("titulo").textContent = d.juego === "desenfunda" ? "¡Desenfunda!" : d.juego === "bala" ? "Esquiva la bala" : "El cuarto";
   document.title = $("titulo").textContent + " · control";
   $("salto-accion").textContent = d.juego === "desenfunda" ? "¡DISPARA!" : "SALTA";
+  $("salto").classList.toggle("duelo", d.juego === "desenfunda");
   // El anfitrión lo asigna el servidor de sala y la TV lo repite en el estado.
   const anfitrion = d.anfitrionId === yo;
   // Su personaje no cargó en la TV (Codex O7): se queda el aviso y vuelve el selector para elegir otro o reintentar.
