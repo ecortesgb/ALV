@@ -6,7 +6,7 @@ vi.mock("../servicios/personajesPrivados", () => ({ fuentePrivada: privada.fuent
 import { leerFicha } from "./ficha";
 import { deCatalogo } from "./figura";
 import { piezasDeCatalogo, ponerPieza } from "./constructorDatos";
-import { TOPE_PUENTE, banderaV3, empaquetarV3, fuenteDePersonajes, leerV3, montajeEscena, resolverFigura, sinV3 } from "./integracion";
+import { TOPE_PUENTE, banderaV3, cambioDeCuenta, empaquetarV3, fuenteDePersonajes, leerV3, montajeEscena, resolverFigura, sinV3 } from "./integracion";
 import type { Catalogo } from "./plano";
 import type { Ficha } from "./tipos";
 
@@ -127,6 +127,15 @@ describe("fase 5: corte a v3 (Codex, v3-directo-r1)", () => {
     expect(await fuenteDePersonajes({ DEV: false })).toBeNull();
     expect(await fuenteDePersonajes({ DEV: true })).toBeNull();
     expect(privada.fuente).not.toHaveBeenCalled();
+  });
+  it("con el corte, salir o cambiar de cuenta recarga la página; entrar sin cuenta previa solo vuelve a pedir el catálogo", () => {
+    expect(cambioDeCuenta(undefined, "a")).toBe("nada");       // primer aviso (INITIAL_SESSION): solo se anota
+    expect(cambioDeCuenta(undefined, null)).toBe("nada");
+    expect(cambioDeCuenta("a", "a")).toBe("nada");             // token renovado
+    expect(cambioDeCuenta(null, null)).toBe("nada");
+    expect(cambioDeCuenta(null, "a")).toBe("reintentar");      // no había nada privado cargado
+    expect(cambioDeCuenta("a", null)).toBe("recargar");        // salir: lo privado de A no se queda en memoria
+    expect(cambioDeCuenta("a", "b")).toBe("recargar");         // A → B
   });
   it("con el corte la escena no se crea mientras la fuente carga y se vuelve a crear si el catálogo llega tarde", () => {
     // Sin corte: siempre y con la misma clave (nada cambia en lo publicado de hoy).

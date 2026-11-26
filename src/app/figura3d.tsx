@@ -99,6 +99,8 @@ type Modelo = { figura?: FiguraV2 | null; semilla?: number; encuadre?: Encuadre;
 // localStorage de las fotos). Las que fallaron no se vuelven a pedir en la sesión: se usa la foto de la v2 de respaldo.
 const fotosV3 = new Map<string, string>();
 const fallidasV3 = new Set<string>();
+/** Catálogo con el que se pidieron las fotos nuevas: si llega otro (Reintentar recuperó el acceso), las fallidas se olvidan. */
+let catalogoFotos: CatalogoV3 | null = null;
 const esV3 = (pid: string) => pid.startsWith("V3:") || pid.startsWith("V3B:");
 /** «cuerpo»: figura completa (240×300). «busto»: pecho, hombros y cabeza (320×320) para TarjetaEsquina y Burbuja. */
 export type Encuadre = "cuerpo" | "busto";
@@ -123,7 +125,7 @@ function crearFotografo() {
   oyenteFotos = true;
   addEventListener("message", e => {
     if (e.origin !== location.origin || e.source !== fotografo?.contentWindow || e.data?.origen !== "minifig") return;
-    if (e.data.tipo === "listo") { fotografoListo = true; colaFotos.splice(0).forEach(x => enviarFoto(x.pid, x.m)); }
+    if (e.data.tipo === "listo") { fotografoListo = true; if (!repararFotografo()) vaciarColaFotos(); }
     if (e.data.tipo === "foto") {
       enviadasFoto.delete(String(e.data.pid));
       const url = typeof e.data.url === "string" && e.data.url.startsWith("data:image/") ? e.data.url as string : null;
@@ -142,26 +144,31 @@ function crearFotografo() {
     }
   });
 }
+const vaciarColaFotos = () => colaFotos.splice(0).forEach(x => enviarFoto(x.pid, x.m));
+/** Veces que se rehízo el fotógrafo en esta página (tope: si el service worker no lo toma, las fotos nuevas fallan y se ve
+ *  la de respaldo, sin dar vueltas). */
+let reparaciones = 0;
+/** Con el corte: si hay fotos nuevas por mandar y el fotógrafo ya cargado quedó fuera del service worker (se creó antes de
+ *  que la fuente llegara, p. ej. con Reintentar), se quita, lo que no contestó regresa a la cola y se crea otro. true si lo
+ *  rehízo (la cola se manda cuando el nuevo avise «listo»). Codex fuente-privada-verif, 2. */
+function repararFotografo(): boolean {
+  if (!modoCorteV3() || !fotografo || reparaciones >= 2 || !colaFotos.some(x => esV3(x.pid)) || bajoServiceWorker(fotografo)) return false;
+  reparaciones++;
+  fotografo.remove();
+  enviadasFoto.forEach((m, pid) => colaFotos.push({ pid, m }));
+  enviadasFoto.clear();
+  crearFotografo();
+  return true;
+}
 function pedirAlFotografo(pid: string, m: Modelo) {
-  if (modoCorteV3()) {
+  colaFotos.push({ pid, m });
+  if (modoCorteV3() && !fotografo) {
     // Antes de que la fuente resuelva no se crea (quedaría fuera del service worker); los pedidos esperan en la cola.
-    if (!fotografo) {
-      colaFotos.push({ pid, m });
-      if (!esperaFotografo) esperaFotografo = catalogoParaEscena().then(() => { if (!fotografo) crearFotografo(); });
-      return;
-    }
-    // Una foto nueva con un fotógrafo creado fuera del service worker (la fuente llegó tarde, con Reintentar): se vuelve a
-    // crear, y lo que el viejo no contestó regresa a la cola.
-    if (esV3(pid) && fotografoListo && !bajoServiceWorker(fotografo)) {
-      fotografo.remove();
-      enviadasFoto.forEach((mm, p) => colaFotos.push({ pid: p, m: mm }));
-      enviadasFoto.clear();
-      colaFotos.push({ pid, m });
-      crearFotografo();
-      return;
-    }
-  } else if (!fotografo) crearFotografo();
-  if (fotografoListo) enviarFoto(pid, m); else colaFotos.push({ pid, m });
+    if (!esperaFotografo) esperaFotografo = catalogoParaEscena().then(() => { if (!fotografo) crearFotografo(); });
+    return;
+  }
+  if (!fotografo) crearFotografo();
+  if (fotografoListo && !repararFotografo()) vaciarColaFotos();
 }
 const enviarFoto = (pid: string, m: Modelo) => { enviadasFoto.set(pid, m); fotografo?.contentWindow?.postMessage({
   ...(m.encuadre === "busto"
@@ -173,6 +180,7 @@ const enviarFoto = (pid: string, m: Modelo) => { enviadasFoto.set(pid, m); fotog
  *  La clave lleva el plano resuelto (personaje, piezas, tintes, GLB), la revisión del personaje y el encuadre. */
 function fotoNueva(figura: FiguraV2 | null | undefined, encuadre: Encuadre, cat: CatalogoV3 | null): { pid: string; plano3: unknown } | null {
   if (!cat || !figura) return null;
+  if (cat !== catalogoFotos) { catalogoFotos = cat; fallidasV3.clear(); }
   const x = paraEscena({ id: "foto", figura }, cat);
   if (!x.plano3) return null;
   const rev = (figura as { extensiones?: { alv?: { v3?: { origen?: { revision?: unknown } } } } }).extensiones?.alv?.v3?.origen?.revision ?? 0;
@@ -270,7 +278,9 @@ export function Escena3D({ figuras, momentos, className, alto, modo, columnas, s
   // Fase 5: con la bandera encendida las figuras que traen v3 van con su plano; apagada, igual que siempre. Con el corte,
   // el iframe se crea cuando la fuente privada ya resolvió (y otra vez si llega tarde): ver montajeEscena.
   const { catalogo: v3, montar, clave } = useEscenaV3();
-  useEffect(() => { listoRef.current = false; setListo(false); }, [clave]);
+  // Iframe nuevo: hasta que avise «listo» no se le manda nada, y los momentos vigentes se le vuelven a mandar (Codex
+  // fuente-privada-verif, 3).
+  useEffect(() => { listoRef.current = false; setListo(false); vistos.current = new Map(); }, [clave]);
   const ultimas = useRef({ figuras, columnas, asientos, alVolar, alCabezas, vida, v3 });
   ultimas.current = { figuras, columnas, asientos, alVolar, alCabezas, vida, v3 };
   const listoRef = useRef(false);
@@ -305,7 +315,7 @@ export function Escena3D({ figuras, momentos, className, alto, modo, columnas, s
   useEffect(() => { if (listo && modo === "nave" && expulsar) enviar({ tipo: "expulsar", id: expulsar }); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [listo, expulsar]);
   const vistos = useRef(new Map<string, number>());
   useEffect(() => {
-    if (!listo) return;
+    if (!listo || !listoRef.current) return;
     for (const m of momentos ?? []) {
       const clave = `${m.id}:${m.cual}`;
       if (vistos.current.get(clave) === m.n) continue;

@@ -157,6 +157,7 @@ let cargaCatalogo: Promise<CatalogoV3 | null> | null = null;
  *  todas las figuras se ven con su v2 de respaldo). */
 export function catalogoParaEscena(): Promise<CatalogoV3 | null> {
   if (!banderaV3()) return Promise.resolve(null);
+  if (modoCorteV3()) vigilarCuenta();
   if (!cargaCatalogo) {
     cargaCatalogo = fuenteDePersonajes()
       .then(f => (f ? cargarIndice(f).then(ind => ({ catalogo: ind.catalogo, piezas: piezasDeCatalogo(ind.catalogo, ind.ranuras) })) : null))
@@ -171,6 +172,28 @@ export function useCatalogoV3(): CatalogoV3 | null {
 /** Vuelve a pedir el catálogo (p. ej. tras recuperar la sesión o el acceso privado). Avisa a quien lo esté usando. */
 const oyentesCat = new Set<() => void>();
 export function reintentarCatalogo() { cargaCatalogo = null; oyentesCat.forEach(f => f()); }
+
+/** Qué hacer cuando cambia la cuenta con el corte (Codex fuente-privada-verif, 1). Lo privado ya cargado (catálogo, GLB en
+ *  los iframes, fotos en memoria) es de la cuenta anterior y `fuentePrivada()` guarda su resultado por página: al salir o
+ *  entrar con otra cuenta se recarga la página completa. Si antes no había cuenta, no había nada privado: solo se vuelve a
+ *  pedir el catálogo. Renovar el token (misma cuenta) no hace nada. `antes` undefined = aún no se sabe (primer aviso). */
+export function cambioDeCuenta(antes: string | null | undefined, ahora: string | null): "nada" | "reintentar" | "recargar" {
+  if (antes === undefined || antes === ahora) return "nada";
+  return antes === null ? "reintentar" : "recargar";
+}
+let vigilando = false;
+function vigilarCuenta() {
+  if (vigilando || !cliente) return;
+  vigilando = true;
+  let antes: string | null | undefined;
+  cliente.auth.onAuthStateChange((_evento, s) => {
+    const ahora = s?.user?.id ?? null, que = cambioDeCuenta(antes, ahora);
+    antes = ahora;
+    // Fuera del aviso: Supabase pide no llamar a auth dentro de él (reintentar vuelve a pedir la sesión).
+    if (que === "reintentar") setTimeout(reintentarCatalogo, 0);
+    if (que === "recargar") location.reload();
+  });
+}
 /** El catálogo y en qué va: «cargando», «listo» o «sin-acceso» (sin fuente, sin sesión o falló: se ve el respaldo y se
  *  puede reintentar; Codex, v3-directo-r1). Con la bandera apagada: «sin-acceso» y nada se pide. */
 export function useEstadoCatalogoV3(): { catalogo: CatalogoV3 | null; estado: "cargando" | "listo" | "sin-acceso"; reintentar: () => void } {
