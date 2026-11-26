@@ -13,10 +13,13 @@
     especial: "especial", entrada: "entrada", llegada: "entrada", bailar: "victoria",
   };
   // Pistas por nombre para la vida automática y las animaciones de momentos.js / gestos.js.
+  // Regla: un id de la biblioteca cae en la misma lógica que su respaldo de ALV (perfiles-animacion.json); lo revisa
+  // nucleo.test.ts con todos los pares. Orden: lo más específico primero.
   const PISTAS = [
+    [/personality_|idle|respir|look_around|restless|mirar/, "reposo"],
     [/wave|salud|hola|greet/, "saludo"],
-    [/victor|cheer|celebr|alegr|brazos-arriba|puno|salto|baile|dance|clap|aplau|presum|flex/, "victoria"],
-    [/derrot|triste|sad|cabeza-baja|caer|knock|mareo|confund|shrug|pisot|brazos-caidos/, "derrota"],
+    [/confus|confund|derrot|triste|sad|cabeza-baja|caer|knock|mareo|dizzy|shrug|pisot|brazos-caidos/, "derrota"],
+    [/victor|cheer|celebr|joy|alegr|arms_up|brazos-arriba|puno|salto|baile|dance|clap|aplau|presum|flex/, "victoria"],
     [/especial|furia|visor|rayo|telara|poder/, "especial"],
   ];
   /** Lógica para un nombre de momento, gesto o vida. Siempre devuelve una: lo que no se reconoce es reposo. */

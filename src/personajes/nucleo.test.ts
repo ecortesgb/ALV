@@ -159,6 +159,22 @@ describe("lógicas del motor (tools/personajes/logicas.js)", () => {
     expect(L.logicaDe("cabeza-baja")).toBe("derrota");
     expect(L.logicaDe("furia")).toBe("especial");
   });
+  it("cada id de la biblioteca cae en la misma lógica que su respaldo de ALV (todos los pares de perfiles-animacion.json)", () => {
+    const pares: [string, string][] = [];
+    JSON.parse(readFileSync("src/content/perfiles-animacion.json", "utf8"), (_k, v) => {
+      if (v && typeof v === "object" && !Array.isArray(v) && typeof v.lib === "string" && typeof v.respaldo === "string") pares.push([v.lib, v.respaldo]);
+      return v;
+    });
+    expect(pares.length).toBeGreaterThan(5);
+    for (const [lib, respaldo] of pares) expect(L.logicaDe(lib), `${lib} → como ${respaldo}`).toBe(L.logicaDe(respaldo));
+    expect(L.logicaDe("lib:reaction_confused")).toBe("derrota");
+    expect(L.logicaDe("lib:personality_restless")).toBe("reposo");
+  });
+  it("las animaciones de ALV que usa la vida caen donde deben", () => {
+    const esperado: Record<string, string> = { respirar: "reposo", saludar: "saludo", "salto-puno": "victoria", "puno-arriba": "victoria", baile: "victoria",
+      flexionar: "victoria", mareo: "derrota", "cabeza-baja": "derrota", pisoton: "derrota" };
+    for (const [n, l] of Object.entries(esperado)) expect(L.logicaDe(n), n).toBe(l);
+  });
   it("lo desconocido es reposo y nunca truena", () => {
     for (const x of ["nada", "", null, 5, "lib:", "__proto__", "constructor"]) expect(L.LOGICAS).toContain(L.logicaDe(x));
     expect(L.logicaDe("constructor")).toBe("reposo");

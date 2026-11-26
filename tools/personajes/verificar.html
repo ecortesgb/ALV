@@ -15,9 +15,10 @@ iframe{position:absolute;left:-2000px;width:10px;height:10px;border:0}
 </head>
 <body>
 <h1>Verificación de personajes en el motor real</h1>
-<p class="chico">Criterio de la fase 2 (plan rápido) y de entrega de producción: ficha válida, huellas SHA256, las 6 lógicas (clip o respaldo),
-mensajes de siempre traducidos, clips de vida y sentado, vuelta sola a reposo. El tiempo se avanza a mano (no depende de que la
-pestaña esté visible). <code>?ids=iron-man,hulk</code> · <code>?fuente=http://127.0.0.1:4193/</code></p>
+<p class="chico">Criterio de la fase 2 (plan rápido) y de entrega de producción: ficha válida, huellas SHA256, las 6 lógicas (clip o respaldo)
+que mueven de verdad el esqueleto, mensajes de siempre y todos los ids de vida traducidos, clips de vida y sentado, vuelta sola a reposo
+tras todo lo que no es bucle. El tiempo se avanza a mano (no depende de que la pestaña esté visible).
+<code>?ids=iron-man,hulk</code> · <code>?corte=iron-man:&lt;sha256 del glb&gt;,…</code> · <code>?fuente=http://127.0.0.1:4193/</code></p>
 <div id="salida">Verificando…</div>
 <iframe id="escena" src="escena.html" title="Motor (oculto)"></iframe>
 <script type="module">
@@ -28,15 +29,27 @@ import { LOGICAS } from "/src/personajes/tipos.ts";
 
 const q = new URLSearchParams(location.search);
 const FUENTE = (q.get("fuente") || "http://127.0.0.1:4193/").replace(/\/?$/, "/");
-const IDS = (q.get("ids") || "iron-man,hulk").split(",").map(s => s.trim()).filter(Boolean);
+const IDS = (q.get("ids") ?? "iron-man,hulk").split(",").map(s => s.trim()).filter(Boolean);
+// ?corte=id:sha256,id:sha256 → la huella del GLB debe ser esa (repetir sobre el mismo corte).
+const CORTE = new Map((q.get("corte") || "").split(",").filter(Boolean).map(x => x.split(":")));
 const hex = async buf => [...new Uint8Array(await crypto.subtle.digest("SHA-256", buf))].map(b => b.toString(16).padStart(2, "0")).join("");
-const MENSAJES = { espera: "reposo", punto: "victoria", victoria: "victoria", derrota: "derrota", saludar: "saludo", especial: "especial", "lib:gesture_wave": "saludo", "cabeza-baja": "derrota", furia: "especial" };
+// Mensajes de siempre y su lógica esperada: momentos, gestos y TODOS los ids de vida (perfiles-animacion.json) con sus respaldos.
+const MENSAJES = { espera: "reposo", punto: "victoria", victoria: "victoria", derrota: "derrota", saludar: "saludo", especial: "especial", furia: "especial",
+  "lib:gesture_wave": "saludo", "lib:celebration_joyful": "victoria", "lib:celebration_arms_up": "victoria", "lib:personality_idle": "reposo",
+  "lib:personality_look_around": "reposo", "lib:personality_restless": "reposo", "lib:reaction_confused": "derrota",
+  respirar: "reposo", "salto-puno": "victoria", "puno-arriba": "victoria", baile: "victoria", flexionar: "victoria", mareo: "derrota", "cabeza-baja": "derrota", pisoton: "derrota" };
 
 async function motor() {
   const f = document.getElementById("escena");
   for (let i = 0; i < 100; i++) { if (f.contentWindow?.MotorPersonajes) return f.contentWindow; await new Promise(r => setTimeout(r, 100)); }
   throw new Error("el motor no cargó");
 }
+
+/** Giro de cada hueso (cuaternión local), para ver si una animación mueve de verdad el esqueleto. */
+const huesos = p => { const l = []; p.obj.traverse(o => { if (o.isBone) l.push(o); }); return l; };
+const pose = hs => hs.map(h => h.quaternion.clone());
+const cambioMax = (a, b) => a.reduce((m, qq, i) => Math.max(m, qq.angleTo(b[i]) * 180 / Math.PI), 0);
+const avanzar = (p, s) => { for (let t = 0; t < s; t += 0.05) p.update(0.05); };
 
 async function verificar(W, ent) {
   const ch = [], bien = (nombre, ok, detalle = "") => ch.push({ nombre, ok: !!ok, detalle });
@@ -45,38 +58,52 @@ async function verificar(W, ent) {
   if (!r.ok) return { id: ent.id, ok: false, checks: ch };
   const f = r.ficha, base = new URL(ent.ruta, FUENTE).href, glbUrl = new URL(f.glb, base).href;
   const buf = await (await fetch(glbUrl, { cache: "no-store" })).arrayBuffer();
-  const huellas = { ficha: await hex(new TextEncoder().encode(JSON.stringify(ent.ficha))), glb: await hex(buf), bytes: buf.byteLength };
-  const cat = new Map([[f.id, { ficha: f, base }]]);
-  const plano = resolver("v", deCatalogo(f), cat);
+  const archivo = await (await fetch(new URL(f.id + ".json", base).href, { cache: "no-store" })).arrayBuffer();
+  // fichaArchivo = sha256 del archivo tal cual (igual a sha256sum); fichaJSON = sha256 de JSON.stringify de la ficha leída.
+  const huellas = { glb: await hex(buf), bytes: buf.byteLength, fichaArchivo: await hex(archivo), fichaJSON: await hex(new TextEncoder().encode(JSON.stringify(ent.ficha))) };
+  if (CORTE.has(f.id)) bien("GLB igual al corte", CORTE.get(f.id) === huellas.glb, CORTE.get(f.id).slice(0, 12) + "…");
+  const plano = resolver("v", deCatalogo(f), new Map([[f.id, { ficha: f, base }]]));
   bien("plano", plano);
   const p = await W.MotorPersonajes.crear(plano);
-  const clips = new Set(p.nombresClips());
-  for (const [l, c] of Object.entries(f.animaciones.mapa)) bien(`mapa.${l} = ${c} existe en el GLB`, clips.has(c));
+  const clips = new Set(p.nombresClips()), hs = huesos(p);
+  bien("esqueleto con huesos (" + hs.length + ")", hs.length > 10);
+  for (const [l, c] of Object.entries(f.animaciones.mapa)) bien("mapa." + l + " = " + c + " existe en el GLB", clips.has(c));
   const resueltos = resolverClips(f);
   for (const l of LOGICAS) {
-    const c = resueltos[l];
-    const propio = f.animaciones.mapa[l] === c;
+    const c = resueltos[l], propio = f.animaciones.mapa[l] === c;
+    p.tocar("reposo", { mezcla: 0 }); p.update(0.05);
     const ok = c && clips.has(c) && p.tocar(l, { mezcla: 0 });
     p.update(0.05);
-    bien(`lógica ${l}`, ok && (p.estado().clip === c), c ? `${c}${propio ? "" : " (respaldo)"}` : "sin clip ni respaldo");
+    bien("lógica " + l, ok && p.estado().clip === c, c ? c + (propio ? "" : " (respaldo)") : "sin clip ni respaldo");
+    // Movimiento real: a lo largo del clip el esqueleto debe girar (reposo incluido: respira). Se mide todo el clip
+    // (algunos, como KNOCKEDDOWN, esperan medio segundo antes de caer); el reposo, 2 s.
+    const antes = pose(hs), largo = l === "reposo" ? 2 : Math.max(0.5, p.duracion(c) || 0.5);
+    let giro = 0;
+    for (let t = 0; t < largo; t += 0.05) { p.update(0.05); giro = Math.max(giro, cambioMax(antes, pose(hs))); }
+    bien("lógica " + l + " mueve huesos", giro > 0.3, giro.toFixed(1) + "° máx en " + largo.toFixed(1) + " s");
   }
-  p.tocar("reposo", { mezcla: 0 });
   for (const [m, l] of Object.entries(MENSAJES)) {
+    p.tocar("reposo", { mezcla: 0 }); p.update(0.05);
     p.tocar(m, { mezcla: 0 }); p.update(0.05);
     const e = p.estado();
-    bien(`mensaje «${m}» → ${l}`, e.logica === l && e.clip === resueltos[l], `${e.logica}/${e.clip}`);
+    bien("mensaje «" + m + "» → " + l, e.logica === l && e.clip === resueltos[l], e.logica + "/" + e.clip);
   }
-  for (const v of f.animaciones.vida) { bien(`vida ${v} existe`, clips.has(v)); if (clips.has(v)) { p.tocar(v, { mezcla: 0 }); p.update(0.05); bien(`vida ${v} se toca`, p.estado().clip === v); } }
-  if (f.animaciones.sentado) bien(`sentado ${f.animaciones.sentado} existe`, clips.has(f.animaciones.sentado));
-  // Vuelta sola a reposo después de victoria (avanzando el tiempo a mano).
-  p.tocar("reposo", { mezcla: 0 }); p.update(0.05);
-  if (resueltos.victoria && resueltos.victoria !== resueltos.reposo) {
-    p.tocar("victoria", { mezcla: 0 });
-    const dur = p.duracion(resueltos.victoria);
-    for (let t = 0; t < dur + 1.2; t += 0.05) p.update(0.05);
-    bien(`vuelve a reposo tras victoria (${dur.toFixed(2)} s)`, p.estado().logica === "reposo", `${p.estado().logica}/${p.estado().clip}`);
-  } else bien("vuelve a reposo tras victoria", true, "victoria = reposo (respaldo)");
-  bien(`altura en escena ≈ ${p.alto().toFixed(2)}`, p.alto() > 1.5 && p.alto() < 6);
+  for (const v of f.animaciones.vida) {
+    bien("vida " + v + " existe", clips.has(v));
+    if (clips.has(v)) { p.tocar(v, { mezcla: 0 }); p.update(0.05); bien("vida " + v + " se toca", p.estado().clip === v); }
+  }
+  bien(f.animaciones.sentado ? "sentado " + f.animaciones.sentado + " existe" : "sentado: no declarado (la nave usa reposo)", !f.animaciones.sentado || clips.has(f.animaciones.sentado));
+  // Vuelta sola a reposo tras todo lo que no es bucle (avanzando el tiempo a mano).
+  const unaVez = [...["entrada", "saludo", "victoria", "derrota", "especial"].map(l => [l, resueltos[l]]), ...f.animaciones.vida.filter(v => clips.has(v)).map(v => [v, v])];
+  for (const [quien, c] of unaVez) {
+    if (!c || c === resueltos.reposo) { bien("vuelve a reposo tras " + quien, true, "es el mismo clip de reposo (respaldo)"); continue; }
+    p.tocar("reposo", { mezcla: 0 }); p.update(0.05);
+    p.tocar(quien, { mezcla: 0 });
+    const dur = p.duracion(c);
+    avanzar(p, dur + 1.2);
+    bien("vuelve a reposo tras " + quien + " (" + dur.toFixed(2) + " s)", p.estado().logica === "reposo", p.estado().logica + "/" + p.estado().clip);
+  }
+  bien("altura en escena ≈ " + p.alto().toFixed(2), p.alto() > 1.5 && p.alto() < 6);
   p.quitar();
   return { id: f.id, familia: f.familia, calidad: f.calidad.estado, huellas, clips: clips.size, ok: ch.every(c => c.ok), checks: ch };
 }
@@ -84,20 +111,25 @@ async function verificar(W, ent) {
 (async () => {
   const salida = document.getElementById("salida");
   try {
+    if (!IDS.length) throw new Error("No hay personajes que verificar (?ids= vacío): no cuenta como pasar.");
     const W = await motor();
     const indice = await (await fetch(FUENTE + "indice.json", { cache: "no-store" })).json();
     const informe = { fecha: new Date().toISOString(), fuente: FUENTE, personajes: [] };
     for (const id of IDS) {
       const ent = (indice.personajes || []).find(e => e.id === id);
-      informe.personajes.push(ent ? await verificar(W, ent) : { id, ok: false, checks: [{ nombre: "está en el índice", ok: false }] });
+      informe.personajes.push(ent ? await verificar(W, ent) : { id, ok: false, checks: [{ nombre: "está en el índice", ok: false, detalle: "" }] });
     }
-    informe.ok = informe.personajes.every(p => p.ok);
+    informe.ok = informe.personajes.length > 0 && informe.personajes.every(p => p.ok);
+    // Criterio de la fase 2: además de pasar, al menos una minifigura y un Big Fig.
+    const fams = new Set(informe.personajes.filter(p => p.ok).map(p => p.familia));
+    informe.fase2 = informe.ok && fams.has("minifig") && fams.has("bigfig");
     window.__verificacion = informe;
-    salida.innerHTML = `<p class="${informe.ok ? "ok" : "mal"}"><b>${informe.ok ? "TODO PASA" : "HAY FALLAS"}</b></p>` + informe.personajes.map(p => `<h2>${p.id} <span class="${p.ok ? "ok" : "mal"}">${p.ok ? "✓" : "✗"}</span> <span class="chico">${p.familia ?? ""} · ${p.calidad ?? ""} · ${p.clips ?? 0} clips</span></h2>
-      ${p.huellas ? `<p class="chico">GLB sha256 ${p.huellas.glb} (${p.huellas.bytes} bytes) · ficha sha256 ${p.huellas.ficha}</p>` : ""}
-      <table>${p.checks.map(c => `<tr><td class="${c.ok ? "ok" : "mal"}">${c.ok ? "✓" : "✗"}</td><td>${c.nombre}</td><td class="chico">${c.detalle}</td></tr>`).join("")}</table>`).join("")
-      + `<h2>Informe</h2><pre>${JSON.stringify(informe, null, 1).replace(/</g, "&lt;")}</pre>`;
-  } catch (e) { salida.innerHTML = `<p class="mal">${e}</p>`; window.__verificacion = { ok: false, error: String(e) }; }
+    salida.innerHTML = '<p class="' + (informe.ok ? "ok" : "mal") + '"><b>' + (informe.ok ? "TODO PASA" : "HAY FALLAS") + "</b> · criterio de fase 2 (minifigura + Big Fig): " + (informe.fase2 ? "cumple" : "no cumple") + "</p>"
+      + informe.personajes.map(p => "<h2>" + p.id + ' <span class="' + (p.ok ? "ok" : "mal") + '">' + (p.ok ? "✓" : "✗") + '</span> <span class="chico">' + (p.familia ?? "") + " · " + (p.calidad ?? "") + " · " + (p.clips ?? 0) + " clips</span></h2>"
+        + (p.huellas ? '<p class="chico">GLB sha256 ' + p.huellas.glb + " (" + p.huellas.bytes + " bytes) · ficha (archivo) " + p.huellas.fichaArchivo + "</p>" : "")
+        + "<table>" + p.checks.map(c => '<tr><td class="' + (c.ok ? "ok" : "mal") + '">' + (c.ok ? "✓" : "✗") + "</td><td>" + c.nombre + '</td><td class="chico">' + (c.detalle ?? "") + "</td></tr>").join("") + "</table>").join("")
+      + "<h2>Informe</h2><pre>" + JSON.stringify(informe, null, 1).replace(/</g, "&lt;") + "</pre>";
+  } catch (e) { salida.innerHTML = '<p class="mal">' + e + "</p>"; window.__verificacion = { ok: false, fase2: false, error: String(e) }; }
 })();
 </script>
 </body>
