@@ -84,6 +84,14 @@ describe("guardar figura nueva con la nube (simulada)", () => {
     expect(leerPendientes(U)).toEqual([]);
   });
 
+  it("tras revertir el corte la primera sincronización toma la nube tal cual (aunque esté vacía) y no sube nada", async () => {
+    escribirCapsulas(U, { version: 1, activa: 0, slots: [{ nombre: "Local", figura: { version: 2 }, actualizado: "" }, null, null] } as never);
+    nube.estado = null; // nube vacía
+    expect(await sincronizar(U, { desdeNube: true })).toBe(true);
+    expect(nube.subidas).toEqual([]);
+    expect(leerCapsulas(U).slots.every(s => !s)).toBe(true);
+  });
+
   it("dos guardados seguidos van en fila y los dos llegan", async () => {
     const a = guardarFiguraNueva(U, 0, v3("thor"), "Thor"), b = guardarFiguraNueva(U, 1, v3("hulk"), "Hulk");
     expect(await Promise.all([a, b])).toEqual(["sincronizado", "sincronizado"]);

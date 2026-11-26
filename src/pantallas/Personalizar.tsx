@@ -23,10 +23,12 @@ let fila: Promise<unknown> = Promise.resolve();
 function enFila<T>(f: () => Promise<T>, siFalla: T): Promise<T> { const p = fila.then(f).catch(() => siFalla); fila = p; return p; }
 
 /** Lee la nube, combina (manda la nube salvo los pendientes de aquí), lo deja aquí y lo sube. true = igual en los dos lados. */
-export function sincronizar(uid: string): Promise<boolean> {
+export function sincronizar(uid: string, opciones: { desdeNube?: boolean } = {}): Promise<boolean> {
   return enFila(async () => {
     const nube = await cargarCapsulasNube();
     if (!nube) return false;
+    // Tras revertir el corte: lo de este aparato no se sube; se queda lo de la nube (aunque esté vacía).
+    if (opciones.desdeNube) { escribirCapsulas(uid, nube); return true; }
     const sellos = leerSellos(uid), pend = Object.keys(sellos).map(Number), aqui = leerCapsulas(uid);
     // Nube vacía: lo de este aparato sube completo (cuentas que guardaron antes de tener nube).
     const base = nube.slots.some(Boolean) ? combinar(nube, aqui, pend) : aqui;
@@ -49,9 +51,9 @@ export function SincroCapsulas() {
   const ultima = useRef<{ uid: string; e: EstadoCapsulas } | null>(null);
   useEffect(() => {
     if (!hayNube || fase !== "dentro" || !uid) return;
-    prepararEpoca();
+    let desdeNube = prepararEpoca();
     let vivo = true;
-    const intentar = () => void sincronizar(uid).then(ok => { if (vivo && ok) ultima.current = { uid, e: leerCapsulas(uid) }; });
+    const intentar = () => void sincronizar(uid, { desdeNube }).then(ok => { if (ok) desdeNube = false; if (vivo && ok) ultima.current = { uid, e: leerCapsulas(uid) }; });
     intentar();
     // Reintentos de lo pendiente: al recuperar la conexión y al volver a la app.
     const otraVez = () => { if (leerPendientes(uid).length && document.visibilityState === "visible") intentar(); };
