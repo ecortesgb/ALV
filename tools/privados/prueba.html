@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Personajes privados: prueba</title>
+  <style>
+    :root { color-scheme: light dark; }
+    body { margin: 0; font: 15px/1.4 system-ui, sans-serif; background: #14121c; color: #eee; }
+    header { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 10px 16px; background: #221f30; }
+    header input, header button { font: inherit; padding: 6px 10px; border-radius: 8px; border: 1px solid #555; background: #2c2840; color: inherit; }
+    #estado { padding: 6px 16px; white-space: pre-wrap; font-family: ui-monospace, monospace; font-size: 13px; }
+    #fotos { display: flex; flex-wrap: wrap; gap: 8px; padding: 8px 16px; }
+    #fotos img { border-radius: 8px; background: #2c2840; object-fit: cover; }
+    a { color: #ffd84a; }
+  </style>
+</head>
+<body>
+  <header>
+    <strong>Personajes privados (stack local)</strong>
+    <input id="apodo" placeholder="apodo" autocomplete="off" />
+    <input id="clave" type="password" placeholder="contraseña" autocomplete="off" />
+    <button id="entrar">Entrar</button>
+    <button id="salir">Salir</button>
+  </header>
+  <div id="estado">Sin sesión.</div>
+  <div id="fotos"></div>
+  <p style="padding: 0 16px"><a id="abrir" target="_blank" rel="opener" hidden>Abrir galería con esta fuente (otra pestaña; deja esta abierta)</a></p>
+  <script type="module" src="./prueba.ts"></script>
+</body>
+</html>
