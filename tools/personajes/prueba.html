@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Personajes nuevos · prueba</title>
+<style>
+:root{--fondo:#12141c;--panel:#1d2130;--tinta:#eef0f6;--suave:#9aa1b5;--acento:#e23b2e;--ok:#3fb27f;--mal:#e2683b}
+*{box-sizing:border-box}
+body{margin:0;background:var(--fondo);color:var(--tinta);font:14px/1.4 system-ui,sans-serif;display:grid;grid-template-columns:300px 1fr;height:100vh}
+aside{background:var(--panel);padding:14px;overflow:auto;display:flex;flex-direction:column;gap:12px}
+h1{font-size:16px;margin:0}
+h2{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--suave);margin:6px 0 4px}
+button,select{font:inherit;color:var(--tinta);background:#2a3044;border:1px solid #3a4260;border-radius:8px;padding:6px 9px;cursor:pointer}
+button:hover{border-color:var(--tinta)}
+.fila{display:flex;flex-wrap:wrap;gap:6px}
+.chico{font-size:12px;color:var(--suave)}
+#lista label{display:flex;gap:6px;align-items:center;padding:3px 0}
+#estado{white-space:pre-wrap;font:12px/1.4 ui-monospace,monospace;color:var(--suave)}
+.mal{color:var(--mal)} .ok{color:var(--ok)}
+iframe{width:100%;height:100%;border:0;display:block}
+@media (max-width:760px){body{grid-template-columns:1fr;grid-template-rows:auto 60vh}}
+</style>
+</head>
+<body>
+<aside>
+  <h1>Personajes nuevos · prueba de motor</h1>
+  <div class="chico">Fase 2 (zona aparte). Lee el índice del servidor privado, valida cada ficha con el núcleo
+    (<code>src/personajes</code>), arma el plano y lo manda a la escena. No toca el juego.</div>
+  <h2>Personajes</h2>
+  <div id="lista" class="chico">Cargando índice…</div>
+  <div class="fila"><span class="chico">Copias de cada uno:</span>
+    <select id="copias"><option>1</option><option>2</option><option selected>4</option><option>8</option></select>
+    <button id="armar">Armar</button></div>
+  <h2>Animaciones lógicas (todas)</h2>
+  <div class="fila" id="logicas"></div>
+  <h2>Mensajes de siempre (traducidos)</h2>
+  <div class="fila" id="viejos"></div>
+  <h2>Medir</h2>
+  <div class="fila"><button id="medir">Alturas y escala</button></div>
+  <div id="estado"></div>
+</aside>
+<main><iframe id="escena" src="escena.html" title="Escena de personajes"></iframe></main>
+<script type="module">
+import { leerFicha, logicasQueFaltan } from "/src/personajes/ficha.ts";
+import { deCatalogo } from "/src/personajes/figura.ts";
+import { resolver } from "/src/personajes/plano.ts";
+import { LOGICAS } from "/src/personajes/tipos.ts";
+
+const q = new URLSearchParams(location.search);
+const FUENTE = (q.get("fuente") || "http://127.0.0.1:4193/").replace(/\/?$/, "/");
+const $ = id => document.getElementById(id);
+const marco = $("escena");
+const catalogo = new Map();
+const log = [];
+const decir = (t, cls) => { log.unshift(cls ? `[${cls}] ${t}` : t); $("estado").textContent = log.slice(0, 30).join("\n"); };
+const enviar = m => marco.contentWindow.postMessage({ origen: "alv", ...m }, location.origin);
+let ids = [];
+window.__prueba = { catalogo, log, get ids() { return ids; } };
+
+addEventListener("message", e => {
+  if (e.origin !== location.origin || e.source !== marco.contentWindow || e.data?.origen !== "minifig") return;
+  const d = e.data;
+  if (d.tipo === "listo") decir("escena lista");
+  if (d.tipo === "armadas") { ids = d.ids; decir(`armadas ${d.ids.length}` + (d.errores.length ? " · errores: " + d.errores.join("; ") : ""), d.errores.length ? "mal" : "ok"); }
+  if (d.tipo === "medida") decir("medida " + JSON.stringify(d.figuras));
+  if (d.tipo === "error") decir(d.texto, "mal");
+});
+
+async function cargarIndice() {
+  let indice;
+  try { indice = await (await fetch(FUENTE + "indice.json")).json(); }
+  catch (e) { $("lista").innerHTML = `<span class="mal">No responde ${FUENTE} (servidor «personajes-privados»).</span>`; return; }
+  $("lista").textContent = "";
+  for (const ent of indice.personajes || []) {
+    const r = leerFicha(ent.ficha, { rutasLibres: !!ent.prueba });
+    if (!r.ok) { decir(`${ent.id}: ficha rechazada (${r.errores.join(", ")})`, "mal"); continue; }
+    catalogo.set(r.ficha.id, { ficha: r.ficha, base: new URL(ent.ruta, FUENTE).href });
+    const falta = logicasQueFaltan(r.ficha);
+    const l = document.createElement("label");
+    l.innerHTML = `<input type="checkbox" value="${r.ficha.id}" checked> ${r.ficha.nombre} <span class="chico">(${r.ficha.familia}${ent.prueba ? ", prueba" : ""}${falta.length ? ", sin " + falta.join("/") : ""})</span>`;
+    $("lista").appendChild(l);
+  }
+  decir(`índice: ${catalogo.size} personajes válidos`, "ok");
+}
+
+function armar() {
+  const elegidos = [...document.querySelectorAll("#lista input:checked")].map(i => i.value);
+  const n = Number($("copias").value);
+  const planos = [];
+  for (let i = 0; i < n; i++) for (const id of elegidos) {
+    const en = catalogo.get(id);
+    const p = resolver(`${id}-${i}`, deCatalogo(en.ficha), catalogo);
+    if (p) planos.push(p);
+  }
+  enviar({ tipo: "planos", lista: planos });
+  decir(`mandé ${planos.length} planos`);
+}
+
+for (const l of LOGICAS) { const b = document.createElement("button"); b.textContent = l; b.onclick = () => enviar({ tipo: "todos", cual: l }); $("logicas").appendChild(b); }
+for (const v of ["espera", "punto", "victoria", "derrota", "saludar", "especial", "lib:gesture_wave", "cabeza-baja", "furia"]) {
+  const b = document.createElement("button"); b.textContent = v; b.onclick = () => enviar({ tipo: "todos", cual: v }); $("viejos").appendChild(b);
+}
+$("armar").onclick = armar;
+$("medir").onclick = () => enviar({ tipo: "medir" });
+marco.addEventListener("load", async () => { await cargarIndice(); armar(); });
+</script>
+</body>
+</html>
