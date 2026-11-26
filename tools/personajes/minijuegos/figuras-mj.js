@@ -2,9 +2,10 @@
 // Usa MotorPersonajes (tools/personajes/motor-personajes.js) SIN cambiarlo: el motor baja y clona el GLB y aquí se
 // manejan los clips de locomoción y combate, que el motor no conoce (solo sabe las 6 lógicas).
 // Desde 2026-11-26 producción entrega un GLB «juego» por personaje (catalogo\<id>\<id>-juego.glb, ~3 MB, servido por 4193)
-// con su mapa de clips en ficha.juego.clips: se usa ese. Si un personaje no trae «juego», se cae al GLB completo
-// (personajes-privado\completos, servidor 4197) y a los nombres de CANDIDATOS.
-//   const f = await FigurasMJ.crear(ficha, { base, completos })  →  { obj, anim(nombre, op), tiene(nombre), update(dt), quitar() }
+// con su mapa de clips en ficha.juego.clips: se usa ese (los 120 del catálogo lo traen). Un personaje sin «juego» no
+// entra (indice() lo deja fuera). Para las acciones que no vienen en el mapa (festejo, saludo, derrota) se buscan en
+// el mismo GLB los nombres de CANDIDATOS.
+//   const f = await FigurasMJ.crear(ficha, { base })  →  { obj, anim(nombre, op), tiene(nombre), update(dt), quitar() }
 // Nombres que entiende anim(): reposo, caminar, correr, saltar, caer, aterrizar, golpe, herido, ko, eliminado, festejo,
 // derrota, nervios, saludo. Si el personaje no tiene el clip, usa el más parecido; si no hay ninguno, se queda en reposo.
 (function (raiz) {
@@ -53,15 +54,18 @@
     if (!r.ok) throw new Error("índice " + r.status);
     const j = await r.json();
     const mapa = new Map();
-    (j.personajes || []).forEach(p => { if (p && p.ficha && !p.prueba) mapa.set(p.id, { ficha: p.ficha, base: new URL(p.ruta, fuente).href }); });
+    const lista = (j.personajes || []).filter(p => p && p.ficha && !p.prueba && p.ficha.juego && typeof p.ficha.juego.glb === "string");
+    lista.sort((a, b) => String(a.ficha.nombre || a.id).localeCompare(String(b.ficha.nombre || b.id), "es"));
+    lista.forEach(p => mapa.set(p.id, { ficha: p.ficha, base: new URL(p.ruta, fuente).href }));
     return mapa;
   }
 
   async function crear(ficha, op) {
     const o = op || {};
     const juego = ficha.juego && typeof ficha.juego.glb === "string" && o.base ? ficha.juego : null;
-    const glb = juego ? new URL(juego.glb, o.base).href : new URL(ficha.id + "-completo.glb", o.completos).href;
-    const deFicha = (juego && juego.clips) || {};
+    if (!juego) throw new Error(ficha.id + " no trae GLB «juego»");
+    const glb = new URL(juego.glb, o.base).href;
+    const deFicha = juego.clips || {};
     const plano = {
       id: (o.idFigura || ficha.id), familia: ficha.familia, rig: "esqueleto", glb, escala: ESCALA,
       huesos: Object.assign({}, ficha.huesos), clips: Object.assign({}, ficha.animaciones && ficha.animaciones.mapa),
@@ -140,7 +144,7 @@
       clipDe: nombre => (elegido[nombre] ? elegido[nombre].name : null),
       duracion: nombre => (elegido[nombre] ? elegido[nombre].duration : 0),
       actual: () => nombreActual,
-      fuente: juego ? "juego" : "completo",
+      fuente: "juego",
       update: dt => { p.mixer.update(dt); if (pararEn && actual && actual.time >= pararEn) { actual.time = pararEn; actual.paused = true; } },
       alto: p.alto, ancho: p.ancho,
       quitar: () => p.quitar(),

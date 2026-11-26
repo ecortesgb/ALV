@@ -20,8 +20,15 @@ const llave = (() => {
 // ?desfase=ms: simula que el reloj de este celular está corrido (prueba de Codex O4: otro aparato, otra hora).
 const DESFASE = Number(q.get("desfase")) || 0;
 const ahora = () => ahoraPc() + DESFASE;
-const NOMBRES = { "iron-man": "Iron Man", "black-widow": "Black Widow", wolverine: "Wolverine", hulk: "Hulk", "spider-man": "Spider-Man", "black-panther": "Black Panther", "capitan-america": "Capitán América", thor: "Thor" };
-let personajes = Object.keys(NOMBRES), elegido = q.get("personaje") || null, dentro = false, ultimo = null, miJ = null;
+// Nombres de las tarjetas: del índice del servidor de personajes. Qué personajes se pueden elegir lo dice la TV.
+const NOMBRES = {};
+let personajes = [], elegido = q.get("personaje") || null, dentro = false, ultimo = null, miJ = null;
+fetch(FUENTE + "indice.json").then(r => (r.ok ? r.json() : null)).then(j => {
+  const lista = ((j && j.personajes) || []).filter(p => p && p.ficha && !p.prueba && p.ficha.juego);
+  lista.forEach(p => { NOMBRES[p.id] = String(p.ficha.nombre || p.id).slice(0, 30); });
+  if (!personajes.length) personajes = lista.map(p => p.id).sort((a, b) => NOMBRES[a].localeCompare(NOMBRES[b], "es"));
+  irAElegido(); pintarGrid();
+}).catch(() => { /* sin índice: quedan los ids que mande la TV */ });
 const fallidos = new Set(); // personajes que no cargaron en la TV (se ven grises; se pueden reintentar)
 const muestras = [];
 let reloj = null;
@@ -53,18 +60,54 @@ const canal = PESTANAS ? abrirCanal(sala, yo, alLlegar, redDeUrl(q))
 let pings = 0;
 (function pingear() { canal.enviar("ping", { t0: ahora() }); pings++; setTimeout(pingear, pings < 12 ? 250 : 2000); })();
 
+// Cuadrícula por páginas (no hay scroll): caben las filas que entren en la pantalla; se pasa con ‹ › o deslizando.
+let pagina = 0, porPagina = 9;
+const filtrados = () => {
+  const t = $("buscar").value.trim().toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+  if (!t) return personajes;
+  return personajes.filter(id => (NOMBRES[id] || id).toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").includes(t));
+};
+function medir() {
+  const g = $("grid"), ancho = g.clientWidth, alto = g.clientHeight, hueco = 8;
+  if (!ancho || !alto) return;
+  const altoCarta = ((ancho - 2 * hueco) / 3) * 5 / 4;
+  porPagina = 3 * Math.max(1, Math.floor((alto + hueco) / (altoCarta + hueco)));
+}
+function irAElegido() { const i = filtrados().indexOf(elegido); if (i >= 0) pagina = Math.floor(i / porPagina); }
 function pintarGrid() {
-  const g = $("grid");
+  medir();
+  const g = $("grid"), lista = filtrados(), paginas = Math.max(1, Math.ceil(lista.length / porPagina));
+  pagina = Math.min(Math.max(0, pagina), paginas - 1);
   g.innerHTML = "";
-  personajes.forEach(id => {
+  lista.slice(pagina * porPagina, (pagina + 1) * porPagina).forEach(id => {
     const c = document.createElement("button");
     c.className = "carta" + (id === elegido ? " si" : "") + (fallidos.has(id) ? " fallo" : "");
-    c.innerHTML = `<img alt="" src="${FUENTE}catalogo/${id}/${id}-tarjeta.webp"><span>${NOMBRES[id] || id}</span>`;
-    c.querySelector("img").onerror = e => { e.target.style.visibility = "hidden"; }; // sin foto, queda el nombre
-    c.onclick = () => { elegido = id; pintarGrid(); };
+    const img = document.createElement("img");
+    img.alt = ""; img.src = `${FUENTE}catalogo/${id}/${id}-tarjeta.webp`;
+    img.onerror = () => { img.style.visibility = "hidden"; }; // sin foto, queda el nombre
+    const nombre = document.createElement("span");
+    nombre.textContent = NOMBRES[id] || id;
+    c.append(img, nombre);
+    c.onclick = () => { if (deslizo) return; elegido = id; pintarGrid(); };
     g.appendChild(c);
   });
+  if (!lista.length) g.innerHTML = '<div class="suave" style="grid-column:1/-1;text-align:center;padding:20px 0">Nadie con ese nombre</div>';
+  $("pag").textContent = `${pagina + 1}/${paginas}`;
+  $("ant").disabled = pagina === 0; $("sig").disabled = pagina >= paginas - 1;
 }
+$("ant").onclick = () => { pagina--; pintarGrid(); };
+$("sig").onclick = () => { pagina++; pintarGrid(); };
+$("buscar").oninput = () => { pagina = 0; pintarGrid(); };
+let x0 = null, deslizo = false;
+$("grid").addEventListener("pointerdown", e => { x0 = e.clientX; deslizo = false; });
+$("grid").addEventListener("pointerup", e => {
+  if (x0 === null) return;
+  const dx = e.clientX - x0; x0 = null;
+  if (Math.abs(dx) < 40) return;
+  deslizo = true; setTimeout(() => { deslizo = false; }, 0); // que el toque no elija la tarjeta de abajo
+  pagina += dx < 0 ? 1 : -1; pintarGrid();
+});
+addEventListener("resize", () => { if (!dentro) { irAElegido(); pintarGrid(); } });
 pintarGrid();
 function entrar() {
   if (!sala) return;
@@ -83,7 +126,10 @@ addEventListener("pagehide", () => canal.enviar("adios"));
 
 function estado(d) {
   ultimo = d;
-  if (Array.isArray(d.personajes) && d.personajes.length && d.personajes.join() !== personajes.join()) { personajes = d.personajes; if (!dentro) pintarGrid(); }
+  if (Array.isArray(d.personajes) && d.personajes.length && d.personajes.join() !== personajes.join()) {
+    personajes = d.personajes.filter(id => typeof id === "string").slice(0, 300);
+    if (!dentro) { irAElegido(); pintarGrid(); }
+  }
   const lista = Array.isArray(d.jugadores) ? d.jugadores : [];
   const j = lista.find(x => x.id === yo);
   pid = typeof d.pid === "string" ? d.pid : "";

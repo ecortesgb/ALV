@@ -12,9 +12,6 @@ export const PESTANAS = q.get("canal") === "pestanas";
 // Modelos del mismo aparato que sirvió la página: en esta PC, localhost; si la TV abre la página desde otro aparato de la
 // casa (http://192.168.x.x:4202/…), la PC tiene que correr el servidor de personajes con --red (launch: personajes-privados-red).
 export const FUENTE = (q.get("fuente") || `http://${location.hostname}:4193/`).replace(/\/?$/, "/");
-export const COMPLETOS = (q.get("completos") || `http://${location.hostname}:4197/completos/`).replace(/\/?$/, "/");
-/** Los del prototipo: tienen caminar, correr, saltar, golpe, golpe recibido y caída en su GLB completo (2026-11-26). */
-export const PERSONAJES = ["iron-man", "black-widow", "wolverine", "hulk", "capitan-america", "spider-man", "black-panther", "thor"];
 export const MAX_JUGADORES = 6;
 const SIN_SENAL_MS = 15000;
 // Solo para pruebas: ?fallar=hulk,thor hace que esos personajes «no carguen» en la TV (prueba de Codex O7).
@@ -84,7 +81,8 @@ export function crearTV({ juego, escena, alUnirse, alMensaje, alSalir, alDescone
     qr.innerHTML = codigo.createSvgTag({ cellSize: 3, margin: 2 }); // SVG generado aquí, sin texto de jugadores
   }
 
-  function disponibles() { return PERSONAJES.filter(id => catalogo.has(id)); }
+  /** Todos los del catálogo que traen su GLB «juego» (desde 2026-11-26 son los 120), por nombre. */
+  function disponibles() { return [...catalogo.keys()]; }
 
   async function unir(id, d, bot = false) {
     await listo;
@@ -114,7 +112,7 @@ export function crearTV({ juego, escena, alUnirse, alMensaje, alSalir, alDescone
       const mio = (j.carga = (j.carga || 0) + 1);
       try {
         if (FALLAR.has(personaje)) throw new Error("carga fallida a propósito (?fallar)");
-        const f = await FigurasMJ.crear(ficha, { base: catalogo.get(personaje).base, completos: COMPLETOS, idFigura: id });
+        const f = await FigurasMJ.crear(ficha, { base: catalogo.get(personaje).base, idFigura: id });
         if (mio !== j.carga || !jugadores.has(id)) { f.quitar(); return; }
         if (j.figura) j.figura.quitar();
         j.figura = f; j.alto = 0; j.estado = "listo";
