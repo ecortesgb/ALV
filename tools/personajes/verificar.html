@@ -58,6 +58,72 @@ function moverMientras(p, hs, clip, largo) {
   return [giro > 0.3, giro.toFixed(1) + "° máx en " + t.toFixed(2) + " s de " + clip];
 }
 
+// --- Comparaciones del GLB de juego contra el del catálogo (contrato §3.1) ---
+const casi = (a, b, t) => Math.abs(a - b) <= t * Math.max(1, Math.abs(a), Math.abs(b));
+/** Huesos por nombre: padre e inversa de unión (de las mallas con esqueleto). */
+function esqueletoDe(scene) {
+  const m = new Map();
+  scene.traverse(o => { if (o.isBone && !m.has(o.name)) m.set(o.name, { padre: o.parent ? o.parent.name : "", inv: null }); });
+  scene.traverse(o => { if (o.isSkinnedMesh) o.skeleton.bones.forEach((h, i) => { const e = m.get(h.name); if (e && !e.inv) e.inv = o.skeleton.boneInverses[i].elements; }); });
+  return m;
+}
+function mismoEsqueleto(a, b) {
+  const ea = esqueletoDe(a), eb = esqueletoDe(b), mal = [];
+  if (ea.size !== eb.size) mal.push("huesos " + ea.size + " ≠ " + eb.size);
+  for (const [n, x] of ea) {
+    const y = eb.get(n);
+    if (!y) { mal.push("falta " + n); continue; }
+    if (x.padre !== y.padre) mal.push(n + ": padre " + x.padre + " ≠ " + y.padre);
+    if (x.inv && (!y.inv || x.inv.some((v, k) => Math.abs(v - y.inv[k]) > 1e-3))) mal.push(n + ": unión distinta");
+  }
+  return [!mal.length, mal.length ? mal.slice(0, 4).join(" · ") : ea.size + " huesos iguales"];
+}
+/** Firma de cada malla (sin animaciones): ranura, vértices, índices, suma de posiciones y uv, gestos de cara (morph),
+ *  máscara de boca y su material (nombre, color, rugosidad, metal, mapa con tamaño). */
+function firmasDe(scene) {
+  const l = [];
+  scene.traverse(o => {
+    if (!o.isMesh) return;
+    const g = o.geometry, suma = at => { if (!at) return 0; let s = 0; for (let i = 0; i < at.array.length; i++) s += at.array[i]; return s; };
+    const mats = (Array.isArray(o.material) ? o.material : [o.material]).map(m => [m.name, m.color ? m.color.getHexString() : "", +(m.roughness ?? -1).toFixed(3), +(m.metalness ?? -1).toFixed(3),
+      +(m.clearcoat ?? -1).toFixed(3), m.map && m.map.image ? m.map.image.width + "x" + m.map.image.height : "", !!m.vertexColors].join("|"));
+    l.push({ clave: (o.userData.slot || "") + "/" + o.name, n: g.attributes.position.count, idx: g.index ? g.index.count : 0, pos: suma(g.attributes.position), uv: suma(g.attributes.uv),
+      morph: Object.keys(g.morphAttributes || {}).map(k => k + ":" + g.morphAttributes[k].length).join(","), ocl: !!o.userData.alvOclusor, mats: mats.join(";") });
+  });
+  return l.sort((x, y) => (x.clave < y.clave ? -1 : x.clave > y.clave ? 1 : x.n - y.n));
+}
+function mismaApariencia(a, b) {
+  const fa = firmasDe(a), fb = firmasDe(b), mal = [];
+  if (fa.length !== fb.length) mal.push("mallas " + fa.length + " ≠ " + fb.length);
+  fa.forEach((x, i) => {
+    const y = fb[i];
+    if (!y) return;
+    if (x.clave !== y.clave || x.n !== y.n || x.idx !== y.idx || x.morph !== y.morph || x.ocl !== y.ocl) mal.push(x.clave + ": forma/cara distinta");
+    else if (!casi(x.pos, y.pos, 1e-4) || !casi(x.uv, y.uv, 1e-4)) mal.push(x.clave + ": geometría distinta");
+    else if (x.mats !== y.mats) mal.push(x.clave + ": acabado distinto");
+  });
+  return [!mal.length, mal.length ? mal.slice(0, 4).join(" · ") : fa.length + " mallas iguales (materiales, mapas y gestos de cara incluidos)"];
+}
+/** Cada clip del catálogo debe estar igual en el de juego: duración, pistas (destino y tipo), tiempos y valores (±1e-4). */
+function mismosClips(ca, cb) {
+  const mb = new Map(cb.map(c => [c.name, c])), mal = [];
+  for (const c of ca) {
+    const d = mb.get(c.name);
+    if (!d) { mal.push("falta " + c.name); continue; }
+    if (!casi(c.duration, d.duration, 1e-4) || c.tracks.length !== d.tracks.length) { mal.push(c.name + ": duración o pistas"); continue; }
+    const pd = new Map(d.tracks.map(t => [t.name, t]));
+    for (const t of c.tracks) {
+      const u = pd.get(t.name);
+      if (!u || u.ValueTypeName !== t.ValueTypeName || t.times.length !== u.times.length || t.values.length !== u.values.length) { mal.push(c.name + ": pista " + t.name); break; }
+      let st = 0, su = 0, vt = 0, vu = 0;
+      for (let i = 0; i < t.times.length; i++) { st += t.times[i]; su += u.times[i]; }
+      for (let i = 0; i < t.values.length; i++) { vt += Math.abs(t.values[i]); vu += Math.abs(u.values[i]); }
+      if (!casi(st, su, 1e-4) || !casi(vt, vu, 1e-4)) { mal.push(c.name + ": valores de " + t.name); break; }
+    }
+  }
+  return [!mal.length, mal.length ? mal.slice(0, 4).join(" · ") : ca.length + " clips iguales por dentro"];
+}
+
 async function verificar(W, ent) {
   const ch = [], bien = (nombre, ok, detalle = "") => ch.push({ nombre, ok: !!ok, detalle });
   const r = leerFicha(ent.ficha, { rutasLibres: !!ent.prueba });
@@ -117,8 +183,11 @@ async function verificar(W, ent) {
   bien("control: un clip inerte NO pasa como movimiento", !movioInerte && pi.estado().clip !== undefined, detInerte);
   pi.quitar();
   g.animations.splice(g.animations.findIndex(a => a.name === "__INERTE__"), 1);
-  // Bloque opcional «juego» (CONTRATO-ENTREGA.md §3.1): el archivo existe, pesa ≤ 5 000 000 bytes, trae el mismo
-  // esqueleto y los clips del catálogo, y cada acción apunta a un clip que existe y mueve el esqueleto.
+  // Bloque opcional «juego» (CONTRATO-ENTREGA.md §3.1; revisado por Codex, encargo 2026-11-26-contrato-juego-r1):
+  // el archivo existe y pesa ≤ 5 000 000 bytes; conserva el esqueleto (nombres, padres y matrices de unión), la
+  // geometría, el acabado y la cara (firma de mallas y materiales, aparte de las animaciones) y los clips del catálogo
+  // por dentro (pistas, tiempos y valores); cada acción existe y mueve el esqueleto. Un control con una acción que apunta
+  // a un clip inexistente debe reprobar.
   if (f.juego) {
     const jUrl = new URL(f.juego.glb, base).href, jr = await fetch(jUrl, { cache: "no-store" });
     bien("juego: " + f.juego.glb + " existe", jr.ok, jr.ok ? "" : "HTTP " + jr.status);
@@ -126,20 +195,45 @@ async function verificar(W, ent) {
       const jb = await jr.arrayBuffer();
       huellas.juego = await hex(jb); huellas.juegoBytes = jb.byteLength;
       bien("juego: peso ≤ 5 000 000 bytes", jb.byteLength <= 5000000, (jb.byteLength / 1e6).toFixed(2) + " MB" + (jb.byteLength > 3.5e6 ? " (pasa del objetivo de 3.5 MB)" : ""));
-      const acciones = Object.entries(f.juego.clips);
-      const pj = await W.MotorPersonajes.crear({ ...plano, id: "juego", glb: jUrl, vida: [...(plano.vida || []), ...acciones.map(([, c]) => c)] });
-      const cj = new Set(pj.nombresClips()), hj = huesos(pj);
-      bien("juego: mismo esqueleto (" + hj.length + " huesos)", hj.length === hs.length);
-      const faltan = [...clips].filter(c => !cj.has(c));
-      bien("juego: incluye los clips del catálogo", !faltan.length, faltan.length ? "faltan " + faltan.join(", ") : clips.size + " clips");
-      for (const [accion, c] of acciones) {
-        const existe = cj.has(c);
-        bien("juego." + accion + " = " + c + " existe", existe);
-        if (!existe) continue;
-        pj.tocar("reposo", { mezcla: 0 }); pj.update(0.05); pj.tocar(c, { mezcla: 0 }); pj.update(0.05);
-        bien("juego." + accion + " mueve huesos", ...moverMientras(pj, hj, c, Math.min(4, pj.duracion(c))));
-      }
-      pj.quitar();
+      const gc = await W.MotorPersonajes.bajar(glbUrl, f.carga), gj = await W.MotorPersonajes.bajar(jUrl, f.carga);
+      const [okEsq, detEsq] = mismoEsqueleto(gc.scene, gj.scene);
+      bien("juego: mismo esqueleto (nombres, padres y unión ±1e-3)", okEsq, detEsq);
+      const [okMallas, detMallas] = mismaApariencia(gc.scene, gj.scene);
+      bien("juego: misma geometría, acabado y cara", okMallas, detMallas);
+      const [okClips, detClips] = mismosClips(gc.animations, gj.animations);
+      bien("juego: clips del catálogo iguales por dentro", okClips, detClips);
+      // Controles: cada comparación debe reprobar un cambio hecho a propósito (copias; el GLB en caché no se toca).
+      const T3 = W.THREE, copia = T3.SkeletonUtils.clone(gj.scene);
+      copia.traverse(o => { if (o.isSkinnedMesh && !o.userData.ctl) { o.skeleton.boneInverses = o.skeleton.boneInverses.map(x => x.clone()); } });
+      let tocado = false;
+      copia.traverse(o => { if (!tocado && o.isSkinnedMesh) { o.skeleton.boneInverses[0].elements[13] += 0.5; tocado = true; } });
+      bien("control: un esqueleto con otra unión reprueba", !mismoEsqueleto(gc.scene, copia)[0]);
+      const copia2 = T3.SkeletonUtils.clone(gj.scene);
+      let pintado = false;
+      copia2.traverse(o => { if (!pintado && o.isMesh && !o.userData.alvOclusor && o.material && o.material.color) { o.material = o.material.clone(); o.material.color.setHex(o.material.color.getHex() ^ 0x00ff00); pintado = true; } });
+      bien("control: un acabado distinto reprueba", !mismaApariencia(gc.scene, copia2)[0]);
+      const clipsMod = gj.animations.map(c => c.clone());
+      const conValores = clipsMod.find(c => gc.animations.some(x => x.name === c.name) && c.tracks.some(t => t.values.length));
+      if (conValores) { const t = conValores.tracks.find(t => t.values.length); t.values = t.values.slice(); t.values[0] += 1; }
+      bien("control: un clip del catálogo cambiado por dentro reprueba", !!conValores && !mismosClips(gc.animations, clipsMod)[0]);
+      const revisarAcciones = async (accionesClips, marca) => {
+        const res = [];
+        const acciones = Object.entries(accionesClips);
+        const pj = await W.MotorPersonajes.crear({ ...plano, id: "juego" + marca, glb: jUrl, vida: [...(plano.vida || []), ...acciones.map(([, c]) => c)] });
+        const cj = new Set(pj.nombresClips()), hj = huesos(pj);
+        for (const [accion, c] of acciones) {
+          const existe = cj.has(c);
+          res.push(["juego." + accion + " = " + c + " existe", existe, ""]);
+          if (!existe) continue;
+          pj.tocar("reposo", { mezcla: 0 }); pj.update(0.05); pj.tocar(c, { mezcla: 0 }); pj.update(0.05);
+          res.push(["juego." + accion + " mueve huesos", ...moverMientras(pj, hj, c, Math.min(4, pj.duracion(c)))]);
+        }
+        pj.quitar();
+        return res;
+      };
+      for (const [n, ok, d] of await revisarAcciones(f.juego.clips, "")) bien(n, ok, d);
+      const falso = await revisarAcciones({ caminar: "__NO_EXISTE__" }, "-control");
+      bien("control: una acción con clip inexistente reprueba", falso.some(([, ok]) => !ok), falso.map(([n, ok]) => n + (ok ? " ✓" : " ✗")).join(" · "));
     }
   }
   p.quitar();
