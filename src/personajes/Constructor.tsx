@@ -106,7 +106,9 @@ export function Constructor({ catalogo, piezas, inicial, escenaUrl, onGuardar, o
   const [pestana, setPestana] = useState<Pestana>("cabeza");
   const [sub, setSub] = useState<Sub>("cara");
   /** Switch Originales / Genéricas, recordado por sub-parte. */
-  const [fuentes, setFuentes] = useState<Partial<Record<Sub, Fuente>>>({});
+  /** Switch Originales / Común: uno para todo el taller (Elías, 2026-11-26). Cambia las piezas que se ofrecen y el fondo:
+   *  cómic con las originales, clóset con las comunes. */
+  const [modo, setModo] = useState<Fuente>("original");
   const [grupo, setGrupo] = useState<Id>("todas");
   const [pagina, setPagina] = useState(0);
   const [caja, setCaja] = useState({ columnas: 4, filas: 2 });
@@ -156,7 +158,8 @@ export function Constructor({ catalogo, piezas, inicial, escenaUrl, onGuardar, o
   const origenDe = (it: Item) => (it.tipo === "pieza" ? it.pz.origen ?? "original" : it.op?.origen ?? "ninguna");
   const grupoDe = (it: Item) => (it.tipo === "pieza" ? it.pz.grupo ?? "" : it.op?.grupo ?? "");
   const hay = (f: Fuente) => todas.some(it => origenDe(it) === f);
-  const fuente: Fuente = fuentes[sub] ?? (hay("original") || !hay("generica") ? "original" : "generica");
+  const fuente: Fuente = modo;
+  void hay;
   /** Chips de grupo: sagas (originales) o tipos (genéricas), solo los que tienen algo. */
   const grupos = useMemo(() => {
     const de = todas.filter(it => origenDe(it) === fuente);
@@ -214,7 +217,7 @@ export function Constructor({ catalogo, piezas, inicial, escenaUrl, onGuardar, o
     setPestana(t); setSub(SUBPARTES[t][0]!); setGrupo("todas"); setPagina(0); setPasa(null);
   };
   const elegirSub = (x: Sub) => { setSub(x); setGrupo("todas"); setPagina(0); setPasa(null); };
-  const elegirFuente = (f: Fuente) => { setFuentes(m => ({ ...m, [sub]: f })); setGrupo("todas"); setPagina(0); setPasa(null); };
+  const elegirModo = (f: Fuente) => { if (f === modo) return; setModo(f); setGrupo("todas"); setPagina(0); setPasa(null); };
   const elegirGrupo = (x: Id) => { setGrupo(x); setPagina(0); setPasa(null); };
   const deshacer = () => { if (!historia.length) return; setFuturo(f => [figura, ...f].slice(0, 30)); setFigura(historia[historia.length - 1]!); setHistoria(h => h.slice(0, -1)); setGuardado(false); };
   const rehacer = () => { if (!futuro.length) return; setHistoria(h => [...h.slice(-29), figura]); setFigura(futuro[0]!); setFuturo(f => f.slice(1)); setGuardado(false); };
@@ -247,6 +250,22 @@ export function Constructor({ catalogo, piezas, inicial, escenaUrl, onGuardar, o
     setRueda({ x: Math.max(borde, Math.min(re.width - borde, x)), y: Math.max(borde, Math.min(re.height - borde, y)) });
     if (pista) { setPista(false); try { localStorage.setItem("alv-pista-rueda", "vista"); } catch { /* sin almacenamiento */ } }
   };
+  /** Tocar la figura abre la parte tocada (Elías: «seleccionar partes directamente tocando el personaje»). La vista
+   *  encuadra la figura de cuerpo entero: arriba la cabeza, al centro el torso (los lados, los brazos), abajo las piernas. */
+  const [marca, setMarca] = useState<{ t: Pestana; n: number } | null>(null);
+  const tocarParte = (nx: number, ny: number) => {
+    if (rueda) { cerrarRueda("fuera"); return; }
+    const t: Pestana = ny < 0.4 ? "cabeza" : ny < 0.66 ? (Math.abs(nx - 0.5) > 0.13 ? "brazos" : "torso") : "piernas";
+    setMarca(m => ({ t, n: (m?.n ?? 0) + 1 }));
+    elegirLosa(t);
+    if (pista) { setPista(false); try { localStorage.setItem("alv-pista-rueda", "vista"); } catch { /* sin almacenamiento */ } }
+  };
+  useEffect(() => { if (!marca) return; const t = setTimeout(() => setMarca(null), 700); return () => clearTimeout(t); }, [marca]);
+  /** Acercar a la cara o ver el cuerpo entero (la escena ya sabe enfocar). */
+  const [orden, setOrden] = useState<{ n: number; msg: Record<string, unknown> } | null>(null);
+  const [cerca, setCerca] = useState(false);
+  const enfocar = (cabeza: boolean) => { setCerca(cabeza); setOrden(o => ({ n: (o?.n ?? 0) + 1, msg: { tipo: "enfocar", zona: cabeza ? "cabeza" : "cuerpo" } })); };
+  const girar = (cuanto: number) => setGiro(g => ({ n: (g?.n ?? 0) + 1, cuanto }));
   // Celular: mientras la rueda está abierta la cámara corre la figura a la izquierda. Al elegir: late 100 ms, la figura
   // regresa al centro en 180 ms mientras la rueda se cierra, y el gesto empieza cuando ya regresó (Codex r2).
   const [correr, setCorrer] = useState<{ x: number; ms: number } | undefined>(undefined);
@@ -280,64 +299,90 @@ export function Constructor({ catalogo, piezas, inicial, escenaUrl, onGuardar, o
   };
   function irA(n: number) { const m = Math.max(0, Math.min(pags.length - 1, n)); if (m === p) return; setPasa(m > p ? "sig" : "ant"); setPagina(m); }
 
+  const pocas = lista.filter(it => (it.tipo === "pieza" ? !!it.pz.glb : !!it.op)).length;
+  const indiceSel = lista.filter(it => (it.tipo === "pieza" ? !!it.pz.glb : !!it.op)).findIndex(visible);
+  const comun = modo === "generica";
+
   return (
-    <div className="pz">
+    <div className={"pz pz-taller" + (comun ? " comun" : " original")}>
       <div className="pz-fondo" aria-hidden="true" />
-      <div className="pz-vin pz-vin-accion" aria-hidden="true" style={{ "--arte-h": `url(${ARTE}personalizar/comic-accion-horizontal.webp)`, "--arte-v": `url(${ARTE}personalizar/comic-accion-vertical.webp)` } as CSSProperties} />
       <header className="pz-top">
-        {onSalir && <button type="button" className="pf-atras" onClick={salir}><span aria-hidden="true">◀</span>Atrás</button>}
-        <div className="pz-placa">Crear mi personaje</div>
+        {onSalir && <button type="button" className="pz-volver" onClick={salir}><span aria-hidden="true">←</span> Volver</button>}
+        <h1 className="pz-titulo">Crear mi personaje</h1>
+        {/* Switch Originales / Común: distinto a todo lo demás, con perilla que se desliza (Elías, 2026-11-26). */}
+        <button type="button" role="switch" aria-checked={comun} className="pz-modo" onClick={() => elegirModo(comun ? "original" : "generica")}
+          aria-label={comun ? "Piezas comunes. Toca para usar las originales" : "Piezas originales. Toca para usar las comunes"}>
+          <span className="pz-modo-txt izq">Originales</span>
+          <span className="pz-modo-txt der">Común</span>
+          <span className="pz-modo-perilla" aria-hidden="true">{comun ? "Común" : "Originales"}</span>
+        </button>
       </header>
 
-      <div className="pz-escena" ref={escena}>
-        <p className="pz-cartela" aria-hidden="true">Mientras tanto, en el vestidor…</p>
-        <div className="pz-toca" ref={toca} tabIndex={0} role="button" aria-label="Tu personaje: Enter para elegir una animación; flechas izquierda y derecha para girarlo" onKeyDown={teclaFigura}>
-        <Vista3D url={escenaUrl + (escenaUrl.includes("?") ? "&" : "?") + ["cerca=1", frente ? "frente=" + frente : ""].filter(Boolean).join("&")} plano={plano} alLlegar={llego ? null : "entrada"} className="pz-vista" momento={momento} onArmado={alArmar} onToque={tocar} correr={correr} giro={giro}
-          onPresion={() => { if (rueda) cerrarRueda("fuera"); }} />
-        </div>
-        {pista && !rueda && <p className="pz-pista" aria-hidden="true">Toca a tu personaje</p>}
-        {rueda && <RuedaGestos gestos={RUEDA} x={rueda.x} y={rueda.y} centro={`${ARTE}ui/personalizar/ico-cabeza.webp`} onElegir={elegirGesto} onCerrar={cerrarRueda} />}
-        {aviso && <div className="pz-aviso" role="status">{aviso}</div>}
-      </div>
-
-      <nav className="pz-losas" aria-label="Secciones del personaje">
+      <nav className="pz-nav" aria-label="Secciones del personaje">
         {LOSAS.map(l => (
-          <button key={l.id} type="button" className={"az-losa pz-losa" + (pestana === l.id ? " on" : "")} aria-pressed={pestana === l.id}
+          <button key={l.id} type="button" className={"pz-sec" + (pestana === l.id ? " on" : "") + (marca?.t === l.id ? " marca" : "")} aria-pressed={pestana === l.id}
             style={{ "--c1": l.c1, "--c2": l.c2, "--lab": l.lab } as CSSProperties} onClick={() => elegirLosa(l.id)}>
             <IconoLosa id={l.ico} />
-            <span className="az-losa-txt"><b>{l.titulo}</b></span>
+            <span className="pz-sec-txt">{l.titulo}</span>
             {hecha(l.id) && <i className="pz-palomita" aria-label="con cambios">✓</i>}
           </button>
         ))}
       </nav>
 
-      <section className="pz-panel" style={{ "--pj": losa.c2 } as CSSProperties} aria-label={losa.titulo}>
-        <p className="pz-cartela pz-cartela-sec" key={"c" + pestana}>{losa.cartela}</p>
+      <div className="pz-escena" ref={escena}>
+        <div className="pz-escena-fondo comic" aria-hidden="true" style={{ "--arte-h": `url(${ARTE}personalizar/comic-accion-horizontal.webp)`, "--arte-v": `url(${ARTE}personalizar/comic-accion-vertical.webp)` } as CSSProperties} />
+        <div className="pz-escena-fondo closet" aria-hidden="true" style={{ backgroundImage: `url(${ARTE}personalizar/closet.webp)` }} />
+        <p className="pz-etiqueta" aria-hidden="true">{comun ? "En el clóset…" : "Mientras tanto, en el vestidor…"}</p>
+        <div className="pz-toca" ref={toca} tabIndex={0} role="button" aria-label="Tu personaje: toca una parte para editarla; Enter para los gestos; flechas para girarlo" onKeyDown={teclaFigura}>
+          <Vista3D url={escenaUrl + (escenaUrl.includes("?") ? "&" : "?") + ["cerca=1", frente ? "frente=" + frente : ""].filter(Boolean).join("&")} plano={plano} alLlegar={llego ? null : "entrada"} className="pz-vista" momento={momento} onArmado={alArmar} onToque={tocarParte} correr={correr} giro={giro} orden={orden}
+            onPresion={() => { if (rueda) cerrarRueda("fuera"); }} />
+        </div>
+        {pista && !rueda && <p className="pz-pista" aria-hidden="true">Toca una parte para editarla</p>}
+        <div className="pz-controles">
+          <div className="pz-grupo-ctl">
+            <button type="button" onClick={() => girar(-0.5)} aria-label="Girar a la izquierda" title="Girar">⟲</button>
+            <button type="button" onClick={() => girar(0.5)} aria-label="Girar a la derecha" title="Girar">⟳</button>
+          </div>
+          <div className="pz-grupo-ctl">
+            <button type="button" onClick={() => enfocar(false)} disabled={!cerca} aria-label="Ver cuerpo entero" title="Alejar">−</button>
+            <button type="button" onClick={() => enfocar(true)} disabled={cerca} aria-label="Acercar a la cara" title="Acercar">+</button>
+          </div>
+          <button type="button" className="pz-gestos" onClick={() => tocar(0.62, 0.6)} aria-label="Probar gestos">★ Gestos</button>
+        </div>
+        {rueda && <RuedaGestos gestos={RUEDA} x={rueda.x} y={rueda.y} centro={`${ARTE}ui/personalizar/ico-cabeza.webp`} onElegir={elegirGesto} onCerrar={cerrarRueda} />}
+        {aviso && <div className="pz-aviso" role="status">{aviso}</div>}
+      </div>
+
+      <section className="pz-panel" style={{ "--pj": losa.c2, "--pj1": losa.c1 } as CSSProperties} aria-label={losa.titulo}>
+        <header className="pz-cab">
+          <IconoLosa id={losa.ico} />
+          <div>
+            <h2>{losa.titulo}</h2>
+            <p>{NOMBRE_SUB[sub]} · {pocas ? (indiceSel >= 0 ? `${indiceSel + 1} de ${pocas}` : `${pocas} ${gesto ? "movimientos" : "piezas"}`) : "nada por ahora"}{comun ? " comunes" : " originales"}</p>
+          </div>
+        </header>
         {SUBPARTES[pestana].length > 1 && (
-          <div className="pz-pills">
-            {SUBPARTES[pestana].map(x => <button key={x} type="button" className={"pz-pill" + (sub === x ? " on" : "")} aria-pressed={sub === x} onClick={() => elegirSub(x)}>{NOMBRE_SUB[x]}</button>)}
+          <div className="pz-subs" role="tablist">
+            {SUBPARTES[pestana].map(x => <button key={x} type="button" role="tab" className={"pz-sub" + (sub === x ? " on" : "")} aria-selected={sub === x} onClick={() => elegirSub(x)}>{NOMBRE_SUB[x]}</button>)}
           </div>
         )}
-        <div className="pz-filtros">
-          <div className="pz-switch" role="radiogroup" aria-label="Tipo de piezas">
-            {(["original", "generica"] as const).map(f => (
-              <button key={f} type="button" role="radio" aria-checked={fuente === f} className={fuente === f ? "on" : ""} onClick={() => elegirFuente(f)}>{f === "original" ? "Originales" : "Genéricas"}</button>
-            ))}
-          </div>
-          {paleta && (
-            <div className="pz-colores" role="group" aria-label={NOMBRE_PALETA[paleta]}>
-              {PALETAS[paleta].map(c => (
-                <button key={c.id} type="button" className={"pz-color" + (tinte === c.id ? " on" : "")} style={{ "--c": c.hex } as CSSProperties} aria-label={c.nombre} aria-pressed={tinte === c.id}
-                  title={c.nombre} onClick={() => parte && cambiar(teñir(figura, parte, paleta, c.id))} />
-              ))}
-            </div>
-          )}
-        </div>
-        {grupos.length > 1 && (
-          <div className="pz-chips" role="group" aria-label={fuente === "original" ? "Sagas" : "Tipos"}>
-            {[{ id: "todas", nombre: "Todos" }, ...grupos].map(x => (
-              <button key={x.id} type="button" className={"pz-chip" + (g === x.id ? " on" : "")} aria-pressed={g === x.id} onClick={() => elegirGrupo(x.id)}>{x.nombre}</button>
-            ))}
+        {(grupos.length > 1 || paleta) && (
+          <div className="pz-filtros">
+            {grupos.length > 1 && (
+              <div className="pz-chips" role="group" aria-label={fuente === "original" ? "Sagas" : "Tipos"}>
+                {[{ id: "todas", nombre: "Todos" }, ...grupos].map(x => (
+                  <button key={x.id} type="button" className={"pz-chip" + (g === x.id ? " on" : "")} aria-pressed={g === x.id} onClick={() => elegirGrupo(x.id)}>{x.nombre}</button>
+                ))}
+              </div>
+            )}
+            {paleta && (
+              <div className="pz-colores" role="group" aria-label={NOMBRE_PALETA[paleta]}>
+                {PALETAS[paleta].map(c => (
+                  <button key={c.id} type="button" className={"pz-color" + (tinte === c.id ? " on" : "")} style={{ "--c": c.hex } as CSSProperties} aria-label={c.nombre} aria-pressed={tinte === c.id}
+                    title={c.nombre} onClick={() => parte && cambiar(teñir(figura, parte, paleta, c.id))} />
+                ))}
+              </div>
+            )}
           </div>
         )}
         <div className={"pz-rejilla" + (pasa ? " pasa-" + pasa : "")} ref={rejilla} onPointerDown={bajar} onPointerUp={subir}
@@ -345,8 +390,9 @@ export function Constructor({ catalogo, piezas, inicial, escenaUrl, onGuardar, o
           {(pags[p] ?? []).map(it => {
             const clave = it.tipo === "pieza" ? it.pz.id : it.op?.id ?? "de-siempre";
             const nombre = it.tipo === "pieza" ? (it.pz.glb ? it.pz.nombre : "Ninguno") : it.op ? it.op.nombre : "De siempre";
+            const on = visible(it);
             return (
-              <button key={clave} type="button" className={"pz-pieza" + (visible(it) ? " on" : "")} aria-pressed={visible(it)} onClick={() => tocarItem(it)}
+              <button key={clave} type="button" className={"pz-pieza" + (on ? " on" : "")} aria-pressed={on} onClick={() => tocarItem(it)}
                 title={it.tipo === "mov" && it.op ? `${it.op.nombre} · ${it.op.sub}` : nombre}>
                 {(() => {
                   if (it.tipo === "mov") {
@@ -363,18 +409,21 @@ export function Constructor({ catalogo, piezas, inicial, escenaUrl, onGuardar, o
                 })()}
                 <span>{nombre}</span>
                 {it.tipo === "mov" && it.op && <small className="pz-mov-sub">{it.op.sub}</small>}
+                {on && <i className="pz-check" aria-hidden="true">✓</i>}
               </button>
             );
           })}
-          {lista.length <= (ninguno ? 1 : 0) && (
-            <p className="pz-vacio">{fuente === "generica" ? "Pronto: aún no hay piezas genéricas de este tipo." : "Todavía no hay piezas de este tipo."}</p>
+          {!pocas && (
+            <p className="pz-vacio">{comun ? "Pronto: aún no hay piezas comunes de este tipo. Prueba con las originales." : "Todavía no hay piezas de este tipo."}</p>
           )}
         </div>
-        <div className="pz-paginas">
-          <button type="button" className="pz-flecha" onClick={() => irA(p - 1)} disabled={p === 0} aria-label="Página anterior"><span className="pz-flecha-t">‹</span></button>
-          <span className="pz-puntos" aria-label={`Página ${p + 1} de ${pags.length}`}>{pags.map((_, i) => <i key={i} className={i === p ? "on" : ""} />)}</span>
-          <button type="button" className="pz-flecha" onClick={() => irA(p + 1)} disabled={p >= pags.length - 1} aria-label="Página siguiente"><span className="pz-flecha-t">›</span></button>
-        </div>
+        {pags.length > 1 && (
+          <div className="pz-paginas">
+            <button type="button" className="pz-flecha" onClick={() => irA(p - 1)} disabled={p === 0} aria-label="Página anterior"><span className="pz-flecha-t">‹</span></button>
+            <span className="pz-puntos" aria-label={`Página ${p + 1} de ${pags.length}`}>{pags.map((_, i) => <i key={i} className={i === p ? "on" : ""} />)}</span>
+            <button type="button" className="pz-flecha" onClick={() => irA(p + 1)} disabled={p >= pags.length - 1} aria-label="Página siguiente"><span className="pz-flecha-t">›</span></button>
+          </div>
+        )}
         {hoja && (
           <div key={hoja.n} className={"pz-hoja-sec " + hoja.dir} aria-hidden="true">
             <div className="pz-hoja-frente" /><div className="pz-hoja-reverso" />
@@ -382,17 +431,15 @@ export function Constructor({ catalogo, piezas, inicial, escenaUrl, onGuardar, o
         )}
       </section>
 
-      <div className="pz-acciones">
-        <div className="pz-hist">
-          <button type="button" className="pz-redondo" onClick={deshacer} disabled={!historia.length} aria-label="Deshacer" title="Deshacer">↶</button>
-          <button type="button" className="pz-redondo" onClick={rehacer} disabled={!futuro.length} aria-label="Rehacer" title="Rehacer">↷</button>
-          <button type="button" className="pz-restablecer" onClick={restablecer} disabled={figura === inicial}>Restablecer</button>
-        </div>
-        <button type="button" className={"az-losa az-jugar pz-guardar" + (guarda ? " guarda" : "")} disabled={!sePuedeGuardar} onAnimationEnd={() => setGuarda(false)}
+      <footer className="pz-pie">
+        <button type="button" className="pz-redondo" onClick={deshacer} disabled={!historia.length} aria-label="Deshacer" title="Deshacer">↶</button>
+        <button type="button" className="pz-redondo" onClick={rehacer} disabled={!futuro.length} aria-label="Rehacer" title="Rehacer">↷</button>
+        <button type="button" className="pz-restablecer" onClick={restablecer} disabled={figura === inicial}>Restablecer</button>
+        <button type="button" className={"pz-guardar" + (guarda ? " guarda" : "")} disabled={!sePuedeGuardar} onAnimationEnd={() => setGuarda(false)}
           onClick={() => { if (sePuedeGuardar) { onGuardar(figura); setGuardado(true); setGuarda(true); } }}>
-          <span className="az-losa-txt"><b>{guardado ? "¡Guardado!" : "¡Guardar!"}</b></span>
+          <span aria-hidden="true">✓</span> {guardado ? "¡Guardado!" : <>Guardar<span className="pz-largo"> personaje</span></>}
         </button>
-      </div>
+      </footer>
       {mini.marco}
       {volteo && paginaAnterior && (
         <div className={"pz-volteo " + volteo} aria-hidden="true" onAnimationEnd={finVolteo}>
