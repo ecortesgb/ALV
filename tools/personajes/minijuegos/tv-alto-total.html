@@ -8,18 +8,22 @@
 <link rel="stylesheet" href="tv.css">
 <style>
 /* La franja termina exactamente en franja(); ninguna señal invade la zona 3D. */
-.franja{position:fixed;inset:0 0 auto;height:calc(13vh + min(260px,36vh));display:flex;flex-direction:column;align-items:center;gap:8px;padding:12px 18px;background:linear-gradient(#0a1030,rgba(10,16,48,.85));overflow:hidden}
+.franja{position:fixed;inset:0 0 auto;height:min(200px,28vh);display:flex;flex-direction:column;align-items:center;gap:4px;padding:6px 18px;background:linear-gradient(#0a1030,rgba(10,16,48,.85));overflow:hidden}
 .franja .titulo,.franja .sub,.franja .centro,.franja .marcador{position:static;transform:none;margin:0;text-align:center;max-width:100%;white-space:normal}
-.franja .titulo{font-size:clamp(24px,3vw,42px)}
-.franja .sub{display:block;font-size:clamp(12px,1.5vw,18px)}
+.franja .titulo{font-size:clamp(24px,2.3vw,34px)}
+.franja .sub{display:block;font-size:clamp(12px,1.2vw,16px)}
 .senal{display:flex;align-items:center;justify-content:center;gap:18px;min-height:0;flex:1;width:100%}
 .luz{flex:none;width:clamp(40px,7vh,84px);aspect-ratio:1;border:5px solid #05091d;border-radius:50%;background:#57617a}
 .luz.verde{background:#8cf09a;box-shadow:0 0 30px #8cf09a88}.luz.rojo{background:#ff4854;box-shadow:0 0 30px #ff485488}
-.franja .centro,.franja .centro.chico{font-size:clamp(24px,5.5vw,74px);line-height:1.1;-webkit-text-stroke:1px var(--borde);text-shadow:0 3px 0 var(--borde);overflow-wrap:anywhere}
+.franja .centro,.franja .centro.chico{font-size:clamp(24px,4vw,60px);line-height:1.1;-webkit-text-stroke:1px var(--borde);text-shadow:0 3px 0 var(--borde);overflow-wrap:anywhere}
 .franja .marcador{padding:4px 12px;font-size:18px}
 .franja .podio{position:static;transform:none;padding:4px;gap:4px;box-shadow:none;flex-wrap:wrap;justify-content:center;max-width:100%}
 .franja .podio div{font-size:clamp(12px,1.4vw,18px);padding:3px 6px}
-.distancia{font:800 13px Nunito,sans-serif;text-shadow:0 2px 2px #000}.etiqueta.ko .placa{background:#e8343a!important;color:#fff!important}
+.etiqueta{display:none}
+.etiqueta.placa-carril{transform:translateY(-50%);height:38px;display:flex;align-items:stretch;gap:0;border:2px solid var(--borde);border-radius:8px;background:var(--noche);overflow:hidden}
+.placa-carril .placa{font-size:clamp(11px,.85vw,14px);line-height:16px;padding:1px 4px;border:0;border-radius:0;box-shadow:none;overflow:hidden;text-overflow:ellipsis}
+.placa-carril .distancia{font:800 clamp(10px,.9vw,14px)/16px Nunito,sans-serif;padding:0 4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.etiqueta.ko .placa{background:#e8343a!important;color:#fff!important}
 .boton-tv{bottom:10px;font-size:22px;padding:8px 24px}.podio:not(.oculto)~.boton-tv{bottom:10px}
 .sala{top:auto;bottom:14px;right:14px;font-size:12px;max-width:230px}.sala .qr{display:none}
 </style>

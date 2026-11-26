@@ -5,13 +5,14 @@ import { avanzar, crearPartida, empezar, posicion, ranking, recibir } from "/src
 import { crearTV } from "./tv-comun.js";
 
 const q = new URLSearchParams(location.search), $ = id => document.getElementById(id);
-const escena = EscenaMJ.crear($("lienzo"), { fov: 32 });
+const escena = EscenaMJ.crear($("lienzo"), { fov: 3 });
 const INICIO = -13, META = 13;
 let partida = null, pid = "", cuenta = 0, participantes = [], vigilante = null, cargaVigilante = 0;
-let fondoPista = 10, anchoCarril = 3, pista = null;
+let fondoPista = 10, pista = null;
+const anchoCarril = 2.2;
 const bots = new Map();
 const tv = crearTV({
-  juego: "alto", escena, topeEtiquetas: () => franja() + ETIQUETA,
+  juego: "alto", escena,
   alUnirse: () => { if (tv.fase === "lobby") { acomodar(); ponerVigilante(); } botonEmpezar(); },
   alSalir: () => { if (tv.fase === "lobby") { acomodar(); ponerVigilante(); } botonEmpezar(); },
   alDesconectar: j => tv.pop(j, "Se desconectó", "#c9d2ff"), // nunca es una infracción
@@ -61,13 +62,16 @@ async function ponerVigilante() {
   try {
     const dato = tv.catalogo().get(id), f = await FigurasMJ.crear(dato.ficha, { base: dato.base, idFigura: "vigilante-alto" });
     if (token !== cargaVigilante) { f.quitar(); return; }
-    vigilante = f; escena.scene.add(f.obj); orientar(); camara(); botonEmpezar();
+    vigilante = f;
+    // El vigilante conserva una talla legible aunque el catálogo entregue una minifig.
+    f.obj.scale.multiplyScalar(5 / f.alto());
+    escena.scene.add(f.obj); orientar(); camara(); botonEmpezar();
   } catch (e) { console.error("No cargó el vigilante", e); $("sub").textContent = "No cargó el vigilante. Reintenta entrando al lobby."; }
 }
 function orientar() {
   if (!vigilante) return;
   // Frente local +z: verde mira a la derecha; rojo hacia los corredores a la izquierda.
-  vigilante.obj.position.set(META + 3.5, 0, 0);
+  vigilante.obj.position.set(META + 2, 0, 0);
   vigilante.obj.rotation.y = partida?.color === "rojo" ? -Math.PI / 2 : Math.PI / 2;
   animar(vigilante, "reposo");
 }
@@ -81,7 +85,7 @@ function dibujarPista() {
     pista.traverse(o => { o.geometry?.dispose(); if (o.material) o.material.dispose(); });
   }
   pista = new THREE.Group(); const n = Math.max(1, fila().length);
-  pista.add(caja(1, -0.22, 0, 38, 0.4, fondoPista + 2, "#343a66"));
+  pista.add(caja(1, -0.22, 0, 32, 0.4, fondoPista + 2, "#343a66"));
   for (let i = 0; i < n; i++) {
     const z = (i - (n - 1) / 2) * anchoCarril;
     pista.add(caja(0, 0, z, 29, 0.04, anchoCarril - 0.25, i % 2 ? "#394b79" : "#445c86"));
@@ -92,43 +96,86 @@ function dibujarPista() {
   escena.scene.add(pista);
 }
 function acomodar() {
-  const lista = fila();
-  anchoCarril = Math.max(4.8, ...lista.map(j => Math.max((j.figura?.ancho() || 1.8) + 1.2, (j.figura?.alto() || 2.7) * 1.8)));
+  // Z negativo está al fondo: los altos nunca quedan delante de una minifig.
+  const lista = fila().sort((a, b) => (b.figura?.alto() || 2.7) - (a.figura?.alto() || 2.7) || a.n - b.n);
   fondoPista = Math.max(anchoCarril, lista.length * anchoCarril);
   lista.forEach((j, i) => {
     j.z = (i - (lista.length - 1) / 2) * anchoCarril;
     if (j.figura) { j.figura.obj.position.set(INICIO, 0, j.z); j.figura.obj.rotation.y = Math.PI / 2; }
+    j.etiqueta.classList.add("placa-carril");
+    j.etiqueta.querySelector(".placa").textContent = `P${j.n + 1} ${j.nombre}`;
     if (!j.etiqueta.querySelector(".distancia")) {
-      const d = document.createElement("div"); d.className = "distancia"; j.etiqueta.prepend(d);
+      const d = document.createElement("div"); d.className = "distancia"; j.etiqueta.appendChild(d);
     }
     j.ultimoAvance = 0;
   });
   dibujarPista(); orientar(); camara();
 }
-// Copia de franja()/encuadrar() de tv-fisico.js (O4), extendida a las esquinas de los carriles.
-const ETIQUETA = 62, v3 = new THREE.Vector3();
-function franja() { return Math.round(innerHeight * 0.13 + Math.min(260, innerHeight * 0.36)); }
-function encuadrar(ancho, alto) {
-  const c = escena.camera, H = innerHeight, fondo = H - 70;
-  const tanV = Math.tan((c.fov * Math.PI) / 360), tanH = tanV * c.aspect;
-  const yPant = (y, z = 0) => { v3.set(0, y, z).project(c); return ((1 - v3.y) / 2) * H; };
-  let d = Math.max(12, (ancho / 2) / tanH + fondoPista / 2);
-  for (let i = 0; i < 100; i++, d *= 1.04) {
-    let lo = -alto * 6 - fondoPista, hi = alto * 6 + fondoPista, mira = 0;
-    for (let k = 0; k < 30; k++) {
-      mira = (lo + hi) / 2;
-      c.position.set(0, alto * 0.6 + d * 0.55, d); c.lookAt(0, mira, 0); c.updateMatrixWorld(true);
-      if (yPant(0, fondoPista / 2) > fondo) hi = mira; else lo = mira;
-    }
-    v3.set(ancho / 2, 0, fondoPista / 2).project(c);
-    if (Math.min(yPant(alto, -fondoPista / 2), yPant(alto, fondoPista / 2)) - ETIQUETA >= franja() && Math.abs(v3.x) < 0.94) break;
-  }
-  c.far = Math.max(300, d * 3 + fondoPista); c.updateProjectionMatrix();
-  escena.scene.fog.near = d + fondoPista; escena.scene.fog.far = d + fondoPista + 120;
-}
+const v3 = new THREE.Vector3();
+function franja() { return Math.round(Math.min(200, innerHeight * 0.28)); }
 function camara() {
-  const alto = Math.max(5.5, vigilante?.alto() || 0, ...fila().map(j => j.figura?.alto() || 0));
-  encuadrar(39, alto + 0.5);
+  const c = escena.camera, W = innerWidth, H = innerHeight, angulo = 35 * Math.PI / 180;
+  const puntos = [], cajaFigura = new THREE.Box3();
+  const esquina = (x, y, z) => puntos.push(new THREE.Vector3(x, y, z));
+  // Medir cada talla en ambos extremos de su recorrido, incluyendo su volumen.
+  fila().forEach(j => {
+    const o = j.figura?.obj;
+    if (!o) return;
+    o.updateMatrixWorld(true); cajaFigura.setFromObject(o);
+    for (const x of [INICIO, META]) for (const dx of [cajaFigura.min.x - o.position.x, cajaFigura.max.x - o.position.x])
+      for (const y of [Math.min(0, cajaFigura.min.y), cajaFigura.max.y + 0.25])
+        for (const z of [cajaFigura.min.z, cajaFigura.max.z]) esquina(x + dx, y, z);
+  });
+  for (const x of [INICIO - 0.5, META + 0.5]) for (const z of [-fondoPista / 2, fondoPista / 2]) esquina(x, 0, z);
+  if (vigilante) {
+    vigilante.obj.updateMatrixWorld(true); cajaFigura.setFromObject(vigilante.obj);
+    // Incluir ambos giros sin cambiar el encuadre al ponerse en rojo.
+    const rx = Math.max(Math.abs(cajaFigura.min.x - META - 2), Math.abs(cajaFigura.max.x - META - 2));
+    const rz = Math.max(Math.abs(cajaFigura.min.z), Math.abs(cajaFigura.max.z));
+    for (const x of [META + 2 - rx, META + 2 + rx]) for (const y of [0, cajaFigura.max.y + 0.25])
+      for (const z of [-rz, rz]) esquina(x, y, z);
+  }
+  const izquierda = anchoPlaca() + 16, derecha = W - 12, arriba = franja() + 12, abajo = H - 32;
+  function medir(d) {
+    c.clearViewOffset();
+    c.position.set(0, Math.sin(angulo) * d, Math.cos(angulo) * d);
+    c.lookAt(0, 0, 0); c.updateMatrixWorld(true);
+    let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
+    puntos.forEach(p => {
+      v3.copy(p).project(c);
+      const x = (v3.x + 1) * W / 2, y = (1 - v3.y) * H / 2;
+      x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y);
+    });
+    return { x0, x1, y0, y1 };
+  }
+  // FOV estrecho: vista lateral casi paralela, sin encoger los carriles del fondo.
+  // Búsqueda binaria de la menor distancia que cabe en el espacio de juego.
+  let cerca = 20, lejos = 2000;
+  for (let i = 0; i < 36; i++) {
+    const d = (cerca + lejos) / 2, b = medir(d);
+    if (b.x1 - b.x0 <= derecha - izquierda && b.y1 - b.y0 <= abajo - arriba) lejos = d; else cerca = d;
+  }
+  const b = medir(lejos);
+  c.setViewOffset(W, H, (b.x0 + b.x1 - izquierda - derecha) / 2, (b.y0 + b.y1 - arriba - abajo) / 2, W, H);
+  c.far = Math.max(300, lejos + fondoPista + 120); c.updateProjectionMatrix();
+  escena.scene.fog.near = lejos + fondoPista; escena.scene.fog.far = lejos + fondoPista + 120;
+  placas();
+}
+function anchoPlaca() { return Math.max(88, Math.min(126, innerWidth * 0.08)); }
+function placas() {
+  fila().forEach(j => {
+    if (!j.figura) { j.etiqueta.style.display = "none"; return; }
+    // El pie del carril es fijo: las placas no siguen la cabeza ni el avance.
+    v3.set(INICIO, 0, j.z).project(escena.camera);
+    j.etiqueta.style.display = "";
+    j.etiqueta.style.left = "8px";
+    j.etiqueta.style.top = (1 - v3.y) * innerHeight / 2 + "px";
+    j.etiqueta.style.width = anchoPlaca() + "px";
+    if (j.aro) {
+      j.aro.position.x = j.figura.obj.position.x; j.aro.position.z = j.z;
+      j.aro.scale.setScalar(Math.min(1, (j.figura.ancho() || 1) * 0.75));
+    }
+  });
 }
 addEventListener("resize", camara);
 function botonEmpezar() {
@@ -226,10 +273,10 @@ escena.alCuadro(dt => {
       j.etiqueta.querySelector(".distancia").textContent = ko ? "¡KO! · Al inicio" : bloqueado(regla, t) ? "Suelta y vuelve a correr" : `${p.toFixed(2)} / 7 s`;
       if (tv.fase !== "fin") animar(j.figura, ko ? "ko" : p > j.ultimoAvance ? "correr" : "reposo");
       j.ultimoAvance = p;
-    } else j.etiqueta.querySelector(".distancia").textContent = "Meta →";
+    } else j.etiqueta.querySelector(".distancia").textContent = "0.00 / 7 s";
     j.figura.update(dt);
   });
-  vigilante?.update(dt); tv.etiquetas();
+  vigilante?.update(dt); placas();
 });
 (async () => {
   await tv.listo; const lista = tv.disponibles(), n = Math.max(0, Math.min(6, Number(q.get("bots")) || 0));
