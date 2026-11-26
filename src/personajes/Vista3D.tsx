@@ -6,7 +6,7 @@ import "./vista-3d.css";
 const quieto = typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches;
 import type { Plano } from "./tipos";
 
-export function Vista3D({ url, plano, alLlegar = "saludo", className = "gal-vista", momento, onArmado, onToque, correr, onPresion, giro }: { url: string; plano: Plano | null; alLlegar?: string | null; className?: string;
+export function Vista3D({ url, plano, alLlegar = "saludo", className = "gal-vista", momento, onArmado, onToque, correr, onPresion, giro, orden, onMensaje }: { url: string; plano: Plano | null; alLlegar?: string | null; className?: string;
   /** Cada vez que cambia `n`, la figura hace `cual` (gestos Saludar, Ganar, Perder, Especial). */
   momento?: { cual: string; n: number } | null;
   /** Resultado de armar el ÚLTIMO plano mandado: ok, o los errores (pieza que no encaja). La escena conserva la figura
@@ -19,7 +19,11 @@ export function Vista3D({ url, plano, alLlegar = "saludo", className = "gal-vist
   /** Empezó un toque en la escena (para cerrar menús abiertos: la página no ve los toques del iframe). */
   onPresion?: () => void;
   /** Cada vez que cambia `n`, la figura gira `cuanto` radianes (girar con teclado). */
-  giro?: { n: number; cuanto: number } | null }) {
+  giro?: { n: number; cuanto: number } | null;
+  /** Orden suelta para la escena (enfocar, cara, restablecer…): se manda cada vez que cambia `n`. */
+  orden?: { n: number; msg: Record<string, unknown> } | null;
+  /** Respuestas de la escena que este componente no maneja (p. ej. {tipo:"caras", n}). */
+  onMensaje?: (d: Record<string, unknown>) => void }) {
   const ref = useRef<HTMLIFrameElement>(null);
   const [listo, setListo] = useState(false);
   const [cargando, setCargando] = useState(false);
@@ -31,6 +35,8 @@ export function Vista3D({ url, plano, alLlegar = "saludo", className = "gal-vist
   tocado.current = onToque;
   const presion = useRef(onPresion);
   presion.current = onPresion;
+  const otro = useRef(onMensaje);
+  otro.current = onMensaje;
   // Error visible con reintento (Codex, cierre-r1): la escena avisa {tipo:"error"}, no dice «listo» en 12 s, o un plano
   // no se pudo armar y no hay figura.
   const [error, setError] = useState<string | null>(null);
@@ -49,6 +55,7 @@ export function Vista3D({ url, plano, alLlegar = "saludo", className = "gal-vist
       if (e.data.tipo === "listo") { setListo(true); setError(null); }
       if (e.data.tipo === "error") setError("No se pudo preparar el 3D.");
       if (e.data.tipo === "presion") presion.current?.();
+      if (e.data.tipo === "caras") otro.current?.(e.data);
       if (e.data.tipo === "toque" && typeof e.data.x === "number" && typeof e.data.y === "number")
         tocado.current?.(Math.max(0, Math.min(1, e.data.x)), Math.max(0, Math.min(1, e.data.y)));
       if (e.data.tipo === "armadas") {
@@ -79,6 +86,7 @@ export function Vista3D({ url, plano, alLlegar = "saludo", className = "gal-vist
     if (listo && plano && momento && momento.n > 0) enviar({ tipo: "momento", id: plano.id, cual: momento.cual });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [listo, momento?.n]);
+  useEffect(() => { if (listo && orden && orden.n > 0) enviar(orden.msg); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [listo, orden?.n]);
   useEffect(() => { if (listo && giro && giro.n > 0) enviar({ tipo: "girar", cuanto: giro.cuanto }); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [listo, giro?.n]);
   useEffect(() => { if (listo && correr) enviar({ tipo: "correr", x: correr.x, ms: correr.ms }); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [listo, correr?.x, correr?.ms]);
   return (

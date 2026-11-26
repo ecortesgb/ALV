@@ -64,7 +64,8 @@
     });
     if (cajaC.isEmpty()) cab.getWorldPosition(vc), cajaC.setFromCenterAndSize(vc, new THREE.Vector3(0.6, 0.6, 0.6));
     const c = cajaC.getCenter(new THREE.Vector3()), t = cajaC.getSize(new THREE.Vector3());
-    const r = Math.max(t.x, t.y) * 0.5 * 1.35, tanV = Math.tan((camera.fov * Math.PI) / 360);
+    // Al menos un 14 % de la altura de la figura: en las grandes (Big Fig) la cabeza es chica y quedaba encima.
+    const r = Math.max(Math.max(t.x, t.y) * 0.5 * 1.7, f.p.alto() * 0.14), tanV = Math.tan((camera.fov * Math.PI) / 360);
     const d = r / Math.min(tanV, tanV * camera.aspect);
     camera.position.set(c.x, c.y, c.z + d); camera.lookAt(c);
   }
@@ -142,6 +143,7 @@
     if (d.tipo === "planos") ponerPlanos(d.lista, d.rev);
     if (d.tipo === "enfocar") {
       foco = d.zona === "cabeza" ? "cabeza" : "cuerpo";
+      if (foco === "cuerpo") caraFija(null); // al salir de la cara se suelta la expresión fija (Codex, modo-revision-verif)
       const f = figuras.get(orden[0]);
       if (f && foco === "cabeza") f.p.tocar("reposo", { mezcla: 0.2 });
       acomodar();

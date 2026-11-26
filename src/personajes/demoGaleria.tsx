@@ -1,6 +1,7 @@
 // Página de prueba del sistema de personajes nuevo (tools/personajes/galeria.html). Solo desarrollo: no entra al juego.
 // «Mi personaje» → Elegir personaje (galería) o Crear mi personaje (constructor básico).
 // ?fuente=<url del servidor de personajes> (por omisión personajes-privados en 4193) · ?yo=<jugador> · ?vista=galeria|crear
+// ?revisar=1 → modo revisión de los personajes del catálogo (Revision.tsx).
 import { useEffect, useMemo, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { Boton, FondoCiudad, Panel, RaizDS } from "../ds";
@@ -8,6 +9,7 @@ import { figuraActiva, guardarColeccion, leerColeccion, ponerEnColeccion } from 
 import { Constructor } from "./Constructor";
 import { figuraInicial, piezasDeCatalogo, sePuedePersonalizar } from "./constructorDatos";
 import { Galeria } from "./Galeria";
+import { Revision } from "./Revision";
 import { cargarIndice, type Indice } from "./indice";
 import type { FiguraV3 } from "./tipos";
 
@@ -38,7 +40,8 @@ function Demo() {
     <RaizDS ancho={ancho} className={vista.cual === "crear" ? "az" : ""} style={{ position: "fixed", inset: 0, overflow: "hidden" }}>
       {vista.cual !== "crear" && <div className="d-bg"><FondoCiudad /></div>}
       {error && <p style={{ position: "absolute", inset: "auto 16px 16px", color: "#fff" }}>No responde el servidor de personajes ({FUENTE}): {error}</p>}
-      {ind && vista.cual === "inicio" && (
+      {ind && q.get("revisar") === "1" && <Revision catalogo={ind.catalogo} escenaUrl={ESCENA + "&frente=25"} />}
+      {ind && q.get("revisar") !== "1" && vista.cual === "inicio" && (
         <div className="gal" style={{ gridTemplateRows: "auto minmax(0,1fr)", gridTemplateAreas: '"top" "lista"', gridTemplateColumns: "1fr" }}>
           <header className="gal-top"><h1 className="dsp ol gal-titulo">Mi personaje</h1></header>
           <div style={{ gridArea: "lista", display: "grid", gap: 16, gridTemplateColumns: ancho ? "1fr 1fr" : "1fr", alignContent: "center", maxWidth: 900, width: "100%", justifySelf: "center" }}>
