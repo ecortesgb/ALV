@@ -902,6 +902,7 @@
     // Fase 5: la figura nueva traduce el momento a una de sus seis lógicas (logicas.js; Codex D4). Mismo contrato:
     // prioridad, enfriamiento, «gesto» y, al terminar, «termino». Lo que no tiene lógica propia no suena.
     if (e.v3) {
+      e.accion = null;
       const Lg = window.LogicasALV, l = cual === "espera" ? "reposo" : Lg ? Lg.logicaDe(cual) : "reposo";
       if (l === "reposo") {
         if (cual === "espera") { e.v3.tocar("reposo"); e.prio = 0; e.cual = null; e.hasta = 0; }
@@ -1321,38 +1322,68 @@
       if (figuras.get(e.id) !== e || e.gen3 !== gen || e.v3) { inst.quitar(); return; } // llegó tarde
       const grupo = new THREE.Group();
       grupo.add(inst.obj);
+      // Figuras grandes (Big Fig): en escenas con lugares (sala, nave, azotea) se topa su altura para que no invadan el
+      // lugar de al lado ni se salgan del encuadre (?bigfig=real las deja a tamaño real; decisión de diseño pendiente).
+      const alto = inst.alto(), TOPE = 3.4;
+      // Decidió Codex (fase5-paso2-verif, b): tope 3.4 con escala uniforme, solo en sala, nave y azotea.
+      if ((SALA || NAVE || AZOTEA) && !/[?&]bigfig=real/.test(location.search) && alto > TOPE) inst.obj.scale.multiplyScalar(TOPE / alto);
       const sombra = new THREE.Mesh(sombraGeo, sombraMat); sombra.rotation.x = -Math.PI / 2; sombra.position.y = 0.003; grupo.add(sombra);
       grupo.position.copy(e.obj.position); grupo.rotation.copy(e.obj.rotation); grupo.scale.copy(e.obj.scale); grupo.visible = e.obj.visible;
       if (e.cara) { e.cara.malla.material.map = e.cara.base; [e.cara.parpadeo, e.cara.sonrisa, e.cara.especial].forEach(x => x && x.dispose()); e.cara = null; }
       scene.remove(e.obj); dispose(e.obj);
-      e.obj = grupo; e.v3 = inst; e.prio = 0; e.cual = null; e.hasta = 0;
+      e.obj = grupo; e.v3 = inst;
       scene.add(grupo);
       inst.tocar(NAVE && p3.sentado ? p3.sentado : "reposo", { mezcla: 0 });
+      // Si el respaldo estaba a media animación de un gesto, la nueva la sigue con su lógica y el tiempo que le quedaba
+      // (mismo contrato: al vencer, «termino»; Codex, fase5-paso2-verif).
+      const ahora = reloj.getElapsedTime();
+      if (e.prio > 0 && e.cual && ahora < e.hasta) { const Lg = window.LogicasALV, l = Lg ? Lg.logicaDe(e.cual) : "reposo"; if (l !== "reposo") inst.tocar(l, { mezcla: 0 }); }
+      else { e.prio = 0; e.cual = null; e.hasta = 0; }
       acomodar();
       window.__figurasV3 = figuras; // para revisar desde la consola (solo existe si llegó una figura nueva)
       enviar({ tipo: "v3", id: e.id, ok: true });
     }).catch(err => { console.warn("escena: figura nueva sin cargar, se queda la de respaldo", e.id, err); enviar({ tipo: "v3", id: e.id, ok: false }); });
   }
-  const cabezaV3 = new THREE.Euler();
   function animarV3(e, t, dt) {
+    // La mirada se SUMA a la cabeza: antes de avanzar la animación se quita lo sumado en el cuadro anterior (si el clip
+    // no mueve la cabeza, sumar cada cuadro la haría girar sin parar).
+    const cab = e.v3.hueso("cabeza");
+    if (cab && e.mirada) { cab.rotation.y -= e.mirada; e.mirada = 0; }
     e.v3.update(dt);
     // Termina el gesto: el motor vuelve solo a reposo; aquí se avisa como siempre.
     if (e.prio > 0 && t >= e.hasta) { enviar({ tipo: "termino", id: e.id, cual: e.cual }); e.prio = 0; e.cual = null; }
+    if (AZOTEA) { giroAzoteaV3(e, dt); caidaAzotea(e, t); } // giro con inercia y caída de la llegada, en el grupo exterior
     // Azotea: voltea solo la cabeza de lado hacia donde mira ALV, con límite (Codex D4).
-    if (AZOTEA && AZ.mira.activa) {
-      const cab = e.v3.hueso("cabeza");
-      if (cab) { cabezaV3.set(0, Math.max(-0.6, Math.min(0.6, AZ.mira.x * 0.6)), 0); cab.rotation.y += cabezaV3.y; }
-    }
+    // Misma mirada suavizada que la figura vieja (AZ.mira.ax con su peso w), con límite ±0.6 rad.
+    if (AZOTEA && cab) { const m = AZ.mira, y = Math.max(-0.6, Math.min(0.6, m.ax * 0.55 * m.w)); if (Math.abs(y) > 1e-4) { cab.rotation.y += y; e.mirada = y; } }
     if (SALA && e.tele != null) {
       const d = (t - e.tele) / 0.9;
       if (d >= 1) { e.tele = null; e.obj.visible = true; e.obj.scale.setScalar(1); }
       else { const k = 1 - Math.pow(1 - Math.max(0, d), 3); e.obj.visible = d > 0.03; e.obj.scale.set(0.3 + 0.7 * k, Math.max(0.001, k), 0.3 + 0.7 * k); }
     }
   }
+  // Giro del jugador con inercia y mirada de la azotea, sobre el grupo exterior (lo mismo que reaccionAzotea hace con la
+  // figura vieja, sin sus poses de articulaciones).
+  function giroAzoteaV3(e, dt) {
+    const m = AZ.mira, a = AZ.acc, r = Math.min(1, dt * 7);
+    m.w += ((m.activa ? 1 : 0) - m.w) * Math.min(1, dt * 5); m.ax += (m.x - m.ax) * r; m.ay += (m.y - m.ay) * r;
+    if (Math.abs(AZ.vel) > 0.001) { AZ.usuario += AZ.vel * dt; AZ.vel *= Math.exp(-4 * dt); } else AZ.vel = 0;
+    AZ.usuario = Math.atan2(Math.sin(AZ.usuario), Math.cos(AZ.usuario));
+    const frente = Math.max(m.w, e.accion ? 1 : 0);
+    e.obj.rotation.y = AZ_GIRO + AZ.usuario * (1 - frente) + m.ax * 0.5 * m.w;
+    AZ.quieto = !L_activa() && !e.accion && m.w < 0.01 && AZ.vel === 0;
+    void a;
+  }
+  // Acciones breves de la azotea (al señalar botones): prioridad baja. No interrumpen un gesto que suena (ni su
+  // enfriamiento) y `accion(null)` solo suelta la acción propia, nunca un gesto superior (Codex, fase5-paso2-verif).
   function accionV3(e, c) {
+    const t = reloj.getElapsedTime();
+    if ((e.prio || 0) > 0 && t < e.hasta) return;
+    if (c == null) { if (e.accion) { e.accion = null; e.v3.tocar("reposo"); } return; }
     const a = { listo: "victoria", orgullo: "victoria", flexionar: "victoria", saludar: "saludo" }[c];
-    if (a) { e.v3.tocar(a); return; }
-    if (c === "mirarse" || c === "frotar") { const v = (e.v3.obj.userData.plano && e.v3.obj.userData.plano.vida) || []; if (v[0]) e.v3.tocar(v[0]); }
+    const vida = (e.v3.obj.userData.plano && e.v3.obj.userData.plano.vida) || [];
+    const clip = a || ((c === "mirarse" || c === "frotar") && vida[0]) || null;
+    if (clip && e.accion !== c && e.v3.tocar(clip)) e.accion = c;
   }
 
   function cuadro() {
@@ -1477,7 +1508,7 @@
     else if (AZOTEA && d.tipo === "accion") {
       const t = reloj.getElapsedTime(), e0 = figuras.get(orden[0]);
       // Figura nueva: listo/orgullo/flexionar → victoria; mirarse/frotar → vida (su primer clip); saludar → saludo (Codex D4).
-      if (e0 && e0.v3) { const c = d.cual == null ? null : String(d.cual); if (c) accionV3(e0, c); }
+      if (e0 && e0.v3) accionV3(e0, d.cual == null ? null : String(d.cual));
       else accionAzotea(d.cual == null ? null : String(d.cual), e0, t);
     }
     else if (AZOTEA && d.tipo === "llegada") { const e = figuras.get(orden[0]); iniciarLlegada(reloj.getElapsedTime(), true); if (e) e.obj.visible = false; AZ.polvo = false; }
