@@ -1,15 +1,17 @@
-// «Crear mi personaje» (constructor básico) con el diseño A2 aprobado por Elías (ALV_DISENO_PERSONALIZADOR.md §0):
-// mismas piezas que el HUB y el lobby (losas .az-losa, ¡Guardar! como .az-jugar, «Atrás» .pf-atras, panel .lb-panel,
-// gestos redondos .mg-b). 4 losas: Cabeza (cara, pelo, piel), Torso, Brazos (brazos, manos), Piernas (cadera, piernas).
-// Va dentro de <RaizDS className="az">. Escenario elegido por Elías (ALV_ESCENARIOS_PERSONALIZADOR.md): página de cómic.
-// La figura va en la viñeta grande (líneas de acción y trama); las losas, el panel y ¡Guardar! en la de al lado. Entrada:
-// la página del HUB se voltea; «Atrás»: se voltea de regreso y luego sale. Arte final de Elías en arte/personalizar/; sin
-// él queda el boceto en CSS.
+// «Crear mi personaje» en página de cómic (rediseño pedido por Elías el 2026-11-26): el orden del «Armario» del Centro de
+// Mando GB (secciones con palomita, rejilla, figura con deshacer/rehacer, Restablecer, ¡Guardar!) con el estilo cómic que
+// ya tenía (ALV_DISENO_PERSONALIZADOR.md §0, losas .az-losa, ¡Guardar! como .az-jugar). Cada sección es una viñeta con su
+// cartela; cambiar de sección voltea la hoja como el libro del personalizador anterior. Cada parte tiene el switch
+// Originales (piezas de los personajes, por saga) / Genéricas (piezas de producción, por tipo). Seis secciones: Cabeza,
+// Torso, Brazos, Piernas, Accesorios y Movimientos (saludar, ganar, perder, especial; de un personaje o genéricos).
+// Va dentro de <RaizDS className="az">. Entrada: la página del HUB se voltea; «Atrás»: se voltea de regreso y luego sale.
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type PointerEvent as PE } from "react";
-import { PALETAS, PALETA_DE_PARTE, piezasDe, planoConstructor, ponerPieza, teñir, type PiezaCons, type Piezas } from "./constructorDatos";
+import { PALETAS, paletaDePieza, piezasDe, planoConstructor, ponerPieza, teñir, type PiezaCons, type Piezas } from "./constructorDatos";
 import { caben, paginas } from "./galeriaDatos";
+import { GRUPOS_GENERICAS } from "./genericas";
+import { conMovimientos, elegirMovimiento, GESTOS, movimientosElegidos, NOMBRE_GESTO, opcionesMovimiento, type BaseGenerica, type Gesto, type OpcionMov } from "./movimientos";
 import type { Catalogo } from "./plano";
-import { PESTANAS_BASICO, type FiguraV3, type Parte } from "./tipos";
+import type { FiguraV3, Id, Parte } from "./tipos";
 import { RuedaGestos, type GestoRueda } from "./RuedaGestos";
 import { useMiniaturas } from "./useMiniaturas";
 import { Vista3D } from "./Vista3D";
@@ -19,18 +21,35 @@ import "../pantallas/lobby/lobby.css";
 import "../pantallas/gestos/menu-gestos.css";
 import "./constructor.css";
 
-type Pestana = keyof typeof PESTANAS_BASICO;
+/** Secciones del editor (pedido de Elías, 2026-11-26: orden del «Armario» del Centro de Mando GB, en viñetas de cómic). */
+type Pestana = "cabeza" | "torso" | "brazos" | "piernas" | "accesorios" | "movimientos";
+type Sub = Parte | Gesto;
 const ARTE = `${import.meta.env.BASE_URL}arte/`;
-const LOSAS: { id: Pestana; titulo: string; sub: string; c1: string; c2: string; lab: string; ico: string }[] = [
-  { id: "cabeza", titulo: "Cabeza", sub: "Cara, pelo y piel", c1: "#6fb6ff", c2: "#1f5fd6", lab: "#123e9c", ico: "ico-cabeza" },
-  { id: "torso", titulo: "Torso", sub: "Playeras y trajes", c1: "#c08bff", c2: "#6f2fd6", lab: "#4a1c9c", ico: "ico-torso" },
-  { id: "brazos", titulo: "Brazos", sub: "Brazos y manos", c1: "#7bea92", c2: "#1fa84a", lab: "#137033", ico: "ico-brazos" },
-  { id: "piernas", titulo: "Piernas", sub: "Cadera y piernas", c1: "#ffb866", c2: "#f06a12", lab: "#a8420a", ico: "ico-piernas" },
+const LOSAS: { id: Pestana; titulo: string; cartela: string; c1: string; c2: string; lab: string; ico: string }[] = [
+  { id: "cabeza", titulo: "Cabeza", cartela: "Capítulo 1: una cara nueva", c1: "#6fb6ff", c2: "#1f5fd6", lab: "#123e9c", ico: "ico-cabeza" },
+  { id: "torso", titulo: "Torso", cartela: "Capítulo 2: el traje", c1: "#c08bff", c2: "#6f2fd6", lab: "#4a1c9c", ico: "ico-torso" },
+  { id: "brazos", titulo: "Brazos", cartela: "Capítulo 3: brazos y manos", c1: "#7bea92", c2: "#1fa84a", lab: "#137033", ico: "ico-brazos" },
+  { id: "piernas", titulo: "Piernas", cartela: "Capítulo 4: listo para correr", c1: "#ffb866", c2: "#f06a12", lab: "#a8420a", ico: "ico-piernas" },
+  { id: "accesorios", titulo: "Accesorios", cartela: "Capítulo 5: el equipo", c1: "#ff8fb3", c2: "#d6246a", lab: "#8c1242", ico: "ico-accesorios" },
+  { id: "movimientos", titulo: "Movimientos", cartela: "Capítulo 6: movimientos especiales", c1: "#ffe066", c2: "#e0a400", lab: "#8a6200", ico: "ico-efectos" },
 ];
-const NOMBRE_PARTE: Partial<Record<Parte, string>> = { cabeza: "Piel", cara: "Cara", cabello: "Pelo", torso: "Torso", brazos: "Brazos", manos: "Manos", cadera: "Cadera", piernas: "Piernas" };
+const NOMBRE_SUB: Record<string, string> = { cabeza: "Piel", cara: "Cara", cabello: "Pelo", torso: "Torso", brazos: "Brazos", manos: "Manos", cadera: "Cadera", piernas: "Piernas",
+  accesorio: "Capas y objetos", sombrero: "Cascos", ...NOMBRE_GESTO };
 const NOMBRE_PALETA = { piel: "Piel", pelo: "Pelo", ropa: "Color" } as const;
-/** Sub-partes de cada losa, en el orden en que salen (la cabeza empieza por la cara). */
-const SUBPARTES: Record<Pestana, Parte[]> = { cabeza: ["cara", "cabello", "cabeza"], torso: ["torso"], brazos: ["brazos", "manos"], piernas: ["piernas", "cadera"] };
+/** Sub-partes de cada sección, en el orden en que salen (la cabeza empieza por la cara). */
+const SUBPARTES: Record<Pestana, Sub[]> = { cabeza: ["cara", "cabello", "cabeza"], torso: ["torso"], brazos: ["brazos", "manos"], piernas: ["piernas", "cadera"],
+  accesorios: ["accesorio", "sombrero"], movimientos: [...GESTOS] };
+const esGesto = (x: Sub): x is Gesto => (GESTOS as readonly string[]).includes(x);
+/** Sagas de las piezas originales (ficha.grupo), en el orden de los chips. */
+const SAGAS: { id: Id; nombre: string }[] = [
+  { id: "avengers", nombre: "Avengers" }, { id: "x-men", nombre: "X-Men" }, { id: "guardianes", nombre: "Guardianes" },
+  { id: "villanos-marvel", nombre: "Villanos" }, { id: "otros-marvel", nombre: "Otros Marvel" },
+];
+/** Gesto del menú de la rueda para cada gesto de la figura (para probarlo al elegirlo). */
+const RUEDA_DE: Record<Gesto, string> = { saludo: "saludar", victoria: "victoria", derrota: "derrota", especial: "especial" };
+type Fuente = "original" | "generica";
+/** Elemento de la rejilla: pieza o movimiento. */
+type Item = { tipo: "pieza"; pz: PiezaCons } | { tipo: "mov"; op: OpcionMov | null };
 
 /** Ícono ilustrado de Elías (arte/ui/personalizar/<id>.webp); mientras no exista, su lugar queda vacío. */
 const faltan = new Set<string>();
@@ -64,6 +83,8 @@ export interface ConstructorProps {
   escenaUrl: string;
   onGuardar: (figura: FiguraV3) => void;
   onSalir?: () => void;
+  /** Base genérica (movimientos genéricos); null si la entrega no la trae. */
+  base?: BaseGenerica | null;
   /** Imagen de la página que se voltea al entrar y al salir (el HUB). null = sin volteo. */
   paginaAnterior?: string | null;
   /** Estudio de miniaturas de piezas sueltas; null = usar la foto del personaje que dona la pieza. */
@@ -74,18 +95,25 @@ export interface ConstructorProps {
 }
 
 const sinMovimiento = () => typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches;
+const fotoValida = (u: string | null | undefined) => !!u;
 
-export function Constructor({ catalogo, piezas, inicial, escenaUrl, onGuardar, onSalir, paginaAnterior = `${ARTE}azotea-pedestal-noche-1920.webp`,
+export function Constructor({ catalogo, piezas, inicial, escenaUrl, onGuardar, onSalir, base = null, paginaAnterior = `${ARTE}azotea-pedestal-noche-1920.webp`,
   estudioUrl = escenaUrl.replace(/escena\.html.*$/, "estudio.html"), frente = 10 }: ConstructorProps) {
   const mini = useMiniaturas(estudioUrl, catalogo);
   const [figura, setFigura] = useState(inicial);
   const [historia, setHistoria] = useState<FiguraV3[]>([]);
+  const [futuro, setFuturo] = useState<FiguraV3[]>([]);
   const [pestana, setPestana] = useState<Pestana>("cabeza");
-  const [parte, setParte] = useState<Parte>("cara");
+  const [sub, setSub] = useState<Sub>("cara");
+  /** Switch Originales / Genéricas, recordado por sub-parte. */
+  const [fuentes, setFuentes] = useState<Partial<Record<Sub, Fuente>>>({});
+  const [grupo, setGrupo] = useState<Id>("todas");
   const [pagina, setPagina] = useState(0);
   const [caja, setCaja] = useState({ columnas: 4, filas: 2 });
   const [guardado, setGuardado] = useState(false);
   const [momento, setMomento] = useState<{ cual: string; n: number } | null>(null);
+  /** Gesto que se toca en cuanto la escena arme la figura con el movimiento recién elegido. */
+  const probar = useRef<string | null>(null);
   /** Firma del último plano que la escena armó bien. Solo se guarda si el plano de ahora es ese (Codex O2). */
   const [confirmada, setConfirmada] = useState<string | null>(null);
   /** Última figura que la escena confirmó; si una pieza no encaja, se vuelve a ella. */
@@ -94,6 +122,8 @@ export function Constructor({ catalogo, piezas, inicial, escenaUrl, onGuardar, o
   const rejilla = useRef<HTMLDivElement>(null);
   /** Volteo de página: "entra" (el HUB se va), "sale" (el HUB regresa y luego onSalir), null = quieto. */
   const [volteo, setVolteo] = useState<"entra" | "sale" | null>(() => (paginaAnterior && !sinMovimiento() ? "entra" : null));
+  /** Vuelta de página al cambiar de sección: hacia adelante o hacia atrás (n cambia para reiniciar la animación). */
+  const [hoja, setHoja] = useState<{ dir: "sig" | "ant"; n: number } | null>(null);
   /** La primera figura entra con su saltito; las demás no hacen nada al cambiar una pieza. */
   const [llego, setLlego] = useState(false);
   const salio = useRef(false);
@@ -103,52 +133,101 @@ export function Constructor({ catalogo, piezas, inicial, escenaUrl, onGuardar, o
   };
   // Si la animación no termina (se canceló o se pidió reducir movimiento a medias), el volteo se cierra igual (Codex O10).
   useEffect(() => { if (!volteo) return; const t = setTimeout(finVolteo, volteo === "entra" ? 1100 : 1000); return () => clearTimeout(t); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [volteo]);
+  useEffect(() => { if (!hoja) return; const t = setTimeout(() => setHoja(null), 800); return () => clearTimeout(t); }, [hoja]);
 
   useEffect(() => {
     const el = rejilla.current;
     if (!el) return;
-    const medir = () => setCaja(caben(el.clientWidth, el.clientHeight, { min: el.clientWidth < 520 ? 70 : 96, proporcion: 1.05, hueco: 8 }));
+    const medir = () => setCaja(caben(el.clientWidth, el.clientHeight, { min: el.clientWidth < 520 ? 70 : 92, proporcion: 1.05, hueco: 8 }));
     medir();
     const ro = new ResizeObserver(medir);
     ro.observe(el);
     return () => ro.disconnect();
   }, []);
 
-  const plano = useMemo(() => planoConstructor("yo", figura, catalogo, piezas), [figura, catalogo, piezas]);
+  const plano = useMemo(() => { const p = planoConstructor("yo", figura, catalogo, piezas); return p ? conMovimientos(p, figura, catalogo, base) : null; }, [figura, catalogo, piezas, base]);
   const firma = plano ? JSON.stringify(plano) : "";
   const sePuedeGuardar = !!plano && firma === confirmada;
-  const lista = useMemo(() => piezasDe(piezas, parte, figura.familia), [piezas, parte, figura.familia]);
+  const gesto = esGesto(sub) ? sub : null;
+  const parte = gesto ? null : (sub as Parte);
+  const movs = useMemo(() => (gesto ? opcionesMovimiento(catalogo, base, gesto, figura.familia) : []), [catalogo, base, gesto, figura.familia]);
+  const todas = useMemo<Item[]>(() => (parte ? piezasDe(piezas, parte, figura.familia).map(pz => ({ tipo: "pieza" as const, pz })) : movs.map(op => ({ tipo: "mov" as const, op }))),
+    [piezas, parte, figura.familia, movs]);
+  const origenDe = (it: Item) => (it.tipo === "pieza" ? it.pz.origen ?? "original" : it.op?.origen ?? "ninguna");
+  const grupoDe = (it: Item) => (it.tipo === "pieza" ? it.pz.grupo ?? "" : it.op?.grupo ?? "");
+  const hay = (f: Fuente) => todas.some(it => origenDe(it) === f);
+  const fuente: Fuente = fuentes[sub] ?? (hay("original") || !hay("generica") ? "original" : "generica");
+  /** Chips de grupo: sagas (originales) o tipos (genéricas), solo los que tienen algo. */
+  const grupos = useMemo(() => {
+    const de = todas.filter(it => origenDe(it) === fuente);
+    const lista = fuente === "original" ? SAGAS : parte ? GRUPOS_GENERICAS[parte] ?? [] : [];
+    return lista.filter(g => de.some(it => grupoDe(it) === g.id));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [todas, fuente, parte]);
+  const g = grupos.some(x => x.id === grupo) ? grupo : "todas";
+  const ninguno: Item | null = gesto ? { tipo: "mov", op: null } : todas.find(it => origenDe(it) === "ninguna") ?? null;
+  const lista = useMemo<Item[]>(() => {
+    const l = todas.filter(it => origenDe(it) === fuente && (g === "todas" || grupoDe(it) === g));
+    return ninguno ? [ninguno, ...l] : l;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [todas, fuente, g, ninguno]);
   const pags = useMemo(() => paginas(lista, caja.columnas * caja.filas), [lista, caja]);
   const p = Math.min(pagina, pags.length - 1);
-  const puesta = figura.piezas[parte]?.id ?? null;
-  const paleta = PALETA_DE_PARTE[parte];
-  const tinte = paleta ? figura.piezas[parte]?.tintes?.[paleta] ?? null : null;
-  const base = figura.origen.tipo === "catalogo" ? figura.origen.personaje : null;
-  const visible = (pz: PiezaCons) => pz.id === puesta || (!puesta && pz.donante === base);
+  const elegidos = movimientosElegidos(figura);
+  const puesta = parte ? figura.piezas[parte]?.id ?? null : null;
+  const pzPuesta = puesta ? piezas.get(puesta) : undefined;
+  const paleta = parte ? paletaDePieza(pzPuesta, parte) : undefined;
+  const tinte = parte && paleta ? figura.piezas[parte]?.tintes?.[paleta] ?? null : null;
+  const baseId = figura.origen.tipo === "catalogo" ? figura.origen.personaje : null;
+  const visible = (it: Item) => it.tipo === "pieza" ? it.pz.id === puesta || (!puesta && it.pz.donante === baseId) : (it.op?.id ?? null) === (gesto ? elegidos[gesto] ?? null : null);
   const losa = LOSAS.find(l => l.id === pestana)!;
+  /** Palomita de cada sección: algo cambió respecto al personaje base. */
+  const hecha = (t: Pestana) => t === "movimientos" ? Object.keys(elegidos).length > 0 : SUBPARTES[t].some(x => !!figura.piezas[x as Parte]);
   // Pide las fotos de las piezas de la página que se ve (las demás, cuando se llegue a ellas).
-  useEffect(() => { pags[p]?.forEach(mini.pedir); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [mini.listo, pags, p]);
+  useEffect(() => { pags[p]?.forEach(it => { if (it.tipo === "pieza") mini.pedir(it.pz); }); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [mini.listo, pags, p]);
 
-  const cambiar = (nueva: FiguraV3) => { setHistoria(h => [...h.slice(-29), figura]); setFigura(nueva); setGuardado(false); };
+  const cambiar = (nueva: FiguraV3) => { setHistoria(h => [...h.slice(-29), figura]); setFuturo([]); setFigura(nueva); setGuardado(false); };
   // Respuesta de la escena al plano de la figura actual (las viejas ya las descartó Vista3D). Si una pieza no encaja,
   // se vuelve a la última figura confirmada y se espera a que la escena la confirme otra vez; sin ninguna confirmada,
   // ¡Guardar! queda apagado (Codex O2).
   const alArmar = (ok: boolean, errores: string[]) => {
     setLlego(true);
-    if (ok) { valida.current = figura; setConfirmada(firma); return; }
+    if (ok) {
+      valida.current = figura; setConfirmada(firma);
+      if (probar.current) { const c = probar.current; probar.current = null; setTimeout(() => setMomento(m => ({ cual: c, n: (m?.n ?? 0) + 1 })), 150); }
+      return;
+    }
+    probar.current = null;
     setAviso("Esa pieza no le queda a tu figura.");
     console.warn("pieza rechazada:", errores);
     const v = valida.current;
     if (v && v !== figura) { setFigura(v); setHistoria(h => h.slice(0, -1)); }
   };
   useEffect(() => { if (!aviso) return; const t = setTimeout(() => setAviso(null), 2600); return () => clearTimeout(t); }, [aviso]);
-  // Dirección del último cambio de página, para que la rejilla entre por ese lado (Codex E5.2).
+  // Dirección del último cambio de página de la rejilla, para que entre por ese lado (Codex E5.2).
   const [pasa, setPasa] = useState<"sig" | "ant" | null>(null);
   const [guarda, setGuarda] = useState(false);
-  const elegirLosa = (t: Pestana) => { setPestana(t); setParte(SUBPARTES[t][0]!); setPagina(0); setPasa(null); };
-  const elegirParte = (x: Parte) => { setParte(x); setPagina(0); setPasa(null); };
-  const regresar = () => setHistoria(h => { if (!h.length) return h; setFigura(h[h.length - 1]!); setGuardado(false); return h.slice(0, -1); });
-  const gesto = (cual: string) => setMomento(m => ({ cual, n: (m?.n ?? 0) + 1 }));
+  const elegirLosa = (t: Pestana) => {
+    if (t === pestana) return;
+    const i = LOSAS.findIndex(l => l.id === t), j = LOSAS.findIndex(l => l.id === pestana);
+    if (!sinMovimiento()) setHoja(h => ({ dir: i > j ? "sig" : "ant", n: (h?.n ?? 0) + 1 }));
+    setPestana(t); setSub(SUBPARTES[t][0]!); setGrupo("todas"); setPagina(0); setPasa(null);
+  };
+  const elegirSub = (x: Sub) => { setSub(x); setGrupo("todas"); setPagina(0); setPasa(null); };
+  const elegirFuente = (f: Fuente) => { setFuentes(m => ({ ...m, [sub]: f })); setGrupo("todas"); setPagina(0); setPasa(null); };
+  const elegirGrupo = (x: Id) => { setGrupo(x); setPagina(0); setPasa(null); };
+  const deshacer = () => { if (!historia.length) return; setFuturo(f => [figura, ...f].slice(0, 30)); setFigura(historia[historia.length - 1]!); setHistoria(h => h.slice(0, -1)); setGuardado(false); };
+  const rehacer = () => { if (!futuro.length) return; setHistoria(h => [...h.slice(-29), figura]); setFigura(futuro[0]!); setFuturo(f => f.slice(1)); setGuardado(false); };
+  const restablecer = () => { if (figura !== inicial) cambiar(inicial); };
+  const tocarItem = (it: Item) => {
+    if (it.tipo === "pieza") { cambiar(ponerPieza(figura, it.pz)); return; }
+    if (!gesto) return;
+    const nueva = elegirMovimiento(figura, gesto, it.op?.id ?? null);
+    if (nueva.extensiones.alv?.animaciones?.propias?.[gesto] === elegidos[gesto]) { setMomento(m => ({ cual: RUEDA_DE[gesto], n: (m?.n ?? 0) + 1 })); return; }
+    probar.current = RUEDA_DE[gesto];
+    cambiar(nueva);
+  };
+  const gestoRueda = (cual: string) => setMomento(m => ({ cual, n: (m?.n ?? 0) + 1 }));
   // Rueda de gestos al tocar al personaje (reemplaza a los 4 botones). Decidió Codex (encargo 2026-11-26-rueda-gestos-r1):
   // en computadora sale a un lado del toque, hacia donde hay más espacio y sin tapar la cara; en celular, fija en la
   // esquina de abajo a la derecha; siempre a 16 px o más de los bordes de la viñeta.
@@ -182,8 +261,8 @@ export function Constructor({ catalogo, piezas, inicial, escenaUrl, onGuardar, o
   // Girar con el teclado: con el personaje enfocado y la rueda cerrada, ← y → (Codex, cierre-r1).
   const [giro, setGiro] = useState<{ n: number; cuanto: number } | null>(null);
   const elegirGesto = (cual: string) => {
-    if (corrida.current) { setTimeout(() => setCorrer({ x: 0, ms: 180 }), 100); setTimeout(() => gesto(cual), 280); }
-    else setTimeout(() => gesto(cual), 220);
+    if (corrida.current) { setTimeout(() => setCorrer({ x: 0, ms: 180 }), 100); setTimeout(() => gestoRueda(cual), 280); }
+    else setTimeout(() => gestoRueda(cual), 220);
   };
   const teclaFigura = (ev: { key: string; preventDefault: () => void }) => {
     if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); tocar(0.5, 0.45); }
@@ -205,7 +284,6 @@ export function Constructor({ catalogo, piezas, inicial, escenaUrl, onGuardar, o
     <div className="pz">
       <div className="pz-fondo" aria-hidden="true" />
       <div className="pz-vin pz-vin-accion" aria-hidden="true" style={{ "--arte-h": `url(${ARTE}personalizar/comic-accion-horizontal.webp)`, "--arte-v": `url(${ARTE}personalizar/comic-accion-vertical.webp)` } as CSSProperties} />
-      <div className="pz-vin pz-vin-piezas" aria-hidden="true" />
       <header className="pz-top">
         {onSalir && <button type="button" className="pf-atras" onClick={salir}><span aria-hidden="true">◀</span>Atrás</button>}
         <div className="pz-placa">Crear mi personaje</div>
@@ -222,58 +300,94 @@ export function Constructor({ catalogo, piezas, inicial, escenaUrl, onGuardar, o
         {aviso && <div className="pz-aviso" role="status">{aviso}</div>}
       </div>
 
-      <nav className="pz-losas" aria-label="Partes del personaje">
+      <nav className="pz-losas" aria-label="Secciones del personaje">
         {LOSAS.map(l => (
           <button key={l.id} type="button" className={"az-losa pz-losa" + (pestana === l.id ? " on" : "")} aria-pressed={pestana === l.id}
             style={{ "--c1": l.c1, "--c2": l.c2, "--lab": l.lab } as CSSProperties} onClick={() => elegirLosa(l.id)}>
             <IconoLosa id={l.ico} />
-            <span className="az-losa-txt"><b>{l.titulo}</b><small>{l.sub}</small></span>
+            <span className="az-losa-txt"><b>{l.titulo}</b></span>
+            {hecha(l.id) && <i className="pz-palomita" aria-label="con cambios">✓</i>}
           </button>
         ))}
       </nav>
 
-      <section className="lb-panel pz-panel" style={{ "--pj": losa.c2 } as CSSProperties} aria-label="Piezas">
+      <section className="pz-panel" style={{ "--pj": losa.c2 } as CSSProperties} aria-label={losa.titulo}>
+        <p className="pz-cartela pz-cartela-sec" key={"c" + pestana}>{losa.cartela}</p>
         {SUBPARTES[pestana].length > 1 && (
           <div className="pz-pills">
-            {SUBPARTES[pestana].map(x => <button key={x} type="button" className={"pz-pill" + (parte === x ? " on" : "")} aria-pressed={parte === x} onClick={() => elegirParte(x)}>{NOMBRE_PARTE[x]}</button>)}
+            {SUBPARTES[pestana].map(x => <button key={x} type="button" className={"pz-pill" + (sub === x ? " on" : "")} aria-pressed={sub === x} onClick={() => elegirSub(x)}>{NOMBRE_SUB[x]}</button>)}
           </div>
         )}
-        {paleta && (
-          <div className="pz-colores" role="group" aria-label={NOMBRE_PALETA[paleta]}>
-            <span>{NOMBRE_PALETA[paleta]}</span>
-            {PALETAS[paleta].map(c => (
-              <button key={c.id} type="button" className={"pz-color" + (tinte === c.id ? " on" : "")} style={{ "--c": c.hex } as CSSProperties} aria-label={c.nombre} aria-pressed={tinte === c.id}
-                title={c.nombre} onClick={() => cambiar(teñir(figura, parte, paleta, c.id))} />
+        <div className="pz-filtros">
+          <div className="pz-switch" role="radiogroup" aria-label="Tipo de piezas">
+            {(["original", "generica"] as const).map(f => (
+              <button key={f} type="button" role="radio" aria-checked={fuente === f} className={fuente === f ? "on" : ""} onClick={() => elegirFuente(f)}>{f === "original" ? "Originales" : "Genéricas"}</button>
+            ))}
+          </div>
+          {paleta && (
+            <div className="pz-colores" role="group" aria-label={NOMBRE_PALETA[paleta]}>
+              {PALETAS[paleta].map(c => (
+                <button key={c.id} type="button" className={"pz-color" + (tinte === c.id ? " on" : "")} style={{ "--c": c.hex } as CSSProperties} aria-label={c.nombre} aria-pressed={tinte === c.id}
+                  title={c.nombre} onClick={() => parte && cambiar(teñir(figura, parte, paleta, c.id))} />
+              ))}
+            </div>
+          )}
+        </div>
+        {grupos.length > 1 && (
+          <div className="pz-chips" role="group" aria-label={fuente === "original" ? "Sagas" : "Tipos"}>
+            {[{ id: "todas", nombre: "Todos" }, ...grupos].map(x => (
+              <button key={x.id} type="button" className={"pz-chip" + (g === x.id ? " on" : "")} aria-pressed={g === x.id} onClick={() => elegirGrupo(x.id)}>{x.nombre}</button>
             ))}
           </div>
         )}
         <div className={"pz-rejilla" + (pasa ? " pasa-" + pasa : "")} ref={rejilla} onPointerDown={bajar} onPointerUp={subir}
           style={{ gridTemplateColumns: `repeat(${caja.columnas}, minmax(0, 1fr))`, gridTemplateRows: `repeat(${caja.filas}, minmax(0, 1fr))` }}>
-          {pags[p]!.map(pz => (
-            <button key={pz.id} type="button" className={"pz-pieza" + (visible(pz) ? " on" : "")} aria-pressed={visible(pz)} onClick={() => cambiar(ponerPieza(figura, pz))}>
-              {(() => {
-                if (!pz.glb) return <span className="pz-sin" aria-hidden="true">—</span>;
-                const m = mini.foto(pz);
-                if (m) return <img src={m} alt="" draggable={false} />;
-                if (m === undefined) return <span className="pz-espera" aria-hidden="true" />;
-                return pz.foto ? <img src={pz.foto} alt="" draggable={false} loading="lazy" /> : <span className="pz-sin" aria-hidden="true">—</span>;
-              })()}
-              <span>{pz.glb ? pz.nombre : "Ninguno"}</span>
-            </button>
-          ))}
-          {!lista.length && <p className="pz-vacio">Todavía no hay piezas de este tipo.</p>}
+          {(pags[p] ?? []).map(it => {
+            const clave = it.tipo === "pieza" ? it.pz.id : it.op?.id ?? "de-siempre";
+            const nombre = it.tipo === "pieza" ? (it.pz.glb ? it.pz.nombre : "Ninguno") : it.op ? it.op.nombre : "De siempre";
+            return (
+              <button key={clave} type="button" className={"pz-pieza" + (visible(it) ? " on" : "")} aria-pressed={visible(it)} onClick={() => tocarItem(it)}
+                title={it.tipo === "mov" && it.op ? `${it.op.nombre} · ${it.op.sub}` : nombre}>
+                {(() => {
+                  if (it.tipo === "mov") {
+                    if (it.op?.foto) return <img src={it.op.foto} alt="" draggable={false} loading="lazy" />;
+                    return <svg className="pz-mov-ico" viewBox="0 0 24 24" aria-hidden="true"><TrazosGesto cual={gesto ? RUEDA_DE[gesto] : "especial"} /></svg>;
+                  }
+                  const pz = it.pz;
+                  if (!pz.glb) return <span className="pz-sin" aria-hidden="true">—</span>;
+                  if (pz.origen === "generica") return fotoValida(pz.foto) ? <img src={pz.foto!} alt="" draggable={false} loading="lazy" /> : <span className="pz-sin" aria-hidden="true">—</span>;
+                  const m = mini.foto(pz);
+                  if (m) return <img src={m} alt="" draggable={false} />;
+                  if (m === undefined) return <span className="pz-espera" aria-hidden="true" />;
+                  return pz.foto ? <img src={pz.foto} alt="" draggable={false} loading="lazy" /> : <span className="pz-sin" aria-hidden="true">—</span>;
+                })()}
+                <span>{nombre}</span>
+                {it.tipo === "mov" && it.op && <small className="pz-mov-sub">{it.op.sub}</small>}
+              </button>
+            );
+          })}
+          {lista.length <= (ninguno ? 1 : 0) && (
+            <p className="pz-vacio">{fuente === "generica" ? "Pronto: aún no hay piezas genéricas de este tipo." : "Todavía no hay piezas de este tipo."}</p>
+          )}
         </div>
         <div className="pz-paginas">
           <button type="button" className="pz-flecha" onClick={() => irA(p - 1)} disabled={p === 0} aria-label="Página anterior"><span className="pz-flecha-t">‹</span></button>
           <span className="pz-puntos" aria-label={`Página ${p + 1} de ${pags.length}`}>{pags.map((_, i) => <i key={i} className={i === p ? "on" : ""} />)}</span>
           <button type="button" className="pz-flecha" onClick={() => irA(p + 1)} disabled={p >= pags.length - 1} aria-label="Página siguiente"><span className="pz-flecha-t">›</span></button>
         </div>
+        {hoja && (
+          <div key={hoja.n} className={"pz-hoja-sec " + hoja.dir} aria-hidden="true">
+            <div className="pz-hoja-frente" /><div className="pz-hoja-reverso" />
+          </div>
+        )}
       </section>
 
       <div className="pz-acciones">
-        <button type="button" className="az-losa pz-regresar" onClick={regresar} disabled={!historia.length} title={historia.length ? "Deshacer el último cambio" : "Aún no hay cambios que regresar"}>
-          <span className="az-losa-txt"><b>↶ Regresar</b></span>
-        </button>
+        <div className="pz-hist">
+          <button type="button" className="pz-redondo" onClick={deshacer} disabled={!historia.length} aria-label="Deshacer" title="Deshacer">↶</button>
+          <button type="button" className="pz-redondo" onClick={rehacer} disabled={!futuro.length} aria-label="Rehacer" title="Rehacer">↷</button>
+          <button type="button" className="pz-restablecer" onClick={restablecer} disabled={figura === inicial}>Restablecer</button>
+        </div>
         <button type="button" className={"az-losa az-jugar pz-guardar" + (guarda ? " guarda" : "")} disabled={!sePuedeGuardar} onAnimationEnd={() => setGuarda(false)}
           onClick={() => { if (sePuedeGuardar) { onGuardar(figura); setGuardado(true); setGuarda(true); } }}>
           <span className="az-losa-txt"><b>{guardado ? "¡Guardado!" : "¡Guardar!"}</b></span>

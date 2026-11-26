@@ -4,7 +4,7 @@
   position: absolute; inset: 0; overflow: hidden; color: #fff; font-family: var(--f-texto);
   display: grid; gap: 10px; padding: max(10px, env(safe-area-inset-top)) 12px max(10px, env(safe-area-inset-bottom));
   grid-template-columns: minmax(0, 1fr);
-  grid-template-rows: auto minmax(0, .9fr) auto minmax(0, 1.1fr) auto;
+  grid-template-rows: auto minmax(0, .8fr) auto minmax(0, 1.25fr) auto;
   grid-template-areas: "top" "escena" "losas" "panel" "acciones";
 }
 @media (min-width: 860px) {
@@ -25,20 +25,15 @@
   background: var(--arte-h, none) center / cover no-repeat,
               radial-gradient(circle, rgba(150, 60, 0, .35) 1.3px, transparent 1.8px) 0 0 / 9px 9px,
               repeating-conic-gradient(from 0deg at 50% 55%, #ffd23f 0 4deg, #ffb000 4deg 8deg); }
-.D .pz-vin-accion { margin-bottom: -1px; }
-.D .pz-vin-piezas { margin-top: -1px; }
-.D .pz-vin-piezas { grid-row: 3 / 6; grid-column: 1;
-  background: radial-gradient(circle, rgba(31, 95, 214, .2) 1.3px, transparent 1.8px) 0 0 / 9px 9px, #e6eeff; }
 .D .pz-cartela { position: absolute; z-index: 2; left: 2px; top: 0; margin: 0; padding: 5px 9px; background: #ffd23f; color: var(--tinta);
   border: 3px solid var(--tinta); box-shadow: 3px 3px 0 var(--tinta); font: 400 11px/1 var(--f-titulo); text-transform: uppercase; letter-spacing: .02em; }
 @media (min-width: 860px) {
   .D .pz { column-gap: 44px; }
-  .D .pz-vin, .D .pz-vin-accion, .D .pz-vin-piezas { margin: -10px; }
+  .D .pz-vin, .D .pz-vin-accion { margin: -10px; }
   .D .pz-vin-accion { grid-row: 1 / -1; grid-column: 1;
     background-image: var(--arte-v, none),
                       radial-gradient(circle, rgba(150, 60, 0, .35) 1.3px, transparent 1.8px),
                       repeating-conic-gradient(from 0deg at 50% 58%, #ffd23f 0 4deg, #ffb000 4deg 8deg); }
-  .D .pz-vin-piezas { grid-row: 1 / -1; grid-column: 2; }
   .D .pz-cartela { left: 6px; top: 6px; font-size: 15px; padding: 7px 12px; }
 }
 
@@ -75,33 +70,70 @@
 .D .pz-vista iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; display: block; }
 .D .pz-vista .gal-cargando { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); font: 400 16px var(--f-titulo); color: #dfe6ff; }
 
-/* Las 4 losas (mismas del HUB, con su ícono a la izquierda) */
-.D .pz-losas { grid-area: losas; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
-@media (min-width: 860px) { .D .pz-losas { grid-template-columns: 1fr 1fr; gap: 12px; } }
+/* Las 6 secciones (losas del HUB en chico: ícono arriba, nombre abajo, palomita si ya tiene cambios, como el Armario) */
+.D .pz-losas { grid-area: losas; display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 6px; }
+@media (min-width: 860px) { .D .pz-losas { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; } }
 /* Entrada: suben 8 px y aparecen, 220 ms, escalonadas 25 ms; solo al entrar (Codex, rueda-gestos-r1 E5.3). */
-.D .pz-losa { min-height: 50px; padding: 6px 8px; gap: 8px; animation: pzEntraLosa .22s cubic-bezier(.2, .8, .2, 1) both; }
+.D .pz-losa { position: relative; min-height: 50px; padding: 6px 8px; gap: 8px; justify-content: flex-start; animation: pzEntraLosa .22s cubic-bezier(.2, .8, .2, 1) both; }
 .D .pz-losa:nth-child(2) { animation-delay: 25ms; } .D .pz-losa:nth-child(3) { animation-delay: 50ms; } .D .pz-losa:nth-child(4) { animation-delay: 75ms; }
+.D .pz-losa:nth-child(5) { animation-delay: 100ms; } .D .pz-losa:nth-child(6) { animation-delay: 125ms; }
 @keyframes pzEntraLosa { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
-.D .pz-losa .az-ico { position: static; order: -1; flex: none; width: 40px; height: 40px; top: auto; right: auto; transform: none; }
-.D .pz-losa .az-losa-txt b { font-size: clamp(15px, 1.5vw, 22px); }
-.D .pz-losa .az-losa-txt small { font-size: 11px; }
-.D .pz-losa.on { outline: 4px solid #fff; outline-offset: 3px; }
+.D .pz-losa::after { display: none; }
+.D .pz-losa .az-ico { position: static; order: -1; flex: none; width: 36px; height: 36px; top: auto; right: auto; transform: none; }
+.D .pz-losa .az-losa-txt { flex: 0 1 auto; min-width: 0; }
+.D .pz-losa .az-losa-txt b { font-size: clamp(14px, 1.3vw, 19px); white-space: nowrap; }
+.D .pz-losa.on { outline: 4px solid var(--tinta); outline-offset: 2px; }
+.D .pz-palomita { position: absolute; right: -6px; top: -7px; width: 22px; height: 22px; display: grid; place-items: center; border-radius: 50%;
+  background: #22a447; color: #fff; border: 2.5px solid var(--tinta); font: 900 12px/1 var(--f-texto); font-style: normal; box-shadow: 0 2px 0 var(--tinta); }
 .D .pz-ico-vacio { display: block; border-radius: 12px; border: 2px dashed rgba(255, 255, 255, .7); background: rgba(10, 16, 48, .2); }
 @media (max-width: 859px) {
-  .D .pz-losa { justify-content: center; padding: 4px; min-height: 44px; }
-  .D .pz-losa .az-losa-txt small { display: none; }
-  .D .pz-losa.on { outline-width: 3px; outline-offset: 1px; }
-  /* Decidió Codex (encargo 2026-11-25-constructor-diseno-r4): D5 B, ícono de 24 px, 3 px de separación, texto de 11 px,
-     4 px a los lados, «PIERNAS» completo. D6 B: gestos en columna a la derecha (como en el HUB), botones de 40 px con
-     área de toque de 44 × 44; la figura usa todo el alto de la viñeta. */
-  .D .pz-losa { gap: 3px; padding: 4px; }
+  .D .pz-losas { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px 6px; }
+  .D .pz-losa { justify-content: flex-start; gap: 4px; padding: 2px 6px; min-height: 36px; }
   .D .pz-losa .az-ico { width: 24px; height: 24px; }
-  .D .pz-losa .az-losa-txt { flex: 0 1 auto; min-width: 0; }
-  .D .pz-losa .az-losa-txt b { font-size: 11px; letter-spacing: 0; white-space: nowrap; overflow: visible; }
+  .D .pz-losa .az-losa-txt b { font-size: 12px; letter-spacing: 0; }
+  .D .pz-losa.on { outline-width: 3px; outline-offset: 1px; }
+  .D .pz-palomita { width: 16px; height: 16px; font-size: 9px; right: -4px; top: -5px; border-width: 2px; }
 }
 
-/* Panel del lobby con las piezas */
-.D .pz-panel { grid-area: panel; min-height: 0; align-items: stretch; gap: 8px; padding: 10px; border-width: 3px; }
+/* La sección: una viñeta de cómic con su cartela (papel, tinta y trama, como la de la figura) */
+.D .pz-panel { grid-area: panel; position: relative; min-height: 0; display: flex; flex-direction: column; gap: 7px; padding: 30px 10px 6px; color: var(--tinta);
+  border: 4px solid var(--tinta); border-radius: 4px; box-shadow: 4px 5px 0 rgba(10, 16, 48, .28); perspective: 1600px;
+  background: radial-gradient(circle, rgba(31, 95, 214, .18) 1.3px, transparent 1.8px) 0 0 / 9px 9px, #eef3ff; }
+.D .pz-cartela-sec { left: -4px; top: -4px; animation: pzCartela .3s cubic-bezier(.2, .8, .2, 1) both; }
+@keyframes pzCartela { from { opacity: 0; transform: translateX(-8px) rotate(-2deg); } to { opacity: 1; transform: none; } }
+@media (min-width: 860px) { .D .pz-panel { padding: 40px 14px 8px; gap: 9px; } .D .pz-cartela-sec { left: -4px; top: -4px; } }
+/* Vuelta de hoja al cambiar de sección: una hoja de papel tapa la viñeta y se voltea sobre su orilla (como el libro del
+   personalizador anterior, personalizador.css .p-hoja). Adelante gira sobre la izquierda; atrás, sobre la derecha. */
+.D .pz-hoja-sec { position: absolute; inset: -4px; z-index: 6; transform-style: preserve-3d; pointer-events: none; }
+.D .pz-hoja-sec.sig { transform-origin: 0 50%; animation: pzHojaSig .6s cubic-bezier(.45, .05, .35, 1) both; }
+.D .pz-hoja-sec.ant { transform-origin: 100% 50%; animation: pzHojaAnt .6s cubic-bezier(.45, .05, .35, 1) both; }
+.D .pz-hoja-frente, .D .pz-hoja-reverso { position: absolute; inset: 0; backface-visibility: hidden; -webkit-backface-visibility: hidden; border: 4px solid var(--tinta); border-radius: 4px;
+  background: radial-gradient(circle, rgba(10, 16, 48, .08) 1px, transparent 1.4px) 0 0 / 7px 7px, var(--papel); }
+.D .pz-hoja-frente::after { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, rgba(0, 0, 0, .25), transparent 40%); opacity: 0; animation: pzSombra .6s ease-in both; }
+.D .pz-hoja-sec.ant .pz-hoja-frente::after { background: linear-gradient(270deg, rgba(0, 0, 0, .25), transparent 40%); }
+.D .pz-hoja-reverso { transform: rotateY(180deg); background: linear-gradient(270deg, rgba(0, 0, 0, .18), transparent 30%), var(--papel); }
+@keyframes pzHojaSig { from { transform: rotateY(0deg); } to { transform: rotateY(-180deg); } }
+@keyframes pzHojaAnt { from { transform: rotateY(0deg); } to { transform: rotateY(180deg); } }
+@keyframes pzSombra { to { opacity: 1; } }
+
+/* Switch Originales / Genéricas y colores en una fila; chips de saga o tipo debajo */
+.D .pz-filtros { display: flex; align-items: center; justify-content: space-between; gap: 6px 10px; flex-wrap: wrap; }
+.D .pz-switch { display: inline-flex; padding: 3px; border-radius: 999px; background: var(--tinta); box-shadow: 0 3px 0 rgba(10, 16, 48, .35); }
+.D .pz-switch button { min-height: 38px; padding: 0 14px; border: 0; border-radius: 999px; background: transparent; color: #cfd6f2; cursor: pointer;
+  font: 400 14px/1 var(--f-titulo); text-transform: uppercase; letter-spacing: .02em; transition: background .15s, color .15s; }
+.D .pz-switch button.on { background: linear-gradient(#fff09a, #ffc21a); color: var(--tinta); }
+.D .pz-chips { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
+.D .pz-chips::-webkit-scrollbar { display: none; }
+.D .pz-chip { flex: none; min-height: 32px; padding: 0 12px; border-radius: 999px; border: 2px solid var(--tinta); background: #fff; color: var(--tinta); cursor: pointer;
+  font: 800 12.5px/1 var(--f-texto); white-space: nowrap; }
+.D .pz-chip.on { background: var(--pj, #1f5fd6); color: #fff; }
+@media (max-width: 859px) {
+  .D .pz-switch button { min-height: 34px; padding: 0 10px; font-size: 12.5px; }
+  .D .pz-pill { min-height: 36px; font-size: 13px; }
+  .D .pz-panel { gap: 6px; padding-top: 28px; }
+  .D .pz-filtros .pz-colores .pz-color { width: 36px; height: 40px; }
+  .D .pz-filtros .pz-colores .pz-color::before { inset: 8px 4px; }
+}
 .D .pz-pills { display: flex; gap: 6px; }
 .D .pz-pill { flex: 1; min-height: 44px; border-radius: 12px; border: 2.5px solid var(--az-tinta); cursor: pointer; font: 400 15px/1 var(--f-titulo); text-transform: uppercase;
   color: var(--az-tinta); background: #eef1f8; box-shadow: 0 4px 0 #b9c1d8; transition: transform .12s; }
@@ -116,12 +148,14 @@
 .D .pz-color:focus-visible { outline: none; }
 .D .pz-color:focus-visible::before { outline: 3px solid var(--az-tinta); outline-offset: 2px; }
 .D .pz-rejilla { flex: 1 1 0; min-height: 0; display: grid; gap: 8px; touch-action: pan-y; user-select: none; }
-.D .pz-pieza { position: relative; min-height: 0; display: grid; grid-template-rows: minmax(0, 1fr) auto; padding: 4px; cursor: pointer; border-radius: 12px;
+.D .pz-pieza { position: relative; min-height: 0; display: grid; grid-template-rows: minmax(0, 1fr) auto auto; padding: 4px; cursor: pointer; border-radius: 12px;
   border: 2px solid #c9d0e3; background: radial-gradient(ellipse at 50% 30%, #fff, #dfe5f3); color: #3a4470; transition: transform .12s; }
 .D .pz-pieza:hover { transform: translateY(-2px); }
 .D .pz-pieza.on { border-color: #ffb000; box-shadow: 0 0 0 3px #ffb000; }
 .D .pz-pieza img { width: 100%; height: 100%; object-fit: contain; min-height: 0; pointer-events: none; }
-.D .pz-pieza span:last-child { font: 800 11px/1.1 var(--f-texto); text-align: center; padding-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.D .pz-mov-ico { width: 62%; height: 100%; min-height: 0; place-self: center; }
+.D .pz-mov-sub { font: 700 10px/1.1 var(--f-texto); text-align: center; color: #6a74a0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.D .pz-pieza > span:not(.pz-sin):not(.pz-espera) { font: 800 11px/1.1 var(--f-texto); text-align: center; padding-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .D .pz-espera { width: 34%; aspect-ratio: 1; place-self: center; border-radius: 50%; border: 4px solid #d5dbea; border-top-color: #ffb000; animation: pzGira .8s linear infinite; }
 @keyframes pzGira { to { transform: rotate(360deg); } }
 .D .pz-sin { display: grid; place-items: center; font: 400 28px var(--f-titulo); color: #9aa3c0; }
@@ -136,18 +170,24 @@
 .D .pz-puntos i { width: 10px; height: 6px; border-radius: 99px; background: #c4cbe0; }
 .D .pz-puntos i.on { width: 22px; background: #ffb000; }
 
-/* Regresar y ¡Guardar! (como ¡Jugar!) */
-.D .pz-acciones { grid-area: acciones; display: grid; grid-template-columns: minmax(0, .45fr) minmax(0, 1fr); gap: 12px; }
+/* Deshacer, rehacer, Restablecer (como el Armario) y ¡Guardar! (como ¡Jugar!) */
+.D .pz-acciones { grid-area: acciones; display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 12px; }
+.D .pz-hist { display: flex; align-items: center; gap: 6px; }
+.D .pz-redondo { width: 44px; height: 44px; border-radius: 50%; border: 2.5px solid var(--tinta); background: #fff; color: var(--tinta); cursor: pointer;
+  font: 900 22px/1 var(--f-texto); box-shadow: 0 3px 0 var(--tinta); }
+.D .pz-redondo:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--tinta); }
+.D .pz-restablecer { min-height: 44px; padding: 0 6px; border: 0; background: none; color: var(--tinta); cursor: pointer; text-decoration: underline; text-underline-offset: 3px;
+  font: 800 14px/1 var(--f-texto); }
+.D .pz-redondo:disabled, .D .pz-restablecer:disabled { opacity: .35; cursor: default; box-shadow: none; }
 .D .pz-acciones .az-losa { min-height: 54px; justify-content: center; padding: 6px 10px; }
 .D .pz-acciones .az-losa::after { display: none; }
+.D .pz-acciones .pz-guardar { min-height: 54px; max-height: 72px; }
 .D .pz-guardar .az-losa-txt b { font-size: clamp(22px, 2.4vw, 34px); }
-.D .pz-regresar .az-losa-txt b { font-size: clamp(14px, 1.3vw, 18px); }
 /* Texto centrado como ¡Jugar! (en el HUB el texto ocupa todo el ancho: flex 1). */
 .D .pz-acciones .az-losa-txt { flex: 0 1 auto; align-items: center; text-align: center; }
-/* Apagado se ve gris (no hay nada que regresar / la figura aún se arma), no azul deslavado. */
-/* Decidió Codex (encargo 2026-11-25-constructor-diseno-r3, D1 A): gris a opacidad completa, sin respuesta al cursor. */
-.D .pz-regresar:disabled, .D .pz-guardar:disabled { --c1: #c3c9d8; --c2: #8f98b0; --lab: #5f6880; filter: saturate(.4); pointer-events: none; transform: none; }
-.D .pz-regresar:disabled .az-losa-txt b, .D .pz-guardar:disabled .az-losa-txt b { color: #eef1f8; }
+/* Apagado se ve gris (la figura aún se arma), no azul deslavado. Decidió Codex (encargo 2026-11-25-constructor-diseno-r3, D1 A). */
+.D .pz-guardar:disabled { --c1: #c3c9d8; --c2: #8f98b0; --lab: #5f6880; filter: saturate(.4); pointer-events: none; transform: none; }
+.D .pz-guardar:disabled .az-losa-txt b { color: #eef1f8; }
 .D .pz-aviso { position: absolute; left: 50%; top: 8px; transform: translateX(-50%); z-index: 3; padding: 8px 14px; border-radius: 12px; border: 2.5px solid var(--az-tinta);
   background: #ff3b5c; color: #fff; font: 400 15px/1 var(--f-titulo); box-shadow: 0 4px 0 var(--az-tinta); white-space: nowrap; }
 .D .pz-losa .az-losa-txt b, .D .pz-pill, .D .pz-placa { font-family: var(--f-titulo); }
@@ -159,4 +199,4 @@
 /* ¡Guardar!: se comprime y recupera al guardar (E5.4). */
 .D .pz-guardar.guarda { animation: pzGuarda .18s cubic-bezier(.34, 1.56, .64, 1); }
 @keyframes pzGuarda { 40% { transform: scale(.94); } to { transform: none; } }
-@media (prefers-reduced-motion: reduce) { .D .pz-top, .D .pz-losa, .D .pz-pista, .D .pz-rejilla > *, .D .pz-guardar.guarda, .D .pz-espera { animation: none; } .D .pz .pz-volteo { display: none; } }
+@media (prefers-reduced-motion: reduce) { .D .pz-hoja-sec { display: none; } .D .pz-cartela-sec, .D .pz-top, .D .pz-losa, .D .pz-pista, .D .pz-rejilla > *, .D .pz-guardar.guarda, .D .pz-espera { animation: none; } .D .pz .pz-volteo { display: none; } }

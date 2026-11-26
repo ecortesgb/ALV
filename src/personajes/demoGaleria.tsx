@@ -1,13 +1,16 @@
 // Página de prueba del sistema de personajes nuevo (tools/personajes/galeria.html). Solo desarrollo: no entra al juego.
 // «Mi personaje» → Elegir personaje (galería) o Crear mi personaje (constructor básico).
 // ?fuente=<url del servidor de personajes> (por omisión personajes-privados en 4193) · ?yo=<jugador> · ?vista=galeria|crear
+// ?mp=1 → la pantalla real «Mi personaje» (mueble «Mi colección» + constructor) con la colección local.
 // ?revisar=1 → modo revisión de los personajes del catálogo (Revision.tsx).
 import { useEffect, useMemo, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { Boton, FondoCiudad, Panel, RaizDS } from "../ds";
 import { figuraActiva, guardarColeccion, leerColeccion, ponerEnColeccion } from "./coleccion";
 import { Constructor } from "./Constructor";
-import { figuraInicial, piezasDeCatalogo, sePuedePersonalizar } from "./constructorDatos";
+import { figuraInicial, sePuedePersonalizar } from "./constructorDatos";
+import { baseDelIndice, todasLasPiezas } from "./integracion";
+import { MiPersonaje } from "./MiPersonaje";
 import { Galeria } from "./Galeria";
 import { Revision } from "./Revision";
 import { cargarIndice, type Indice } from "./indice";
@@ -29,7 +32,7 @@ function Demo() {
   useEffect(() => { cargarIndice(FUENTE).then(setInd, e => setError(String(e))); }, []);
   useEffect(() => { const f = () => setAncho(innerWidth >= 860); addEventListener("resize", f); return () => removeEventListener("resize", f); }, []);
   useEffect(() => { if (!aviso) return; const t = setTimeout(() => setAviso(null), 2600); return () => clearTimeout(t); }, [aviso]);
-  const piezas = useMemo(() => (ind ? piezasDeCatalogo(ind.catalogo, ind.ranuras) : new Map()), [ind]);
+  const piezas = useMemo(() => (ind ? todasLasPiezas(ind) : new Map()), [ind]);
   const activa = figuraActiva(coleccion);
   const crear = () => { const f = ind && figuraInicial(ind.catalogo, activa); if (f) setVista({ cual: "crear", figura: f }); };
   useEffect(() => { if (ind && q.get("vista") === "galeria") setVista({ cual: "galeria" }); if (ind && q.get("vista") === "crear") crear(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [ind]);
@@ -76,4 +79,20 @@ function Demo() {
   );
 }
 
-createRoot(document.getElementById("raiz")!).render(<Demo />);
+/** «Mi personaje» tal cual lo ve el jugador, con la colección de este aparato en lugar de las cápsulas de la nube. */
+function DemoMP() {
+  const [ind, setInd] = useState<Indice | null>(null);
+  const [coleccion, setColeccion] = useState(() => leerColeccion(JUGADOR));
+  useEffect(() => { cargarIndice(FUENTE).then(setInd, e => console.warn(e)); }, []);
+  const cat = useMemo(() => (ind ? { catalogo: ind.catalogo, piezas: todasLasPiezas(ind), base: baseDelIndice(ind) } : null), [ind]);
+  (window as unknown as { __mp: unknown }).__mp = { ind, coleccion, cat };
+  return (
+    <MiPersonaje jugador={JUGADOR} catalogo={cat} estadoCatalogo={cat ? "listo" : "cargando"}
+      espacios={coleccion.espacios.map(f => ({ figura: f, nombre: "", antes: false }))} activa={coleccion.activa}
+      onGuardar={async (i, f) => { const c = ponerEnColeccion(coleccion, f, i); guardarColeccion(JUGADOR, c); setColeccion(c); return "local"; }}
+      onActivar={i => { const c = { ...coleccion, activa: i }; guardarColeccion(JUGADOR, c); setColeccion(c); }}
+      onSalir={() => location.reload()} />
+  );
+}
+
+createRoot(document.getElementById("raiz")!).render(q.get("mp") === "1" ? <DemoMP /> : <Demo />);

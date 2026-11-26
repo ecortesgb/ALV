@@ -3,7 +3,7 @@
 // catálogo: cada ranura de cada personaje (su cabeza, su torso, su pelo…) es una pieza. Funciones puras.
 import { deCatalogo } from "./figura";
 import { resolver, type Catalogo } from "./plano";
-import type { FiguraV3, Id, Parte, PiezaPlano, Plano } from "./tipos";
+import type { Carga, FiguraV3, Id, Parte, PiezaPlano, Plano } from "./tipos";
 
 /** Ranura del GLB (extras.slot) que cambia cada parte. */
 export const RANURA: Partial<Record<Parte, string>> = {
@@ -45,6 +45,15 @@ export interface PiezaCons {
   donante: Id | null;
   /** Familia del esqueleto de la pieza; null en «Sin …» (sirve a cualquiera). Codex O1: no se mezclan familias. */
   familia: Id | null;
+  /** De un personaje del catálogo, genérica (piezas.json de producción) o «Sin …». Switch del personalizador. */
+  origen?: "original" | "generica" | "ninguna";
+  /** Saga del donante (ficha.grupo) en las originales; tipo (genericas.ts) en las genéricas. */
+  grupo?: Id;
+  /** Genéricas: qué material se tiñe con qué paleta, y su color de fábrica (hex) por paleta. */
+  tintesDef?: { material: string; paleta: NombrePaleta }[];
+  inicial?: Record<string, string>;
+  /** Acabado del GLB (genéricas: el del personaje base). */
+  carga?: Carga;
 }
 export type Piezas = ReadonlyMap<Id, PiezaCons>;
 
@@ -55,7 +64,7 @@ export const BASE_CREAR = "peter-parker";
 /** Piezas sacadas del catálogo: una por cada parte que el personaje trae (según `ranuras` del índice). */
 export function piezasDeCatalogo(catalogo: Catalogo, ranuras: ReadonlyMap<Id, readonly string[]>): Map<Id, PiezaCons> {
   const fuera = new Map<Id, PiezaCons>();
-  for (const p of OPCIONALES) fuera.set(sinId(p), { id: sinId(p), nombre: "Sin " + p, parte: p, glb: "", ranuras: [RANURA[p]!], foto: null, donante: null, familia: null });
+  for (const p of OPCIONALES) fuera.set(sinId(p), { id: sinId(p), nombre: "Sin " + p, parte: p, glb: "", ranuras: [RANURA[p]!], foto: null, donante: null, familia: null, origen: "ninguna", grupo: "" });
   for (const { ficha: f, base } of catalogo.values()) {
     if (f.familia !== "minifig") continue;
     const tiene = new Set(ranuras.get(f.id) ?? []);
@@ -65,7 +74,7 @@ export function piezasDeCatalogo(catalogo: Catalogo, ranuras: ReadonlyMap<Id, re
       if (!tiene.has(ranura)) continue;
       const id = `${f.id}--${parte}`;
       fuera.set(id, { id, nombre: f.nombre, parte, glb, ranuras: [ranura], foto: parte === "cabeza" || parte === "cara" || parte === "cabello" || parte === "sombrero" ? foto
-        : (/\.(webp|png|jpg)$/i.test(f.fotos.tarjeta) && !/no-hay/.test(f.fotos.tarjeta) ? new URL(f.fotos.tarjeta, base).href : null), donante: f.id, familia: f.familia });
+        : (/\.(webp|png|jpg)$/i.test(f.fotos.tarjeta) && !/no-hay/.test(f.fotos.tarjeta) ? new URL(f.fotos.tarjeta, base).href : null), donante: f.id, familia: f.familia, origen: "original", grupo: f.grupo });
     }
   }
   return fuera;
@@ -121,15 +130,24 @@ export function planoConstructor(id: string, f: FiguraV3, catalogo: Catalogo, pi
   for (const [parte, puesta] of Object.entries(f.piezas) as [Parte, { id: Id; tintes?: Record<string, Id> }][]) {
     const pz = piezas.get(puesta.id);
     if (!pz || pz.parte !== parte || !deFamilia(pz, f.familia)) continue;
-    const tintes = Object.entries(puesta.tintes ?? {}).flatMap(([paleta, color]) => {
-      const c = PALETAS[paleta as NombrePaleta]?.find(x => x.id === color);
-      return c ? [{ material: "*", hex: c.hex }] : [];
-    });
-    const carga = pz.donante ? catalogo.get(pz.donante)?.ficha.carga : undefined;
+    const tintes = tintesPlano(pz, puesta.tintes);
+    const carga = pz.carga ?? (pz.donante ? catalogo.get(pz.donante)?.ficha.carga : undefined);
     fuera.push(carga ? { glb: pz.glb, ranuras: [...pz.ranuras], tintes, carga: { ...carga, metal: [...carga.metal] } } : { glb: pz.glb, ranuras: [...pz.ranuras], tintes });
   }
   return { ...base, piezas: fuera };
 }
+
+/** Tintes para el motor. Originales: el color elegido tiñe toda la pieza («*»). Genéricas: cada material con tinte toma
+ *  el color elegido de su paleta o, si no hay, su color de fábrica. */
+export function tintesPlano(pz: PiezaCons, elegidos: Record<string, Id> | undefined): { material: string; hex: string }[] {
+  const hexDe = (paleta: string, color: Id | undefined) => (color ? PALETAS[paleta as NombrePaleta]?.find(x => x.id === color)?.hex : undefined);
+  if (pz.tintesDef) return pz.tintesDef.flatMap(t => { const hex = hexDe(t.paleta, elegidos?.[t.paleta]) ?? pz.inicial?.[t.paleta]; return hex ? [{ material: t.material, hex }] : []; });
+  return Object.entries(elegidos ?? {}).flatMap(([paleta, color]) => { const hex = hexDe(paleta, color); return hex ? [{ material: "*", hex }] : []; });
+}
+
+/** Paleta que se ofrece al elegir una pieza: la de la genérica, o la de la parte (piel, pelo) en las originales. */
+export const paletaDePieza = (pz: PiezaCons | undefined, parte: Parte): NombrePaleta | undefined =>
+  pz?.tintesDef ? pz.tintesDef[0]?.paleta : PALETA_DE_PARTE[parte];
 
 /** Piezas de la figura que no se pueden resolver (no están en el registro, son de otra parte o de otra familia).
  *  Para avisar en vez de perderlas en silencio (Codex O4). */

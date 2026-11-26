@@ -9,9 +9,11 @@
 import { useEffect, useState } from "react";
 import { cliente } from "../servicios/cliente";
 import { fuentePrivada } from "../servicios/personajesPrivados";
-import { piezasDeCatalogo, planoConstructor, type Piezas } from "./constructorDatos";
+import { BASE_CREAR, piezasDeCatalogo, planoConstructor, type PiezaCons, type Piezas } from "./constructorDatos";
+import { piezasGenericas } from "./genericas";
+import { baseGenerica, conMovimientos, type BaseGenerica } from "./movimientos";
 import { leerFigura } from "./figura";
-import { cargarIndice } from "./indice";
+import { cargarIndice, type Indice } from "./indice";
 import { resolver, type Catalogo } from "./plano";
 import type { FiguraV3, Plano } from "./tipos";
 export type { FiguraV3 } from "./tipos";
@@ -90,9 +92,10 @@ export function sinV3<T extends FiguraV2Puente>(f: T): T {
 /** Resolución central (Codex, ajuste 3): la misma para el catálogo y para lo creado en el constructor (base del catálogo
  *  + piezas cambiadas), así HUB, lobby, TV y fotos reciben exactamente el mismo personaje compuesto. null si falta el
  *  personaje, la familia o la fuente: entonces se usa la v2 de respaldo. */
-export function resolverFigura(id: string, f: FiguraV3, catalogo: Catalogo, piezas: Piezas): Plano | null {
+export function resolverFigura(id: string, f: FiguraV3, catalogo: Catalogo, piezas: Piezas, base: BaseGenerica | null = null): Plano | null {
   if (f.origen.tipo !== "catalogo") return null;
-  return Object.keys(f.piezas).length ? planoConstructor(id, f, catalogo, piezas) : resolver(id, f, catalogo);
+  const plano = Object.keys(f.piezas).length ? planoConstructor(id, f, catalogo, piezas) : resolver(id, f, catalogo);
+  return plano ? conMovimientos(plano, f, catalogo, base) : null;
 }
 
 // ---------- Frontera con la base (Codex, v3-directo-r1, opción A) ----------
@@ -151,7 +154,27 @@ export function haciaBase(f: unknown, corte: boolean = modoCorteV3()): HaciaBase
 
 // ---------- Para las escenas de la app (HUB, lobby, TV, nave) ----------
 
-export interface CatalogoV3 { catalogo: Catalogo; piezas: Piezas }
+export interface CatalogoV3 { catalogo: Catalogo; piezas: Piezas;
+  /** Base genérica de minifigura (movimientos genéricos); null si la entrega no la trae. */
+  base?: BaseGenerica | null }
+
+/** La base genérica de minifigura del índice (la primera válida). */
+export function baseDelIndice(ind: Pick<Indice, "genericas">): BaseGenerica | null {
+  for (const g of ind.genericas) { const b = baseGenerica(g); if (b) return b; }
+  return null;
+}
+
+/** Piezas del constructor: las de cada personaje del catálogo (originales) más las genéricas de producción. */
+export function todasLasPiezas(ind: Pick<Indice, "catalogo" | "ranuras" | "genericas">): Map<string, PiezaCons> {
+  const fuera = piezasDeCatalogo(ind.catalogo, ind.ranuras);
+  const carga = ind.catalogo.get(BASE_CREAR)?.ficha.carga;
+  for (const g of ind.genericas) {
+    const { piezas, errores } = piezasGenericas(g, carga);
+    if (errores.length) console.warn("piezas genéricas rechazadas:", errores);
+    for (const [id, pz] of piezas) if (!fuera.has(id)) fuera.set(id, pz);
+  }
+  return fuera;
+}
 let cargaCatalogo: Promise<CatalogoV3 | null> | null = null;
 /** El catálogo, una sola vez por página, solo con la bandera encendida y una fuente. null si no (o si falla: entonces
  *  todas las figuras se ven con su v2 de respaldo). */
@@ -160,7 +183,7 @@ export function catalogoParaEscena(): Promise<CatalogoV3 | null> {
   if (modoCorteV3()) vigilarCuenta();
   if (!cargaCatalogo) {
     cargaCatalogo = fuenteDePersonajes()
-      .then(f => (f ? cargarIndice(f).then(ind => ({ catalogo: ind.catalogo, piezas: piezasDeCatalogo(ind.catalogo, ind.ranuras) })) : null))
+      .then(f => (f ? cargarIndice(f).then(ind => ({ catalogo: ind.catalogo, piezas: todasLasPiezas(ind), base: baseDelIndice(ind) })) : null))
       .catch(err => { console.warn("personajes nuevos: no cargó el catálogo; se usan las figuras de respaldo", err); return null; });
   }
   return cargaCatalogo;
@@ -218,6 +241,6 @@ export function useEscenaV3(): { catalogo: CatalogoV3 | null; montar: boolean; c
 export function paraEscena<T extends { id: string; figura?: unknown }>(x: T, cat: CatalogoV3 | null): T & { plano3?: Plano } {
   if (!cat || !x.figura || typeof x.figura !== "object") return x;
   const v3 = leerV3(x.figura);
-  const plano = v3 ? resolverFigura(x.id, v3, cat.catalogo, cat.piezas) : null;
+  const plano = v3 ? resolverFigura(x.id, v3, cat.catalogo, cat.piezas, cat.base ?? null) : null;
   return { ...x, figura: sinV3(x.figura as FiguraV2Puente), ...(plano ? { plano3: plano } : {}) };
 }

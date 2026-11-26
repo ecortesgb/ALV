@@ -51,7 +51,7 @@
       // como Doctor Octopus, la tienen girada; Codex D2 pide el rostro visible y los ojos a la misma altura).
       p.mixer.stopAllAction(); p.obj.traverse(o => { if (o.isSkinnedMesh) o.skeleton.pose(); });
       const mostrar = new Set(ver);
-      p.obj.traverse(o => { if (o.isMesh && !o.userData.alvOclusor) o.visible = mostrar.has(o.userData.slot); });
+      p.obj.traverse(o => { if (o.isMesh && !o.userData.alvOclusor) o.visible = mostrar.has(o.userData.slot) && !o.userData.alvFuera; }); // lo que una pieza reemplazó sigue escondido
       p.obj.rotation.y = GIRO;
       scene.add(p.obj);
       const b = caja(p.obj);

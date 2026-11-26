@@ -1,6 +1,6 @@
 # ALV — Amigos Legendarios Verdaderos
 ## Documento Maestro del Producto
-**Versión:** 1.63  
+**Versión:** 1.64  
 **Última actualización:** 26 de noviembre de 2026  
 **Estado:** Documento vivo de producto; decisiones y propuestas identificadas por separado.
 
@@ -828,6 +828,13 @@ Reglas propuestas:
 7. **Producción privada:** los personajes y las piezas se arman con Figure Forge a partir de los juegos LEGO de PC de Elías. Lo que sale de un juego nunca va al repo ni a una página pública; se sirve solo desde almacenamiento privado. La app es de uso personal con amigos.
 8. **Personajes antiguos:** los 49 personajes y el personalizador de libro de cómic salen de la app y se conservan como respaldo. Las figuras guardadas por los jugadores se respaldan y salen con la migración de la fase 5, que se presenta antes con su procedimiento y plan de reversión (D-002).
 9. **Primera tanda real:** 123 personajes de LEGO Marvel Super Heroes (126 exportados; Legolas, Aragorn y Gandalf salen del catálogo por ahora porque el juego no trae sus texturas). Todos siguen «sin revisar» hasta que Elías los apruebe a la vista. Los personajes de otros juegos (DC, Star Wars, Harry Potter, Piratas, Sonic) quedan para tandas siguientes.
+
+**DECISIÓN (v1.64, Elías, 26 de noviembre) — D3, rediseño del personalizador.** Cambia los puntos 1 y 3 de D3 v1.62 (y del 4 solo los accesorios, que pasan al básico). Se publica cuando Elías apruebe las capturas.
+1. **Entrada:** el mueble de madera «Mi colección» (arte de Elías) con los 3 personajes parados en sus nichos. Nicho vacío: «Crear» o «Elegir» ahí. Nicho ocupado: tocarlo lo pone en juego; tocarlo otra vez lo abre para editarlo. Abajo, «Crear figura» (grande) y «Elegir personaje». Lo nuevo cae en el primer nicho vacío; con la colección llena, reemplaza la figura en juego.
+2. **Editor:** el orden del «Armario» del Centro de Mando GB con el estilo cómic actual: secciones con palomita cuando tienen cambios, rejilla de piezas, figura 3D, deshacer y rehacer, «Restablecer» y «¡Guardar!».
+3. **Seis secciones**, cada una una viñeta con su cartela: Cabeza (cara, pelo, piel), Torso, Brazos (brazos y manos), Piernas (piernas y cadera), Accesorios (capas y objetos, cascos) y Movimientos. Cambiar de sección voltea la hoja como el libro del personalizador anterior.
+4. **Switch Originales / Genéricas** en cada parte: las originales (piezas de los personajes) se acomodan por saga; las genéricas (piezas de producción) por tipo, por ejemplo caras normales, con pestañas, con cicatrices, enojadas y máscaras; pelo corto, largo, gorras y cascos.
+5. **Movimientos especiales:** saludar, ganar, perder y especial; cada uno con el de un personaje (por saga) o uno genérico, o «De siempre». Al elegirlo, la figura lo hace. Si el movimiento usa un objeto del personaje (el martillo de Thor), la figura lo hace sin el objeto.
 10. **Cómo se ve (decisiones de Elías del 25 y 26 de noviembre):** dirección A, con el estilo cómic del HUB y del lobby (tipografía, íconos, botones y dinámica). El personalizador es una **página de cómic** («Mientras tanto, en el vestidor…»): al entrar, el HUB se voltea como hoja y al salir regresa. Los gestos salen en una **rueda** al tocar al personaje (Saludar, Ganar, Especial, Perder), en lugar de botones. Íconos y fondos generados por Elías. Las caras conservan sus gestos del juego, salvo cuatro personajes con cara fija.
 
 Estado (26 de noviembre): fases 1 y 2 cerradas; galería y constructor básico construidos en una zona aparte del código (`src/personajes/`, `tools/personajes/`), sin conectar a HUB, lobby ni TV (eso es la fase 5) y sin publicar en la app, porque el catálogo es privado y el repo es público.
@@ -1768,6 +1775,9 @@ Decisiones del usuario del 12 de noviembre de 2026:
 ## v1.6
 - Primeros logros (14.2), con ámbito de sesión o histórico (ver DECISIÓN v1.6 en 14.2).
 
+## v1.64
+- 26 nov 2026. D3 (sección 10): rediseño del personalizador pedido por Elías: entrada con el mueble «Mi colección», editor como el «Armario» del Centro de Mando GB en estilo cómic, seis secciones en viñetas con vuelta de hoja, switch Originales / Genéricas por parte (por saga y por tipo), Accesorios y Movimientos especiales por gesto. Cambia los puntos 1 y 3 de D3 v1.62. Sin publicar hasta que Elías apruebe las capturas. Sin cambios de base.
+
 ## v1.63
 - 26 nov 2026. Modo Mini-Juegos con su lista inicial y la ficha de «Esquiva la bala» (6A.6 E y F); Físico como sala de personajes de frente con puntos, castigos y retos que da el anfitrión y juegos físicos en la TV (6A.6 G, resuelve C15); «Palabra prohibida» pasa a ser el primer juego de Físico y el juego viejo con ese nombre se llama ahora «Descríbelo sin decirlo» (resuelve C16); Modo libre como cuarta tarjeta de Modos (6A.6 H). Prototipos en una zona aparte del código, sin publicar. Sin cambios de base (los puntos de Físico ya los guarda la 040).
 
@@ -1972,5 +1982,5 @@ Decisiones del usuario del 12 de noviembre de 2026:
 
 ---
 
-**Fin del Documento Maestro ALV v1.63**  
+**Fin del Documento Maestro ALV v1.64**  
 Este documento debe actualizarse de forma incremental y conservar la distinción entre decisiones aprobadas, propuestas, pendientes y descartadas.
