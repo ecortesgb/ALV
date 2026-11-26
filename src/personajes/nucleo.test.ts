@@ -23,6 +23,15 @@ const buena = (x = ficha()): Ficha => { const r = leerFicha(x); if (!r.ok) throw
 
 describe("ficha de producción", () => {
   it("acepta la ficha del contrato", () => expect(leerFicha(ficha()).ok).toBe(true));
+  it("bloque juego opcional (§3, Codex 2026-11-26): sin él sigue valiendo; con él, solo <id>-juego.glb y acciones conocidas", () => {
+    expect(buena().juego).toBeUndefined();
+    const j = buena(ficha({ juego: { glb: "iron-man-juego.glb", clips: { caminar: "Walk", saltar: "Jump", ko: "KNOCKEDDOWN" } } }));
+    expect(j.juego).toEqual({ glb: "iron-man-juego.glb", clips: { caminar: "Walk", saltar: "Jump", ko: "KNOCKEDDOWN" } });
+    for (const malo of [{ glb: "otro-juego.glb", clips: { caminar: "Walk" } }, { glb: "../iron-man-juego.glb", clips: { caminar: "Walk" } },
+      { glb: "iron-man-juego.glb", clips: { volar: "Fly" } }, { glb: "iron-man-juego.glb", clips: {} }, { glb: "iron-man-juego.glb", clips: { caminar: "<script>" } }]) {
+      expect(leerFicha(ficha({ juego: malo })).ok, JSON.stringify(malo)).toBe(false);
+    }
+  });
   it("rechaza lo que no cuadra", () => {
     for (const malo of [{ id: "Iron Man" }, { familia: "gigante" }, { rig: "rigido" }, { glb: "../../secreto.glb" }, { glb: "https://x.com/a.glb" },
       { glb: "C:\\a.glb" }, { bando: "malo" }, { publica: true }, { calidad: { estado: "listo" } }]) {

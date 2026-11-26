@@ -1,7 +1,7 @@
 // Lee y valida la ficha de un personaje que entrega producción (CONTRATO-ENTREGA.md §3).
 // Lo que llega de un servidor no es confiable: se revisa campo por campo y se rechaza lo que no cuadra.
 import { familia } from "./familias";
-import { HUESOS_LOGICOS, LOGICAS, esId, esLogica, type Ficha, type HuesoLogico, type Logica } from "./tipos";
+import { ACCIONES_JUEGO, HUESOS_LOGICOS, LOGICAS, esId, esLogica, type AccionJuego, type Ficha, type HuesoLogico, type Logica } from "./tipos";
 
 const texto = (x: unknown, max = 80): x is string => typeof x === "string" && x.length > 0 && x.length <= max;
 /** Ruta relativa sin salir hacia arriba ni ser una dirección completa. */
@@ -68,6 +68,20 @@ export function leerFicha(x: unknown, opciones: { rutasLibres?: boolean } = {}):
   const cal = (f.calidad ?? {}) as Record<string, unknown>;
   if (!["borrador", "jugable", "revision", "aprobado"].includes(cal.estado as string)) e.push("calidad.estado");
 
+  // Bloque opcional `juego` (§3): <id>-juego.glb junto a la ficha y acciones conocidas → nombre de clip.
+  let juego: Ficha["juego"];
+  if (f.juego != null) {
+    const j = f.juego as Record<string, unknown>;
+    const clips: Partial<Record<AccionJuego, string>> = {};
+    if (!okRuta(j.glb) || String(j.glb) !== `${String(f.id)}-juego.glb`) e.push("juego.glb");
+    for (const [k, v] of Object.entries((j.clips ?? {}) as Record<string, unknown>)) {
+      if (!(ACCIONES_JUEGO as readonly string[]).includes(k) || !clip(v)) { e.push("juego.clips." + k); continue; }
+      clips[k as AccionJuego] = v;
+    }
+    if (!Object.keys(clips).length) e.push("juego.clips");
+    juego = { glb: j.glb as string, clips };
+  }
+
   if (e.length) return { ok: false, errores: e };
   return {
     ok: true,
@@ -82,6 +96,7 @@ export function leerFicha(x: unknown, opciones: { rutasLibres?: boolean } = {}):
         personaje_juego: origen.personaje_juego as string | undefined, herramienta: origen.herramienta as string | undefined },
       publica: f.publica as boolean,
       calidad: { estado: cal.estado as Ficha["calidad"]["estado"], notas: typeof cal.notas === "string" ? cal.notas.slice(0, 300) : undefined },
+      ...(juego ? { juego } : {}),
     },
   };
 }

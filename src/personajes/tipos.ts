@@ -58,7 +58,14 @@ export interface Ficha {
   origen: { fuente: "juego" | "ldraw" | "propia"; juego?: string; personaje_juego?: string; herramienta?: string };
   publica: boolean;
   calidad: { estado: "borrador" | "jugable" | "revision" | "aprobado"; notas?: string };
+  /** Opcional (CONTRATO-ENTREGA.md §3, aprobado por Codex el 2026-11-26): GLB del mismo personaje con sus clips más las
+   *  acciones de los minijuegos. `clips`: acción lógica → nombre exacto del clip en ese GLB. */
+  juego?: { glb: string; clips: Partial<Record<AccionJuego, string>> };
 }
+
+/** Acciones de los minijuegos (bloque `juego` de la ficha). */
+export const ACCIONES_JUEGO = ["caminar", "correr", "saltar", "caer", "aterrizar", "golpe", "herido", "ko", "eliminado", "nervios"] as const;
+export type AccionJuego = (typeof ACCIONES_JUEGO)[number];
 
 /** Pieza puesta en la figura del jugador. `tintes`: material → id de color de su paleta. */
 export interface PiezaPuesta { id: Id; var?: Id; tintes?: Record<string, Id> }
