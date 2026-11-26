@@ -477,13 +477,25 @@
     const pz = (geo, m, x, y, z) => { const o = new THREE.Mesh(geo, m); o.position.set(x, y, z); o.castShadow = o.receiveShadow = true; g.add(o); return o; };
     const cuerpo = matN(0x2b3a5c, 0.35, 0.25), tira = new THREE.MeshBasicMaterial({ color: 0x5aa6f0 });
     pz(new THREE.BoxGeometry(0.92, 0.12, 0.78), cuerpo, 0, SILLA_Y - 0.06, -0.04);
-    pz(new THREE.BoxGeometry(0.92, 0.6, 0.12), cuerpo, 0, SILLA_Y + 0.28, -0.46);
+    const respaldo = pz(new THREE.BoxGeometry(0.92, 0.6, 0.12), cuerpo, 0, SILLA_Y + 0.28, -0.46);
     const t = pz(new THREE.BoxGeometry(0.94, 0.09, 0.14), tira, 0, SILLA_Y + 0.6, -0.46); t.castShadow = false;
+    // Cojín: sube la cara del asiento hasta la cadera de un Big Fig que queda en el aire (alto 1; se escala en acomodarNave).
+    const cojin = pz(new THREE.BoxGeometry(0.92, 1, 0.78), cuerpo, 0, SILLA_Y, -0.04); cojin.visible = false;
     pz(new THREE.CylinderGeometry(0.07, 0.07, SILLA_Y - 0.12, 12), matN(0x8d96a8, 0.2, 0.8), 0, (SILLA_Y - 0.12) / 2, -0.04);
     pz(new THREE.CylinderGeometry(0.34, 0.38, 0.05, 24), matN(0x232833, 0.3, 0.6), 0, 0.025, -0.04);
     const halo = haloN(1.5, 0x5aa6f0); halo.position.set(0, 0.02, -0.04); g.add(halo);
     scene.add(g);
-    return { g, tira, halo };
+    return { g, tira, tiraMalla: t, halo, respaldo, cojin };
+  }
+  // Plaza de Big Fig (Codex, sentado-bigfig13-verif, b): silla SIN respaldo (el cuerpo lo envolvía), la tira de color pasa al
+  // frente del asiento y, si la cadera queda en el aire, el asiento sube hasta ella (cojín). Minifiguras: la silla de siempre.
+  const ASIENTO_TOL = 0.02, COJIN_MAX = 0.25;
+  function vestirSilla(s, e) {
+    const grande = esBigFig(e), cojin = grande && e.apoyo != null && e.apoyo > ASIENTO_TOL ? Math.min(COJIN_MAX, e.apoyo) : 0;
+    s.respaldo.visible = !grande;
+    s.tiraMalla.position.set(0, grande ? SILLA_Y - 0.06 : SILLA_Y + 0.6, grande ? 0.3 : -0.46);
+    s.cojin.visible = cojin > 0;
+    if (cojin > 0) { s.cojin.scale.y = cojin; s.cojin.position.y = SILLA_Y + cojin / 2; }
   }
   // Figuras nuevas sentadas: si sus pies llegan al tablero, la silla y la figura se alejan juntas, en línea recta desde el
   // centro y sin girar, lo mínimo para dejar PIES_HOLGURA libre entre los pies y el canto (Codex, sentado-r2). Solo cuentan
@@ -499,8 +511,8 @@
     const R = 1.05 + n * 0.13;
     if (!NV.mesa || NV.n !== n) { quitarN(NV.mesa && NV.mesa.g); NV.mesa = armarMesa(R); NV.n = n; NV.R = R; NV.S = R + 0.42; }
     while (NV.sillas.length < n) NV.sillas.push(armarSilla());
-    const colorDe = new Map(), lejos = new Map();
-    orden.forEach(id => { const e = figuras.get(id); colorDe.set(e.columna, e.color); e.alejar = alejarN(e); if (e.alejar) lejos.set(e.columna, e.alejar); });
+    const colorDe = new Map(), lejos = new Map(), deColumna = new Map();
+    orden.forEach(id => { const e = figuras.get(id); colorDe.set(e.columna, e.color); deColumna.set(e.columna, e); e.alejar = alejarN(e); if (e.alejar) lejos.set(e.columna, e.alejar); });
     NV.lejos = Math.max(0, ...lejos.values());
     NV.sillas.forEach((s, i) => {
       s.g.visible = i < n; if (i >= n) return;
@@ -510,6 +522,8 @@
       const c = colorValido(colorDe.get(i) || NV.colores[i]);
       s.tira.color.copy(linN(c || "#4a5687"));
       s.halo.material.color.copy(linN(c || "#4a5687"));
+      const e = deColumna.get(i);
+      vestirSilla(s, e && e.vuela == null ? e : null);
     });
     orden.forEach(id => {
       const e = figuras.get(id), a = anguloN(e.columna, n);
@@ -587,6 +601,22 @@
     const d = Math.max((ancho / 2) / th, (prof / 2) / tv) * 0.98;
     const y0 = 1.05;
     camera.position.set(0, y0 + d * Math.sin(ang), d * Math.cos(ang)); camera.lookAt(0, y0, 0); camera.updateProjectionMatrix();
+    // Con Big Fig (Codex, sentado-bigfig13-verif): se aleja la cámara hasta que quepan el piso de las sillas y lo más alto de
+    // cada figura sentada (la cola de Lagarto), con margen abajo. Sin Big Fig, el encuadre de siempre.
+    const grandes = orden.map(id => figuras.get(id)).filter(e => esBigFig(e) && e.vuela == null);
+    if (grandes.length) {
+      const pts = [], n = Math.max(3, lugares());
+      for (let k = 0; k < 24; k++) { const a = (k / 24) * Math.PI * 2; pts.push(new THREE.Vector3(Math.sin(a) * ext, 0, Math.cos(a) * ext)); }
+      orden.forEach(id => {
+        const e = figuras.get(id), a = anguloN(e.columna, n), S = NV.S + (e.alejar || 0), top = SILLA_Y + (esBigFig(e) && e.techo != null ? e.techo : 1.7);
+        for (const r of [S - 0.5, S + 0.5]) pts.push(new THREE.Vector3(Math.sin(a) * r, top, Math.cos(a) * r));
+      });
+      const v = new THREE.Vector3(), cabe = () => {
+        camera.updateMatrixWorld(true);
+        return pts.every(p => { v.copy(p).project(camera); return Math.abs(v.x) <= 0.96 && v.y >= -0.88 && v.y <= 0.94; });
+      };
+      for (let k = 0; k < 60 && !cabe(); k++) { const dd = d * Math.pow(1.02, k + 1); camera.position.set(0, y0 + dd * Math.sin(ang), dd * Math.cos(ang)); camera.lookAt(0, y0, 0); }
+    }
     if (!TOON) { const sc = luz.shadow.camera, a = ext + 1.2; sc.left = -a; sc.right = a; sc.top = a; sc.bottom = -a; sc.updateProjectionMatrix(); luz.position.set(-3.5, 8, 5); luz.target.position.set(0, 0.6, 0); }
   }
   if (SIN_PLAT && !TOON) scene.add(pisoSombra(1.6));
@@ -1350,7 +1380,11 @@
       inst.tocar("reposo", { mezcla: 0 });
       // Nave: hasta dónde llegan los pies sentados a la altura del tablero (todo el bucle); acomodarNave() aleja la silla y la
       // figura lo justo para que no toquen la mesa (decidió Codex, sentado-r2: Big Fig, opción 2).
-      if (NAVE && p3.familia === "bigfig") e.pies = inst.alcancePies(p3.sentado, grupo, MESA_Y - 0.14 - PIES_HOLGURA_Y - SILLA_Y);
+      // Además, el punto más bajo del cuerpo sobre la huella del asiento (cojín si queda en el aire) y el más alto (encuadre).
+      if (NAVE && p3.familia === "bigfig") {
+        const ms = inst.medirSentado(p3.sentado, grupo, { yMinPies: MESA_Y - 0.14 - PIES_HOLGURA_Y - SILLA_Y, huella: { x: 0.46, z0: -0.43, z1: 0.35 } });
+        e.pies = ms && ms.pies; e.apoyo = ms && ms.apoyo; e.techo = ms && ms.techo;
+      }
       // Si el respaldo estaba a media animación de un gesto, la nueva la sigue con su lógica y el tiempo que le quedaba
       // (mismo contrato: al vencer, «termino»; Codex, fase5-paso2-verif).
       const ahora = reloj.getElapsedTime();

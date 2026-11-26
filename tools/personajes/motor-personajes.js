@@ -165,22 +165,28 @@
   }
 
   // Vértices que mueven los huesos de los pies (el hueso de más peso), por malla con piel: [[malla, índices], …].
-  function verticesDePies(obj) {
+  /** Vértices de cada malla con piel, separados en pies (Foot/ToeBase…) y resto. `paso` salta vértices del resto en mallas
+   *  muy grandes (solo para medidas). */
+  function verticesPorParte(obj, paso = 1) {
     const fuera = [];
     obj.traverse(o => {
       if (!o.isSkinnedMesh || !o.visible || o.userData.alvOclusor) return;
       const pies = new Set(o.skeleton.bones.map((h, i) => (PIE.test(h.name) ? i : -1)).filter(i => i >= 0));
       const si = o.geometry.attributes.skinIndex, sw = o.geometry.attributes.skinWeight;
-      if (!pies.size || !si || !sw) return;
-      const lista = [];
+      if (!si || !sw) return;
+      const p = [], r = [], salto = si.count > 20000 ? paso : 1;
       for (let i = 0; i < si.count; i++) {
         let k = 0, w = sw.getX(i);
         if (sw.getY(i) > w) { k = 1; w = sw.getY(i); } if (sw.getZ(i) > w) { k = 2; w = sw.getZ(i); } if (sw.getW(i) > w) k = 3;
-        if (pies.has(k === 0 ? si.getX(i) : k === 1 ? si.getY(i) : k === 2 ? si.getZ(i) : si.getW(i))) lista.push(i);
+        if (pies.has(k === 0 ? si.getX(i) : k === 1 ? si.getY(i) : k === 2 ? si.getZ(i) : si.getW(i))) p.push(i);
+        else if (i % salto === 0) r.push(i);
       }
-      if (lista.length) fuera.push([o, lista]);
+      fuera.push([o, p, r]);
     });
     return fuera;
+  }
+  function verticesDePies(obj) {
+    return verticesPorParte(obj).filter(([, p]) => p.length).map(([o, p]) => [o, p]);
   }
 
   async function crear(plano) {
@@ -212,6 +218,35 @@
       a.play();
       if (actual && actual !== a) { if (mezcla > 0) actual.crossFadeTo(a, mezcla, false); else actual.stop(); }
       actual = a;
+    }
+    function medirClip(nombre, marco, op) {
+      const clip = porNombre.get(nombre);
+      if (!clip || !marco) return null;
+      const muestras = op.muestras || 16, yMin = op.yMinPies == null ? -Infinity : op.yMinPies, h = op.huella;
+      const partes = verticesPorParte(obj, 2), v = new T.Vector3();
+      const m2 = new T.AnimationMixer(obj), a = m2.clipAction(clip);
+      a.play();
+      let pies = -Infinity, apoyo = Infinity, techo = -Infinity;
+      for (let k = 0; k < muestras; k++) {
+        m2.setTime((clip.duration * k) / muestras);
+        obj.updateMatrixWorld(true); marco.updateMatrixWorld(true);
+        for (const [m, lp, lr] of partes) {
+          const pos = m.geometry.attributes.position;
+          for (const i of lp) {
+            v.fromBufferAttribute(pos, i); m.boneTransform(i, v); v.applyMatrix4(m.matrixWorld); marco.worldToLocal(v);
+            if (v.y >= yMin && v.z > pies) pies = v.z;
+            if (v.y > techo) techo = v.y;
+          }
+          if (op.soloPies) continue;
+          for (const i of lr) {
+            v.fromBufferAttribute(pos, i); m.boneTransform(i, v); v.applyMatrix4(m.matrixWorld); marco.worldToLocal(v);
+            if (v.y > techo) techo = v.y;
+            if (h && Math.abs(v.x) <= h.x && v.z >= h.z0 && v.z <= h.z1 && v.y < apoyo) apoyo = v.y;
+          }
+        }
+      }
+      a.stop(); m2.uncacheRoot(obj);
+      return { pies: isFinite(pies) ? pies : null, apoyo: isFinite(apoyo) ? apoyo : null, techo: isFinite(techo) ? techo : null };
     }
     /** Toca una lógica, un momento o gesto de siempre (se traduce) o un clip de «vida» por su nombre. */
     function tocar(cual, op) {
@@ -261,27 +296,14 @@
        *  quedan a la altura de algo que puedan atravesar). Usa un mezclador aparte: no cambia lo que se está tocando (el
        *  siguiente update vuelve a poner la pose). null si el clip no está o no hay pies. La nave lo usa para alejar la silla. */
       alcancePies: (nombre, marco, yMin = -Infinity, muestras = 16) => {
-        const clip = porNombre.get(nombre);
-        if (!clip || !marco) return null;
-        const vp2 = new T.Vector3(), pies = verticesDePies(obj);
-        if (!pies.length) return null;
-        const m2 = new T.AnimationMixer(obj), a = m2.clipAction(clip);
-        a.play();
-        let max = -Infinity;
-        for (let k = 0; k < muestras; k++) {
-          m2.setTime((clip.duration * k) / muestras);
-          obj.updateMatrixWorld(true); marco.updateMatrixWorld(true);
-          for (const [m, lista] of pies) {
-            const pos = m.geometry.attributes.position;
-            for (const i of lista) {
-              vp2.fromBufferAttribute(pos, i); m.boneTransform(i, vp2); vp2.applyMatrix4(m.matrixWorld); marco.worldToLocal(vp2);
-              if (vp2.y >= yMin && vp2.z > max) max = vp2.z;
-            }
-          }
-        }
-        a.stop(); m2.uncacheRoot(obj);
-        return isFinite(max) ? max : null;
+        const m = medirClip(nombre, marco, { yMinPies: yMin, muestras, soloPies: true });
+        return m && m.pies != null ? m.pies : null;
       },
+      /** Medidas de la pose sentada a lo largo de TODO el clip `nombre`, en coordenadas de `marco`: `pies` = hasta dónde llegan
+       *  los pies hacia el frente (+Z) con y ≥ `yMinPies`; `apoyo` = el punto más bajo del cuerpo (sin pies) sobre la huella del
+       *  asiento (|x| ≤ huella.x, huella.z0 ≤ z ≤ huella.z1); `techo` = el punto más alto. Mezclador aparte (no cambia lo que se
+       *  toca). null si el clip no está. La nave lo usa para la silla de Big Fig. */
+      medirSentado: (nombre, marco, op = {}) => medirClip(nombre, marco, op),
       /** Ancho en reposo (para acomodar varias figuras sin que se encimen). */
       ancho: () => ancho0,
       hueso: logico => { const n = plano.huesos && plano.huesos[logico]; return n ? obj.getObjectByName(n) : null; },
