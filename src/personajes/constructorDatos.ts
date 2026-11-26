@@ -1,0 +1,117 @@
+// Constructor básico (ALV_PLAN_PERSONAJES_RAPIDO.md, R5): piezas por ranura sobre el esqueleto común de minifigura.
+// Mientras producción entrega las piezas genéricas (CONTRATO-ENTREGA.md §6), las piezas salen de los personajes del
+// catálogo: cada ranura de cada personaje (su cabeza, su torso, su pelo…) es una pieza. Funciones puras.
+import { deCatalogo } from "./figura";
+import { resolver, type Catalogo } from "./plano";
+import type { FiguraV3, Id, Parte, PiezaPlano, Plano } from "./tipos";
+
+/** Ranura del GLB (extras.slot) que cambia cada parte. */
+export const RANURA: Partial<Record<Parte, string>> = {
+  cabeza: "head", cara: "face", cabello: "hair", sombrero: "headgear", torso: "torso", brazos: "arms", manos: "hands",
+  cadera: "hips", piernas: "legs", accesorio: "accessory",
+};
+/** Partes que se pueden dejar vacías («Sin pelo», «Sin casco»). */
+export const OPCIONALES: readonly Parte[] = ["cabello", "sombrero", "accesorio"];
+/** Partes que se estorban: poner una quita la otra (pelo y casco ocupan el cráneo). */
+const ESTORBA: Partial<Record<Parte, Parte>> = { cabello: "sombrero", sombrero: "cabello" };
+
+export interface Color { id: Id; nombre: string; hex: string }
+export const PALETAS: Record<"piel" | "pelo" | "ropa", Color[]> = {
+  piel: [
+    { id: "amarilla", nombre: "Amarilla", hex: "#f2cd37" }, { id: "clara", nombre: "Clara", hex: "#f6d7b3" },
+    { id: "blanca", nombre: "Blanca", hex: "#fbe7d6" }, { id: "morena", nombre: "Morena", hex: "#aa7d55" },
+    { id: "oscura", nombre: "Oscura", hex: "#5c3a21" },
+  ],
+  pelo: [
+    { id: "rubio", nombre: "Rubio", hex: "#e4b54a" }, { id: "castano", nombre: "Castaño", hex: "#6b3d1e" },
+    { id: "negro", nombre: "Negro", hex: "#1b1b1f" }, { id: "rojo", nombre: "Rojo", hex: "#b4321c" },
+  ],
+  ropa: [
+    { id: "rojo", nombre: "Rojo", hex: "#c91a09" }, { id: "azul", nombre: "Azul", hex: "#0055bf" }, { id: "verde", nombre: "Verde", hex: "#237841" },
+    { id: "negro", nombre: "Negro", hex: "#1b2a34" }, { id: "blanco", nombre: "Blanco", hex: "#f4f4f4" }, { id: "gris", nombre: "Gris", hex: "#a0a5a9" },
+    { id: "mezclilla", nombre: "Mezclilla", hex: "#4a6fa5" },
+  ],
+};
+export type NombrePaleta = keyof typeof PALETAS;
+/** Qué paleta tiñe cada parte cuando la pieza es lisa (las del catálogo se tiñen enteras). */
+export const PALETA_DE_PARTE: Partial<Record<Parte, NombrePaleta>> = { cabeza: "piel", manos: "piel", cabello: "pelo" };
+
+export interface PiezaCons {
+  id: Id; nombre: string; parte: Parte;
+  /** URL del GLB del que se toma; vacía en las piezas «Sin …». */
+  glb: string;
+  ranuras: string[];
+  foto: string | null;
+  donante: Id | null;
+}
+export type Piezas = ReadonlyMap<Id, PiezaCons>;
+
+const sinId = (p: Parte) => "sin-" + p;
+/** Personaje con el que arranca «Crear mi personaje» si no hay piezas genéricas: un civil liso. */
+export const BASE_CREAR = "peter-parker";
+
+/** Piezas sacadas del catálogo: una por cada parte que el personaje trae (según `ranuras` del índice). */
+export function piezasDeCatalogo(catalogo: Catalogo, ranuras: ReadonlyMap<Id, readonly string[]>): Map<Id, PiezaCons> {
+  const fuera = new Map<Id, PiezaCons>();
+  for (const p of OPCIONALES) fuera.set(sinId(p), { id: sinId(p), nombre: "Sin " + p, parte: p, glb: "", ranuras: [RANURA[p]!], foto: null, donante: null });
+  for (const { ficha: f, base } of catalogo.values()) {
+    if (f.familia !== "minifig") continue;
+    const tiene = new Set(ranuras.get(f.id) ?? []);
+    const glb = new URL(f.glb, base).href;
+    const foto = /\.(webp|png|jpg)$/i.test(f.fotos.busto) && !/no-hay/.test(f.fotos.busto) ? new URL(f.fotos.busto, base).href : null;
+    for (const [parte, ranura] of Object.entries(RANURA) as [Parte, string][]) {
+      if (!tiene.has(ranura)) continue;
+      const id = `${f.id}--${parte}`;
+      fuera.set(id, { id, nombre: f.nombre, parte, glb, ranuras: [ranura], foto: parte === "cabeza" || parte === "cara" || parte === "cabello" || parte === "sombrero" ? foto
+        : (/\.(webp|png|jpg)$/i.test(f.fotos.tarjeta) && !/no-hay/.test(f.fotos.tarjeta) ? new URL(f.fotos.tarjeta, base).href : null), donante: f.id });
+    }
+  }
+  return fuera;
+}
+
+/** Piezas de una parte, ordenadas por nombre, con «Sin …» primero si la parte es opcional. */
+export function piezasDe(piezas: Piezas, parte: Parte): PiezaCons[] {
+  const l = [...piezas.values()].filter(p => p.parte === parte);
+  return l.sort((a, b) => (a.donante ? 1 : 0) - (b.donante ? 1 : 0) || a.nombre.localeCompare(b.nombre, "es"));
+}
+
+/** Figura de partida de «Crear mi personaje»: el civil base tal cual, sin piezas cambiadas. */
+export function figuraInicial(catalogo: Catalogo, antes?: FiguraV3 | null): FiguraV3 | null {
+  const en = catalogo.get(BASE_CREAR) ?? [...catalogo.values()].find(x => x.ficha.familia === "minifig");
+  if (!en) return null;
+  return { ...deCatalogo(en.ficha, antes), origen: { tipo: "catalogo", personaje: en.ficha.id, version: "base", revision: 1 } };
+}
+
+/** Pone una pieza (o «Sin …»), quitando la que estorba; conserva los tintes de esa parte. */
+export function ponerPieza(f: FiguraV3, pz: PiezaCons): FiguraV3 {
+  const piezas = { ...f.piezas };
+  const antes = piezas[pz.parte];
+  piezas[pz.parte] = antes?.tintes ? { id: pz.id, tintes: { ...antes.tintes } } : { id: pz.id };
+  const otra = ESTORBA[pz.parte];
+  if (otra && pz.glb) piezas[otra] = { id: sinId(otra) };
+  return { ...f, piezas };
+}
+
+/** Tiñe una parte. Si la parte no tiene pieza elegida, toma la del propio personaje base. */
+export function teñir(f: FiguraV3, parte: Parte, paleta: NombrePaleta, color: Id): FiguraV3 {
+  const base = f.origen.tipo === "catalogo" ? f.origen.personaje : BASE_CREAR;
+  const actual = f.piezas[parte] ?? { id: `${base}--${parte}` };
+  return { ...f, piezas: { ...f.piezas, [parte]: { ...actual, tintes: { ...(actual.tintes ?? {}), [paleta]: color } } } };
+}
+
+/** El plano del personaje base con las piezas cambiadas y sus tintes. */
+export function planoConstructor(id: string, f: FiguraV3, catalogo: Catalogo, piezas: Piezas): Plano | null {
+  const base = resolver(id, { ...f, piezas: {} }, catalogo);
+  if (!base) return null;
+  const fuera: PiezaPlano[] = [];
+  for (const [parte, puesta] of Object.entries(f.piezas) as [Parte, { id: Id; tintes?: Record<string, Id> }][]) {
+    const pz = piezas.get(puesta.id);
+    if (!pz || pz.parte !== parte) continue;
+    const tintes = Object.entries(puesta.tintes ?? {}).flatMap(([paleta, color]) => {
+      const c = PALETAS[paleta as NombrePaleta]?.find(x => x.id === color);
+      return c ? [{ material: "*", hex: c.hex }] : [];
+    });
+    fuera.push({ glb: pz.glb, ranuras: [...pz.ranuras], tintes });
+  }
+  return { ...base, piezas: fuera };
+}

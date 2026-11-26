@@ -1,0 +1,99 @@
+/* Galería «Elegir personaje». Usa los tokens del Design System (.D). Cabe en una pantalla: sin bajar. */
+.D .gal {
+  position: absolute; inset: 0; color: #fff; font: var(--cuerpo);
+  display: grid; gap: 10px; padding: 12px 14px 14px;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto auto minmax(0, 1fr);
+  grid-template-areas: "top" "filtros" "lista";
+}
+@media (min-width: 860px) {
+  .D .gal {
+    padding: 18px 24px 22px; gap: 12px 26px;
+    grid-template-columns: minmax(0, 1.35fr) minmax(320px, 1fr);
+    grid-template-rows: auto auto minmax(0, 1fr);
+    grid-template-areas: "top ficha" "filtros ficha" "lista ficha";
+  }
+}
+
+/* Arriba */
+.D .gal-top { grid-area: top; display: flex; align-items: center; gap: 10px; min-width: 0; }
+.D .gal-titulo { margin: 0; font-size: clamp(26px, 4.2vw, 40px); color: var(--yel); transform: rotate(-2deg); }
+.D .gal-cuenta { margin-left: auto; font: var(--chip); color: var(--mut); white-space: nowrap; }
+.D .gal-atras, .D .gal-cerrar, .D .gal-flecha {
+  display: grid; place-items: center; width: 40px; height: 40px; flex: none; color: #fff; cursor: pointer;
+  background: linear-gradient(180deg, #7fb5ff, #2f7bff 55%, #1a4fc4); border: 2.5px solid var(--ink); border-radius: 50%;
+  box-shadow: inset 0 .14em 0 rgba(255, 255, 255, .45), 0 .22em 0 var(--ink); font-size: 20px;
+}
+.D .gal-flecha:disabled { opacity: .35; cursor: default; }
+.D .gal-flecha.der .ic { transform: scaleX(-1); }
+
+/* Filtros: las fichas se deslizan de lado si no caben */
+.D .gal-filtros { grid-area: filtros; display: grid; gap: 7px; min-width: 0; }
+.D .gal-fila { display: flex; gap: 6px; align-items: center; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
+.D .gal-fila::-webkit-scrollbar { display: none; }
+.D .gal-fila .d-chip { flex: none; font-size: 13px; padding: .4em .9em; color: #fff; cursor: pointer; }
+.D .gal-fila .d-chip.on { color: var(--ink); }
+.D .gal-sep { width: 2px; height: 20px; background: rgba(95, 180, 255, .4); flex: none; margin: 0 4px; }
+
+/* Lista en páginas */
+.D .gal-lista { grid-area: lista; display: grid; grid-template-rows: minmax(0, 1fr) auto; gap: 8px; min-height: 0; }
+.D .gal-rejilla { display: grid; gap: 10px; min-height: 0; touch-action: pan-y; user-select: none; }
+.D .gal-tarj { position: relative; min-width: 0; min-height: 0; }
+.D .gal-tarj-boton {
+  width: 100%; height: 100%; display: grid; grid-template-rows: minmax(0, 1fr) auto; padding: 6px 6px 8px; gap: 4px; cursor: pointer;
+  color: #fff; text-align: center; border: 2px solid var(--ink); border-radius: 12px;
+  background: radial-gradient(ellipse at 50% 30%, rgba(127, 181, 255, .45), transparent 65%), linear-gradient(170deg, var(--p1), var(--p2));
+  box-shadow: inset 0 0 0 2px rgba(95, 180, 255, .45), 0 .22em 0 var(--ink);
+  transition: transform .15s, box-shadow .15s;
+}
+.D .gal-tarj-boton:hover { transform: translateY(-3px); }
+.D .gal-tarj.on .gal-tarj-boton { box-shadow: inset 0 0 0 3px var(--yel), 0 0 18px rgba(255, 210, 63, .55), 0 .22em 0 var(--ink); }
+.D .gal-tarj-boton:focus-visible { outline: 3px solid var(--yel); outline-offset: 2px; }
+.D .gal-foto { display: grid; place-items: center; min-height: 0; overflow: hidden; }
+.D .gal-foto img { width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 6px 6px rgba(0, 0, 0, .45)); pointer-events: none; }
+.D .gal-ini { font-size: 42px; color: rgba(255, 255, 255, .55); }
+.D .gal-nombre { font-size: clamp(14px, 1.6vw, 18px); line-height: 1; -webkit-text-stroke: .06em var(--ink); paint-order: stroke fill; overflow: hidden;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow-wrap: anywhere; }
+.D .gal-prueba { position: absolute; left: 8px; top: 8px; font: var(--chip); background: rgba(10, 16, 48, .7); padding: 2px 6px; border-radius: 99px; color: var(--mut); }
+.D .gal-tarj.usado .gal-tarj-boton::after {
+  content: "TUYO"; position: absolute; left: 8px; bottom: 30px; font: 800 italic 12px/1 var(--letra-display);
+  background: var(--yel); color: var(--ink); padding: 3px 7px; border-radius: 99px; border: 2px solid var(--ink);
+}
+.D .gal-estrella {
+  position: absolute; top: 6px; right: 6px; width: 32px; height: 32px; display: grid; place-items: center; cursor: pointer;
+  background: rgba(10, 16, 48, .65); border: 1.5px solid rgba(95, 180, 255, .55); border-radius: 50%; color: #fff; font-size: 17px;
+}
+.D .gal-estrella.on { color: var(--yel); background: rgba(10, 16, 48, .85); border-color: var(--yel); }
+.D .gal-estrella.on .ic { fill: var(--yel); }
+.D .gal-estrella.grande { position: static; width: 44px; height: 44px; font-size: 22px; flex: none; }
+.D .gal-vacio { grid-column: 1 / -1; align-self: center; text-align: center; color: var(--mut); margin: 0; }
+.D .gal-paginas { display: flex; align-items: center; justify-content: center; gap: 14px; }
+.D .gal-puntos { display: flex; gap: 6px; }
+.D .gal-puntos i { width: 9px; height: 9px; border-radius: 50%; background: rgba(255, 255, 255, .3); border: 1.5px solid var(--ink); }
+.D .gal-puntos i.on { background: var(--yel); }
+
+/* Ficha */
+.D .gal-ficha { grid-area: ficha; display: grid; grid-template-rows: minmax(0, 1fr) auto; overflow: hidden; min-height: 0; }
+.D .gal-vista { position: relative; min-height: 0; background: radial-gradient(ellipse at 50% 85%, rgba(127, 181, 255, .35), transparent 60%); }
+.D .gal-vista iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; display: block; }
+.D .gal-cargando { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); font: var(--etiqueta); color: var(--mut); pointer-events: none; }
+.D .gal-datos { display: grid; gap: 12px; padding: 12px 16px 16px; background: rgba(10, 16, 48, .45); border-top: 2px solid var(--ink); }
+.D .gal-cabeza { display: flex; align-items: center; gap: 10px; }
+.D .gal-cabeza > div { flex: 1; min-width: 0; }
+.D .gal-cabeza h2 { margin: 0; font-size: clamp(24px, 3vw, 34px); }
+.D .gal-cabeza p { margin: 4px 0 0; font: var(--cuerpo-chico); color: var(--mut); }
+.D .gal-acciones { display: flex; gap: 12px; flex-wrap: wrap; }
+.D .gal-acciones .d-btn { flex: 1 1 140px; justify-content: center; font-size: 17px; }
+.D .gal-cerrar { display: none; position: absolute; top: 10px; left: 10px; z-index: 2; }
+.D .gal-cerrar .ic { transform: rotate(-90deg); }
+
+/* Celular: la ficha sube desde abajo al elegir */
+@media (max-width: 859px) {
+  .D .gal-ficha {
+    position: absolute; left: 8px; right: 8px; bottom: 8px; height: min(78%, 620px); z-index: 5;
+    transform: translateY(calc(100% + 20px)); transition: transform .32s cubic-bezier(.2, .8, .2, 1);
+  }
+  .D .gal-ficha-abierta .gal-ficha { transform: none; }
+  .D .gal-cerrar { display: grid; }
+}
+@media (prefers-reduced-motion: reduce) { .D .gal-ficha, .D .gal-tarj-boton { transition: none; } }

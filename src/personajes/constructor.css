@@ -1,0 +1,38 @@
+/* «Crear mi personaje». Reusa las piezas visuales de la galería (galeria.css). Cabe en una pantalla: sin bajar. */
+.D .cons {
+  position: absolute; inset: 0; color: #fff; font: var(--cuerpo);
+  display: grid; gap: 8px; padding: 10px 12px 12px;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 0.8fr) minmax(0, 1.2fr);
+  grid-template-areas: "top" "vista" "panel";
+}
+@media (min-width: 860px) {
+  .D .cons {
+    padding: 18px 24px 22px; gap: 12px 24px;
+    grid-template-columns: minmax(300px, 0.9fr) minmax(0, 1.25fr);
+    grid-template-rows: auto minmax(0, 1fr);
+    grid-template-areas: "top panel" "vista panel";
+  }
+}
+.D .cons-top { grid-area: top; }
+.D .cons-vista { grid-area: vista; display: grid; overflow: hidden; min-height: 0; }
+.D .cons-vista .gal-vista { min-height: 0; }
+.D .cons-panel { grid-area: panel; display: flex; flex-direction: column; gap: 8px; min-height: 0; }
+.D .cons-panel > * { flex: none; }
+.D .cons-panel > .cons-rejilla { flex: 1 1 0; }
+.D .cons-panel .d-tabs { overflow-x: auto; scrollbar-width: none; }
+.D .cons-panel .d-tab { color: #fff; cursor: pointer; font-size: 15px; }
+.D .cons-panel .d-tab.on { color: var(--ink); }
+.D .cons-partes:empty { display: none; }
+.D .cons-colores { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font: var(--cuerpo-chico); color: var(--mut); }
+.D .cons-colores > span { margin-right: 2px; }
+.D .cons-color {
+  width: 34px; height: 34px; border-radius: 50%; border: 2.5px solid var(--ink); cursor: pointer;
+  box-shadow: inset 0 .12em 0 rgba(255, 255, 255, .45), 0 .16em 0 var(--ink);
+}
+.D .cons-color.on { outline: 3px solid var(--yel); outline-offset: 2px; }
+.D .cons-rejilla { min-height: 0; }
+.D .cons-pieza .gal-nombre { font-size: 13px; }
+.D .cons-acciones { display: flex; gap: 12px; }
+.D .cons-acciones .d-btn { flex: 1; justify-content: center; font-size: 17px; }
+.D .cons-acciones .d-btn.is-off { opacity: .45; pointer-events: none; }
