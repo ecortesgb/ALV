@@ -120,4 +120,4 @@
 .D .pz-aviso { position: absolute; left: 50%; top: 8px; transform: translateX(-50%); z-index: 3; padding: 8px 14px; border-radius: 12px; border: 2.5px solid var(--az-tinta);
   background: #ff3b5c; color: #fff; font: 400 15px/1 var(--f-titulo); box-shadow: 0 4px 0 var(--az-tinta); white-space: nowrap; }
 .D .pz-losa .az-losa-txt b, .D .pz-pill, .D .pz-placa { font-family: var(--f-titulo); }
-@media (prefers-reduced-motion: reduce) { .D .pz-top, .D .pz-losa, .D .pz-hoja { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .D .pz-top, .D .pz-losa { animation: none; } .D .pz .pz-volteo { display: none; } }

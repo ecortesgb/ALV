@@ -75,16 +75,23 @@ export function Constructor({ catalogo, piezas, inicial, escenaUrl, onGuardar, o
   const [caja, setCaja] = useState({ columnas: 4, filas: 2 });
   const [guardado, setGuardado] = useState(false);
   const [momento, setMomento] = useState<{ cual: string; n: number } | null>(null);
-  /** El último plano se armó bien (si no, no se deja guardar). null = armando. */
-  const [armado, setArmado] = useState<boolean | null>(null);
+  /** Firma del último plano que la escena armó bien. Solo se guarda si el plano de ahora es ese (Codex O2). */
+  const [confirmada, setConfirmada] = useState<string | null>(null);
+  /** Última figura que la escena confirmó; si una pieza no encaja, se vuelve a ella. */
+  const valida = useRef<FiguraV3 | null>(null);
   const [aviso, setAviso] = useState<string | null>(null);
   const rejilla = useRef<HTMLDivElement>(null);
   /** Volteo de página: "entra" (el HUB se va), "sale" (el HUB regresa y luego onSalir), null = quieto. */
   const [volteo, setVolteo] = useState<"entra" | "sale" | null>(() => (paginaAnterior && !sinMovimiento() ? "entra" : null));
   /** La primera figura entra con su saltito; las demás no hacen nada al cambiar una pieza. */
   const [llego, setLlego] = useState(false);
-  const salir = () => { if (!onSalir) return; if (!paginaAnterior || sinMovimiento()) onSalir(); else setVolteo("sale"); };
-  const finVolteo = () => { if (volteo === "sale") onSalir?.(); else setVolteo(null); };
+  const salio = useRef(false);
+  const salir = () => { if (!onSalir || volteo === "sale") return; if (!paginaAnterior || sinMovimiento()) onSalir(); else setVolteo("sale"); };
+  const finVolteo = () => {
+    if (volteo === "sale") { if (!salio.current) { salio.current = true; onSalir?.(); } } else setVolteo(null);
+  };
+  // Si la animación no termina (se canceló o se pidió reducir movimiento a medias), el volteo se cierra igual (Codex O10).
+  useEffect(() => { if (!volteo) return; const t = setTimeout(finVolteo, volteo === "entra" ? 1100 : 1000); return () => clearTimeout(t); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [volteo]);
 
   useEffect(() => {
     const el = rejilla.current;
@@ -97,6 +104,8 @@ export function Constructor({ catalogo, piezas, inicial, escenaUrl, onGuardar, o
   }, []);
 
   const plano = useMemo(() => planoConstructor("yo", figura, catalogo, piezas), [figura, catalogo, piezas]);
+  const firma = plano ? JSON.stringify(plano) : "";
+  const sePuedeGuardar = !!plano && firma === confirmada;
   const lista = useMemo(() => piezasDe(piezas, parte, figura.familia), [piezas, parte, figura.familia]);
   const pags = useMemo(() => paginas(lista, caja.columnas * caja.filas), [lista, caja]);
   const p = Math.min(pagina, pags.length - 1);
@@ -107,15 +116,17 @@ export function Constructor({ catalogo, piezas, inicial, escenaUrl, onGuardar, o
   const visible = (pz: PiezaCons) => pz.id === puesta || (!puesta && pz.donante === base);
   const losa = LOSAS.find(l => l.id === pestana)!;
 
-  const cambiar = (nueva: FiguraV3) => { setHistoria(h => [...h.slice(-29), figura]); setFigura(nueva); setGuardado(false); setArmado(null); };
-  // Si una pieza no encaja, la escena conserva la figura anterior: aquí se regresa ese paso y se avisa (Codex O2).
+  const cambiar = (nueva: FiguraV3) => { setHistoria(h => [...h.slice(-29), figura]); setFigura(nueva); setGuardado(false); };
+  // Respuesta de la escena al plano de la figura actual (las viejas ya las descartó Vista3D). Si una pieza no encaja,
+  // se vuelve a la última figura confirmada y se espera a que la escena la confirme otra vez; sin ninguna confirmada,
+  // ¡Guardar! queda apagado (Codex O2).
   const alArmar = (ok: boolean, errores: string[]) => {
     setLlego(true);
-    if (ok) { setArmado(true); return; }
+    if (ok) { valida.current = figura; setConfirmada(firma); return; }
     setAviso("Esa pieza no le queda a tu figura.");
     console.warn("pieza rechazada:", errores);
-    setHistoria(h => { if (h.length) setFigura(h[h.length - 1]!); return h.slice(0, -1); });
-    setArmado(true);
+    const v = valida.current;
+    if (v && v !== figura) { setFigura(v); setHistoria(h => h.slice(0, -1)); }
   };
   useEffect(() => { if (!aviso) return; const t = setTimeout(() => setAviso(null), 2600); return () => clearTimeout(t); }, [aviso]);
   const elegirLosa = (t: Pestana) => { setPestana(t); setParte(SUBPARTES[t][0]!); setPagina(0); };
@@ -202,7 +213,7 @@ export function Constructor({ catalogo, piezas, inicial, escenaUrl, onGuardar, o
         <button type="button" className="az-losa pz-regresar" onClick={regresar} disabled={!historia.length} style={{ "--c1": "#6fb6ff", "--c2": "#1f5fd6", "--lab": "#123e9c" } as CSSProperties}>
           <span className="az-losa-txt"><b>↶ Regresar</b></span>
         </button>
-        <button type="button" className="az-losa az-jugar pz-guardar" disabled={armado !== true} onClick={() => { if (armado === true) { onGuardar(figura); setGuardado(true); } }}>
+        <button type="button" className="az-losa az-jugar pz-guardar" disabled={!sePuedeGuardar} onClick={() => { if (sePuedeGuardar) { onGuardar(figura); setGuardado(true); } }}>
           <span className="az-losa-txt"><b>{guardado ? "¡Guardado!" : "¡Guardar!"}</b></span>
         </button>
       </div>

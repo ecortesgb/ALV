@@ -110,14 +110,19 @@
           const propios = m.skeleton.bones.map(h => huesos.get(h.name));
           const falta = m.skeleton.bones.find((h, i) => !propios[i]);
           if (falta) throw new Error("la pieza usa el hueso «" + falta.name + "», que este cuerpo no tiene (" + pz.glb + ")");
-          const distinto = m.skeleton.bones.find((h, i) => inversaBase.has(h.name) && !iguales(m.skeleton.boneInverses[i], inversaBase.get(h.name)));
+          // Sin la inversa del base no se puede comprobar el enlace: se rechaza (Codex O9).
+          const sinInversa = m.skeleton.bones.find(h => !inversaBase.has(h.name));
+          if (sinInversa) throw new Error("no se puede comprobar el enlace del hueso «" + sinInversa.name + "» (" + pz.glb + ")");
+          const distinto = m.skeleton.bones.find((h, i) => !iguales(m.skeleton.boneInverses[i], inversaBase.get(h.name)));
           if (distinto) throw new Error("la pieza está enlazada a un esqueleto distinto (hueso «" + distinto.name + "», " + pz.glb + ")");
           c.bind(new T.Skeleton(propios, m.skeleton.boneInverses.map(x => x.clone())), m.bindMatrix.clone());
         }
         // Malla rígida pegada a un hueso (las caras del juego): ese hueso tiene que existir y estar en la misma pose de
         // unión que en el base, comparando con el enlace que trae el GLB de la pieza (Codex O3: la cara de Hulk no entra).
+        // Una malla rígida bajo un grupo u otra malla no se sabe dónde quedaría: se rechaza (Codex O9).
+        if (!m.isSkinnedMesh && !(m.parent && m.parent.isBone)) throw new Error("la pieza trae una malla fija que no va pegada a un hueso (" + (m.name || "sin nombre") + ", " + pz.glb + ")");
         let padre = obj;
-        if (!m.isSkinnedMesh && m.parent && m.parent.isBone) {
+        if (!m.isSkinnedMesh) {
           padre = huesos.get(m.parent.name);
           if (!padre) throw new Error("la pieza va pegada al hueso «" + m.parent.name + "», que este cuerpo no tiene (" + pz.glb + ")");
           const inv = inversaPieza.get(m.parent.name);

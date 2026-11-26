@@ -56,7 +56,7 @@
   // Cada mensaje «planos» es un turno; si llega otro mientras se arman las figuras (cambios rápidos en el constructor),
   // lo armado por el turno viejo se tira para que no queden figuras duplicadas en la escena.
   let turno = 0;
-  async function ponerPlanos(lista) {
+  async function ponerPlanos(lista, rev) {
     const mio = ++turno;
     const errores = [];
     const nuevos = Array.isArray(lista) ? lista.filter(p => p && typeof p.id === "string" && typeof p.glb === "string") : [];
@@ -77,13 +77,14 @@
     if (mio !== turno) return;
     orden = nuevos.map(p => p.id).filter(id => figuras.has(id));
     acomodar();
-    enviar({ tipo: "armadas", ids: orden, errores });
+    // rev: número del pedido que se armó (Codex O2: quien pidió descarta respuestas viejas).
+    enviar({ tipo: "armadas", ids: orden, errores, rev: typeof rev === "number" ? rev : null });
   }
 
   addEventListener("message", e => {
     if (e.origin !== location.origin || !e.data || e.data.origen !== "alv") return;
     const d = e.data;
-    if (d.tipo === "planos") ponerPlanos(d.lista);
+    if (d.tipo === "planos") ponerPlanos(d.lista, d.rev);
     if (d.tipo === "momento" && figuras.has(d.id)) figuras.get(d.id).p.tocar(d.cual, { vel: d.vel });
     if (d.tipo === "todos") figuras.forEach(f => f.p.tocar(d.cual));
     if (d.tipo === "medir") {
