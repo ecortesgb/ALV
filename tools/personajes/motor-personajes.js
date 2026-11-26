@@ -142,6 +142,28 @@
     return propios;
   }
 
+  /** Altura más baja (mundo) de los vértices que dependen sobre todo de un hueso de pie; null si no hay. */
+  const PIE = /(foot|toebase|toe)$/i, vp = new T.Vector3();
+  function pisoDePies(obj) {
+    let min = Infinity;
+    obj.traverse(o => {
+      if (!o.isSkinnedMesh || !o.visible || o.userData.alvOclusor) return;
+      const pies = new Set(o.skeleton.bones.map((h, i) => (PIE.test(h.name) ? i : -1)).filter(i => i >= 0));
+      if (!pies.size) return;
+      const pos = o.geometry.attributes.position, si = o.geometry.attributes.skinIndex, sw = o.geometry.attributes.skinWeight;
+      if (!pos || !si || !sw) return;
+      for (let i = 0; i < pos.count; i++) {
+        let k = 0, w = sw.getX(i);
+        if (sw.getY(i) > w) { k = 1; w = sw.getY(i); } if (sw.getZ(i) > w) { k = 2; w = sw.getZ(i); } if (sw.getW(i) > w) k = 3;
+        const hueso = k === 0 ? si.getX(i) : k === 1 ? si.getY(i) : k === 2 ? si.getZ(i) : si.getW(i);
+        if (!pies.has(hueso)) continue;
+        vp.fromBufferAttribute(pos, i); o.boneTransform(i, vp); vp.applyMatrix4(o.matrixWorld);
+        if (vp.y < min) min = vp.y;
+      }
+    });
+    return isFinite(min) ? min : null;
+  }
+
   async function crear(plano) {
     const g = await bajar(plano.glb, plano.carga);
     const obj = T.SkeletonUtils.clone(g.scene);
@@ -187,10 +209,14 @@
     mixer.addEventListener("finished", e => { if (e.action === actual && !L.EN_BUCLE[logica]) tocar("reposo"); });
     tocar("reposo", { mezcla: 0 });
     mixer.update(0);
-    // Pies en el piso aunque el GLB no lo cumpla del todo.
+    // Pies en el piso aunque el GLB no lo cumpla del todo. Se mide con los vértices que mueven los huesos de los pies
+    // (Foot / ToeBase) ya posados: la caja de todo el modelo fallaba con Carnage y Venom, cuyos zarcillos bajan 27 % de
+    // su altura bajo los pies (aviso de producción, 2026-11-26). Sin huesos de pies, la caja de todo.
     obj.updateMatrixWorld(true);
     const caja = new T.Box3().setFromObject(obj);
-    if (isFinite(caja.min.y) && Math.abs(caja.min.y) > 1e-3) obj.position.y -= caja.min.y;
+    const piso = pisoDePies(obj);
+    const bajo = piso !== null ? piso : caja.min.y;
+    if (isFinite(bajo) && Math.abs(bajo) > 1e-3) obj.position.y -= bajo;
     const ancho0 = isFinite(caja.max.x) ? caja.max.x - caja.min.x : 1;
 
     return {
