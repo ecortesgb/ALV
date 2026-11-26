@@ -138,10 +138,10 @@ function estado(d) {
   if (!j) { $("estado").textContent = "Entrando…"; return; }
   document.documentElement.style.setProperty("--yo", j.color);
   $("chip").textContent = `P${j.n + 1} ${j.nombre}`; $("chip").classList.remove("oculto");
-  $("titulo").textContent = d.juego === "alto" ? "Alto total" : d.juego === "martillazo" ? "Martillazo" : d.juego === "desenfunda" ? "¡Desenfunda!" : d.juego === "bala" ? "Esquiva la bala" : "El cuarto";
+  $("titulo").textContent = d.juego === "paracaidas" ? "Paracaídas" : d.juego === "alto" ? "Alto total" : d.juego === "martillazo" ? "Martillazo" : d.juego === "desenfunda" ? "¡Desenfunda!" : d.juego === "bala" ? "Esquiva la bala" : "El cuarto";
   document.title = $("titulo").textContent + " · control";
-  $("salto-accion").textContent = d.juego === "alto" ? "¡CORRE!" : d.juego === "martillazo" ? "¡GOLPEA!" : d.juego === "desenfunda" ? "¡DISPARA!" : "SALTA";
-  $("salto").classList.toggle("duelo", d.juego === "alto" || d.juego === "desenfunda" || d.juego === "martillazo");
+  $("salto-accion").textContent = d.juego === "paracaidas" ? "¡ABRE!" : d.juego === "alto" ? "¡CORRE!" : d.juego === "martillazo" ? "¡GOLPEA!" : d.juego === "desenfunda" ? "¡DISPARA!" : "SALTA";
+  $("salto").classList.toggle("duelo", d.juego === "paracaidas" || d.juego === "alto" || d.juego === "desenfunda" || d.juego === "martillazo");
   // El anfitrión lo asigna el servidor de sala y la TV lo repite en el estado.
   const anfitrion = d.anfitrionId === yo;
   // Su personaje no cargó en la TV (Codex O7): se queda el aviso y vuelve el selector para elegir otro o reintentar.
@@ -156,10 +156,11 @@ function estado(d) {
   $("espera").classList.toggle("oculto", enJuego);
   const duelo = d.juego === "desenfunda";
   const martillo = d.juego === "martillazo";
+  const paracaidas = d.juego === "paracaidas";
   const adelantado = duelo && (d.adelantados || []).includes(yo);
-  const tocado = (duelo || martillo) && (d.tocados || []).includes(yo);
-  $("salto").classList.toggle("fuera", d.juego === "alto" ? false : duelo || martillo ? adelantado || tocado || !d.activa : !vivo);
-  $("salto-txt").textContent = martillo ? textoMartillazo() : duelo ? textoDisparo() : vivo ? "Toca cuando llegue la bala" : "Te tumbaron. Mira la TV.";
+  const tocado = (duelo || martillo || paracaidas) && (d.tocados || []).includes(yo);
+  $("salto").classList.toggle("fuera", d.juego === "alto" ? false : duelo || martillo || paracaidas ? adelantado || tocado || !d.activa || paracaidas && (d.estrellados || []).includes(yo) : !vivo);
+  $("salto-txt").textContent = paracaidas ? textoParacaidas() : martillo ? textoMartillazo() : duelo ? textoDisparo() : vivo ? "Toca cuando llegue la bala" : "Te tumbaron. Mira la TV.";
   $("empezar").classList.toggle("oculto", !(anfitrion && d.fase === "lobby"));
   $("empezar").disabled = !d.puedeEmpezar;
   $("empezar").textContent = d.puedeEmpezar ? "¡Empezar!" : "Cargando personajes…";
@@ -188,6 +189,12 @@ $("empezar").onclick = () => canal.enviar("empezar");
 $("otra").onclick = () => canal.enviar("otra");
 
 function evento(d) {
+  if (ultimo?.juego === "paracaidas") {
+    if (d.pid !== pid) return;
+    if (d.id === yo && d.tipo === "estrella") { vibrar([80, 40, 120]); $("salto-txt").textContent = "¡Te estrellaste!"; }
+    if (d.id === yo && d.tipo === "aterriza") vibrar(20);
+    return;
+  }
   if (ultimo?.juego === "alto") {
     if (d.pid !== pid) return;
     if (d.tipo === "atrapado" && d.id === yo) {
@@ -236,6 +243,12 @@ function textoMartillazo() {
   if (!ultimo?.activa) return "Espera el siguiente intento";
   return "Mira la barra en la TV. Golpea en el centro";
 }
+function textoParacaidas() {
+  if ((ultimo?.estrellados || []).includes(yo)) return "¡Te estrellaste!";
+  if ((ultimo?.tocados || []).includes(yo) || disparoEnviado === pid && pid) return "Ya abriste. Mira la TV";
+  if (!ultimo?.activa) return "Espera la siguiente ronda";
+  return "Abre lo más tarde que puedas";
+}
 function textoDisparo() {
   if ((ultimo?.adelantados || []).includes(yo)) return "¡Adelantado! Vuelves en la siguiente ronda";
   if ((ultimo?.tocados || []).includes(yo) || disparoEnviado === pid && pid) return "Ya disparaste. Mira la TV.";
@@ -250,6 +263,7 @@ function pintarSalto() {
   if (!ok) $("salto-txt").textContent = "Sincronizando con la TV…";
   else if (ultimo?.juego === "alto") $("salto-txt").textContent = textoAlto();
   else if (ultimo?.juego === "martillazo") $("salto-txt").textContent = textoMartillazo();
+  else if (ultimo?.juego === "paracaidas") $("salto-txt").textContent = textoParacaidas();
   else if (ultimo?.juego === "desenfunda") $("salto-txt").textContent = textoDisparo();
   else if (!b.classList.contains("fuera")) $("salto-txt").textContent = "Toca cuando llegue la bala";
 }
@@ -264,10 +278,10 @@ $("salto").addEventListener("pointerdown", e => {
     $("salto").classList.add("toca"); vibrar(12); return;
   }
   if ($("salto").classList.contains("fuera") || !sincronizado() || !pid) return;
-  if (ultimo?.juego === "desenfunda" || ultimo?.juego === "martillazo") {
+  if (ultimo?.juego === "desenfunda" || ultimo?.juego === "martillazo" || ultimo?.juego === "paracaidas") {
     if (!ultimo.activa || disparoEnviado === pid) return;
     disparoEnviado = pid;
-    $("salto-txt").textContent = ultimo.juego === "martillazo" ? "Ya golpeaste. Mira la TV." : "Ya disparaste. Mira la TV.";
+    $("salto-txt").textContent = ultimo.juego === "paracaidas" ? "Ya abriste. Mira la TV" : ultimo.juego === "martillazo" ? "Ya golpeaste. Mira la TV." : "Ya disparaste. Mira la TV.";
   }
   canal.enviar("salto", { pid, s: horaTv(), inc: Math.round(reloj.incertidumbre) });
   vibrar(12);

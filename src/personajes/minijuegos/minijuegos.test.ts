@@ -2,11 +2,226 @@
 import { describe, expect, it } from "vitest";
 import * as desenfunda from "./desenfunda";
 import * as martillazo from "./martillazo";
+import * as paracaidas from "./paracaidas";
+import codigoParacaidasTv from "../../../tools/personajes/minijuegos/tv-paracaidas.js?raw";
 import * as alto from "./altoTotal";
 import { acotarToque, estimar, muestra, relojListo } from "./reloj";
 import { aireDe, avanzar, crearPartida, empezar, enElAire, llegada, posBala, ranking, saltar, CONFIG_BALA, type Bala, type EstadoBala, type Evento } from "./bala";
 import { crearCuarto, entrar, mandar, pasoCuarto } from "./cuarto";
 import { crearSecuencias, deLaTv, leer, validarDeCelular } from "./canal";
+
+describe("Paracaídas", () => {
+  const jugadores = ["a", "b", "c", "d", "e"].map(id => ({ id }));
+  function preparar() {
+    const e = paracaidas.crearPartida(jugadores, { caidaMs: [5000, 5000] }, () => 0);
+    paracaidas.empezar(e, 1000);
+    return e;
+  }
+  it("altura común a 20 m/s desde los pies, independiente de tamaños", () => {
+    const e = preparar();
+    expect(e.jugadores).toEqual(jugadores);
+    expect(paracaidas.altura(e, 1000)).toBe(100);
+    expect(paracaidas.altura(e, 2000)).toBe(80);
+    expect(paracaidas.altura(e, 2500)).toBe(70);
+    expect(paracaidas.altura(e, 6100)).toBe(0);
+  });
+  it("T no aparece en los eventos anteriores al impacto", () => {
+    const e = paracaidas.crearPartida(jugadores, {}, () => 0.812);
+    const ev = paracaidas.empezar(e, 1000);
+    expect(ev).toEqual([{ tipo: "ronda", ronda: 1 }]);
+    ev.push(...paracaidas.abrir(e, "a", 2000));
+    ev.push(...paracaidas.avanzar(e, e.impacto - 1));
+    expect(ev).toEqual([
+      { tipo: "ronda", ronda: 1 }, { tipo: "abre", id: "a" },
+      { tipo: "aterriza", id: "a", altura: paracaidas.altura(e, 2400) },
+    ]);
+    expect(JSON.stringify(ev)).not.toContain(String(e.impacto));
+    expect(JSON.stringify(ev)).not.toContain(String(e.impacto - e.inicioRonda));
+  });
+  it("400 ms para abrir, después 250 ms para confirmar la altura al completar la apertura", () => {
+    const e = preparar();
+    expect(paracaidas.abrir(e, "a", 2000)).toEqual([{ tipo: "abre", id: "a" }]);
+    expect(e.aperturas.get("a")).toEqual({ s: 2000, fin: 2400, altura: 72 });
+    expect(paracaidas.avanzar(e, 2399)).toEqual([]);
+    expect(paracaidas.avanzar(e, 2649)).toEqual([]);
+    expect(paracaidas.avanzar(e, 2650)).toEqual([{ tipo: "aterriza", id: "a", altura: 72 }]);
+  });
+  it("una llegada 240 ms después conserva la hora del toque y espera su juicio", () => {
+    const e = preparar();
+    expect(paracaidas.abrir(e, "a", 5550, 5790)).toEqual([{ tipo: "abre", id: "a" }]);
+    expect(paracaidas.avanzar(e, 6199)).toEqual([]);
+    expect(paracaidas.avanzar(e, 6200)).toEqual([{ tipo: "aterriza", id: "a", altura: 1 }]);
+  });
+  it("azar inyectable y eventos previos al impacto sin T ni duración", () => {
+    const e = paracaidas.crearPartida(jugadores, {}, () => 0.5);
+    expect(paracaidas.empezar(e, 0)).toEqual([{ tipo: "ronda", ronda: 1 }]);
+    expect(e.impacto).toBe(4750); // 3500 + 0.5 × 2500
+    const ev = [...paracaidas.abrir(e, "a", 4000), ...paracaidas.avanzar(e, 4749)];
+    expect(ev).toEqual([{ tipo: "abre", id: "a" }, { tipo: "aterriza", id: "a", altura: 7 }]);
+    expect(JSON.stringify(ev)).not.toMatch(/impacto|caidaMs|duracion|"T"/);
+    expect(paracaidas.empezar(e, 0)).toEqual([]);
+  });
+  it("la caída dura entre 3.5 y 6 s (decisión P2 de Codex)", () => {
+    expect(paracaidas.CONFIG_PARACAIDAS.caidaMs).toEqual([3500, 6000]);
+    for (const r of [0, 0.5, 0.999]) {
+      const e = paracaidas.crearPartida([{ id: "a" }], {}, () => r);
+      paracaidas.empezar(e, 1000);
+      expect(e.impacto - 1000).toBeGreaterThanOrEqual(3500);
+      expect(e.impacto - 1000).toBeLessThanOrEqual(6000);
+    }
+  });
+  it("apertura de 400 ms y confirmación 250 ms después, con altura al completarse", () => {
+    const e = preparar();
+    expect(paracaidas.abrir(e, "a", 5000)).toEqual([{ tipo: "abre", id: "a" }]);
+    expect(e.aperturas.get("a")).toEqual({ s: 5000, fin: 5400, altura: 12 });
+    expect(paracaidas.avanzar(e, 5399)).toEqual([]);
+    expect(paracaidas.avanzar(e, 5649)).toEqual([]);
+    expect(paracaidas.avanzar(e, 5650)).toEqual([{ tipo: "aterriza", id: "a", altura: 12 }]);
+  });
+  it("aterriza justo con 70 ms de tolerancia; con 71 se estrella", () => {
+    const e = preparar();
+    paracaidas.abrir(e, "a", 5670); paracaidas.abrir(e, "b", 5671);
+    const ev = paracaidas.avanzar(e, 6320);
+    expect(ev).toContainEqual({ tipo: "aterriza", id: "a", altura: 0 });
+    expect(ev).toContainEqual({ tipo: "estrella", id: "b" });
+    expect(e.resultados.get("a")).toBe(0);
+  });
+  it("acepta hora atrasada por red dentro de los 250 ms sin usar la llegada para la altura", () => {
+    const e = preparar();
+    paracaidas.avanzar(e, 6100);
+    const ev = paracaidas.abrir(e, "a", 5500, 6249);
+    expect(ev).toContainEqual({ tipo: "abre", id: "a" });
+    expect(ev).toContainEqual({ tipo: "aterriza", id: "a", altura: 2 });
+    expect(e.aperturas.get("a")?.s).toBe(5500);
+  });
+  it("después del juicio el toque no resucita al jugador, aunque no se haya avanzado antes", () => {
+    const e = preparar();
+    expect(paracaidas.abrir(e, "a", 5500, 6250)).not.toContainEqual({ tipo: "abre", id: "a" });
+    expect(e.resultados.get("a")).toBeNull();
+  });
+  it("ignora segundo toque, desconocidos, horas inválidas y anteriores al inicio menos 70", () => {
+    const e = preparar();
+    expect(paracaidas.abrir(e, "a", 929)).toEqual([]);
+    expect(paracaidas.abrir(e, "x", 1000)).toEqual([]);
+    for (const n of [NaN, Infinity]) {
+      expect(paracaidas.abrir(e, "a", n)).toEqual([]);
+      expect(paracaidas.abrir(e, "a", 1000, n)).toEqual([]);
+    }
+    expect(paracaidas.abrir(e, "a", 930)).toEqual([{ tipo: "abre", id: "a" }]);
+    expect(paracaidas.abrir(e, "a", 1100)).toEqual([]);
+    expect(e.aperturas.get("a")?.s).toBe(930);
+  });
+  it("puntos N, N−1: empates comparten lugar y saltan lugares; estrellados y sin toque valen 0", () => {
+    const e = preparar();
+    // Llegan juntos: las horas de toque, no el orden de recepción, fijan los lugares.
+    paracaidas.abrir(e, "c", 5200, 5600);
+    paracaidas.abrir(e, "a", 5500, 5600); paracaidas.abrir(e, "b", 5500, 5600);
+    paracaidas.abrir(e, "d", 5800);
+    const ev = paracaidas.avanzar(e, 6250);
+    expect(ev).toContainEqual({ tipo: "puntos", ronda: 1, tabla: [
+      { id: "a", altura: 2, lugar: 1, puntos: 5 }, { id: "b", altura: 2, lugar: 1, puntos: 5 },
+      { id: "c", altura: 8, lugar: 3, puntos: 3 },
+      { id: "d", altura: null, lugar: 4, puntos: 0 }, { id: "e", altura: null, lugar: 4, puntos: 0 },
+    ] });
+  });
+  it("sin empate otorga N, N−1, N−2", () => {
+    const e = preparar();
+    for (const [i, id] of ["a", "b", "c"].entries()) paracaidas.abrir(e, id, 5500 - i * 100, 5500);
+    paracaidas.avanzar(e, 6250);
+    expect([...e.puntos.values()]).toEqual([5, 4, 3, 0, 0]);
+  });
+  it("tres rondas con pausa CONFIG_BALA, suma acumulada y empate final compartido", () => {
+    const e = preparar();
+    let t = 1000;
+    for (let ronda = 1; ronda <= 3; ronda++) {
+      for (const id of ["a", "b"]) paracaidas.abrir(e, id, t + 4500);
+      const ev = paracaidas.avanzar(e, t + 5250);
+      expect(ev.filter(x => x.tipo === "puntos")).toHaveLength(1);
+      if (ronda < 3) {
+        expect(e.fase).toBe("pausa");
+        expect(paracaidas.abrir(e, "c", t + 5300)).toEqual([]);
+        expect(e.finFase).toBe(t + 5250 + CONFIG_BALA.pausaMs);
+        expect(paracaidas.avanzar(e, e.finFase - 1)).toEqual([]);
+        t = e.finFase;
+        expect(paracaidas.avanzar(e, t)).toEqual([{ tipo: "ronda", ronda: ronda + 1 }]);
+        expect(e.aperturas.size).toBe(0); expect(e.resultados.size).toBe(0);
+      } else expect(ev).toContainEqual({ tipo: "fin", ranking: [
+        { id: "a", lugar: 1, puntos: 15 }, { id: "b", lugar: 1, puntos: 15 },
+        { id: "c", lugar: 3, puntos: 0 }, { id: "d", lugar: 3, puntos: 0 }, { id: "e", lugar: 3, puntos: 0 },
+      ] });
+    }
+    expect(e.fase).toBe("fin"); expect(paracaidas.avanzar(e, 1e9)).toEqual([]);
+  });
+  it("aunque todos abran temprano, espera el impacto para cerrar la ronda", () => {
+    const e = preparar();
+    for (const j of jugadores) paracaidas.abrir(e, j.id, 1000);
+    expect(paracaidas.avanzar(e, 2000).some(x => x.tipo === "puntos")).toBe(false);
+    expect(e.fase).toBe("ronda");
+    expect(paracaidas.avanzar(e, 6250).some(x => x.tipo === "puntos")).toBe(true);
+  });
+  it("gana la suma de las tres rondas, aunque otro gane la segunda", () => {
+    const e = paracaidas.crearPartida([{ id: "a" }, { id: "b" }], { caidaMs: [5000, 5000] }, 7);
+    paracaidas.empezar(e, 0);
+    let ev: paracaidas.Evento[] = [];
+    for (let ronda = 1; ronda <= 3; ronda++) {
+      const t = e.inicioRonda;
+      paracaidas.abrir(e, "a", t + (ronda === 2 ? 4400 : 4500), t + 4500);
+      paracaidas.abrir(e, "b", t + (ronda === 2 ? 4500 : 4400), t + 4500);
+      ev = paracaidas.avanzar(e, t + 5250);
+      if (ronda < 3) paracaidas.avanzar(e, e.finFase);
+    }
+    expect(ev).toContainEqual({ tipo: "fin", ranking: [
+      { id: "a", lugar: 1, puntos: 5 }, { id: "b", lugar: 2, puntos: 4 },
+    ] });
+  });
+  it("O2: seis cuerpos, domos y etiquetas bajo franja a 1280×720 en las 20 combinaciones de tres abiertos arriba", () => {
+    // Ejecuta la función real de la TV. La proyección independiente comprueba las cajas 3D y los 62 px de etiqueta.
+    const codigo = codigoParacaidasTv.slice(codigoParacaidasTv.indexOf("export function encuadrarGrupo"),
+      codigoParacaidasTv.indexOf("const v = new THREE.Vector3")).replace("export ", "");
+    const encuadrar = new Function("ETIQUETA", codigo + "; return encuadrarGrupo;")(62);
+    const W = 1280, H = 720, franja = Math.round(H * 0.13 + Math.min(260, H * 0.36));
+    const tan = Math.tan(32 * Math.PI / 360), altos = [2.7, 2.7, 2.7, 2.7, 4.6, 5.5];
+    // Cajas conservadoras: ancho igual al alto, más los domos creados por la TV (radio = ancho × .8).
+    const radios = altos.map(h => Math.max(3.2, h * 1.6) / 2);
+    const camera = {
+      fov: 32, position: { x: 0, y: 0, z: 0, set(x: number, y: number, z: number) { Object.assign(this, { x, y, z }); } },
+      lookAt() {}, updateProjectionMatrix() {}, updateMatrixWorld() {},
+    };
+    const proyectar = (x: number, y: number, z = 0) => ({
+      x: W / 2 + (x - camera.position.x) * H / (2 * tan * (camera.position.z - z)),
+      y: H / 2 - (y - camera.position.y) * H / (2 * tan * (camera.position.z - z)),
+    });
+    let casos = 0;
+    for (let mask = 0; mask < 64; mask++) {
+      if (mask.toString(2).replace(/0/g, "").length !== 3) continue;
+      casos++;
+      // 32.5 unidades es el máximo inicial (130 m); ningún abierto puede quedar por encima.
+      const figuras = altos.map((h, i) => ({ h, r: radios[i]!, y: mask >> i & 1 ? 32.5 : 0.05, abierto: !!(mask >> i & 1), x: 0 }));
+      const limites = { minX: -30, maxX: 30, minY: 0,
+        maxY: Math.max(...figuras.map(p => p.y + p.h + (p.abierto ? 1.1 + p.r * 0.65 : 0) + 0.35)),
+        profundidad: Math.max(...radios) };
+      encuadrar(camera, limites, W, H, franja);
+      const escala = H / (2 * camera.position.z * tan);
+      const paso = Math.max(...radios.map(r => 2 * r + 1), (Math.min(180, W * 0.14) + 12) / escala);
+      figuras.forEach((p, i) => { p.x = (i - 2.5) * paso; });
+      limites.minX = Math.min(-6, ...figuras.map(p => p.x - p.r));
+      limites.maxX = Math.max(6, ...figuras.map(p => p.x + p.r));
+      encuadrar(camera, limites, W, H, franja);
+      for (const p of figuras) {
+        const techo = p.y + p.h + (p.abierto ? 1.1 + p.r * 0.65 : 0);
+        const puntos = [];
+        for (const x of [p.x - p.r, p.x + p.r]) for (const y of [p.y, techo]) for (const z of [-p.r, p.r]) puntos.push(proyectar(x, y, z));
+        const etiqueta = proyectar(p.x, techo + 0.35);
+        puntos.push({ x: etiqueta.x - 89.6, y: etiqueta.y - 62 }, { x: etiqueta.x + 89.6, y: etiqueta.y });
+        for (const punto of puntos) {
+          expect(punto.y).toBeGreaterThanOrEqual(franja); expect(punto.y).toBeLessThanOrEqual(H - 24);
+          expect(punto.x).toBeGreaterThanOrEqual(0); expect(punto.x).toBeLessThanOrEqual(W);
+        }
+      }
+    }
+    expect(casos).toBe(20);
+  });
+});
 
 describe("Alto total", () => {
   function preparar(cfg: Partial<alto.ConfigAltoTotal> = {}) {
