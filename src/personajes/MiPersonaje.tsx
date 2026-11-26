@@ -58,6 +58,7 @@ export function MiPersonaje({ jugador, catalogo, espacios, activa, onGuardar, on
     setAviso(TEXTO[r](nombre));
     if (r !== "error") setVista({ cual: "inicio" });
   };
+  const conservar = (f: FiguraV3): FiguraV3 => (activaV3 ? { ...f, momentos: activaV3.momentos, extensiones: activaV3.extensiones } : f);
   const crear = () => { const f = catalogo && figuraInicial(catalogo.catalogo, activaV3); if (f) setVista({ cual: "crear", figura: f }); };
 
   return (
@@ -105,8 +106,9 @@ export function MiPersonaje({ jugador, catalogo, espacios, activa, onGuardar, on
       {catalogo && vista.cual === "galeria" && (
         <Galeria catalogo={catalogo.catalogo} jugador={jugador} escenaUrl={ESCENA + "&frente=25" /* Codex r5: 25° en la galería */}
           actual={activaV3?.origen.tipo === "catalogo" && !Object.keys(activaV3.piezas).length ? activaV3.origen.personaje : null}
-          onUsar={(f, t) => void guardar(f, t.nombre)}
-          onPersonalizar={f => setVista({ cual: "crear", figura: { ...f, momentos: activaV3?.momentos ?? f.momentos } })}
+          // Cambia la apariencia y conserva los momentos y extensiones (personalidad, apodo) de la figura en juego (Codex, ajuste 6).
+          onUsar={(f, t) => void guardar(conservar(f), t.nombre)}
+          onPersonalizar={f => setVista({ cual: "crear", figura: conservar(f) })}
           personalizable={fam => sePuedePersonalizar(catalogo.piezas, fam)}
           onSalir={() => setVista({ cual: "inicio" })} />
       )}

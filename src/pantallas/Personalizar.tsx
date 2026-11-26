@@ -4,6 +4,7 @@ import { Suspense, lazy, useEffect, useRef } from "react";
 import type { FiguraV2 } from "../content/personaje";
 import { FotoFigura, N_CAPSULAS, escribirCapsulas, huella, leerCapsulas, useCapsulas, type EstadoCapsulas } from "../app/figura3d";
 import { atras, ir } from "../app/rutas";
+import { combinar, leerPendientes, marcarPendiente, quitarPendientes } from "../app/capsulasPendientes";
 import { banderaV3, empaquetarV3, leerV3, sinV3, useCatalogoV3, type FiguraV2Puente, type FiguraV3 } from "../personajes/integracion";
 import { useSesion } from "../app/sesion";
 import { sonar } from "../app/sonido";
@@ -13,36 +14,59 @@ import { enlace } from "../servicios/enlace";
 import { aviso } from "./comun";
 import { Personalizador } from "./Personalizador";
 
-// Subidas a la nube en fila, una a la vez (Codex, fase 5 ajuste 6): guardarCapsulasNube() BORRA los espacios vacíos, así que
-// dos subidas cruzadas podían dejar la nube con un estado viejo. Cada subida lee lo último de este aparato al empezar.
-let filaSubidas: Promise<unknown> = Promise.resolve();
-function subirCapsulas(uid: string): Promise<boolean> {
-  const p = filaSubidas.then(() => guardarCapsulasNube(leerCapsulas(uid)));
-  filaSubidas = p.catch(() => false);
-  return p.catch(() => false);
+// Sincronizar con la nube (fase 5, Codex paso4-r1). guardarCapsulasNube() BORRA los espacios ausentes, así que:
+//  · todo va en UNA fila (lectura incluida): dos sincronizaciones nunca se cruzan;
+//  · nunca se sube sin leer antes la nube: si la lectura falla, no se sube nada y lo de aquí queda pendiente;
+//  · los espacios cambiados en este aparato se marcan pendientes (capsulasPendientes.ts): la nube no los pisa al cargar y
+//    se reintentan al entrar, al recuperar la conexión y al volver a la app.
+let fila: Promise<unknown> = Promise.resolve();
+function enFila<T>(f: () => Promise<T>, siFalla: T): Promise<T> { const p = fila.then(f).catch(() => siFalla); fila = p; return p; }
+
+/** Lee la nube, combina (manda la nube salvo los pendientes de aquí), lo deja aquí y lo sube. true = igual en los dos lados. */
+export function sincronizar(uid: string): Promise<boolean> {
+  return enFila(async () => {
+    const nube = await cargarCapsulasNube();
+    if (!nube) return false;
+    const pend = leerPendientes(uid), aqui = leerCapsulas(uid);
+    // Nube vacía: lo de este aparato sube completo (cuentas que guardaron antes de tener nube).
+    const base = nube.slots.some(Boolean) ? combinar(nube, aqui, pend) : aqui;
+    if (huella(base) !== huella(aqui)) escribirCapsulas(uid, base);
+    if (!base.slots.some(Boolean) || huella(base) === huella(nube)) { quitarPendientes(uid, pend); return true; }
+    const ok = await guardarCapsulasNube(base);
+    if (ok) quitarPendientes(uid, pend);
+    return ok;
+  }, false);
 }
 
-/** Mantiene las cápsulas de la cuenta iguales aquí y en la nube. Al abrir manda la nube; después, cada cambio sube. */
+const mismoEspacio = (a: EstadoCapsulas["slots"][number], b: EstadoCapsulas["slots"][number]) => (a ? huella(a.figura) + "|" + a.nombre : "") === (b ? huella(b.figura) + "|" + b.nombre : "");
+
+/** Mantiene las cápsulas de la cuenta iguales aquí y en la nube. Al abrir manda la nube (salvo lo pendiente de aquí);
+ *  después, cada espacio que cambia aquí se marca pendiente y se sincroniza. */
 export function SincroCapsulas() {
   const { uid, fase } = useSesion();
   const caps = useCapsulas(uid || "nadie");
-  const leida = useRef(""), subida = useRef("");
+  // Lo que había aquí tras la última sincronización buena (para saber qué espacios cambiaron después).
+  const ultima = useRef<{ uid: string; e: EstadoCapsulas } | null>(null);
   useEffect(() => {
     if (!hayNube || fase !== "dentro" || !uid) return;
     let vivo = true;
-    void cargarCapsulasNube().then(async nube => {
-      if (!vivo || !nube) return;
-      const aqui = leerCapsulas(uid);
-      if (nube.slots.some(Boolean)) { subida.current = huella(nube); escribirCapsulas(uid, nube); }
-      else if (aqui.slots.some(Boolean) && await subirCapsulas(uid)) subida.current = huella(aqui);
-      leida.current = uid;
-    });
-    return () => { vivo = false; };
+    const intentar = () => void sincronizar(uid).then(ok => { if (vivo && ok) ultima.current = { uid, e: leerCapsulas(uid) }; });
+    intentar();
+    // Reintentos de lo pendiente: al recuperar la conexión y al volver a la app.
+    const otraVez = () => { if (leerPendientes(uid).length && document.visibilityState === "visible") intentar(); };
+    addEventListener("online", otraVez); document.addEventListener("visibilitychange", otraVez);
+    return () => { vivo = false; removeEventListener("online", otraVez); document.removeEventListener("visibilitychange", otraVez); };
   }, [uid, fase]);
   const h = huella(caps);
   useEffect(() => {
-    if (!hayNube || leida.current !== uid || h === subida.current) return;
-    const t = setTimeout(() => { void subirCapsulas(uid).then(ok => { if (ok) subida.current = h; }); }, 500);
+    const u = ultima.current;
+    if (!hayNube || !u || u.uid !== uid) return; // antes de la primera sincronización buena no se sube nada
+    const t = setTimeout(() => {
+      const aqui = leerCapsulas(uid);
+      aqui.slots.forEach((s, k) => { if (!mismoEspacio(s, u.e.slots[k] ?? null)) marcarPendiente(uid, k); });
+      if (!leerPendientes(uid).length && aqui.activa === u.e.activa) return;
+      void sincronizar(uid).then(ok => { if (ok) ultima.current = { uid, e: leerCapsulas(uid) }; });
+    }, 500);
     return () => clearTimeout(t);
   }, [h, uid]);
   return null;
@@ -79,24 +103,20 @@ export function Capsulas() {
 
 // ---------- Fase 5: «Mi personaje» (solo con la bandera, en desarrollo) ----------
 
-/** Guarda una figura nueva en el espacio `i` como UNA operación (Codex, ajuste 6): lee lo último (la nube manda, como en
- *  SincroCapsulas; lo que solo está aquí se conserva), mete la v3 en la v2 de ese espacio con el puente, lo activa, lo
- *  escribe aquí y lo sube en la fila. Dice si quedó en la nube o solo en este aparato. */
-async function guardarFiguraNueva(uid: string, i: number, f: FiguraV3, nombre: string): Promise<"sincronizado" | "local" | "error"> {
-  let base: EstadoCapsulas = leerCapsulas(uid);
-  if (hayNube) {
-    const nube = await cargarCapsulasNube();
-    if (nube && nube.slots.some(Boolean)) base = { ...nube, slots: nube.slots.map((c, k) => c ?? base.slots[k] ?? null) };
-  }
-  const previa = base.slots[i]?.figura;
+/** Guarda una figura nueva en el espacio `i` (Codex, ajuste 6 y paso4-r1): mete la v3 en la v2 de ese espacio con el puente
+ *  (la v2 queda de respaldo), lo activa y lo escribe aquí; con nube lo marca pendiente y sincroniza (lee, combina y sube en
+ *  la fila). Dice si quedó en la nube o solo en este aparato (entonces se reintenta solo). */
+export async function guardarFiguraNueva(uid: string, i: number, f: FiguraV3, nombre: string): Promise<"sincronizado" | "local" | "error"> {
+  const aqui = leerCapsulas(uid);
+  const previa = aqui.slots[i]?.figura;
   const fig = empaquetarV3(f, previa ? sinV3(previa as unknown as FiguraV2Puente) : null);
   if (!fig) return "error";
-  const slots = [...base.slots];
+  const slots = [...aqui.slots];
   slots[i] = { nombre: nombre.slice(0, 24), figura: fig as unknown as FiguraV2, actualizado: new Date().toISOString() };
-  escribirCapsulas(uid, { ...base, slots, activa: i });
-  void enlace.activarCapsula(i + 1);
+  escribirCapsulas(uid, { ...aqui, slots, activa: i });
   if (!hayNube) return "local";
-  return (await subirCapsulas(uid)) ? "sincronizado" : "local";
+  marcarPendiente(uid, i);
+  return (await sincronizar(uid)) ? "sincronizado" : "local";
 }
 
 const MiPersonaje = lazy(() => import("../personajes/MiPersonaje").then(m => ({ default: m.MiPersonaje })));
