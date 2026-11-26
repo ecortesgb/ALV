@@ -95,7 +95,10 @@ describe("fase 5: resolución central", () => {
 
 describe("fase 5: copias para la escena vieja", () => {
   it("public/personajes tiene la misma copia del motor nuevo, la escena y el estudio que tools/personajes (lo publicado)", () => {
-    for (const f of ["motor-personajes.js", "logicas.js", "escena.html", "estudio.html", "escena-personajes.js", "estudio-personajes.js"]) expect(readFileSync(`public/personajes/${f}`, "utf8"), f).toBe(readFileSync(`tools/personajes/${f}`, "utf8"));
+    // Sin contar el salto de línea: con core.autocrlf=true la copia de trabajo puede tener CRLF en una y LF en otra
+    // aunque en el repo sean idénticas.
+    const leer = (p: string) => readFileSync(p, "utf8").replace(/\r\n/g, "\n");
+    for (const f of ["motor-personajes.js", "logicas.js", "escena.html", "estudio.html", "escena-personajes.js", "estudio-personajes.js"]) expect(leer(`public/personajes/${f}`), f).toBe(leer(`tools/personajes/${f}`));
   });
 });
 
