@@ -7,7 +7,7 @@ import { escribirCapsulas, leerCapsulas, apodoDe, useCapsulas, useFoto, N_CAPSUL
 import { ir } from "../../app/rutas";
 import { enlace, esLocal, modoLocal, type Miembro, type SalaV } from "../../servicios/enlace";
 import { PersonajeLocal, type DatosPersonaje } from "./PersonajeLocal";
-import { colorDe } from "../../app/colorJugador";
+import { colorDe, varsColor } from "../../app/colorJugador";
 import { BotonCast } from "./Cast";
 import { ConfigEnVivo, useConfigEnVivo } from "../ConfigEnVivo";
 import type { PresenciaPantalla } from "../../servicios/tiempoReal";
@@ -44,6 +44,8 @@ export function Lobby({ sala, miembros, yo, soyAnfitrion, final, red, refrescar,
   const local = esLocal(sala.id);
   const [editar, setEditar] = useState<{ tipo: "nuevo" } | { tipo: "figura"; m: Miembro } | null>(null);
   const [verResultados, setVerResultados] = useState(true);
+  // En línea: «Cambiar figura» abre tus figuras guardadas en un aviso de caja de bloques (igual que en Local, Elías 26 nov).
+  const [verFiguras, setVerFiguras] = useState(false);
   // En celulares (sin pantalla), los demás ven en vivo lo que el anfitrión va armando.
   const vivo = useConfigEnVivo(!soyAnfitrion && !local ? sala.id : undefined, pantalla !== "presente");
   const [vivoMin, setVivoMin] = useState(false);
@@ -84,7 +86,7 @@ export function Lobby({ sala, miembros, yo, soyAnfitrion, final, red, refrescar,
         </>
       ) : (<>
         {local ? <button type="button" className="lb-mini" onClick={() => setEditar({ tipo: "figura", m })}>Cambiar figura</button>
-          : <ElegirFigura uid={yo} alCambiar={refrescar} bloqueado={m.listo} />}
+          : <button type="button" className="lb-mini" onClick={() => setVerFiguras(true)}>Cambiar figura</button>}
         <button type="button" className={"lb-listo" + (m.listo ? " quitar" : "")} onClick={() => listo(m)}>
           {!m.listo && <img src={ico("ico-listo")} alt="" />}{m.listo ? "Ya no estoy listo" : "¡Listo!"}
         </button>
@@ -136,6 +138,18 @@ export function Lobby({ sala, miembros, yo, soyAnfitrion, final, red, refrescar,
         )}
       </div>
       {vivo && <div className={"cv-lobby" + (vivoMin ? " min" : "")} role="button" tabIndex={0} aria-expanded={!vivoMin} onClick={() => setVivoMin(x => !x)} onKeyDown={e => { if (e.key === "Enter" || e.key === " ") setVivoMin(x => !x); }}><ConfigEnVivo e={vivo} /></div>}
+      {verFiguras && (
+        <div className="a-velo" onClick={() => setVerFiguras(false)}>
+          <div className="d-pnl a-dialogo lbn-dlg lb-figs-dlg" style={varsColor(colorDe(yo, miembros.map(x => x.id)))} role="dialog" aria-modal="true" aria-label="Tu figura" onClick={e => e.stopPropagation()}>
+            <span className="dsp ol a-t2">Tu figura</span>
+            <ElegirFigura uid={yo} alCambiar={refrescar} bloqueado={!!miembros.find(x => x.id === yo)?.listo} />
+            <div className="a-fila">
+              <button type="button" className="a-plano" onClick={() => ir("personalizar")}>Personalizar</button>
+              <button type="button" className="d-btn k-yel" autoFocus onClick={() => setVerFiguras(false)}><span className="dsp">Cerrar</span></button>
+            </div>
+          </div>
+        </div>
+      )}
       {editar && <PersonajeLocal titulo={editar.tipo === "nuevo" ? "Nuevo jugador" : `Figura de ${editar.m.nombre}`} soloFigura={editar.tipo === "figura"}
         inicial={editar.tipo === "figura" ? { figura: editar.m.figura, nombre: editar.m.nombre } : undefined}
         color={editar.tipo === "figura" ? colorDe(editar.m.id, miembros.map(x => x.id)) : undefined} alListo={guardarPersonaje} alCerrar={() => setEditar(null)} />}

@@ -749,3 +749,28 @@
 .D .pasa-btn:active { transform: translateY(3px); }
 .D .pasa-btn:focus-visible { outline: 3px solid #fff; outline-offset: 3px; }
 .D .a-pasa-caja.pasa-n .pasa-btn, .D .ns-bloque b { font-family: var(--f-titulo); font-weight: 400; }
+
+/* En línea y Físico igual que Local (Elías, 26 nov). «Proyectar» y «Salir» del invitado: botones chicos de placa morada
+   como el letrero, fijos en las esquinas de arriba; el letrero siempre al centro. */
+.D.az.lb.lbn .lb-cast, .D.az.lb.lbn .pf-atras:not(.lb-atras-anf) { position: fixed; top: 8px; z-index: 7; width: auto; height: 44px; margin: 0; padding: 0 14px;
+  display: inline-flex; align-items: center; gap: 8px; border: 0; border-radius: 6px; color: #fff; cursor: pointer;
+  background: linear-gradient(180deg, #7a52c4, #6340ad); box-shadow: inset 0 2px 0 rgba(255, 255, 255, .25), 0 4px 0 #3c2575, 0 8px 14px rgba(0, 0, 0, .45);
+  -webkit-backdrop-filter: none; backdrop-filter: none;
+  font: italic 400 18px/1 var(--f-titulo); text-transform: uppercase; text-shadow: 2px 2px 0 #1a1030; }
+.D.az.lb.lbn .lb-cast { right: max(10px, env(safe-area-inset-right)); left: auto; }
+.D.az.lb.lbn .lb-cast.on { color: #062a28; text-shadow: none; background: linear-gradient(180deg, #4ff3e4, #12b5a8); box-shadow: 0 4px 0 #0b6f67, 0 0 16px rgba(46, 230, 214, .45); }
+.D.az.lb.lbn .pf-atras:not(.lb-atras-anf) { left: max(10px, env(safe-area-inset-left)); right: auto; }
+.D.az.lb.lbn .lb-cast:active, .D.az.lb.lbn .pf-atras:not(.lb-atras-anf):active { transform: translateY(3px); box-shadow: inset 0 2px 0 rgba(255, 255, 255, .25), 0 1px 0 #3c2575; }
+.D.az.lb.lbn:not(.wide) .lb-banner { left: 50%; right: auto; translate: -50% 0; }
+/* Celular: solo el ícono, para que quepan a los lados del letrero. */
+.D.az.lb.lbn:not(.wide) .lb-cast { width: 44px; padding: 0; justify-content: center; }
+.D.az.lb.lbn:not(.wide) .lb-cast .cs-txt { display: none; }
+.D.az.lb.lbn:not(.wide) .pf-atras:not(.lb-atras-anf) { width: 44px; padding: 0; justify-content: center; font-size: 0; }
+.D.az.lb.lbn:not(.wide) .pf-atras:not(.lb-atras-anf) span { font-size: 18px; }
+/* Aviso «Tu figura»: tus figuras guardadas en la charola gris. */
+.D .a-dialogo.lbn-dlg .lb-figs { padding: 12px 10px; border-radius: 4px; background: #c3c6c9; box-shadow: inset 0 2px 0 rgba(255, 255, 255, .5); }
+.D .a-dialogo.lbn-dlg .lb-figs small { color: #2a2d36; font-size: 13px; }
+.D .a-dialogo.lbn-dlg .lb-mini-fig { width: 64px; height: 64px; border-radius: 50%; border: 4px solid #e4e6e8; background: #fff; }
+.D .a-dialogo.lbn-dlg .lb-mini-fig.activa { border-color: var(--pj, #f2b632); }
+.D .a-dialogo.lbn-dlg .lb-flecha { color: #1a1a24; }
+.D .a-dialogo.lbn-dlg > .lb-mini { min-height: 52px; border: 0; border-radius: 4px; background: #c3c6c9; color: #1a1a24; font-weight: 800; }

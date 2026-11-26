@@ -18,7 +18,11 @@ import { ConfigEnVivo, useConfigEnVivo } from "../../pantallas/ConfigEnVivo";
 import { MesaJuego } from "../../pantallas/MesaJuego";
 import "../../pantallas/lobby/cast.css";
 import { colorDe, varsColor } from "../../app/colorJugador";
-import { CUPO_LOBBY, Pedestales, TodosListos } from "../../pantallas/SalaEspera";
+import { CUPO_LOBBY, Pedestales, TodosListos, lugaresSala, preparados } from "../../pantallas/SalaEspera";
+import { claseLobby, LOBBY_NUEVO } from "../../pantallas/lobby/version";
+import "../../pantallas/azotea/azotea.css";
+import "../../pantallas/perfil/perfil.css";
+import "../../pantallas/lobby/lobby.css";
 import { useColoresSala } from "../../pantallas/lobby/colores";
 import { useSala } from "../sala";
 import { AvisoLogro } from "../../pantallas/AvisoLogro";
@@ -106,6 +110,33 @@ export function PantallaTv({ codigo }: { codigo: string }) {
         </div>
       )}
     </>);
+  }
+
+  // Lobby nuevo en la TV (Elías, 26 nov): el mismo cuarto, cabinas, plataformas, J1/J2 y barra de nombres que en los
+  // celulares, sin paneles ni botones. Los resultados de la partida anterior siguen con la vista de siempre.
+  if (!final && LOBBY_NUEVO) {
+    const pr = preparados(s.miembros);
+    return (
+      <RaizDS ancho className={"alv a-tv az lb tv-lb" + claseLobby}>
+        <FondoCuarto />
+        <div className="a-scroll"><div className="lb-caja">
+          <header className="lb-top">
+            <div className={"lb-banner" + (pr.todos ? " todos" : "")} role="status" aria-live="polite">
+              <span className="lb-banner-n">{s.miembros.length}/{CUPO_LOBBY}</span>
+              <span className="lb-banner-t">{pr.todos ? "¡Todos listos!" : `${pr.listos} listo${pr.listos === 1 ? "" : "s"}`}</span>
+              <small className="lb-banner-s">{pr.todos ? "El administrador arma la partida" : "Abre ALV en tu celular y toca «¡Jugar!»"}</small>
+            </div>
+            <span className="lb-red"><Conexion red={s.red} /></span>
+          </header>
+          <section className="lb-escenario" style={{ "--lugares": lugaresSala(ordenados.length) } as React.CSSProperties}>
+            <Pedestales miembros={ordenados} className="lb-pedestales" fiesta={{ escenarios: true }} vida="tv" />
+          </section>
+        </div></div>
+        {vivoTv && <div className="cv-tv"><ConfigEnVivo e={vivoTv} grande /></div>}
+        <button type="button" className="cs-boton on tv-dejar" onClick={dejar} aria-label="Dejar de proyectar"><span aria-hidden="true">✕</span> Dejar de proyectar</button>
+        <AvisoLogro tv={s.sala?.id ?? ""} />
+      </RaizDS>
+    );
   }
 
   return marco(<>
