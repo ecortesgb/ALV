@@ -2,7 +2,8 @@
 // El nickname se guarda como correo interno (no real) para que Supabase lo haga único.
 import type { Session } from "@supabase/supabase-js";
 import type { FiguraV2 } from "../content/personaje";
-import { esFigura, normalizar, N_CAPSULAS, type EstadoCapsulas } from "../app/figura3d";
+import { normalizar, N_CAPSULAS, type EstadoCapsulas } from "../app/figura3d";
+import { desdeBase, haciaBase, modoCorteV3 } from "../personajes/integracion";
 import { cliente, cuentaActiva, fijarArticulos, fijarUsuario, GENERICO, uidActual } from "./cliente";
 
 const NICK = /^[a-z0-9_]{3,20}$/;
@@ -147,22 +148,34 @@ export async function cargarCapsulasNube(): Promise<EstadoCapsulas | null> {
     let activa: number | null = null;
     for (const f of data) {
       const i = Number(f.capsula) - 1;
-      if (i < 0 || i >= N_CAPSULAS || !esFigura(f.figura)) continue;
-      slots[i] = { nombre: String(f.nombre ?? ""), figura: f.figura as FiguraV2, actualizado: String(f.actualizado ?? "") };
+      const fig = desdeBase(f.figura); // frontera v3 (fase 5): una v3 directa llega como puente; lo inválido no entra
+      if (i < 0 || i >= N_CAPSULAS || !fig) continue;
+      slots[i] = { nombre: String(f.nombre ?? ""), figura: fig as FiguraV2, actualizado: String(f.actualizado ?? "") };
       if (f.activa) activa = i;
     }
     return normalizar({ version: 1, activa, slots });
   } catch (e) { console.error("cargarCapsulasNube", e); return null; }
 }
 
-/** Sube las cápsulas tal como están en el celular: guarda las llenas, borra las vacías y marca la activa. */
+/** Sube las cápsulas tal como están en el celular: guarda las llenas, borra las vacías y marca la activa.
+ *  Con el corte a v3 (Codex, v3-directo-r1): cada figura cruza la frontera (haciaBase): sube su v3; una figura sin v3 o
+ *  inválida NO se sube y TAMPOCO se borra (y el resultado es false: no se anuncia «sincronizado»); los espacios vacíos ya no
+ *  se borran (las bajas solo pueden ser explícitas; la 046 quita además el DELETE directo); solo se activa una cápsula que sí
+ *  se subió. */
 export async function guardarCapsulasNube(e: EstadoCapsulas): Promise<boolean> {
   if (!cliente) return false;
   try {
     const uid = await uidActual();
     if (!uid) return false;
-    const llenas = e.slots.flatMap((c, i) => (c ? [{ jugador: uid, capsula: i + 1, nombre: c.nombre.slice(0, 24), figura: c.figura, actualizado: new Date().toISOString() }] : []));
-    const vacias = e.slots.flatMap((c, i) => (c ? [] : [i + 1]));
+    const corte = modoCorteV3();
+    let omitidas = false;
+    const llenas = e.slots.flatMap((c, i) => {
+      if (!c) return [];
+      const h = haciaBase(c.figura, corte);
+      if (h.tipo !== "subir") { omitidas = true; return []; }
+      return [{ jugador: uid, capsula: i + 1, nombre: c.nombre.slice(0, 24), figura: h.figura, actualizado: new Date().toISOString() }];
+    });
+    const vacias = corte ? [] : e.slots.flatMap((c, i) => (c ? [] : [i + 1]));
     if (llenas.length) {
       // Sin la columna activa: solo la cambia la función activar_capsula.
       const { error } = await cliente.from("figuras_jugador").upsert(llenas, { onConflict: "jugador,capsula" });
@@ -172,11 +185,11 @@ export async function guardarCapsulasNube(e: EstadoCapsulas): Promise<boolean> {
       const { error } = await cliente.from("figuras_jugador").delete().eq("jugador", uid).in("capsula", vacias);
       if (error) { console.error("guardarCapsulasNube borrar", error.message); return false; }
     }
-    if (e.activa != null) {
+    if (e.activa != null && llenas.some(f => f.capsula === e.activa! + 1)) {
       const { error } = await cliente.rpc("activar_capsula", { p_capsula: e.activa + 1 });
       if (error) { console.error("activar_capsula", error.message); return false; }
     }
-    return true;
+    return !omitidas;
   } catch (err) { console.error("guardarCapsulasNube", err); return false; }
 }
 

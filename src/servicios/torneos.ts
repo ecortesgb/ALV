@@ -5,6 +5,7 @@
 import { cliente, hayNube } from "./cliente";
 import { sesionAhora } from "../app/sesion";
 import type { FiguraV2 } from "../content/personaje";
+import { conFiguras } from "../personajes/integracion";
 
 export type ModalidadTorneo = "todas" | "individual" | "parejas" | "equipos";
 export interface Torneo {
@@ -44,7 +45,7 @@ export async function tablaTorneo(id: string): Promise<FilaTorneo[] | null> {
   try {
     const { data, error } = await cliente!.rpc("tabla_torneo", { p_torneo: id });
     if (error) { console.error("tablaTorneo", error.message); return null; }
-    return (data ?? []) as FilaTorneo[];
+    return conFiguras((data ?? []) as FilaTorneo[]);
   } catch (e) { console.error("tablaTorneo", e); return null; }
 }
 

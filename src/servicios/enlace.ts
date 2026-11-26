@@ -2,6 +2,7 @@
 // Con Supabase configurado usa la nube; sin él (desarrollo o demostración) usa un respaldo local que
 // comparte la sala entre pestañas del mismo navegador, para probar TV + celulares sin cuentas.
 import type { FiguraV2 } from "../content/personaje";
+import { desdeBase } from "../personajes/integracion";
 import { cliente, hayNube, uidActual } from "./cliente";
 import { anunciarLobby, buscarLobby, escucharSala, vigilarPantalla, type EstadoRed, type PresenciaPantalla } from "./tiempoReal";
 import { vigilarPantallaSinNube } from "./difusion";
@@ -117,7 +118,7 @@ const nube: Enlace = {
         cliente!.from("figuras_jugador").select("jugador, figura").eq("activa", true).in("jugador", ids),
       ]);
       const nombre = new Map((perf.data ?? []).map(x => [x.id as string, x.nombre as string]));
-      const figura = new Map((figs.data ?? []).map(x => [x.jugador as string, x.figura as FiguraV2]));
+      const figura = new Map((figs.data ?? []).map(x => [x.jugador as string, desdeBase(x.figura) as FiguraV2 | null])); // frontera v3 (fase 5)
       return (m.data ?? []).map(x => ({
         id: x.jugador as string, nombre: nombre.get(x.jugador as string) ?? "Jugador", figura: figura.get(x.jugador as string) ?? null,
         anfitrion: x.jugador === ev.data!.anfitrion, listo: !!x.listo,

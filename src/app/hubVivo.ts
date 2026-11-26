@@ -5,6 +5,7 @@ import { cliente, hayNube } from "../servicios/cliente";
 import { conectarHub, type ConexionHub, type EnLinea, type MensajeChat } from "../servicios/hubVivo";
 import { figuraActiva, leerCapsulas } from "./figura3d";
 import { useSesion } from "./sesion";
+import { desdeBase } from "../personajes/integracion";
 
 const GUARDAR = 60;       // mensajes que se quedan en memoria
 const ESPERA_MS = 1200;   // entre un mensaje y otro (evita ráfagas)
@@ -61,7 +62,7 @@ export function useFigurasDe(ids: string[]): Map<string, FiguraV2 | null> {
     for (const id of faltan) figuras.set(id, null);
     let vivo = true;
     void cliente!.from("figuras_jugador").select("jugador, figura").eq("activa", true).in("jugador", faltan).then(({ data }) => {
-      for (const f of (data ?? []) as { jugador: string; figura: FiguraV2 }[]) figuras.set(f.jugador, f.figura);
+      for (const f of (data ?? []) as { jugador: string; figura: unknown }[]) figuras.set(f.jugador, desdeBase(f.figura) as FiguraV2 | null); // frontera v3
       if (vivo) setN(n => n + 1);
     });
     return () => { vivo = false; };

@@ -107,7 +107,7 @@ for (const [nombre, f] of Object.entries(rotas)) {
 const largoJS = f => JSON.stringify(f).length;
 const tamano = async (nombre, f, entra) => prueba(`tamaño: ${nombre} (JSON ${largoJS(f)} caracteres) ${entra ? "entra" : "no entra"}`, async () => {
   await como(C);
-  if (entra) { await poner(C, 3, f); await db.query("delete from public.figuras_jugador where jugador = $1 and capsula = 3", [C]); }
+  if (entra) { await poner(C, 3, f); await admin(); await db.query("delete from public.figuras_jugador where jugador = $1 and capsula = 3", [C]); }
   else await falla("insert into public.figuras_jugador (jugador, capsula, figura) values ($1, 3, $2)", [C, JSON.stringify(f)], "figuras_jugador_figura_v3");
 });
 await tamano("ASCII de 7 000", v3({ extensiones: { relleno: "x".repeat(7000) } }), true);
@@ -123,6 +123,10 @@ await prueba("RLS: B no escribe por A; C no ve las de A; B (comparte sala) sí; 
   await como(C); igual((await uno("select count(*)::int n from public.figuras_jugador where jugador = $1", [A])).n, 0);
   await como(B); igual((await uno("select count(*)::int n from public.figuras_jugador where jugador = $1", [A])).n, 2);
   await anon(); await falla("select * from public.figuras_jugador", [], "permission denied");
+});
+await prueba("los jugadores ya no pueden borrar filas (cliente viejo abierto durante el corte)", async () => {
+  await como(A); await falla("delete from public.figuras_jugador where jugador = $1", [A], "permission denied");
+  await admin(); igual((await uno("select count(*)::int n from public.figuras_jugador where jugador = $1", [A])).n, 2);
 });
 await prueba("activar_capsula sigue igual (y no activa una vacía)", async () => {
   await como(A); await db.query("select public.activar_capsula(2::smallint)");

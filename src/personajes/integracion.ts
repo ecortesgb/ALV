@@ -17,12 +17,20 @@ export type { FiguraV3 } from "./tipos";
 /** Lo mínimo de una figura v2 que el puente necesita (el tipo completo vive en el sistema viejo). */
 export interface FiguraV2Puente { version: 2; extensiones?: Record<string, unknown>; [k: string]: unknown }
 
-type Entorno = { DEV?: boolean; VITE_PERSONAJES_V3?: string; VITE_PERSONAJES_PRIVADOS_URL?: string };
+type Entorno = { DEV?: boolean; VITE_PERSONAJES_V3?: string; VITE_PERSONAJES_PRIVADOS_URL?: string; VITE_CORTE_V3?: string };
 const entorno = (): Entorno => import.meta.env as unknown as Entorno;
 
-/** Bandera de la fase 5: solo en desarrollo, con VITE_PERSONAJES_V3=1 o ?v3=1. En el build publicado DEV es false y
- *  nada la enciende (Codex D3: parámetro y no localStorage, para no dejarla prendida sin querer). */
+/** Día del corte a v3 (Codex, v3-directo-r1): EXACTAMENTE VITE_CORTE_V3=1 al compilar (publicar.yml la pasa desde las
+ *  variables de GitHub). Enciende a la vez: la base guarda y devuelve v3 directa, la bandera también en lo publicado y la
+ *  fuente privada. Sin ella, todo como antes. */
+export function modoCorteV3(env: Entorno = entorno()): boolean {
+  return env.VITE_CORTE_V3 === "1";
+}
+
+/** Bandera de la fase 5: con el corte, siempre; si no, solo en desarrollo, con VITE_PERSONAJES_V3=1 o ?v3=1. Sin corte, en el
+ *  build publicado DEV es false y nada la enciende (Codex D3, modificada en v3-directo-r1; ?v3=1 nunca activa lo publicado). */
 export function banderaV3(env: Entorno = entorno(), busqueda: string = typeof location !== "undefined" ? location.search : ""): boolean {
+  if (modoCorteV3(env)) return true;
   if (!env.DEV) return false;
   return env.VITE_PERSONAJES_V3 === "1" || new URLSearchParams(busqueda).get("v3") === "1";
 }
@@ -31,8 +39,11 @@ export function banderaV3(env: Entorno = entorno(), busqueda: string = typeof lo
  *  Publicado: null en esta fase; luego `return fuentePrivada({ cliente })` (rama de alv-privacidad). Tener fuente NO
  *  enciende la bandera. */
 export async function fuenteDePersonajes(env: Entorno = entorno()): Promise<string | null> {
-  if (env.DEV && env.VITE_PERSONAJES_PRIVADOS_URL) return env.VITE_PERSONAJES_PRIVADOS_URL;
-  return null; // luego: fuentePrivada({ cliente })
+  if (env.DEV && env.VITE_PERSONAJES_PRIVADOS_URL) return env.VITE_PERSONAJES_PRIVADOS_URL; // desarrollo: ensayo con la local
+  // Publicado con el corte: SOLO la fuente privada (Codex, v3-directo-r1): sin sesión o sin acceso se ve el respaldo; nunca
+  // se regresa a una URL local o pública. Se conecta aquí cuando la rama de alv-privacidad esté en main.
+  if (modoCorteV3(env)) return null; // luego: return fuentePrivada({ cliente })
+  return null;
 }
 
 /** Tope de la columna figuras_jugador.figura (CHECK pg_column_size ≤ 32768); se deja margen. */
@@ -72,6 +83,58 @@ export function resolverFigura(id: string, f: FiguraV3, catalogo: Catalogo, piez
   return Object.keys(f.piezas).length ? planoConstructor(id, f, catalogo, piezas) : resolver(id, f, catalogo);
 }
 
+// ---------- Frontera con la base (Codex, v3-directo-r1, opción A) ----------
+// Dentro de la app la figura sigue siendo una v2 (con la v3 en el puente); la base, después del corte, recibe y devuelve la
+// v3 DIRECTA. Solo estas dos funciones cruzan la frontera, en los puntos de entrada y salida (cuenta, enlace, hubVivo, RPC).
+
+/** Los campos que todavía leen las pantallas viejas (momentos, personalidad, apodo) salen de la v3: un solo valor. */
+export function proyectar(v3: FiguraV3): FiguraV2Puente {
+  const alv = (v3.extensiones.alv ?? {}) as Record<string, unknown>;
+  const ext: Record<string, unknown> = { v3 };
+  if (alv.apodo !== undefined) ext.apodo = alv.apodo;
+  if (alv.personalidad !== undefined) ext.personalidad = alv.personalidad;
+  return { version: 2, momentos: { ...v3.momentos }, extensiones: { alv: ext } };
+}
+
+/** Lo que llega de la base (o de otro aparato) a la forma interna. v3 válida → puente proyectado (sin depender del catálogo
+ *  ni del GLB: si faltan recursos se ve el respaldo y los datos se conservan); v2 → igual que siempre; lo demás → null. */
+export function desdeBase(f: unknown): FiguraV2Puente | null {
+  if (!f || typeof f !== "object" || Array.isArray(f)) return null;
+  const v = (f as { version?: unknown }).version;
+  if (v === 2) return f as FiguraV2Puente;
+  if (v === 3) { const v3 = leerFigura(f); return v3 ? proyectar(v3) : null; }
+  return null;
+}
+
+/** Filas de una RPC con `figura` (ranking, salón, récords, torneos): cada figura pasa por la frontera. */
+export function conFiguras<T extends { figura?: unknown }>(filas: T[]): T[] {
+  return filas.map(r => ("figura" in r ? { ...r, figura: desdeBase(r.figura) } : r));
+}
+
+const momentosValidos = (m: unknown): m is FiguraV3["momentos"] => {
+  const x = m as Record<string, unknown> | null;
+  return !!x && typeof x === "object" && ["espera", "victoria", "derrota", "punto"].every(k => typeof x[k] === "string" && (x[k] as string).length <= 40)
+    && (x.paquete === null || (typeof x.paquete === "string" && x.paquete.length <= 40));
+};
+
+/** Qué se manda a la base. Sin corte: la figura tal cual (v2 o puente, como hoy). Con corte: la v3 del puente, con lo que una
+ *  pantalla vieja haya cambiado en la proyección (momentos, personalidad, apodo) ya dentro de la v3; una v2 sin v3 se OMITE
+ *  (no se sube y tampoco cuenta como espacio vacío: nunca produce un borrado); lo inválido es error. */
+export type HaciaBase = { tipo: "subir"; figura: unknown } | { tipo: "omitir" } | { tipo: "error" };
+export function haciaBase(f: unknown, corte: boolean = modoCorteV3()): HaciaBase {
+  if (!f || typeof f !== "object" || (f as { version?: unknown }).version !== 2) return { tipo: "error" };
+  if (!corte) return { tipo: "subir", figura: f };
+  const p = f as FiguraV2Puente & { momentos?: unknown };
+  const pAlv = (p.extensiones?.alv ?? {}) as Record<string, unknown>;
+  if (pAlv.v3 === undefined) return { tipo: "omitir" };
+  const v3 = leerFigura(pAlv.v3);
+  if (!v3) return { tipo: "error" };
+  const alv = { ...((v3.extensiones.alv ?? {}) as Record<string, unknown>) };
+  for (const k of ["apodo", "personalidad"]) { if (k in pAlv) alv[k] = pAlv[k]; else delete alv[k]; }
+  const junta = leerFigura({ ...v3, momentos: momentosValidos(p.momentos) ? p.momentos : v3.momentos, extensiones: { ...v3.extensiones, alv } });
+  return junta ? { tipo: "subir", figura: junta } : { tipo: "error" };
+}
+
 // ---------- Para las escenas de la app (HUB, lobby, TV, nave) ----------
 
 export interface CatalogoV3 { catalogo: Catalogo; piezas: Piezas }
@@ -89,9 +152,24 @@ export function catalogoParaEscena(): Promise<CatalogoV3 | null> {
 }
 /** El catálogo para una escena (null mientras carga, con la bandera apagada o sin fuente). */
 export function useCatalogoV3(): CatalogoV3 | null {
-  const [c, setC] = useState<CatalogoV3 | null>(null);
-  useEffect(() => { let vivo = true; catalogoParaEscena().then(x => { if (vivo) setC(x); }); return () => { vivo = false; }; }, []);
-  return c;
+  return useEstadoCatalogoV3().catalogo;
+}
+/** Vuelve a pedir el catálogo (p. ej. tras recuperar la sesión o el acceso privado). Avisa a quien lo esté usando. */
+const oyentesCat = new Set<() => void>();
+export function reintentarCatalogo() { cargaCatalogo = null; oyentesCat.forEach(f => f()); }
+/** El catálogo y en qué va: «cargando», «listo» o «sin-acceso» (sin fuente, sin sesión o falló: se ve el respaldo y se
+ *  puede reintentar; Codex, v3-directo-r1). Con la bandera apagada: «sin-acceso» y nada se pide. */
+export function useEstadoCatalogoV3(): { catalogo: CatalogoV3 | null; estado: "cargando" | "listo" | "sin-acceso"; reintentar: () => void } {
+  const [r, setR] = useState<{ catalogo: CatalogoV3 | null; estado: "cargando" | "listo" | "sin-acceso" }>({ catalogo: null, estado: "cargando" });
+  const [vuelta, setVuelta] = useState(0);
+  useEffect(() => { const f = () => setVuelta(n => n + 1); oyentesCat.add(f); return () => { oyentesCat.delete(f); }; }, []);
+  useEffect(() => {
+    let vivo = true;
+    setR(x => (x.catalogo ? x : { catalogo: null, estado: "cargando" }));
+    catalogoParaEscena().then(c => { if (vivo) setR({ catalogo: c, estado: c ? "listo" : "sin-acceso" }); });
+    return () => { vivo = false; };
+  }, [vuelta]);
+  return { ...r, reintentar: reintentarCatalogo };
 }
 /** Una figura lista para la escena vieja con el adaptador de la fase 5: la v2 sin el puente y, si su v3 se puede resolver,
  *  el `plano3` que el adaptador carga. Sin catálogo (bandera apagada) la figura pasa igual que siempre. */

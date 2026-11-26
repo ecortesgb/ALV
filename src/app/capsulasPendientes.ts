@@ -3,8 +3,25 @@
 // al recuperar la conexión). guardarCapsulasNube() borra los espacios ausentes, así que NUNCA se sube sin haber leído
 // antes la nube y combinado con ella.
 import type { EstadoCapsulas } from "./figura3d";
+import { modoCorteV3 } from "../personajes/integracion";
 
-const clave = (jugador: string) => "alv-capsulas-pendientes-" + (jugador.replace(/[^a-zA-Z0-9_-]/g, "").slice(0, 64) || "local");
+const PREFIJO = "alv-capsulas-pendientes-", PREFIJO_CORTE = "alv-capsulas-pendientes-c3-";
+const clave = (jugador: string) => (modoCorteV3() ? PREFIJO_CORTE : PREFIJO) + (jugador.replace(/[^a-zA-Z0-9_-]/g, "").slice(0, 64) || "local");
+
+/** Época de las figuras en este aparato («corte» o «v2»). Si un build SIN corte encuentra la marca «corte» (se revirtió),
+ *  borra los pendientes de antes del corte para que la sincronización vuelva a empezar desde la nube (Codex, v3-directo-r1).
+ *  Lo de la época del corte vive en sus propias claves y un build sin corte no lo lee. */
+export function prepararEpoca(corte: boolean = modoCorteV3()) {
+  try {
+    const MARCA = "alv-epoca-figuras", antes = localStorage.getItem(MARCA);
+    if (!corte && antes === "corte") {
+      const borrar: string[] = [];
+      for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k && k.startsWith(PREFIJO) && !k.startsWith(PREFIJO_CORTE)) borrar.push(k); }
+      borrar.forEach(k => localStorage.removeItem(k));
+    }
+    localStorage.setItem(MARCA, corte ? "corte" : "v2");
+  } catch { /* sin almacenamiento */ }
+}
 const valido = (i: unknown): i is number => Number.isInteger(i) && (i as number) >= 0 && (i as number) < 3;
 
 /** Sellos de los espacios pendientes: cada guardado pone un sello nuevo, así una subida solo quita la marca del guardado

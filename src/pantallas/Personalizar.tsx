@@ -4,8 +4,8 @@ import { Suspense, lazy, useEffect, useRef } from "react";
 import type { FiguraV2 } from "../content/personaje";
 import { FotoFigura, N_CAPSULAS, escribirCapsulas, huella, leerCapsulas, useCapsulas, type EstadoCapsulas } from "../app/figura3d";
 import { atras, ir } from "../app/rutas";
-import { combinar, leerPendientes, leerSellos, marcarPendiente, quitarPendientes } from "../app/capsulasPendientes";
-import { banderaV3, empaquetarV3, leerV3, sinV3, useCatalogoV3, type FiguraV2Puente, type FiguraV3 } from "../personajes/integracion";
+import { combinar, leerPendientes, leerSellos, marcarPendiente, prepararEpoca, quitarPendientes } from "../app/capsulasPendientes";
+import { banderaV3, empaquetarV3, leerV3, modoCorteV3, proyectar, sinV3, useEstadoCatalogoV3, type FiguraV2Puente, type FiguraV3 } from "../personajes/integracion";
 import { useSesion } from "../app/sesion";
 import { sonar } from "../app/sonido";
 import { hayNube } from "../servicios/cliente";
@@ -49,6 +49,7 @@ export function SincroCapsulas() {
   const ultima = useRef<{ uid: string; e: EstadoCapsulas } | null>(null);
   useEffect(() => {
     if (!hayNube || fase !== "dentro" || !uid) return;
+    prepararEpoca();
     let vivo = true;
     const intentar = () => void sincronizar(uid).then(ok => { if (vivo && ok) ultima.current = { uid, e: leerCapsulas(uid) }; });
     intentar();
@@ -109,7 +110,9 @@ export function Capsulas() {
 export async function guardarFiguraNueva(uid: string, i: number, f: FiguraV3, nombre: string): Promise<"sincronizado" | "local" | "error"> {
   const aqui = leerCapsulas(uid);
   const previa = aqui.slots[i]?.figura;
-  const fig = empaquetarV3(f, previa ? sinV3(previa as unknown as FiguraV2Puente) : null);
+  // Con el corte la figura interna es la proyección de la v3 (sin respaldo v2: la base ya no guarda v2).
+  const fig = modoCorteV3() ? (leerV3({ version: 2, extensiones: { alv: { v3: f } } }) ? proyectar(f) : null)
+    : empaquetarV3(f, previa ? sinV3(previa as unknown as FiguraV2Puente) : null);
   if (!fig) return "error";
   const slots = [...aqui.slots];
   slots[i] = { nombre: nombre.slice(0, 24), figura: fig as unknown as FiguraV2, actualizado: new Date().toISOString() };
@@ -124,7 +127,7 @@ const MiPersonaje = lazy(() => import("../personajes/MiPersonaje").then(m => ({ 
 function MiPersonajeApp() {
   const { uid } = useSesion();
   const caps = useCapsulas(uid);
-  const cat = useCatalogoV3();
+  const { catalogo: cat, estado, reintentar } = useEstadoCatalogoV3();
   const espacios = caps.slots.map(c => ({ figura: c ? leerV3(c.figura) : null, nombre: c?.nombre ?? "", antes: !!c }));
   const activar = (i: number) => {
     if (!caps.slots[i] || caps.activa === i) return;
@@ -134,7 +137,7 @@ function MiPersonajeApp() {
   };
   return (
     <Suspense fallback={null}>
-      <MiPersonaje jugador={uid} catalogo={cat} espacios={espacios} activa={caps.activa}
+      <MiPersonaje jugador={uid} catalogo={cat} estadoCatalogo={estado} onReintentar={reintentar} espacios={espacios} activa={caps.activa}
         onGuardar={(i, f, n) => guardarFiguraNueva(uid, i, f, n)} onActivar={activar} onSalir={atras} />
     </Suspense>
   );

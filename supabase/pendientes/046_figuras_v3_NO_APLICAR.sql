@@ -18,7 +18,8 @@
 --     coalesce(…, false): un campo ausente da NULL y un CHECK con NULL deja pasar; así se rechaza.
 --  5) El guardián de piezas (033) se queda solo para figuras v2: con v3 no hace nada (lectores v2 separados).
 -- Tablas, adquisiciones (piezas_jugador), retos_jugador e historial no se tocan: se conservan para la reversión.
--- RLS, permisos y activar_capsula() no cambian.
+-- RLS y activar_capsula() no cambian. Permisos: los jugadores ya no pueden BORRAR filas (6): la app del corte nunca borra por
+-- espacio vacío, y así un cliente viejo abierto durante el corte no puede borrar figuras nuevas (Codex, v3-directo-r1).
 --
 -- TODO en UNA transacción (el aplicador de migraciones de Supabase ya la abre; en el editor SQL, envolver en begin; … commit;).
 -- Lo primero es bloquear las tablas: ninguna escritura puede colarse entre la copia y el borrado (Codex, paso5-r1).
@@ -89,3 +90,6 @@ begin
 end;
 $$;
 revoke execute on function privado.validar_piezas_figura() from public, anon, authenticated;
+
+-- 6) Sin DELETE directo para los jugadores (la reversión lo devuelve)
+revoke delete on public.figuras_jugador from authenticated;

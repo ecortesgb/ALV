@@ -38,7 +38,8 @@ insert into public.perfiles (id, nombre) select x, 'prueba_' || left(x::text, 6)
 --     coalesce(…, false): un campo ausente da NULL y un CHECK con NULL deja pasar; así se rechaza.
 --  5) El guardián de piezas (033) se queda solo para figuras v2: con v3 no hace nada (lectores v2 separados).
 -- Tablas, adquisiciones (piezas_jugador), retos_jugador e historial no se tocan: se conservan para la reversión.
--- RLS, permisos y activar_capsula() no cambian.
+-- RLS y activar_capsula() no cambian. Permisos: los jugadores ya no pueden BORRAR filas (6): la app del corte nunca borra por
+-- espacio vacío, y así un cliente viejo abierto durante el corte no puede borrar figuras nuevas (Codex, v3-directo-r1).
 --
 -- TODO en UNA transacción (el aplicador de migraciones de Supabase ya la abre; en el editor SQL, envolver en begin; … commit;).
 -- Lo primero es bloquear las tablas: ninguna escritura puede colarse entre la copia y el borrado (Codex, paso5-r1).
@@ -109,6 +110,9 @@ begin
 end;
 $$;
 revoke execute on function privado.validar_piezas_figura() from public, anon, authenticated;
+
+-- 6) Sin DELETE directo para los jugadores (la reversión lo devuelve)
+revoke delete on public.figuras_jugador from authenticated;
 -- ===== fin 046 =====
 
 do $$
@@ -131,6 +135,8 @@ begin
   exception when others then r := r || chr(10) || ('v3 sin momentos rechazada: ' || sqlerrm); end;
   begin insert into public.figuras_jugador (jugador, capsula, figura) values (a, 3, jsonb_set(v3, '{extensiones}', jsonb_build_object('x', repeat('x', 9000)))); r := r || chr(10) || ('FALLA: entró v3 de más de 8 KB');
   exception when others then r := r || chr(10) || ('v3 > 8 KB rechazada: ' || sqlerrm); end;
+  begin delete from public.figuras_jugador where jugador = a; r := r || chr(10) || ('FALLA: A pudo borrar');
+  exception when others then r := r || chr(10) || ('borrar directo rechazado: ' || sqlerrm); end;
   perform public.activar_capsula(2::smallint);
   select capsula into n from public.figuras_jugador where jugador = a and activa; r := r || chr(10) || ('activa tras activar_capsula(2): ' || n);
   begin perform * from public.reclamar_reto((select id from public.retos_figura limit 1), 1::smallint); r := r || chr(10) || ('FALLA: reto reclamado');

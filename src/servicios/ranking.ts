@@ -5,6 +5,7 @@ import { useSyncExternalStore } from "react";
 import { cliente, hayNube } from "./cliente";
 import { sesionAhora } from "../app/sesion";
 import type { FiguraV2 } from "../content/personaje";
+import { conFiguras } from "../personajes/integracion";
 
 export type FiltroRanking = "amigos" | "global";
 
@@ -74,7 +75,7 @@ export async function rankingJugadores(filtro: FiltroRanking, temporada: boolean
   try {
     const { data, error } = await cliente!.rpc("ranking_jugadores", { p_filtro: filtro, p_temporada: temporada });
     if (error) { console.error("rankingJugadores", error.message); return null; }
-    return (data ?? []) as FilaJugador[];
+    return conFiguras((data ?? []) as FilaJugador[]);
   } catch (e) { console.error("rankingJugadores", e); return null; }
 }
 
@@ -137,7 +138,7 @@ export async function rankingReconocimientos(filtro: FiltroRanking, categoria: C
   try {
     const { data, error } = await cliente!.rpc("ranking_reconocimientos", { p_filtro: filtro, p_categoria: categoria, p_temporada: temporada });
     if (error) { console.error("rankingReconocimientos", error.message); return null; }
-    return (data ?? []) as FilaVoto[];
+    return conFiguras((data ?? []) as FilaVoto[]);
   } catch (e) { console.error("rankingReconocimientos", e); return null; }
 }
 export interface ConteoVoto { categoria: CategoriaVoto; votado: string | null; nombre: string | null; votos: number; mi_voto: string | null }
@@ -193,7 +194,7 @@ export async function salonDeLaFama(): Promise<FilaSalon[] | null> {
   try {
     const { data, error } = await cliente!.rpc("salon_de_la_fama");
     if (error) { console.error("salonDeLaFama", error.message); return null; }
-    return (data ?? []) as FilaSalon[];
+    return conFiguras((data ?? []) as FilaSalon[]);
   } catch (e) { console.error("salonDeLaFama", e); return null; }
 }
 
@@ -213,7 +214,7 @@ export async function records(filtro: FiltroRanking): Promise<Record_[] | null> 
   try {
     const { data, error } = await cliente!.rpc("records", { p_filtro: filtro });
     if (error) { console.error("records", error.message); return null; }
-    return (data ?? []) as Record_[];
+    return conFiguras((data ?? []) as Record_[]);
   } catch (e) { console.error("records", e); return null; }
 }
 export async function leerOcultarBebidas(): Promise<boolean> {

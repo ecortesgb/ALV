@@ -13,6 +13,8 @@
   border: 2.5px solid var(--ink); background: #e2e6f0; color: var(--ink); font: 900 30px/1 var(--f-texto); box-shadow: 0 .16em 0 var(--ink); }
 .D .mp-atras:active { transform: translateY(2px); box-shadow: 0 .06em 0 var(--ink); }
 .D .mp-cargando { margin: 0; color: var(--mut); }
+.D .mp-sin { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 10px 14px; max-width: 900px; text-align: center; }
+.D .mp-sin p { margin: 0; color: #fff; font-weight: 800; }
 
 .D .mp-opciones { display: grid; gap: 12px; width: 100%; max-width: 900px; grid-template-columns: 1fr; }
 @media (min-width: 860px) { .D .mp-opciones { grid-template-columns: 1fr 1fr; gap: 16px; } }

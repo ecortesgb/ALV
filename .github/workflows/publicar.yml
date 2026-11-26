@@ -28,6 +28,8 @@ jobs:
         env:
           VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
           VITE_SUPABASE_PUBLISHABLE_KEY: ${{ vars.VITE_SUPABASE_PUBLISHABLE_KEY }}
+          # Corte a v3 (fase 5, Codex v3-directo-r1): solo el día del corte se crea la variable con el valor 1.
+          VITE_CORTE_V3: ${{ vars.VITE_CORTE_V3 }}
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist

@@ -95,3 +95,55 @@ describe("fase 5: copias para la escena vieja", () => {
     for (const f of ["motor-personajes.js", "logicas.js"]) expect(readFileSync(`public/personajes/${f}`, "utf8"), f).toBe(readFileSync(`tools/personajes/${f}`, "utf8"));
   });
 });
+
+describe("fase 5: corte a v3 (Codex, v3-directo-r1)", () => {
+  const v3 = { ...deCatalogo(cat.get("iron-man")!.ficha), extensiones: { alv: { apodo: "Tony", personalidad: { perfil: "timido" } } } };
+  it("el interruptor es exactamente VITE_CORTE_V3=1 y enciende la bandera también en lo publicado", async () => {
+    const { modoCorteV3 } = await import("./integracion");
+    expect(modoCorteV3({ VITE_CORTE_V3: "1" })).toBe(true);
+    expect(modoCorteV3({ VITE_CORTE_V3: "true" })).toBe(false);
+    expect(modoCorteV3({})).toBe(false);
+    expect(banderaV3({ DEV: false, VITE_CORTE_V3: "1" }, "")).toBe(true);
+    expect(banderaV3({ DEV: false }, "?v3=1")).toBe(false);
+  });
+  it("en lo publicado con corte la fuente nunca es la local", async () => {
+    expect(await fuenteDePersonajes({ DEV: false, VITE_CORTE_V3: "1", VITE_PERSONAJES_PRIVADOS_URL: "http://127.0.0.1:4193/" })).toBeNull();
+    expect(await fuenteDePersonajes({ DEV: true, VITE_CORTE_V3: "1", VITE_PERSONAJES_PRIVADOS_URL: "http://127.0.0.1:4193/" })).toBe("http://127.0.0.1:4193/");
+  });
+  it("ida y vuelta estable: haciaBase(desdeBase(v3)) es la misma v3, y proyecta momentos, personalidad y apodo", async () => {
+    const { desdeBase, haciaBase } = await import("./integracion");
+    const p = desdeBase(v3)!;
+    expect(p.version).toBe(2);
+    expect(p.momentos).toEqual(v3.momentos);
+    expect(p.extensiones).toMatchObject({ alv: { apodo: "Tony", personalidad: { perfil: "timido" } } });
+    expect(haciaBase(p, true)).toEqual({ tipo: "subir", figura: v3 });
+  });
+  it("v2 pasa igual; lo inválido no entra; sin corte se sube lo de siempre", async () => {
+    const { desdeBase, haciaBase } = await import("./integracion");
+    expect(desdeBase({ version: 2, cabello: "x" })).toEqual({ version: 2, cabello: "x" });
+    expect(desdeBase({ version: 3, familia: "../x" })).toBeNull();
+    expect(desdeBase(null)).toBeNull();
+    expect(desdeBase([1])).toBeNull();
+    expect(haciaBase({ version: 2, cabello: "x" }, false)).toEqual({ tipo: "subir", figura: { version: 2, cabello: "x" } });
+    expect(haciaBase({ version: 3 }, false)).toEqual({ tipo: "error" });
+  });
+  it("con corte: una v2 sin v3 se OMITE (no se sube ni se borra); un puente roto es error", async () => {
+    const { haciaBase } = await import("./integracion");
+    expect(haciaBase({ version: 2, cabello: "x" }, true)).toEqual({ tipo: "omitir" });
+    expect(haciaBase({ version: 2, extensiones: { alv: { v3: { version: 3, familia: "../x" } } } }, true)).toEqual({ tipo: "error" });
+  });
+  it("lo que una pantalla vieja cambie en la proyección entra a la v3 (un solo valor)", async () => {
+    const { desdeBase, haciaBase } = await import("./integracion");
+    const p = desdeBase(v3)! as unknown as { momentos: Record<string, unknown>; extensiones: { alv: Record<string, unknown> } };
+    p.momentos = { ...p.momentos, victoria: "baile" };
+    p.extensiones.alv.personalidad = { perfil: "comico" };
+    delete p.extensiones.alv.apodo;
+    const r = haciaBase(p, true) as { tipo: "subir"; figura: typeof v3 };
+    expect(r.tipo).toBe("subir");
+    expect(r.figura.momentos.victoria).toBe("baile");
+    expect(r.figura.extensiones.alv).toEqual({ personalidad: { perfil: "comico" } });
+    // momentos rotos en la proyección: se quedan los de la v3
+    p.momentos = { espera: 3 } as never;
+    expect((haciaBase(p, true) as { figura: typeof v3 }).figura.momentos).toEqual(v3.momentos);
+  });
+});

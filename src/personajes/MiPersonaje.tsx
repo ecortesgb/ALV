@@ -22,6 +22,9 @@ export interface MiPersonajeProps {
   jugador: string;
   /** Catálogo y piezas (null mientras carga o si no hay fuente). */
   catalogo: CatalogoV3 | null;
+  /** En qué va el catálogo: sin acceso (sin sesión, sin permiso o falló) se ofrece reintentar. */
+  estadoCatalogo?: "cargando" | "listo" | "sin-acceso";
+  onReintentar?: () => void;
   espacios: EspacioMP[];
   activa: number | null;
   onGuardar: (espacio: number, figura: FiguraV3, nombre: string) => Promise<ResultadoGuardar>;
@@ -38,7 +41,7 @@ const TEXTO: Record<ResultadoGuardar, (n: string) => string> = {
   error: () => "No se pudo guardar. Intenta otra vez.",
 };
 
-export function MiPersonaje({ jugador, catalogo, espacios, activa, onGuardar, onActivar, onSalir }: MiPersonajeProps) {
+export function MiPersonaje({ jugador, catalogo, estadoCatalogo = catalogo ? "listo" : "cargando", onReintentar, espacios, activa, onGuardar, onActivar, onSalir }: MiPersonajeProps) {
   const [ancho, setAncho] = useState(() => innerWidth >= 860);
   const [vista, setVista] = useState<Vista>({ cual: "inicio" });
   const [aviso, setAviso] = useState<string | null>(null);
@@ -70,17 +73,23 @@ export function MiPersonaje({ jugador, catalogo, espacios, activa, onGuardar, on
             <button type="button" className="mp-atras" onClick={onSalir} aria-label="Regresar">‹</button>
             <h1 className="dsp ol mp-titulo">Mi personaje</h1>
           </header>
-          {!catalogo && <p className="mp-cargando" role="status">Cargando personajes…</p>}
+          {!catalogo && estadoCatalogo === "cargando" && <p className="mp-cargando" role="status">Cargando personajes…</p>}
+          {!catalogo && estadoCatalogo === "sin-acceso" && (
+            <div className="mp-sin" role="alert">
+              <p>No se pudieron cargar los personajes. Revisa tu sesión y tu conexión.</p>
+              {onReintentar && <Boton color="amarillo" texto="Reintentar" icono="wheel" onClick={onReintentar} />}
+            </div>
+          )}
           <div className="mp-opciones">
             <Panel className="mp-opcion">
               <h2 className="dsp ol">Elegir personaje</h2>
-              <p>{catalogo ? `${catalogo.catalogo.size} personajes listos para jugar.` : "…"}</p>
-              <Boton color="amarillo" texto="Ver galería" icono="users" cargando={!catalogo} onClick={() => setVista({ cual: "galeria" })} />
+              <p>{catalogo ? `${catalogo.catalogo.size} personajes listos para jugar.` : estadoCatalogo === "sin-acceso" ? "No disponibles por ahora." : "…"}</p>
+              <Boton color="amarillo" texto="Ver galería" icono="users" cargando={!catalogo && estadoCatalogo === "cargando"} desactivado={!catalogo && estadoCatalogo === "sin-acceso"} onClick={() => setVista({ cual: "galeria" })} />
             </Panel>
             <Panel className="mp-opcion">
               <h2 className="dsp ol">Crear mi personaje</h2>
               <p>Cabeza, torso, brazos y piernas.</p>
-              <Boton color="azul" texto="Empezar" icono="shirt" cargando={!catalogo} onClick={crear} />
+              <Boton color="azul" texto="Empezar" icono="shirt" cargando={!catalogo && estadoCatalogo === "cargando"} desactivado={!catalogo && estadoCatalogo === "sin-acceso"} onClick={crear} />
             </Panel>
           </div>
           <section className="mp-coleccion" aria-label="Mi colección">
