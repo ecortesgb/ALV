@@ -6,7 +6,7 @@ import { paramsEscena } from "./preferencias";
 import { alPedirGesto, animacionDe, esGesto, terminarGesto } from "./animaciones";
 import { PRIORIDAD_VIDA, animPerfil, perfilDe, soloApariencia, type Contexto } from "./perfiles";
 import { alVida, nombreVida, useVidaPerfil } from "./vidaPerfil";
-import { modoCorteV3, paraEscena, useCatalogoV3, type CatalogoV3 } from "../personajes/integracion";
+import { catalogoParaEscena, modoCorteV3, paraEscena, useCatalogoV3, useEscenaV3, type CatalogoV3 } from "../personajes/integracion";
 
 const BASE = `${import.meta.env.BASE_URL}minifig/`;
 export const N_CAPSULAS = 3;
@@ -103,42 +103,71 @@ const esV3 = (pid: string) => pid.startsWith("V3:") || pid.startsWith("V3B:");
 /** «cuerpo»: figura completa (240×300). «busto»: pecho, hombros y cabeza (320×320) para TarjetaEsquina y Burbuja. */
 export type Encuadre = "cuerpo" | "busto";
 const colaFotos: { pid: string; m: Modelo }[] = [];
-function pedirAlFotografo(pid: string, m: Modelo) {
-  if (!fotografo) {
-    fotografo = document.createElement("iframe");
-    fotografo.src = BASE + "escena.html";
-    fotografo.title = "Fotos de figuras";
-    fotografo.setAttribute("aria-hidden", "true");
-    fotografo.tabIndex = -1;
-    fotografo.style.cssText = "position:fixed;left:-400px;top:0;width:80px;height:80px;border:0;opacity:0;pointer-events:none";
-    document.body.appendChild(fotografo);
-    addEventListener("message", e => {
-      if (e.origin !== location.origin || e.source !== fotografo?.contentWindow || e.data?.origen !== "minifig") return;
-      if (e.data.tipo === "listo") { fotografoListo = true; colaFotos.splice(0).forEach(x => enviarFoto(x.pid, x.m)); }
-      if (e.data.tipo === "foto") {
-        const url = typeof e.data.url === "string" && e.data.url.startsWith("data:image/") ? e.data.url as string : null;
-        if (esV3(String(e.data.pid))) {
-          const pid = String(e.data.pid);
-          if (url && e.data.v3 === true) fotosV3.set(pid, url); else fallidasV3.add(pid);
-          (pedidas.get(pid) ?? []).forEach(f => f(url));
-          pedidas.delete(pid);
-          return;
-        }
-        // Un escena.js viejo (caché del navegador) ignora el busto y manda el cuerpo: se muestra, pero no se guarda.
-        const ok = !String(e.data.pid).startsWith("B:") || e.data.zona === "busto";
-        if (url && ok) { fotos.set(e.data.pid, url); guardarFotos(); }
-        (pedidas.get(e.data.pid) ?? []).forEach(f => f(url));
-        pedidas.delete(e.data.pid);
+/** Pedidos ya mandados al fotógrafo que aún no responden (si se vuelve a crear, regresan a la cola). */
+const enviadasFoto = new Map<string, Modelo>();
+let oyenteFotos = false;
+/** Con el corte, el fotógrafo se crea cuando la fuente privada ya resolvió (ver montajeEscena en integracion.ts). */
+let esperaFotografo: Promise<unknown> | null = null;
+/** El iframe quedó bajo el service worker de los personajes privados (sin él, los GLB privados no le llegan). */
+const bajoServiceWorker = (f: HTMLIFrameElement) => { try { return !!f.contentWindow?.navigator.serviceWorker?.controller; } catch { return false; } };
+function crearFotografo() {
+  fotografo = document.createElement("iframe");
+  fotografoListo = false;
+  fotografo.src = BASE + "escena.html";
+  fotografo.title = "Fotos de figuras";
+  fotografo.setAttribute("aria-hidden", "true");
+  fotografo.tabIndex = -1;
+  fotografo.style.cssText = "position:fixed;left:-400px;top:0;width:80px;height:80px;border:0;opacity:0;pointer-events:none";
+  document.body.appendChild(fotografo);
+  if (oyenteFotos) return;
+  oyenteFotos = true;
+  addEventListener("message", e => {
+    if (e.origin !== location.origin || e.source !== fotografo?.contentWindow || e.data?.origen !== "minifig") return;
+    if (e.data.tipo === "listo") { fotografoListo = true; colaFotos.splice(0).forEach(x => enviarFoto(x.pid, x.m)); }
+    if (e.data.tipo === "foto") {
+      enviadasFoto.delete(String(e.data.pid));
+      const url = typeof e.data.url === "string" && e.data.url.startsWith("data:image/") ? e.data.url as string : null;
+      if (esV3(String(e.data.pid))) {
+        const pid = String(e.data.pid);
+        if (url && e.data.v3 === true) fotosV3.set(pid, url); else fallidasV3.add(pid);
+        (pedidas.get(pid) ?? []).forEach(f => f(url));
+        pedidas.delete(pid);
+        return;
       }
-    });
-  }
+      // Un escena.js viejo (caché del navegador) ignora el busto y manda el cuerpo: se muestra, pero no se guarda.
+      const ok = !String(e.data.pid).startsWith("B:") || e.data.zona === "busto";
+      if (url && ok) { fotos.set(e.data.pid, url); guardarFotos(); }
+      (pedidas.get(e.data.pid) ?? []).forEach(f => f(url));
+      pedidas.delete(e.data.pid);
+    }
+  });
+}
+function pedirAlFotografo(pid: string, m: Modelo) {
+  if (modoCorteV3()) {
+    // Antes de que la fuente resuelva no se crea (quedaría fuera del service worker); los pedidos esperan en la cola.
+    if (!fotografo) {
+      colaFotos.push({ pid, m });
+      if (!esperaFotografo) esperaFotografo = catalogoParaEscena().then(() => { if (!fotografo) crearFotografo(); });
+      return;
+    }
+    // Una foto nueva con un fotógrafo creado fuera del service worker (la fuente llegó tarde, con Reintentar): se vuelve a
+    // crear, y lo que el viejo no contestó regresa a la cola.
+    if (esV3(pid) && fotografoListo && !bajoServiceWorker(fotografo)) {
+      fotografo.remove();
+      enviadasFoto.forEach((mm, p) => colaFotos.push({ pid: p, m: mm }));
+      enviadasFoto.clear();
+      colaFotos.push({ pid, m });
+      crearFotografo();
+      return;
+    }
+  } else if (!fotografo) crearFotografo();
   if (fotografoListo) enviarFoto(pid, m); else colaFotos.push({ pid, m });
 }
-const enviarFoto = (pid: string, m: Modelo) => fotografo?.contentWindow?.postMessage({
+const enviarFoto = (pid: string, m: Modelo) => { enviadasFoto.set(pid, m); fotografo?.contentWindow?.postMessage({
   ...(m.encuadre === "busto"
     ? { origen: "alv", tipo: "foto", pid, figura: m.figura ?? null, semilla: m.semilla, ancho: 320, alto: 320, zona: "busto" }
     : { origen: "alv", tipo: "foto", pid, figura: m.figura ?? null, semilla: m.semilla, ancho: 240, alto: 300 }),
-  ...(m.plano3 ? { plano3: m.plano3 } : {}) }, location.origin);
+  ...(m.plano3 ? { plano3: m.plano3 } : {}) }, location.origin); };
 
 /** Clave y plano de la foto de una figura nueva (con la bandera y el catálogo), o null: entonces la foto es la de siempre.
  *  La clave lleva el plano resuelto (personaje, piezas, tintes, GLB), la revisión del personaje y el encuadre. */
@@ -238,8 +267,10 @@ export function Escena3D({ figuras, momentos, className, alto, modo, columnas, s
   const ref = useRef<HTMLIFrameElement>(null);
   const [listo, setListo] = useState(false);
   const enviar = (m: object) => ref.current?.contentWindow?.postMessage({ origen: "alv", ...m }, location.origin);
-  // Fase 5: con la bandera encendida (solo desarrollo) las figuras que traen v3 van con su plano; apagada, igual que siempre.
-  const v3 = useCatalogoV3();
+  // Fase 5: con la bandera encendida las figuras que traen v3 van con su plano; apagada, igual que siempre. Con el corte,
+  // el iframe se crea cuando la fuente privada ya resolvió (y otra vez si llega tarde): ver montajeEscena.
+  const { catalogo: v3, montar, clave } = useEscenaV3();
+  useEffect(() => { listoRef.current = false; setListo(false); }, [clave]);
   const ultimas = useRef({ figuras, columnas, asientos, alVolar, alCabezas, vida, v3 });
   ultimas.current = { figuras, columnas, asientos, alVolar, alCabezas, vida, v3 };
   const listoRef = useRef(false);
@@ -286,7 +317,7 @@ export function Escena3D({ figuras, momentos, className, alto, modo, columnas, s
   }, [listo, JSON.stringify(momentos ?? [])]);
   return (
     <div className={"escena3d" + (className ? " " + className : "")} style={alto ? { height: alto } : undefined}>
-      <iframe ref={ref} src={BASE + "escena.html?modo=" + (modo ?? "") + (modo === "hub" ? paramsCine() : "") + (sinPedestal ? "&pedestal=no" : "") + paramsEscena()} title="Escena con las figuras" tabIndex={-1} />
+      {montar && <iframe key={clave} ref={ref} src={BASE + "escena.html?modo=" + (modo ?? "") + (modo === "hub" ? paramsCine() : "") + (sinPedestal ? "&pedestal=no" : "") + paramsEscena()} title="Escena con las figuras" tabIndex={-1} />}
       {!listo && <span className="escena3d-cargando" aria-live="polite">Armando figuras…</span>}
     </div>
   );

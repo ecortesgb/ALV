@@ -1,12 +1,14 @@
 // Fase 5 · ÚNICO punto por donde la app usa el sistema de personajes nuevo (ALV_PLAN_FASE5.md; arquitectura decidida por
 // Codex, encargo 2026-11-26-fase5-r1). Aquí viven:
 //   · la bandera (solo en desarrollo: en la app publicada no se puede encender),
-//   · la fuente de los GLB privados (una sola función; después la conecta alv-privacidad a fuentePrivada()),
+//   · la fuente de los GLB privados (una sola función: con el corte, fuentePrivada() de alv-privacidad),
 //   · el puente temporal v2 ↔ v3: la figura nueva viaja DENTRO de la v2 como extensiones.alv.v3, así pasa el CHECK de la
 //     base (version = 2) sin migración y quien tenga la bandera apagada ve la v2 de respaldo,
 //   · la resolución central de una figura v3 a su plano (catálogo y lo creado en el constructor, igual en HUB, TV y fotos).
 // No importa nada del sistema viejo (candado separacion.test.ts): la figura v2 se trata como objeto con version = 2.
 import { useEffect, useState } from "react";
+import { cliente } from "../servicios/cliente";
+import { fuentePrivada } from "../servicios/personajesPrivados";
 import { piezasDeCatalogo, planoConstructor, type Piezas } from "./constructorDatos";
 import { leerFigura } from "./figura";
 import { cargarIndice } from "./indice";
@@ -36,14 +38,24 @@ export function banderaV3(env: Entorno = entorno(), busqueda: string = typeof lo
 }
 
 /** De dónde se leen los personajes privados (índice y GLB). Desarrollo: VITE_PERSONAJES_PRIVADOS_URL (servidor 4193).
- *  Publicado: null en esta fase; luego `return fuentePrivada({ cliente })` (rama de alv-privacidad). Tener fuente NO
- *  enciende la bandera. */
+ *  Publicado con el corte: SOLO `fuentePrivada({ cliente })` (service worker + bucket privado de la 045). Sin corte: null.
+ *  Tener fuente NO enciende la bandera. */
 export async function fuenteDePersonajes(env: Entorno = entorno()): Promise<string | null> {
   if (env.DEV && env.VITE_PERSONAJES_PRIVADOS_URL) return env.VITE_PERSONAJES_PRIVADOS_URL; // desarrollo: ensayo con la local
-  // Publicado con el corte: SOLO la fuente privada (Codex, v3-directo-r1): sin sesión o sin acceso se ve el respaldo; nunca
-  // se regresa a una URL local o pública. Se conecta aquí cuando la rama de alv-privacidad esté en main.
-  if (modoCorteV3(env)) return null; // luego: return fuentePrivada({ cliente })
+  // Publicado con el corte: SOLO la fuente privada (Codex, v3-directo-r1): sin sesión o sin acceso da null y se ve el
+  // respaldo; nunca se regresa a una URL local o pública. Un null no se guarda: «Reintentar» vuelve a preguntar.
+  if (modoCorteV3(env)) return fuentePrivada({ cliente });
   return null;
+}
+
+/** Si una escena (iframe de escena.html) ya se puede crear, y con qué clave. Con el corte, los GLB privados solo llegan por
+ *  el service worker, y un iframe solo queda bajo su control si se crea DESPUÉS de que `fuentePrivada()` lo registró:
+ *  mientras el catálogo carga no se crea, y si el catálogo llega más tarde (Reintentar) la clave cambia y el iframe se
+ *  vuelve a crear. Sin corte, siempre y con la misma clave (como antes). */
+export function montajeEscena(corte: boolean, estado: "cargando" | "listo" | "sin-acceso", hayCatalogo: boolean): { montar: boolean; clave: string } {
+  if (!corte) return { montar: true, clave: "siempre" };
+  if (!hayCatalogo && estado === "cargando") return { montar: false, clave: "espera" };
+  return { montar: true, clave: hayCatalogo ? "privada" : "respaldo" };
 }
 
 /** Tope de la columna figuras_jugador.figura (CHECK pg_column_size ≤ 32768); se deja margen. */
@@ -172,6 +184,11 @@ export function useEstadoCatalogoV3(): { catalogo: CatalogoV3 | null; estado: "c
     return () => { vivo = false; };
   }, [vuelta]);
   return { ...r, reintentar: reintentarCatalogo };
+}
+/** El catálogo y si la escena ya se puede crear (ver `montajeEscena`). */
+export function useEscenaV3(): { catalogo: CatalogoV3 | null; montar: boolean; clave: string } {
+  const { catalogo, estado } = useEstadoCatalogoV3();
+  return { catalogo, ...montajeEscena(modoCorteV3(), estado, !!catalogo) };
 }
 /** Una figura lista para la escena vieja con el adaptador de la fase 5: la v2 sin el puente y, si su v3 se puede resolver,
  *  el `plano3` que el adaptador carga. Sin catálogo (bandera apagada) la figura pasa igual que siempre. */

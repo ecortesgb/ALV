@@ -1,9 +1,12 @@
 import { readFileSync } from "node:fs";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+// La fuente privada real necesita service worker y sesión: aquí se simula para ver qué le pasa la integración.
+const privada = vi.hoisted(() => ({ fuente: vi.fn(async (_e: unknown): Promise<string | null> => null) }));
+vi.mock("../servicios/personajesPrivados", () => ({ fuentePrivada: privada.fuente }));
 import { leerFicha } from "./ficha";
 import { deCatalogo } from "./figura";
 import { piezasDeCatalogo, ponerPieza } from "./constructorDatos";
-import { TOPE_PUENTE, banderaV3, empaquetarV3, fuenteDePersonajes, leerV3, resolverFigura, sinV3 } from "./integracion";
+import { TOPE_PUENTE, banderaV3, empaquetarV3, fuenteDePersonajes, leerV3, montajeEscena, resolverFigura, sinV3 } from "./integracion";
 import type { Catalogo } from "./plano";
 import type { Ficha } from "./tipos";
 
@@ -109,6 +112,31 @@ describe("fase 5: corte a v3 (Codex, v3-directo-r1)", () => {
   it("en lo publicado con corte la fuente nunca es la local", async () => {
     expect(await fuenteDePersonajes({ DEV: false, VITE_CORTE_V3: "1", VITE_PERSONAJES_PRIVADOS_URL: "http://127.0.0.1:4193/" })).toBeNull();
     expect(await fuenteDePersonajes({ DEV: true, VITE_CORTE_V3: "1", VITE_PERSONAJES_PRIVADOS_URL: "http://127.0.0.1:4193/" })).toBe("http://127.0.0.1:4193/");
+  });
+  it("con el corte la fuente es fuentePrivada() con el cliente de la app; sin corte ni se le pregunta", async () => {
+    const { cliente } = await import("../servicios/cliente");
+    privada.fuente.mockClear();
+    privada.fuente.mockResolvedValueOnce("https://x.test/privado/20261126T154920Z/");
+    expect(await fuenteDePersonajes({ DEV: false, VITE_CORTE_V3: "1" })).toBe("https://x.test/privado/20261126T154920Z/");
+    expect(privada.fuente).toHaveBeenCalledTimes(1);
+    expect(privada.fuente.mock.calls[0]![0]).toEqual({ cliente });
+    // Sin sesión o sin acceso: null (se ve el respaldo) y la siguiente vez vuelve a preguntar (Reintentar).
+    expect(await fuenteDePersonajes({ DEV: false, VITE_CORTE_V3: "1" })).toBeNull();
+    expect(privada.fuente).toHaveBeenCalledTimes(2);
+    privada.fuente.mockClear();
+    expect(await fuenteDePersonajes({ DEV: false })).toBeNull();
+    expect(await fuenteDePersonajes({ DEV: true })).toBeNull();
+    expect(privada.fuente).not.toHaveBeenCalled();
+  });
+  it("con el corte la escena no se crea mientras la fuente carga y se vuelve a crear si el catálogo llega tarde", () => {
+    // Sin corte: siempre y con la misma clave (nada cambia en lo publicado de hoy).
+    for (const e of ["cargando", "listo", "sin-acceso"] as const) expect(montajeEscena(false, e, e === "listo")).toEqual({ montar: true, clave: "siempre" });
+    expect(montajeEscena(true, "cargando", false)).toEqual({ montar: false, clave: "espera" });
+    const sinAcceso = montajeEscena(true, "sin-acceso", false), conPrivada = montajeEscena(true, "listo", true);
+    expect(sinAcceso.montar && conPrivada.montar).toBe(true);
+    expect(sinAcceso.clave).not.toBe(conPrivada.clave); // Reintentar con éxito → iframe nuevo, bajo el service worker
+    // Reintentar con el catálogo ya cargado no desmonta nada.
+    expect(montajeEscena(true, "cargando", true)).toEqual(conPrivada);
   });
   it("ida y vuelta estable: haciaBase(desdeBase(v3)) es la misma v3, y proyecta momentos, personalidad y apodo", async () => {
     const { desdeBase, haciaBase } = await import("./integracion");

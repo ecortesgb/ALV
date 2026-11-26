@@ -8,7 +8,7 @@ import type { FiguraV2 } from "../../content/personaje";
 import { PRIORIDAD_VIDA, animPerfil, soloApariencia, type Contexto } from "../../app/perfiles";
 import { alVida, nombreVida } from "../../app/vidaPerfil";
 import type { Ambiente, Anclaje, ColoresPlataforma } from "./paquetes";
-import { paraEscena, useCatalogoV3 } from "../../personajes/integracion";
+import { paraEscena, useEscenaV3 } from "../../personajes/integracion";
 
 const BASE = `${import.meta.env.BASE_URL}minifig/`;
 const LLEGADA = "alv-azotea-llegada";
@@ -47,7 +47,9 @@ export const EscenaAzotea = forwardRef<MandoAzotea, { id: string; figura: Figura
     colocar.current = () => { if (anclaje && caja.current) ponerSobrePedestal(caja.current, anclaje, pies.current); };
     const enviar = (m: object) => ref.current?.contentWindow?.postMessage({ origen: "alv", ...m }, location.origin);
     // Fase 5: catálogo del sistema nuevo (solo con la bandera encendida en desarrollo; apagada, null y nada cambia).
-    const v3 = useCatalogoV3();
+    // Con el corte, el iframe se crea cuando la fuente privada ya resolvió (y otra vez si llega tarde): ver montajeEscena.
+    const { catalogo: v3, montar, clave } = useEscenaV3();
+    useEffect(() => { listoRef.current = false; setListo(false); }, [clave]);
     const catV3 = useRef(v3);
     catV3.current = v3;
     useEffect(() => { if (v3 && listoRef.current) mandarTodo(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [v3]);
@@ -136,7 +138,7 @@ export const EscenaAzotea = forwardRef<MandoAzotea, { id: string; figura: Figura
 
     return (
       <div ref={caja} className={"az-figura" + (listo ? " listo" : "") + (anclaje ? " anclada" : "") + (className ? " " + className : "")} {...arrastre}>
-        <iframe ref={ref} src={src} title="Tu figura en la azotea" tabIndex={-1} aria-hidden="true" />
+        {montar && <iframe key={clave} ref={ref} src={src} title="Tu figura en la azotea" tabIndex={-1} aria-hidden="true" />}
       </div>
     );
   });
