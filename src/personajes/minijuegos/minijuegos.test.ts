@@ -1,10 +1,141 @@
 // Pruebas del prototipo de Mini-Juegos (zona aparte): reloj, juicio del salto, rondas, contrato del canal y cuarto.
 import { describe, expect, it } from "vitest";
 import * as desenfunda from "./desenfunda";
+import * as martillazo from "./martillazo";
 import { acotarToque, estimar, muestra, relojListo } from "./reloj";
 import { aireDe, avanzar, crearPartida, empezar, enElAire, llegada, posBala, ranking, saltar, CONFIG_BALA, type Bala, type EstadoBala, type Evento } from "./bala";
 import { crearCuarto, entrar, mandar, pasoCuarto } from "./cuarto";
 import { crearSecuencias, deLaTv, leer, validarDeCelular } from "./canal";
+
+describe("Martillazo", () => {
+  function preparar(ids = ["a", "b"], azar: () => number = () => 0) {
+    const e = martillazo.crearPartida(ids.map(id => ({ id })), {}, azar);
+    expect(martillazo.empezar(e, 1000)).toEqual([{ tipo: "intento", intento: 1 }]);
+    return e;
+  }
+  function siguiente(e: martillazo.EstadoMartillazo) {
+    martillazo.avanzar(e, e.juicio ?? e.inicioIntento + 6250);
+    return martillazo.avanzar(e, e.finFase);
+  }
+  it("recorre un triángulo lineal 0–100–0 con periodos 1600, 1300 y 1000 ms", () => {
+    const e = preparar();
+    for (const periodo of [1600, 1300, 1000]) {
+      expect(e.cfg.periodosMs[e.intento - 1]).toBe(periodo);
+      for (const [fraccion, p] of [[0, 0], [0.125, 25], [0.25, 50], [0.5, 100], [0.75, 50], [1, 0], [1.25, 50]]) {
+        expect(martillazo.posicion(e, "a", e.inicioIntento + periodo * fraccion!)).toBeCloseTo(p!);
+      }
+      siguiente(e);
+    }
+    expect(e.fase).toBe("fin");
+  });
+  it("la TV elige una fase independiente por jugador y la renueva en cada intento con azar inyectable", () => {
+    const fases = [0, 0.25, 0.5, 0.75, 0.125, 0.625];
+    const e = preparar(["a", "b"], () => fases.shift()!);
+    for (const ps of [[0, 50], [100, 50], [25, 75]]) {
+      expect(martillazo.posicion(e, "a", e.inicioIntento)).toBe(ps[0]);
+      expect(martillazo.posicion(e, "b", e.inicioIntento)).toBe(ps[1]);
+      siguiente(e);
+    }
+    const a = martillazo.crearPartida([{ id: "a" }], {}, 123);
+    const b = martillazo.crearPartida([{ id: "a" }], {}, 123);
+    martillazo.empezar(a, 0); martillazo.empezar(b, 0);
+    expect(a.fases).toEqual(b.fases);
+  });
+  it.each([
+    [0, 0, false, "rebota"], [29.5, 59, false, "rebota"], [30, 60, false, "agrieta"],
+    [44.5, 89, false, "agrieta"], [45, 90, false, "rompe"], [46.9, 94, false, "rompe"],
+    [47, 94, true, "rompe"], [50, 100, true, "rompe"], [53, 94, true, "rompe"],
+    [53.1, 94, false, "rompe"], [100, 0, false, "rebota"], [33.2, 66, false, "agrieta"],
+  ])("posición %s: puntaje %s, perfecto %s y resultado %s", (p, puntos, perfecto, resultado) => {
+    const e = preparar();
+    const s = e.inicioIntento + Number(p) * 8;
+    expect(martillazo.tocar(e, "a", s)).toContainEqual({ tipo: "puntaje", intento: 1, id: "a", puntos, perfecto, resultado });
+  });
+  it.each([47, 53])("también incluye el extremo perfecto %s cuando la barra baja", p => {
+    const e = preparar();
+    const s = e.inicioIntento + (200 - p) * 8;
+    expect(martillazo.posicion(e, "a", s)).toBe(p);
+    expect(martillazo.tocar(e, "a", s)).toContainEqual({ tipo: "puntaje", intento: 1, id: "a", puntos: 94, perfecto: true, resultado: "rompe" });
+  });
+  it("el margen de 70 ms solo admite el toque en los límites; no corrige su posición ni amplía perfecto", () => {
+    for (const [fase, s, admitido] of [[0.25, 930, true], [0.25, 929, false], [0.5, 7070, true], [0.5, 7071, false]] as const) {
+      const e = preparar(["a"], () => fase);
+      const ev = martillazo.tocar(e, "a", s, Math.max(1000, s));
+      expect(e.toques.has("a")).toBe(admitido);
+      if (admitido) {
+        const p = martillazo.posicion(e, "a", s);
+        expect(ev).toContainEqual({ tipo: "puntaje", intento: 1, id: "a", puntos: Math.round(100 - 2 * Math.abs(p - 50)), perfecto: false, resultado: "agrieta" });
+      }
+    }
+  });
+  it("son tres intentos y cuenta el mejor, incluso si después no toca", () => {
+    const e = preparar();
+    martillazo.tocar(e, "a", 1400); // 100
+    martillazo.tocar(e, "b", 1240); // 60
+    siguiente(e);
+    martillazo.tocar(e, "a", e.inicioIntento); // 0
+    martillazo.tocar(e, "b", e.inicioIntento + 1300 / 4); // 100
+    siguiente(e);
+    const ev = martillazo.avanzar(e, e.inicioIntento + 6250);
+    expect(ev).toContainEqual({ tipo: "fin", ranking: [{ id: "a", puntos: 100, lugar: 1 }, { id: "b", puntos: 100, lugar: 1 }] });
+    expect(e.fase).toBe("fin");
+    expect(martillazo.empezar(e, 99999)).toEqual([]);
+    expect(martillazo.avanzar(e, 99999)).toEqual([]);
+  });
+  it("sin toque a los 6 s vale cero, y cierra tras los 250 ms de juicio", () => {
+    const e = preparar();
+    expect(martillazo.avanzar(e, 6999)).toEqual([]);
+    expect(martillazo.avanzar(e, 7000)).toEqual([]);
+    expect(e.juicio).toBe(7250);
+    expect(martillazo.avanzar(e, 7249)).toEqual([]);
+    expect(martillazo.avanzar(e, 7250)).toEqual([
+      { tipo: "sinToque", intento: 1, id: "a" }, { tipo: "sinToque", intento: 1, id: "b" },
+    ]);
+    expect([...e.puntos.values()]).toEqual([0, 0]);
+    expect(e.fase).toBe("pausa");
+  });
+  it("un toque atrasado dentro de los 250 ms se puntúa con la hora del toque", () => {
+    const e = preparar(["a"], () => 0.5);
+    martillazo.avanzar(e, 7000);
+    expect(martillazo.tocar(e, "a", 7000, 7249)).toContainEqual({ tipo: "puntaje", intento: 1, id: "a", puntos: 100, perfecto: true, resultado: "rompe" });
+    expect(e.juicio).toBe(7250);
+    expect(martillazo.avanzar(e, 7250)).toEqual([]);
+    expect(e.fase).toBe("pausa");
+    const tarde = preparar(["a"]);
+    expect(martillazo.tocar(tarde, "a", 7000, 7250)).toEqual([{ tipo: "sinToque", intento: 1, id: "a" }]);
+    expect(tarde.toques.size).toBe(0);
+  });
+  it("todos juegan a la vez: solo un toque por jugador e intento, y juicio al tocar el último", () => {
+    const e = preparar();
+    expect(martillazo.tocar(e, "a", 1200)).toContainEqual({ tipo: "toque", intento: 1, id: "a" });
+    expect(e.juicio).toBeNull();
+    expect(martillazo.tocar(e, "a", 1400)).toEqual([]);
+    expect(e.puntos.get("a")).toBe(50);
+    martillazo.tocar(e, "b", 1400);
+    expect(e.juicio).toBe(1650);
+    martillazo.avanzar(e, 1649); expect(e.fase).toBe("intento");
+    siguiente(e);
+    expect(e.toques.size).toBe(0);
+    expect(martillazo.tocar(e, "a", e.inicioIntento)).toContainEqual({ tipo: "toque", intento: 2, id: "a" });
+  });
+  it("empates comparten lugar, saltando las plazas ocupadas como bala y desenfunda", () => {
+    const e = preparar(["a", "b", "c", "d"]);
+    for (const [id, t] of [["a", 1400], ["b", 1400], ["c", 1240], ["d", 1000]] as const) martillazo.tocar(e, id, t);
+    expect(martillazo.ranking(e)).toEqual([
+      { id: "a", puntos: 100, lugar: 1 }, { id: "b", puntos: 100, lugar: 1 },
+      { id: "c", puntos: 60, lugar: 3 }, { id: "d", puntos: 0, lugar: 4 },
+    ]);
+  });
+  it("ignora desconocidos, horas no finitas y mensajes de un intento anterior", () => {
+    const e = preparar();
+    expect(martillazo.tocar(e, "x", 1400)).toEqual([]);
+    expect(martillazo.tocar(e, "a", NaN)).toEqual([]);
+    expect(martillazo.tocar(e, "a", 1400, Infinity)).toEqual([]);
+    siguiente(e);
+    expect(martillazo.tocar(e, "a", 1400, e.inicioIntento)).toEqual([]);
+    expect(e.toques.size).toBe(0);
+  });
+});
 
 describe("¡Desenfunda!", () => {
   function preparar() {

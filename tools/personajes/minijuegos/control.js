@@ -138,10 +138,10 @@ function estado(d) {
   if (!j) { $("estado").textContent = "Entrando…"; return; }
   document.documentElement.style.setProperty("--yo", j.color);
   $("chip").textContent = `P${j.n + 1} ${j.nombre}`; $("chip").classList.remove("oculto");
-  $("titulo").textContent = d.juego === "desenfunda" ? "¡Desenfunda!" : d.juego === "bala" ? "Esquiva la bala" : "El cuarto";
+  $("titulo").textContent = d.juego === "martillazo" ? "Martillazo" : d.juego === "desenfunda" ? "¡Desenfunda!" : d.juego === "bala" ? "Esquiva la bala" : "El cuarto";
   document.title = $("titulo").textContent + " · control";
-  $("salto-accion").textContent = d.juego === "desenfunda" ? "¡DISPARA!" : "SALTA";
-  $("salto").classList.toggle("duelo", d.juego === "desenfunda");
+  $("salto-accion").textContent = d.juego === "martillazo" ? "¡GOLPEA!" : d.juego === "desenfunda" ? "¡DISPARA!" : "SALTA";
+  $("salto").classList.toggle("duelo", d.juego === "desenfunda" || d.juego === "martillazo");
   // El anfitrión lo asigna el servidor de sala y la TV lo repite en el estado.
   const anfitrion = d.anfitrionId === yo;
   // Su personaje no cargó en la TV (Codex O7): se queda el aviso y vuelve el selector para elegir otro o reintentar.
@@ -150,15 +150,16 @@ function estado(d) {
   const vivo = !Array.isArray(d.vivos) || d.vivos.includes(yo);
   if (d.juego === "cuarto") return verMando();
   if (d.juego === "fisico") return verFisico(d, j);
-  // Esquiva la bala y Desenfunda comparten botón y reloj. Solo la TV juzga.
+  // Esquiva la bala, Desenfunda y Martillazo comparten botón y reloj. Solo la TV juzga.
   const enJuego = d.fase === "cuenta" || d.fase === "juego";
   $("salto").classList.toggle("oculto", !enJuego && d.fase !== "fin");
   $("espera").classList.toggle("oculto", enJuego);
   const duelo = d.juego === "desenfunda";
+  const martillo = d.juego === "martillazo";
   const adelantado = duelo && (d.adelantados || []).includes(yo);
-  const tocado = duelo && (d.tocados || []).includes(yo);
-  $("salto").classList.toggle("fuera", duelo ? adelantado || tocado || !d.activa : !vivo);
-  $("salto-txt").textContent = duelo ? textoDisparo() : vivo ? "Toca cuando llegue la bala" : "Te tumbaron. Mira la TV.";
+  const tocado = (duelo || martillo) && (d.tocados || []).includes(yo);
+  $("salto").classList.toggle("fuera", duelo || martillo ? adelantado || tocado || !d.activa : !vivo);
+  $("salto-txt").textContent = martillo ? textoMartillazo() : duelo ? textoDisparo() : vivo ? "Toca cuando llegue la bala" : "Te tumbaron. Mira la TV.";
   $("empezar").classList.toggle("oculto", !(anfitrion && d.fase === "lobby"));
   $("empezar").disabled = !d.puedeEmpezar;
   $("empezar").textContent = d.puedeEmpezar ? "¡Empezar!" : "Cargando personajes…";
@@ -186,6 +187,11 @@ $("empezar").onclick = () => canal.enviar("empezar");
 $("otra").onclick = () => canal.enviar("otra");
 
 function evento(d) {
+  if (ultimo?.juego === "martillazo") {
+    if (d.pid !== pid) return;
+    if (d.tipo === "puntaje" && d.id === yo) vibrar(d.perfecto ? [20, 30, 20] : 20);
+    return;
+  }
   if (ultimo?.juego === "desenfunda") {
     if (d.pid !== pid) return;
     if (d.tipo === "adelantado" && d.id === yo) { vibrar([80, 40, 120]); $("estado").textContent = "¡Adelantado! Vuelves en la siguiente ronda."; }
@@ -199,6 +205,11 @@ const vibrar = p => { try { navigator.vibrate && navigator.vibrate(p); } catch {
 const horaTv = () => ahora() + reloj.offset;
 let pid = "";
 let disparoEnviado = "";
+function textoMartillazo() {
+  if ((ultimo?.tocados || []).includes(yo) || disparoEnviado === pid && pid) return "Ya golpeaste. Mira la TV.";
+  if (!ultimo?.activa) return "Espera el siguiente intento";
+  return "Mira la barra en la TV. Golpea en el centro";
+}
 function textoDisparo() {
   if ((ultimo?.adelantados || []).includes(yo)) return "¡Adelantado! Vuelves en la siguiente ronda";
   if ((ultimo?.tocados || []).includes(yo) || disparoEnviado === pid && pid) return "Ya disparaste. Mira la TV.";
@@ -211,6 +222,7 @@ function pintarSalto() {
   const b = $("salto"), ok = sincronizado();
   b.classList.toggle("espera", !ok);
   if (!ok) $("salto-txt").textContent = "Sincronizando con la TV…";
+  else if (ultimo?.juego === "martillazo") $("salto-txt").textContent = textoMartillazo();
   else if (ultimo?.juego === "desenfunda") $("salto-txt").textContent = textoDisparo();
   else if (!b.classList.contains("fuera")) $("salto-txt").textContent = "Toca cuando llegue la bala";
 }
@@ -220,10 +232,10 @@ setInterval(pintarSalto, 500);
 $("salto").addEventListener("pointerdown", e => {
   e.preventDefault();
   if ($("salto").classList.contains("fuera") || !sincronizado() || !pid) return;
-  if (ultimo?.juego === "desenfunda") {
+  if (ultimo?.juego === "desenfunda" || ultimo?.juego === "martillazo") {
     if (!ultimo.activa || disparoEnviado === pid) return;
     disparoEnviado = pid;
-    $("salto-txt").textContent = "Ya disparaste. Mira la TV.";
+    $("salto-txt").textContent = ultimo.juego === "martillazo" ? "Ya golpeaste. Mira la TV." : "Ya disparaste. Mira la TV.";
   }
   canal.enviar("salto", { pid, s: horaTv(), inc: Math.round(reloj.incertidumbre) });
   vibrar(12);
