@@ -6,8 +6,10 @@
 //     base (version = 2) sin migración y quien tenga la bandera apagada ve la v2 de respaldo,
 //   · la resolución central de una figura v3 a su plano (catálogo y lo creado en el constructor, igual en HUB, TV y fotos).
 // No importa nada del sistema viejo (candado separacion.test.ts): la figura v2 se trata como objeto con version = 2.
-import { planoConstructor, type Piezas } from "./constructorDatos";
+import { useEffect, useState } from "react";
+import { piezasDeCatalogo, planoConstructor, type Piezas } from "./constructorDatos";
 import { leerFigura } from "./figura";
+import { cargarIndice } from "./indice";
 import { resolver, type Catalogo } from "./plano";
 import type { FiguraV3, Plano } from "./tipos";
 
@@ -67,4 +69,34 @@ export function sinV3<T extends FiguraV2Puente>(f: T): T {
 export function resolverFigura(id: string, f: FiguraV3, catalogo: Catalogo, piezas: Piezas): Plano | null {
   if (f.origen.tipo !== "catalogo") return null;
   return Object.keys(f.piezas).length ? planoConstructor(id, f, catalogo, piezas) : resolver(id, f, catalogo);
+}
+
+// ---------- Para las escenas de la app (HUB, lobby, TV, nave) ----------
+
+export interface CatalogoV3 { catalogo: Catalogo; piezas: Piezas }
+let cargaCatalogo: Promise<CatalogoV3 | null> | null = null;
+/** El catálogo, una sola vez por página, solo con la bandera encendida y una fuente. null si no (o si falla: entonces
+ *  todas las figuras se ven con su v2 de respaldo). */
+export function catalogoParaEscena(): Promise<CatalogoV3 | null> {
+  if (!banderaV3()) return Promise.resolve(null);
+  if (!cargaCatalogo) {
+    cargaCatalogo = fuenteDePersonajes()
+      .then(f => (f ? cargarIndice(f).then(ind => ({ catalogo: ind.catalogo, piezas: piezasDeCatalogo(ind.catalogo, ind.ranuras) })) : null))
+      .catch(err => { console.warn("personajes nuevos: no cargó el catálogo; se usan las figuras de respaldo", err); return null; });
+  }
+  return cargaCatalogo;
+}
+/** El catálogo para una escena (null mientras carga, con la bandera apagada o sin fuente). */
+export function useCatalogoV3(): CatalogoV3 | null {
+  const [c, setC] = useState<CatalogoV3 | null>(null);
+  useEffect(() => { let vivo = true; catalogoParaEscena().then(x => { if (vivo) setC(x); }); return () => { vivo = false; }; }, []);
+  return c;
+}
+/** Una figura lista para la escena vieja con el adaptador de la fase 5: la v2 sin el puente y, si su v3 se puede resolver,
+ *  el `plano3` que el adaptador carga. Sin catálogo (bandera apagada) la figura pasa igual que siempre. */
+export function paraEscena<T extends { id: string; figura?: unknown }>(x: T, cat: CatalogoV3 | null): T & { plano3?: Plano } {
+  if (!cat || !x.figura || typeof x.figura !== "object") return x;
+  const v3 = leerV3(x.figura);
+  const plano = v3 ? resolverFigura(x.id, v3, cat.catalogo, cat.piezas) : null;
+  return { ...x, figura: sinV3(x.figura as FiguraV2Puente), ...(plano ? { plano3: plano } : {}) };
 }

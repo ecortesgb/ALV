@@ -8,6 +8,7 @@ import type { FiguraV2 } from "../../content/personaje";
 import { PRIORIDAD_VIDA, animPerfil, soloApariencia, type Contexto } from "../../app/perfiles";
 import { alVida, nombreVida } from "../../app/vidaPerfil";
 import type { Ambiente, Anclaje, ColoresPlataforma } from "./paquetes";
+import { paraEscena, useCatalogoV3 } from "../../personajes/integracion";
 
 const BASE = `${import.meta.env.BASE_URL}minifig/`;
 const LLEGADA = "alv-azotea-llegada";
@@ -45,6 +46,11 @@ export const EscenaAzotea = forwardRef<MandoAzotea, { id: string; figura: Figura
     const colocar = useRef<() => void>(() => {});
     colocar.current = () => { if (anclaje && caja.current) ponerSobrePedestal(caja.current, anclaje, pies.current); };
     const enviar = (m: object) => ref.current?.contentWindow?.postMessage({ origen: "alv", ...m }, location.origin);
+    // Fase 5: catálogo del sistema nuevo (solo con la bandera encendida en desarrollo; apagada, null y nada cambia).
+    const v3 = useCatalogoV3();
+    const catV3 = useRef(v3);
+    catV3.current = v3;
+    useEffect(() => { if (v3 && listoRef.current) mandarTodo(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [v3]);
     const datos = useRef({ id, figura, ambiente, plataforma, vida });
     datos.current = { id, figura, ambiente, plataforma, vida };
     // Animaciones de la biblioteca que tiene esta escena (las avisa biblioteca-anim.js).
@@ -56,7 +62,7 @@ export const EscenaAzotea = forwardRef<MandoAzotea, { id: string; figura: Figura
       enviar({ tipo: "plataforma", colores: d.plataforma });
       enviar({ tipo: "ambiente", brillo: d.ambiente.brillo, ranura: d.plataforma.ranura, ...d.ambiente.luz });
       // Con vida: al motor va solo la apariencia y la personalidad viaja como perillas (reposo, velocidad, intensidad).
-      enviar({ tipo: "figuras", lista: [d.figura ? { id: d.id, figura: d.vida ? soloApariencia(d.figura) : d.figura, anim: d.vida ? { ...animacionDe(d.figura), ...animPerfil(d.figura, hay) } : animacionDe(d.figura) } : { id: d.id, semilla: semillaDe(d.id) }] });
+      enviar({ tipo: "figuras", lista: [d.figura ? paraEscena({ id: d.id, figura: d.vida ? soloApariencia(d.figura) : d.figura, anim: d.vida ? { ...animacionDe(d.figura), ...animPerfil(d.figura, hay) } : animacionDe(d.figura) }, catV3.current) : { id: d.id, semilla: semillaDe(d.id) }] });
     };
     useEffect(() => {
       const f = (e: MessageEvent) => {
