@@ -182,6 +182,8 @@
     const clips = plano.clips || {};
     const vida = new Set(plano.vida || []);
     let actual = null, logica = null, clipActual = null;
+    // Clip de reposo: el de la ficha, o el que pida la escena con reposoEn() (la nave: «sentado», si el personaje lo trae).
+    let reposoClip = clips.reposo;
 
     function iniciar(a, bucle, mezcla, vel) {
       a.reset(); a.enabled = true;
@@ -197,7 +199,7 @@
       const o = op || {}, mezcla = o.mezcla == null ? MEZCLA : o.mezcla;
       let nombre, l;
       if (typeof cual === "string" && vida.has(cual)) { nombre = cual; l = "vida"; }
-      else { l = L.logicaDe(cual); nombre = clips[l] || clips.reposo; }
+      else { l = L.logicaDe(cual); nombre = (l === "reposo" ? reposoClip : clips[l]) || reposoClip; }
       const a = accion(nombre);
       if (!a) return false;
       if (a === actual && l === logica && L.EN_BUCLE[l]) return true; // ya está en ese reposo
@@ -221,6 +223,14 @@
 
     return {
       obj, mixer, tocar,
+      /** Cambia el clip de reposo (al que se vuelve tras cada gesto) por otro del GLB, p. ej. «sentado» en la nave. false si
+       *  el GLB no lo trae (se queda el de siempre). Si estaba en reposo, cambia ya. */
+      reposoEn: nombre => {
+        if (!nombre || !accion(nombre)) return false;
+        reposoClip = nombre;
+        if (logica === "reposo" || logica === null) { const a = accion(nombre); if (a !== actual) { iniciar(a, true, MEZCLA, 1); logica = "reposo"; clipActual = nombre; } }
+        return true;
+      },
       update: dt => mixer.update(dt),
       estado: () => ({ logica, clip: clipActual, tiempo: actual ? actual.time : 0, clips: [...porNombre.keys()].length }),
       /** Nombres de todos los clips del GLB (para verificar fichas). */

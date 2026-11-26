@@ -794,7 +794,8 @@
           fase: Math.random() * Math.PI * 2, mira: { y: 0, v: 0, meta: 0, inc: 0, prox: t + 1 + Math.random() * 2 }, lx: 0, lz: 0, saludoK: 0 }; }
         catch (err) { console.error("escena: no se pudo armar", id, err); return; }
         scene.add(e.obj); figuras.set(id, e);
-        if (p3) iniciarV3(e, p3);
+        // Nave: la figura nueva solo si trae clip «sentado» (Codex, ajuste 5); sin él se queda la v2 de respaldo, sentada.
+        if (p3 && !(NAVE && !p3.sentado)) iniciarV3(e, p3);
         // Sala: la figura llega «teletransportada»: crece desde los pies sobre su pedestal.
         if (SALA) { e.tele = t; e.obj.visible = false; }
         if (AZOTEA) { if (AZ.pendiente) { AZ.pendiente = false; iniciarLlegada(t, true); } else if (habia) iniciarLlegada(t, false); AZ.saludo = t + 6; }
@@ -1333,7 +1334,8 @@
       scene.remove(e.obj); dispose(e.obj);
       e.obj = grupo; e.v3 = inst;
       scene.add(grupo);
-      inst.tocar(NAVE && p3.sentado ? p3.sentado : "reposo", { mezcla: 0 });
+      if (NAVE) inst.reposoEn(p3.sentado); // tras cada gesto vuelve a «sentado», no a parado
+      inst.tocar("reposo", { mezcla: 0 });
       // Si el respaldo estaba a media animación de un gesto, la nueva la sigue con su lógica y el tiempo que le quedaba
       // (mismo contrato: al vencer, «termino»; Codex, fase5-paso2-verif).
       const ahora = reloj.getElapsedTime();
@@ -1449,8 +1451,7 @@
 
   // Fotos: un dibujante aparte, con fondo transparente, sin tocar la escena viva.
   let fotografo = null;
-  function foto(f, ancho, alto, zona, pose) {
-    ancho = Math.min(512, Math.max(64, ancho | 0 || 256)); alto = Math.min(640, Math.max(64, alto | 0 || 320));
+  function fotografoDe() {
     if (!fotografo) {
       const r = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true });
       r.outputEncoding = THREE.sRGBEncoding; r.toneMapping = renderer.toneMapping; r.toneMappingExposure = renderer.toneMappingExposure; r.setClearColor(0, 0);
@@ -1458,7 +1459,41 @@
       scene.children.filter(o => o.isLight).forEach(l => s.add(l.clone()));
       fotografo = { r, s, cam: new THREE.PerspectiveCamera(24, 1, 0.3, 40) };
     }
-    const { r, s, cam } = fotografo;
+    return fotografo;
+  }
+  // Fase 5 (Codex, ajuste 7): foto de una figura nueva. Asíncrona (el GLB se baja la primera vez), con tiempo límite; si
+  // falla, null y quien la pidió usa la v2 de respaldo. Pose de reposo al inicio del clip; mismo encuadre que las viejas:
+  // «cuerpo» = la figura completa por su altura, «busto» = siguiendo la cabeza.
+  const FOTO_V3_MS = 15000;
+  function fotoV3(p3, ancho, alto, zona) {
+    ancho = Math.min(512, Math.max(64, ancho | 0 || 256)); alto = Math.min(640, Math.max(64, alto | 0 || 320));
+    const limite = new Promise((_, mal) => setTimeout(() => mal(new Error("tiempo límite")), FOTO_V3_MS));
+    return Promise.race([motorV3().then(M => M.crear(p3)), limite]).then(inst => {
+      const { r, s, cam } = fotografoDe();
+      try {
+        r.setSize(ancho, alto, false); cam.aspect = ancho / alto; cam.updateProjectionMatrix();
+        inst.tocar("reposo", { mezcla: 0 }); inst.update(0);
+        const o = inst.obj; o.rotation.y = zona === "busto" ? ZONAS.busto.giro : -0.35; s.add(o); o.updateMatrixWorld(true);
+        // Encuadre por la caja real de la figura posada: que quepa de alto y de ancho (un Big Fig es más ancho que alto).
+        const caja = new THREE.Box3().setFromObject(o), h = caja.max.y - caja.min.y, w = caja.max.x - caja.min.x;
+        const tv = Math.tan(cam.fov * Math.PI / 360), th = tv * cam.aspect;
+        // Busto: desde la punta de la cabeza hacia abajo (el 62 % de arriba en minifigura, como el «busto» de las viejas;
+        // 50 % en Big Fig, que tiene la cabeza más chica y los hombros más altos).
+        const fr = zona === "busto" ? (p3.familia === "bigfig" ? 0.5 : 0.62) : 1.16;
+        const altoZ = h * fr, cy = zona === "busto" ? caja.max.y - altoZ * 0.44 : caja.min.y + h * 0.48;
+        const anchoZ = zona === "busto" ? Math.min(w, altoZ) : w * 1.08;
+        const dd = Math.max((altoZ / 2) / tv, (anchoZ / 2) / th);
+        cam.position.set((caja.min.x + caja.max.x) / 2, cy + dd * 0.07, dd); cam.lookAt((caja.min.x + caja.max.x) / 2, cy, 0);
+        medirContorno(r); r.render(s, cam);
+        let url = r.domElement.toDataURL("image/webp", 0.85);
+        if (!url.startsWith("data:image/webp")) url = r.domElement.toDataURL("image/png");
+        return url;
+      } finally { s.remove(inst.obj); inst.quitar(); }
+    });
+  }
+  function foto(f, ancho, alto, zona, pose) {
+    ancho = Math.min(512, Math.max(64, ancho | 0 || 256)); alto = Math.min(640, Math.max(64, alto | 0 || 320));
+    const { r, s, cam } = fotografoDe();
     r.setSize(ancho, alto, false); cam.aspect = ancho / alto;
     const a = armar(f), z = zona && (typeof zona === "object" ? zona : ZONAS[zona]); window.MOM_T0 = 0; animar(a.obj, pose && Momentos.info(pose.mom) ? "mom:" + pose.mom : "quieto", pose ? +pose.t || 0 : 0); postura(a.obj.userData.j); cuidarObjetos(a.obj, a.plano); cuidarCuello(a.obj.userData.j); a.obj.rotation.y = z ? z.giro : -0.35; s.add(a.obj);
     if (z && z.mano) { // vista de revisión: la cámara mira a esa mano
@@ -1491,6 +1526,14 @@
       const v = d.vista && typeof d.vista === "object" ? { y: +d.vista.y || 1.3, alto: +d.vista.alto || 3.3, giro: +d.vista.giro || 0, x: +d.vista.x || 0, mano: d.vista.mano === "izq" ? "izq" : d.vista.mano === "der" ? "der" : null } : null;
       // En «foto» solo se acepta el encuadre «busto» (retratos); «miniatura» acepta cualquier zona o `vista`.
       const zf = d.tipo === "miniatura" ? (v || String(d.zona || "")) : d.zona === "busto" ? "busto" : "";
+      // Fase 5: con `plano3` la foto es de la figura nueva (asíncrona). Si falla, llega url null y `v3: false`: ALV no la
+      // guarda y pide la de respaldo.
+      const p3 = d.tipo === "foto" ? planoV3(d.plano3) : null;
+      if (p3) {
+        fotoV3(p3, d.ancho, d.alto, zf).then(u => enviar({ tipo: d.tipo, pid: d.pid, url: u, zona: zf || undefined, v3: true }),
+          err => { console.warn("escena: foto nueva", err); enviar({ tipo: d.tipo, pid: d.pid, url: null, zona: zf || undefined, v3: false }); });
+        return;
+      }
       try { const fx = figuraDe(d); if (fx) url = foto(fx, d.ancho, d.alto, zf, d.pose && typeof d.pose === "object" ? d.pose : null); } catch (e) { console.error("escena: foto", e); }
       enviar({ tipo: d.tipo, pid: d.pid, url, zona: zf || undefined });
     }
