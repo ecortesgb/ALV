@@ -4,7 +4,7 @@ import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { runInNewContext } from "node:vm";
 import { describe, expect, it } from "vitest";
-import { basePrivada, mensajeSesion } from "./personajesPrivados";
+import { basePrivada, fuentePrivada, mensajeSesion } from "./personajesPrivados";
 
 const ORIGEN = "https://ecortesgb.github.io";
 const ALCANCE = ORIGEN + "/ALV/";
@@ -368,6 +368,20 @@ describe("módulo de la página", () => {
     const s = { access_token: "t", user: { id: CUENTA_A } } as never;
     expect(mensajeSesion(s, SUPA + "/", "k")).toEqual({ tipo: "sesion", url: SUPA, llave: "k", token: "t", cuenta: CUENTA_A });
     expect(mensajeSesion(s, "", "k")).toBeNull();
+  });
+  it("un null no queda guardado: «reintentar» vuelve a probar sin recargar", async () => {
+    let sesionActual: unknown = null;
+    const cliente = {
+      auth: { getSession: async () => ({ data: { session: sesionActual } }), onAuthStateChange: () => ({}) },
+      rpc: async () => ({ data: SELLO, error: null }),
+    } as never;
+    const sw = { register: async () => ({}), ready: Promise.resolve({}), controller: { postMessage() {} },
+      addEventListener() {} } as never;
+    const e = { cliente, url: SUPA, llave: "sb_publishable_x", sw, seguro: true, base: ALCANCE };
+    expect(await fuentePrivada(e)).toBeNull();                 // sin sesión todavía
+    sesionActual = { access_token: "t", user: { id: CUENTA_A } };
+    expect(await fuentePrivada(e)).toBe(ALCANCE + `privado/${SELLO}/`); // ya con sesión
+    expect(await fuentePrivada(e)).toBe(ALCANCE + `privado/${SELLO}/`); // y se queda
   });
   it("la base privada es del mismo origen, bajo el alcance y fija por entrega", () => {
     expect(basePrivada(ALCANCE, SELLO)).toBe(ALCANCE + `privado/${SELLO}/`);

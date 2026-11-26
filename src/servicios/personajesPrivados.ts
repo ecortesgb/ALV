@@ -36,9 +36,13 @@ export function basePrivada(base: string, sello: string): string | null {
 
 let activo: Promise<string | null> | null = null;
 
-/** Prepara la entrega privada una vez por página. */
+/** Prepara la entrega privada. Un resultado bueno se guarda para toda la página; un null NO (sin sesión, sin permiso,
+ *  sin entrega…): el siguiente llamado vuelve a intentar, para que «reintentar» funcione sin recargar. */
 export function fuentePrivada(e: Entorno): Promise<string | null> {
-  return (activo ??= preparar(e).catch(err => { console.warn("personajes privados:", err); activo = null; return null; }));
+  const p = activo ?? (activo = preparar(e)
+    .catch(err => { console.warn("personajes privados:", err); return null; })
+    .then(f => { if (!f && activo === p) activo = null; return f; }));
+  return p;
 }
 
 async function preparar(e: Entorno): Promise<string | null> {
