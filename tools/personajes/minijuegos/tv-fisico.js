@@ -4,7 +4,7 @@
 // terminar_partida_sala de la 040, cuando Físico viva en una sala real de la app (ver `alCambiarPuntos`).
 import { agregarJugador, asignar, cambioDeArbitro, crearFisico, darPuntos, nuevaRonda, perdio, responder, revelar, tabla, tapar, CASTIGOS, CATEGORIAS, RETOS } from "/src/personajes/minijuegos/fisico.ts";
 import { azarCon } from "/src/personajes/minijuegos/bala.ts";
-import { crearTV } from "./tv-comun.js";
+import { crearEncuadreFranjas, crearTV } from "./tv-comun.js";
 
 const q = new URLSearchParams(location.search);
 const $ = id => document.getElementById(id);
@@ -13,6 +13,7 @@ let escenario = ESCENARIOS.includes(q.get("escenario")) ? q.get("escenario") : "
 // Decidió Codex (F1): la palabra empieza tapada; ?palabra=visible para jugar con ella a la vista (de espaldas a la TV).
 let modo = q.get("palabra") === "visible" ? "visible" : "oculta";
 const escena = EscenaMJ.crear($("lienzo"), { fov: 30, transparente: true });
+const { franja, encuadrar } = crearEncuadreFranjas(escena);
 EscenaMJ.pisoSombra(escena.scene, 60);
 const azar = azarCon(Date.now() & 0xffffffff);
 const HUECO = 0.9;
@@ -132,23 +133,6 @@ function acomodar() {
  * etiqueta. La cámara se aleja lo necesario para que la cabeza del más alto + su etiqueta (~62 px) queden debajo de la
  * franja, y se apunta para que los pies queden cerca del borde de abajo. Se comprueba con 6 personajes, Hulk incluido.
  */
-const ETIQUETA = 62, v3 = new THREE.Vector3();
-function franja() { return Math.round(innerHeight * 0.13 + Math.min(260, innerHeight * 0.36)); }
-function encuadrar(ancho, alto) {
-  const c = escena.camera, H = innerHeight, fondo = H - 24;
-  const tanV = Math.tan((c.fov * Math.PI) / 360), tanH = tanV * c.aspect;
-  const yPant = y => { v3.set(0, y, 0).project(c); return ((1 - v3.y) / 2) * H; };
-  let d = Math.max(12, (ancho / 2) / tanH);
-  for (let i = 0; i < 60; i++, d *= 1.04) {
-    let lo = -alto * 3, hi = alto * 4, mira = 0;
-    for (let k = 0; k < 30; k++) { // dónde mirar para que los pies queden en «fondo»
-      mira = (lo + hi) / 2;
-      c.position.set(0, alto * 0.6, d); c.lookAt(0, mira, 0); c.updateMatrixWorld(true);
-      if (yPant(0) > fondo) hi = mira; else lo = mira;
-    }
-    if (yPant(alto) - ETIQUETA >= franja()) break;
-  }
-}
 addEventListener("resize", acomodar);
 
 function pintar() {

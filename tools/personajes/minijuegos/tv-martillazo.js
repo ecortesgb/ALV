@@ -2,17 +2,18 @@
 import { ahora } from "/src/personajes/minijuegos/canal.ts";
 import { acotarToque, MAX_INCERTIDUMBRE } from "/src/personajes/minijuegos/reloj.ts";
 import { avanzar, crearPartida, empezar, posicion, ranking, tocar } from "/src/personajes/minijuegos/martillazo.ts";
-import { crearTV } from "./tv-comun.js";
+import { crearEncuadreFranjas, crearTV } from "./tv-comun.js";
 
 const q = new URLSearchParams(location.search);
 const $ = id => document.getElementById(id);
 const escena = EscenaMJ.crear($("lienzo"), { fov: 32 });
+const { franja, encuadrar } = crearEncuadreFranjas(escena);
 EscenaMJ.pista(escena.scene, 40);
 let partida = null, pid = "", numPartida = 0, cuenta = 0, participantes = [];
 let anchoFila = 14, altoFila = 2.7;
 const puestos = new Map();
 const tv = crearTV({
-  juego: "martillazo", escena,
+  juego: "martillazo", escena, topeEtiquetas: () => franja() + 62,
   alUnirse: () => { if (tv.fase === "lobby") acomodar(); botonEmpezar(); },
   alSalir: () => { if (tv.fase === "lobby") acomodar(); botonEmpezar(); },
   alDesconectar: j => tv.pop(j, "Se desconectó", "#c9d2ff"),
@@ -46,6 +47,8 @@ function recibirToque(j, d) {
   tv.difundir();
 }
 function fila() { return [...tv.jugadores.values()].sort((a, b) => a.n - b.n); }
+const anchoPersonaje = j => j.figura ? Math.max(1.6, j.figura.ancho()) : 1.8;
+const CARRIL = 1.6, HUECO = 0.8;
 function puntos() {
   fila().forEach(j => {
     let m = j.etiqueta.querySelector(".puntos-ronda");
@@ -55,11 +58,13 @@ function puntos() {
 }
 function acomodar() {
   const lista = fila();
-  const anchos = lista.map(j => j.figura ? Math.max(1.6, j.figura.ancho()) : 1.8);
-  const total = anchos.reduce((a, b) => a + b, 0) + 1.3 * Math.max(0, lista.length - 1);
+  // Cuerpo + carril de 1.6 para la barra a la derecha + hueco. La barra es HTML encima del 3D: un brazo nunca la tapa,
+  // así que no hace falta reservar el alcance del golpe (con 2× el ancho, seis personajes salían diminutos).
+  const anchos = lista.map(anchoPersonaje);
+  const total = anchos.reduce((a, b) => a + b + CARRIL, 0) + HUECO * Math.max(0, lista.length - 1);
   let x = -total / 2;
   lista.forEach((j, i) => {
-    j.x = x + anchos[i] / 2; x += anchos[i] + 1.3;
+    j.x = x + anchos[i] / 2; x += anchos[i] + CARRIL + HUECO;
     if (j.figura) { j.figura.obj.position.set(j.x, 0, 0); j.figura.obj.rotation.y = 0; }
   });
   anchoFila = Math.max(10, total + 4);
@@ -67,9 +72,8 @@ function acomodar() {
   camara(); puntos();
 }
 function camara() {
-  const c = escena.camera, tanV = Math.tan(c.fov * Math.PI / 360);
-  const d = Math.max(14, anchoFila / (2 * tanV * c.aspect), altoFila * 2 / (2 * tanV));
-  c.position.set(0, 4.2, d); c.lookAt(0, altoFila * 0.62, 0);
+  encuadrar(anchoFila, altoFila);
+  document.documentElement.style.setProperty("--franja-tv", franja() + "px");
 }
 addEventListener("resize", camara);
 function botonEmpezar() {
@@ -130,6 +134,7 @@ function eventos(evs) {
       tv.pop(tv.jugadores.get(ev.id), "Sin toque · 0", "#c9d2ff");
     } else if (ev.tipo === "fin") {
       tv.fase = "fin";
+      $("marcador").classList.add("oculto");
       const p = $("podio"); p.replaceChildren();
       ev.ranking.forEach(l => {
         const j = tv.jugadores.get(l.id); if (!j) return;
@@ -190,9 +195,12 @@ function dibujarPuestos(t) {
     const hora = partida.toques.get(id) ?? Math.min(t, fin);
     p.aguja.style.bottom = posicion(partida, id, hora) + "%";
     p.barra.classList.toggle("listo", partida.toques.has(id) || t >= fin || partida.fase !== "intento");
-    v.set(j.x + j.figura.ancho() / 2 + 0.45, j.figura.alto() * 0.55, 0).project(escena.camera);
-    p.barra.style.left = ((v.x + 1) / 2) * innerWidth + "px";
-    p.barra.style.top = ((1 - v.y) / 2) * innerHeight + "px";
+    v.set(j.x + anchoPersonaje(j) / 2, j.figura.alto() * 0.55, 0).project(escena.camera);
+    // Pegada al costado derecho del cuerpo, dentro de su carril (la barra mide ~42 px).
+    p.barra.style.left = ((v.x + 1) / 2) * innerWidth + 26 + "px";
+    // Con seis figuras la cámara se aleja: la barra conserva su tamaño en px, incluidos 0 y 100.
+    const margenBarra = p.barra.offsetHeight / 2 + 20;
+    p.barra.style.top = Math.max(franja() + margenBarra, Math.min(innerHeight - 24 - margenBarra, ((1 - v.y) / 2) * innerHeight)) + "px";
     if (!p.resultado) return;
     const s = Math.max(0, (t - p.t) / 1000);
     const golpe = Math.min(1, s / 0.15);

@@ -2,16 +2,17 @@
 import { ahora } from "/src/personajes/minijuegos/canal.ts";
 import { acotarToque, MAX_INCERTIDUMBRE } from "/src/personajes/minijuegos/reloj.ts";
 import { avanzar, crearPartida, empezar, ranking, tocar } from "/src/personajes/minijuegos/desenfunda.ts";
-import { crearTV } from "./tv-comun.js";
+import { crearEncuadreFranjas, crearTV } from "./tv-comun.js";
 
 const q = new URLSearchParams(location.search);
 const $ = id => document.getElementById(id);
 const escena = EscenaMJ.crear($("lienzo"), { fov: 32 });
+const { franja, encuadrar } = crearEncuadreFranjas(escena);
 EscenaMJ.pista(escena.scene, 40);
 let partida = null, pid = "", numPartida = 0, cuenta = 0, participantes = [];
 let anchoFila = 14, altoFila = 2.7;
 const tv = crearTV({
-  juego: "desenfunda", escena,
+  juego: "desenfunda", escena, topeEtiquetas: () => franja() + 62,
   alUnirse: () => { if (tv.fase === "lobby") acomodar(); botonEmpezar(); },
   alSalir: () => { if (tv.fase === "lobby") acomodar(); botonEmpezar(); },
   alDesconectar: j => tv.pop(j, "Se desconectó", "#c9d2ff"),
@@ -69,9 +70,8 @@ function acomodar() {
   camara(); puntos();
 }
 function camara() {
-  const c = escena.camera, tanV = Math.tan(c.fov * Math.PI / 360);
-  const d = Math.max(14, anchoFila / (2 * tanV * c.aspect), altoFila * 2 / (2 * tanV));
-  c.position.set(0, 4.2, d); c.lookAt(0, altoFila * 0.62, 0);
+  encuadrar(anchoFila, altoFila);
+  document.documentElement.style.setProperty("--franja-tv", franja() + "px");
 }
 addEventListener("resize", camara);
 function botonEmpezar() {
@@ -136,6 +136,7 @@ function eventos(evs) {
     } else if (ev.tipo === "sinGanador") letrero("Nadie disparó a tiempo", true);
     else if (ev.tipo === "fin") {
       tv.fase = "fin";
+      $("marcador").classList.add("oculto");
       const p = $("podio"); p.replaceChildren();
       ev.ranking.forEach(l => {
         const j = tv.jugadores.get(l.id); if (!j) return;
