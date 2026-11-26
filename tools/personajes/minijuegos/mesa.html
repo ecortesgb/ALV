@@ -24,23 +24,23 @@ small{color:#c9d2ff}
 </head>
 <body>
 <!-- Mesa de prueba del prototipo (zona aparte): la TV y 3 «celulares» en una sola página, todos en la misma sala.
-     ?juego=bala|cuarto (bala por omisión), ?cels=1..4, ?lat=&jit= (red simulada en todos), más los de la TV (?cam, ?cuarto, ?bots). -->
+     ?juego=bala|desenfunda|cuarto|fisico (bala por omisión), ?cels=1..4, ?lat=&jit= (red simulada en todos), más los de la TV (?cam, ?cuarto, ?bots). -->
 <div class="mesa">
   <div class="tv">
     <div class="barra"><b id="tit">TV</b><small id="info"></small>
-      <a id="bala" href="#">Esquiva la bala</a><a id="cuarto" href="#">Modo libre</a><a id="fisico" href="#">Físico</a></div>
+      <a id="bala" href="#">Esquiva la bala</a><a id="desenfunda" href="?juego=desenfunda">¡Desenfunda!</a><a id="cuarto" href="#">Modo libre</a><a id="fisico" href="#">Físico</a></div>
     <iframe id="tv" title="TV"></iframe>
   </div>
   <div class="cels" id="cels"></div>
 </div>
 <script>
 const q = new URLSearchParams(location.search);
-const juego = ["cuarto", "fisico"].includes(q.get("juego")) ? q.get("juego") : "bala";
+const juego = ["desenfunda", "cuarto", "fisico"].includes(q.get("juego")) ? q.get("juego") : "bala";
 const sala = (q.get("sala") || "M" + Math.random().toString(36).slice(2, 5)).toUpperCase();
 const red = ["lat", "jit"].filter(k => q.get(k)).map(k => `&${k}=${q.get(k)}`).join("");
 const tvExtra = ["bots", "escenario", "palabra"].filter(k => q.get(k)).map(k => `&${k}=${q.get(k)}`).join("");
 document.getElementById("tv").src = `tv-${juego}.html?sala=${sala}${red}${tvExtra}`;
-document.getElementById("tit").textContent = { bala: "TV · Esquiva la bala", cuarto: "TV · Modo libre (el cuarto)", fisico: "TV · Físico" }[juego];
+document.getElementById("tit").textContent = { bala: "TV · Esquiva la bala", desenfunda: "TV · ¡Desenfunda!", cuarto: "TV · Modo libre (el cuarto)", fisico: "TV · Físico" }[juego];
 document.getElementById("info").textContent = `sala ${sala}` + (red ? ` · red simulada ${q.get("lat") || 0} ± ${q.get("jit") || 0} ms` : "");
 const lista = [["Ana", "iron-man"], ["Beto", "black-widow"], ["Caro", "hulk"], ["Dani", "wolverine"]].slice(0, Math.max(1, Math.min(4, Number(q.get("cels")) || 3)));
 const cels = document.getElementById("cels");
@@ -60,6 +60,7 @@ setTimeout(() => lista.forEach(([n, p]) => {
 }), 1500);
 const ir = j => { const u = new URLSearchParams(q); u.set("juego", j); u.delete("sala"); location.search = u.toString(); };
 document.getElementById("bala").onclick = e => { e.preventDefault(); ir("bala"); };
+document.getElementById("desenfunda").onclick = e => { e.preventDefault(); ir("desenfunda"); };
 document.getElementById("cuarto").onclick = e => { e.preventDefault(); ir("cuarto"); };
 document.getElementById("fisico").onclick = e => { e.preventDefault(); ir("fisico"); };
 </script>

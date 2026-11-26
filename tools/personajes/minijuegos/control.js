@@ -45,7 +45,7 @@ const alLlegar = m => {
     const s = muestra(Number(m.d.t0), Number(m.d.t), ahora());
     if (s) { muestras.push(s); if (muestras.length > 40) muestras.shift(); reloj = estimar(muestras); }
   } else if (m.tipo === "estado") estado(m.d);
-  else if (m.tipo === "eco" && m.d.para === yo) diag(m.d.ok ? `salto aceptado · llegó ${m.d.atraso} ms después` : `salto rechazado (${m.d.motivo || "?"})`);
+  else if (m.tipo === "eco" && m.d.para === yo) diag(m.d.ok ? `toque aceptado · llegó ${m.d.atraso} ms después` : `toque rechazado (${m.d.motivo || "?"})`);
   else if (m.tipo === "evento") evento(m.d);
   else if (m.tipo === "secreto" && m.d.para === yo && typeof m.d.palabra === "string") $("secreta").textContent = m.d.palabra.slice(0, 40);
   else if (m.tipo === "lleno" && m.d.para === yo) $("estado").textContent = "La sala está llena o ya empezó";
@@ -138,7 +138,10 @@ function estado(d) {
   if (!j) { $("estado").textContent = "Entrando…"; return; }
   document.documentElement.style.setProperty("--yo", j.color);
   $("chip").textContent = `P${j.n + 1} ${j.nombre}`; $("chip").classList.remove("oculto");
-  $("titulo").textContent = d.juego === "bala" ? "Esquiva la bala" : "El cuarto";
+  $("titulo").textContent = d.juego === "desenfunda" ? "¡Desenfunda!" : d.juego === "bala" ? "Esquiva la bala" : "El cuarto";
+  document.title = $("titulo").textContent + " · control";
+  $("salto-accion").textContent = d.juego === "desenfunda" ? "¡DISPARA!" : "SALTA";
+  $("salto").classList.toggle("duelo", d.juego === "desenfunda");
   // El anfitrión lo asigna el servidor de sala y la TV lo repite en el estado.
   const anfitrion = d.anfitrionId === yo;
   // Su personaje no cargó en la TV (Codex O7): se queda el aviso y vuelve el selector para elegir otro o reintentar.
@@ -147,12 +150,15 @@ function estado(d) {
   const vivo = !Array.isArray(d.vivos) || d.vivos.includes(yo);
   if (d.juego === "cuarto") return verMando();
   if (d.juego === "fisico") return verFisico(d, j);
-  // Esquiva la bala.
+  // Esquiva la bala y Desenfunda comparten botón y reloj. Solo la TV juzga.
   const enJuego = d.fase === "cuenta" || d.fase === "juego";
   $("salto").classList.toggle("oculto", !enJuego && d.fase !== "fin");
   $("espera").classList.toggle("oculto", enJuego);
-  $("salto").classList.toggle("fuera", !vivo);
-  $("salto-txt").textContent = vivo ? "Toca cuando llegue la bala" : "Te tumbaron. Mira la TV.";
+  const duelo = d.juego === "desenfunda";
+  const adelantado = duelo && (d.adelantados || []).includes(yo);
+  const tocado = duelo && (d.tocados || []).includes(yo);
+  $("salto").classList.toggle("fuera", duelo ? adelantado || tocado || !d.activa : !vivo);
+  $("salto-txt").textContent = duelo ? textoDisparo() : vivo ? "Toca cuando llegue la bala" : "Te tumbaron. Mira la TV.";
   $("empezar").classList.toggle("oculto", !(anfitrion && d.fase === "lobby"));
   $("empezar").disabled = !d.puedeEmpezar;
   $("empezar").textContent = d.puedeEmpezar ? "¡Empezar!" : "Cargando personajes…";
@@ -163,7 +169,7 @@ function estado(d) {
     const l = d.ranking.find(x => x.id === yo);
     $("estado").textContent = l ? (l.lugar === 1 ? "¡Ganaste!" : `Quedaste en ${l.lugar}° lugar`) : "";
     $("salto").classList.add("oculto"); $("espera").classList.remove("oculto"); $("espera-txt").textContent = "Fin de la partida";
-  } else $("estado").textContent = vivo ? "" : "Eliminado";
+  } else $("estado").textContent = duelo ? (adelantado ? "Fuera de esta ronda. Vuelves en la siguiente." : "") : vivo ? "" : "Eliminado";
 }
 function pedirOtro(fallo) {
   if (fallo) fallidos.add(fallo);
@@ -180,18 +186,32 @@ $("empezar").onclick = () => canal.enviar("empezar");
 $("otra").onclick = () => canal.enviar("otra");
 
 function evento(d) {
+  if (ultimo?.juego === "desenfunda") {
+    if (d.pid !== pid) return;
+    if (d.tipo === "adelantado" && d.id === yo) { vibrar([80, 40, 120]); $("estado").textContent = "¡Adelantado! Vuelves en la siguiente ronda."; }
+    if (d.tipo === "gana" && d.ids.includes(yo)) { vibrar(60); $("estado").textContent = "¡Ganaste la ronda!"; }
+    return;
+  }
   if (d.tipo === "golpe" && d.id === yo) { vibrar([80, 40, 120]); $("estado").textContent = "¡PUM! Eliminado"; }
   if (d.tipo === "salvado" && d.id === yo) { vibrar(20); $("estado").textContent = "¡Salvado!"; setTimeout(() => { if ($("estado").textContent === "¡Salvado!") $("estado").textContent = ""; }, 700); }
 }
 const vibrar = p => { try { navigator.vibrate && navigator.vibrate(p); } catch { /* sin vibración */ } };
 const horaTv = () => ahora() + reloj.offset;
 let pid = "";
+let disparoEnviado = "";
+function textoDisparo() {
+  if ((ultimo?.adelantados || []).includes(yo)) return "¡Adelantado! Vuelves en la siguiente ronda";
+  if ((ultimo?.tocados || []).includes(yo) || disparoEnviado === pid && pid) return "Ya disparaste. Mira la TV.";
+  if (!ultimo?.activa) return "Espera la siguiente ronda";
+  return "Mira la TV. Toca solo al ver ¡YA!";
+}
 /** Sin reloj confiable no se juega (Codex O4): el botón dice «Sincronizando…» y no manda nada. */
 const sincronizado = () => relojListo(reloj) && reloj.incertidumbre <= MAX_INCERTIDUMBRE;
 function pintarSalto() {
   const b = $("salto"), ok = sincronizado();
   b.classList.toggle("espera", !ok);
   if (!ok) $("salto-txt").textContent = "Sincronizando con la TV…";
+  else if (ultimo?.juego === "desenfunda") $("salto-txt").textContent = textoDisparo();
   else if (!b.classList.contains("fuera")) $("salto-txt").textContent = "Toca cuando llegue la bala";
 }
 setInterval(pintarSalto, 500);
@@ -200,6 +220,11 @@ setInterval(pintarSalto, 500);
 $("salto").addEventListener("pointerdown", e => {
   e.preventDefault();
   if ($("salto").classList.contains("fuera") || !sincronizado() || !pid) return;
+  if (ultimo?.juego === "desenfunda") {
+    if (!ultimo.activa || disparoEnviado === pid) return;
+    disparoEnviado = pid;
+    $("salto-txt").textContent = "Ya disparaste. Mira la TV.";
+  }
   canal.enviar("salto", { pid, s: horaTv(), inc: Math.round(reloj.incertidumbre) });
   vibrar(12);
   $("salto").classList.add("toca"); setTimeout(() => $("salto").classList.remove("toca"), 110);
