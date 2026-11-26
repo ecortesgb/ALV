@@ -1321,6 +1321,8 @@
     const gen = (e.gen3 = ++V3.gen);
     motorV3().then(M => M.crear(p3)).then(inst => {
       if (figuras.get(e.id) !== e || e.gen3 !== gen || e.v3) { inst.quitar(); return; } // llegó tarde
+      // Nave: el clip «sentado» declarado tiene que existir en el GLB ANTES de retirar la v2; si no, se queda el respaldo.
+      if (NAVE && !inst.reposoEn(p3.sentado)) { inst.quitar(); enviar({ tipo: "v3", id: e.id, ok: false }); return; }
       const grupo = new THREE.Group();
       grupo.add(inst.obj);
       // Figuras grandes (Big Fig): en escenas con lugares (sala, nave, azotea) se topa su altura para que no invadan el
@@ -1334,7 +1336,6 @@
       scene.remove(e.obj); dispose(e.obj);
       e.obj = grupo; e.v3 = inst;
       scene.add(grupo);
-      if (NAVE) inst.reposoEn(p3.sentado); // tras cada gesto vuelve a «sentado», no a parado
       inst.tocar("reposo", { mezcla: 0 });
       // Si el respaldo estaba a media animación de un gesto, la nueva la sigue con su lógica y el tiempo que le quedaba
       // (mismo contrato: al vencer, «termino»; Codex, fase5-paso2-verif).
@@ -1464,13 +1465,18 @@
   // Fase 5 (Codex, ajuste 7): foto de una figura nueva. Asíncrona (el GLB se baja la primera vez), con tiempo límite; si
   // falla, null y quien la pidió usa la v2 de respaldo. Pose de reposo al inicio del clip; mismo encuadre que las viejas:
   // «cuerpo» = la figura completa por su altura, «busto» = siguiendo la cabeza.
-  const FOTO_V3_MS = 15000;
+  // ?fotoms= acorta el plazo (pruebas de carga tardía); nunca más de 15 s.
+  const FOTO_V3_MS = Math.min(15000, Math.max(1, Number(new URLSearchParams(location.search).get("fotoms")) || 15000));
   function fotoV3(p3, ancho, alto, zona) {
     ancho = Math.min(512, Math.max(64, ancho | 0 || 256)); alto = Math.min(640, Math.max(64, alto | 0 || 320));
-    const limite = new Promise((_, mal) => setTimeout(() => mal(new Error("tiempo límite")), FOTO_V3_MS));
-    return Promise.race([motorV3().then(M => M.crear(p3)), limite]).then(inst => {
-      const { r, s, cam } = fotografoDe();
+    // Si vence el plazo y la figura llega después, se libera al llegar (Codex, paso3-r1).
+    let vencida = false, reloj0 = 0;
+    const creada = motorV3().then(M => M.crear(p3)).then(inst => { if (vencida) { inst.quitar(); throw new Error("llegó tarde"); } return inst; });
+    const limite = new Promise((_, mal) => { reloj0 = setTimeout(() => { vencida = true; mal(new Error("tiempo límite")); }, FOTO_V3_MS); });
+    return Promise.race([creada, limite]).then(inst => {
+      clearTimeout(reloj0);
       try {
+        const { r, s, cam } = fotografoDe();
         r.setSize(ancho, alto, false); cam.aspect = ancho / alto; cam.updateProjectionMatrix();
         inst.tocar("reposo", { mezcla: 0 }); inst.update(0);
         const o = inst.obj; o.rotation.y = zona === "busto" ? ZONAS.busto.giro : -0.35; s.add(o); o.updateMatrixWorld(true);
@@ -1488,8 +1494,8 @@
         let url = r.domElement.toDataURL("image/webp", 0.85);
         if (!url.startsWith("data:image/webp")) url = r.domElement.toDataURL("image/png");
         return url;
-      } finally { s.remove(inst.obj); inst.quitar(); }
-    });
+      } finally { inst.quitar(); } // quitar() también la saca de la escena del fotógrafo
+    }, err => { clearTimeout(reloj0); throw err; });
   }
   function foto(f, ancho, alto, zona, pose) {
     ancho = Math.min(512, Math.max(64, ancho | 0 || 256)); alto = Math.min(640, Math.max(64, alto | 0 || 320));
