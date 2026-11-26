@@ -1,0 +1,5 @@
+{
+  "nota": "Únicos modelos 3D permitidos en el repo (ALV_PLAN_PERSONAJES_NUEVO.md). Cada uno con ruta desde la raíz de app, origen y licencia pública. Lo sacado de un juego nunca va aquí: vive en juegos-fiesta/personajes-privado/.",
+  "licencias": ["CC BY 4.0", "propia"],
+  "archivos": []
+}

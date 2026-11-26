@@ -24,6 +24,17 @@ function revisarCarpeta(dir) {
   }
 }
 revisarCarpeta("public");
+// Personajes (ALV_PLAN_PERSONAJES_NUEVO.md): ningún modelo 3D se publica si no está en src/personajes/archivos-3d.json
+// con licencia pública. Lo sacado de un juego nunca entra al build.
+const MODELOS = /\.(glb|gltf|fbx|blend|blend1|obj|dae|ktx2|ghg|gsc)$/i;
+const permitidos = new Set(JSON.parse(readFileSync("src/personajes/archivos-3d.json", "utf8")).archivos.map(a => a.ruta));
+(function modelos(dir) {
+  for (const n of readdirSync(dir)) {
+    const ruta = join(dir, n);
+    if (statSync(ruta).isDirectory()) { modelos(ruta); continue; }
+    if (MODELOS.test(n) && !permitidos.has(ruta.split("\\").join("/"))) { console.error(`Modelo 3D sin permiso en public/ (${ruta}). Agrégalo a src/personajes/archivos-3d.json solo si su licencia es pública. Build detenido.`); process.exit(1); }
+  }
+})("public");
 const bib = process.env.VITE_ANIM_BIBLIOTECA_URL ?? "";
 if (bib && !/^https?:\/\/[^\s"'<>]+$/.test(bib)) { console.error("VITE_ANIM_BIBLIOTECA_URL no es una dirección http(s). Build detenido."); process.exit(1); }
 console.log(url ? "config ok: con servidor" : "config ok: sin servidor (modo local)");
