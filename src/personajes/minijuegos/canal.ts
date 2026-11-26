@@ -50,6 +50,7 @@ const id40 = (v: unknown) => (typeof v === "string" && /^[A-Za-z0-9_-]{1,40}$/.t
  * Lo que manda un celular a la TV, ya limpio, o null si no cumple. Todos llevan `n` (número creciente por celular).
  * - hola {nombre, personaje} · ping {t0} · adios · empezar · otra
  * - salto {pid, s, inc}: pid = partida; s = hora del toque en el reloj de la TV; inc = incertidumbre del reloj (ms)
+ * - corre {pid, s, inc, a}: a = aprieta | suelta | latido (Alto total)
  * - mando {x, z} en [-1, 1] · boton {b}
  * - Sala de Físico: fx {a, id?, n?, c?} (acción del anfitrión; la TV revisa que sea el anfitrión) · gesto {g} (anima a
  *   su propio personaje) · acepta {si} (respuesta a un castigo o reto de contacto)
@@ -65,6 +66,11 @@ export function validarDeCelular(m: Mensaje): Record<string, unknown> | null {
     case "salto": {
       const pid = txt(d.pid, 20), s = num(d.s), inc = num(d.inc);
       return pid && s !== null && inc !== null && inc >= 0 ? { n, pid, s, inc } : null;
+    }
+    case "corre": {
+      const pid = txt(d.pid, 20), s = num(d.s), inc = num(d.inc), a = txt(d.a, 10);
+      return pid !== null && s !== null && inc !== null && inc >= 0 && a !== null && ["aprieta", "suelta", "latido"].includes(a)
+        ? { n, pid, s, inc, a } : null;
     }
     case "mando": {
       const x = num(d.x), z = num(d.z);

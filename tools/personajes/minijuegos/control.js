@@ -138,10 +138,10 @@ function estado(d) {
   if (!j) { $("estado").textContent = "Entrando…"; return; }
   document.documentElement.style.setProperty("--yo", j.color);
   $("chip").textContent = `P${j.n + 1} ${j.nombre}`; $("chip").classList.remove("oculto");
-  $("titulo").textContent = d.juego === "martillazo" ? "Martillazo" : d.juego === "desenfunda" ? "¡Desenfunda!" : d.juego === "bala" ? "Esquiva la bala" : "El cuarto";
+  $("titulo").textContent = d.juego === "alto" ? "Alto total" : d.juego === "martillazo" ? "Martillazo" : d.juego === "desenfunda" ? "¡Desenfunda!" : d.juego === "bala" ? "Esquiva la bala" : "El cuarto";
   document.title = $("titulo").textContent + " · control";
-  $("salto-accion").textContent = d.juego === "martillazo" ? "¡GOLPEA!" : d.juego === "desenfunda" ? "¡DISPARA!" : "SALTA";
-  $("salto").classList.toggle("duelo", d.juego === "desenfunda" || d.juego === "martillazo");
+  $("salto-accion").textContent = d.juego === "alto" ? "¡CORRE!" : d.juego === "martillazo" ? "¡GOLPEA!" : d.juego === "desenfunda" ? "¡DISPARA!" : "SALTA";
+  $("salto").classList.toggle("duelo", d.juego === "alto" || d.juego === "desenfunda" || d.juego === "martillazo");
   // El anfitrión lo asigna el servidor de sala y la TV lo repite en el estado.
   const anfitrion = d.anfitrionId === yo;
   // Su personaje no cargó en la TV (Codex O7): se queda el aviso y vuelve el selector para elegir otro o reintentar.
@@ -158,7 +158,7 @@ function estado(d) {
   const martillo = d.juego === "martillazo";
   const adelantado = duelo && (d.adelantados || []).includes(yo);
   const tocado = (duelo || martillo) && (d.tocados || []).includes(yo);
-  $("salto").classList.toggle("fuera", duelo || martillo ? adelantado || tocado || !d.activa : !vivo);
+  $("salto").classList.toggle("fuera", d.juego === "alto" ? false : duelo || martillo ? adelantado || tocado || !d.activa : !vivo);
   $("salto-txt").textContent = martillo ? textoMartillazo() : duelo ? textoDisparo() : vivo ? "Toca cuando llegue la bala" : "Te tumbaron. Mira la TV.";
   $("empezar").classList.toggle("oculto", !(anfitrion && d.fase === "lobby"));
   $("empezar").disabled = !d.puedeEmpezar;
@@ -170,7 +170,8 @@ function estado(d) {
     const l = d.ranking.find(x => x.id === yo);
     $("estado").textContent = l ? (l.lugar === 1 ? "¡Ganaste!" : `Quedaste en ${l.lugar}° lugar`) : "";
     $("salto").classList.add("oculto"); $("espera").classList.remove("oculto"); $("espera-txt").textContent = "Fin de la partida";
-  } else $("estado").textContent = duelo ? (adelantado ? "Fuera de esta ronda. Vuelves en la siguiente." : "") : vivo ? "" : "Eliminado";
+  } else $("estado").textContent = d.juego === "alto" ? textoAlto() : duelo ? (adelantado ? "Fuera de esta ronda. Vuelves en la siguiente." : "") : vivo ? "" : "Eliminado";
+  if (d.juego === "alto" && d.fase !== "juego") soltarCarrera();
 }
 function pedirOtro(fallo) {
   if (fallo) fallidos.add(fallo);
@@ -187,6 +188,13 @@ $("empezar").onclick = () => canal.enviar("empezar");
 $("otra").onclick = () => canal.enviar("otra");
 
 function evento(d) {
+  if (ultimo?.juego === "alto") {
+    if (d.pid !== pid) return;
+    if (d.tipo === "atrapado" && d.id === yo) {
+      vibrar([80, 40, 120]); $("estado").textContent = "¡Te atraparon! Suelta y vuelve a correr";
+    }
+    return;
+  }
   if (ultimo?.juego === "martillazo") {
     if (d.pid !== pid) return;
     if (d.tipo === "puntaje" && d.id === yo) vibrar(d.perfecto ? [20, 30, 20] : 20);
@@ -205,6 +213,24 @@ const vibrar = p => { try { navigator.vibrate && navigator.vibrate(p); } catch {
 const horaTv = () => ahora() + reloj.offset;
 let pid = "";
 let disparoEnviado = "";
+let carrera = null;
+function textoAlto() {
+  if ((ultimo?.atrapados || []).includes(yo)) return "¡Te atraparon! Suelta y vuelve a correr";
+  return ultimo?.fase === "cuenta" ? "Prepárate. Mira la TV" : "Mantén para correr. Suelta en ROJO";
+}
+function mandarCarrera(a) {
+  if (carrera && reloj) canal.enviar("corre", { pid: carrera.pid, a, s: horaTv(), inc: Math.round(reloj.incertidumbre) });
+}
+function soltarCarrera(e) {
+  if (!carrera || e?.pointerId !== undefined && e.pointerId !== carrera.dedo) return;
+  mandarCarrera("suelta"); carrera = null; $("salto").classList.remove("toca");
+}
+setInterval(() => { if (carrera) mandarCarrera("latido"); }, 250);
+for (const tipo of ["pointerup", "pointercancel", "pointerleave", "lostpointercapture"]) $("salto").addEventListener(tipo, soltarCarrera);
+addEventListener("pointerup", soltarCarrera);
+addEventListener("blur", () => soltarCarrera());
+addEventListener("pagehide", () => soltarCarrera());
+document.addEventListener("visibilitychange", () => { if (document.hidden) soltarCarrera(); });
 function textoMartillazo() {
   if ((ultimo?.tocados || []).includes(yo) || disparoEnviado === pid && pid) return "Ya golpeaste. Mira la TV.";
   if (!ultimo?.activa) return "Espera el siguiente intento";
@@ -222,6 +248,7 @@ function pintarSalto() {
   const b = $("salto"), ok = sincronizado();
   b.classList.toggle("espera", !ok);
   if (!ok) $("salto-txt").textContent = "Sincronizando con la TV…";
+  else if (ultimo?.juego === "alto") $("salto-txt").textContent = textoAlto();
   else if (ultimo?.juego === "martillazo") $("salto-txt").textContent = textoMartillazo();
   else if (ultimo?.juego === "desenfunda") $("salto-txt").textContent = textoDisparo();
   else if (!b.classList.contains("fuera")) $("salto-txt").textContent = "Toca cuando llegue la bala";
@@ -231,6 +258,11 @@ setInterval(pintarSalto, 500);
 // Botón de salto: se manda al tocar (pointerdown), no al soltar.
 $("salto").addEventListener("pointerdown", e => {
   e.preventDefault();
+  if (ultimo?.juego === "alto") {
+    if (carrera || ultimo.fase !== "juego" || !sincronizado() || !pid) return;
+    carrera = { pid, dedo: e.pointerId }; mandarCarrera("aprieta");
+    $("salto").classList.add("toca"); vibrar(12); return;
+  }
   if ($("salto").classList.contains("fuera") || !sincronizado() || !pid) return;
   if (ultimo?.juego === "desenfunda" || ultimo?.juego === "martillazo") {
     if (!ultimo.activa || disparoEnviado === pid) return;

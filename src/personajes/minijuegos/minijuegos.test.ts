@@ -2,10 +2,214 @@
 import { describe, expect, it } from "vitest";
 import * as desenfunda from "./desenfunda";
 import * as martillazo from "./martillazo";
+import * as alto from "./altoTotal";
 import { acotarToque, estimar, muestra, relojListo } from "./reloj";
 import { aireDe, avanzar, crearPartida, empezar, enElAire, llegada, posBala, ranking, saltar, CONFIG_BALA, type Bala, type EstadoBala, type Evento } from "./bala";
 import { crearCuarto, entrar, mandar, pasoCuarto } from "./cuarto";
 import { crearSecuencias, deLaTv, leer, validarDeCelular } from "./canal";
+
+describe("Alto total", () => {
+  function preparar(cfg: Partial<alto.ConfigAltoTotal> = {}) {
+    const e = alto.crearPartida([{ id: "a" }, { id: "big-fig" }], cfg, () => 0);
+    expect(alto.empezar(e, 0)).toEqual([{ tipo: "luz", color: "verde" }]);
+    return e;
+  }
+  const mandar = (e: alto.EstadoAltoTotal, a: alto.Entrada["a"], s: number, llegada = s, id = "a") =>
+    alto.recibir(e, id, { a, s }, llegada);
+  function correr(e: alto.EstadoAltoTotal, desde: number, hasta: number, id = "a") {
+    mandar(e, "aprieta", desde, desde, id);
+    for (let s = desde + 250; s <= hasta; s += 250) mandar(e, "latido", s, s, id);
+  }
+  it("solo suma verde, incluso durante la gracia, y Big Fig corre a la misma velocidad", () => {
+    const e = preparar();
+    for (const id of ["a", "big-fig"]) {
+      correr(e, 0, 1500, id); mandar(e, "suelta", 1800, 1800, id);
+      expect(alto.posicion(e, id, 1800)).toBe(1.5);
+    }
+    expect(alto.avanzar(e, 3500)).toContainEqual({ tipo: "luz", color: "verde" });
+  });
+  it("no aplica KO hasta rojo + 370 + 250, aunque haya prueba de pulsación", () => {
+    const e = preparar(); correr(e, 0, 1750);
+    expect(mandar(e, "latido", 1870)).not.toContainEqual({ tipo: "atrapado", id: "a" });
+    expect(alto.avanzar(e, 2119)).toEqual([]);
+    expect(alto.avanzar(e, 2120)).toContainEqual({ tipo: "atrapado", id: "a" });
+  });
+  it.each([1800, 1869])("soltar a %i dentro de la gracia no castiga", s => {
+    const e = preparar(); correr(e, 0, 1750); mandar(e, "suelta", s);
+    expect(alto.avanzar(e, 2300)).not.toContainEqual({ tipo: "atrapado", id: "a" });
+    expect(alto.posicion(e, "a", 2300)).toBe(1.5);
+  });
+  it("rojo + 370 es inclusivo: el intervalo que no terminó antes de ahí sí castiga", () => {
+    const e = preparar(); correr(e, 0, 1750); mandar(e, "suelta", 1870);
+    expect(alto.avanzar(e, 2119)).toEqual([]);
+    expect(alto.avanzar(e, 2120)).toContainEqual({ tipo: "atrapado", id: "a" });
+  });
+  it("admite suelta atrasada en la ventana de juicio antes de juzgar", () => {
+    const e = preparar(); correr(e, 0, 1750);
+    alto.avanzar(e, 2000);
+    expect(mandar(e, "suelta", 1830, 2070)).not.toContainEqual({ tipo: "atrapado", id: "a" });
+    expect(alto.avanzar(e, 2200)).toEqual([]);
+  });
+  it("una suelta atrasada recalcula y puede bajar la posición", () => {
+    const e = preparar(); correr(e, 0, 750);
+    expect(alto.posicion(e, "a", 1000)).toBe(1);
+    mandar(e, "suelta", 800, 1040);
+    expect(alto.posicion(e, "a", 1040)).toBe(0.8);
+  });
+  it.each([1500, 1750])("sin latidos acaba en el último latido %i; desconectarse no castiga", ultimo => {
+    const e = preparar(); correr(e, 0, ultimo);
+    expect(alto.avanzar(e, ultimo + 600)).not.toContainEqual({ tipo: "atrapado", id: "a" });
+    expect(alto.posicion(e, "a", 4000)).toBe(1.5);
+    expect(alto.avanzar(e, 4000)).not.toContainEqual({ tipo: "atrapado", id: "a" });
+  });
+  it("sin más latidos ni siquiera una aprieta al final de verde se prolonga hasta rojo", () => {
+    const e = preparar(); mandar(e, "aprieta", 1490);
+    expect(alto.avanzar(e, 2200)).not.toContainEqual({ tipo: "atrapado", id: "a" });
+    expect(alto.posicion(e, "a", 2200)).toBe(0);
+  });
+  it("un latido aislado no inventa un intervalo de carrera, pero sí prueba pulsación en rojo", () => {
+    const e = preparar(); mandar(e, "latido", 100); mandar(e, "latido", 350);
+    expect(alto.posicion(e, "a", 500)).toBe(0);
+    mandar(e, "latido", 2000);
+    expect(alto.avanzar(e, 2250)).toContainEqual({ tipo: "atrapado", id: "a" });
+  });
+  it("KO de 1 s, posición cero y después exige soltar y volver a apretar", () => {
+    const e = preparar(); correr(e, 0, 2000);
+    expect(alto.avanzar(e, 2120)).toContainEqual({ tipo: "atrapado", id: "a" });
+    expect(e.jugadores[0]!.koHasta).toBe(3120);
+    expect(alto.posicion(e, "a", 2120)).toBe(0);
+    mandar(e, "suelta", 2500); mandar(e, "aprieta", 3000);
+    for (let s = 3250; s <= 4000; s += 250) mandar(e, "latido", s);
+    expect(alto.posicion(e, "a", 4000)).toBe(0);
+    mandar(e, "suelta", 4100); mandar(e, "latido", 4200);
+    expect(alto.posicion(e, "a", 4200)).toBe(0);
+    mandar(e, "aprieta", 4250); mandar(e, "latido", 4500);
+    expect(alto.posicion(e, "a", 4500)).toBe(0.25);
+  });
+  it("si ya soltó antes del juicio, tras el KO basta una aprieta nueva (no le pide otra suelta)", () => {
+    const e = preparar(); correr(e, 0, 1750); mandar(e, "suelta", 1900);
+    expect(alto.avanzar(e, 2120)).toContainEqual({ tipo: "atrapado", id: "a" });
+    expect(e.jugadores[0]!.exigeSoltar).toBe(false);
+    mandar(e, "aprieta", 3000); // durante el KO (termina en 3120): no cuenta
+    mandar(e, "suelta", 3050);
+    mandar(e, "aprieta", 3600); mandar(e, "latido", 3850); mandar(e, "latido", 4100);
+    expect(alto.posicion(e, "a", 4100)).toBe(0.5);
+  });
+  it("una suelta atrasada que llega después del KO también lo desbloquea", () => {
+    const e = preparar(); correr(e, 0, 2000);
+    expect(alto.avanzar(e, 2120)).toContainEqual({ tipo: "atrapado", id: "a" });
+    expect(e.jugadores[0]!.exigeSoltar).toBe(true);
+    mandar(e, "suelta", 2050, 2200); // soltó antes del juicio pero el mensaje llegó después
+    mandar(e, "aprieta", 3600); mandar(e, "latido", 3850);
+    expect(alto.posicion(e, "a", 3850)).toBe(0.25);
+  });
+  it("confirma el cruce a los 250 ms y comparte lugar con cruces simultáneos", () => {
+    const e = preparar({ verdeMinMs: 10000, verdeMaxMs: 10000 });
+    for (let s = 0; s <= 7000; s += 250) for (const id of ["a", "big-fig"]) {
+      mandar(e, s ? "latido" : "aprieta", s, s, id);
+    }
+    expect(alto.avanzar(e, 7249)).toEqual([]);
+    const ev = alto.avanzar(e, 7250);
+    expect(ev.filter(x => x.tipo === "cruza")).toHaveLength(2);
+    expect(ev).toContainEqual({ tipo: "fin", porTiempo: false, ranking: [
+      { id: "a", lugar: 1, cruce: 7000, distancia: 7 }, { id: "big-fig", lugar: 1, cruce: 7000, distancia: 7 },
+    ] });
+  });
+  it("no confirma cruce especulativo si dejan de llegar latidos antes de la meta", () => {
+    const e = preparar({ verdeMinMs: 10000, verdeMaxMs: 10000 }); correr(e, 0, 6750);
+    expect(alto.posicion(e, "a", 7000)).toBe(7);
+    expect(alto.avanzar(e, 7250)).toEqual([]);
+    expect(alto.posicion(e, "a", 7350)).toBe(6.75);
+  });
+  it("suelta atrasada antes del cruce impide confirmarlo", () => {
+    const e = preparar({ verdeMinMs: 10000, verdeMaxMs: 10000 }); correr(e, 0, 6750);
+    mandar(e, "suelta", 6900, 7100);
+    expect(alto.avanzar(e, 7250)).toEqual([]);
+    expect(alto.posicion(e, "a", 7250)).toBe(6.9);
+  });
+  it("el primer cruce manda; el resto queda por distancia", () => {
+    const e = preparar({ verdeMinMs: 10000, verdeMaxMs: 10000 });
+    for (let s = 0; s <= 7000; s += 250) {
+      mandar(e, s ? "latido" : "aprieta", s);
+      if (s >= 250) mandar(e, s === 250 ? "aprieta" : "latido", s, s, "big-fig");
+    }
+    mandar(e, "suelta", 7000, 7000, "big-fig");
+    alto.avanzar(e, 7250);
+    expect(alto.ranking(e).map(x => [x.id, x.lugar, x.cruce, x.distancia])).toEqual([
+      ["a", 1, 7000, 7], ["big-fig", 2, null, 6.75],
+    ]);
+  });
+  it("se sigue avanzando hasta la confirmación del primer cruce", () => {
+    const e = preparar({ verdeMinMs: 10000, verdeMaxMs: 10000 });
+    for (let s = 0; s <= 7250; s += 250) {
+      if (s <= 7000) mandar(e, s ? "latido" : "aprieta", s);
+      if (s >= 1000) mandar(e, s === 1000 ? "aprieta" : "latido", s, s, "big-fig");
+    }
+    expect(e.fase).toBe("fin"); expect(e.fin).toBe(7250);
+    expect(alto.posicion(e, "big-fig", 9000)).toBe(6.25);
+  });
+  it("si al avanzar hay varios cruces ya juzgados, los ordena por su hora", () => {
+    const e = preparar({ verdeMinMs: 10000, verdeMaxMs: 10000, metaMs: 1000 });
+    mandar(e, "aprieta", 0); mandar(e, "aprieta", 100, 100, "big-fig");
+    for (const s of [250, 500, 750, 1000, 1100]) {
+      mandar(e, "latido", s); mandar(e, "latido", s, s, "big-fig");
+    }
+    const ev = alto.avanzar(e, 1400);
+    expect(ev.filter(x => x.tipo === "cruza")).toHaveLength(2);
+    expect(alto.ranking(e).map(x => [x.id, x.lugar, x.cruce])).toEqual([["a", 1, 1000], ["big-fig", 2, 1100]]);
+  });
+  it("corta a los 60 s, espera juicio y ordena por distancia", () => {
+    const e = preparar(); correr(e, 0, 1000); mandar(e, "suelta", 1000);
+    correr(e, 0, 500, "big-fig"); mandar(e, "suelta", 500, 1000, "big-fig");
+    expect(alto.avanzar(e, 60000).some(x => x.tipo === "fin")).toBe(false);
+    expect(alto.avanzar(e, 60250)).toContainEqual({ tipo: "fin", porTiempo: true, ranking: [
+      { id: "a", lugar: 1, distancia: 1, cruce: null }, { id: "big-fig", lugar: 2, distancia: 0.5, cruce: null },
+    ] });
+  });
+  it("distancias empatadas comparten lugar", () => {
+    const e = preparar(); alto.avanzar(e, 60250);
+    expect(alto.ranking(e).map(x => x.lugar)).toEqual([1, 1]);
+  });
+  it("al límite, los 600 ms sin latidos se miden con el reloj real del juicio", () => {
+    const e = preparar({ verdeMinMs: 61000, verdeMaxMs: 61000 });
+    correr(e, 59000, 59500);
+    alto.avanzar(e, 60250);
+    expect(alto.posicion(e, "a", 60250)).toBe(0.5);
+    expect(alto.posicion(e, "a", 90000)).toBe(0.5);
+  });
+  it("un latido posterior al límite respalda el intervalo previo sin sumar carrera extra", () => {
+    const e = preparar({ verdeMinMs: 61000, verdeMaxMs: 61000 });
+    correr(e, 59000, 60000); mandar(e, "latido", 60250);
+    expect(e.fase).toBe("fin");
+    expect(alto.posicion(e, "a", 60250)).toBe(1);
+  });
+  it("apretar en rojo se juzga 250 ms después de ese evento", () => {
+    const e = preparar();
+    expect(mandar(e, "aprieta", 2100)).not.toContainEqual({ tipo: "atrapado", id: "a" });
+    expect(alto.avanzar(e, 2349)).toEqual([]);
+    expect(alto.avanzar(e, 2350)).toContainEqual({ tipo: "atrapado", id: "a" });
+  });
+  it("el fin de rojo es exclusivo y la siguiente verde vuelve a sumar", () => {
+    const e = preparar(); mandar(e, "aprieta", 3500); mandar(e, "latido", 3750);
+    expect(alto.posicion(e, "a", 3750)).toBe(0.25);
+    expect(alto.avanzar(e, 4000)).not.toContainEqual({ tipo: "atrapado", id: "a" });
+  });
+  it("azar inyectable respeta los rangos de verde y rojo", () => {
+    const e = alto.crearPartida([], {}, () => 0.5); alto.empezar(e, 100);
+    expect(e.tramos[0]!.fin).toBe(2850); alto.avanzar(e, 2850);
+    expect(e.tramos[1]!.fin).toBe(5600);
+  });
+  it.each(["aprieta", "suelta", "latido"])("contrato corre admite %s", a => {
+    const d = { n: 1, pid: "partida", s: 123.5, inc: 0, a };
+    expect(validarDeCelular({ de: "a", tipo: "corre", d })).toEqual(d);
+  });
+  it.each([
+    { pid: "x".repeat(21) }, { pid: 1 }, { s: NaN }, { s: Infinity }, { s: "1" },
+    { inc: -1 }, { inc: Infinity }, { inc: "0" }, { a: "correr" }, { a: null }, { n: -1 },
+  ])("contrato corre rechaza %j", cambio => {
+    expect(validarDeCelular({ de: "a", tipo: "corre", d: { n: 1, pid: "p", s: 10, inc: 0, a: "latido", ...cambio } })).toBeNull();
+  });
+});
 
 describe("Martillazo", () => {
   function preparar(ids = ["a", "b"], azar: () => number = () => 0) {
