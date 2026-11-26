@@ -164,6 +164,25 @@
     return isFinite(min) ? min : null;
   }
 
+  // Vértices que mueven los huesos de los pies (el hueso de más peso), por malla con piel: [[malla, índices], …].
+  function verticesDePies(obj) {
+    const fuera = [];
+    obj.traverse(o => {
+      if (!o.isSkinnedMesh || !o.visible || o.userData.alvOclusor) return;
+      const pies = new Set(o.skeleton.bones.map((h, i) => (PIE.test(h.name) ? i : -1)).filter(i => i >= 0));
+      const si = o.geometry.attributes.skinIndex, sw = o.geometry.attributes.skinWeight;
+      if (!pies.size || !si || !sw) return;
+      const lista = [];
+      for (let i = 0; i < si.count; i++) {
+        let k = 0, w = sw.getX(i);
+        if (sw.getY(i) > w) { k = 1; w = sw.getY(i); } if (sw.getZ(i) > w) { k = 2; w = sw.getZ(i); } if (sw.getW(i) > w) k = 3;
+        if (pies.has(k === 0 ? si.getX(i) : k === 1 ? si.getY(i) : k === 2 ? si.getZ(i) : si.getW(i))) lista.push(i);
+      }
+      if (lista.length) fuera.push([o, lista]);
+    });
+    return fuera;
+  }
+
   async function crear(plano) {
     const g = await bajar(plano.glb, plano.carga);
     const obj = T.SkeletonUtils.clone(g.scene);
@@ -237,6 +256,32 @@
       nombresClips: () => [...porNombre.keys()],
       duracion: nombre => (porNombre.has(nombre) ? porNombre.get(nombre).duration : 0),
       alto: () => { obj.updateMatrixWorld(true); const b = new T.Box3().setFromObject(obj); return b.max.y - b.min.y; },
+      /** Hasta dónde llegan los pies hacia el frente (+Z de `marco`, p. ej. el grupo de la escena) a lo largo de TODO el clip
+       *  `nombre` (`muestras` poses repartidas en su duración). Solo cuentan los vértices con y ≥ `yMin` en `marco` (los que
+       *  quedan a la altura de algo que puedan atravesar). Usa un mezclador aparte: no cambia lo que se está tocando (el
+       *  siguiente update vuelve a poner la pose). null si el clip no está o no hay pies. La nave lo usa para alejar la silla. */
+      alcancePies: (nombre, marco, yMin = -Infinity, muestras = 16) => {
+        const clip = porNombre.get(nombre);
+        if (!clip || !marco) return null;
+        const vp2 = new T.Vector3(), pies = verticesDePies(obj);
+        if (!pies.length) return null;
+        const m2 = new T.AnimationMixer(obj), a = m2.clipAction(clip);
+        a.play();
+        let max = -Infinity;
+        for (let k = 0; k < muestras; k++) {
+          m2.setTime((clip.duration * k) / muestras);
+          obj.updateMatrixWorld(true); marco.updateMatrixWorld(true);
+          for (const [m, lista] of pies) {
+            const pos = m.geometry.attributes.position;
+            for (const i of lista) {
+              vp2.fromBufferAttribute(pos, i); m.boneTransform(i, vp2); vp2.applyMatrix4(m.matrixWorld); marco.worldToLocal(vp2);
+              if (vp2.y >= yMin && vp2.z > max) max = vp2.z;
+            }
+          }
+        }
+        a.stop(); m2.uncacheRoot(obj);
+        return isFinite(max) ? max : null;
+      },
       /** Ancho en reposo (para acomodar varias figuras sin que se encimen). */
       ancho: () => ancho0,
       hueso: logico => { const n = plano.huesos && plano.huesos[logico]; return n ? obj.getObjectByName(n) : null; },

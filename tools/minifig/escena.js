@@ -485,6 +485,13 @@
     scene.add(g);
     return { g, tira, halo };
   }
+  // Figuras nuevas sentadas: si sus pies llegan al tablero, la silla y la figura se alejan juntas, en línea recta desde el
+  // centro y sin girar, lo mínimo para dejar PIES_HOLGURA libre entre los pies y el canto (Codex, sentado-r2). Solo cuentan
+  // los pies que quedan a la altura del tablero (PIES_HOLGURA_Y por debajo de su cara inferior o más arriba).
+  const PIES_HOLGURA = 0.12, PIES_HOLGURA_Y = 0.03, CANTO = 0.045;
+  // Solo Big Fig: las minifiguras con «sentado» ya están aprobadas en su lugar de siempre (Codex, sentado-r2).
+  const esBigFig = e => !!(e && e.v3 && e.v3.obj.userData.plano && e.v3.obj.userData.plano.familia === "bigfig");
+  const alejarN = e => (esBigFig(e) && e.pies != null ? Math.max(0, NV.R + CANTO + PIES_HOLGURA - (NV.S - e.pies)) : 0);
   // Ángulo del asiento i de n: el 0 queda al fondo, de frente a la cámara, y siguen alrededor.
   const anguloN = (i, n) => Math.PI + (i - (n - 1) / 2) * (Math.PI * 2 / n);
   function acomodarNave() {
@@ -492,12 +499,14 @@
     const R = 1.05 + n * 0.13;
     if (!NV.mesa || NV.n !== n) { quitarN(NV.mesa && NV.mesa.g); NV.mesa = armarMesa(R); NV.n = n; NV.R = R; NV.S = R + 0.42; }
     while (NV.sillas.length < n) NV.sillas.push(armarSilla());
-    const colorDe = new Map();
-    orden.forEach(id => { const e = figuras.get(id); colorDe.set(e.columna, e.color); });
+    const colorDe = new Map(), lejos = new Map();
+    orden.forEach(id => { const e = figuras.get(id); colorDe.set(e.columna, e.color); e.alejar = alejarN(e); if (e.alejar) lejos.set(e.columna, e.alejar); });
+    NV.lejos = Math.max(0, ...lejos.values());
     NV.sillas.forEach((s, i) => {
       s.g.visible = i < n; if (i >= n) return;
       const a = anguloN(i, n);
-      s.g.position.set(Math.sin(a) * NV.S, 0, Math.cos(a) * NV.S); s.g.rotation.y = a + Math.PI;
+      const S = NV.S + (lejos.get(i) || 0);
+      s.g.position.set(Math.sin(a) * S, 0, Math.cos(a) * S); s.g.rotation.y = a + Math.PI;
       const c = colorValido(colorDe.get(i) || NV.colores[i]);
       s.tira.color.copy(linN(c || "#4a5687"));
       s.halo.material.color.copy(linN(c || "#4a5687"));
@@ -505,7 +514,8 @@
     orden.forEach(id => {
       const e = figuras.get(id), a = anguloN(e.columna, n);
       if (e.vuela != null) return;
-      e.obj.position.set(Math.sin(a) * NV.S, SILLA_Y, Math.cos(a) * NV.S); e.obj.rotation.set(0, a + Math.PI, 0); e.obj.scale.setScalar(1);
+      const S = NV.S + (e.alejar || 0);
+      e.obj.position.set(Math.sin(a) * S, SILLA_Y, Math.cos(a) * S); e.obj.rotation.set(0, a + Math.PI, 0); e.obj.scale.setScalar(1);
     });
   }
   // Sentada: las piernas al frente (90°) y la cadera baja hasta el asiento. Encima va lo que haga el momento.
@@ -544,7 +554,8 @@
       const d = (t - e.vuela) / 2.4;
       if (d >= 1) { e.obj.visible = false; return; }
       const k = d * d, a = anguloN(e.columna, Math.max(3, lugares()));
-      e.obj.position.set(Math.sin(a) * NV.S * (1 + d * 0.6), SILLA_Y + 0.6 * Math.min(1, d * 4) + k * 9, Math.cos(a) * NV.S * (1 + d * 0.6));
+      const S = NV.S + (e.alejar || 0);
+      e.obj.position.set(Math.sin(a) * S * (1 + d * 0.6), SILLA_Y + 0.6 * Math.min(1, d * 4) + k * 9, Math.cos(a) * S * (1 + d * 0.6));
       e.obj.rotation.set(d * 3, a + Math.PI + d * 14, d * 2);
       e.obj.scale.setScalar(Math.max(0.05, 1 - k * 0.8));
     });
@@ -571,7 +582,7 @@
   function encuadrarNave() {
     const tv = Math.tan(camera.fov * Math.PI / 360), th = tv * camera.aspect;
     const vertical = camera.aspect < 0.9, ang = vertical ? 1.05 : 0.74;
-    const ext = NV.S + 0.75, ancho = 2 * ext;
+    const ext = NV.S + (NV.lejos || 0) + 0.75, ancho = 2 * ext; // con las sillas alejadas de los Big Fig, si las hay
     const prof = 2 * ext * Math.sin(ang) + 3.1 * Math.cos(ang);
     const d = Math.max((ancho / 2) / th, (prof / 2) / tv) * 0.98;
     const y0 = 1.05;
@@ -1337,6 +1348,9 @@
       e.obj = grupo; e.v3 = inst;
       scene.add(grupo);
       inst.tocar("reposo", { mezcla: 0 });
+      // Nave: hasta dónde llegan los pies sentados a la altura del tablero (todo el bucle); acomodarNave() aleja la silla y la
+      // figura lo justo para que no toquen la mesa (decidió Codex, sentado-r2: Big Fig, opción 2).
+      if (NAVE && p3.familia === "bigfig") e.pies = inst.alcancePies(p3.sentado, grupo, MESA_Y - 0.14 - PIES_HOLGURA_Y - SILLA_Y);
       // Si el respaldo estaba a media animación de un gesto, la nueva la sigue con su lógica y el tiempo que le quedaba
       // (mismo contrato: al vencer, «termino»; Codex, fase5-paso2-verif).
       const ahora = reloj.getElapsedTime();
