@@ -50,6 +50,13 @@ const huesos = p => { const l = []; p.obj.traverse(o => { if (o.isBone) l.push(o
 const pose = hs => hs.map(h => h.quaternion.clone());
 const cambioMax = (a, b) => a.reduce((m, qq, i) => Math.max(m, qq.angleTo(b[i]) * 180 / Math.PI), 0);
 const avanzar = (p, s) => { for (let t = 0; t < s; t += 0.05) p.update(0.05); };
+/** Giro máximo de algún hueso mientras `clip` sigue siendo el actual, hasta `largo` segundos. Devuelve [ok, detalle]. */
+function moverMientras(p, hs, clip, largo) {
+  const antes = pose(hs);
+  let giro = 0, t = 0;
+  for (; t < largo && p.estado().clip === clip; t += 0.05) { p.update(0.05); if (p.estado().clip !== clip) break; giro = Math.max(giro, cambioMax(antes, pose(hs))); }
+  return [giro > 0.3, giro.toFixed(1) + "° máx en " + t.toFixed(2) + " s de " + clip];
+}
 
 async function verificar(W, ent) {
   const ch = [], bien = (nombre, ok, detalle = "") => ch.push({ nombre, ok: !!ok, detalle });
@@ -75,12 +82,9 @@ async function verificar(W, ent) {
     const ok = c && clips.has(c) && p.tocar(l, { mezcla: 0 });
     p.update(0.05);
     bien("lógica " + l, ok && p.estado().clip === c, c ? c + (propio ? "" : " (respaldo)") : "sin clip ni respaldo");
-    // Movimiento real: a lo largo del clip el esqueleto debe girar (reposo incluido: respira). Se mide todo el clip
-    // (algunos, como KNOCKEDDOWN, esperan medio segundo antes de caer); el reposo, 2 s.
-    const antes = pose(hs), largo = l === "reposo" ? 2 : Math.max(0.5, p.duracion(c) || 0.5);
-    let giro = 0;
-    for (let t = 0; t < largo; t += 0.05) { p.update(0.05); giro = Math.max(giro, cambioMax(antes, pose(hs))); }
-    bien("lógica " + l + " mueve huesos", giro > 0.3, giro.toFixed(1) + "° máx en " + largo.toFixed(1) + " s");
+    // Movimiento real, SOLO mientras el clip esperado está activo (el reposo al que vuelve no cuenta; Codex O2):
+    // se mide hasta que el clip termina o deja de ser el actual. El reposo se mide 2 s (es su propio bucle).
+    bien("lógica " + l + " mueve huesos", ...moverMientras(p, hs, c, l === "reposo" ? 2 : p.duracion(c)));
   }
   for (const [m, l] of Object.entries(MENSAJES)) {
     p.tocar("reposo", { mezcla: 0 }); p.update(0.05);
@@ -104,6 +108,15 @@ async function verificar(W, ent) {
     bien("vuelve a reposo tras " + quien + " (" + dur.toFixed(2) + " s)", p.estado().logica === "reposo", p.estado().logica + "/" + p.estado().clip);
   }
   bien("altura en escena ≈ " + p.alto().toFixed(2), p.alto() > 1.5 && p.alto() < 6);
+  // Control negativo: un clip inerte (sin pistas) puesto como «especial» debe reprobar la medición de movimiento.
+  const g = await W.MotorPersonajes.bajar(glbUrl, f.carga);
+  if (!g.animations.some(a => a.name === "__INERTE__")) g.animations.push(new W.THREE.AnimationClip("__INERTE__", 1.5, []));
+  const pi = await W.MotorPersonajes.crear({ ...plano, id: "inerte", clips: { ...plano.clips, especial: "__INERTE__" } });
+  pi.tocar("reposo", { mezcla: 0 }); pi.update(0.05); pi.tocar("especial", { mezcla: 0 }); pi.update(0.05);
+  const [movioInerte, detInerte] = moverMientras(pi, huesos(pi), "__INERTE__", 1.5);
+  bien("control: un clip inerte NO pasa como movimiento", !movioInerte && pi.estado().clip !== undefined, detInerte);
+  pi.quitar();
+  g.animations.splice(g.animations.findIndex(a => a.name === "__INERTE__"), 1);
   p.quitar();
   return { id: f.id, familia: f.familia, calidad: f.calidad.estado, huellas, clips: clips.size, ok: ch.every(c => c.ok), checks: ch };
 }
