@@ -21,7 +21,8 @@ canvas{background:transparent}
   background:repeating-linear-gradient(135deg,#5a3fa8 0 18px,#4a3290 18px 36px);box-shadow:0 7px 0 var(--borde);font:400 clamp(26px,3.4vw,46px)/1 "Lilita One",sans-serif}
 .perdio{font:400 clamp(22px,2.6vw,36px)/1 "Lilita One",sans-serif;padding:8px 16px 10px;border:3px solid var(--borde);border-radius:14px;box-shadow:0 4px 0 var(--borde)}
 .etiqueta .pts{font:400 16px/1 "Lilita One",sans-serif;background:#0a1030;color:var(--amarillo);border:3px solid var(--borde);border-radius:10px;padding:3px 8px 4px}
-.aviso{position:fixed;right:18px;bottom:22px;max-width:min(36vw,460px);display:flex;flex-direction:column;gap:8px;align-items:center;pointer-events:none}
+/* Avisos arriba a la izquierda: abajo a la derecha tapaban al personaje de la orilla (Codex, 2026-11-26-fisico-aviso-r1, A). */
+.aviso{position:fixed;left:18px;top:18px;max-width:min(27vw,340px);display:flex;flex-direction:column;gap:8px;align-items:flex-start;text-align:left;pointer-events:none}
 .aviso div{font:400 clamp(18px,2vw,28px)/1.1 "Lilita One",sans-serif;background:var(--panel);border:3px solid var(--borde);border-radius:14px;padding:10px 16px;box-shadow:0 4px 0 var(--borde);animation:entra .25s ease-out}
 .aviso small{display:block;font:800 14px Nunito,sans-serif;color:var(--suave)}
 @keyframes entra{from{transform:translateY(12px);opacity:0}to{transform:none;opacity:1}}
