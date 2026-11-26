@@ -3,12 +3,14 @@
 import { useEffect, useRef, useState } from "react";
 import type { Plano } from "./tipos";
 
-export function Vista3D({ url, plano, alLlegar = "saludo", className = "gal-vista", momento, onArmado }: { url: string; plano: Plano | null; alLlegar?: string | null; className?: string;
+export function Vista3D({ url, plano, alLlegar = "saludo", className = "gal-vista", momento, onArmado, onToque }: { url: string; plano: Plano | null; alLlegar?: string | null; className?: string;
   /** Cada vez que cambia `n`, la figura hace `cual` (gestos Saludar, Ganar, Perder, Especial). */
   momento?: { cual: string; n: number } | null;
   /** Resultado de armar el ÚLTIMO plano mandado: ok, o los errores (pieza que no encaja). La escena conserva la figura
    *  anterior. Las respuestas a planos viejos se descartan. */
-  onArmado?: (ok: boolean, errores: string[]) => void }) {
+  onArmado?: (ok: boolean, errores: string[]) => void;
+  /** Se tocó la figura sin arrastrar; x/y de 0 a 1 dentro de la vista. */
+  onToque?: (x: number, y: number) => void }) {
   const ref = useRef<HTMLIFrameElement>(null);
   const [listo, setListo] = useState(false);
   const [cargando, setCargando] = useState(false);
@@ -16,12 +18,16 @@ export function Vista3D({ url, plano, alLlegar = "saludo", className = "gal-vist
   llegar.current = alLlegar;
   const avisar = useRef(onArmado);
   avisar.current = onArmado;
+  const tocado = useRef(onToque);
+  tocado.current = onToque;
   const rev = useRef(0);
   const enviar = (m: object) => ref.current?.contentWindow?.postMessage({ origen: "alv", ...m }, location.origin);
   useEffect(() => {
     const f = (e: MessageEvent) => {
       if (e.origin !== location.origin || e.source !== ref.current?.contentWindow || e.data?.origen !== "minifig") return;
       if (e.data.tipo === "listo") setListo(true);
+      if (e.data.tipo === "toque" && typeof e.data.x === "number" && typeof e.data.y === "number")
+        tocado.current?.(Math.max(0, Math.min(1, e.data.x)), Math.max(0, Math.min(1, e.data.y)));
       if (e.data.tipo === "armadas") {
         // Solo cuenta la respuesta al último plano mandado (Codex O2): una vieja no confirma la figura de ahora.
         if (e.data.rev !== rev.current) return;

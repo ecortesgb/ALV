@@ -59,23 +59,29 @@
 .D .pz:not(:has(.pf-atras)) .pz-placa { margin: 0 auto; }
 
 /* Figura y gestos */
-.D .pz-escena { grid-area: escena; position: relative; min-height: 0; display: grid; grid-template-rows: minmax(0, 1fr) auto; }
-.D .pz-vista { position: relative; min-height: 0; }
+.D .pz-escena { grid-area: escena; position: relative; min-height: 0; display: grid; grid-template-rows: minmax(0, 1fr); }
+/* La figura se puede tocar (o enfocar y Enter) para abrir la rueda de gestos (RuedaGestos.tsx). */
+.D .pz-toca { position: relative; min-height: 0; border-radius: 12px; outline: none; }
+.D .pz-toca:focus-visible { box-shadow: 0 0 0 3px #fff, 0 0 0 6px var(--tinta); }
+.D .pz-vista { position: absolute; inset: 0; }
 /* Celular: la figura empieza debajo del recuadro «Mientras tanto…» (Codex D3: ≥ 8 px entre cabeza y letrero). */
-@media (max-width: 859px) { .D .pz-vista { margin-top: 26px; } }
+@media (max-width: 859px) { .D .pz-toca { margin-top: 26px; } }
 /* Computadora: igual, la figura empieza debajo del recuadro (6 px + ~34 px del recuadro + 8 px de aire): ni saludando lo toca. */
-@media (min-width: 860px) { .D .pz-vista { margin-top: 48px; } }
+@media (min-width: 860px) { .D .pz-toca { margin-top: 48px; } }
+/* Pista hasta abrir la rueda la primera vez (Codex E2). */
+.D .pz-pista { position: absolute; left: 50%; bottom: 10px; transform: translateX(-50%); z-index: 2; margin: 0; padding: 6px 12px; border-radius: 999px; white-space: nowrap;
+  background: rgba(10, 16, 48, .82); color: #fff; font: 400 13px/1 var(--f-titulo); text-transform: uppercase; letter-spacing: .03em; pointer-events: none; animation: pzPista .3s ease-out .8s both; }
+@keyframes pzPista { from { opacity: 0; transform: translate(-50%, 6px); } to { opacity: 1; transform: translateX(-50%); } }
 .D .pz-vista iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; display: block; }
 .D .pz-vista .gal-cargando { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); font: 400 16px var(--f-titulo); color: #dfe6ff; }
-.D .pz-gestos { justify-content: center; padding-bottom: 4px; }
-.D .pz-gestos .mg-b { --tam: 44px; }
-@media (min-width: 860px) { .D .pz-gestos .mg-b { --tam: 50px; } }
 
 /* Las 4 losas (mismas del HUB, con su ícono a la izquierda) */
 .D .pz-losas { grid-area: losas; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
 @media (min-width: 860px) { .D .pz-losas { grid-template-columns: 1fr 1fr; gap: 12px; } }
-.D .pz-losa { min-height: 50px; padding: 6px 8px; gap: 8px; animation: azEntraLosa .4s cubic-bezier(.2, .8, .2, 1) both; }
-.D .pz-losa:nth-child(2) { animation-delay: .05s; } .D .pz-losa:nth-child(3) { animation-delay: .1s; } .D .pz-losa:nth-child(4) { animation-delay: .15s; }
+/* Entrada: suben 8 px y aparecen, 220 ms, escalonadas 25 ms; solo al entrar (Codex, rueda-gestos-r1 E5.3). */
+.D .pz-losa { min-height: 50px; padding: 6px 8px; gap: 8px; animation: pzEntraLosa .22s cubic-bezier(.2, .8, .2, 1) both; }
+.D .pz-losa:nth-child(2) { animation-delay: 25ms; } .D .pz-losa:nth-child(3) { animation-delay: 50ms; } .D .pz-losa:nth-child(4) { animation-delay: 75ms; }
+@keyframes pzEntraLosa { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 .D .pz-losa .az-ico { position: static; order: -1; flex: none; width: 40px; height: 40px; top: auto; right: auto; transform: none; }
 .D .pz-losa .az-losa-txt b { font-size: clamp(15px, 1.5vw, 22px); }
 .D .pz-losa .az-losa-txt small { font-size: 11px; }
@@ -92,9 +98,6 @@
   .D .pz-losa .az-ico { width: 24px; height: 24px; }
   .D .pz-losa .az-losa-txt { flex: 0 1 auto; min-width: 0; }
   .D .pz-losa .az-losa-txt b { font-size: 11px; letter-spacing: 0; white-space: nowrap; overflow: visible; }
-  .D .pz-escena { grid-template-rows: minmax(0, 1fr); grid-template-columns: minmax(0, 1fr) auto; }
-  .D .pz-gestos.mg-fila { flex-direction: column; gap: 2px; padding: 0 2px 0 0; align-self: center; }
-  .D .pz-gestos .mg-b { --tam: 40px; min-width: 44px; min-height: 44px; }
 }
 
 /* Panel del lobby con las piezas */
@@ -140,4 +143,12 @@
 .D .pz-aviso { position: absolute; left: 50%; top: 8px; transform: translateX(-50%); z-index: 3; padding: 8px 14px; border-radius: 12px; border: 2.5px solid var(--az-tinta);
   background: #ff3b5c; color: #fff; font: 400 15px/1 var(--f-titulo); box-shadow: 0 4px 0 var(--az-tinta); white-space: nowrap; }
 .D .pz-losa .az-losa-txt b, .D .pz-pill, .D .pz-placa { font-family: var(--f-titulo); }
-@media (prefers-reduced-motion: reduce) { .D .pz-top, .D .pz-losa { animation: none; } .D .pz .pz-volteo { display: none; } }
+/* Cambio de página: la rejilla entra 12 px desde el lado elegido con fundido, 170 ms; el marco no se mueve (E5.2). */
+.D .pz-rejilla.pasa-sig > * { animation: pzPasaSig .17s ease-out both; }
+.D .pz-rejilla.pasa-ant > * { animation: pzPasaAnt .17s ease-out both; }
+@keyframes pzPasaSig { from { opacity: 0; transform: translateX(12px); } to { opacity: 1; transform: none; } }
+@keyframes pzPasaAnt { from { opacity: 0; transform: translateX(-12px); } to { opacity: 1; transform: none; } }
+/* ¡Guardar!: se comprime y recupera al guardar (E5.4). */
+.D .pz-guardar.guarda { animation: pzGuarda .18s cubic-bezier(.34, 1.56, .64, 1); }
+@keyframes pzGuarda { 40% { transform: scale(.94); } to { transform: none; } }
+@media (prefers-reduced-motion: reduce) { .D .pz-top, .D .pz-losa, .D .pz-pista, .D .pz-rejilla > *, .D .pz-guardar.guarda { animation: none; } .D .pz .pz-volteo { display: none; } }

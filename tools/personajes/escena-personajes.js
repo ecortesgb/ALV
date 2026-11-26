@@ -3,7 +3,8 @@
 //   {tipo:"planos", lista:[plano…]}  → arma las figuras de izquierda a derecha (las que ya están y no cambiaron se quedan)
 //   {tipo:"momento", id, cual, vel?} → esa figura toca una lógica, un momento o gesto de siempre, o un clip de vida
 //   {tipo:"todos", cual}             → todas a la vez
-// Responde {origen:"minifig", tipo:"listo"} al cargar, {tipo:"armadas", ids, errores} y {tipo:"medida", …}.
+// Responde {origen:"minifig", tipo:"listo"} al cargar, {tipo:"armadas", ids, errores, rev}, {tipo:"medida", …} y
+// {tipo:"toque", id, x, y} cuando se toca una figura sin arrastrar.
 (function () {
   "use strict";
   const enviar = m => { try { if (window.parent !== window) window.parent.postMessage(Object.assign({ origen: "minifig" }, m), location.origin); } catch (e) { /* sin ventana */ } };
@@ -15,6 +16,7 @@
   const CERCA = new URLSearchParams(location.search).get("cerca") === "1";
   // ?frente=<grados> → en reposo y en vida, el cuerpo no se aparta del frente más de esos grados (el clip de reposo de
   // algunos personajes gira la cadera hasta ±65°: en el personalizador hay que ver lo que se cambia). 0 = sin límite.
+  const QUIETO = typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches;
   const FRENTE = Math.max(0, Math.min(90, parseFloat(new URLSearchParams(location.search).get("frente")) || 0)) * Math.PI / 180;
   if (SIN_FONDO) document.documentElement.style.background = document.body.style.background = "transparent";
   const renderer = new THREE.WebGLRenderer({ canvas: lienzo, antialias: true, alpha: SIN_FONDO });
@@ -77,11 +79,13 @@
         if (mio !== turno) { p.quitar(); return; }
         const viejo = figuras.get(plano.id);
         if (viejo) viejo.p.quitar();
+        // Al cambiar una pieza la figura late (1 → 1.025 → 1 en 180 ms, desde los pies) para confirmar el cambio.
+        const pulso = viejo && !QUIETO ? { t: 0, base: p.obj.scale.x } : null;
         // Con ?frente (constructor y galería) la figura nueva regresa al frente aunque el jugador la haya girado (Codex,
         // encargo 2026-11-25-constructor-diseno-r5); sin él conserva el giro.
         if (FRENTE) { giro = 0; aplicarGiro(); }
         p.obj.rotation.y = giro;
-        scene.add(p.obj); figuras.set(plano.id, { p, firma });
+        scene.add(p.obj); figuras.set(plano.id, { p, firma, pulso });
       } catch (e) { errores.push(plano.id + ": " + (e && e.message ? e.message : e)); }
     }));
     if (mio !== turno) return;
@@ -106,9 +110,30 @@
   // Girar arrastrando (con una sola figura, como la ficha de la galería) o con {tipo:"girar", cuanto} en radianes.
   let giro = 0, arrastre = null;
   const aplicarGiro = () => figuras.forEach(f => { f.p.obj.rotation.y = giro; });
-  lienzo.addEventListener("pointerdown", e => { arrastre = { x: e.clientX, g: giro }; lienzo.setPointerCapture(e.pointerId); });
+  lienzo.addEventListener("pointerdown", e => { arrastre = { x: e.clientX, y: e.clientY, g: giro, t: performance.now() }; lienzo.setPointerCapture(e.pointerId); });
   lienzo.addEventListener("pointermove", e => { if (!arrastre) return; giro = arrastre.g + (e.clientX - arrastre.x) * 0.012; aplicarGiro(); });
-  const soltar = () => { arrastre = null; };
+  // Un toque (sin arrastrar) sobre una figura se avisa arriba: {tipo:"toque", id, x, y} con x/y de 0 a 1 en el lienzo.
+  // La figura se mide por sus huesos proyectados en pantalla, con un poco de margen (las mallas con huesos no se
+  // pueden «tocar» bien con rayos en r128).
+  const pv = new THREE.Vector3();
+  function figuraEn(nx, ny) {
+    let mejor = null;
+    figuras.forEach((f, id) => {
+      let x0 = 1, x1 = -1, y0 = 1, y1 = -1;
+      f.p.obj.traverse(o => { if (!o.isBone) return; o.getWorldPosition(pv); pv.project(camera); x0 = Math.min(x0, pv.x); x1 = Math.max(x1, pv.x); y0 = Math.min(y0, pv.y); y1 = Math.max(y1, pv.y); });
+      const mx = (x1 - x0) * 0.25 + 0.04, my = (y1 - y0) * 0.12 + 0.04;
+      if (nx >= x0 - mx && nx <= x1 + mx && ny >= y0 - my && ny <= y1 + my) mejor = id;
+    });
+    return mejor;
+  }
+  const soltar = e => {
+    const a = arrastre; arrastre = null;
+    if (!a || !e || e.type !== "pointerup") return;
+    if (Math.hypot(e.clientX - a.x, e.clientY - a.y) > 8 || performance.now() - a.t > 500) return;
+    const r = lienzo.getBoundingClientRect(), x = (e.clientX - r.left) / r.width, y = (e.clientY - r.top) / r.height;
+    const id = figuraEn(x * 2 - 1, 1 - y * 2);
+    if (id) enviar({ tipo: "toque", id, x, y });
+  };
   lienzo.addEventListener("pointerup", soltar); lienzo.addEventListener("pointercancel", soltar);
   addEventListener("message", e => {
     if (e.origin !== location.origin || !e.data || e.data.origen !== "alv") return;
@@ -145,6 +170,13 @@
     const t0 = performance.now();
     figuras.forEach(f => f.p.update(dt));
     if (FRENTE) figuras.forEach(f => alFrente(f, dt));
+    figuras.forEach(f => {
+      if (!f.pulso) return;
+      f.pulso.t += dt;
+      const k = Math.min(1, f.pulso.t / 0.18);
+      f.p.obj.scale.setScalar(f.pulso.base * (1 + 0.025 * Math.sin(Math.PI * k)));
+      if (k >= 1) f.pulso = null;
+    });
     const t1 = performance.now();
     renderer.render(scene, camera);
     const t2 = performance.now();
