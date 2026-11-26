@@ -27,11 +27,16 @@ const ZONA = ["src/personajes", "tools/personajes", "public/personajes"].map(d =
 const enZona = (p: string) => ZONA.some(z => p === z || p.startsWith(z + sep));
 
 describe("zona del sistema de personajes nuevo", () => {
-  it("nada fuera de la zona la importa todavía (hasta la fase 5)", () => {
+  // Fase 5 (Codex, encargo 2026-11-26-fase5-r1, ajuste 8): la app solo entra por los puntos de integración acordados —
+  // `personajes/integracion` (bandera, fuente, puente v2↔v3, resolución), la pantalla «Mi personaje» en carga diferida y,
+  // en la escena vieja, los scripts del motor nuevo. Nada más de la zona se importa desde fuera.
+  const PUNTOS = [/personajes\/integracion(\.ts)?$/, /personajes\/MiPersonaje(\.tsx)?$/, /personajes\/(motor-personajes|logicas)\.js$/];
+  it("fuera de la zona solo se usan los puntos de integración de la fase 5", () => {
     const malos = archivos(join(RAIZ, "src")).concat(archivos(join(RAIZ, "tools")))
       .filter(p => CODIGO.test(p) && !enZona(p))
-      .filter(p => importaciones(readFileSync(p, "utf8")).some(i => /(^|\/)personajes(\/|$)/.test(i) && !/content\/personajes?\b/.test(i) && !/audio-personajes/.test(i)))
-      .map(rel);
+      .flatMap(p => importaciones(readFileSync(p, "utf8"))
+        .filter(i => /(^|\/)personajes(\/|$)/.test(i) && !/content\/personajes?\b/.test(i) && !/audio-personajes/.test(i) && !PUNTOS.some(r => r.test(i)))
+        .map(i => `${rel(p)} → ${i}`));
     expect(malos).toEqual([]);
   });
 
