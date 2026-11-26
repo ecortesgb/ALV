@@ -12,6 +12,7 @@ import { leerFigura } from "./figura";
 import { cargarIndice } from "./indice";
 import { resolver, type Catalogo } from "./plano";
 import type { FiguraV3, Plano } from "./tipos";
+export type { FiguraV3 } from "./tipos";
 
 /** Lo mínimo de una figura v2 que el puente necesita (el tipo completo vive en el sistema viejo). */
 export interface FiguraV2Puente { version: 2; extensiones?: Record<string, unknown>; [k: string]: unknown }
