@@ -67,12 +67,15 @@ export interface ConstructorProps {
   estudioUrl?: string | null;
   /** Encuadre más cerrado de la figura (la figura se ve más grande en la viñeta). */
   figuraCerca?: boolean;
+  /** Grados máximos que el cuerpo se aparta del frente en reposo (0 = como venga el clip). Decidió Codex: 10° (encargo
+   *  2026-11-25-constructor-diseno-r5). */
+  frente?: number;
 }
 
 const sinMovimiento = () => typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 export function Constructor({ catalogo, piezas, inicial, escenaUrl, onGuardar, onSalir, paginaAnterior = `${ARTE}azotea-pedestal-noche-1920.webp`,
-  estudioUrl = escenaUrl.replace(/escena\.html.*$/, "estudio.html"), figuraCerca = true }: ConstructorProps) {
+  estudioUrl = escenaUrl.replace(/escena\.html.*$/, "estudio.html"), figuraCerca = true, frente = 10 }: ConstructorProps) {
   const mini = useMiniaturas(estudioUrl, catalogo);
   const [figura, setFigura] = useState(inicial);
   const [historia, setHistoria] = useState<FiguraV3[]>([]);
@@ -165,7 +168,7 @@ export function Constructor({ catalogo, piezas, inicial, escenaUrl, onGuardar, o
 
       <div className="pz-escena">
         <p className="pz-cartela" aria-hidden="true">Mientras tanto, en el vestidor…</p>
-        <Vista3D url={figuraCerca ? escenaUrl + (escenaUrl.includes("?") ? "&" : "?") + "cerca=1" : escenaUrl} plano={plano} alLlegar={llego ? null : "entrada"} className="pz-vista" momento={momento} onArmado={alArmar} />
+        <Vista3D url={escenaUrl + (escenaUrl.includes("?") ? "&" : "?") + [figuraCerca ? "cerca=1" : "", frente ? "frente=" + frente : ""].filter(Boolean).join("&")} plano={plano} alLlegar={llego ? null : "entrada"} className="pz-vista" momento={momento} onArmado={alArmar} />
         {aviso && <div className="pz-aviso" role="status">{aviso}</div>}
         <div className="mg mg-fila pz-gestos" role="group" aria-label="Probar tu figura">
           {GESTOS.map(g => (

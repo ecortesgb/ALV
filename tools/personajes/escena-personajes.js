@@ -13,6 +13,9 @@
   const SIN_FONDO = new URLSearchParams(location.search).get("fondo") === "no";
   // ?cerca=1 → encuadre más cerrado para una sola figura en un cuadro bajo (el constructor en celular).
   const CERCA = new URLSearchParams(location.search).get("cerca") === "1";
+  // ?frente=<grados> → en reposo y en vida, el cuerpo no se aparta del frente más de esos grados (el clip de reposo de
+  // algunos personajes gira la cadera hasta ±65°: en el personalizador hay que ver lo que se cambia). 0 = sin límite.
+  const FRENTE = Math.max(0, Math.min(90, parseFloat(new URLSearchParams(location.search).get("frente")) || 0)) * Math.PI / 180;
   if (SIN_FONDO) document.documentElement.style.background = document.body.style.background = "transparent";
   const renderer = new THREE.WebGLRenderer({ canvas: lienzo, antialias: true, alpha: SIN_FONDO });
   renderer.outputEncoding = THREE.sRGBEncoding;
@@ -74,7 +77,10 @@
         if (mio !== turno) { p.quitar(); return; }
         const viejo = figuras.get(plano.id);
         if (viejo) viejo.p.quitar();
-        p.obj.rotation.y = giro; // conserva el giro que el jugador le dio (al cambiar una pieza no regresa al frente)
+        // Con ?frente (constructor y galería) la figura nueva regresa al frente aunque el jugador la haya girado (Codex,
+        // encargo 2026-11-25-constructor-diseno-r5); sin él conserva el giro.
+        if (FRENTE) { giro = 0; aplicarGiro(); }
+        p.obj.rotation.y = giro;
         scene.add(p.obj); figuras.set(plano.id, { p, firma });
       } catch (e) { errores.push(plano.id + ": " + (e && e.message ? e.message : e)); }
     }));
@@ -113,6 +119,22 @@
   const M = { cuadros: 0, mover: 0, dibujar: 0, llamadas: 0, triangulos: 0 };
   window.__escena = { figuras, M, renderer, scene, camera };
   const reloj = new THREE.Clock();
+  // Gira la figura entera en sentido contrario a lo que la cadera se aparta del frente de más; suave, para no saltar al
+  // pasar de reposo a un gesto (los gestos se ven completos, sin compensar).
+  const qa = new THREE.Quaternion(), qb = new THREE.Quaternion(), adelante = new THREE.Vector3();
+  function alFrente(f, dt) {
+    const cad = f.p.hueso("cadera"), l = f.p.estado().logica;
+    let meta = 0;
+    if (cad && (l === "reposo" || l === "vida")) {
+      f.p.obj.rotation.y = giro + (f.compensa || 0); f.p.obj.updateMatrixWorld(true);
+      cad.getWorldQuaternion(qa); f.p.obj.getWorldQuaternion(qb); qa.premultiply(qb.invert());
+      adelante.set(0, 0, 1).applyQuaternion(qa);
+      const yaw = Math.atan2(adelante.x, adelante.z);
+      meta = Math.max(-FRENTE, Math.min(FRENTE, yaw)) - yaw;
+    }
+    f.compensa = (f.compensa || 0) + (meta - (f.compensa || 0)) * Math.min(1, dt * 6);
+    f.p.obj.rotation.y = giro + f.compensa;
+  }
   function cuadro() {
     requestAnimationFrame(cuadro);
     const w = lienzo.clientWidth, h = lienzo.clientHeight;
@@ -122,6 +144,7 @@
     const dt = Math.min(reloj.getDelta(), 0.1);
     const t0 = performance.now();
     figuras.forEach(f => f.p.update(dt));
+    if (FRENTE) figuras.forEach(f => alFrente(f, dt));
     const t1 = performance.now();
     renderer.render(scene, camera);
     const t2 = performance.now();
