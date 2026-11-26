@@ -4,6 +4,7 @@
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { Icono } from "../../ds";
 import { hoyMexico, retosDelDia } from "../../content/rarezas";
+import { modoCorteV3 } from "../../personajes/integracion";
 import { figuraActiva, useCapsulas } from "../../app/figura3d";
 import { horaDePrueba, useMomentoDia } from "../../app/horaDelDia";
 import { abrirChat, useFigurasDe, useHubVivo } from "../../app/hubVivo";
@@ -120,7 +121,7 @@ export function HubAzotea() {
                 <LogoALV tamano="medio" unaVez className="az-logo" />
               </span>
             ) : null}
-            <Boleto compacto={!ancho || bajo} />
+            {!modoCorteV3() && <Boleto compacto={!ancho || bajo} />}
           </div>
           <span className="az-reflector" aria-hidden="true" /><span className="az-reflector dos" aria-hidden="true" />
           <EscenaAzotea ref={mando} id={s.uid} figura={f} ambiente={amb} plataforma={esc.plataforma} vida="hub" />

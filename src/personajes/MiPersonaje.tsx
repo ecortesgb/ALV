@@ -7,6 +7,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Boton, FondoCiudad, Panel, RaizDS } from "../ds";
 import { Constructor } from "./Constructor";
 import { figuraInicial, sePuedePersonalizar } from "./constructorDatos";
+import { destinoGuardado } from "./espacios";
 import { Galeria } from "./Galeria";
 import { tarjetas } from "./galeriaDatos";
 import type { CatalogoV3 } from "./integracion";
@@ -48,11 +49,12 @@ export function MiPersonaje({ jugador, catalogo, estadoCatalogo = catalogo ? "li
   const [vista, setVista] = useState<Vista>({ cual: "inicio" });
   const [aviso, setAviso] = useState<string | null>(null);
   const [guardando, setGuardando] = useState(false);
+  const [elegido, setElegido] = useState<number | null>(null);
   useEffect(() => { const f = () => setAncho(innerWidth >= 860); addEventListener("resize", f); return () => removeEventListener("resize", f); }, []);
   useEffect(() => { if (!aviso) return; const t = setTimeout(() => setAviso(null), 3200); return () => clearTimeout(t); }, [aviso]);
   const fotos = useMemo(() => new Map((catalogo ? tarjetas(catalogo.catalogo, { conBorradores: true }) : []).map(t => [t.id, t])), [catalogo]);
-  // Se guarda en el espacio en juego; si no hay, en el primero vacío; si no, en el primero.
-  const destino = activa ?? (espacios.findIndex(e => !e.figura && !e.antes) >= 0 ? espacios.findIndex(e => !e.figura && !e.antes) : 0);
+  // El vacío elegido tiene prioridad; después se conserva la regla del espacio en juego.
+  const destino = destinoGuardado(espacios, activa, elegido);
   const activaV3 = activa != null ? espacios[activa]?.figura ?? null : null;
 
   const guardar = async (f: FiguraV3, nombre: string) => {
@@ -61,7 +63,7 @@ export function MiPersonaje({ jugador, catalogo, estadoCatalogo = catalogo ? "li
     const r = await onGuardar(destino, f, nombre).catch((): ResultadoGuardar => "error");
     setGuardando(false);
     setAviso(TEXTO[r](nombre));
-    if (r !== "error") setVista({ cual: "inicio" });
+    if (r !== "error") { setElegido(null); setVista({ cual: "inicio" }); }
   };
   const conservar = (f: FiguraV3): FiguraV3 => (activaV3 ? { ...f, momentos: activaV3.momentos, extensiones: activaV3.extensiones } : f);
   const crear = () => { const f = catalogo && figuraInicial(catalogo.catalogo, activaV3); if (f) setVista({ cual: "crear", figura: f }); };
@@ -99,13 +101,14 @@ export function MiPersonaje({ jugador, catalogo, estadoCatalogo = catalogo ? "li
             <div className="mp-espacios" role="group">
               {espacios.map((e, i) => {
                 const o = e.figura?.origen, t = o?.tipo === "catalogo" ? fotos.get(o.personaje) : null, en = activa === i;
+                const vacio = !e.figura && !e.antes, aqui = vacio && elegido === i;
                 const titulo = e.figura ? e.nombre || t?.nombre || "Mi personaje" : e.antes ? "Figura de antes" : "Vacío";
                 return (
-                  <button key={i} type="button" className={"d-pnl mp-espacio" + (en ? " on" : "")} aria-pressed={en}
-                    disabled={!e.figura && !e.antes} onClick={() => { if (!en) onActivar(i); }}
-                    aria-label={`Espacio ${i + 1}: ${titulo}${en ? ", en juego" : ""}`}>
+                  <button key={i} type="button" className={"d-pnl mp-espacio" + (en ? " on" : "") + (aqui ? " elegido" : "")} aria-pressed={en || aqui}
+                    onClick={() => { if (vacio) setElegido(i); else { setElegido(null); if (!en) onActivar(i); } }}
+                    aria-label={vacio ? `Espacio ${i + 1}: vacío${aqui ? ", aquí se guarda lo que elijas" : ". Tócalo para guardar ahí"}` : `Espacio ${i + 1}: ${titulo}${en ? ", en juego" : ""}`}>
                     {t?.foto ? <img src={t.foto} alt="" draggable={false} /> : <span className="dsp mp-mas" aria-hidden="true">{e.antes ? "?" : "+"}</span>}
-                    <small>{en ? "En juego" : titulo}</small>
+                    <small>{aqui ? "Aquí se guarda" : en ? "En juego" : titulo}</small>
                   </button>
                 );
               })}

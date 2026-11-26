@@ -31,6 +31,7 @@
 .D .mp-espacio small { position: relative; font: 800 13px/1.1 var(--f-texto); text-align: center; overflow-wrap: anywhere; }
 .D .mp-espacio.on { outline: 4px solid var(--yel); outline-offset: 2px; }
 .D .mp-espacio.on small { color: var(--ink); background: var(--yel); padding: 2px 8px; border-radius: 99px; }
+.D .mp-espacio.elegido { outline: 3px dashed #fff; outline-offset: 2px; }
 .D .mp-espacio:disabled { cursor: default; opacity: .7; }
 .D .mp-mas { position: absolute; inset: 0 0 28px; display: grid; place-items: center; font-size: 44px; color: var(--mut); }
 .D .mp-nota { margin: 0; color: var(--mut); font-size: 14px; text-align: center; }
