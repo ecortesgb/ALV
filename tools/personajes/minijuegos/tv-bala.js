@@ -25,8 +25,8 @@ const tv = crearTV({
   alDesconectar: j => tv.pop(j, "Se desconectó", "#c9d2ff"),
   alMensaje: (j, m) => {
     if (m.tipo === "salto") recibirSalto(j, m.d);
-    else if (m.tipo === "empezar" && j.n === primero()) iniciar();
-    else if (m.tipo === "otra" && tv.fase === "fin" && j.n === primero()) aLobby();
+    else if (m.tipo === "empezar" && tv.esAnfitrion(j)) iniciar();
+    else if (m.tipo === "otra" && tv.fase === "fin" && tv.esAnfitrion(j)) aLobby();
   },
 });
 tv.extra = () => ({
@@ -36,7 +36,6 @@ tv.extra = () => ({
   ranking: partida && partida.fase === "fin" ? ranking(partida) : null,
   puedeEmpezar: tv.todosListos(),
 });
-const primero = () => Math.min(...[...tv.jugadores.values()].filter(j => !j.bot && !j.desconectado).map(j => j.n), 99);
 
 /** Salto de un celular: misma partida, reloj confiable y hora válida (Codex O3/O4); si no, se rechaza y se le avisa. */
 function recibirSalto(j, d) {

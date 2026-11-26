@@ -234,6 +234,16 @@ describe("contrato del canal", () => {
     expect(s.nueva("c1|salto", 2)).toBe(false);
     expect(s.nueva("c2|salto", 2)).toBe(true);
   });
+  it("un celular que se reconecta empieza otra vez en 1 en todos sus tipos", () => {
+    const s = crearSecuencias();
+    expect(s.nueva("c1|fx", 50)).toBe(true);
+    expect(s.nueva("c1|mando", 40)).toBe(true);
+    expect(s.nueva("c10|fx", 9)).toBe(true);
+    s.olvidar("c1");
+    expect(s.nueva("c1|fx", 1)).toBe(true);
+    expect(s.nueva("c1|mando", 1)).toBe(true);
+    expect(s.nueva("c10|fx", 9)).toBe(false); // otro celular cuyo id empieza igual no se toca
+  });
 });
 
 describe("cuarto de Físico", () => {
@@ -348,7 +358,7 @@ describe("cuarto de Físico", () => {
   });
 });
 
-import { agregarJugador, asignar, crearFisico, darPuntos, nuevaRonda, perdio, responder, revelar, tabla, CASTIGOS, CATEGORIAS, RETOS } from "./fisico";
+import { agregarJugador, asignar, cambioDeArbitro, crearFisico, darPuntos, nuevaRonda, perdio, responder, revelar, tabla, tapar, CASTIGOS, CATEGORIAS, RETOS } from "./fisico";
 import { azarCon } from "./bala";
 
 describe("sala de Físico: Palabra prohibida", () => {
@@ -374,6 +384,32 @@ describe("sala de Físico: Palabra prohibida", () => {
     expect(e.ronda!.revelada).toBe(true);
     expect(perdio(e, "a")).toBe(false);
     const e2 = crearFisico(["a"]); nuevaRonda(e2, azarCon(2)); expect(revelar(e2)).toBe(true);
+  });
+  it("un solo control de visibilidad: tapada al empezar, se tapa y destapa, y tras «la dijo» ya no se tapa", () => {
+    const e = crearFisico(["a", "b"]);
+    expect(nuevaRonda(e, azarCon(3)).revelada).toBe(false);
+    expect(nuevaRonda(e, azarCon(3), undefined, true).revelada).toBe(true);
+    expect(tapar(e)).toBe(true); expect(e.ronda!.revelada).toBe(false);
+    revelar(e); perdio(e, "a");
+    expect(tapar(e)).toBe(false); expect(e.ronda!.revelada).toBe(true);
+  });
+  it("si cambia el anfitrión con la palabra tapada, la ronda se anula y la siguiente sigue la cuenta", () => {
+    const e = crearFisico(["ana", "beto"]);
+    nuevaRonda(e, azarCon(1), undefined, false, "ana");
+    expect(cambioDeArbitro(e, "ana")).toBe(false);
+    expect(cambioDeArbitro(e, "beto")).toBe(true); // Ana se fue: Beto recibiría la palabra
+    expect(e.ronda).toBeNull();
+    expect(nuevaRonda(e, azarCon(2), undefined, false, "beto").n).toBe(2);
+    revelar(e);
+    expect(cambioDeArbitro(e, "ana")).toBe(false); // a la vista: todos la conocen, no se anula
+    nuevaRonda(e, azarCon(3), undefined, false, "beto"); perdio(e, "ana");
+    expect(cambioDeArbitro(e, "ana")).toBe(false); // ya decidida
+  });
+  it("si la TV se recarga, quien vuelve a entrar recupera sus puntos", () => {
+    const e = crearFisico([], { a: 7, b: 2 });
+    agregarJugador(e, "a"); agregarJugador(e, "c");
+    expect(e.puntos.get("a")).toBe(7);
+    expect(e.puntos.get("c")).toBe(0);
   });
   it("puntos a mano: enteros de −5 a 10, el total nunca baja de 0", () => {
     const e = crearFisico(["a", "b"]);
@@ -403,9 +439,10 @@ describe("sala de Físico: Palabra prohibida", () => {
     const r = responder(e, "a", false, azarCon(1))!;
     expect(r.estado).toBe("rechazado");
     expect(r.alternativa!.contacto).toBe(false);
-    expect(asignar(e, "b", "reto", "abrazo")).toBe("pendiente");
+    expect(asignar(e, "b", "castigo", "globo")).toBe("pendiente");
     expect(responder(e, "b", true, azarCon(1))!.estado).toBe("aplicado");
-    expect(RETOS.filter(x => x.contacto).length + CASTIGOS.filter(x => x.contacto).length).toBeGreaterThan(0);
+    // Ningún reto involucra a otra persona (su consentimiento no se pide todavía; Codex O2).
+    expect(RETOS.filter(x => x.contacto)).toEqual([]);
   });
   it("entra alguien a mitad con 0 puntos", () => {
     const e = crearFisico(["a"], { a: 5 });

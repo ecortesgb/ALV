@@ -33,6 +33,9 @@ canvas{position:fixed;inset:0;width:100%;height:100%;display:block}
 .podio div{font:400 20px/1.2 "Lilita One",sans-serif;padding:6px 10px;border-radius:10px;border:3px solid var(--borde)}
 .aviso-red{position:fixed;bottom:10px;right:14px;color:var(--suave);font:700 12px ui-monospace,monospace;text-shadow:0 1px 0 #000;white-space:pre}
 .oculto{display:none!important}
+.sala .qr{margin-top:8px;background:#fff;border-radius:8px;padding:4px;width:max-content}
+.sala .qr svg{display:block}
+.sala small#como{word-break:break-all}
 .centro.chico{top:22%;font-size:clamp(40px,6vw,84px);-webkit-text-stroke:3px var(--borde);white-space:nowrap}
 .podio:not(.oculto) ~ .boton-tv{bottom:118px}
 @media (max-aspect-ratio:1/1){.sub{display:none}.titulo{top:64px}.centro{font-size:12vw}}

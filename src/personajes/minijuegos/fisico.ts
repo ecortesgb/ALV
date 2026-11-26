@@ -8,8 +8,10 @@
 // - Ningún castigo o reto de contacto (globo de agua) sale sin el consentimiento de quien lo recibe: queda pendiente
 //   hasta que acepta en su celular; si no acepta, toca uno sin contacto.
 // - Los puntos solo los da el anfitrión; el total de nadie baja de 0 (como el motor, que nunca da negativos).
-// - Guardar en la nube necesita la migración 038 (Plan de Modos D5). En el prototipo los puntos viven en la TV (memoria y
-//   localStorage). Punto de conexión: `alCambiarPuntos` en tools/personajes/minijuegos/tv-fisico.js.
+// - En la nube no hace falta migración nueva: la 040 (aplicada) ya acepta 'fisico' en terminar_partida_sala y guarda
+//   puntos y lugar por jugador en resultados_partida. Falta que Físico viva en una sala real de la app (integración).
+//   En el prototipo los puntos viven en la TV (memoria y localStorage). Punto de conexión: `alCambiarPuntos` en
+//   tools/personajes/minijuegos/tv-fisico.js.
 
 export interface Categoria { id: string; nombre: string; palabras: string[] }
 
@@ -35,26 +37,32 @@ export const CASTIGOS: Castigo[] = [
   { id: "cantar", texto: "Canta el coro de una canción", contacto: false, trago: false },
   { id: "imitar", texto: "Imita a un personaje por 10 s", contacto: false, trago: false },
 ];
+// Sin retos que involucren a otra persona: el consentimiento sería de dos (Codex O2); se agregan cuando haya cómo pedirlo.
 export const RETOS: Castigo[] = [
   { id: "baile", texto: "Baila 15 s sin música", contacto: false, trago: false },
   { id: "trabalenguas", texto: "Di un trabalenguas sin trabarte", contacto: false, trago: false },
-  { id: "abrazo", texto: "Abrazo de oso a quien elijas", contacto: true, trago: false },
   { id: "chiste", texto: "Cuenta un chiste", contacto: false, trago: false },
 ];
 const SIN_CONTACTO = (l: Castigo[]) => l.filter(c => !c.contacto);
 
-export interface Ronda { n: number; categoria: Categoria; palabra: string; revelada: boolean; perdio: string | null }
+/** `arbitro`: quién era el anfitrión cuando empezó la ronda (el único que conoce la palabra tapada). */
+export interface Ronda { n: number; categoria: Categoria; palabra: string; revelada: boolean; perdio: string | null; arbitro: string | null }
 export interface Pendiente { id: string; tipo: "castigo" | "reto"; castigo: Castigo }
 export type Entrada =
   | { tipo: "puntos"; id: string; n: number; total: number }
   | { tipo: "castigo" | "reto"; id: string; castigo: Castigo; estado: "aplicado" | "pendiente" | "rechazado" }
   | { tipo: "perdio"; id: string; ronda: number }
-  | { tipo: "ronda"; n: number; categoria: string };
+  | { tipo: "ronda"; n: number; categoria: string }
+  | { tipo: "anulada"; n: number };
 
 export interface EstadoFisico {
   jugadores: string[];
+  /** Puntos guardados de una carga anterior (la TV se recargó): quien vuelva a entrar los recupera (Codex O5). */
+  guardados: Map<string, number>;
   puntos: Map<string, number>;
   ronda: Ronda | null;
+  /** Rondas empezadas (sigue contando aunque una se anule). */
+  rondas: number;
   usadas: Set<string>;
   pendientes: Map<string, Pendiente>;
   historial: Entrada[];
@@ -63,8 +71,9 @@ export interface EstadoFisico {
 export function crearFisico(jugadores: string[], puntos: Record<string, number> = {}): EstadoFisico {
   return {
     jugadores: [...jugadores],
+    guardados: new Map(Object.entries(puntos).map(([id, n]) => [id, Math.max(0, Math.floor(Number(n) || 0))])),
     puntos: new Map(jugadores.map(id => [id, Math.max(0, Math.floor(Number(puntos[id]) || 0))])),
-    ronda: null, usadas: new Set(), pendientes: new Map(), historial: [],
+    ronda: null, rondas: 0, usadas: new Set(), pendientes: new Map(), historial: [],
   };
 }
 
@@ -72,11 +81,14 @@ export function crearFisico(jugadores: string[], puntos: Record<string, number> 
 export function agregarJugador(e: EstadoFisico, id: string) {
   if (e.jugadores.includes(id)) return;
   e.jugadores.push(id);
-  if (!e.puntos.has(id)) e.puntos.set(id, 0);
+  if (!e.puntos.has(id)) e.puntos.set(id, e.guardados.get(id) ?? 0);
 }
 
-/** Nueva ronda: categoría (la que pida el anfitrión o una al azar) y una palabra que no haya salido. */
-export function nuevaRonda(e: EstadoFisico, azar: () => number, categoriaId?: string): Ronda {
+/**
+ * Nueva ronda: categoría (la que pida el anfitrión o una al azar) y una palabra que no haya salido. La palabra empieza
+ * tapada (Codex F1); `visible` = true para jugar con la palabra a la vista (p. ej. si están de espaldas a la TV).
+ */
+export function nuevaRonda(e: EstadoFisico, azar: () => number, categoriaId?: string, visible = false, arbitro: string | null = null): Ronda {
   const posibles = categoriaId ? CATEGORIAS.filter(c => c.id === categoriaId) : CATEGORIAS;
   const lista = posibles.length ? posibles : CATEGORIAS;
   let cat = lista[Math.floor(azar() * lista.length) % lista.length]!;
@@ -88,15 +100,35 @@ export function nuevaRonda(e: EstadoFisico, azar: () => number, categoriaId?: st
   if (!libres.length) { for (const p of cat.palabras) e.usadas.delete(cat.id + "|" + p); libres = [...cat.palabras]; }
   const palabra = libres[Math.floor(azar() * libres.length) % libres.length]!;
   e.usadas.add(cat.id + "|" + palabra);
-  const n = (e.ronda?.n ?? 0) + 1;
-  e.ronda = { n, categoria: cat, palabra, revelada: false, perdio: null };
+  const n = ++e.rondas;
+  e.ronda = { n, categoria: cat, palabra, revelada: visible, perdio: null, arbitro };
   e.historial.push({ tipo: "ronda", n, categoria: cat.nombre });
   return e.ronda;
 }
 
+/**
+ * Si cambia el anfitrión a media ronda (se fue y otro tomó su lugar), quien recibió la palabra tapada podría volver a
+ * competir sabiéndola: la ronda se anula y el anfitrión de ahora saca otra (Codex N1). Devuelve true si anuló algo.
+ * Una ronda ya decidida («la dijo») o con la palabra a la vista no se anula.
+ */
+export function cambioDeArbitro(e: EstadoFisico, anfitrionActual: string | null): boolean {
+  const r = e.ronda;
+  if (!r || r.perdio || r.revelada || r.arbitro === anfitrionActual) return false;
+  e.historial.push({ tipo: "anulada", n: r.n });
+  e.ronda = null;
+  return true;
+}
+
+/** Un solo control de visibilidad (Codex O3): lo que dice `revelada` es lo que muestra la TV. */
 export function revelar(e: EstadoFisico): boolean {
   if (!e.ronda) return false;
   e.ronda.revelada = true;
+  return true;
+}
+/** Tapar otra vez. No se puede después de «la dijo»: queda a la vista hasta la siguiente ronda. */
+export function tapar(e: EstadoFisico): boolean {
+  if (!e.ronda || e.ronda.perdio) return false;
+  e.ronda.revelada = false;
   return true;
 }
 

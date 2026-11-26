@@ -1,14 +1,22 @@
 // Control del celular (prototipo de Mini-Juegos y cuarto de Físico, zona aparte).
 // Mide el reloj de la TV (ping/pong) y manda cada toque con su hora ya traducida al reloj de la TV.
-import { abrirCanal, ahora as ahoraPc, deLaTv, redDeUrl } from "/src/personajes/minijuegos/canal.ts";
+import { abrirCanal, abrirCanalWs, ahora as ahoraPc, deLaTv, redDeUrl, urlSala, SERVIDOR } from "/src/personajes/minijuegos/canal.ts";
 import { estimar, muestra, relojListo, MAX_INCERTIDUMBRE } from "/src/personajes/minijuegos/reloj.ts";
 
 const q = new URLSearchParams(location.search);
 const $ = id => document.getElementById(id);
-const FUENTE = (q.get("fuente") || "http://127.0.0.1:4193/").replace(/\/?$/, "/");
+// Las fotos de las tarjetas: del servidor privado en la misma máquina que sirvió la página (en la casa, la PC).
+const FUENTE = (q.get("fuente") || `http://${location.hostname}:4193/`).replace(/\/?$/, "/");
+const PESTANAS = q.get("canal") === "pestanas";
 const sala = (q.get("sala") || "").toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 8);
-// Un id nuevo en cada carga: la secuencia de mensajes empieza en 1 y la TV no debe confundirla con la de antes.
-const yo = "c" + Math.random().toString(36).slice(2, 9);
+// Quién soy: con WebSocket lo dice el servidor al conectar, a partir de una llave secreta que solo guarda este
+// navegador (al recargar conserva su lugar y sus puntos; nadie más la conoce). En pestañas, un id local nuevo.
+let yo = PESTANAS ? "c" + Math.random().toString(36).slice(2, 9) : "";
+const llave = (() => {
+  const k = "alv-mj-llave-" + sala + "-" + (q.get("nombre") || ""); // con el nombre: en la mesa los iframes comparten el almacenamiento
+  const nueva = () => Array.from(crypto.getRandomValues(new Uint8Array(16)), b => b.toString(16).padStart(2, "0")).join("");
+  try { let v = sessionStorage.getItem(k); if (!v) { v = nueva(); sessionStorage.setItem(k, v); } return v; } catch { return nueva(); }
+})();
 // ?desfase=ms: simula que el reloj de este celular está corrido (prueba de Codex O4: otro aparato, otra hora).
 const DESFASE = Number(q.get("desfase")) || 0;
 const ahora = () => ahoraPc() + DESFASE;
@@ -21,8 +29,11 @@ let reloj = null;
 $("sala-txt").textContent = sala ? `Sala ${sala}` : "Sin sala: abre esta página desde la TV";
 $("nombre").value = q.get("nombre") || "";
 
-const canal = abrirCanal(sala, yo, m => {
+const oyentes = []; // solo para las pruebas automáticas (__control.oir)
+const alLlegar = m => {
+  if (m.de === SERVIDOR) { if (m.tipo === "bienvenida" && typeof m.d.yo === "string") yo = m.d.yo; return; }
   if (!deLaTv(m)) return; // el celular solo le cree a la TV (Codex O3)
+  oyentes.forEach(f => { try { f(m); } catch { /* prueba */ } });
   if (m.tipo === "pong" && m.d.para === yo) {
     const s = muestra(Number(m.d.t0), Number(m.d.t), ahora());
     if (s) { muestras.push(s); if (muestras.length > 40) muestras.shift(); reloj = estimar(muestras); }
@@ -31,7 +42,12 @@ const canal = abrirCanal(sala, yo, m => {
   else if (m.tipo === "evento") evento(m.d);
   else if (m.tipo === "secreto" && m.d.para === yo && typeof m.d.palabra === "string") $("secreta").textContent = m.d.palabra.slice(0, 40);
   else if (m.tipo === "lleno" && m.d.para === yo) $("estado").textContent = "La sala está llena o ya empezó";
-}, redDeUrl(q));
+};
+const canal = PESTANAS ? abrirCanal(sala, yo, alLlegar, redDeUrl(q))
+  : abrirCanalWs(urlSala(q, sala, "cel", llave), alLlegar, redDeUrl(q), (abierto, motivo) => {
+    if (!abierto) $("estado").textContent = motivo === "abriste otra vez" ? "Abriste este control en otra pestaña" : "Sin conexión con la PC: reintentando…";
+    else if (/conexión|reintentando/.test($("estado").textContent)) $("estado").textContent = "";
+  });
 
 // Reloj: rápido al principio, luego cada 2 s.
 let pings = 0;
@@ -44,6 +60,7 @@ function pintarGrid() {
     const c = document.createElement("button");
     c.className = "carta" + (id === elegido ? " si" : "") + (fallidos.has(id) ? " fallo" : "");
     c.innerHTML = `<img alt="" src="${FUENTE}catalogo/${id}/${id}-tarjeta.webp"><span>${NOMBRES[id] || id}</span>`;
+    c.querySelector("img").onerror = e => { e.target.style.visibility = "hidden"; }; // sin foto, queda el nombre
     c.onclick = () => { elegido = id; pintarGrid(); };
     g.appendChild(c);
   });
@@ -52,6 +69,7 @@ pintarGrid();
 function entrar() {
   if (!sala) return;
   if (!elegido) elegido = personajes[Math.floor(Math.random() * personajes.length)];
+  if (!PESTANAS && !yo) { setTimeout(entrar, 300); return; } // todavía no llega la bienvenida del servidor
   canal.enviar("hola", { nombre: $("nombre").value.trim() || "Jugador", personaje: elegido });
   dentro = true;
   $("unirse").classList.add("oculto");
@@ -75,7 +93,8 @@ function estado(d) {
   document.documentElement.style.setProperty("--yo", j.color);
   $("chip").textContent = `P${j.n + 1} ${j.nombre}`; $("chip").classList.remove("oculto");
   $("titulo").textContent = d.juego === "bala" ? "Esquiva la bala" : "El cuarto";
-  const anfitrion = Math.min(...lista.filter(x => !x.bot && !x.desconectado).map(x => x.n)) === j.n;
+  // El anfitrión lo asigna el servidor de sala y la TV lo repite en el estado.
+  const anfitrion = d.anfitrionId === yo;
   // Su personaje no cargó en la TV (Codex O7): se queda el aviso y vuelve el selector para elegir otro o reintentar.
   if (j.estado === "error") return pedirOtro(j.personaje);
   if ($("unirse").dataset.reintento) { delete $("unirse").dataset.reintento; $("unirse").classList.add("oculto"); }
@@ -225,7 +244,6 @@ function verFisico(d, j) {
     document.querySelectorAll("[data-g]").forEach(b => b.addEventListener("pointerdown", e => { e.preventDefault(); canal.enviar("gesto", { g: b.dataset.g }); vibrar(10); }));
     $("b-ronda").onclick = () => fx("ronda", $("cat").value ? { c: $("cat").value } : {});
     $("b-revelar").onclick = () => fx(ultimoFisico && ultimoFisico.ronda && ultimoFisico.ronda.revelada ? "ocultar" : "revelar");
-    $("b-ver").onclick = () => fx("ver");
     $("esc").onchange = () => fx("escenario", { c: $("esc").value });
     $("consent-si").onclick = () => { canal.enviar("acepta", { si: true }); $("consent").classList.add("oculto"); };
     $("consent-no").onclick = () => { canal.enviar("acepta", { si: false }); $("consent").classList.add("oculto"); };
@@ -236,15 +254,18 @@ function verFisico(d, j) {
   const mio = (d.pendientes || []).find(p => p.id === yo);
   $("consent").classList.toggle("oculto", !mio);
   if (mio) $("consent-txt").textContent = mio.texto;
-  const soy = d.anfitrion === j.n;
+  const soy = d.anfitrionId === yo;
   $("anf").classList.toggle("oculto", !soy);
   if (!soy) return;
   if (!d.ronda) $("secreta").textContent = "Toca «Nueva palabra»";
   llenar($("cat"), [["", "Categoría al azar"], ...(d.categorias || []).map(c => [c.id, c.nombre])]);
   llenar($("esc"), (d.escenarios || []).map(x => [x, "Escenario: " + x]), d.escenario);
-  $("b-revelar").textContent = d.ronda && d.ronda.revelada ? "Tapar" : "Revelar";
-  $("b-ver").textContent = d.modo === "visible" ? "TV: palabra visible" : "TV: palabra tapada";
-  const lista = $("lista"), filas = (d.jugadores || []).filter(x => !x.desconectado);
+  // Un solo control (Codex O3): «Mostrar en la TV» / «Tapar»; después de «La dijo» queda a la vista hasta la siguiente.
+  const b = $("b-revelar");
+  b.textContent = d.ronda && d.ronda.revelada ? "Tapar en la TV" : "Mostrar en la TV";
+  b.disabled = !d.ronda || !!d.ronda.perdio;
+  // El anfitrión arbitra y no compite (F2): no aparece en la lista de puntos.
+  const lista = $("lista"), filas = (d.jugadores || []).filter(x => !x.desconectado && x.id !== yo);
   if (lista.dataset.firma !== filas.map(x => x.id).join()) {
     lista.dataset.firma = filas.map(x => x.id).join();
     lista.innerHTML = "";
@@ -278,4 +299,4 @@ function diag(t) {
   $("diag").textContent = (reloj ? `reloj ±${Math.round(reloj.incertidumbre)} ms (viaje ${Math.round(reloj.rtt)} ms, ${reloj.muestras} muestras)${DESFASE ? ` · desfase simulado ${DESFASE} ms` : ""}\n` : "midiendo reloj…\n") + (t || "");
 }
 setInterval(() => diag(), 2000);
-window.__control = { yo, get reloj() { return reloj; }, get ultimo() { return ultimo; } };
+window.__control = { oir: f => oyentes.push(f), get yo() { return yo; }, get reloj() { return reloj; }, get ultimo() { return ultimo; } };

@@ -52,6 +52,7 @@ input{font:800 18px Nunito,sans-serif;padding:10px 12px;border-radius:12px;borde
 .gestos{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
 .gestos button,.anf button,.anf select{font:400 14px/1 "Lilita One",sans-serif;border:3px solid var(--borde);border-radius:12px;padding:8px 4px;box-shadow:0 3px 0 var(--borde);color:var(--noche);background:#fff}
 .gestos button:active,.anf button:active{transform:translateY(3px);box-shadow:0 0 0 var(--borde)}
+.anf button:disabled{opacity:.45}
 .g-saludo{background:#8cf09a!important}.g-festejo{background:var(--amarillo)!important}.g-derrota{background:#7cc0ff!important}.g-especial{background:#ff8a1f!important}
 .anf{flex:1;min-height:0;display:flex;flex-direction:column;gap:6px;background:rgba(10,16,48,.55);border:3px solid var(--borde);border-radius:16px;padding:8px}
 .anf .secreta{font:400 26px/1 "Lilita One",sans-serif;color:var(--amarillo);text-align:center;text-shadow:0 3px 0 var(--borde)}
@@ -105,10 +106,10 @@ input{font:800 18px Nunito,sans-serif;padding:10px 12px;border-radius:12px;borde
       <button class="g-derrota" data-g="derrota">Triste</button><button class="g-especial" data-g="especial">Especial</button>
     </div>
     <div class="anf oculto" id="anf">
-      <div class="suave" style="text-align:center">Eres el anfitrión · palabra secreta:</div>
+      <div class="suave" style="text-align:center">Eres el anfitrión: arbitras · palabra secreta:</div>
       <div class="secreta" id="secreta">—</div>
       <div class="fila"><select id="cat"></select><button id="b-ronda">Nueva palabra</button></div>
-      <div class="fila"><button id="b-revelar">Revelar</button><button id="b-ver">TV: palabra visible</button><select id="esc"></select></div>
+      <div class="fila"><button id="b-revelar">Mostrar en la TV</button><select id="esc"></select></div>
       <div class="lista" id="lista"></div>
     </div>
   </section>

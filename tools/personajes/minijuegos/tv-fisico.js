@@ -1,8 +1,8 @@
 // TV de la sala de Físico (prototipo, zona aparte). La TV guarda el estado (src/personajes/minijuegos/fisico.ts);
 // el anfitrión (P1, el primero que entró) manda las acciones desde su celular; cada jugador anima a su personaje y
-// contesta si acepta un castigo o reto de contacto. Los puntos viven en la TV (memoria y localStorage): guardarlos en la
-// nube necesita la migración 038 y solo se conecta cuando Elías la autorice (ver `alCambiarPuntos`).
-import { agregarJugador, asignar, crearFisico, darPuntos, nuevaRonda, perdio, responder, revelar, tabla, CASTIGOS, CATEGORIAS, RETOS } from "/src/personajes/minijuegos/fisico.ts";
+// contesta si acepta un castigo o reto de contacto. Los puntos viven en la TV (memoria y localStorage); en la nube irán por
+// terminar_partida_sala de la 040, cuando Físico viva en una sala real de la app (ver `alCambiarPuntos`).
+import { agregarJugador, asignar, cambioDeArbitro, crearFisico, darPuntos, nuevaRonda, perdio, responder, revelar, tabla, tapar, CASTIGOS, CATEGORIAS, RETOS } from "/src/personajes/minijuegos/fisico.ts";
 import { azarCon } from "/src/personajes/minijuegos/bala.ts";
 import { crearTV } from "./tv-comun.js";
 
@@ -10,7 +10,8 @@ const q = new URLSearchParams(location.search);
 const $ = id => document.getElementById(id);
 const ESCENARIOS = ["ciudad", "alberca", "fogata", "parque"];
 let escenario = ESCENARIOS.includes(q.get("escenario")) ? q.get("escenario") : "ciudad";
-let modo = q.get("palabra") === "oculta" ? "oculta" : "visible";
+// Decidió Codex (F1): la palabra empieza tapada; ?palabra=visible para jugar con ella a la vista (de espaldas a la TV).
+let modo = q.get("palabra") === "visible" ? "visible" : "oculta";
 const escena = EscenaMJ.crear($("lienzo"), { fov: 30, transparente: true });
 EscenaMJ.pisoSombra(escena.scene, 60);
 const azar = azarCon(Date.now() & 0xffffffff);
@@ -18,30 +19,35 @@ const HUECO = 0.9;
 let fx = null;
 
 const tv = crearTV({
-  juego: "fisico", escena,
+  juego: "fisico", escena, topeEtiquetas: () => franja() + 62,
   alUnirse: j => {
-    if (!fx) fx = crearFisico([], cargarPuntos());
+    if (!fx) fx = crearFisico([], cargarPuntos()); // los guardados se recuperan en agregarJugador
     agregarJugador(fx, j.id);
     if (!j.etiqueta.querySelector(".pts")) { const p = document.createElement("div"); p.className = "pts"; j.etiqueta.appendChild(p); }
     acomodar(); pintar();
     if (j.figura) j.figura.anim("saludo");
   },
   alSalir: () => { acomodar(); pintar(); },
+  // Si el anfitrión cambia con la palabra tapada, la ronda se anula: el temporal la conoció y volvería a competir (N1).
+  alAnfitrion: a => {
+    if (fx && cambioDeArbitro(fx, a)) { avisar("Ronda anulada", "Cambió el anfitrión: que saque otra palabra"); tv.jugadores.forEach(x => x.figura && x.figura.anim("reposo")); pintar(); tv.difundir(); }
+    pintar();
+  },
   alMensaje: (j, m) => {
     if (m.tipo === "gesto") { if (j.figura) j.figura.anim(m.d.g); return; }
     if (m.tipo === "acepta") return contestar(j, m.d.si);
-    if (m.tipo === "fx") { if (j.n !== anfitrion()) return; accion(j, m.d); }
+    if (m.tipo === "fx") { if (!tv.esAnfitrion(j)) return; accion(j, m.d); } // el anfitrión lo dice el servidor
   },
 });
-const anfitrion = () => Math.min(...[...tv.jugadores.values()].filter(j => !j.bot && !j.desconectado).map(j => j.n), 99);
+const anfitrion = () => tv.anfitrionId();
 const nombre = id => tv.jugadores.get(id)?.nombre || "?";
 
 // Lo que ven los celulares. La palabra solo va si está revelada o si se juega «visible»; al anfitrión le llega aparte.
 tv.extra = () => {
   const r = fx && fx.ronda;
   return {
-    modo, escenario, anfitrion: anfitrion(),
-    ronda: r ? { n: r.n, categoria: r.categoria.nombre, palabra: r.revelada || modo === "visible" ? r.palabra : null, revelada: r.revelada, perdio: r.perdio } : null,
+    modo, escenario,
+    ronda: r ? { n: r.n, categoria: r.categoria.nombre, palabra: r.revelada ? r.palabra : null, revelada: r.revelada, perdio: r.perdio } : null,
     puntos: fx ? Object.fromEntries(fx.puntos) : {},
     pendientes: fx ? [...fx.pendientes.values()].map(p => ({ id: p.id, tipo: p.tipo, texto: p.castigo.texto })) : [],
     castigos: CASTIGOS.map(c => ({ id: c.id, texto: c.texto, contacto: c.contacto })),
@@ -50,22 +56,25 @@ tv.extra = () => {
     escenarios: ESCENARIOS,
   };
 };
-/** La palabra al anfitrión aunque esté tapada: él juzga quién la dijo. (Con WebSocket irá solo a su celular.) */
+/**
+ * La palabra al anfitrión aunque esté tapada: él arbitra (F2). Con WebSocket el servidor la entrega solo a la conexión
+ * del anfitrión (aunque «para» dijera otra cosa). En pestañas cualquiera podría leerla: ese modo es solo de prueba.
+ */
 function secretoAlAnfitrion() {
-  const h = [...tv.jugadores.values()].find(j => j.n === anfitrion());
-  if (h && fx && fx.ronda) tv.canal.enviar("secreto", { para: h.id, palabra: fx.ronda.palabra });
+  const h = anfitrion();
+  if (h && fx && fx.ronda && fx.ronda.arbitro === h) tv.canal.enviar("secreto", { para: h, palabra: fx.ronda.palabra });
 }
 setInterval(secretoAlAnfitrion, 2000);
 
 // ---------- Acciones del anfitrión ----------
 function accion(h, d) {
   if (!fx) return;
-  const j = d.id ? tv.jugadores.get(d.id) : null;
+  // El anfitrión arbitra y no compite (F2): no se da puntos, castigos ni retos a sí mismo.
+  const j = d.id && d.id !== anfitrion() ? tv.jugadores.get(d.id) : null;
   switch (d.a) {
-    case "ronda": nuevaRonda(fx, azar, CATEGORIAS.some(c => c.id === d.c) ? d.c : undefined); tv.jugadores.forEach(x => x.figura && x.figura.anim("nervios")); avisar(`Ronda ${fx.ronda.n}: ${fx.ronda.categoria.nombre}`, "Digan una palabra de la categoría por turnos; quien diga la prohibida, pierde"); break;
+    case "ronda": nuevaRonda(fx, azar, CATEGORIAS.some(c => c.id === d.c) ? d.c : undefined, modo === "visible", anfitrion()); tv.jugadores.forEach(x => x.figura && x.figura.anim("nervios")); avisar(`Ronda ${fx.ronda.n}: ${fx.ronda.categoria.nombre}`, "Digan una palabra de la categoría por turnos; quien diga la prohibida, pierde"); break;
     case "revelar": revelar(fx); break;
-    case "ocultar": if (fx.ronda && !fx.ronda.perdio) fx.ronda.revelada = false; break;
-    case "ver": modo = modo === "visible" ? "oculta" : "visible"; break;
+    case "ocultar": tapar(fx); break; // un solo control de visibilidad (O3); tras «la dijo» ya no se tapa
     case "perdio": if (j && perdio(fx, j.id)) { j.figura && j.figura.anim("derrota"); tv.pop(j, "¡La dijo!", "#e8343a"); avisar(`¡${j.nombre} dijo «${fx.ronda.palabra}»!`, "Pierde la ronda"); } break;
     case "puntos": if (j && typeof d.n2 === "number") { const t = darPuntos(fx, j.id, d.n2); if (t !== null) { if (d.n2 > 0 && j.figura) j.figura.anim("festejo"); tv.pop(j, (d.n2 > 0 ? "+" : "") + d.n2, d.n2 > 0 ? "#8cf09a" : "#ff8a1f"); alCambiarPuntos(); } } break;
     case "castigo": case "reto": if (j && d.c) {
@@ -88,12 +97,17 @@ function contestar(j, si) {
   pintar(); tv.difundir();
 }
 
-// ---------- Puntos: memoria + localStorage (aquí se conectaría la 038) ----------
+// ---------- Puntos: memoria + localStorage (aquí se conecta la nube, con la 040) ----------
+// Los puntos se guardan por sala en este navegador: si la TV se recarga, cada quien los recupera al volver a entrar
+// (con WebSocket el celular conserva su id gracias a su llave; Codex O5).
 const LLAVE = "alv-fisico-puntos-" + tv.sala;
 function cargarPuntos() { try { return JSON.parse(localStorage.getItem(LLAVE) || "{}"); } catch { return {}; } }
 /**
- * Punto de conexión con la nube: cuando Elías autorice la migración 038 (Plan de Modos D5), aquí se mandarían los puntos
- * de la sala al servidor (una función del servidor que valide al anfitrión, nunca escritura directa desde el navegador).
+ * Punto de conexión con la nube. No hace falta migración: la 040 (aplicada) ya tiene
+ * terminar_partida_sala(p_partida, 'fisico', p_jugadores, p_resultados), que valida al anfitrión en el servidor y guarda
+ * por jugador { jugador: uuid de la cuenta, puntos, lugar (de `tabla`), rondas, retos } en resultados_partida, con la misma
+ * XP y monedas que los otros juegos (tomar nunca suma: los castigos no cambian puntos ni retos). Para usarla, Físico tiene
+ * que vivir en una sala real de la app (evento, partida y cuentas); eso es la integración, no este prototipo.
  * Por ahora solo se guardan en este navegador.
  */
 function alCambiarPuntos() {
@@ -111,10 +125,29 @@ function acomodar() {
   let x = -total / 2;
   lista.forEach((j, i) => { j.x = x + anchos[i] / 2; x += anchos[i] + HUECO; if (j.figura) { j.figura.obj.position.set(j.x, 0, 0); j.figura.obj.rotation.y = 0; } });
   const alto = Math.max(2.7, ...lista.map(j => (j.figura ? j.figura.alto() : 2.7)));
-  // Los personajes abajo: arriba queda libre para la categoría y la palabra.
-  const c = escena.camera, tanV = Math.tan((c.fov * Math.PI) / 360), tanH = tanV * c.aspect;
-  const d = Math.max(13, (Math.max(10, total + 4) / 2) / tanH, (alto * 2.3) / (2 * tanV));
-  c.position.set(0, alto * 0.75, d); c.lookAt(0, alto * 0.95, 0);
+  encuadrar(Math.max(10, total + 4), alto);
+}
+/**
+ * Franjas separadas (Codex O4): arriba la categoría y la palabra (hasta `franja()`), abajo los personajes con su
+ * etiqueta. La cámara se aleja lo necesario para que la cabeza del más alto + su etiqueta (~62 px) queden debajo de la
+ * franja, y se apunta para que los pies queden cerca del borde de abajo. Se comprueba con 6 personajes, Hulk incluido.
+ */
+const ETIQUETA = 62, v3 = new THREE.Vector3();
+function franja() { return Math.round(innerHeight * 0.13 + Math.min(260, innerHeight * 0.36)); }
+function encuadrar(ancho, alto) {
+  const c = escena.camera, H = innerHeight, fondo = H - 24;
+  const tanV = Math.tan((c.fov * Math.PI) / 360), tanH = tanV * c.aspect;
+  const yPant = y => { v3.set(0, y, 0).project(c); return ((1 - v3.y) / 2) * H; };
+  let d = Math.max(12, (ancho / 2) / tanH);
+  for (let i = 0; i < 60; i++, d *= 1.04) {
+    let lo = -alto * 3, hi = alto * 4, mira = 0;
+    for (let k = 0; k < 30; k++) { // dónde mirar para que los pies queden en «fondo»
+      mira = (lo + hi) / 2;
+      c.position.set(0, alto * 0.6, d); c.lookAt(0, mira, 0); c.updateMatrixWorld(true);
+      if (yPant(0) > fondo) hi = mira; else lo = mira;
+    }
+    if (yPant(alto) - ETIQUETA >= franja()) break;
+  }
 }
 addEventListener("resize", acomodar);
 
@@ -123,14 +156,14 @@ function pintar() {
   $("titulo").textContent = r ? "Palabra prohibida" : "Físico";
   if (!r) cont.innerHTML = `<div class="cat">Esperando al anfitrión…</div>`;
   else {
-    const ver = r.revelada || modo === "visible";
+    const ver = r.revelada;
     const perdedor = r.perdio ? tv.jugadores.get(r.perdio) : null;
     cont.innerHTML = `<div class="cat"></div>${ver ? `<div class="palabra"></div>` : `<div class="tapada">Palabra secreta</div>`}${perdedor ? `<div class="perdio"></div>` : ""}`;
     cont.querySelector(".cat").textContent = r.categoria.nombre; // textContent: nada de HTML con texto de jugadores
     if (ver) cont.querySelector(".palabra").textContent = r.palabra;
     if (perdedor) { const p = cont.querySelector(".perdio"); p.textContent = `La dijo ${perdedor.nombre}`; p.style.background = perdedor.color.base; p.style.color = perdedor.color.texto; }
   }
-  if (fx) tabla(fx).forEach(f => { const j = tv.jugadores.get(f.id); const p = j && j.etiqueta.querySelector(".pts"); if (p) p.textContent = `${f.puntos} pts`; });
+  if (fx) tabla(fx).forEach(f => { const j = tv.jugadores.get(f.id); const p = j && j.etiqueta.querySelector(".pts"); if (p) p.textContent = f.id === anfitrion() ? "Anfitrión" : `${f.puntos} pts`; });
 }
 function avisar(texto, sub) {
   const a = $("aviso"), d = document.createElement("div");

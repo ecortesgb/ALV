@@ -1,11 +1,20 @@
 // Canal entre la TV y los celulares del prototipo de Mini-Juegos (zona aparte).
-// Hoy: BroadcastChannel entre pestañas del mismo navegador, con latencia simulada (?lat=ms&jit=ms&perdida=0..1) para
-// probar el juicio del salto como si fuera la red real. Siguiente entrega (Codex D8): WebSocket en la PC, con el mismo
-// contrato. Lo que llega de otro aparato no es confiable: `leer` revisa el sobre y `validar` el contrato de cada tipo;
+// Dos transportes con el mismo contrato:
+// - WebSocket a la PC (Codex D8, herramientas-locales/sala-ws.mjs): por omisión; es el que sirve para celulares y TV
+//   reales. El servidor pone el remitente, asigna al anfitrión y entrega lo que va «para» alguien solo a esa conexión.
+// - Pestañas (BroadcastChannel, ?canal=pestanas): solo para pruebas en un mismo navegador; aquí el remitente lo pone
+//   el propio mensaje, así que NO sirve para nada que deba ser secreto ni para saber quién es el anfitrión.
+// Ambos aceptan latencia simulada al mandar (?lat=ms&jit=ms&perdida=0..1). Lo que llega de otro aparato no es confiable: `leer` revisa el sobre y `validar` el contrato de cada tipo;
 // lo inválido se descarta sin lanzar excepciones (Codex O3).
 
 export interface Mensaje { de: string; tipo: string; d: Record<string, unknown> }
-export interface Canal { enviar: (tipo: string, d?: Record<string, unknown>) => void; cerrar: () => void }
+export interface Canal {
+  enviar: (tipo: string, d?: Record<string, unknown>) => void;
+  cerrar: () => void;
+  /** Quién soy: en WebSocket lo dice el servidor al conectar («bienvenida»); en pestañas, el id local. */
+  yo: () => string;
+  tipo: "ws" | "pestanas";
+}
 export interface Red { lat: number; jit: number; perdida: number }
 
 export const TV = "tv";
@@ -33,7 +42,7 @@ const num = (v: unknown) => (typeof v === "number" && Number.isFinite(v) ? v : n
 const ent = (v: unknown) => (typeof v === "number" && Number.isInteger(v) && v >= 0 && v < 1e9 ? v : null);
 const txt = (v: unknown, max: number) => (typeof v === "string" && v.length <= max ? v : null);
 const BOTONES = new Set(["saltar", "golpe", "festejo"]);
-const ACCIONES = new Set(["ronda", "revelar", "ocultar", "perdio", "puntos", "castigo", "reto", "escenario", "ver"]);
+const ACCIONES = new Set(["ronda", "revelar", "ocultar", "perdio", "puntos", "castigo", "reto", "escenario"]);
 const GESTOS = new Set(["saludo", "festejo", "derrota", "especial"]);
 const id40 = (v: unknown) => (typeof v === "string" && /^[A-Za-z0-9_-]{1,40}$/.test(v) ? v : null);
 
@@ -90,7 +99,8 @@ export function crearSecuencias() {
       ultimo.set(de, n);
       return true;
     },
-    olvidar(de: string) { ultimo.delete(de); },
+    /** Borra lo de ese remitente con todos sus tipos (`de` y `de|tipo`): un celular recargado empieza en 1 (Codex W2). */
+    olvidar(de: string) { for (const k of [...ultimo.keys()]) if (k === de || k.startsWith(de + "|")) ultimo.delete(k); },
   };
 }
 
@@ -109,7 +119,58 @@ export function abrirCanal(sala: string, yo: string, alMensaje: (m: Mensaje) => 
       else setTimeout(() => { if (!cerrado) bc.postMessage(msj); }, espera);
     },
     cerrar: () => { cerrado = true; bc.close(); },
+    yo: () => yo, tipo: "pestanas",
   };
+}
+
+/** Mensaje del servidor de sala (no de la TV ni de un celular). */
+export const SERVIDOR = "servidor";
+
+/**
+ * Canal por WebSocket al servidor de sala. Se reconecta solo (cada 1.5 s) y guarda hasta 50 mensajes mientras tanto.
+ * `llave` (solo celulares): secreto local con el que el servidor le da siempre el mismo id a ese celular.
+ */
+export function abrirCanalWs(url: string, alMensaje: (m: Mensaje) => void, red: Red = { lat: 0, jit: 0, perdida: 0 },
+  alConexion?: (abierto: boolean, motivo?: string) => void): Canal {
+  let ws: WebSocket | null = null, cerrado = false, n = 0, yo = "";
+  const cola: string[] = [];
+  const conectar = () => {
+    if (cerrado) return;
+    ws = new WebSocket(url);
+    ws.onopen = () => { alConexion?.(true); for (const x of cola.splice(0)) ws!.send(x); };
+    ws.onmessage = ev => {
+      let crudo: unknown;
+      try { crudo = JSON.parse(String(ev.data)); } catch { return; }
+      const m = leer(crudo);
+      if (!m) return;
+      if (m.de === SERVIDOR && m.tipo === "bienvenida" && typeof m.d.yo === "string") yo = m.d.yo;
+      alMensaje(m);
+    };
+    ws.onclose = ev => { alConexion?.(false, ev.reason || String(ev.code)); if (!cerrado && ev.code < 4000) setTimeout(conectar, 1500); };
+  };
+  conectar();
+  const salir = (texto: string) => {
+    if (ws && ws.readyState === 1) ws.send(texto);
+    else if (cola.length < 50) cola.push(texto);
+  };
+  return {
+    enviar: (tipo, d = {}) => {
+      if (cerrado) return;
+      const texto = JSON.stringify({ tipo, d: { ...d, n: ++n } });
+      if (red.perdida && Math.random() < red.perdida) return;
+      const espera = red.lat + (red.jit ? (Math.random() * 2 - 1) * red.jit : 0);
+      if (espera <= 0) salir(texto); else setTimeout(() => { if (!cerrado) salir(texto); }, espera);
+    },
+    cerrar: () => { cerrado = true; ws?.close(); },
+    yo: () => yo, tipo: "ws",
+  };
+}
+
+/** Dirección del servidor de sala para esta página: el mismo aparato que sirvió la página, puerto 4200 (o ?ws=puerto). */
+export function urlSala(q: URLSearchParams, sala: string, rol: "tv" | "cel", llave = ""): string {
+  const puerto = /^\d{2,5}$/.test(q.get("ws") || "") ? q.get("ws") : "4200";
+  const p = new URLSearchParams({ sala, rol, ...(llave ? { llave } : {}) });
+  return `ws://${location.hostname}:${puerto}/?${p.toString()}`;
 }
 
 /** Número de sala corto para el prototipo (4 letras sin las que se confunden). */
