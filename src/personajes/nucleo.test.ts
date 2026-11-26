@@ -196,3 +196,199 @@ describe("lógicas del motor (tools/personajes/logicas.js)", () => {
     expect(L.logicaDe("constructor")).toBe("reposo");
   });
 });
+
+describe("cruces y compensación (lógica pura en vm)", () => {
+  type Cruce = { entrante: string; pesoEntranteInicial: number; pesosSalientesIniciales: Map<string, number>; t: number; pesos: Map<string, number> };
+  type Frente = { valor: number; logica: string; velocidad: number; t: number };
+  const ctx: Record<string, unknown> = {};
+  ctx.self = ctx;
+  vm.createContext(ctx);
+  vm.runInContext(readFileSync("tools/personajes/logicas.js", "utf8"), ctx);
+  const L = ctx.LogicasALV as {
+    pasoCruce(e: Cruce, dt: number, mezcla: number): Cruce;
+    pasoCompensacion(e: Frente | undefined, meta: number, logica: string, dt: number, mezcla: number): Frente;
+  };
+  const iniciar = (entrante: string, pesos: Map<string, number>): Cruce => ({
+    entrante, pesos, pesoEntranteInicial: pesos.get(entrante) || 0,
+    pesosSalientesIniciales: new Map([...pesos].filter(([a]) => a !== entrante)), t: 0,
+  });
+  const sumaUno = (e: Cruce) => expect([...e.pesos.values()].reduce((s, w) => s + w, 0)).toBeCloseTo(1, 12);
+
+  it("la suma es 1 en cada paso, también con dt irregular y después de terminar", () => {
+    let e = iniciar("saludo", new Map([["reposo", 0.7], ["victoria", 0.3]]));
+    for (const dt of [0, 0.016, 0.07, 0.014, 0.1, 0.05, 0.1, 0.5]) {
+      e = L.pasoCruce(e, dt, 0.35);
+      sumaUno(e);
+      for (const w of e.pesos.values()) { expect(w).toBeGreaterThanOrEqual(0); expect(w).toBeLessThanOrEqual(1); }
+    }
+    expect(e.pesos.get("saludo")).toBe(1);
+    expect(e.pesos.get("reposo")).toBe(0);
+    expect(e.pesos.get("victoria")).toBe(0);
+  });
+  it("interrumpir varias veces no sube ninguna saliente y conserva sus proporciones", () => {
+    let e = L.pasoCruce(iniciar("saludo", new Map([["reposo", 1]])), 0.14, 0.35);
+    for (const siguiente of ["victoria", "derrota", "especial"]) {
+      const anteriores = e.pesos;
+      e = iniciar(siguiente, anteriores);
+      for (const dt of [0, 0.035, 0.035]) {
+        const previo = e.pesos;
+        e = L.pasoCruce(e, dt, 0.35);
+        sumaUno(e);
+        for (const [a, w] of previo) if (a !== siguiente) expect(e.pesos.get(a)!).toBeLessThanOrEqual(w);
+      }
+      expect(e.pesos.get("reposo")! / e.pesos.get("saludo")!).toBeCloseTo(1.5);
+    }
+  });
+  it("una entrante con peso 0.4 parte de 0.4 y llega a 1 en 0.35 * 0.6 segundos", () => {
+    const base = iniciar("saludo", new Map([["saludo", 0.4], ["reposo", 0.2], ["victoria", 0.4]]));
+    let e = L.pasoCruce(base, 0, 0.35);
+    expect(e.pesos.get("saludo")).toBe(0.4);
+    e = L.pasoCruce(e, 0.105, 0.35);
+    expect(e.pesos.get("saludo")).toBeCloseTo(0.7);
+    sumaUno(e);
+    e = L.pasoCruce(e, 0.105, 0.35);
+    expect(e.pesos.get("saludo")).toBe(1);
+    expect(base.t).toBe(0);
+    expect([...base.pesos]).toEqual([["saludo", 0.4], ["reposo", 0.2], ["victoria", 0.4]]);
+  });
+  it("mezcla 0 apaga TODAS las salientes, incluidas las de cruces anteriores", () => {
+    const e = L.pasoCruce(iniciar("especial", new Map([["reposo", 0.4], ["saludo", 0.4], ["victoria", 0.2]])), 0, 0);
+    expect([...e.pesos]).toEqual([["especial", 1], ["reposo", 0], ["saludo", 0], ["victoria", 0]]);
+    sumaUno(e);
+  });
+  it("la compensación llega linealmente a su meta en 0.35 s, hacia ambos lados", () => {
+    for (const meta of [-0.7, 0.7]) {
+      let e = L.pasoCompensacion(undefined, meta, "reposo", 0, 0.35);
+      for (let i = 1; i <= 7; i++) {
+        e = L.pasoCompensacion(e, meta, "reposo", 0.05, 0.35);
+        expect(e.valor).toBeCloseTo(meta * i / 7, 12);
+      }
+      e = L.pasoCompensacion(e, 0, "saludo", 0, 0.35);
+      expect(e.valor).toBeCloseTo(meta);
+      for (let i = 1; i <= 7; i++) {
+        e = L.pasoCompensacion(e, 0, "saludo", 0.05, 0.35);
+        expect(e.valor).toBeCloseTo(meta * (1 - i / 7), 12);
+      }
+    }
+  });
+  it("al interrumpir la compensación parte del valor actual y sigue metas móviles sin congelar los gestos", () => {
+    let e = L.pasoCompensacion(undefined, 0.7, "reposo", 0.175, 0.35);
+    expect(e.valor).toBeCloseTo(0.35);
+    const antes = e;
+    e = L.pasoCompensacion(e, 0, "saludo", 0.05, 0.35);
+    expect(e.valor).toBeCloseTo(0.3);
+    expect(antes.valor).toBeCloseTo(0.35);
+    const previo = e.valor;
+    e = L.pasoCompensacion(e, -0.7, "saludo", 0.05, 0.35);
+    expect(e.valor).toBeCloseTo(previo - 0.05);
+    e = L.pasoCompensacion(e, -0.7, "saludo", 0.3, 0.35);
+    const terminado = e.valor;
+    e = L.pasoCompensacion(e, 0.7, "saludo", 0.05, 0.35);
+    expect(e.valor - terminado).toBeCloseTo(0.05);
+    const neutro = L.pasoCompensacion(undefined, 0, "reposo", 0.4, 0.35);
+    expect(L.pasoCompensacion(neutro, 0.7, "reposo", 0.05, 0.35).valor).toBeGreaterThan(0);
+  });
+});
+
+describe("motor: repetición, reentrada y retorno automático", () => {
+  // Dobles mínimos de r128: tiempo independiente del peso y finished con la última pose retenida.
+  class Accion {
+    time = 0; weight = 1; enabled = true; paused = false; activa = false; clampWhenFinished = false;
+    reinicios = 0; paradas = 0; vel = 1; loop = 0;
+    constructor(readonly nombre: string) {}
+    reset() { this.time = 0; this.paused = false; this.enabled = true; this.reinicios++; return this; }
+    play() { this.activa = true; return this; }
+    stop() { this.activa = false; this.paradas++; return this.reset(); }
+    isRunning() { return this.activa && this.enabled && !this.paused; }
+    setEffectiveWeight(w: number) { this.weight = w; return this; }
+    setEffectiveTimeScale(v: number) { this.vel = v; return this; }
+    setLoop(loop: number) { this.loop = loop; return this; }
+  }
+  async function preparar() {
+    const acciones = new Map<string, Accion>();
+    const pesosAlActualizar: number[] = [];
+    let finished: (e: { action: Accion }) => void = () => {};
+    class Mixer {
+      clipAction(c: { name: string }) {
+        if (!acciones.has(c.name)) acciones.set(c.name, new Accion(c.name));
+        return acciones.get(c.name)!;
+      }
+      addEventListener(_nombre: string, fn: typeof finished) { finished = fn; }
+      update(dt: number) {
+        pesosAlActualizar.push([...acciones.values()].filter(a => a.activa && a.enabled).reduce((s, a) => s + a.weight, 0));
+        for (const a of [...acciones.values()]) {
+          if (!a.isRunning()) continue;
+          a.time += dt * a.vel;
+          if (a.loop === 1 && a.time >= 1) { a.time = 1; a.paused = a.clampWhenFinished; finished({ action: a }); }
+        }
+        return this;
+      }
+    }
+    const obj = { name: "", userData: {}, scale: { setScalar() {} }, position: { y: 0 }, traverse() {}, updateMatrixWorld() {} };
+    const ctx: Record<string, unknown> = { THREE: {
+      GLTFLoader: class {}, SkeletonUtils: { clone: () => obj }, AnimationMixer: Mixer, Vector3: class {}, LoopRepeat: 2, LoopOnce: 1,
+      Box3: class { min = { y: 0 }; max = { x: 1 }; setFromObject() { return this; } },
+    } };
+    ctx.self = ctx;
+    vm.createContext(ctx);
+    for (const f of ["logicas.js", "motor-personajes.js"]) vm.runInContext(readFileSync(`tools/personajes/${f}`, "utf8"), ctx);
+    const motor = ctx.MotorPersonajes as {
+      MEZCLA: number;
+      cache: Map<string, unknown>;
+      crear(p: unknown): Promise<{ tocar(c: string, op?: { mezcla?: number; vel?: number }): boolean; update(dt: number): void; estado(): { logica: string; tiempo: number } }>;
+    };
+    motor.cache.set("prueba.glb", Promise.resolve({ scene: obj, animations: ["Idle", "Wave", "Cheer"].map(name => ({ name, duration: 1 })) }));
+    const p = await motor.crear({ id: "prueba", glb: "prueba.glb", clips: { reposo: "Idle", saludo: "Wave", victoria: "Cheer" } });
+    return { p, acciones, pesosAlActualizar, mezcla: motor.MEZCLA };
+  }
+  it("repetir el mismo gesto en curso no reinicia tiempo, velocidad ni pesos (E1)", async () => {
+    const { p, acciones } = await preparar();
+    p.tocar("saludo"); p.update(0.14);
+    const a = acciones.get("Wave")!, antes = [a.time, a.weight, a.reinicios, a.vel];
+    expect(p.tocar("hola", { vel: 2 })).toBe(true);
+    expect([a.time, a.weight, a.reinicios, a.vel]).toEqual(antes);
+  });
+  it("reentrar desde 0.4 conserva el tiempo y sube desde su peso actual; las salientes se detienen en 0 (E2/E3)", async () => {
+    const { p, acciones, pesosAlActualizar, mezcla } = await preparar();
+    expect(mezcla).toBe(0.35);
+    p.tocar("saludo"); p.update(0.14);
+    const a = acciones.get("Wave")!, tiempo = a.time, reinicios = a.reinicios;
+    p.tocar("victoria");
+    expect(a.weight).toBeCloseTo(0.4);
+    p.tocar("saludo");
+    expect(a.time).toBe(tiempo); expect(a.reinicios).toBe(reinicios); expect(a.weight).toBeCloseTo(0.4);
+    p.update(0.105); expect(a.weight).toBeCloseTo(0.7);
+    p.update(0.105); expect(a.weight).toBe(1);
+    expect(acciones.get("Idle")!.activa).toBe(false);
+    expect(acciones.get("Idle")!.weight).toBe(0);
+    expect(acciones.get("Idle")!.paradas).toBe(1);
+    for (const suma of pesosAlActualizar) expect(suma).toBeCloseTo(1, 12);
+  });
+  it("finished vuelve a reposo con cruce y otro gesto inmediato con mezcla 0 apaga también el clip terminado", async () => {
+    const { p, acciones } = await preparar();
+    p.tocar("saludo", { mezcla: 0 }); p.update(1);
+    expect(p.estado().logica).toBe("reposo");
+    p.update(0.14);
+    expect(acciones.get("Wave")!.weight).toBeCloseTo(0.6);
+    expect(acciones.get("Idle")!.weight).toBeCloseTo(0.4);
+    p.tocar("victoria", { mezcla: 0 });
+    for (const nombre of ["Wave", "Idle"]) {
+      expect(acciones.get(nombre)!.weight).toBe(0);
+      expect(acciones.get(nombre)!.activa).toBe(false);
+    }
+    expect(acciones.get("Cheer")!.weight).toBe(1);
+    p.tocar("saludo", { mezcla: 0 });
+    expect(p.estado().tiempo).toBe(0); // al volver desde peso 0 sí reinicia
+  });
+  it("recuperar un clip terminado que aún pesa conserva su tiempo y permite volver a emitir finished", async () => {
+    const { p, acciones } = await preparar();
+    p.tocar("saludo", { mezcla: 0 }); p.update(1); p.update(0.14);
+    const a = acciones.get("Wave")!, reinicios = a.reinicios;
+    expect(a.paused).toBe(true);
+    p.tocar("saludo");
+    expect(a.time).toBe(1); expect(a.reinicios).toBe(reinicios);
+    expect(a.weight).toBeCloseTo(0.6); expect(a.paused).toBe(false);
+    p.update(0.01);
+    expect(p.estado().logica).toBe("reposo");
+  });
+});

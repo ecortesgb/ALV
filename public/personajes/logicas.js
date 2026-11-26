@@ -37,6 +37,30 @@
    *  velocidad y la intensidad de los perfiles de vida y de los gestos eran para las tablas rígidas del motor viejo; en las
    *  figuras nuevas la personalidad se nota en qué clips elige y cada cuánto, no en acelerarlos. */
   const velocidadClip = () => 1;
-  const api = { LOGICAS, logicaDe, EN_BUCLE, velocidadClip };
+  /** Cruce normalizado. Las claves del Map pueden ser las propias acciones; no las modifica. */
+  function pasoCruce(estado, dt, mezcla) {
+    const t = estado.t + Math.max(0, dt), inicial = estado.pesoEntranteInicial;
+    const w = mezcla > 0 ? Math.min(1, inicial + t / mezcla) : 1;
+    const pesos = new Map([[estado.entrante, w]]);
+    const factor = inicial < 1 ? (1 - w) / (1 - inicial) : 0;
+    for (const [a, peso] of estado.pesosSalientesIniciales) {
+      pesos.set(a, peso * factor);
+    }
+    return { ...estado, t, pesos };
+  }
+  /** Al cambiar de lógica usa una rampa lineal; dentro de ella sigue la meta móvil sin superar esa velocidad. */
+  function pasoCompensacion(estado, meta, logica, dt, mezcla) {
+    const valor = estado ? estado.valor : 0;
+    const cambio = !estado || estado.logica !== logica;
+    const velocidad = cambio ? (mezcla > 0 ? Math.abs(meta - valor) / mezcla : 0) : estado.velocidad;
+    const t = cambio ? 0 : estado.t;
+    const delta = meta - valor, paso = Math.max(0, dt);
+    if (mezcla <= 0) return { valor: meta, logica, velocidad, t: 0 };
+    // Si el cambio de lógica partió de la propia meta, permite seguir los giros posteriores del clip.
+    const limite = (velocidad || Math.abs(delta) / mezcla) * paso;
+    const avance = t < mezcla ? Math.abs(delta) : Math.abs(delta) * Math.min(1, paso * 6);
+    return { valor: valor + Math.sign(delta) * Math.min(avance, limite), logica, velocidad, t: t + paso };
+  }
+  const api = { LOGICAS, logicaDe, EN_BUCLE, velocidadClip, pasoCruce, pasoCompensacion };
   if (typeof module !== "undefined" && module.exports) module.exports = api; else raiz.LogicasALV = api;
 })(typeof self !== "undefined" ? self : this);

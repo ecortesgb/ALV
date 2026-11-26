@@ -217,7 +217,8 @@
       const yaw = Math.atan2(adelante.x, adelante.z);
       meta = Math.max(-FRENTE, Math.min(FRENTE, yaw)) - yaw;
     }
-    f.compensa = (f.compensa || 0) + (meta - (f.compensa || 0)) * Math.min(1, dt * 6);
+    f.cruceFrente = window.LogicasALV.pasoCompensacion(f.cruceFrente, meta, l, dt, MotorPersonajes.MEZCLA);
+    f.compensa = f.cruceFrente.valor;
     f.p.obj.rotation.y = giro + f.compensa;
   }
   function cuadro() {

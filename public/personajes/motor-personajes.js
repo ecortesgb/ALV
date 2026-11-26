@@ -207,17 +207,34 @@
     const clips = plano.clips || {};
     const vida = new Set(plano.vida || []);
     let actual = null, logica = null, clipActual = null;
+    let pesos = new Map(), cruce = null, mezclaCruce = MEZCLA;
     // Clip de reposo: el de la ficha, o el que pida la escena con reposoEn() (la nave: «sentado», si el personaje lo trae).
     let reposoClip = clips.reposo;
 
     function iniciar(a, bucle, mezcla, vel) {
-      a.reset(); a.enabled = true;
-      a.setEffectiveTimeScale(vel || 1); a.setEffectiveWeight(1);
+      const inicial = pesos.get(a) || 0;
+      if (a === actual || inicial === 0) a.reset();
+      a.enabled = true; a.paused = false;
+      a.setEffectiveTimeScale(vel || 1);
       a.setLoop(bucle ? T.LoopRepeat : T.LoopOnce, Infinity);
       a.clampWhenFinished = !bucle;
       a.play();
-      if (actual && actual !== a) { if (mezcla > 0) actual.crossFadeTo(a, mezcla, false); else actual.stop(); }
+      const salientes = new Map([...pesos].filter(([otra]) => otra !== a));
+      cruce = { entrante: a, pesoEntranteInicial: salientes.size ? inicial : 1, pesosSalientesIniciales: salientes, t: 0 };
+      mezclaCruce = mezcla;
       actual = a;
+      aplicarCruce(0);
+    }
+    function aplicarCruce(dt) {
+      if (!cruce) return;
+      cruce = L.pasoCruce(cruce, dt, mezclaCruce);
+      pesos = new Map();
+      for (const [a, peso] of cruce.pesos) {
+        a.setEffectiveWeight(peso);
+        if (peso > 0 || a === actual) pesos.set(a, peso);
+        else a.stop();
+      }
+      if (pesos.get(actual) === 1) cruce = null;
     }
     function medirClip(nombre, marco, op) {
       const clip = porNombre.get(nombre);
@@ -257,6 +274,7 @@
       const a = accion(nombre);
       if (!a) return false;
       if (a === actual && l === logica && L.EN_BUCLE[l]) return true; // ya está en ese reposo
+      if (a === actual && l === logica && !L.EN_BUCLE[l] && a.isRunning()) return true;
       iniciar(a, !!L.EN_BUCLE[l], mezcla, o.vel);
       logica = l; clipActual = nombre;
       return true;
@@ -285,7 +303,7 @@
         if (logica === "reposo" || logica === null) { const a = accion(nombre); if (a !== actual) { iniciar(a, true, MEZCLA, 1); logica = "reposo"; clipActual = nombre; } }
         return true;
       },
-      update: dt => mixer.update(dt),
+      update: dt => { aplicarCruce(dt); return mixer.update(dt); },
       estado: () => ({ logica, clip: clipActual, tiempo: actual ? actual.time : 0, clips: [...porNombre.keys()].length }),
       /** Nombres de todos los clips del GLB (para verificar fichas). */
       nombresClips: () => [...porNombre.keys()],
@@ -311,5 +329,5 @@
     };
   }
 
-  raiz.MotorPersonajes = { crear, bajar, cache };
+  raiz.MotorPersonajes = { crear, bajar, cache, MEZCLA };
 })(typeof self !== "undefined" ? self : this);
