@@ -291,7 +291,8 @@ describe("cruces y compensación (lógica pura en vm)", () => {
     e = L.pasoCompensacion(e, -0.7, "saludo", 0.3, 0.35);
     const terminado = e.valor;
     e = L.pasoCompensacion(e, 0.7, "saludo", 0.05, 0.35);
-    expect(e.valor - terminado).toBeCloseTo(0.05);
+    // Terminada la rampa del cambio de lógica, sigue la meta móvil como siempre (dt·6), sin el límite lineal.
+    expect(e.valor - terminado).toBeCloseTo((0.7 - terminado) * 0.3);
     const neutro = L.pasoCompensacion(undefined, 0, "reposo", 0.4, 0.35);
     expect(L.pasoCompensacion(neutro, 0.7, "reposo", 0.05, 0.35).valor).toBeGreaterThan(0);
   });

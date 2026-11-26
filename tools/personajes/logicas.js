@@ -56,10 +56,12 @@
     const t = cambio ? 0 : estado.t;
     const delta = meta - valor, paso = Math.max(0, dt);
     if (mezcla <= 0) return { valor: meta, logica, velocidad, t: 0 };
-    // Si el cambio de lógica partió de la propia meta, permite seguir los giros posteriores del clip.
-    const limite = (velocidad || Math.abs(delta) / mezcla) * paso;
-    const avance = t < mezcla ? Math.abs(delta) : Math.abs(delta) * Math.min(1, paso * 6);
-    return { valor: valor + Math.sign(delta) * Math.min(avance, limite), logica, velocidad, t: t + paso };
+    // Durante la rampa del cambio de lógica (MEZCLA s, igual que el cruce): lineal a la velocidad fijada al cambiar. Fuera de
+    // ella, o si el cambio partió de la propia meta (velocidad 0), sigue la meta como siempre (dt·6): una cadera que gira
+    // dentro del mismo reposo no se queda atrás (con el límite lineal llegaba a 9.5° de retraso; medido el 2026-11-26).
+    const enRampa = t < mezcla && velocidad > 0;
+    const mov = enRampa ? Math.sign(delta) * Math.min(Math.abs(delta), velocidad * paso) : delta * Math.min(1, paso * 6);
+    return { valor: valor + mov, logica, velocidad, t: t + paso };
   }
   /** Si una acción que se vuelve a pedir arranca desde el principio. Sí: la que ya suena (repetir una lógica de bucle), la
    *  que no tiene peso y la que ya llegó a su final aunque todavía se esté apagando (si no, se queda en su último cuadro,
