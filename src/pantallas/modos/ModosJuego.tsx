@@ -28,7 +28,7 @@ const MODOS: Modo[] = [
   { id: "local", nombre: "Local", lema: "Un solo teléfono, sin cuentas", listo: true, arte: true },
   { id: "en-linea", nombre: "En línea", lema: "Cada quien en su celular", listo: true, arte: true },
   { id: "fisico", nombre: "Juego físico", lema: "Retos en persona, el administrador da los puntos", listo: true, arte: true },
-  { id: "libre", nombre: "Modo libre", lema: "Prueba trajes, poderes y saltos sin reglas", listo: false, arte: false },
+  { id: "libre", nombre: "Modo libre", lema: "Prueba trajes, poderes y saltos sin reglas", listo: false, arte: true },
 ];
 
 export function ModosJuego() {

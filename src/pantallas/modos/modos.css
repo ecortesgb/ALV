@@ -1,5 +1,5 @@
 /* «Modos de juego» (ModosJuego.tsx). Mismos tokens que el HUB «La Azotea» (.D.az en azotea.css).
-   Las ilustraciones de Elías van tal cual; Modo libre usa un sustituto CSS mientras llega su arte. */
+   Las ilustraciones de Elías van tal cual; el sustituto CSS queda para un modo nuevo que todavía no tenga arte. */
 /* Alto de la carta: caben 4 a lo ancho, con 3 huecos, el padding del HUB y 30 px por lema (628×1024). */
 .D.az.mj { --mj-gap: clamp(18px, 3vw, 56px); --mj-alto-ancho: calc((100vw - var(--az-pad) * 2 - var(--mj-gap) * 3 - 120px) / 4 * 1024 / 628);
   --mj-alto: min(calc(100dvh - 250px), 660px, var(--mj-alto-ancho)); }
