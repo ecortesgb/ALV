@@ -104,7 +104,8 @@ function mismaApariencia(a, b) {
   });
   return [!mal.length, mal.length ? mal.slice(0, 4).join(" · ") : fa.length + " mallas iguales (materiales, mapas y gestos de cara incluidos)"];
 }
-/** Cada clip del catálogo debe estar igual en el de juego: duración, pistas (destino y tipo), tiempos y valores (±1e-4). */
+/** Cada clip del catálogo debe estar igual en el de juego: duración, pistas (destino y tipo), y cada tiempo y cada valor
+ *  con su signo (±1e-4 relativo). */
 function mismosClips(ca, cb) {
   const mb = new Map(cb.map(c => [c.name, c])), mal = [];
   for (const c of ca) {
@@ -115,10 +116,13 @@ function mismosClips(ca, cb) {
     for (const t of c.tracks) {
       const u = pd.get(t.name);
       if (!u || u.ValueTypeName !== t.ValueTypeName || t.times.length !== u.times.length || t.values.length !== u.values.length) { mal.push(c.name + ": pista " + t.name); break; }
-      let st = 0, su = 0, vt = 0, vu = 0;
-      for (let i = 0; i < t.times.length; i++) { st += t.times[i]; su += u.times[i]; }
-      for (let i = 0; i < t.values.length; i++) { vt += Math.abs(t.values[i]); vu += Math.abs(u.values[i]); }
-      if (!casi(st, su, 1e-4) || !casi(vt, vu, 1e-4)) { mal.push(c.name + ": valores de " + t.name); break; }
+      // Elemento por elemento, con signo (Codex r2: la suma de |valores| no veía +60° → −60°).
+      let i = 0;
+      while (i < t.times.length && casi(t.times[i], u.times[i], 1e-4)) i++;
+      if (i < t.times.length) { mal.push(c.name + ": tiempo " + i + " de " + t.name); break; }
+      i = 0;
+      while (i < t.values.length && casi(t.values[i], u.values[i], 1e-4)) i++;
+      if (i < t.values.length) { mal.push(c.name + ": valor " + i + " de " + t.name); break; }
     }
   }
   return [!mal.length, mal.length ? mal.slice(0, 4).join(" · ") : ca.length + " clips iguales por dentro"];
@@ -216,6 +220,11 @@ async function verificar(W, ent) {
       const conValores = clipsMod.find(c => gc.animations.some(x => x.name === c.name) && c.tracks.some(t => t.values.length));
       if (conValores) { const t = conValores.tracks.find(t => t.values.length); t.values = t.values.slice(); t.values[0] += 1; }
       bien("control: un clip del catálogo cambiado por dentro reprueba", !!conValores && !mismosClips(gc.animations, clipsMod)[0]);
+      // El caso de Codex r2: solo un signo cambiado (misma magnitud) también debe reprobar.
+      const clipsSigno = gj.animations.map(c => c.clone());
+      const conSigno = clipsSigno.find(c => gc.animations.some(x => x.name === c.name) && c.tracks.some(t => t.values.some(v => Math.abs(v) > 0.01)));
+      if (conSigno) { const t = conSigno.tracks.find(t => t.values.some(v => Math.abs(v) > 0.01)); t.values = t.values.slice(); const k = t.values.findIndex(v => Math.abs(v) > 0.01); t.values[k] = -t.values[k]; }
+      bien("control: un signo cambiado en un clip del catálogo reprueba", !!conSigno && !mismosClips(gc.animations, clipsSigno)[0]);
       const revisarAcciones = async (accionesClips, marca) => {
         const res = [];
         const acciones = Object.entries(accionesClips);
