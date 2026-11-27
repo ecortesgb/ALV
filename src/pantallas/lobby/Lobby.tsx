@@ -129,9 +129,12 @@ export function Lobby({ sala, miembros, yo, soyAnfitrion, final, red, refrescar,
     </div>
   );
 
-  // Local: «Agregar jugador» en el primer lugar libre (hasta 8).
-  const libreLocal = local && soyAnfitrion ? (i: number) => (i === miembros.length && miembros.length < CUPO_LOBBY
-    ? <button type="button" className="lb-agregar" onClick={() => setEditar(hayNube ? { tipo: "elegir" } : { tipo: "nuevo" })}><b><span>＋</span>Agregar jugador</b></button> : null) : undefined;
+  // «Agregar jugador» en el primer lugar libre (hasta 8). En Local: con cuenta, cuenta existente o sin cuenta.
+  // En línea (Elías, 27 nov): crea un personaje rápido que entra a esta sala. Si entra con su UsuarioN en su celular juega ahí;
+  // si no, juega en el celular del anfitrión (se le pasa el turno).
+  const agregaEnLinea = !local && soyAnfitrion && hayNube;
+  const libreLocal = (local || agregaEnLinea) && soyAnfitrion ? (i: number) => (i === miembros.length && miembros.length < CUPO_LOBBY
+    ? <button type="button" className="lb-agregar" onClick={() => setEditar(agregaEnLinea ? { tipo: "rapido" } : hayNube ? { tipo: "elegir" } : { tipo: "nuevo" })}><b><span>＋</span>Agregar jugador</b></button> : null) : undefined;
   const guardarPersonaje = (d: DatosPersonaje) => {
     if (editar?.tipo === "nuevo") { if (!modoLocal.agregar(sala, d)) aviso("No se pudo agregar (máximo 8)."); }
     else if (editar?.tipo === "figura") modoLocal.figura(sala, editar.m.id, d.figura);
@@ -140,11 +143,12 @@ export function Lobby({ sala, miembros, yo, soyAnfitrion, final, red, refrescar,
   const crearRapido = async (d: DatosPersonaje) => {
     if (creando) return;
     setCreando(true); setErrorRapido(null);
-    const espejo = await asegurarEspejo(sala);
-    const r = espejo ? await crearPersonajeRapido(d.nombre, d.figura, espejo) : "No se pudo conectar con el servidor. Intenta otra vez o agrégalo sin cuenta.";
+    // En línea la cuenta nueva entra directo a esta sala; en Local, a su sala espejo.
+    const espejo = local ? await asegurarEspejo(sala) : { id: sala.id, codigo: sala.codigo };
+    const r = espejo ? await crearPersonajeRapido(d.nombre, d.figura, espejo, !local) : "No se pudo conectar con el servidor. Intenta otra vez o agrégalo sin cuenta.";
     setCreando(false);
     if (typeof r === "string") { setErrorRapido(r); return; }
-    if (!modoLocal.agregarCuenta(sala, { id: r.id, nombre: d.nombre, figura: r.figura, cuenta: "rapida", genero: d.genero })) aviso("No se pudo agregar (máximo 8).");
+    if (local && !modoLocal.agregarCuenta(sala, { id: r.id, nombre: d.nombre, figura: r.figura, cuenta: "rapida", genero: d.genero })) aviso("No se pudo agregar (máximo 8).");
     setEditar(null); setAcceso(r); refrescar();
   };
   const entrarConCuenta = async (usuario: string, clave: string): Promise<string | null> => {
@@ -184,11 +188,11 @@ export function Lobby({ sala, miembros, yo, soyAnfitrion, final, red, refrescar,
         )}
 
         {ancho ? (
-          <section className="lb-escenario" style={{ "--lugares": lugaresSala(miembros.length, local) } as CSSProperties}>
+          <section className="lb-escenario" style={{ "--lugares": lugaresSala(miembros.length, local || agregaEnLinea) } as CSSProperties}>
             <Pedestales miembros={miembros} yo={yo} className="lb-pedestales" fiesta={{ arriba: botonesAdmin, abajo: miPanel, escenarios: PRUEBA_ESCENARIOS, libre: libreLocal, tocar: tocarFigura }} vida="lobby" />
           </section>
         ) : (
-          <Carrusel lugares={lugaresSala(miembros.length, local)} ids={miembros.map(m => m.id)} yo={yo}>
+          <Carrusel lugares={lugaresSala(miembros.length, local || agregaEnLinea)} ids={miembros.map(m => m.id)} yo={yo}>
             <Pedestales miembros={miembros} yo={yo} className="lb-pedestales" fiesta={{ arriba: botonesAdmin, abajo: miPanel, escenarios: PRUEBA_ESCENARIOS, libre: libreLocal, tocar: tocarFigura }} vida="lobby" />
           </Carrusel>
         )}
@@ -210,7 +214,7 @@ export function Lobby({ sala, miembros, yo, soyAnfitrion, final, red, refrescar,
       {editar?.tipo === "elegir" && <ElegirComoAgregar conNube={hayNube && modoLocal.esCuenta(sala.anfitrionId)} alCerrar={() => setEditar(null)} alElegir={t => { setErrorRapido(null); setEditar(t === "sin-cuenta" ? { tipo: "nuevo" } : t === "rapido" ? { tipo: "rapido" } : { tipo: "cuenta" }); }} />}
       {editar?.tipo === "cuenta" && <EntrarCuenta alEntrar={entrarConCuenta} alCerrar={() => setEditar(null)} />}
       {editar?.tipo === "rapido" && <PersonajeLocal titulo="Personaje nuevo" rapido ocupado={creando} error={errorRapido} alListo={d => void crearRapido(d)} alCerrar={() => { if (!creando) setEditar(null); }} />}
-      {acceso && <DatosAcceso p={acceso} alListo={() => setAcceso(null)} />}
+      {acceso && <DatosAcceso p={acceso} enLinea={!local} alListo={() => setAcceso(null)} />}
       {editar && (editar.tipo === "nuevo" || editar.tipo === "figura") && <PersonajeLocal titulo={editar.tipo === "nuevo" ? "Nuevo jugador" : `Figura de ${editar.m.nombre}`} soloFigura={editar.tipo === "figura"}
         inicial={editar.tipo === "figura" ? { figura: editar.m.figura, nombre: editar.m.nombre } : undefined}
         color={editar.tipo === "figura" ? colorDe(editar.m.id, miembros.map(x => x.id)) : undefined} alListo={guardarPersonaje} alCerrar={() => setEditar(null)} />}

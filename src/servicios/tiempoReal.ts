@@ -115,3 +115,27 @@ export function buscarLobby(alCodigo: (codigo: string | null) => void): () => vo
   const reloj = setInterval(() => { if (ultimo && Date.now() - oido > OLVIDO_LOBBY_MS) poner(null); }, 1000);
   return () => { clearInterval(reloj); void cliente?.removeChannel(canal); };
 }
+
+// ---------- ¿Quién juega en su propio celular? (Elías, 27 nov) ----------
+// El celular del anfitrión puede jugar por los personajes rápidos que creó. Si esa persona entra con su usuario en su celular,
+// su celular late por un canal de difusión (`celulares-<sala>`, no se guarda) y el anfitrión deja de pasarle el turno.
+// El latido no da ningún permiso: solo decide a quién le pide el celular el anfitrión.
+export const LATIDO_CELULAR_MS = 3000, SILENCIO_CELULAR_MS = 8000;
+export function celularesEnSala(salaId: string, yo: string, latir: boolean, alOir?: (ids: string[]) => void): () => void {
+  if (!cliente) return () => { /* nada */ };
+  let cerrado = false, reloj: ReturnType<typeof setInterval> | undefined;
+  const vistos = new Map<string, number>();
+  const avisar = () => { const ahora = Date.now(); alOir?.([...vistos].filter(([, t]) => ahora - t < SILENCIO_CELULAR_MS).map(([id]) => id).sort()); };
+  const canal = cliente.channel(`celulares-${salaId}`);
+  if (alOir) canal.on("broadcast", { event: "aqui" }, ({ payload }) => {
+    const id = typeof payload?.id === "string" ? payload.id.slice(0, 40) : "";
+    if (!cerrado && id) { vistos.set(id, Date.now()); avisar(); }
+  });
+  canal.subscribe(s => {
+    if (cerrado || s !== "SUBSCRIBED") return;
+    clearInterval(reloj);
+    reloj = setInterval(() => { if (latir) void canal.send({ type: "broadcast", event: "aqui", payload: { id: yo } }); avisar(); }, LATIDO_CELULAR_MS);
+    if (latir) void canal.send({ type: "broadcast", event: "aqui", payload: { id: yo } });
+  });
+  return () => { cerrado = true; clearInterval(reloj); void cliente?.removeChannel(canal); };
+}

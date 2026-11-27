@@ -7,7 +7,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { FiguraV2 } from "../content/personaje";
 import { desdeBase, haciaBase } from "../personajes/integracion";
-import { cliente, clienteAparte, hayNube } from "./cliente";
+import { cliente, clienteAparte, clienteSostenido, hayNube } from "./cliente";
 import { nickValido, passValida } from "./cuenta";
 
 /** Nombre de la sala espejo en la nube. lobby_abierto (053) la ignora para que nadie entre solo a ella. */
@@ -41,7 +41,7 @@ export async function abrirEspejo(): Promise<Espejo | null> {
 }
 
 /** Con la sesión aparte: entra a la sala espejo y lee su nombre y su figura activa. Siempre cierra la sesión aparte. */
-async function entrarYLeer(c: SupabaseClient, uid: string, espejo: Espejo): Promise<CuentaEnAparato | string> {
+async function entrarYLeer(c: SupabaseClient, uid: string, espejo: Espejo, cerrar = true): Promise<CuentaEnAparato | string> {
   try {
     const u = await c.rpc("unirse_evento", { p_codigo: espejo.codigo });
     if (u.error) {
@@ -55,7 +55,7 @@ async function entrarYLeer(c: SupabaseClient, uid: string, espejo: Espejo): Prom
     ]);
     return { id: uid, nombre: String(p.data?.nombre ?? "Jugador").slice(0, 20), figura: (desdeBase(f.data?.figura) as FiguraV2 | null) ?? null };
   } finally {
-    try { await c.auth.signOut({ scope: "local" }); } catch { /* la sesión aparte no se guardó en ningún lado */ }
+    if (cerrar) try { await c.auth.signOut({ scope: "local" }); } catch { /* la sesión aparte no se guardó en ningún lado */ }
   }
 }
 
@@ -76,7 +76,7 @@ export async function entrarCuentaEnAparato(nick: string, pass: string, espejo: 
  * Personaje rápido: crea la cuenta UsuarioN (el número lo da el servidor), con contraseña aleatoria, le pone el apodo,
  * guarda su figura (si se eligió) y la mete a la sala espejo. El código de recuperación lo genera el servidor.
  */
-export async function crearPersonajeRapido(apodo: string, figura: FiguraV2 | null, espejo: Espejo): Promise<PersonajeRapido | string> {
+export async function crearPersonajeRapido(apodo: string, figura: FiguraV2 | null, espejo: Espejo, sostener = false): Promise<PersonajeRapido | string> {
   const limpio = apodo.replace(/\s+/g, " ").trim();
   if (limpio.length < 2 || limpio.length > 20) return "El nombre va de 2 a 20 letras.";
   if (!cliente || !hayNube) return "Sin servidor no se pueden crear cuentas.";
@@ -86,7 +86,9 @@ export async function crearPersonajeRapido(apodo: string, figura: FiguraV2 | nul
   // Si otro aparato ganó el número, se prueba con los siguientes.
   for (let n = sig.data, intento = 0; intento < 5; n++, intento++) {
     const nick = `usuario${n}`;
-    const c = clienteAparte()!;
+    // En la sala en línea su sesión se queda en este celular para jugar por él si no entra en el suyo.
+    const claveSesion = `alv-sost-${nick}-${Math.random().toString(36).slice(2, 8)}`;
+    const c = (sostener ? clienteSostenido(claveSesion) : null) ?? clienteAparte()!;
     try {
       const { data, error } = await c.auth.signUp({ email: correo(nick), password: clave });
       if (error || !data.user || !data.session) { if (error && /registered|exists/i.test(error.message)) continue; log("crearPersonajeRapido", error ?? "sin sesión"); return "No se pudo crear el personaje. Intenta otra vez."; }
@@ -99,8 +101,12 @@ export async function crearPersonajeRapido(apodo: string, figura: FiguraV2 | nul
           if (g.error) log("figura rápida", g.error); else await c.rpc("activar_capsula", { p_capsula: 1 });
         }
       }
-      const dentro = await entrarYLeer(c, data.user.id, espejo);
-      if (typeof dentro === "string") return dentro;
+      const dentro = await entrarYLeer(c, data.user.id, espejo, !sostener);
+      if (typeof dentro === "string") { if (sostener) try { await c.auth.signOut({ scope: "local" }); } catch { /* nada */ } return dentro; }
+      if (sostener) {
+        sostenidos.registrar(espejo.id, data.user.id, claveSesion, c);
+        try { await c.rpc("marcar_en_sala", { p_evento: espejo.id, p_listo: true, p_gesto: null, p_a: null }); } catch { /* el anfitrión le da listo */ }
+      }
       return { ...dentro, figura: dentro.figura ?? figura, usuario: `Usuario${n}`, clave, codigo: r.data };
     } catch (e) { log("crearPersonajeRapido", e); return "No se pudo crear el personaje. Intenta otra vez."; }
   }
@@ -119,3 +125,44 @@ export async function recuperarCuenta(usuario: string, codigo: string, clave: st
     return null;
   } catch (e) { log("recuperarCuenta", e); return "No se pudo. Revisa tu usuario y tu código."; }
 }
+
+// ---------- Personajes que juegan en el celular del anfitrión (sala en línea, Elías 27 nov) ----------
+// «Si lo creé y no entra con su usuario, que se quede para jugar en mi celular; si no, que entre con el suyo.»
+// El celular del anfitrión guarda la sesión de cada personaje rápido que creó en esa sala (solo en esta pestaña) y, cuando le
+// toca y no está en su propio celular, manda sus jugadas con SU sesión: el servidor sigue sabiendo quién contesta.
+interface Registro { sala: string; jugadores: { id: string; clave: string }[] }
+const REGISTRO = "alv-sostenidos";
+const clientes = new Map<string, SupabaseClient>();
+let enMano = "";
+const leerRegistro = (): Registro | null => { try { return JSON.parse(sessionStorage.getItem(REGISTRO) ?? "null") as Registro | null; } catch { return null; } };
+const guardarRegistro = (r: Registro | null) => { try { if (r) sessionStorage.setItem(REGISTRO, JSON.stringify(r)); else sessionStorage.removeItem(REGISTRO); } catch { /* sin almacenamiento */ } };
+
+export const sostenidos = {
+  registrar(sala: string, id: string, clave: string, c: SupabaseClient) {
+    const r = leerRegistro();
+    const base: Registro = r && r.sala === sala ? r : { sala, jugadores: [] };
+    if (!base.jugadores.some(j => j.id === id)) base.jugadores.push({ id, clave });
+    guardarRegistro(base); clientes.set(id, c);
+  },
+  /** Ids de los personajes que este celular sostiene en la sala. */
+  de(sala: string): string[] { const r = leerRegistro(); return r && r.sala === sala ? r.jugadores.map(j => j.id) : []; },
+  /** Cliente con la sesión del personaje (se rearma tras recargar la página). */
+  cliente(id: string): SupabaseClient | null {
+    const ya = clientes.get(id); if (ya) return ya;
+    const j = leerRegistro()?.jugadores.find(x => x.id === id); if (!j) return null;
+    const c = clienteSostenido(j.clave); if (c) clientes.set(id, c);
+    return c;
+  },
+  /** Deja de jugar por él en este celular (lo sacaron de la sala). */
+  async soltar(id: string) {
+    const c = sostenidos.cliente(id);
+    if (c) try { await c.auth.signOut({ scope: "local" }); } catch { /* nada */ }
+    clientes.delete(id); if (enMano === id) enMano = "";
+    const r = leerRegistro(); if (r) guardarRegistro({ ...r, jugadores: r.jugadores.filter(j => j.id !== id) });
+  },
+  /** Se cerró la sala: suelta a todos. */
+  async soltarTodos() { for (const id of (leerRegistro()?.jugadores ?? []).map(j => j.id)) await sostenidos.soltar(id); guardarRegistro(null); },
+  /** Quién tiene el celular del anfitrión en este momento ("" = el anfitrión). */
+  pasarA(id: string) { enMano = id && sostenidos.cliente(id) ? id : ""; },
+  enMano: () => enMano,
+};

@@ -6,7 +6,7 @@ import { desdeBase } from "../personajes/integracion";
 import { cliente, hayNube, uidActual } from "./cliente";
 import { anunciarLobby, buscarLobby, escucharSala, vigilarPantalla, type EstadoRed, type PresenciaPantalla } from "./tiempoReal";
 import { vigilarPantallaSinNube } from "./difusion";
-import { NOMBRE_ESPEJO, type Espejo } from "./aparato";
+import { NOMBRE_ESPEJO, sostenidos, type Espejo } from "./aparato";
 
 export type ModoSala = "tv" | "mesa";
 export interface SalaV { id: string; codigo: string; modo: ModoSala; anfitrionId: string }
@@ -154,8 +154,10 @@ const nube: Enlace = {
   },
   async secreto(partida) {
     try {
-      const uid = await uidActual();
-      const { data, error } = await cliente!.from("datos_privados").select("datos").eq("partida", partida).eq("jugador", uid ?? "").maybeSingle();
+      // Si el celular del anfitrión lo tiene un personaje que juega aquí, su secreto se lee con SU sesión.
+      const otro = sostenidos.enMano(), c = (otro && sostenidos.cliente(otro)) || cliente!;
+      const uid = otro && c !== cliente ? otro : await uidActual();
+      const { data, error } = await c.from("datos_privados").select("datos").eq("partida", partida).eq("jugador", uid ?? "").maybeSingle();
       return error ? null : ((data?.datos as Record<string, unknown>) ?? null);
     } catch (e) { log("secreto", e); return null; }
   },
@@ -172,13 +174,15 @@ const nube: Enlace = {
   },
   async enviar(partida, id, tipo, datos) {
     try {
-      const uid = await uidActual();
+      // Jugada de un personaje que juega en este celular: va con su sesión. El control siempre es del anfitrión.
+      const otro = tipo === "control" ? "" : sostenidos.enMano(), c = (otro && sostenidos.cliente(otro)) || cliente!;
+      const uid = otro && c !== cliente ? otro : await uidActual();
       if (!uid) return false;
-      const r = await cliente!.from("acciones").insert({ id, partida, jugador: uid, tipo, datos });
+      const r = await c.from("acciones").insert({ id, partida, jugador: uid, tipo, datos });
       if (!r.error || r.error.code === "23505") return true;
       if (esFalta(r.error) && (tipo === "control" || tipo === "pista")) {
         // Servidor sin la migración 018: mismas acciones con un tipo que ya acepta. El motor revisa quién la manda.
-        const v = await cliente!.from("acciones").insert({ id, partida, jugador: uid, tipo: "carta", datos: { ...datos, _tipo: tipo } });
+        const v = await c.from("acciones").insert({ id, partida, jugador: uid, tipo: "carta", datos: { ...datos, _tipo: tipo } });
         if (!v.error || v.error.code === "23505") return true;
         log("enviar", v.error); return false;
       }
@@ -463,6 +467,7 @@ export const enlace: Enlace = {
     await porSala(sala).cerrar(sala);
     if (espejo) await nube.cerrar({ id: espejo.id, codigo: espejo.codigo, modo: "mesa", anfitrionId: sala.anfitrionId });
     if (esLocal(sala.id)) modoLocal.terminar();
+    else await sostenidos.soltarTodos();
   },
   partida: sala => porSala(sala).partida(sala),
   historial: sala => porSala(sala).historial(sala),
@@ -490,6 +495,7 @@ export const enlace: Enlace = {
   lobbyAbierto: () => base.lobbyAbierto(),
   expulsar: async (sala, j) => {
     const ok = await porSala(sala).expulsar(sala, j);
+    if (ok && !esLocal(sala.id)) await sostenidos.soltar(j);
     // 053: quitar a una cuenta del lobby local también la saca de la sala espejo (deja de ganar puntos aquí).
     const espejo = ok && esLocal(sala.id) && hayNube && UUID.test(j) ? modoLocal.espejo(sala) : null;
     if (espejo) await nube.expulsar({ id: espejo.id, codigo: espejo.codigo, modo: "mesa", anfitrionId: sala.anfitrionId }, j);

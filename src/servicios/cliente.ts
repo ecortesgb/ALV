@@ -19,6 +19,14 @@ export const clienteAparte = (): SupabaseClient | null => URL && LLAVE
   ? createClient(URL, LLAVE, { auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false, storageKey: "alv-aparte-" + Math.random().toString(36).slice(2) } })
   : null;
 
+/**
+ * Cliente de un personaje rápido que juega en el celular del anfitrión dentro de una sala en línea (Elías, 27 nov).
+ * Su sesión vive solo en esta pestaña (sessionStorage): sobrevive a una recarga y se borra al cerrar la pestaña o la sala.
+ */
+export const clienteSostenido = (clave: string): SupabaseClient | null => URL && LLAVE && typeof sessionStorage !== "undefined"
+  ? createClient(URL, LLAVE, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: false, storageKey: clave, storage: sessionStorage } })
+  : null;
+
 /** Hay servidor configurado. Sin él, la app sigue en modo local. */
 export const hayNube = cliente !== null;
 
