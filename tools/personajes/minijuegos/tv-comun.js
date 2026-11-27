@@ -46,6 +46,20 @@ export function crearEncuadreFranjas(escena) {
   return { franja, encuadrar };
 }
 
+/** Lanza el poder i de un jugador (clip del GLB de poderes y sus efectos). Sin i: el primero que no sea de volar.
+ *  → Promise<duración en s, o 0 si no tiene o no bajó>. Lo usan el cuarto y ¡Desenfunda! (el disparo). */
+export function lucirPoder(j, escena, i) {
+  const f = j && j.figura;
+  if (!f || !f.poder || !f.poderes) return Promise.resolve(0);
+  const k = i != null ? i : f.poderes.findIndex(p => p.id !== "volar" && p.id !== "levitar");
+  if (k < 0 || !f.poderes[k]) return Promise.resolve(0);
+  return f.poder(k).then(r => {
+    if (!r) return 0;
+    if (self.EfectosALV) r.efectos.forEach(ef => { try { self.EfectosALV.lanzar(escena.scene, { obj: f.obj, hueso: f.hueso }, ef); } catch (e) { console.warn("efecto", e); } });
+    return r.dur;
+  });
+}
+
 export function crearTV({ juego, escena, alUnirse, alMensaje, alSalir, alDesconectar, alAnfitrion, topeEtiquetas = 118 }) {
   const sala = (q.get("sala") || salaNueva()).toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 8);
   if (!q.get("sala")) { q.set("sala", sala); history.replaceState(null, "", "?" + q.toString()); }

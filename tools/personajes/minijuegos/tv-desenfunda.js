@@ -2,7 +2,7 @@
 import { ahora } from "/src/personajes/minijuegos/canal.ts";
 import { acotarToque, MAX_INCERTIDUMBRE } from "/src/personajes/minijuegos/reloj.ts";
 import { avanzar, crearPartida, empezar, ranking, tocar } from "/src/personajes/minijuegos/desenfunda.ts";
-import { crearEncuadreFranjas, crearTV } from "./tv-comun.js";
+import { crearEncuadreFranjas, crearTV, lucirPoder } from "./tv-comun.js";
 
 const q = new URLSearchParams(location.search);
 const $ = id => document.getElementById(id);
@@ -127,7 +127,8 @@ function eventos(evs) {
     } else if (ev.tipo === "gana") {
       ev.ids.forEach(id => {
         const j = tv.jugadores.get(id);
-        if (j?.figura) j.figura.anim(j.figura.tiene("especial") ? "especial" : "golpe", { mezcla: 0.05 });
+        // El disparo es su poder principal (rayos de Cíclope, palma de Iron Man); sin poderes, su especial o un golpe.
+        if (j?.figura) lucirPoder(j, escena).then(d => { if (!d) j.figura.anim(j.figura.tiene("especial") ? "especial" : "golpe", { mezcla: 0.05 }); });
         tv.pop(j, `+1 · ${Math.round(ev.reaccionMs)} ms`, "#8cf09a");
       });
       const nombres = ev.ids.map(id => tv.jugadores.get(id)?.nombre || "Jugador");
