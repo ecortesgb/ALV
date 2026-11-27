@@ -24,7 +24,7 @@ export const PALETAS: Record<"piel" | "pelo" | "ropa", Color[]> = {
   ],
   pelo: [
     { id: "rubio", nombre: "Rubio", hex: "#e4b54a" }, { id: "castano", nombre: "Castaño", hex: "#6b3d1e" },
-    { id: "negro", nombre: "Negro", hex: "#1b1b1f" }, { id: "rojo", nombre: "Rojo", hex: "#b4321c" },
+    { id: "negro", nombre: "Negro", hex: "#1b1b1f" }, { id: "rojo", nombre: "Rojo", hex: "#b4321c" }, { id: "rosa", nombre: "Rosa", hex: "#f06fae" },
   ],
   ropa: [
     { id: "rojo", nombre: "Rojo", hex: "#c91a09" }, { id: "azul", nombre: "Azul", hex: "#0055bf" }, { id: "verde", nombre: "Verde", hex: "#237841" },
@@ -120,6 +120,20 @@ export function teñir(f: FiguraV3, parte: Parte, paleta: NombrePaleta, color: I
   const base = f.origen.tipo === "catalogo" ? f.origen.personaje : BASE_CREAR;
   const actual = f.piezas[parte] ?? { id: `${base}--${parte}` };
   return { ...f, piezas: { ...f.piezas, [parte]: { ...actual, tintes: { ...(actual.tintes ?? {}), [paleta]: color } } } };
+}
+
+/** Quita el color elegido y deja la pieza con su color de fábrica (Elías, 2026-11-26: «luego ya no puedes volver a ese
+ *  color»). Si la parte era la del propio personaje y ya no le queda ningún tinte, deja de contar como cambiada. */
+export function quitarTinte(f: FiguraV3, parte: Parte, paleta: NombrePaleta): FiguraV3 {
+  const actual = f.piezas[parte];
+  if (!actual?.tintes || !(paleta in actual.tintes)) return f;
+  const { [paleta]: _fuera, ...resto } = actual.tintes;
+  void _fuera;
+  const base = f.origen.tipo === "catalogo" ? f.origen.personaje : BASE_CREAR;
+  const piezas = { ...f.piezas };
+  if (!Object.keys(resto).length && actual.id === `${base}--${parte}`) delete piezas[parte];
+  else piezas[parte] = { ...actual, tintes: resto };
+  return { ...f, piezas };
 }
 
 /** El plano del personaje base con las piezas cambiadas y sus tintes. */

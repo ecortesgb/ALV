@@ -172,7 +172,10 @@
     if (sm.uniforms.cameraInverseProjectionMatrix) sm.uniforms.cameraInverseProjectionMatrix.value.copy(camera.projectionMatrixInverse);
     sm.uniforms.kernelRadius.value = 0.16; sm.uniforms.minDistance.value = 0.0012 / k; sm.uniforms.maxDistance.value = 0.25 / k;
   }
-  const transparente = o => { const m = Array.isArray(o.material) ? o.material[0] : o.material; return !m || m.transparent || m.isShadowMaterial; };
+  // Tampoco entran las mallas con piel (figura nueva) ni las que no pintan color (máscara de la boca): el pase de normales
+  // usa un material sin piel que las dibuja en su pose de origen, y su contorno salía como sombra encima de la figura
+  // (Elías, 2026-11-26: «sombra de contornos» en el HUB).
+  const transparente = o => { const m = Array.isArray(o.material) ? o.material[0] : o.material; return !m || m.transparent || m.isShadowMaterial || o.isSkinnedMesh || m.colorWrite === false; };
   function dibujarAO() {
     const p = AO.pase, ocultos = [];
     ajustarAO(p);
