@@ -1,5 +1,5 @@
 -- 055 · Logros de ALV PARTY (Competitivo; Elías, 27 nov 2026: «cada minijuego también puede dar logros, experiencia y monedas»).
--- NO APLICADA. Se aplica solo con el ok de Elías.
+-- APLICADA 27 nov 2026 con el ok de Elías («aplica la 055»). Antes: prueba en la base remota en transacción deshecha (34 logros, 33 filas de progreso, authenticated sin ejecutar progreso_logros).
 -- XP y monedas ya las da terminar_partida_sala (049) y los resultados se guardan en resultados_partida (040), así que los
 -- logros generales (Primeros pasos, Polifacético, objetivos del día…) ya cuentan los minijuegos. Esta migración agrega
 -- 6 logros propios de ALV PARTY: uno por minijuego (ganar 3 veces) y uno por jugar los 5.
@@ -8,7 +8,7 @@
 -- (el resto es idéntico a la 043).
 
 insert into public.logros (clave, categoria, juego, rareza, nombre, descripcion, meta, recompensa, orden) values
-  ('pistolero',           'minijuego', 'mj-desenfunda', 'comun', 'Pistolero',           'Gana 3 veces ¡Desenfunda!.',      3, 'Insignia común', 510),
+  ('pistolero',           'minijuego', 'mj-desenfunda', 'comun', 'Pistolero',           'Gana 3 veces en ¡Desenfunda!',      3, 'Insignia común', 510),
   ('a-prueba-de-balas',   'minijuego', 'mj-bala',       'comun', 'A prueba de balas',   'Gana 3 veces Esquiva la bala.',   3, 'Insignia común', 520),
   ('mano-de-piedra',      'minijuego', 'mj-martillazo', 'comun', 'Mano de piedra',      'Gana 3 veces Martillazo.',        3, 'Insignia común', 530),
   ('aterrizaje-perfecto', 'minijuego', 'mj-paracaidas', 'comun', 'Aterrizaje perfecto', 'Gana 3 veces Paracaídas.',        3, 'Insignia común', 540),

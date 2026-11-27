@@ -40,7 +40,7 @@ export const LOGROS_ETAPA1: DefLogro[] = [
   { clave: "campeon-temporada", categoria: "progresion", juego: null, rareza: "legendaria", nombre: "Campeón de temporada", descripcion: "Termina un mes en primer lugar por Puntos ALV.", meta: 1, recompensa: "Insignia legendaria", orden: 440 },
   { clave: "constante", categoria: "progresion", juego: null, rareza: "rara", nombre: "Constante", descripcion: "Completa 10 objetivos.", meta: 10, recompensa: "Insignia rara", orden: 430 },
   // ALV PARTY (migración 055, pendiente de aplicar).
-  { clave: "pistolero", categoria: "minijuego", juego: "mj-desenfunda", rareza: "comun", nombre: "Pistolero", descripcion: "Gana 3 veces ¡Desenfunda!.", meta: 3, recompensa: "Insignia común", orden: 510 },
+  { clave: "pistolero", categoria: "minijuego", juego: "mj-desenfunda", rareza: "comun", nombre: "Pistolero", descripcion: "Gana 3 veces en ¡Desenfunda!", meta: 3, recompensa: "Insignia común", orden: 510 },
   { clave: "a-prueba-de-balas", categoria: "minijuego", juego: "mj-bala", rareza: "comun", nombre: "A prueba de balas", descripcion: "Gana 3 veces Esquiva la bala.", meta: 3, recompensa: "Insignia común", orden: 520 },
   { clave: "mano-de-piedra", categoria: "minijuego", juego: "mj-martillazo", rareza: "comun", nombre: "Mano de piedra", descripcion: "Gana 3 veces Martillazo.", meta: 3, recompensa: "Insignia común", orden: 530 },
   { clave: "aterrizaje-perfecto", categoria: "minijuego", juego: "mj-paracaidas", rareza: "comun", nombre: "Aterrizaje perfecto", descripcion: "Gana 3 veces Paracaídas.", meta: 3, recompensa: "Insignia común", orden: 540 },
