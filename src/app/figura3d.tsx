@@ -1,3 +1,4 @@
+import { sonarPoder } from "./sonido";
 // Figuras 3D (Minifig Studio, copiado en public/minifig): cápsulas por jugador, escena de varias figuras,
 // fotos para las listas chicas y el editor. El 3D vive en iframes del mismo origen; aquí solo se mandan mensajes.
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
@@ -298,6 +299,7 @@ export function Escena3D({ figuras, momentos, className, alto, modo, columnas, s
       if (e.data.tipo === "vuelo" && typeof e.data.d === "number") ultimas.current.alVolar?.(e.data.d);
       if (e.data.tipo === "cabezas" && e.data.pos && typeof e.data.pos === "object") ultimas.current.alCabezas?.(e.data.pos);
       if (e.data.tipo === "listo") { listoRef.current = true; setListo(true); mandarFiguras(); }
+      if (e.data.tipo === "sonido") sonarPoder(e.data.cual); // poderes: suena cuando sale el efecto
       if (e.data.tipo === "biblioteca" && Array.isArray(e.data.registradas)) { bib.current = new Set(e.data.registradas.filter((x: unknown) => typeof x === "string")); if (listoRef.current && ultimas.current.vida) mandarFiguras(); }
       avisoDelMotor(e.data);
     };

@@ -25,7 +25,9 @@ export interface Efecto {
 }
 export interface PoderDef { nombre: string; efecto: Efecto; efectos?: Efecto[];
   /** Corta el clip del juego en este segundo (cuando su final se ve mal) y vuelve a reposo. */
-  hasta?: number }
+  hasta?: number;
+  /** Repite el clip este tiempo (s) y luego vuelve a reposo (volar: flotar parado). */
+  bucle?: number }
 
 const AZUL = "#7fd8ff", ROJO = "#ff3b30", FUEGO = "#ff6a1a", AMARILLO = "#ffd23a", ELECTRICO = "#bfe3ff", VERDE = "#62ff6e";
 
@@ -46,7 +48,7 @@ export const PODERES: Readonly<Record<Id, Readonly<Record<string, PoderDef>>>> =
   "antorcha-humana": {
     encender: { nombre: "¡Llamas!", efecto: { tipo: "fuego", modo: "cuerpo", color: FUEGO, color2: AMARILLO, retraso: 0.2, dura: 2.6 } },
     fuego: { nombre: "Bola de fuego", efecto: { tipo: "fuego", desde: "mano_der", color: FUEGO, color2: AMARILLO, retraso: 0.25, dura: 1 } },
-    volar: { nombre: "Volar", efecto: { tipo: "volar", color: FUEGO, color2: AMARILLO, dura: 3 },
+    volar: { nombre: "Volar", bucle: 3, efecto: { tipo: "volar", color: FUEGO, color2: AMARILLO, dura: 3 },
       efectos: [{ tipo: "fuego", modo: "cuerpo", color: FUEGO, color2: AMARILLO, dura: 3 }] },
   },
   "la-mole": {
@@ -65,11 +67,11 @@ export const PODERES: Readonly<Record<Id, Readonly<Record<string, PoderDef>>>> =
     rayo: { nombre: "Rayo", efecto: { tipo: "electrico", desde: "mano_der", color: ELECTRICO, cielo: true, retraso: 0.3, dura: 1.6 } },
     martillo: { nombre: "Martillazo", efecto: { tipo: "golpe", color: ELECTRICO, retraso: 0.55, dura: 0.8 },
       efectos: [{ tipo: "electrico", desde: "mano_der", color: ELECTRICO, cielo: true, retraso: 0.45, dura: 0.6 }] },
-    volar: { nombre: "Volar", efecto: { tipo: "volar", color: "#ffffff", color2: ELECTRICO, dura: 3 } },
+    volar: { nombre: "Volar", bucle: 3, efecto: { tipo: "volar", color: "#ffffff", color2: ELECTRICO, dura: 3 } },
   },
   tormenta: {
     rayo: { nombre: "Rayos", efecto: { tipo: "electrico", desde: "mano_der", color: ELECTRICO, cielo: true, retraso: 0.2, dura: 1.8 } },
-    volar: { nombre: "Volar", efecto: { tipo: "volar", color: "#ffffff", color2: "#cfe8ff", dura: 3 } },
+    volar: { nombre: "Volar", bucle: 3, efecto: { tipo: "volar", color: "#ffffff", color2: "#cfe8ff", dura: 3 } },
   },
   iceman: {
     hielo: { nombre: "Rayo de hielo", efecto: { tipo: "hielo", desde: "mano_der", color: "#4fc3ff", retraso: 0.2, dura: 1.6 } },
@@ -85,18 +87,18 @@ export const PODERES: Readonly<Record<Id, Readonly<Record<string, PoderDef>>>> =
   "iron-man": {
     repulsor: { nombre: "Repulsor", efecto: { tipo: "rayo", desde: "mano_der", color: AZUL, modo: "fino", retraso: 0.2, dura: 0.7 } },
     pecho: { nombre: "Rayo del pecho", efecto: { tipo: "rayo", desde: "torso", color: "#dff6ff", retraso: 0.5, dura: 1.2 } },
-    volar: { nombre: "Volar", efecto: { tipo: "volar", color: "#9fe2ff", color2: "#ffffff", dura: 3 } },
+    volar: { nombre: "Volar", bucle: 3, efecto: { tipo: "volar", color: "#9fe2ff", color2: "#ffffff", dura: 3 } },
   },
   "iron-man-clasico": {
     repulsor: { nombre: "Repulsor", efecto: { tipo: "rayo", desde: "mano_der", color: AZUL, modo: "fino", retraso: 0.2, dura: 0.7 } },
     pecho: { nombre: "Rayo del pecho", efecto: { tipo: "rayo", desde: "torso", color: "#dff6ff", retraso: 0.5, dura: 1.2 } },
-    volar: { nombre: "Volar", efecto: { tipo: "volar", color: "#9fe2ff", color2: "#ffffff", dura: 3 } },
+    volar: { nombre: "Volar", bucle: 3, efecto: { tipo: "volar", color: "#9fe2ff", color2: "#ffffff", dura: 3 } },
   },
   "doctor-strange": {
     hechizo: { nombre: "Hechizo", efecto: { tipo: "hechizo", desde: "mano_der", color: "#ffae3a", retraso: 0.1, dura: 1.8 } },
-    levitar: { nombre: "Levitar", efecto: { tipo: "volar", a: 0.6, color: "#ffae3a", color2: "#ffd27a", dura: 3 } },
+    levitar: { nombre: "Levitar", bucle: 3, efecto: { tipo: "volar", a: 0.3, color: "#ffae3a", color2: "#ffd27a", dura: 3 } },
   },
 };
 
 /** Un poder listo para la escena: el GLB y el clip (null si se dibuja solo el efecto), y sus efectos. */
-export interface PoderPlano { id: string; nombre: string; glb: string; clip: string; efectos: Efecto[]; hasta?: number }
+export interface PoderPlano { id: string; nombre: string; glb: string; clip: string; efectos: Efecto[]; hasta?: number; bucle?: number }

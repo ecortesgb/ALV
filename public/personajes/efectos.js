@@ -3,7 +3,7 @@
 // Lo usan la escena de la app (public/minifig/escena.js) y la de los minijuegos (escena-mj.js). Sin estado del juego: solo
 // dibujo. Cada efecto corre con su propio reloj (requestAnimationFrame) y se limpia solo al terminar.
 //
-//   EfectosALV.lanzar(scene, fig, efecto, op) → { fin() }
+//   EfectosALV.lanzar(scene, fig, efecto, op) → { fin() }   op: { escala?, sonar?(tipo), camara? (tope de vuelo) }
 //     scene  : THREE.Scene donde se dibuja.
 //     fig    : { obj: Object3D del personaje (mira a +Z), hueso(logico) → Object3D|null }. Los efectos que tocan la figura
 //              (invisible, encoger, volar, estirar) dejan obj como estaba al terminar.
@@ -106,6 +106,25 @@
     return out;
   }
   function frente(fig, out, giro) { fig.obj.getWorldDirection(out); out.y = 0; if (out.lengthSq() < 1e-6) out.set(0, 0, 1); out.normalize(); if (giro) out.applyAxisAngle(new T.Vector3(0, 1, 0), giro); return out; }
+  /** Hacia dónde sale lo que se lanza con la mano: del pecho a la mano (sigue al brazo del clip); si no, el frente. */
+  function apunta(c, out) {
+    const d = c.ef.desde;
+    if (d === "mano_der" || d === "mano_izq") {
+      const m = c.fig.hueso && c.fig.hueso(d), p = c.fig.hueso && c.fig.hueso("torso");
+      if (m && p) {
+        m.getWorldPosition(out); out.sub(p.getWorldPosition(new T.Vector3())); out.y *= 0.35;
+        if (out.lengthSq() > 1e-8) { out.normalize(); const f = frente(c.fig, new T.Vector3()); if (out.dot(f) > 0.2) return out; }
+      }
+    }
+    return frente(c.fig, out);
+  }
+  /** Qué tan estirado al frente está el brazo de `desde` (en altos de figura). null si no hay huesos. */
+  function estirado(c) {
+    const m = c.fig.hueso && c.fig.hueso(c.ef.desde), p = c.fig.hueso && c.fig.hueso("torso");
+    if (!m || !p) return null;
+    const v = m.getWorldPosition(new T.Vector3()).sub(p.getWorldPosition(new T.Vector3()));
+    return v.dot(frente(c.fig, new T.Vector3())) / c.u;
+  }
   const LADO = -0.5; // ~30° hacia un lado de la figura
   function altoDe(fig) {
     fig.obj.updateMatrixWorld(true);
@@ -129,7 +148,7 @@
       return {
         paso(t, dt) {
           const k = sobre(t, c.d, 0.15, 0.25);
-          origen(c.fig, c.ef.desde, o); frente(c.fig, f);
+          origen(c.fig, c.ef.desde, o); apunta(c, f);
           if (c.ef.desde === "cabeza") o.addScaledVector(f, 0.12 * c.u);
           const L = largo * Math.min(1, t / 0.15);
           haz.position.copy(o); alma.position.copy(o);
@@ -157,7 +176,7 @@
           const k = sobre(t, c.d, 0.05, 0.2);
           origen(c.fig, c.ef.desde, a); frente(c.fig, f);
           if (c.ef.cielo) { b.copy(a).addScaledVector(f, 1.6 * c.u); b.y = c.fig.obj.getWorldPosition(p).y; a.copy(b); a.y += 6 * c.u; }
-          else b.copy(a).addScaledVector(f, 4 * c.u);
+          else b.copy(a).addScaledVector(apunta(c, f), 4 * c.u);
           if ((cambio -= dt) <= 0) {
             cambio = 0.05;
             for (let i = 0; i < N; i++) {
@@ -194,7 +213,7 @@
               }
             }
           } else {
-            if (!bola.viva && t >= 0 && t < 0.1) { origen(c.fig, c.ef.desde, bola.p); bola.v.copy(frente(c.fig, f)).multiplyScalar(6 * c.u); bola.viva = true; }
+            if (!bola.viva && t >= 0 && t < 0.1) { origen(c.fig, c.ef.desde, bola.p); bola.v.copy(apunta(c, f)).multiplyScalar(6 * c.u); bola.viva = true; }
             if (bola.viva && activo) {
               bola.p.addScaledVector(bola.v, dt);
               for (let i = 0; i < 4; i++) c.P.echar(bola.p, V().set(Math.random() - 0.5, Math.random() - 0.2, Math.random() - 0.5).multiplyScalar(0.6 * c.u), i ? (i > 2 ? ROJO_FUEGO : c.col) : col2, (i ? 0.38 : 0.5) * c.u, 0.4, { crece: 0.3, normal: i > 0 });
@@ -213,7 +232,7 @@
       let fija = false;
       return {
         paso(t, dt) {
-          origen(c.fig, c.ef.desde, o); frente(c.fig, f);
+          origen(c.fig, c.ef.desde, o); if (c.ef.modo === "arriba") frente(c.fig, f); else apunta(c, f);
           if (!fija) { meta.copy(o).addScaledVector(f, c.ef.modo === "arriba" ? 1.2 * c.u : 3.5 * c.u); meta.y += c.ef.modo === "arriba" ? 4 * c.u : 0.3 * c.u; fija = true; }
           const k = Math.min(1, Math.max(0, t) / 0.18), op = sobre(t, c.d, 0.01, 0.3);
           punta.copy(o).lerp(meta, k);
@@ -352,7 +371,15 @@
     volar(c) {
       // Sube, se queda en el aire y baja; estela desde los pies (fuego, propulsores o viento).
       const y0 = c.fig.obj.position.y, o = V(), s = c.fig.obj.parent ? c.fig.obj.parent.getWorldScale(V()).y || 1 : 1;
-      const alto = num(c.ef.a, 0.2, 3, 1.1) * c.u / s;
+      let alto = num(c.ef.a, 0.1, 3, 0.35) * c.u / s;
+      // Tope: con cámara, la cabeza no sale del cuadro (deja 12 % de margen arriba para el HUD).
+      if (c.cam) try {
+        c.fig.obj.updateWorldMatrix(true, true);
+        const caja = new T.Box3().setFromObject(c.fig.obj), p = V(), arriba = caja.max.y, cx = (caja.min.x + caja.max.x) / 2, cz = (caja.min.z + caja.max.z) / 2;
+        const cabe = h => { p.set(cx, arriba + h * s, cz).project(c.cam); return p.y < 0.76; };
+        if (!cabe(0)) alto = 0.06 * c.u / s;
+        else if (!cabe(alto)) { let a = 0, b = alto; for (let i = 0; i < 12; i++) { const m = (a + b) / 2; if (cabe(m)) a = m; else b = m; } alto = Math.max(0.06 * c.u / s, a); }
+      } catch (_) { /* sin tope */ }
       return {
         paso(t, dt) {
           const k = suave(sobre(t, c.d, 0.6, 0.6));
@@ -429,14 +456,26 @@
     const c = {
       scene, fig, ef: efecto, u: num(o.escala, 0.01, 1000, 0) || altoDe(fig),
       col: color(efecto.color, "#7fd8ff"), col2: efecto.color2 ? color(efecto.color2, "#ffffff") : null,
-      d: num(efecto.dura, 0.2, 12, 1.2), P: particulas(scene),
+      d: num(efecto.dura, 0.2, 12, 1.2), P: particulas(scene), cam: o.camara && o.camara.isCamera ? o.camara : null,
     };
     let e;
     try { e = EFECTOS[efecto.tipo](c); } catch (_) { c.P.limpiar(); return nada; }
-    let t = -num(efecto.retraso, 0, 10, 0), listo = false;
+    let t = -num(efecto.retraso, 0, 10, 0), listo = false, sono = false;
+    // Lo que sale de la mano espera a que el brazo del clip llegue al frente (si no, el rayo salía con el brazo abajo).
+    const conMano = (efecto.desde === "mano_der" || efecto.desde === "mano_izq") && !efecto.cielo && efecto.modo !== "arriba" && efecto.modo !== "cuerpo"
+      && ["rayo", "fuego", "telarana", "hielo", "electrico", "escudo"].includes(efecto.tipo);
+    let espera = conMano ? 0 : -1, maximo = -9;
     const v = {
       paso(dt) {
-        t += dt; c.P.paso(dt);
+        c.P.paso(dt);
+        if (t >= 0 && espera >= 0) {
+          const x = estirado(c);
+          espera += dt;
+          if (x != null && espera < 1.2 && !(x > 0.3) && !(x > 0.1 && x < maximo - 0.008)) { maximo = Math.max(maximo, x); return; }
+          espera = -1;
+        }
+        t += dt;
+        if (!sono && t >= 0) { sono = true; if (typeof o.sonar === "function") try { o.sonar(efecto.tipo); } catch (_) { /* nada */ } }
         let sigue = true;
         try { sigue = e.paso(t, dt) !== false; } catch (_) { sigue = false; }
         if (!sigue || t > c.d + 6) v.fin();

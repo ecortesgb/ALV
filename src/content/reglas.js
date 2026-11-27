@@ -1,0 +1,69 @@
+export const REGLAS = {
+    "turnos-cartas": {
+        objetivo: "Una herramienta elige quién pregunta y quién responde. Quien responde elige Verdad (solo una vez) o Reto; quien pregunta la saca de ALV o la dice en voz alta y califica.",
+        puntos: ["Verdad cumplida: +1 punto", "Reto cumplido: +2 puntos (y cuenta como reto para tu XP)", "Tomar en vez de cumplir: +1 punto", "Pasar con comodín: 0"],
+        gana: "Quien junte más puntos al terminar las rondas.",
+    },
+    botella: {
+        objetivo: "El reloj elige quién pregunta y quién responde una verdad.",
+        puntos: ["Responder: +1 punto", "Pasar: 0, sin castigo"],
+        gana: "Quien junte más puntos al terminar las rondas.",
+    },
+    ruleta: {
+        objetivo: "La ruleta elige a alguien y le toca un castigo divertido.",
+        puntos: ["Cumplir el castigo: +1 punto", "Pasar: 0, sin castigo"],
+        gana: "Quien junte más puntos al terminar las rondas.",
+    },
+    dados: {
+        objetivo: "Por turnos, cada quien tira los dados con su pareja: acción, zona y tiempo.",
+        puntos: ["Cumplir: +1 punto", "Pasar: 0, sin castigo"],
+        gana: "Quien junte más puntos al terminar las rondas.",
+    },
+    votacion: {
+        objetivo: "Sale un «¿Qué prefieres?». Cada quien elige A o B en secreto y se revela al mismo tiempo.",
+        puntos: ["Con 3 o más: elegir lo mismo que la mayoría, +1", "Con 2: adivinar lo que eligió tu rival, +1"],
+        gana: "Quien junte más puntos al terminar las rondas.",
+    },
+    "rol-secreto": {
+        objetivo: "Todos ven la palabra secreta menos uno: el impostor. Den pistas sin decirla y voten.",
+        puntos: ["Impostor que escapa: +3", "Votar por el impostor: +1", "Si hay empate en la votación, el impostor escapa"],
+        gana: "Quien junte más puntos al terminar las rondas.",
+    },
+    pareja: {
+        objetivo: "En cada pareja, uno contesta sobre sí y el otro adivina, sin verse.",
+        puntos: ["Si coinciden: +2 a cada uno", "Si no: 0"],
+        gana: "La pareja que más coincida.",
+    },
+    conteo: {
+        objetivo: "Contra reloj: di, describe o actúa todas las que puedas antes de que se acabe el tiempo.",
+        puntos: ["Cada una que logres: +1 punto"],
+        gana: "Quien junte más puntos al terminar las rondas.",
+    },
+    confesion: {
+        objetivo: "Sale un «Yo nunca…». Quien sí lo haya hecho, lo confiesa.",
+        puntos: ["Confesar: +1 punto"],
+        gana: "El más sincero (el que más confiese).",
+    },
+    senalar: {
+        objetivo: "«¿Quién es más probable que…?». Todos señalan en secreto y se revela al mismo tiempo.",
+        puntos: ["Coincidir con la mayoría: +1 punto"],
+        gana: "Quien mejor conozca al grupo.",
+    },
+    competencia: {
+        objetivo: "Una competencia real del lugar. El anfitrión marca quién ganó cada ronda.",
+        puntos: ["Ganar la ronda: +3 puntos"],
+        gana: "Quien gane más rondas.",
+    },
+    fisico: {
+        objetivo: "Retos en persona. ALV sugiere uno por ronda (se puede cambiar) y el administrador usa dados, ruleta, carta, orden o cronómetro.",
+        puntos: ["El administrador da o quita de 1 a 5 puntos a quien quiera, cuando quiera", "Quien termina la ronda con puntos a favor cumple un reto (cuenta para tu XP)"],
+        gana: "Quien junte más puntos al terminar las rondas (o el grupo, según el modo de juego).",
+    },
+};
+/** Cómo se gana la XP en cualquier juego (resumen de engine/economia.ts). */
+export const REGLAS_XP = [
+    "Terminar la partida: +20 XP, más +2 por ronda",
+    "Cada reto cumplido: +3 XP",
+    "1.º, 2.º y 3.º lugar: +15, +10 y +5 XP",
+    "La partida cuenta para XP desde 5 rondas",
+];

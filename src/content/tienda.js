@@ -1,0 +1,88 @@
+// Tienda de ALV (Maestro v1.48, enfoque A; valores aprobados por Elías en v1.49). Precios y probabilidades
+// se pueden ajustar después de probar con jugadores. Plan completo en ALV_PLAN_TIENDA.md (fuera del repo).
+// Cuando exista la migración de la tienda, sus datos se generan de aquí y una prueba compara las dos.
+import { RAREZA } from "./rarezas";
+export const DORSO_SOBRE = "sobre-dorso-alv.webp";
+export const SOBRES = [
+    { id: "basico", nombre: "Sobre básico", precio: 50, arte: "sobre-basico.webp", piezas: 2, comodines: 0,
+        pesos: { rara: 88, epica: 11, legendaria: 1 }, color: "#3fb6ff", frase: "Dos piezas para empezar tu colección." },
+    { id: "accesorios", nombre: "Sobre de accesorios", precio: 120, arte: "sobre-accesorios-v2.webp", piezas: 3, comodines: 0,
+        pesos: { rara: 65, epica: 28, legendaria: 7 }, secciones: ["casco", "detalle", "cuello", "objeto"], color: "#2ee6c5",
+        frase: "Cascos, lentes, cuellos, capas y objetos." },
+    { id: "comodines", nombre: "Sobre de comodines", precio: 150, arte: "sobre-comodines-v2.webp", piezas: 0, comodines: 3,
+        pesos: { rara: 0, epica: 0, legendaria: 0 }, color: "#ff3fb4", frase: "Tres comodines para salvarte en la partida." },
+    { id: "mixto", nombre: "Sobre mixto", precio: 180, arte: "sobre-mixto.webp", piezas: 2, comodines: 2,
+        pesos: { rara: 60, epica: 32, legendaria: 8 }, color: "#b06bff", frase: "Dos piezas y dos comodines." },
+    { id: "epico", nombre: "Sobre épico", precio: 200, arte: "sobre-epico.webp", piezas: 3, comodines: 0,
+        pesos: { rara: 40, epica: 45, legendaria: 15 }, minimo: "epica", color: "#ffb21f", frase: "Tres piezas, mínimo una épica." },
+];
+export const sobrePorId = (id) => SOBRES.find(s => s.id === id) ?? null;
+/** Garantía anti-mala-racha: al sobre número N sin esa rareza, una pieza sale de esa rareza o mejor. */
+export const GARANTIA = { epica: 8, legendaria: 25 };
+/** Comodines a la venta (Maestro v1.49: solo los de efecto definido en 6A.4). Ids iguales a CARTAS_PODER de catalogo.ts.
+ *  Escudo y los especiales entran cuando Elías los confirme; mientras, el sobre de comodines trae solo básicos. */
+export const COMODINES = [
+    { id: "turno", nombre: "Pasa turno", efecto: "Tu turno pasa al siguiente jugador.", especial: false, icono: "⏭️", arte: "carta-pasa-turno.webp", reposicion: 65 },
+    { id: "cambio", nombre: "Cambio de pregunta", efecto: "Cambia la carta que te tocó por otra.", especial: false, icono: "🔄", arte: "carta-cambio-pregunta.webp", reposicion: 75 },
+];
+const cartaEnPreparacion = (id, nombre, efecto, icono, reposicion, familia = "normal") => ({ id, nombre, efecto, icono, reposicion, especial: familia !== "normal", trampa: familia === "trampa", arte: "carta-" + id + ".webp" });
+/** Visibles en la colección. El sorteo usa únicamente el catálogo activo. */
+export const COMODINES_EN_PREPARACION = [
+    cartaEnPreparacion("escudo", "Escudo", "Cancela un castigo que ya te asignaron.", "🛡️", 85),
+    cartaEnPreparacion("salvavidas", "Salvavidas", "Cancela el castigo de otra persona o líbrala de ser mesero.", "◉", 95, "especial"),
+    cartaEnPreparacion("relevo", "Relevo", "Elige a otra persona para que cumpla tu castigo.", "⇢", 100, "especial"),
+    cartaEnPreparacion("doble-castigo", "Doble castigo", "El siguiente castigo compatible de la persona que elijas se cumple dos veces.", "×2", 115, "trampa"),
+    cartaEnPreparacion("mesero", "Cambio de mesero", "Pasa el delantal de mesero a otra persona.", "♢", 85, "especial"),
+    cartaEnPreparacion("suerte", "¿Voy a tener suerte?", "Al azar, tu reto o castigo se suaviza, se duplica, se anula, pasa a otra persona o lo cumple toda la mesa.", "✦", 130, "especial"),
+    cartaEnPreparacion("prorroga", "Prórroga", "Añade tiempo a tu reto antes de que venza el reloj.", "⌛", 65),
+    cartaEnPreparacion("segundo-intento", "Segundo intento", "Repite una vez un reto compatible antes de registrar el fallo.", "↶", 75),
+    cartaEnPreparacion("rebaja", "Rebaja", "Reduce a la mitad el tiempo o las repeticiones de tu reto o castigo.", "½", 80),
+    cartaEnPreparacion("dos-caminos", "Dos caminos", "La app te muestra dos retos compatibles. Elige cuál cumplir.", "⑂", 95, "especial"),
+    cartaEnPreparacion("mano-amiga", "Mano amiga", "Invita a otra persona a ayudarte en un reto que admita parejas.", "✦", 90, "especial"),
+    cartaEnPreparacion("rebote", "Rebote", "Devuelve una carta dirigida contra ti si su efecto admite ese objetivo.", "↪", 120, "trampa"),
+    cartaEnPreparacion("contrarreloj", "Contrarreloj", "Reduce el tiempo del próximo reto compatible de la persona que elijas.", "◷", 95, "trampa"),
+    cartaEnPreparacion("candado", "Candado", "Bloquea el próximo comodín dirigido contra ti durante esta ronda.", "🔒", 105, "trampa"),
+    cartaEnPreparacion("pista-extra", "Pista extra", "Revela una pista de tu pregunta si hay una disponible.", "⌕", 65),
+    cartaEnPreparacion("duelo-dados", "Duelo de dados", "Reta a otra persona a tirar los dados. Quien pierda cumple el reto que mostró la app.", "⚄", 110, "especial"),
+];
+export const comodinPorId = (id) => COMODINES.find(c => c.id === id) ?? COMODINES_EN_PREPARACION.find(c => c.id === id) ?? null;
+/** Probabilidad de que un comodín salga especial (0 mientras no haya especiales a la venta). */
+export const PESO_ESPECIAL = 0;
+/** Máximo por tipo; si ya lo tienes, esa carta se cambia por monedas. */
+export const TOPE_COMODIN = 9;
+export const MONEDAS_SI_TOPE = 10;
+// ---------- Monedas ----------
+/** Por juego terminado: participar + bono por lugar con la regla de podio de la XP. Tope diario y regalo de bienvenida. */
+export const MONEDAS = { participar: 10, lugar: [8, 5, 3], topeDia: 300, bienvenida: 150 };
+/** Saldo con que arranca la demostración (sin nube). */
+export const MONEDAS_DEMO = 600;
+// ---------- Piezas que pueden salir ----------
+/** Sección de cada pieza bloqueada, para filtrar sobres y armar la colección. */
+export function seccionDe(id) {
+    if (id.startsWith("MOM_"))
+        return "momentos";
+    if (id.startsWith("HAIR_"))
+        return "pelo";
+    if (id.startsWith("HELM_") || /^FACE_01[2-5]$/.test(id))
+        return "casco";
+    if (id.startsWith("FACE_"))
+        return "rostro";
+    if (id.startsWith("DETAIL_"))
+        return "detalle";
+    if (id.startsWith("NECK_") || id.startsWith("CAPE_"))
+        return "cuello";
+    if (id.startsWith("PRINT_"))
+        return "torso";
+    return "objeto";
+}
+export const NOMBRE_SECCION = {
+    pelo: "Pelo", casco: "Cascos y máscaras", rostro: "Rostros", detalle: "Detalles", cuello: "Cuello y capa",
+    torso: "Torsos", objeto: "Objetos", momentos: "Momentos",
+};
+export const ORDEN_SECCIONES = ["pelo", "casco", "rostro", "detalle", "cuello", "torso", "objeto", "momentos"];
+/** Todas las piezas que se coleccionan (las bloqueadas de rarezas.ts). */
+export const PIEZAS_COLECCION = Object.entries(RAREZA)
+    .filter((e) => e[1] !== "comun")
+    .map(([id, rareza]) => ({ id, rareza, seccion: seccionDe(id) }));
+/** Piezas que puede traer un sobre. */
+export const piezasDeSobre = (s) => PIEZAS_COLECCION.filter(p => !s.secciones || s.secciones.includes(p.seccion));
