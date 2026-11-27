@@ -22,7 +22,7 @@ function Velo({ titulo, alCerrar, children }: { titulo: string; alCerrar?: () =>
 
 export type TipoAgregar = "rapido" | "cuenta" | "sin-cuenta";
 
-/** Primer paso: cómo entra el jugador nuevo. Sin servidor solo existe «sin cuenta». */
+/** Primer paso: cómo entra el jugador nuevo. Con servidor: personaje nuevo o cuenta existente. Sin servidor solo existe «sin cuenta». */
 export function ElegirComoAgregar({ conNube, alElegir, alCerrar }: { conNube: boolean; alElegir: (t: TipoAgregar) => void; alCerrar: () => void }) {
   return (
     <Velo titulo="Agregar jugador" alCerrar={alCerrar}>
@@ -34,9 +34,11 @@ export function ElegirComoAgregar({ conNube, alElegir, alCerrar }: { conNube: bo
           <b>Ya tengo cuenta</b><small>Entra con usuario y contraseña y gana sus puntos aquí.</small>
         </button>
       </>}
-      <button type="button" className="pl-opcion pl-opcion-suave" onClick={() => alElegir("sin-cuenta")}>
+      {/* Elías, 27 nov: con servidor ya no hay jugadores sin cuenta; todos generan usuario y contraseña. Sin servidor
+          (demostración) es lo único que hay. */}
+      {!conNube && <button type="button" className="pl-opcion pl-opcion-suave" onClick={() => alElegir("sin-cuenta")}>
         <b>Sin cuenta</b><small>Solo para esta sesión. No gana puntos.</small>
-      </button>
+      </button>}
     </Velo>
   );
 }

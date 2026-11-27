@@ -1,9 +1,9 @@
 // Pantalla de carga, acceso y registro. ALV es solo para mayores de 18 (D1): la fecha la valida el servidor.
 import { useEffect, useState, type CSSProperties, type FormEvent, type InputHTMLAttributes, type ReactNode } from "react";
 import { Boton, Icono } from "../ds";
-import { cargarCapsulasNube, entrar, entrarInvitado, esNickInvitado, guardarRegistro, nickValido, passValida, registrar, salir, type Genero } from "../servicios/cuenta";
+import { cargarCapsulasNube, entrar, esNickInvitado, guardarRegistro, nickValido, passValida, registrar, salir, type Genero } from "../servicios/cuenta";
 import { hayNube } from "../servicios/cliente";
-import { recuperarCuenta } from "../servicios/aparato";
+import { codigoLegible, crearMiCuentaRapida, recuperarCuenta, type MiCuentaRapida } from "../servicios/aparato";
 import { entrarDemo, refrescarSesion, useSesion, type Fase } from "../app/sesion";
 import { ir } from "../app/rutas";
 import { pantallaDeCarga } from "../app/musica";
@@ -211,30 +211,55 @@ function Terminos({ alVolver }: { alVolver: () => void }) {
   );
 }
 
-/** Entrar sin cuenta, solo para probar: apodo y confirmar mayoría de edad. No pide fecha ni contraseña. */
+/**
+ * Entrar sin cuenta (Elías, 27 nov): solo apodo y confirmar mayoría de edad, pero se crea una cuenta real UsuarioN con
+ * contraseña aleatoria y código de recuperación (057). Los datos se ven una sola vez. Ya no hay entradas sin historial.
+ */
 function Invitado({ volver }: { volver: () => void }) {
   const [apodo, setApodo] = useState(""), [mayor, setMayor] = useState(false), [error, setError] = useState<string | null>(null), [ocupado, setOcupado] = useState(false);
+  const [datos, setDatos] = useState<MiCuentaRapida | null>(null), [guardado, setGuardado] = useState(false);
   const enviar = async (e?: FormEvent) => {
     e?.preventDefault();
     if (ocupado) return;
     if (apodo.trim().length < 2) { setError("Escribe un apodo de 2 a 20 letras."); return; }
     if (!mayor) { setError("ALV es solo para mayores de 18 años."); return; }
     setOcupado(true); setError(null);
-    const fallo = await entrarInvitado(apodo);
+    const r = await crearMiCuentaRapida(apodo);
     setOcupado(false);
-    if (fallo) { setError(fallo); return; }
+    if (typeof r === "string") { setError(r); return; }
+    setDatos(r);
+  };
+  const seguir = async () => {
+    setOcupado(true);
     await irAPersonalizarSiNueva();
     await refrescarSesion();
   };
+  if (datos) return (
+    <MarcoAcceso>
+      <Tarjeta pestanas={[{ id: "datos", texto: "Tu acceso" }]} activa="datos">
+        <div className="a-pila">
+          <p className="a-suave"><b>Toma foto o anótalo. Solo se ve esta vez.</b> Con esto entras desde cualquier celular y no pierdes lo que ganes.</p>
+          <dl className="a-acceso">
+            <div><dt>Usuario</dt><dd>{datos.usuario}</dd></div>
+            <div><dt>Contraseña</dt><dd>{datos.clave}</dd></div>
+            <div><dt>Código de recuperación</dt><dd>{codigoLegible(datos.codigo)}</dd></div>
+          </dl>
+          <p className="a-suave">Puedes cambiar tu usuario y tu contraseña en Configuración, Cuenta. Si olvidas la contraseña, el código te deja poner una nueva.</p>
+          <label className="a-check"><input type="checkbox" checked={guardado} onChange={e => setGuardado(e.target.checked)} /><span>Ya lo guardé</span></label>
+          <Boton color="amarillo" texto="Entrar" icono="play" cargando={ocupado} desactivado={!guardado} onClick={() => void seguir()} />
+        </div>
+      </Tarjeta>
+    </MarcoAcceso>
+  );
   return (
     <MarcoAcceso alVolver={volver}>
-      <Tarjeta pestanas={[{ id: "prueba", texto: "Entrar de prueba" }]} activa="prueba">
+      <Tarjeta pestanas={[{ id: "prueba", texto: "Entrar sin cuenta" }]} activa="prueba">
         <form onSubmit={e => void enviar(e)} className="a-pila">
-          <p className="a-suave">Juegas sin crear cuenta. Es una entrada de prueba: lo que ganes se borra cuando terminen las pruebas.</p>
+          <p className="a-suave">Solo escribe tu apodo. Te damos un usuario y una contraseña para que no pierdas lo que ganes.</p>
           <CampoIcono etiqueta="Tu apodo" icono="usuario" value={apodo} maxLength={20} onChange={e => setApodo(e.target.value)} autoComplete="off" autoFocus required />
           <label className="a-check"><input type="checkbox" checked={mayor} onChange={e => setMayor(e.target.checked)} /><span>Soy mayor de 18 y acepto jugar con respeto: nadie está obligado a tomar ni a cumplir un reto.</span></label>
           {error && <p className="a-error" role="alert">{error}</p>}
-          <Boton color="amarillo" texto="Entrar de prueba" icono="play" cargando={ocupado} onClick={() => void enviar()} />
+          <Boton color="amarillo" texto="Entrar" icono="play" cargando={ocupado} onClick={() => void enviar()} />
           <button type="submit" hidden />
           <button type="button" className="a-tarjeta-pie" onClick={volver}>Tengo cuenta o quiero crear una</button>
         </form>
@@ -265,7 +290,7 @@ function Recuperar({ volver }: { volver: () => void }) {
           <p className="a-suave">Listo: tu contraseña cambió. Entra con tu usuario y la contraseña nueva.</p>
           <Boton color="amarillo" texto="Ir a iniciar sesión" icono="play" onClick={volver} />
         </div> : <form onSubmit={e => void enviar(e)} className="a-pila">
-          <p className="a-suave">Para personajes creados en el lobby: usa el código de recuperación que se mostró al crearlo.</p>
+          <p className="a-suave">Para cuentas UsuarioN (entrar sin cuenta o personaje del lobby): usa el código de recuperación que se mostró al crearla.</p>
           <CampoIcono etiqueta="Usuario" icono="usuario" value={usuario} onChange={e => setUsuario(e.target.value)} autoComplete="username" autoCapitalize="none" spellCheck={false} maxLength={20} required autoFocus />
           <CampoIcono etiqueta="Código de recuperación" icono="candado" ver value={codigo} onChange={e => setCodigo(e.target.value.toUpperCase())} autoComplete="off" autoCapitalize="characters" spellCheck={false} maxLength={14} placeholder="XXXX-XXXX-XXXX" required />
           <CampoClave nueva value={clave} onChange={e => setClave(e.target.value)} maxLength={72} required />
@@ -348,7 +373,7 @@ export function Acceso({ alVolver }: { alVolver?: () => void } = {}) {
           </button>
         </form>
       </Tarjeta>
-      <button type="button" className="a-plano" onClick={() => setInvitado(true)}>Solo quiero probar: entrar sin cuenta</button>
+      <button type="button" className="a-plano" onClick={() => setInvitado(true)}>Entrar sin cuenta (te damos usuario y contraseña)</button>
     </MarcoAcceso>
   );
 }
