@@ -1386,21 +1386,33 @@
     const gen = (e.gen3 = ++V3.gen);
     // Antes del cambio la figura tiembla y crece un poco (Banner más largo: se está transformando). La animación del juego
     // TRANSFORM_TO_BIGFIG de Banner no sirve aquí: esconde sus piezas esperando las de Hulk y se ve rota (prueba 27 nov).
-    const t0 = reloj.getElapsedTime(), dur = conEspecial ? 1.3 : 0.6, hasta = t0 + dur;
-    const cuerpo = e.v3.obj, esc0 = cuerpo.scale.x, x0 = cuerpo.position.x;
-    e.prio = 9; e.cual = "transformar"; e.hasta = hasta + 0.5; // nadie la interrumpe
-    if (conEspecial) e.v3.tocar("victoria");
-    { const pos = e.obj.position; nube(t0, pos.x, pos.z, 1.2, conEspecial ? [0.55, 0.95, 0.35] : [1, 0.85, 0.3]); }
+    // Con clip del juego (set «transformar» de la ficha, 27 nov): la forma de ahora hace su animación de salida completa
+    // (Banner se vuelve Hulk, Spider-Man se quita la máscara, el Hulkbuster se apaga) y la nueva llega con la suya.
+    const t0 = reloj.getElapsedTime(), inst0 = e.v3, tr0 = (inst0.obj.userData.plano || {}).transformar;
+    const cuerpo = inst0.obj, esc0 = cuerpo.scale.x, x0 = cuerpo.position.x;
+    let hasta = t0 + (conEspecial ? 1.3 : 0.6);
+    e.prio = 9; e.cual = "transformar"; e.hasta = hasta + 7; // nadie la interrumpe
     e.trHuella = h;
-    const temblar = () => {
+    const temblar = dur => {
       if (figuras.get(e.id) !== e || e.gen3 !== gen || e.v3.obj !== cuerpo) return;
       const k = Math.min(1, (reloj.getElapsedTime() - t0) / dur);
       cuerpo.scale.setScalar(esc0 * (1 + 0.14 * k));
       cuerpo.position.x = x0 + Math.sin(reloj.getElapsedTime() * 55) * 0.035 * k;
-      if (k < 1) setTimeout(temblar, 30);
+      if (k < 1) setTimeout(() => temblar(dur), 30);
     };
-    temblar();
-    motorV3().then(M => M.crear(p3)).then(inst => new Promise(ok => {
+    const salida = tr0 && tr0.salir
+      ? inst0.tocarExt(tr0.glb, tr0.salir, { fijo: true, mezcla: 0.15 }).then(d => Number(d) > 0 ? Math.min(7, d) : 0).catch(() => 0) : Promise.resolve(0);
+    const nueva = motorV3().then(M => M.crear(p3));
+    salida.then(d => {
+      const t = reloj.getElapsedTime();
+      if (d > 0) { hasta = t + d - 0.15; e.hasta = hasta + 0.5; nube(hasta, e.obj.position.x, e.obj.position.z, 1.2, conEspecial ? [0.55, 0.95, 0.35] : [1, 0.85, 0.3]); return; }
+      // Sin clip: como antes, temblor (y festejo si es la especial) con humo desde el principio.
+      hasta = t + (conEspecial ? 1.3 : 0.6); e.hasta = hasta + 0.5;
+      if (conEspecial) inst0.tocar("victoria");
+      nube(t, e.obj.position.x, e.obj.position.z, 1.2, conEspecial ? [0.55, 0.95, 0.35] : [1, 0.85, 0.3]);
+      temblar(hasta - t);
+    });
+    Promise.all([nueva, salida]).then(([inst]) => new Promise(ok => {
       const espera = () => (reloj.getElapsedTime() >= hasta ? ok(inst) : setTimeout(espera, 50));
       espera();
     })).then(inst => {
@@ -1420,6 +1432,16 @@
       inst.tocar("reposo", { mezcla: 0 });
       e.prio = 0; e.cual = null; e.hasta = 0; e.accion = null;
       aplicarCareta(e);
+      // Llegada de la nueva forma (Hulk aplaude, el Hulkbuster se enciende, Iron Man despega): mientras, nadie la interrumpe.
+      const tr1 = p3.transformar;
+      if (tr1 && tr1.llegar) {
+        e.prio = 9; e.cual = "transformar"; e.hasta = t + 1;
+        inst.tocarExt(tr1.glb, tr1.llegar, { fijo: true, mezcla: 0 }).then(d => {
+          if (e.v3 !== inst) return;
+          if (Number(d) > 0) { e.prio = 2; e.cual = "poder"; e.hasta = reloj.getElapsedTime() + Math.min(6, d); }
+          else { e.prio = 0; e.cual = null; e.hasta = 0; }
+        });
+      }
       const esGrande = p3.familia === "bigfig";
       nube(t, grupo.position.x, grupo.position.z, Math.max(alto0, Math.min(TOPE, alto)) * grupo.scale.y, esGrande ? [0.55, 0.95, 0.35] : [1, 0.85, 0.3]);
       acomodar();
@@ -1450,6 +1472,12 @@
       .map(x => ({ id: x.id, glb: x.glb, clip: x.clip, hasta: Number(x.hasta) > 0 ? Math.min(20, Number(x.hasta)) : 0, bucle: Number(x.bucle) > 0 ? Math.min(20, Number(x.bucle)) : 0, efectos: Array.isArray(x.efectos) ? x.efectos.slice(0, 3).filter(f => f && typeof f === "object" && typeof f.tipo === "string") : [] })) : [];
     // Sets de movimientos (27 nov): mismos campos que un poder, sin efectos y en su lugar (fijo: los golpes del juego
     // avanzan hacia el enemigo y sacaban a la figura del pedestal).
+    // Transformar (27 nov): clips del juego con que la forma sale y llega.
+    if (p.transformar != null) {
+      const t = p.transformar, clip = c => (typeof c === "string" && c.length > 0 && c.length <= 80 ? c : null);
+      p.transformar = t && typeof t === "object" && typeof t.glb === "string" && URL_OK.test(t.glb) && (clip(t.salir) || clip(t.llegar))
+        ? { glb: t.glb, salir: clip(t.salir), llegar: clip(t.llegar) } : null;
+    }
     if (p.movs != null) p.movs = Array.isArray(p.movs) ? p.movs.slice(0, 64).filter(x => x && typeof x.id === "string" && /^[a-z][a-z0-9-]{0,23}$/.test(x.id)
       && typeof x.glb === "string" && URL_OK.test(x.glb) && typeof x.clip === "string" && x.clip.length <= 80)
       .map(x => ({ id: x.id, glb: x.glb, clip: x.clip, hasta: 0, bucle: 0, efectos: [], fijo: true,
