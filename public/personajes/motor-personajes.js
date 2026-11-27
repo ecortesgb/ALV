@@ -46,9 +46,17 @@
     });
   }
 
+  // Modelos comprimidos con meshopt (EXT_meshopt_compression): el decodificador viene de three r128 (libs/meshopt_decoder.js).
+  // Si no está cargado, los GLB sin comprimir se leen igual.
+  function cargador() {
+    const l = new T.GLTFLoader(), d = raiz.MeshoptDecoder;
+    if (d && l.setMeshoptDecoder) l.setMeshoptDecoder(d);
+    return l;
+  }
+
   function bajar(url, carga) {
     if (!cache.has(url)) {
-      const p = new Promise((ok, mal) => new T.GLTFLoader().load(url, g => { acabado(g.scene, carga); ok(g); }, undefined, mal));
+      const p = new Promise((ok, mal) => cargador().load(url, g => { acabado(g.scene, carga); ok(g); }, undefined, mal));
       p.catch(() => cache.delete(url));
       cache.set(url, p);
     }
