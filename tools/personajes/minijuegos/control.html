@@ -52,8 +52,8 @@ input{font:800 18px Nunito,sans-serif;padding:10px 12px;border-radius:12px;borde
 .zona-palanca{position:absolute;left:0;top:0;bottom:0;width:58%}
 .palanca{position:absolute;width:140px;height:140px;margin:-70px 0 0 -70px;border-radius:50%;border:4px solid rgba(255,255,255,.5);background:rgba(10,16,48,.45)}
 .palanca i{position:absolute;left:50%;top:50%;width:84px;height:84px;margin:-42px 0 0 -42px;border-radius:50%;background:url(../../../arte/ui/mando/x-stick.webp) center/contain no-repeat;filter:drop-shadow(0 4px 0 rgba(5,8,26,.8))}
-/* Mando estilo Xbox (Elías, 27 nov): solo los botones que hacen algo. A salta, B golpe, RT poder (movimiento especial),
-   y ¡Eh! (festejo) chico. X (patada) y Y (transformación) se agregan cuando existan sus movimientos. */
+/* Mando estilo Xbox (Elías, 27 nov): solo los botones que hacen algo. A salta, B golpe, RT poder (movimiento especial);
+   los gestos van en la rueda del centro. X (patada) y Y (transformación) se agregan cuando existan sus movimientos. */
 .botones{position:absolute;right:4px;bottom:16px;width:min(50vw,250px);height:min(50vw,250px)}
 .botones button{position:absolute;border-radius:50%;border:4px solid #05081a;box-shadow:0 6px 0 #05081a,inset 0 -6px 10px rgba(0,0,0,.45);
   background:radial-gradient(circle at 50% 30%,#3a3f4d,#14161d 70%);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:0}
@@ -66,7 +66,20 @@ input{font:800 18px Nunito,sans-serif;padding:10px 12px;border-radius:12px;borde
 .botones .x-a{width:38%;height:38%;left:31%;bottom:0;background-image:url(../../../arte/ui/mando/x-a.webp)!important}
 .botones .x-b{width:38%;height:38%;right:0;top:31%;background-image:url(../../../arte/ui/mando/x-b.webp)!important}
 .botones .x-rt{width:34%!important;height:38%!important;right:6%;top:-14%;border-radius:0!important;background-image:url(../../../arte/ui/mando/x-rt.webp)!important}
-.x-eh{width:24%;height:24%;left:4%;top:8%}.x-eh b{font-size:clamp(14px,4.5vw,20px)!important;color:#ffcf2e}
+/* Rueda de animaciones (Elías, 27 nov: en lugar de ¡Eh!, «nuestro círculo de animaciones» al centro, siempre visible).
+   Mismo vidrio, colores e íconos que la rueda del HUB (src/pantallas/gestos): Saludar, Ganar, Especial y Perder. */
+.rueda{position:absolute;z-index:3;left:50%;top:50%;width:min(44vh,36vw,190px);aspect-ratio:1;translate:-50% -50%;touch-action:none}
+.rueda .vidrio{position:absolute;inset:2%;border-radius:50%;background:rgba(235,240,250,.1);backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px)}
+.rueda svg{position:relative;width:100%;height:100%;overflow:visible}
+.rueda .gajo{cursor:pointer;transform-box:view-box;transform-origin:0 0;transition:transform .16s cubic-bezier(.34,1.56,.64,1)}
+.rueda .forma{fill:rgba(225,232,245,.26);stroke:rgba(255,255,255,.55);stroke-width:1.5;transition:fill .16s}
+.rueda .gajo image{pointer-events:none;filter:drop-shadow(0 1px 2px rgba(10,16,48,.45))}
+.rueda .gajo.on{transform:translate(var(--dx),var(--dy)) scale(1.06)}
+.rueda .gajo.on .forma{fill:var(--c1);fill-opacity:.8;stroke:#fff}
+.rueda .centro{fill:rgba(20,26,52,.42);stroke:rgba(255,255,255,.55);stroke-width:1.5}
+.rueda .nombre{font:400 15px "Lilita One",sans-serif;text-anchor:middle;fill:#fff;text-transform:uppercase;pointer-events:none}
+.rueda .logo{pointer-events:none}
+@media (orientation:portrait){.rueda{top:24%;width:min(46vw,190px)}}
 /* Sala de Físico */
 #fisico{flex:1;display:flex;flex-direction:column;gap:8px;min-height:0;margin-top:8px}
 .mis-pts{font:400 20px/1 "Lilita One",sans-serif;text-align:center}
@@ -120,9 +133,9 @@ input{font:800 18px Nunito,sans-serif;padding:10px 12px;border-radius:12px;borde
   <div id="mando" class="oculto">
     <div class="girar oculto" id="girar">Gira tu celular para jugar más cómodo ⟳</div>
     <div class="zona-palanca" id="zona"><div class="palanca" id="palanca"><i id="bolita"></i></div></div>
+    <div class="rueda" id="rueda" role="menu" aria-label="Animaciones de tu personaje"><span class="vidrio"></span></div>
     <div class="botones">
       <button class="x-rt img" data-b="poder" aria-label="RT: poder"><b>RT</b><small>Poder</small></button>
-      <button class="x-eh" data-b="festejo" aria-label="Festejo"><b>¡Eh!</b></button>
       <button class="x-b img" data-b="golpe" aria-label="B: golpe"><b>B</b><small>Golpe</small></button>
       <button class="x-a img" data-b="saltar" aria-label="A: salta"><b>A</b><small>Salta</small></button>
     </div>
