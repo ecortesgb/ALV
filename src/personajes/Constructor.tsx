@@ -17,7 +17,7 @@ import type { FiguraV3, Id, Parte } from "./tipos";
 import { RUEDA, RuedaGestos, TrazosGesto } from "../pantallas/gestos/RuedaGestos";
 import { useMiniaturas } from "./useMiniaturas";
 import { Vista3D } from "./Vista3D";
-import { CartaPersonaje, LOGOS, logo } from "../pantallas/CartaPersonaje";
+import { CartaPersonaje, LOGOS, logo, temaDe } from "../pantallas/CartaPersonaje";
 import "../pantallas/azotea/azotea.css";
 import "../pantallas/perfil/perfil.css";
 import "../pantallas/lobby/lobby.css";
@@ -55,8 +55,11 @@ const SAGAS: { id: Id; nombre: string }[] = [
 ];
 const GRUPOS: { id: Id; nombre: string }[] = [
   { id: "avengers", nombre: "Avengers" }, { id: "x-men", nombre: "X-Men" }, { id: "guardianes", nombre: "Guardianes" },
-  { id: "villanos-marvel", nombre: "Villanos" }, { id: "otros-marvel", nombre: "Otros" },
+  { id: "villanos-marvel", nombre: "Villanos" }, { id: "cuatro-fantasticos", nombre: "Los 4 Fantásticos" }, { id: "otros-marvel", nombre: "Otros" },
+  { id: "batman", nombre: "Batman" }, { id: "liga-justicia", nombre: "Liga de la Justicia" },
 ];
+/** Secciones que el Álbum separa aparte de `ficha.grupo` (Los 4 Fantásticos; en DC, Batman y la Liga de la Justicia). */
+const SECCIONES_ALBUM = new Set(["cuatro-fantasticos", "batman", "liga-justicia"]);
 /** Botón de saga o grupo con su logo (los mismos del Álbum de la tienda; Elías, 2026-11-27). Sin logo, el nombre. */
 const conLogo = (id: Id) => !!LOGOS[id];
 function NombreSeccion({ id, nombre }: { id: Id; nombre: string }) {
@@ -208,7 +211,15 @@ export function Constructor({ catalogo, piezas, inicial, seccion, escenaUrl, onG
     return movs.map(op => ({ tipo: "mov" as const, op }));
   }, [sub, vistaTrajes, piezas, parte, familiaPiezas, movs, bloqueada]);
   const origenDe = (it: Item) => (it.tipo === "traje" || it.tipo === "volver" ? "original" : it.tipo === "pieza" ? it.pz.origen ?? "original" : it.tipo === "mov" ? it.op?.origen ?? "ninguna" : "ninguna");
-  const grupoCrudo = (it: Item) => (it.tipo === "traje" ? it.grupo : it.tipo === "pieza" ? it.pz.grupo ?? "" : it.tipo === "mov" ? it.op?.grupo ?? "" : "");
+  const grupoCrudo = (it: Item) => {
+    const g = it.tipo === "traje" ? it.grupo : it.tipo === "pieza" ? it.pz.grupo ?? "" : it.tipo === "mov" ? it.op?.grupo ?? "" : "";
+    if (origenDe(it) !== "original") return g;
+    // Mismas secciones que el Álbum de la tienda (Elías, 2026-11-27: «te faltan 4 fantásticos…»).
+    const id = it.tipo === "traje" ? it.id : it.tipo === "pieza" ? it.pz.donante : it.tipo === "mov" ? /^p:([^:]+):/.exec(it.op?.id ?? "")?.[1] : undefined;
+    const t = id ? cartas.get(id) : undefined;
+    const tema = t ? temaDe(t) : "";
+    return SECCIONES_ALBUM.has(tema) ? tema : g;
+  };
   /** Saga del personaje de donde sale el elemento (traje, pieza original o movimiento original). */
   const sagaDe = (it: Item): Id => {
     const id = it.tipo === "traje" ? it.id : it.tipo === "pieza" ? it.pz.donante : it.tipo === "mov" && it.op?.origen === "original" ? /^p:([^:]+):/.exec(it.op.id)?.[1] : undefined;
@@ -460,7 +471,7 @@ export function Constructor({ catalogo, piezas, inicial, seccion, escenaUrl, onG
           <IconoLosa id={losa.ico} />
           <div>
             <h2>{losa.titulo}</h2>
-            <p>{NOMBRE_SUB[sub]} · {pocas ? (indiceSel >= 0 ? `${indiceSel + 1} de ${pocas}` : `${pocas} ${gesto ? "movimientos" : sub === "cabeza" ? "colores" : "piezas"}`) : "nada por ahora"}{comun ? " comunes" : " originales"}</p>
+            <p>{NOMBRE_SUB[sub]} · {pocas ? (indiceSel >= 0 ? `${indiceSel + 1} de ${pocas}` : `${pocas} ${gesto ? "movimientos" : sub === "cabeza" ? "colores" : sub === "traje" ? "trajes" : "piezas"}`) : "nada por ahora"}{comun ? " comunes" : " originales"}</p>
           </div>
         </header>
         {SUBPARTES[pestana].length > 1 && (
