@@ -11,6 +11,7 @@ import type { Plano } from "./tipos";
 const RANURAS_FIGURA = ["head", "face", "hair", "headgear", "neck", "torso", "arms", "hands", "hips", "legs", "accessory"];
 
 const fotos = new Map<string, string | null>(); // id de pieza → url de la foto, o null si no se pudo
+const escalas = new Map<string, number>(); // foto de figura → cuánto creció su cuadro (figura grande > 1)
 /** Ranuras que se ven en la foto: la de la pieza y, para la cara, la cabeza que la sostiene. */
 export const ranurasFoto = (pz: Pick<PiezaCons, "parte" | "ranuras">): string[] => (pz.parte === "cara" ? [...pz.ranuras, "head"] : [...pz.ranuras]);
 
@@ -31,6 +32,7 @@ export function useMiniaturas(url: string | null, catalogo: Catalogo) {
         const u = typeof e.data.url === "string" && e.data.url.startsWith("data:image/") ? e.data.url : null;
         if (!u) console.warn("miniatura no disponible:", e.data.clave, e.data.error);
         fotos.set(e.data.clave, u);
+        if (typeof e.data.escala === "number" && isFinite(e.data.escala) && e.data.escala >= 1 && e.data.escala < 10) escalas.set(e.data.clave, e.data.escala);
         setVersion(v => v + 1);
       }
     };
@@ -61,5 +63,7 @@ export function useMiniaturas(url: string | null, catalogo: Catalogo) {
       style={{ position: "absolute", left: 0, top: 0, width: 1, height: 1, opacity: 0, border: 0, pointerEvents: "none" }} />
   ) : null;
   (window as unknown as { __miniaturas?: unknown }).__miniaturas = fotos; // para revisar las fotos en la página de prueba
-  return { marco, pedir, foto, listo, pedirFigura, fotoDe };
+  /** Escala de la foto de una figura respecto a una minifigura (1 si cabe en el cuadro de minifigura). */
+  const escalaDe = (clave: string) => escalas.get(clave) ?? 1;
+  return { marco, pedir, foto, listo, pedirFigura, fotoDe, escalaDe };
 }

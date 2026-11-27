@@ -104,6 +104,9 @@ export function piezasDe(piezas: Piezas, parte: Parte, familia: Id = "minifig"):
 /** ¿Es una cabeza con la cara o una máscara impresa? (van en «Máscaras», no en Piel). */
 export const esMascara = (pz: PiezaCons | undefined) => !!pz && pz.parte === "cabeza" && !!pz.donante && CABEZAS_CON_CARA.has(pz.donante);
 
+/** Cara de un personaje con máscara: se elige desde «Máscaras», no se repite en «Cara» (Elías, 2026-11-27). */
+export const caraDeMascara = (pz: PiezaCons | undefined) => !!pz && pz.parte === "cara" && !!pz.donante && CABEZAS_CON_CARA.has(pz.donante);
+
 /** Piel: una cabeza lisa del color elegido (Elías, 2026-11-27: «en piel solo debe salir la cabeza y elegir el color»).
  *  Si la cabeza puesta es lisa se tiñe esa; si es una máscara, se cambia por la lisa del civil base, y la cara vuelve. */
 export function ponerPiel(f: FiguraV3, color: Id | null, todas: Piezas): FiguraV3 {
@@ -111,7 +114,14 @@ export function ponerPiel(f: FiguraV3, color: Id | null, todas: Piezas): FiguraV
   const piezas = { ...f.piezas };
   let id = piezas.cabeza?.id ?? `${base}--cabeza`;
   const pz = todas.get(id);
-  if (!pz || esMascara(pz)) id = `${BASE_CREAR}--cabeza`;
+  if (!pz || esMascara(pz)) {
+    id = `${BASE_CREAR}--cabeza`;
+    // Lo que trajo la máscara se va con ella (su casco y su pelo); vuelve lo del personaje base.
+    if (pz?.donante) for (const p of ["cabello", "sombrero"] as const) {
+      const v = piezas[p]?.id;
+      if (v === `${pz.donante}--${p}` || v === sinId(p)) delete piezas[p];
+    }
+  }
   if (color) piezas.cabeza = { id, tintes: { piel: color } };
   else if (id === `${base}--cabeza`) delete piezas.cabeza;
   else piezas.cabeza = { id };
@@ -137,11 +147,12 @@ export function ponerPieza(f: FiguraV3, pz: PiezaCons, todas?: Piezas): FiguraV3
   piezas[pz.parte] = antes?.tintes && pz.origen !== "original" ? { id: pz.id, tintes: { ...antes.tintes } } : { id: pz.id };
   const otra = ESTORBA[pz.parte];
   if (otra && pz.glb) piezas[otra] = { id: sinId(otra) };
-  // Una máscara (cabeza con la cara impresa) se pone con la cara de su personaje, o sin cara: no se enciman.
-  if (esMascara(pz) && todas) {
-    piezas.cara = { id: todas.has(`${pz.donante}--cara`) ? `${pz.donante}--cara` : sinId("cara") };
-    // Y con su pelo, o sin pelo si su personaje no trae (Spider-Man): el pelo no se encima sobre la máscara.
-    if (!piezas.sombrero || piezas.sombrero.id === sinId("sombrero")) piezas.cabello = { id: todas.has(`${pz.donante}--cabello`) ? `${pz.donante}--cabello` : sinId("cabello") };
+  // Una máscara se pone completa, como la trae su personaje (Elías, 2026-11-27: «al elegir una máscara sale sin ojos, debe
+  // salir completa»): su cara, su pelo y su casco, o «Sin …» si no los trae. Capitán América, por ejemplo, trae los ojos
+  // en la ranura del casco.
+  if (esMascara(pz) && todas) for (const p of ["cara", "cabello", "sombrero"] as const) {
+    const suya = `${pz.donante}--${p}`;
+    piezas[p] = { id: todas.has(suya) ? suya : sinId(p) };
   }
   if (pz.parte === "cara" && pz.origen === "original" && pz.donante && todas) {
     const piel = piezas.cabeza, generica = piel && todas.get(piel.id)?.origen === "generica";

@@ -1,7 +1,7 @@
 // Ronda 5 del personalizador (Elías, 2026-11-27): Piel solo color, máscaras aparte, MODOK fuera.
 import { describe, expect, it } from "vitest";
 import { leerFicha } from "./ficha";
-import { BASE_CREAR, esMascara, figuraInicial, piezasDe, piezasDeCatalogo, ponerPieza, ponerPiel } from "./constructorDatos";
+import { BASE_CREAR, caraDeMascara, esMascara, figuraInicial, piezasDe, piezasDeCatalogo, ponerPieza, ponerPiel } from "./constructorDatos";
 import type { Catalogo } from "./plano";
 import type { Ficha } from "./tipos";
 
@@ -15,12 +15,13 @@ const ficha = (id: string): Ficha => {
   if (!r.ok) throw new Error(r.errores.join());
   return r.ficha;
 };
-const ids = [BASE_CREAR, "batman", "spider-man", "modok"];
+const ids = [BASE_CREAR, "batman", "spider-man", "capitan-america", "modok"];
 const cat: Catalogo = new Map(ids.map(id => [id, { ficha: ficha(id), base: `http://x/catalogo/${id}/` }]));
 const ranuras = new Map<string, string[]>([
   [BASE_CREAR, ["head", "face", "hair", "torso", "arms", "hands", "hips", "legs"]],
   ["batman", ["head", "torso", "arms", "hands", "hips", "legs"]],
   ["spider-man", ["head", "face", "torso", "arms", "hands", "hips", "legs"]],
+  ["capitan-america", ["head", "headgear", "torso", "arms", "hands", "hips", "legs"]],
   ["modok", ["torso", "arms", "hands", "hips", "legs"]],
 ]);
 const piezas = piezasDeCatalogo(cat, ranuras);
@@ -32,8 +33,19 @@ describe("máscaras y piel", () => {
     expect(esMascara(piezas.get(`${BASE_CREAR}--cabeza`))).toBe(false);
   });
   it("una máscara sin cara propia quita la cara; con cara propia trae la suya", () => {
-    expect(ponerPieza(f0, piezas.get("batman--cabeza")!, piezas).piezas).toMatchObject({ cara: { id: "sin-cara" }, cabello: { id: "sin-cabello" } });
+    expect(ponerPieza(f0, piezas.get("batman--cabeza")!, piezas).piezas).toMatchObject({ cara: { id: "sin-cara" }, cabello: { id: "sin-cabello" }, sombrero: { id: "sin-sombrero" } });
     expect(ponerPieza(f0, piezas.get("spider-man--cabeza")!, piezas).piezas.cara).toEqual({ id: "spider-man--cara" });
+  });
+  it("una máscara llega completa: Capitán América trae sus ojos en el casco", () => {
+    expect(ponerPieza(f0, piezas.get("capitan-america--cabeza")!, piezas).piezas).toMatchObject({ cara: { id: "sin-cara" }, sombrero: { id: "capitan-america--sombrero" } });
+  });
+  it("la cara de un personaje con máscara no se repite en Cara", () => {
+    expect(caraDeMascara(piezas.get("spider-man--cara"))).toBe(true);
+    expect(caraDeMascara(piezas.get(`${BASE_CREAR}--cara`))).toBe(false);
+  });
+  it("Piel sobre la máscara quita su casco", () => {
+    const f1 = ponerPieza(f0, piezas.get("capitan-america--cabeza")!, piezas);
+    expect(ponerPiel(f1, "clara", piezas).piezas.sombrero).toBeUndefined();
   });
   it("«Sin cara» no se ofrece para elegir", () => {
     expect(piezasDe(piezas, "cara").some(p => p.id === "sin-cara")).toBe(false);

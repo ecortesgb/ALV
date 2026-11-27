@@ -3,7 +3,7 @@
 // pieza (la cara, además, sobre su cabeza lisa: sin pelo ni casco), la encuadra y devuelve la imagen. Nada se guarda en
 // disco: la página de arriba la tiene en memoria mientras está abierta (los modelos son privados, de un juego).
 // Mensajes (mismo origen, {origen:"alv"}):
-//   {tipo:"foto", clave, plano, ver:[ranuras], tam?, pose?: "especial" | "reposo"} → responde {origen:"minifig", tipo:"foto", clave, url} o {…, error}
+//   {tipo:"foto", clave, plano, ver:[ranuras], tam?, pose?: "especial" | "reposo"} → responde {origen:"minifig", tipo:"foto", clave, url, escala} (escala: cuánto creció el cuadro de figura) o {…, error}
 // Responde {tipo:"listo"} al cargar. Las fotos se sacan de una en una, en el orden en que se piden.
 (function () {
   "use strict";
@@ -65,15 +65,15 @@
       scene.add(p.obj);
       const b = caja(p.obj);
       if (b.isEmpty()) throw new Error("la pieza no tiene nada visible");
-      let centro, radio;
+      let centro, radio, escala = 1;
       if (figura) {
-        // Mismo encuadre para todas, con los pies en la misma línea y a la misma escala: el cuadro alcanza para una figura
-        // grande (Hulk, ~4.2) y una minifigura ocupa unos dos tercios; así la grande se ve más grande (Elías, 2026-11-27,
-        // ronda 5). Solo si algo no cabe, el cuadro crece lo justo.
-        const R = ALTO_CABEZA_MINIFIG * 1.24, Y = ALTO_CABEZA_MINIFIG * 1.14;
+        // Mismo encuadre para todas las minifiguras, con los pies en la misma línea. Una figura grande no cabe: el cuadro
+        // crece lo justo y Mi colección la muestra más grande que su nicho (Elías, 2026-11-27: «hacer los bigfig más grandes,
+        // ponerlos en su tamaño original»).
+        const R = ALTO_CABEZA_MINIFIG * 0.74, Y = ALTO_CABEZA_MINIFIG * 0.68;
         const arriba = Y + R * 0.98, ancho = R * 0.95;
         const k = Math.max(1, (b.max.y + 0.05) / arriba, Math.max(Math.abs(b.min.x), Math.abs(b.max.x)) / ancho);
-        radio = R * k; centro = new T.Vector3(0, Y * k - (k - 1) * R * 0.2, 0);
+        radio = R * k; centro = new T.Vector3(0, Y * k, 0); escala = k; // todo a escala: los pies quedan en la misma línea
       } else {
         const med = b.getSize(new T.Vector3());
         centro = b.getCenter(new T.Vector3()); radio = Math.max(med.x, med.y, med.z) / 2;
@@ -87,7 +87,7 @@
       const t = Math.max(64, Math.min(512, tam || 192));
       renderer.setSize(t, t, false);
       renderer.render(scene, camera);
-      return lienzo.toDataURL("image/webp", 0.86);
+      return { url: lienzo.toDataURL("image/webp", 0.86), escala };
     } finally {
       scene.remove(p.obj); p.quitar();
     }
@@ -98,7 +98,7 @@
     if (e.origin !== location.origin || !e.data || e.data.origen !== "alv" || e.data.tipo !== "foto") return;
     const d = e.data;
     if (typeof d.clave !== "string" || !d.plano || typeof d.plano.glb !== "string" || !Array.isArray(d.ver)) return;
-    cola = cola.then(() => foto(d).then(url => enviar({ tipo: "foto", clave: d.clave, url }),
+    cola = cola.then(() => foto(d).then(r => enviar({ tipo: "foto", clave: d.clave, url: r.url, escala: r.escala }),
       err => enviar({ tipo: "foto", clave: d.clave, error: String(err && err.message ? err.message : err) })));
   });
   enviar({ tipo: "listo" });
