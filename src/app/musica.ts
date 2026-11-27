@@ -100,11 +100,11 @@ export function instalarMusica() {
   instalada = true;
   escenaRuta = escenaDeRuta(location.hash);
   enRutaTema = rutaConTema(location.hash);
+  // El primer toque abre el sonido. Los siguientes reintentan si una pista nueva (la del tema de tu personaje llega
+  // después) quedó en pausa porque el navegador (iPhone sobre todo) solo deja sonar dentro de un toque.
   const desbloquear = () => {
-    if (desbloqueado) return;
-    desbloqueado = true;
-    removeEventListener("pointerdown", desbloquear); removeEventListener("keydown", desbloquear);
-    actualizar();
+    if (!desbloqueado) { desbloqueado = true; actualizar(); return; }
+    if (actual?.el.paused && volumenMeta() > 0) void actual.el.play().catch(() => { /* sigue sin permiso */ });
   };
   addEventListener("pointerdown", desbloquear); addEventListener("keydown", desbloquear);
   addEventListener("hashchange", () => { escenaRuta = escenaDeRuta(location.hash); enRutaTema = rutaConTema(location.hash); actualizar(); });

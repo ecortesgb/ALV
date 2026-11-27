@@ -52,6 +52,17 @@ export function temaDe(m: Manifiesto | null, personaje: string | null): Tema | n
 }
 
 // ---------- Descarga ----------
+/** Baja un archivo del bucket por la ruta AUTENTICADA (object.get_authenticated, la única que abre la 047; la de
+ *  supabase-js `download` usa otra operación y la política la rechaza). El token va en la cabecera, nunca en la URL. */
+async function bajarPrivado(ruta: string, token?: string): Promise<Blob | null> {
+  const url = ((import.meta.env.VITE_SUPABASE_URL as string | undefined) ?? "").replace(/\/+$/, "");
+  const llave = (import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string | undefined) ?? "";
+  const t = token ?? (await cliente!.auth.getSession()).data.session?.access_token;
+  if (!url || !llave || !t) return null;
+  const r = await fetch(`${url}/storage/v1/object/authenticated/${BUCKET}/${ruta}`, { headers: { apikey: llave, Authorization: `Bearer ${t}` }, cache: "no-cache" });
+  return r.ok ? r.blob() : null;
+}
+
 let manifiesto: Promise<Manifiesto | null> | null = null;
 let escuchando = false;
 
@@ -63,8 +74,8 @@ export function cargarManifiesto(): Promise<Manifiesto | null> {
   const p = manifiesto ?? (manifiesto = (async () => {
     const { data: s } = await cliente!.auth.getSession();
     if (!s.session) return null;
-    const { data, error } = await cliente!.storage.from(BUCKET).download("manifiesto.json");
-    if (error || !data) return null;
+    const data = await bajarPrivado("manifiesto.json", s.session.access_token);
+    if (!data) return null;
     return leerManifiesto(JSON.parse(await data.text()));
   })().catch(e => { console.warn("temas:", e); return null; }).then(m => { if (!m && manifiesto === p) manifiesto = null; return m; }));
   return p;
@@ -77,8 +88,8 @@ async function bajar(nombre: string): Promise<Blob | null> {
   let cache: Cache | null = null;
   try { cache = await caches.open(CACHE); const r = await cache.match(llave); if (r) return await r.blob(); } catch { cache = null; }
   if (PRUEBA) return (await fetch(new URL(`objetos/${nombre}`, PRUEBA))).blob();
-  const { data, error } = await cliente!.storage.from(BUCKET).download(`objetos/${nombre}`);
-  if (error || !data) return null;
+  const data = await bajarPrivado(`objetos/${nombre}`);
+  if (!data) return null;
   try { await cache?.put(llave, new Response(data, { headers: { "Content-Type": data.type } })); } catch { /* caché llena o no disponible */ }
   return data;
 }
