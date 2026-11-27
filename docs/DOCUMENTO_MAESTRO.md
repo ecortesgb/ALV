@@ -1544,7 +1544,7 @@ Sustituye la pantalla de cuatro modos (Local, En línea, Físico y Modo libre) d
    - **Modo libre:** botón aparte; sala para probar movimientos de los personajes, pelear y golpearse, sin puntos.
 3. **Un solo aparato (antes «Local»):** celular, laptop o tablet compartido. En el lobby se agrega a alguien con su cuenta (usuario y contraseña) o se crea un personaje nuevo. Un personaje nuevo es una **cuenta rápida**: nombre genérico (Usuario1, Usuario2…) y **contraseña aleatoria por cuenta**, que se muestra una sola vez para que la persona entre después a ver lo que ganó y cambie su usuario y contraseña. Se descartó una contraseña igual para todas: cualquiera entraría a la cuenta de otro y quedaría escrita en el repositorio público. Los personajes rápidos salen del lobby cuando el administrador termina la sesión.
 4. Ilustraciones de Elías: `public/arte/modos/modo-alv-fisico.webp`, `modo-alv-party.webp` y `modo-alv-desmadre.webp` (628×936).
-- Estado (27 nov): base del flujo hecha (lobby directo, «Elige cómo jugar» con las tres tarjetas, «Cambiar modo», `alv-modo` = fisico | party | desmadre). ALV PARTY (`#/party/código`), ALV FÍSICO y un solo aparato con cuentas rápidas se construyen en hilos aparte; mientras, ALV PARTY abre el menú de Mini-Juegos y el lobby de un solo aparato sigue siendo el de Local.
+- Estado (27 nov): base del flujo hecha (lobby directo, «Elige cómo jugar» con las tres tarjetas, «Cambiar modo», `alv-modo` = fisico | party | desmadre). ALV PARTY (`#/party/código`), ALV FÍSICO y un solo aparato con cuentas rápidas se construyen en hilos aparte y se publican junto con esta base.
 
 ---
 

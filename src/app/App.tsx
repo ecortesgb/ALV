@@ -8,7 +8,7 @@ import { PaginaConfigurar } from "../pantallas/ConfigurarPartida";
 import { Recompensas } from "../pantallas/Recompensas";
 import { AvisoLogro } from "../pantallas/AvisoLogro";
 import { EsperaLobby } from "../pantallas/lobby/EsperaLobby";
-import { ModosJuego, PartyProvisional } from "../pantallas/modos/ModosJuego";
+import { ModosJuego } from "../pantallas/modos/ModosJuego";
 import { HubAzotea } from "../pantallas/azotea/HubAzotea";
 import { Editor, Personalizar, SincroCapsulas, useDebeCrearFigura } from "../pantallas/Personalizar";
 import { Sala } from "../pantallas/Sala";
@@ -46,7 +46,6 @@ export function App() {
     : fase === "menor" ? <SoloMayores />
     : sinFigura ? <Personalizar />
     : ruta === "modos" ? <ModosJuego key={arg ?? ""} codigo={arg} />
-    : ruta === "party" && arg ? <PartyProvisional codigo={arg} />
     : ruta === "jugar" ? <EsperaLobby />
     : ruta === "catalogo" ? <Catalogo />
     : ruta === "juego" && arg ? <FichaJuego id={arg} />

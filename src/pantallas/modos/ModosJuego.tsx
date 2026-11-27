@@ -153,8 +153,3 @@ function ElegirModo({ codigo }: { codigo: string }) {
   );
 }
 
-/** #/party/código provisional: hasta que llegue el configurador de ALV Party, abre el menú actual de Mini-Juegos. */
-export function PartyProvisional({ codigo: _codigo }: { codigo: string }) {
-  useEffect(() => { location.assign(`${BASE}tools/personajes/minijuegos/`); }, []);
-  return null;
-}
