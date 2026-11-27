@@ -19,6 +19,9 @@ describe("temas de personaje", () => {
     expect(temaDe(m, "wolverine")?.fondo.g).toBe(h("a") + ".webp");
     expect(temaDe(m, "ciclope")).toBeNull();
     expect(temaDe(m, null)).toBeNull();
+    expect(m!.voces).toEqual({});
+    const v = leerManifiesto({ temas: {}, personajes: {}, voces: { ciclope: { especial: h("e") + ".mp3", malo: h("e") + ".mp3" }, "x y": { especial: h("e") + ".mp3" }, tormenta: { especial: "a.mp3" } } });
+    expect(v!.voces).toEqual({ ciclope: { especial: h("e") + ".mp3" } });
     expect(leerManifiesto(null)).toBeNull();
     expect(leerManifiesto({ temas: 3 })).toBeNull();
   });

@@ -12,7 +12,8 @@ import { cliente } from "../servicios/cliente";
 import { leerV3 } from "../personajes/integracion";
 
 export interface Tema { fondo: { g: string; c: string }; musica: string[] }
-export interface Manifiesto { temas: Record<string, Tema>; personajes: Record<string, string> }
+export interface Manifiesto { temas: Record<string, Tema>; personajes: Record<string, string>;
+  /** Voces cortas por personaje y gesto (Elías, 27 nov): {ciclope: {especial: "<sha>.mp3"}}. */ voces: Record<string, Record<string, string>> }
 
 const BUCKET = "temas-privados";
 const CACHE = "alv-temas-v1";
@@ -36,7 +37,15 @@ export function leerManifiesto(x: unknown): Manifiesto | null {
   }
   const p: Record<string, string> = {};
   for (const [k, v] of Object.entries(personajes as Record<string, unknown>)) if (CLAVE.test(k) && typeof v === "string" && t[v]) p[k] = v;
-  return { temas: t, personajes: p };
+  const voces: Record<string, Record<string, string>> = {};
+  const vx = (x as { voces?: unknown }).voces;
+  if (vx && typeof vx === "object") for (const [k, v] of Object.entries(vx as Record<string, unknown>)) {
+    if (!CLAVE.test(k) || !v || typeof v !== "object") continue;
+    const g: Record<string, string> = {};
+    for (const [gesto, a] of Object.entries(v as Record<string, unknown>)) if (/^(saludar|victoria|derrota|especial|ganar|perder)$/.test(gesto) && typeof a === "string" && OBJETO.test(a) && a.endsWith(".mp3")) g[gesto] = a;
+    if (Object.keys(g).length) voces[k] = g;
+  }
+  return { temas: t, personajes: p, voces };
 }
 
 /** Personaje del catálogo que lleva la figura (v3 dentro de la v2). null para lo creado desde cero o sin v3. */
@@ -64,6 +73,8 @@ async function bajarPrivado(ruta: string, token?: string): Promise<Blob | null> 
 }
 
 let manifiesto: Promise<Manifiesto | null> | null = null;
+/** El último manifiesto que llegó (para consultas sin esperar, como la voz al tocar un gesto). */
+let ultimo: Manifiesto | null = null;
 let escuchando = false;
 
 /** El manifiesto vigente (una vez por sesión). Un null no se guarda: el siguiente llamado vuelve a intentar. */
@@ -77,7 +88,7 @@ export function cargarManifiesto(): Promise<Manifiesto | null> {
     const data = await bajarPrivado("manifiesto.json", s.session.access_token);
     if (!data) return null;
     return leerManifiesto(JSON.parse(await data.text()));
-  })().catch(e => { console.warn("temas:", e); return null; }).then(m => { if (!m && manifiesto === p) manifiesto = null; return m; }));
+  })().catch(e => { console.warn("temas:", e); return null; }).then(m => { if (m) ultimo = m; else if (manifiesto === p) manifiesto = null; return m; }));
   return p;
 }
 
@@ -142,6 +153,18 @@ export function useFondosTema(figuras: readonly unknown[], tamano: "c" | "g" | "
 
 export function useFondoTema(figura: unknown, tamano: "c" | "g" | "auto" = "auto", espera?: number): EstadoFondo {
   return useFondosTema([figura], tamano, espera)[0]!;
+}
+
+
+/** Nombre del audio de voz de una figura para un gesto, si lo tiene (con el manifiesto ya cargado). */
+export function vozDe(figura: unknown, gesto: string): string | null {
+  const id = personajeDe(figura);
+  return (id && ultimo?.voces[id]?.[gesto]) || null;
+}
+
+/** Deja lista (bajada) la voz de un gesto para que suene sin espera al tocar. */
+export function prepararVoz(figura: unknown, gesto: string): void {
+  void cargarManifiesto().then(() => { const n = vozDe(figura, gesto); if (n) void urlObjeto(n); });
 }
 
 /** Canciones del tema de una figura, ya como URL local. Lista vacía si no tiene. */
