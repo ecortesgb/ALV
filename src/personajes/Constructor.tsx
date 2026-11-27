@@ -9,6 +9,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, 
 import { PALETAS, paletaDePieza, piezasDe, planoConstructor, ponerPieza, quitarTinte, teñir, type PiezaCons, type Piezas } from "./constructorDatos";
 import { caben, paginas } from "./galeriaDatos";
 import { GRUPOS_GENERICAS } from "./genericas";
+import { esOtros, grupoMostrado, juntarVersiones, nombreBase } from "./agrupar";
 import { conMovimientos, elegirMovimiento, GESTOS, movimientosElegidos, NOMBRE_GESTO, opcionesMovimiento, type BaseGenerica, type Gesto, type OpcionMov } from "./movimientos";
 import type { Catalogo } from "./plano";
 import type { FiguraV3, Id, Parte } from "./tipos";
@@ -57,8 +58,8 @@ const GRUPOS: { id: Id; nombre: string }[] = [
 const legible = (id: Id) => id.split("-").map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
 /** Ordena los ids según una lista conocida (los desconocidos al final, por nombre). */
 function ordenar(ids: Iterable<Id>, conocidos: { id: Id; nombre: string }[]): { id: Id; nombre: string }[] {
-  const pos = (id: Id) => { const i = conocidos.findIndex(c => c.id === id); return i < 0 ? 999 : i; };
-  return [...new Set(ids)].filter(Boolean).map(id => ({ id, nombre: conocidos.find(c => c.id === id)?.nombre ?? legible(id) }))
+  const pos = (id: Id) => { const i = conocidos.findIndex(c => c.id === id); return esOtros(id) ? 1000 : i < 0 ? 999 : i; };
+  return [...new Set(ids)].filter(Boolean).map(id => ({ id, nombre: conocidos.find(c => c.id === id)?.nombre ?? (esOtros(id) ? "Otros" : legible(id)) }))
     .sort((a, b) => pos(a.id) - pos(b.id) || a.nombre.localeCompare(b.nombre, "es"));
 }
 /** Gesto del menú de la rueda para cada gesto de la figura (para probarlo al elegirlo). */
@@ -66,7 +67,9 @@ const RUEDA_DE: Record<Gesto, string> = { saludo: "saludar", victoria: "victoria
 type Fuente = "original" | "generica";
 /** Elemento de la rejilla: pieza o movimiento. */
 /** Elemento de la rejilla: pieza, movimiento o traje completo (un personaje del catálogo tal cual). */
-type Item = { tipo: "pieza"; pz: PiezaCons } | { tipo: "mov"; op: OpcionMov | null } | { tipo: "traje"; id: Id; nombre: string; grupo: Id; foto: string | null };
+/** Un traje con varias versiones del mismo personaje sale una vez; al tocarlo se abren sus versiones (Elías, 2026-11-27). */
+type Item = { tipo: "pieza"; pz: PiezaCons } | { tipo: "mov"; op: OpcionMov | null } | { tipo: "volver" }
+  | { tipo: "traje"; id: Id; nombre: string; grupo: Id; foto: string | null; base?: string; versiones?: Id[] };
 
 /** Ícono ilustrado de Elías (arte/ui/personalizar/<id>.webp); mientras no exista, su lugar queda vacío. */
 const faltan = new Set<string>();
@@ -112,6 +115,7 @@ export function Constructor({ catalogo, piezas, inicial, seccion, escenaUrl, onG
   /** Switch Originales / Común: uno para todo el taller (Elías, 2026-11-26). Cambia las piezas que se ofrecen y el fondo:
    *  cómic con las originales, clóset con las comunes. */
   const [modo, setModo] = useState<Fuente>("original");
+  const [abierto, setAbierto] = useState<string | null>(null); // personaje con sus versiones abiertas en Trajes
   const [grupo, setGrupo] = useState<Id>("todas");
   const [saga, setSaga] = useState<Id>("todas");
   const [pagina, setPagina] = useState(0);
@@ -159,15 +163,27 @@ export function Constructor({ catalogo, piezas, inicial, seccion, escenaUrl, onG
     .sort((a, b) => a.ficha.nombre.localeCompare(b.ficha.nombre, "es"))
     .map(({ ficha: f, base: carpeta }) => ({ tipo: "traje" as const, id: f.id, nombre: f.nombre, grupo: f.grupo,
       foto: /\.(webp|png|jpg)$/i.test(f.fotos.tarjeta) && !/no-hay/.test(f.fotos.tarjeta) ? new URL(f.fotos.tarjeta, carpeta).href : null })), [catalogo, figura.familia]);
-  const todas = useMemo<Item[]>(() => (sub === "traje" ? trajes : parte ? piezasDe(piezas, parte, figura.familia).map(pz => ({ tipo: "pieza" as const, pz })) : movs.map(op => ({ tipo: "mov" as const, op }))),
-    [sub, trajes, piezas, parte, figura.familia, movs]);
-  const origenDe = (it: Item) => (it.tipo === "traje" ? "original" : it.tipo === "pieza" ? it.pz.origen ?? "original" : it.op?.origen ?? "ninguna");
-  const grupoDe = (it: Item) => (it.tipo === "traje" ? it.grupo : it.tipo === "pieza" ? it.pz.grupo ?? "" : it.op?.grupo ?? "");
+  /** Trajes a mostrar: uno por personaje (con sus versiones) o, con uno abierto, sus versiones y «Volver». */
+  const vistaTrajes = useMemo<Item[]>(() => {
+    const solo = trajes as Extract<Item, { tipo: "traje" }>[];
+    if (abierto) { const vs = solo.filter(t => nombreBase(t.nombre) === abierto); if (vs.length > 1) return [{ tipo: "volver" }, ...vs.map(v => ({ ...v, nombre: /\(([^)]*)\)\s*$/.exec(v.nombre)?.[1] ?? v.nombre }))]; }
+    return juntarVersiones(solo, t => t.nombre).map(j => (j.versiones.length > 1 ? { ...j.rep, nombre: j.base, base: j.base, versiones: j.versiones.map(v => v.id) } : j.rep));
+  }, [trajes, abierto]);
+  const todas = useMemo<Item[]>(() => (sub === "traje" ? vistaTrajes : parte ? piezasDe(piezas, parte, figura.familia).map(pz => ({ tipo: "pieza" as const, pz })) : movs.map(op => ({ tipo: "mov" as const, op }))),
+    [sub, vistaTrajes, piezas, parte, figura.familia, movs]);
+  const origenDe = (it: Item) => (it.tipo === "traje" || it.tipo === "volver" ? "original" : it.tipo === "pieza" ? it.pz.origen ?? "original" : it.op?.origen ?? "ninguna");
+  const grupoCrudo = (it: Item) => (it.tipo === "traje" ? it.grupo : it.tipo === "pieza" ? it.pz.grupo ?? "" : it.tipo === "mov" ? it.op?.grupo ?? "" : "");
   /** Saga del personaje de donde sale el elemento (traje, pieza original o movimiento original). */
   const sagaDe = (it: Item): Id => {
-    const id = it.tipo === "traje" ? it.id : it.tipo === "pieza" ? it.pz.donante : it.op?.origen === "original" ? /^p:([^:]+):/.exec(it.op.id)?.[1] : undefined;
+    const id = it.tipo === "traje" ? it.id : it.tipo === "pieza" ? it.pz.donante : it.tipo === "mov" && it.op?.origen === "original" ? /^p:([^:]+):/.exec(it.op.id)?.[1] : undefined;
     return (id && catalogo.get(id)?.ficha.saga) || "";
   };
+  /** Grupos de 3 o menos se juntan en «Otros» de su saga (Elías, 2026-11-27); las comunes conservan su tipo. */
+  const grupoDe = useMemo(() => {
+    const orig = grupoMostrado(todas.filter(it => origenDe(it) === "original"), sagaDe, grupoCrudo);
+    return (it: Item) => (origenDe(it) === "original" ? orig(it) : grupoCrudo(it));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [todas, catalogo]);
   const fuente: Fuente = modo;
   const originales = fuente === "original";
   /** Primer nivel (solo originales): las sagas que tienen algo aquí. */
@@ -181,14 +197,15 @@ export function Constructor({ catalogo, piezas, inicial, seccion, escenaUrl, onG
     if (originales) return sg === "todas" ? [] : ordenar(de.map(grupoDe), GRUPOS);
     return (parte ? GRUPOS_GENERICAS[parte] ?? [] : []).filter(x => de.some(it => grupoDe(it) === x.id));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [todas, fuente, parte, sg]);
+  }, [todas, fuente, parte, sg, grupoDe]);
   const g = grupos.some(x => x.id === grupo) ? grupo : "todas";
   const ninguno: Item | null = gesto ? { tipo: "mov", op: null } : todas.find(it => origenDe(it) === "ninguna") ?? null;
   const lista = useMemo<Item[]>(() => {
+    if (todas[0]?.tipo === "volver") return todas; // versiones de un personaje: todas, sin filtros
     const l = todas.filter(it => origenDe(it) === fuente && (!originales || sg === "todas" || sagaDe(it) === sg) && (g === "todas" || grupoDe(it) === g));
     return ninguno ? [ninguno, ...l] : l;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [todas, fuente, sg, g, ninguno]);
+  }, [todas, fuente, sg, g, ninguno, grupoDe]);
   const pags = useMemo(() => paginas(lista, caja.columnas * caja.filas), [lista, caja]);
   const p = Math.min(pagina, pags.length - 1);
   const elegidos = movimientosElegidos(figura);
@@ -197,7 +214,7 @@ export function Constructor({ catalogo, piezas, inicial, seccion, escenaUrl, onG
   const paleta = parte && pzPuesta?.origen === "generica" ? paletaDePieza(pzPuesta, parte) : undefined; // las originales ya traen su color
   const tinte = parte && paleta ? figura.piezas[parte]?.tintes?.[paleta] ?? null : null;
   const baseId = figura.origen.tipo === "catalogo" ? figura.origen.personaje : null;
-  const visible = (it: Item) => it.tipo === "traje" ? it.id === baseId : it.tipo === "pieza" ? it.pz.id === puesta || (!puesta && it.pz.donante === baseId) : (it.op?.id ?? null) === (gesto ? elegidos[gesto] ?? null : null);
+  const visible = (it: Item) => it.tipo === "volver" ? false : it.tipo === "traje" ? (it.versiones ? !!baseId && it.versiones.includes(baseId) : it.id === baseId) : it.tipo === "pieza" ? it.pz.id === puesta || (!puesta && it.pz.donante === baseId) : (it.op?.id ?? null) === (gesto ? elegidos[gesto] ?? null : null);
   const losa = LOSAS.find(l => l.id === pestana)!;
   /** Palomita de cada sección: algo cambió respecto al personaje base. */
   const hecha = (t: Pestana) => t === "trajes" ? baseId !== (inicial.origen.tipo === "catalogo" ? inicial.origen.personaje : null) : t === "movimientos" ? Object.keys(elegidos).length > 0 : SUBPARTES[t].some(x => !!figura.piezas[x as Parte]);
@@ -239,17 +256,19 @@ export function Constructor({ catalogo, piezas, inicial, seccion, escenaUrl, onG
   const [guarda, setGuarda] = useState(false);
   const elegirLosa = (t: Pestana) => {
     if (t === pestana) return;
-    setPestana(t); setSub(SUBPARTES[t][0]!); setGrupo("todas"); setPagina(0); setPasa(null);
+    setPestana(t); setSub(SUBPARTES[t][0]!); setGrupo("todas"); setPagina(0); setPasa(null); setAbierto(null);
   };
-  const elegirSub = (x: Sub) => { setSub(x); setGrupo("todas"); setPagina(0); setPasa(null); };
-  const elegirModo = (f: Fuente) => { if (f === modo) return; setModo(f); setGrupo("todas"); setPagina(0); setPasa(null); };
-  const elegirSaga = (x: Id) => { setSaga(x); setGrupo("todas"); setPagina(0); setPasa(null); };
-  const elegirGrupo = (x: Id) => { setGrupo(x); setPagina(0); setPasa(null); };
+  const elegirSub = (x: Sub) => { setSub(x); setGrupo("todas"); setPagina(0); setPasa(null); setAbierto(null); };
+  const elegirModo = (f: Fuente) => { if (f === modo) return; setModo(f); setGrupo("todas"); setPagina(0); setPasa(null); setAbierto(null); };
+  const elegirSaga = (x: Id) => { setSaga(x); setGrupo("todas"); setPagina(0); setPasa(null); setAbierto(null); };
+  const elegirGrupo = (x: Id) => { setGrupo(x); setPagina(0); setPasa(null); setAbierto(null); };
   const deshacer = () => { if (!historia.length) return; setFuturo(f => [figura, ...f].slice(0, 30)); setFigura(historia[historia.length - 1]!); setHistoria(h => h.slice(0, -1)); setGuardado(false); };
   const rehacer = () => { if (!futuro.length) return; setHistoria(h => [...h.slice(-29), figura]); setFigura(futuro[0]!); setFuturo(f => f.slice(1)); setGuardado(false); };
   const restablecer = () => { if (figura !== inicial) cambiar(inicial); };
   const tocarItem = (it: Item) => {
     // Traje completo: el personaje tal cual (sin piezas cambiadas); conserva movimientos y extensiones.
+    if (it.tipo === "volver") { setAbierto(null); setPagina(0); setPasa(null); return; }
+    if (it.tipo === "traje" && it.versiones && it.base) { setAbierto(it.base); setPagina(0); setPasa(null); return; }
     if (it.tipo === "traje") { if (it.id !== baseId || Object.keys(figura.piezas).length) cambiar({ ...figura, origen: { tipo: "catalogo", personaje: it.id, version: "base", revision: 1 }, piezas: {} }); return; }
     if (it.tipo === "pieza") { cambiar(ponerPieza(figura, it.pz, piezas)); return; }
     if (!gesto) return;
@@ -327,8 +346,8 @@ export function Constructor({ catalogo, piezas, inicial, seccion, escenaUrl, onG
   };
   function irA(n: number) { const m = Math.max(0, Math.min(pags.length - 1, n)); if (m === p) return; setPasa(m > p ? "sig" : "ant"); setPagina(m); }
 
-  const pocas = lista.filter(it => (it.tipo === "traje" || (it.tipo === "pieza" ? !!it.pz.glb : !!it.op))).length;
-  const indiceSel = lista.filter(it => (it.tipo === "traje" || (it.tipo === "pieza" ? !!it.pz.glb : !!it.op))).findIndex(visible);
+  const pocas = lista.filter(it => (it.tipo === "traje" || (it.tipo === "pieza" ? !!it.pz.glb : it.tipo === "mov" && !!it.op))).length;
+  const indiceSel = lista.filter(it => (it.tipo === "traje" || (it.tipo === "pieza" ? !!it.pz.glb : it.tipo === "mov" && !!it.op))).findIndex(visible);
   const comun = modo === "generica";
 
   return (
@@ -394,7 +413,7 @@ export function Constructor({ catalogo, piezas, inicial, seccion, escenaUrl, onG
             {SUBPARTES[pestana].map(x => <button key={x} type="button" role="tab" className={"pz-sub" + (sub === x ? " on" : "")} aria-selected={sub === x} onClick={() => elegirSub(x)}>{NOMBRE_SUB[x]}</button>)}
           </div>
         )}
-        {(sagas.length > 0 || grupos.length > 1 || paleta) && (
+        {todas[0]?.tipo !== "volver" && (sagas.length > 0 || grupos.length > 1 || paleta) && (
           <div className="pz-filtros">
             {sagas.length > 0 && (
               <div className="pz-chips pz-sagas" role="group" aria-label="Sagas">
@@ -425,13 +444,14 @@ export function Constructor({ catalogo, piezas, inicial, seccion, escenaUrl, onG
         <div className={"pz-rejilla" + (pasa ? " pasa-" + pasa : "")} ref={rejilla} onPointerDown={bajar} onPointerUp={subir}
           style={{ gridTemplateColumns: `repeat(${caja.columnas}, minmax(0, 1fr))`, gridTemplateRows: `repeat(${caja.filas}, minmax(0, 1fr))` }}>
           {(pags[p] ?? []).map(it => {
-            const clave = it.tipo === "traje" ? "traje-" + it.id : it.tipo === "pieza" ? it.pz.id : it.op?.id ?? "de-siempre";
-            const nombre = it.tipo === "traje" ? it.nombre : it.tipo === "pieza" ? (it.pz.glb ? it.pz.nombre : "Ninguno") : it.op ? it.op.nombre : "De siempre";
+            const clave = it.tipo === "volver" ? "volver" : it.tipo === "traje" ? "traje-" + it.id + (it.versiones ? "-v" : "") : it.tipo === "pieza" ? it.pz.id : it.op?.id ?? "de-siempre";
+            const nombre = it.tipo === "volver" ? "Volver" : it.tipo === "traje" ? it.nombre : it.tipo === "pieza" ? (it.pz.glb ? it.pz.nombre : "Ninguno") : it.op ? it.op.nombre : "De siempre";
             const on = visible(it);
             return (
               <button key={clave} type="button" className={"pz-pieza" + (on ? " on" : "")} aria-pressed={on} onClick={() => tocarItem(it)}
                 title={it.tipo === "mov" && it.op ? `${it.op.nombre} · ${it.op.sub}` : nombre}>
                 {(() => {
+                  if (it.tipo === "volver") return <span className="pz-sin pz-volver" aria-hidden="true">‹</span>;
                   if (it.tipo === "traje") return it.foto ? <img src={it.foto} alt="" draggable={false} loading="lazy" /> : <span className="pz-sin" aria-hidden="true">—</span>;
                   if (it.tipo === "mov") {
                     if (it.op?.foto) return <img src={it.op.foto} alt="" draggable={false} loading="lazy" />;
@@ -448,6 +468,7 @@ export function Constructor({ catalogo, piezas, inicial, seccion, escenaUrl, onG
                 })()}
                 <span>{nombre}</span>
                 {it.tipo === "mov" && it.op && <small className="pz-mov-sub">{it.op.sub}</small>}
+                {it.tipo === "traje" && it.versiones && <small className="pz-mov-sub">{it.versiones.length} versiones</small>}
                 {on && <i className="pz-check" aria-hidden="true">✓</i>}
               </button>
             );

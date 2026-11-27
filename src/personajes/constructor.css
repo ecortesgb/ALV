@@ -244,3 +244,6 @@
 /* «Color original»: quita el tinte elegido (Elías, 2026-11-26). */
 .D .pz-color-original::before { background: conic-gradient(#f2cd37 0 25%, #c91a09 0 50%, #0055bf 0 75%, #237841 0); }
 .D .pz-color-original::after { content: "↺"; position: absolute; inset: 0; display: grid; place-items: center; font: 900 14px/1 var(--f-texto); color: #fff; text-shadow: 0 1px 2px #000; }
+
+/* Volver de las versiones de un personaje (Trajes). */
+.pz-pieza .pz-volver { font-size: 44px; font-weight: 800; line-height: 1; }
