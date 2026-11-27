@@ -117,6 +117,7 @@ const GOLPE = p("thor", "martillo", { nombre: "Supergolpe", efecto: { color: "#f
 const FUERZA = (color: string) => hechizo("La Fuerza", color);
 const BLASTER = p("iron-man", "repulsor", { nombre: "Bláster", efecto: { color: "#ff8a3a" } });
 const JETPACK = p("iron-man", "volar", { nombre: "Jetpack", efecto: { color: FUEGO, color2: AMARILLO } });
+const GANCHO = p("spider-man", "columpio", { nombre: "Gancho", efecto: { color: "#b0b0b0" } });
 
 const SUPERMAN: Readonly<Record<string, Prestado>> = {
   volar: p("iron-man", "volar", { efecto: { color: "#ffffff", color2: "#9fd0ff" } }),
@@ -185,6 +186,44 @@ export const PRESTADOS: Readonly<Record<Id, Readonly<Record<string, Prestado>>>>
   yoda: { fuerza: FUERZA(VERDE), levitar: p("doctor-strange", "levitar", { efecto: { color: VERDE, color2: "#c8ffcc" } }) },
   mandaloriano: { volar: JETPACK, blaster: BLASTER },
   "jango-fett": { volar: JETPACK, blaster: BLASTER },
+  // Tanda 2 y figuras LDraw sin poderes (Elías, 27 nov 2026: «que todos tengan movimientos que puedan ir con ellos»).
+  "superman-ojos-rojos": SUPERMAN,
+  "mujer-maravilla-clasica": { lazo: p("spider-man", "telarana", { nombre: "Lazo de la verdad", efecto: { color: AMARILLO } }), golpe: GOLPE },
+  "thor-minifig": { rayo: p("thor", "rayo"), martillo: p("thor", "martillo"), volar: p("thor", "volar") },
+  "tormenta-minifig": { rayo: p("tormenta", "rayo"), volar: p("tormenta", "volar") },
+  "iron-man-mk42-minifig": { repulsor: REPULSOR, pecho: PECHO, volar: VOLAR_IM },
+  "iron-man-mk6": { repulsor: REPULSOR, pecho: PECHO, volar: VOLAR_IM },
+  "spider-man-minifig": { telarana: TELA, columpio: COLUMPIO },
+  "spider-man-simbionte": { telarana: TELA, columpio: COLUMPIO },
+  "spider-gwen": { telarana: TELA, columpio: COLUMPIO },
+  "miles-morales": { telarana: TELA, columpio: COLUMPIO,
+    descarga: p("tormenta", "rayo", { nombre: "Descarga venenosa", efecto: { color: "#ffe14a", cielo: false } }) },
+  "batman-excalibur": { gancho: GANCHO }, "batman-logo-dorado": { gancho: GANCHO }, "batman-gris-oscuro": { gancho: GANCHO },
+  "batman-gris-claro": { gancho: GANCHO }, "batman-logo-amarillo": { gancho: GANCHO }, batgirl: { gancho: GANCHO },
+  "robin-dimensions": { gancho: GANCHO },
+  "darth-vader-minifig": { fuerza: FUERZA(ROJO) },
+  "emperador-palpatine": { rayos: p("tormenta", "rayo", { nombre: "Rayos Sith", efecto: { color: "#9fc4ff", cielo: false } }), fuerza: FUERZA(ROJO) },
+  "mace-windu": { fuerza: FUERZA("#b04cff") },
+  "han-solo": { blaster: BLASTER },
+  "harry-potter-quidditch": { hechizo: hechizo("Hechizo", ROJO) },
+  "harry-potter-chamarra-abierta": { hechizo: hechizo("Hechizo", ROJO) },
+  "harry-potter-chamarra-azul": { hechizo: hechizo("Hechizo", ROJO) },
+  "harry-potter-dimensions": { hechizo: hechizo("Hechizo", ROJO) },
+  "hermione-chamarra": { hechizo: hechizo("Hechizo", AZUL) },
+  "voldemort-dimensions": { hechizo: hechizo("Hechizo", "#3cff3c") },
+  "bellatrix-lestrange": { hechizo: hechizo("Maldición", "#3cff3c") },
+  "loki-minifig": { hechizo: hechizo("Hechizo", "#3cff7a") },
+  elsa: { hielo: p("iceman", "hielo", { nombre: "Hielo", efecto: { color: "#bfefff" } }) },
+  "mr-increible": { golpe: GOLPE },
+  baymax: { volar: p("iron-man", "volar", { nombre: "Volar", efecto: { color: "#ff6a1a", color2: "#ffd23a" } }) },
+  cyborg: { canon: p("iron-man", "repulsor", { nombre: "Cañón sónico", efecto: { color: "#7fd8ff" } }) },
+  starfire: { volar: p("iron-man", "volar", { efecto: { color: VERDE, color2: "#c8ffcc" } }), rayo: p("iron-man", "repulsor", { nombre: "Starbolt", efecto: { color: VERDE } }) },
+  raven: { hechizo: hechizo("Magia oscura", "#b86bff"), levitar: p("doctor-strange", "levitar", { efecto: { color: "#b86bff", color2: "#e0c8ff" } }) },
+  bombon: { volar: p("iron-man", "volar", { efecto: { color: "#ff7ac8", color2: "#ffffff" } }), rayo: p("ciclope", "rayo", { nombre: "Rayo", efecto: { color: "#ff7ac8" } }) },
+  burbuja: { volar: p("iron-man", "volar", { efecto: { color: "#7fd8ff", color2: "#ffffff" } }), rayo: p("ciclope", "rayo", { nombre: "Rayo", efecto: { color: "#7fd8ff" } }) },
+  bellota: { volar: p("iron-man", "volar", { efecto: { color: VERDE, color2: "#ffffff" } }), rayo: p("ciclope", "rayo", { nombre: "Rayo", efecto: { color: VERDE } }) },
+  "marvin-marciano": { blaster: p("iron-man", "repulsor", { nombre: "Pistola de rayos", efecto: { color: VERDE } }) },
+  marceline: { volar: p("doctor-strange", "levitar", { nombre: "Flotar", efecto: { color: "#ff5a7a", color2: "#ffc0cc" } }) },
 };
 
 /** Un poder listo para la escena: el GLB y el clip (null si se dibuja solo el efecto), y sus efectos. */

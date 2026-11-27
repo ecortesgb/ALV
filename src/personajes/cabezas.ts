@@ -11,6 +11,15 @@ export const CABEZAS_CON_CARA: ReadonlySet<Id> = new Set([
   "jango-fett", "jean-grey", "joker", "joker-caballero-oscuro", "loki", "luke-skywalker", "malekith", "mandaloriano",
   "mujer-maravilla", "nick-fury", "robin", "robin-lego-batman", "ron-weasley", "ronan", "shocker", "spider-man",
   "superior-spider-man", "superman", "taskmaster", "voldemort", "yoda",
+  // Tanda 2 (27 nov 2026): todas armadas con LDraw y cara impresa.
+  "mickey-mouse", "minnie-mouse", "c-3po", "wolverine-mascara", "soldado-del-invierno-minifig", "harry-potter-quidditch",
+  "baymax", "edna-moda", "thor-minifig", "spider-gwen", "batgirl", "bellatrix-lestrange", "pedro-picapiedra",
+  "sheldon-cooper", "miles-morales", "han-solo", "emperador-palpatine", "mace-windu", "jack-sparrow", "elsa", "moana",
+  "mr-increible", "loki-minifig", "tormenta-minifig", "lionel-messi", "cristiano-ronaldo", "kylian-mbappe",
+  "vinicius-junior", "batman-excalibur", "batman-logo-dorado", "batman-gris-oscuro", "batman-gris-claro",
+  "batman-logo-amarillo", "iron-man-mk42-minifig", "iron-man-mk6", "spider-man-simbionte", "spider-man-minifig",
+  "harry-potter-chamarra-abierta", "harry-potter-chamarra-azul", "darth-vader-minifig", "joker-clasico",
+  "cristiano-ronaldo-united-2008", "cristiano-ronaldo-madrid-2018", "omni-man", "homelander",
 ]);
 
 /** Personajes cuyas piezas no se ofrecen: su cabeza gigante va en el torso y se encima con la cabeza normal. */
