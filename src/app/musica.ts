@@ -94,6 +94,21 @@ export function tocarFanfarria(src: string, ms = 8000) {
   }).catch(() => { /* el navegador no deja sonar sin un toque */ });
 }
 
+/** Voz corta de un personaje (p. ej. al hacer «Especial»). Suena sobre la música y la baja mientras habla. Sigue el
+ *  interruptor y el volumen de la música (es audio del personaje, como su canción). Devuelve false si no sonó. */
+let voz: HTMLAudioElement | null = null;
+export function tocarVoz(src: string): boolean {
+  const p = preferencias();
+  if (!p.musica || p.volumenMusica <= 0 || typeof Audio === "undefined") return false;
+  if (voz) voz.pause();
+  const el = new Audio(src); el.volume = Math.min(1, p.volumenMusica / 100); voz = el;
+  const fondo = actual?.el;
+  const volver = () => { if (voz === el) voz = null; if (fondo && actual?.el === fondo) fundir(fondo, volumenMeta()); };
+  el.addEventListener("ended", volver, { once: true });
+  void el.play().then(() => { if (fondo) fundir(fondo, volumenMeta() * 0.25); }).catch(volver);
+  return true;
+}
+
 let instalada = false;
 export function instalarMusica() {
   if (instalada || !hayMusica || typeof window === "undefined") return;

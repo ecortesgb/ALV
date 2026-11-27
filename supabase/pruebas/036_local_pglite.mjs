@@ -181,4 +181,34 @@ await prueba("la tienda vieja quedó apagada", async () => {
 });
 
 console.log(`\n${ok} pasan, ${mal} fallan`);
+if (process.argv.includes("--reposicion")) {
+  await admin();
+  await db.exec(readFileSync(join(MIG, "050_reposicion_comodines.sql"), "utf8"));
+  const reponer = async (carta, ped = pedido()) => (await uno("select public.reponer_comodin($1, $2) r", [carta, ped])).r;
+
+  await prueba("050: descubre en sobre, conserva el cero y repone sin duplicar el cobro", async () => {
+    await admin();
+    await db.query("delete from public.comodines_jugador where jugador = $1 and comodin = 'turno'", [B]);
+    await db.query("insert into public.movimientos_monedas(jugador,cantidad,motivo) values ($1,300,'prueba-reposicion')", [B]);
+    await como(B);
+    await falla("select public.reponer_comodin($1,$2)", ["turno", pedido()], "descubre");
+    await admin();
+    await db.query("insert into public.comodines_jugador values ($1,'turno',0)", [B]);
+    await como(B);
+    const saldo = await monedas(), id = pedido();
+    igual(await reponer("turno", id), { monedas: saldo - 65, cantidad: 1 });
+    igual(await reponer("turno", id), { monedas: saldo - 65, cantidad: 1 });
+    await falla("select public.reponer_comodin($1,$2)", ["turno", pedido()], "copias");
+    await falla("select public.reponer_comodin($1,$2)", ["cambio", id], "pedido inválido");
+    igual(await monedas(), saldo - 65);
+  });
+
+  await prueba("050: anónimo sin permiso y precio de Cambio distinto", async () => {
+    await anon();
+    await falla("select public.reponer_comodin($1,$2)", ["cambio", pedido()], "permission denied");
+    await como(B);
+    igual((await uno("select precio_reposicion from public.comodines_tienda where id = 'cambio'")).precio_reposicion, 75);
+  });
+}
+
 process.exit(mal ? 1 : 0);

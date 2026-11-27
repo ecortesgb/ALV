@@ -282,6 +282,7 @@
     let pesos = new Map(), cruce = null, mezclaCruce = MEZCLA;
     // Clip de reposo: el de la ficha, o el que pida la escena con reposoEn() (la nave: «sentado», si el personaje lo trae).
     let reposoClip = clips.reposo;
+    let corte = null;
 
     function iniciar(a, bucle, mezcla, vel) {
       const inicial = pesos.get(a) || 0;
@@ -376,7 +377,36 @@
         if (logica === "reposo" || logica === null) { const a = accion(nombre); if (a !== actual) { iniciar(a, true, MEZCLA, 1); logica = "reposo"; clipActual = nombre; } }
         return true;
       },
-      update: dt => { aplicarCruce(dt); return mixer.update(dt); },
+      /** Toca una vez un clip de otro GLB del mismo personaje (poderes: <id>-poderes.glb, mismo esqueleto) y vuelve a reposo
+       *  al terminar. Promesa con la duración en segundos (0 si no bajó o no está: no cambia lo que se toca). */
+      tocarExt: async (glb, nombre, op) => {
+        const k = "poder:" + String(glb).split("/").pop() + "#" + nombre;
+        if (!porNombre.has(k)) {
+          try {
+            const g2 = await bajar(glb, (op && op.carga) || plano.carga);
+            const c0 = g2.animations.find(a => a.name === nombre);
+            const c = c0 && new T.AnimationClip(k, c0.duration, c0.tracks.filter(t => obj.getObjectByName(T.PropertyBinding.parseTrackName(t.name).nodeName)));
+            if (!c || !c.tracks.length) return 0;
+            porNombre.set(k, c);
+          } catch (_) { return 0; }
+        }
+        const a = accion(k);
+        if (!a) return 0;
+        // `bucle` (s): el clip se repite ese tiempo (volar: flotar parado); `hasta` (s): se corta antes de su final.
+        const d = porNombre.get(k).duration, bucle = op && Number(op.bucle) > 0 ? Math.min(20, Number(op.bucle)) : 0;
+        const hasta = !bucle && op && Number(op.hasta) > 0 && Number(op.hasta) < d ? Number(op.hasta) : 0;
+        iniciar(a, !!bucle, (op && op.mezcla) == null ? MEZCLA : op.mezcla, 1);
+        logica = "poder"; clipActual = k;
+        corte = bucle || hasta ? { a, resta: bucle || hasta } : null;
+        return bucle || hasta || d;
+      },
+      update: dt => {
+        aplicarCruce(dt);
+        const r = mixer.update(dt);
+        // Poder con corte (el final del clip del juego se ve mal): al llegar, de vuelta a reposo.
+        if (corte && ((corte.resta -= dt) <= 0 || corte.a !== actual)) { const c = corte; corte = null; if (c.a === actual) tocar("reposo"); }
+        return r;
+      },
       estado: () => ({ logica, clip: clipActual, tiempo: actual ? actual.time : 0, clips: [...porNombre.keys()].length }),
       /** Nombres de todos los clips del GLB (para verificar fichas). */
       nombresClips: () => [...porNombre.keys()],

@@ -119,7 +119,7 @@
       const q = op2 || {};
       const clip = elegido[nombre] || (nombre === "eliminado" ? elegido.ko : null) || elegido.reposo;
       if (!clip) return false;
-      const bucle = !!EN_BUCLE[nombre];
+      const bucle = q.bucle != null ? !!q.bucle : !!EN_BUCLE[nombre];
       const a = accionDe(clip);
       if (a === actual && bucle && nombreActual === nombre) return true;
       const vel = q.dura ? clip.duration / q.dura : (q.vel || 1);
@@ -138,6 +138,38 @@
     anim("reposo", { mezcla: 0 });
     p.mixer.update(0);
 
+    // Poderes (contrato del hilo de acciones, 27 nov): o.poderes = poderesDeFicha(ficha, base) → [{ id, nombre, glb, clip,
+    // efectos, hasta? }], en orden (el 1º va a RT, el 2º a X). El clip sale del GLB «poderes» y lo toca este mismo
+    // controlador (no el del motor, que ya no manda en este mezclador). Los efectos los dibuja quien tiene la escena.
+    const poderes = Array.isArray(o.poderes) ? o.poderes.filter(x => x && typeof x.glb === "string" && typeof x.clip === "string") : [];
+    const clipsPoder = new Map(); // id → Promise<AnimationClip|null>
+    function clipPoder(pd) {
+      if (!clipsPoder.has(pd.id)) clipsPoder.set(pd.id, M.bajar(pd.glb, plano.carga).then(g2 => {
+        const c0 = g2.animations.find(a => a.name === pd.clip);
+        if (!c0) return null;
+        const c = new T.AnimationClip("poder:" + pd.id, c0.duration,
+          c0.tracks.filter(t => p.obj.getObjectByName(T.PropertyBinding.parseTrackName(t.name).nodeName)));
+        return c.tracks.length ? limpio(pd.glb, c, raizNombre) : null;
+      }).catch(e => { console.warn("poder sin clip", pd.id, e); return null; }));
+      return clipsPoder.get(pd.id);
+    }
+    poderes.forEach(clipPoder); // se bajan de una vez, para que el primer RT no espere
+    let corte = 0, repite = 0; // repite: segundos que le quedan a un poder en bucle
+    /** Toca el poder i (0 = RT, 1 = X). op.bucle: lo repite hasta otra animación (vuelo). → { dur (s), efectos } o null. */
+    async function poder(i, op3) {
+      const pd = poderes[i];
+      if (!pd) return null;
+      const clip = await clipPoder(pd);
+      if (!clip) return null;
+      elegido["poder:" + pd.id] = clip;
+      // op.bucle: se repite hasta otra animación (vuelo del cuarto). pd.bucle (s): se repite esos segundos y vuelve a reposo.
+      const siempre = !!(op3 && op3.bucle), seg = !siempre && Number(pd.bucle) > 0 ? Math.min(12, Number(pd.bucle)) : 0;
+      anim("poder:" + pd.id, { mezcla: 0.08, bucle: siempre || !!seg });
+      const hasta = !siempre && !seg && Number(pd.hasta) > 0 && Number(pd.hasta) < clip.duration ? Number(pd.hasta) : 0;
+      corte = hasta; repite = seg;
+      return { dur: seg || hasta || clip.duration, efectos: Array.isArray(pd.efectos) ? pd.efectos : [] };
+    }
+
     return {
       obj: p.obj, ficha, anim,
       tiene: nombre => !!elegido[nombre],
@@ -145,7 +177,14 @@
       duracion: nombre => (elegido[nombre] ? elegido[nombre].duration : 0),
       actual: () => nombreActual,
       fuente: "juego",
-      update: dt => { p.mixer.update(dt); if (pararEn && actual && actual.time >= pararEn) { actual.time = pararEn; actual.paused = true; } },
+      update: dt => {
+        p.mixer.update(dt);
+        if (pararEn && actual && actual.time >= pararEn) { actual.time = pararEn; actual.paused = true; }
+        // Poder con corte (su final se ve mal): al llegar, de vuelta a reposo.
+        if (corte && String(nombreActual).startsWith("poder:") && actual && actual.time >= corte) { corte = 0; anim("reposo"); }
+        if (repite) { if (!String(nombreActual).startsWith("poder:")) repite = 0; else if ((repite -= dt) <= 0) { repite = 0; anim("reposo"); } }
+      },
+      poderes: poderes.map(x => ({ id: x.id, nombre: x.nombre })), poder, hueso: p.hueso,
       alto: p.alto, ancho: p.ancho,
       quitar: () => p.quitar(),
     };

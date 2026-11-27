@@ -58,6 +58,12 @@ export const SAGAS: Saga[] = [
 ];
 
 export const listo = (x: Version) => !!x.traje;
+/** Selección inicial prevista para la colección, usando ids de las versiones públicas. */
+export const VERSIONES_INICIALES = new Set([
+  "iron-man", "capitan-america", "thor", "hulk", "spider-man",
+  "wolverine", "ciclope", "tormenta", "batman", "superman", "wonder-woman",
+  "darth-vader", "luke", "yoda", "harry", "hermione", "ron",
+]);
 /** Versiones que ya se pueden poner. */
 export const versionesListas = (pj: Personaje) => pj.versiones.filter(listo);
 /** Todos los ids de trajes que usa el catálogo (una prueba revisa que existan en trajes-figura.json). */

@@ -19,10 +19,10 @@ export default defineConfig({
   plugins: [react()],
   define: { __ALV_VERSION__: JSON.stringify(version()) },
   // Mini-Juegos: páginas aparte de la TV y del celular (zona de personajes), por Realtime de Supabase (?canal=nube).
-  // Físico, el cuarto y la mesa de prueba siguen solo en desarrollo.
+  // Con el cuarto de Modo libre. Físico y la mesa de prueba siguen solo en desarrollo.
   build: {
     rollupOptions: {
-      input: Object.fromEntries(["index.html", ...["index", "control", "tv-bala", "tv-desenfunda", "tv-martillazo", "tv-alto-total", "tv-paracaidas"]
+      input: Object.fromEntries(["index.html", ...["index", "control", "tv-bala", "tv-desenfunda", "tv-martillazo", "tv-alto-total", "tv-paracaidas", "tv-cuarto"]
         .map(n => `tools/personajes/minijuegos/${n}.html`)].map(f => [f.replace(/\.html$/, "").replace(/\//g, "-"), fileURLToPath(new URL(f, import.meta.url))])),
     },
   },

@@ -840,8 +840,14 @@
       // Fase 5: con `plano3` (figura del sistema nuevo, ya resuelta por ALV) la huella incluye el plano: si cambia, se
       // arma de nuevo la v2 de respaldo y se vuelve a cargar la nueva.
       const p3 = planoV3(x.plano3);
-      const h = huellaDe(fx) + (p3 ? "|" + huellaDe(p3) : "");
+      let h = huellaDe(fx) + (p3 ? "|" + huellaDe(p3) : "");
       let e = figuras.get(id);
+      // Transformación (formas.ts de ALV: Banner ↔ Hulk, Tony / Iron Man, Peter ↔ Spider-Man): la figura de ahora se queda
+      // mientras baja la otra; luego nube de humo y cambio. Si la de antes tiene que hacer su especial (Banner), primero esa.
+      const tr = Number.isFinite(x.transforma) ? x.transforma : null;
+      if (e && e.huella !== h && e.trHuella === h) h = e.huella; // ya está en camino: nada que hacer
+      else if (e && e.huella !== h && tr != null && tr !== e.transforma && e.v3 && p3 && !NAVE && transformarV3(e, p3, h, !!x.conEspecial)) { e.transforma = tr; h = e.huella; }
+      if (e && tr != null) e.transforma = tr;
       if (!e || e.huella !== h) {
         if (e) quitar(id);
         const t = reloj.getElapsedTime(), habia = !!e;
@@ -876,6 +882,8 @@
       }
       // Piel de la persona bajo la máscara (la cara del especial se pinta con ella, no con el color de la careta).
       e.pielReal = fx.identidad && /^#[0-9a-f]{6}$/i.test(fx.identidad.piel || "") ? fx.identidad.piel : null;
+      // Careta levantada (Iron Man, formas.ts de ALV): gira esas mallas sobre su bisagra; la figura no se vuelve a armar.
+      e.caretaDef = caretaValida(x.careta); aplicarCareta(e);
       e.foco = !!x.foco; orden.push(id);
       if (SALA || NAVE) { e.columna = Number.isInteger(x.columna) && x.columna >= 0 ? x.columna : orden.length - 1; e.color = colorValido(x.color); }
     });
@@ -1344,10 +1352,81 @@
   function moverPolvo(t, dt) {
     for (let i = polvos.length - 1; i >= 0; i--) {
       const x = polvos[i], e = t - x.t0, pos = x.p.geometry.attributes.position;
-      if (e > 0.55) { scene.remove(x.p); x.p.geometry.dispose(); x.p.material.dispose(); polvos.splice(i, 1); continue; }
+      const vida = x.vida || 0.55;
+      if (e > vida) { scene.remove(x.p); x.p.geometry.dispose(); x.p.material.dispose(); polvos.splice(i, 1); continue; }
       for (let k = 0; k < x.vel.length; k++) { pos.array[k * 3] += x.vel[k][0] * dt; pos.array[k * 3 + 1] += x.vel[k][1] * dt; pos.array[k * 3 + 2] += x.vel[k][2] * dt; }
-      pos.needsUpdate = true; x.p.material.opacity = 1 - e / 0.55; x.p.material.size = 0.16 + e * 0.25;
+      pos.needsUpdate = true; x.p.material.opacity = (x.opacidad || 1) * (1 - e / vida); x.p.material.size = (x.tam || 0.16) + e * (x.crece || 0.25);
     }
+  }
+
+  /** Nube de humo de la transformación: más grande y lenta que el polvo, gris claro con chispas verdes o doradas. */
+  function nube(t, ox, oz, alto, chispa) {
+    if (MENOS_MOVIMIENTO) return;
+    const n = 46, pos = new Float32Array(n * 3), col = new Float32Array(n * 3), vel = [];
+    for (let i = 0; i < n; i++) {
+      const a = Math.random() * Math.PI * 2, r = 0.2 + Math.random() * 0.5, y = Math.random() * alto;
+      pos.set([ox + Math.cos(a) * r, y, oz + Math.sin(a) * r * 0.7 + 0.25], i * 3);
+      vel.push([Math.cos(a) * (0.5 + Math.random() * 0.7), 0.25 + Math.random() * 0.6, Math.sin(a) * 0.4]);
+      const g = 0.82 + Math.random() * 0.18, c = Math.random() < 0.18 ? chispa : [g, g, g * 1.02];
+      col.set(c, i * 3);
+    }
+    const geo = new THREE.BufferGeometry(); geo.setAttribute("position", new THREE.BufferAttribute(pos, 3)); geo.setAttribute("color", new THREE.BufferAttribute(col, 3));
+    const mat = new THREE.PointsMaterial({ size: 0.5, map: texPolvo, vertexColors: true, transparent: true, depthWrite: false, alphaTest: 0.02 });
+    const p = new THREE.Points(geo, mat); scene.add(p); polvos.push({ p, vel, t0: t, vida: 0.95, tam: 0.5, crece: 0.9, opacidad: 0.95 });
+  }
+  /**
+   * Cambia la figura nueva de `e` por la de `p3` sin pasar por la de respaldo: la otra se arma aparte y, cuando está lista
+   * (y terminó la especial si `conEspecial`), nube de humo y cambio. false si no hay motor nuevo (se arma como siempre).
+   */
+  function transformarV3(e, p3, h, conEspecial) {
+    const gen = (e.gen3 = ++V3.gen);
+    // Antes del cambio la figura tiembla y crece un poco (Banner más largo: se está transformando). La animación del juego
+    // TRANSFORM_TO_BIGFIG de Banner no sirve aquí: esconde sus piezas esperando las de Hulk y se ve rota (prueba 27 nov).
+    const t0 = reloj.getElapsedTime(), dur = conEspecial ? 1.3 : 0.6, hasta = t0 + dur;
+    const cuerpo = e.v3.obj, esc0 = cuerpo.scale.x, x0 = cuerpo.position.x;
+    e.prio = 9; e.cual = "transformar"; e.hasta = hasta + 0.5; // nadie la interrumpe
+    if (conEspecial) e.v3.tocar("victoria");
+    { const pos = e.obj.position; nube(t0, pos.x, pos.z, 1.2, conEspecial ? [0.55, 0.95, 0.35] : [1, 0.85, 0.3]); }
+    e.trHuella = h;
+    const temblar = () => {
+      if (figuras.get(e.id) !== e || e.gen3 !== gen || e.v3.obj !== cuerpo) return;
+      const k = Math.min(1, (reloj.getElapsedTime() - t0) / dur);
+      cuerpo.scale.setScalar(esc0 * (1 + 0.14 * k));
+      cuerpo.position.x = x0 + Math.sin(reloj.getElapsedTime() * 55) * 0.035 * k;
+      if (k < 1) setTimeout(temblar, 30);
+    };
+    temblar();
+    motorV3().then(M => M.crear(p3)).then(inst => new Promise(ok => {
+      const espera = () => (reloj.getElapsedTime() >= hasta ? ok(inst) : setTimeout(espera, 50));
+      espera();
+    })).then(inst => {
+      if (figuras.get(e.id) !== e || e.gen3 !== gen) { inst.quitar(); return; } // llegó otra cosa mientras
+      cuerpo.scale.setScalar(esc0); cuerpo.position.x = x0;
+      const t = reloj.getElapsedTime(), viejo = e.obj, alto0 = e.v3.alto();
+      const grupo = new THREE.Group();
+      grupo.add(inst.obj);
+      const alto = inst.alto(), TOPE = 3.4;
+      if ((SALA || NAVE || AZOTEA) && !/[?&]bigfig=real/.test(location.search) && alto > TOPE) inst.obj.scale.multiplyScalar(TOPE / alto);
+      inst.obj.traverse(o => { if (o.isMesh) o.receiveShadow = false; });
+      const sombra = new THREE.Mesh(sombraGeo, sombraMat); sombra.rotation.x = -Math.PI / 2; sombra.position.y = 0.003; grupo.add(sombra);
+      grupo.position.copy(viejo.position); grupo.rotation.copy(viejo.rotation); grupo.scale.copy(viejo.scale); grupo.visible = viejo.visible;
+      scene.remove(viejo); e.v3.quitar();
+      e.obj = grupo; e.v3 = inst; e.huella = h; e.trHuella = null;
+      scene.add(grupo);
+      inst.tocar("reposo", { mezcla: 0 });
+      e.prio = 0; e.cual = null; e.hasta = 0; e.accion = null;
+      aplicarCareta(e);
+      const esGrande = p3.familia === "bigfig";
+      nube(t, grupo.position.x, grupo.position.z, Math.max(alto0, Math.min(TOPE, alto)) * grupo.scale.y, esGrande ? [0.55, 0.95, 0.35] : [1, 0.85, 0.3]);
+      acomodar();
+      enviar({ tipo: "transformo", id: e.id, ok: true });
+    }).catch(err => {
+      console.warn("escena: no se pudo transformar", e.id, err);
+      cuerpo.scale.setScalar(esc0); cuerpo.position.x = x0;
+      if (figuras.get(e.id) === e) { e.trHuella = null; e.huella = "x"; } // la próxima lista la arma como siempre
+      enviar({ tipo: "transformo", id: e.id, ok: false });
+    });
+    return true;
   }
 
   let antes = 0;
@@ -1362,7 +1441,29 @@
   function planoV3(p) {
     if (!p || typeof p !== "object" || typeof p.id !== "string" || typeof p.glb !== "string" || !URL_OK.test(p.glb)) return null;
     if (!(Number(p.escala) > 0) || !p.clips || typeof p.clips !== "object") return null;
+    if (p.poderes != null) p.poderes = Array.isArray(p.poderes) ? p.poderes.slice(0, 8).filter(x => x && typeof x.id === "string" && /^[a-z][a-z0-9-]{0,23}$/.test(x.id)
+      && typeof x.glb === "string" && URL_OK.test(x.glb) && typeof x.clip === "string" && x.clip.length <= 80)
+      .map(x => ({ id: x.id, glb: x.glb, clip: x.clip, hasta: Number(x.hasta) > 0 ? Math.min(20, Number(x.hasta)) : 0, bucle: Number(x.bucle) > 0 ? Math.min(20, Number(x.bucle)) : 0, efectos: Array.isArray(x.efectos) ? x.efectos.slice(0, 3).filter(f => f && typeof f === "object" && typeof f.tipo === "string") : [] })) : [];
     return p;
+  }
+  // Poderes (Elías, 27 nov 2026): el clip del GLB «poderes» del personaje y sus efectos (efectos.js). Prioridad de especial:
+  // no lo corta la vida automática ni un gesto menor. Avisa {tipo:"poder", id, poder, ok, dur}.
+  function poder(id, cual) {
+    const e = figuras.get(String(id)), t = reloj.getElapsedTime();
+    const no = () => enviar({ tipo: "poder", id: String(id), poder: String(cual), ok: false });
+    if (!e || !e.v3 || NAVE) return no();
+    const pl = e.v3.obj.userData.plano, pd = pl && (pl.poderes || []).find(x => x.id === cual);
+    if (!pd || ((e.prio || 0) > 0 && t < e.hasta) || t < (e.poderHasta || 0)) return no();
+    const inst = e.v3;
+    e.poderHasta = t + 1; e.prio = 2; e.cual = "poder"; e.hasta = t + 1; e.accion = null;
+    inst.tocarExt(pd.glb, pd.clip, { hasta: pd.hasta, bucle: pd.bucle }).then(dur => {
+      if (e.v3 !== inst) return;
+      const t1 = reloj.getElapsedTime(), largo = Math.max(dur || 0, ...pd.efectos.map(f => (Number(f.retraso) || 0) + (Number(f.dura) || 1)));
+      e.prio = 2; e.cual = "poder"; e.hasta = t1 + largo; e.poderHasta = t1 + largo + 0.3; e.ultG = t1;
+      const fx = window.EfectosALV;
+      if (fx) pd.efectos.forEach(f => fx.lanzar(scene, { obj: inst.obj, hueso: inst.hueso }, f, { camara: camera, sonar: cual => enviar({ tipo: "sonido", id: e.id, cual }) }));
+      enviar({ tipo: "poder", id: e.id, poder: pd.id, ok: true, dur: largo });
+    });
   }
   function motorV3() {
     if (window.MotorPersonajes) return Promise.resolve(window.MotorPersonajes);
@@ -1372,6 +1473,7 @@
       V3.cargando = js("https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js")
         .then(() => js("https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/utils/SkeletonUtils.js"))
         .then(() => js(base + "logicas.js")).then(() => js(base + "motor-personajes.js"))
+        .then(() => js(base + "efectos.js").catch(() => {})) // poderes: sin efectos, el movimiento igual se ve
         .then(() => { if (!window.MotorPersonajes) throw new Error("falta MotorPersonajes"); return window.MotorPersonajes; });
       V3.cargando.catch(() => { V3.cargando = null; });
     }
@@ -1402,6 +1504,7 @@
       e.obj = grupo; e.v3 = inst;
       scene.add(grupo);
       inst.tocar("reposo", { mezcla: 0 });
+      aplicarCareta(e);
       // Nave: hasta dónde llegan los pies sentados a la altura del tablero (todo el bucle); acomodarNave() aleja la silla y la
       // figura lo justo para que no toquen la mesa (decidió Codex, sentado-r2: Big Fig, opción 2).
       // Además, el punto más bajo del cuerpo sobre la huella del asiento (cojín si queda en el aire) y el más alto (encuadre).
@@ -1424,7 +1527,34 @@
       enviar({ tipo: "v3", id: e.id, ok: false });
     });
   }
+  /** La careta que manda ALV, revisada: nombres de malla, bisagra cerca del hueso y ángulo. null = cerrada. */
+  function caretaValida(c) {
+    if (!c || typeof c !== "object" || !Array.isArray(c.mallas) || !Array.isArray(c.bisagra) || c.bisagra.length !== 3) return null;
+    const mallas = c.mallas.filter(n => typeof n === "string" && /^[\w.-]{1,64}$/.test(n)).slice(0, 8);
+    const b = c.bisagra.map(Number);
+    if (!mallas.length || !b.every(v => Number.isFinite(v) && Math.abs(v) < 1) || !Number.isFinite(c.angulo) || Math.abs(c.angulo) > 180) return null;
+    return { mallas, bisagra: b, angulo: c.angulo };
+  }
+  /** Prepara (una vez por figura nueva) la bisagra de la careta y fija hacia dónde va: abierta si hay definición. */
+  function aplicarCareta(e) {
+    if (!e.v3) return;
+    const def = e.caretaDef, inst = e.v3;
+    if (!inst._careta && def) {
+      const mallas = def.mallas.map(n => inst.obj.getObjectByName(n)).filter(Boolean), padre = mallas[0] && mallas[0].parent;
+      if (!padre) return;
+      const piv = new THREE.Object3D(); piv.position.set(def.bisagra[0], def.bisagra[1], def.bisagra[2]); padre.add(piv);
+      mallas.forEach(m => { if (m.parent !== padre) return; m.position.sub(piv.position); piv.add(m); });
+      inst._careta = { piv, ang: (def.angulo * Math.PI) / 180, k: 0, meta: 0 };
+    }
+    if (inst._careta) inst._careta.meta = def ? 1 : 0;
+  }
   function animarV3(e, t, dt) {
+    const ct = e.v3._careta;
+    if (ct && ct.k !== ct.meta) {
+      ct.k = ct.meta > ct.k ? Math.min(ct.meta, ct.k + dt / 0.5) : Math.max(ct.meta, ct.k - dt / 0.5);
+      const u = ct.k * ct.k * (3 - 2 * ct.k); // suave al salir y al llegar
+      ct.piv.rotation.x = ct.ang * u;
+    }
     // La mirada se SUMA a la cabeza: antes de avanzar la animación se quita lo sumado en el cuadro anterior (si el clip
     // no mueve la cabeza, sumar cada cuadro la haría girar sin parar).
     const cab = e.v3.hueso("cabeza");
@@ -1451,7 +1581,7 @@
     AZ.usuario = Math.atan2(Math.sin(AZ.usuario), Math.cos(AZ.usuario));
     const frente = Math.max(m.w, e.accion ? 1 : 0);
     e.obj.rotation.y = AZ_GIRO + AZ.usuario * (1 - frente) + m.ax * 0.5 * m.w;
-    AZ.quieto = !L_activa() && !e.accion && m.w < 0.01 && AZ.vel === 0;
+    AZ.quieto = !L_activa() && !e.accion && m.w < 0.01 && AZ.vel === 0 && !(window.EfectosALV && window.EfectosALV.activos()) && !(e.cual === "poder" && reloj.getElapsedTime() < e.hasta);
     void a;
   }
   // Acciones breves de la azotea (al señalar botones): prioridad baja. No interrumpen un gesto que suena (ni su
@@ -1603,6 +1733,7 @@
     }
     else if (NAVE && d.tipo === "expulsar") { const e = figuras.get(String(d.id)); if (e && e.vuela == null) e.vuela = reloj.getElapsedTime(); }
     else if (d.tipo === "momento") momento(d.id, String(d.cual), Number(d.prio), d);
+    else if (d.tipo === "poder") poder(d.id, String(d.poder));
     else if (d.tipo === "foto" || d.tipo === "miniatura") {
       let url = null;
       // `vista` {y, alto, giro, x}: encuadre a la medida (herramientas de revisión, p. ej. tools/miniaturas/agarre.html).

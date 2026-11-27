@@ -2,8 +2,8 @@
 // segundo con lo que mandan los celulares (palanca y botones) y le pone a cada personaje el clip que toca.
 // Decidió Codex (encargo 2026-11-26-minijuegos-r1, D6): caja con cámara fija; la plataforma y la cámara que sigue
 // quedan fuera de esta entrega (la plataforma sigue en cuarto.ts, con sus pruebas).
-import { crearCuarto, entrar, mandar, pasoCuarto, salir } from "/src/personajes/minijuegos/cuarto.ts";
-import { crearTV } from "./tv-comun.js";
+import { alargar, crearCuarto, entrar, mandar, pasoCuarto, salir } from "/src/personajes/minijuegos/cuarto.ts";
+import { crearTV, lanzarEfecto, lucirPoder } from "./tv-comun.js";
 
 const q = new URLSearchParams(location.search);
 const FORMA = "caja";
@@ -23,7 +23,7 @@ const tv = crearTV({
       if (j.figura) j.figura.anim("saludo");
     }
     visto.delete(j.id);
-    $("sub").textContent = `${tv.jugadores.size} en el cuarto · palanca para moverte, Salta, Golpe y ¡Eh!`;
+    $("sub").textContent = `${tv.jugadores.size} en el cuarto · palanca para moverte · A salta · B golpe · RT y X poderes (los que vuelan despegan) · rueda: gestos`;
   },
   alSalir: j => { salir(cuarto, j.id); visto.delete(j.id); },
   alMensaje: (j, m) => {
@@ -31,7 +31,13 @@ const tv = crearTV({
     else if (m.tipo === "boton") {
       const c = cuarto.cuerpos.get(j.id); if (!c) return;
       const b = String(m.d.b);
-      mandar(cuarto, j.id, { x: c.mando.x, z: c.mando.z, saltar: b === "saltar", golpe: b === "golpe", festejo: b === "festejo" });
+      // El botón del poder de volar (RT o X, según el personaje) despega o aterriza en lugar de tocar el poder.
+      const vuela = (b === "poder" || b === "poder2") && slotVuelo(j) === (b === "poder" ? 0 : 1);
+      mandar(cuarto, j.id, { x: c.mando.x, z: c.mando.z, saltar: b === "saltar", golpe: b === "golpe", festejo: b === "festejo",
+        poder: b === "poder" && !vuela, poder2: b === "poder2" && !vuela, volar: vuela });
+    } else if (m.tipo === "gesto") { // rueda de animaciones del mando (canal.ts ya revisó que sea uno de los 4)
+      const c = cuarto.cuerpos.get(j.id); if (!c) return;
+      mandar(cuarto, j.id, { x: c.mando.x, z: c.mando.z, gesto: m.d.g });
     }
   },
 });
@@ -61,11 +67,58 @@ function animar(j, cu) {
     case "herido": f.anim("herido", { mezcla: 0.04 }); break;
     case "ko": f.anim("ko", { mezcla: 0.04 }); break;
     case "festejo": f.anim("festejo"); break;
+    case "saludo": f.anim("saludo"); break;
+    case "derrota": f.anim("derrota"); break;
+    case "especial": f.anim("especial", { mezcla: 0.08 }); break;
+    case "poder": lanzarPoder(j, 0); break;
+    case "poder2": lanzarPoder(j, 1); break;
+    case "volar": despegar(j); break;
     case "caminar": f.anim("caminar"); break;
     case "correr": f.anim("correr"); break;
     default: f.anim("reposo");
   }
 }
+
+// ---------- Poderes (RT = el primero, X = el segundo): clip del GLB «poderes» y sus efectos (tools/personajes/efectos.js) ----------
+// Sin GLB de poderes (personaje sin ellos o aún sin subir): RT hace el movimiento especial de siempre, X nada.
+function lanzarPoder(j, i) {
+  const f = j.figura, desde = cuarto.cuerpos.get(j.id)?.animDesde;
+  if (!f.poder || !(f.poderes && f.poderes[i])) { if (i === 0) f.anim("especial", { mezcla: 0.08 }); return; }
+  lucirPoder(j, escena, i).then(dur => {
+    const cu = cuarto.cuerpos.get(j.id);
+    if (!cu || cu.animDesde !== desde) return; // ya hace otra cosa
+    if (!dur) { if (i === 0) f.anim("especial", { mezcla: 0.08 }); return; }
+    alargar(cuarto, j.id, dur * 1000);
+  });
+}
+
+// ---------- Vuelo (Elías, 27 nov: «que Iron Man pueda volar por todos lados controlado») ----------
+// Los que traen el poder volar o levitar despegan con ese botón. En el aire se repite su clip de vuelo y sale la estela
+// (efecto «volar» sobre un punto a sus pies, para que el efecto no mueva la figura: la altura la pone cuarto.ts).
+const VUELO = new Set(["volar", "levitar"]);
+const slotVuelo = j => (j.figura && j.figura.poderes ? j.figura.poderes.findIndex(p => VUELO.has(p.id)) : -1);
+function despegar(j) {
+  const f = j.figura, i = slotVuelo(j), desde = cuarto.cuerpos.get(j.id)?.animDesde;
+  f.anim("caer"); // mientras baja el clip (o si no hay): brazos en el aire
+  if (i < 0) return;
+  f.poder(i, { bucle: true }).then(r => {
+    const cu = cuarto.cuerpos.get(j.id);
+    if (!cu || cu.animDesde !== desde || !cu.vuela) return;
+    if (!r) return;
+    j.efVuelo = r.efectos.find(ef => ef && ef.tipo === "volar") || null;
+    j.estelaT = 0;
+  });
+}
+function estela(j, cu, dt) {
+  if (!cu.vuela || !j.efVuelo || !window.EfectosALV) { if (j.estela && !cu.vuela) { try { j.estela.fin(); } catch (_) { /* ya terminó */ } j.estela = null; } return; }
+  j.estelaT = (j.estelaT || 0) - dt;
+  if (j.estelaT > 0) return;
+  j.estelaT = 2.6; // cada efecto dura 3 s: se encadenan sin hueco
+  j.estela = lanzarEfecto(j, escena, j.efVuelo, { a: 0.2, dura: 3, retraso: 0 });
+  if (!j.estela) j.efVuelo = null;
+}
+// Los celulares de quienes vuelan cambian A y B a «Sube» y «Baja».
+tv.extra = () => ({ vuelan: [...cuarto.cuerpos.values()].filter(c => c.vuela).map(c => c.id) });
 
 // ---------- Jugadores de prueba (?bots=N): pasean, a veces corren, saltan o golpean ----------
 async function ponerBots() {
@@ -93,6 +146,8 @@ setInterval(() => {
     resto -= 1000 / 60;
     for (const ev of pasoCuarto(cuarto, 1000 / 60)) {
       if (ev.tipo === "golpe") tv.pop(tv.jugadores.get(ev.a), "¡Pum!", "#ff8a1f");
+      if (ev.tipo === "poder") { const j = tv.jugadores.get(ev.id), nom = j && j.figura && j.figura.poderes && j.figura.poderes[ev.n === 2 ? 1 : 0]; tv.pop(j, nom ? nom.nombre : "¡Poder!", "#b46cff"); }
+      if (ev.tipo === "despega" || ev.tipo === "aterriza") { const j = tv.jugadores.get(ev.id); if (ev.tipo === "despega") tv.pop(j, "¡A volar!", "#7fd8ff"); else if (j) j.vieneDeLejos = true; tv.difundir(); }
       if (ev.tipo === "ko") tv.pop(tv.jugadores.get(ev.id), "¡K.O.!", "#e8343a");
       if (ev.tipo === "cae") { const j = tv.jugadores.get(ev.id); if (j) { j.vieneDeLejos = true; tv.pop(j, "¡Aaah!", "#7cc0ff"); } }
     }
@@ -108,6 +163,7 @@ escena.alCuadro(dt => {
     j.figura.update(dt);
     j.figura.obj.position.set(cu.x, cu.y, cu.z);
     j.figura.obj.rotation.y = cu.rot;
+    estela(j, cu, dt);
     if (j.aro) j.aro.visible = cu.enPiso && !cu.cayendo;
   });
   tv.etiquetas();

@@ -2,7 +2,10 @@
 // Lógica pura que corre en la TV; los celulares mandan el mando (palanca y botones). La escena 3D solo lee `anim`.
 // Unidades de la escena de ALV (una minifigura mide ~2.7). Sin DOM ni 3D: lo prueba minijuegos.test.ts.
 
-export type Anim = "reposo" | "caminar" | "correr" | "saltar" | "caer" | "aterrizar" | "golpe" | "herido" | "ko" | "festejo";
+export type Anim = "reposo" | "caminar" | "correr" | "saltar" | "caer" | "aterrizar" | "golpe" | "herido" | "ko" | "festejo" | "poder" | "poder2" | "saludo" | "derrota" | "especial" | "volar";
+/** Gestos de la rueda del mando (Elías, 27 nov): Saludar, Ganar (festejo), Especial y Perder. */
+export type GestoCuarto = "saludo" | "festejo" | "derrota" | "especial";
+const GESTO_MS: Record<GestoCuarto, number> = { saludo: 2000, festejo: 2300, derrota: 2300, especial: 2000 };
 export type Forma = "caja" | "plataforma";
 
 export interface ConfigCuarto {
@@ -12,6 +15,8 @@ export interface ConfigCuarto {
   golpeMs: number; impactoMs: number; alcance: number; cono: number;
   heridoMs: number; empuje: number; golpesKo: number; ventanaKoMs: number; koMs: number;
   aterrizarMs: number; reaparecerMs: number;
+  /** Vuelo (Iron Man, Thor...): altura al despegar, cuánto sube o baja cada toque, techo y velocidad en el aire. */
+  vueloAlto: number; vueloPaso: number; vueloTecho: number; vueloVel: number;
   /** Sin mando nuevo en este tiempo, la palanca vuelve al centro (celular suspendido o sin red; Codex O5). */
   caducaMandoMs: number;
 }
@@ -23,15 +28,20 @@ export const CONFIG_CUARTO: ConfigCuarto = {
   golpeMs: 600, impactoMs: 220, alcance: 1.5, cono: Math.PI / 3,
   heridoMs: 900, empuje: 3.2, golpesKo: 3, ventanaKoMs: 6000, koMs: 4300,
   aterrizarMs: 260, reaparecerMs: 1400, caducaMandoMs: 500,
+  vueloAlto: 3, vueloPaso: 1.6, vueloTecho: 7, vueloVel: 7.5,
 };
 
-export interface Mando { x: number; z: number; saltar?: boolean; golpe?: boolean; festejo?: boolean }
+export interface Mando { x: number; z: number; saltar?: boolean; golpe?: boolean; festejo?: boolean; poder?: boolean; poder2?: boolean; gesto?: GestoCuarto;
+  /** Despega o aterriza (lo manda la TV cuando el botón es el poder de volar del personaje). En el aire A sube y B baja. */
+  volar?: boolean }
 
 export interface Cuerpo {
   id: string; x: number; z: number; y: number; vy: number; rot: number;
   anim: Anim; hasta: number; golpeo: boolean; recibidos: number[]; empujeX: number; empujeZ: number;
   radio: number; enPiso: boolean; cayendo: boolean;
   mando: Mando; animDesde: number; mandoT: number;
+  /** En vuelo: sin gravedad, va hacia la altura metaY. */
+  vuela: boolean; metaY: number;
 }
 
 export interface EstadoCuarto { cfg: ConfigCuarto; cuerpos: Map<string, Cuerpo>; t: number }
@@ -40,7 +50,10 @@ export type EventoCuarto =
   | { tipo: "golpe"; de: string; a: string }
   | { tipo: "ko"; id: string }
   | { tipo: "cae"; id: string }
-  | { tipo: "salto"; id: string };
+  | { tipo: "salto"; id: string }
+  | { tipo: "poder"; id: string; n?: 2 }
+  | { tipo: "despega"; id: string }
+  | { tipo: "aterriza"; id: string };
 
 export function crearCuarto(cfg: Partial<ConfigCuarto> = {}): EstadoCuarto {
   return { cfg: { ...CONFIG_CUARTO, ...cfg }, cuerpos: new Map(), t: 0 };
@@ -53,13 +66,21 @@ export function entrar(e: EstadoCuarto, id: string, escala = 1): Cuerpo {
   const c: Cuerpo = {
     id, x: Math.cos(ang) * r, z: Math.sin(ang) * r * 0.6, y: 0, vy: 0, rot: 0,
     anim: "reposo", hasta: 0, golpeo: false, recibidos: [], empujeX: 0, empujeZ: 0,
-    radio: e.cfg.radioCuerpo * Math.max(1, escala * 0.8), enPiso: true, cayendo: false, mando: { x: 0, z: 0 }, animDesde: e.t, mandoT: e.t,
+    radio: e.cfg.radioCuerpo * Math.max(1, escala * 0.8), enPiso: true, cayendo: false, mando: { x: 0, z: 0 }, animDesde: e.t, mandoT: e.t, vuela: false, metaY: 0,
   };
   e.cuerpos.set(id, c);
   return c;
 }
 
 export function salir(e: EstadoCuarto, id: string) { e.cuerpos.delete(id); }
+
+/** Alarga (o acorta) el poder que está haciendo al largo de su clip: la TV lo sabe hasta que baja el GLB de poderes.
+ *  Entre 0.4 y 6 s desde que empezó. Si ya no está en un poder, no hace nada. */
+export function alargar(e: EstadoCuarto, id: string, ms: number) {
+  const c = e.cuerpos.get(id);
+  if (!c || (c.anim !== "poder" && c.anim !== "poder2") || !Number.isFinite(ms)) return;
+  c.hasta = c.animDesde + Math.min(6000, Math.max(400, ms));
+}
 
 /** Lo que manda el celular. La palanca se acota a un círculo de radio 1; los botones son «se tocó» (se gastan). */
 export function mandar(e: EstadoCuarto, id: string, m: Mando) {
@@ -68,11 +89,18 @@ export function mandar(e: EstadoCuarto, id: string, m: Mando) {
   let x = Number.isFinite(m.x) ? m.x : 0, z = Number.isFinite(m.z) ? m.z : 0;
   const l = Math.hypot(x, z);
   if (l > 1) { x /= l; z /= l; }
-  c.mando = { x, z, saltar: c.mando.saltar || !!m.saltar, golpe: c.mando.golpe || !!m.golpe, festejo: c.mando.festejo || !!m.festejo };
+  c.mando = { x, z, saltar: c.mando.saltar || !!m.saltar, golpe: c.mando.golpe || !!m.golpe, festejo: c.mando.festejo || !!m.festejo, poder: c.mando.poder || !!m.poder, poder2: c.mando.poder2 || !!m.poder2, volar: c.mando.volar || !!m.volar,
+    gesto: m.gesto && Object.hasOwn(GESTO_MS, m.gesto) ? m.gesto : c.mando.gesto };
   c.mandoT = e.t;
 }
 
-const ocupado = (c: Cuerpo) => c.anim === "golpe" || c.anim === "herido" || c.anim === "ko" || c.anim === "festejo" || c.anim === "aterrizar";
+/** Deja de volar: cae con gravedad y aterriza como de un salto. */
+function aterrizarVuelo(e: EstadoCuarto, c: Cuerpo, ev: EventoCuarto[]) {
+  c.vuela = false; c.metaY = 0; c.vy = 0; poner(e, c, "caer"); ev.push({ tipo: "aterriza", id: c.id });
+}
+
+const ocupado = (c: Cuerpo) => c.anim === "golpe" || c.anim === "herido" || c.anim === "ko" || c.anim === "festejo" || c.anim === "poder" || c.anim === "poder2" || c.anim === "aterrizar"
+  || c.anim === "saludo" || c.anim === "derrota" || c.anim === "especial";
 const angulo = (a: number) => Math.atan2(Math.sin(a), Math.cos(a));
 function poner(e: EstadoCuarto, c: Cuerpo, a: Anim, ms = 0) {
   if (c.anim !== a) c.animDesde = e.t;
@@ -105,9 +133,37 @@ export function pasoCuarto(e: EstadoCuarto, dt: number): EventoCuarto[] {
     }
     const libre = !ocupado(c);
     const fuerza = Math.hypot(m.x, m.z);
+    // Vuelo: el botón de su poder de volar despega (desde el piso) o aterriza. En el aire: palanca a cualquier lado,
+    // A sube y B baja; si baja hasta el piso, aterriza. No golpea ni hace gestos en el aire.
+    if (m.volar && c.vuela) aterrizarVuelo(e, c, ev);
+    else if (m.volar && libre && c.enPiso) {
+      c.vuela = true; c.enPiso = false; c.vy = 0; c.metaY = cfg.vueloAlto; poner(e, c, "volar"); ev.push({ tipo: "despega", id: c.id });
+    }
+    if (c.vuela) {
+      if (m.saltar) c.metaY = Math.min(cfg.vueloTecho, c.metaY + cfg.vueloPaso);
+      if (m.golpe) { c.metaY -= cfg.vueloPaso; if (c.metaY < 0.5) aterrizarVuelo(e, c, ev); }
+    }
+    if (c.vuela) {
+      c.y += (c.metaY - c.y) * Math.min(1, 4 * s);
+      let vx = 0, vz = 0;
+      if (fuerza > 0.08) {
+        vx = (m.x / fuerza) * cfg.vueloVel * Math.min(1, fuerza); vz = (m.z / fuerza) * cfg.vueloVel * Math.min(1, fuerza);
+        const d = angulo(Math.atan2(vx, vz) - c.rot);
+        c.rot = angulo(c.rot + d * Math.min(1, cfg.giro * s));
+      }
+      c.x += vx * s + c.empujeX * s; c.z += vz * s + c.empujeZ * s;
+      const freno = Math.exp(-6 * s); c.empujeX *= freno; c.empujeZ *= freno;
+      continue;
+    }
     // Golpe: arranca el ataque; el impacto se revisa a mitad del clip.
     if (m.golpe && libre && c.enPiso) { poner(e, c, "golpe", cfg.golpeMs); c.golpeo = false; }
-    if (m.festejo && libre && c.enPiso && fuerza < 0.1) poner(e, c, "festejo", 2300);
+    // Gesto de la rueda (o el festejo de antes): se queda quieto mientras lo hace.
+    const gesto = m.gesto ?? (m.festejo ? "festejo" : undefined);
+    if (gesto && libre && c.enPiso) poner(e, c, gesto, GESTO_MS[gesto]);
+    // Poder (gatillo RT): el movimiento especial del personaje (rayos de Cíclope, pecho de Iron Man...). Solo animación.
+    if (m.poder && libre && c.enPiso) { poner(e, c, "poder", 2000); ev.push({ tipo: "poder", id: c.id }); }
+    // Segundo poder (botón X), si el personaje lo trae. La TV alarga los dos al largo real del clip (alargar).
+    else if (m.poder2 && libre && c.enPiso) { poner(e, c, "poder2", 2000); ev.push({ tipo: "poder", id: c.id, n: 2 }); }
     if (m.saltar && libre && c.enPiso) { c.vy = cfg.salto; c.enPiso = false; poner(e, c, "saltar"); ev.push({ tipo: "salto", id: c.id }); }
     // Moverse (también en el aire; no mientras golpea, está herido o tirado).
     let vx = 0, vz = 0;
@@ -158,6 +214,7 @@ export function pasoCuarto(e: EstadoCuarto, dt: number): EventoCuarto[] {
     o.empujeX = ux * cfg.empuje; o.empujeZ = uz * cfg.empuje;
     o.rot = Math.atan2(-ux, -uz); // voltea hacia quien le pegó
     ev.push({ tipo: "golpe", de: c.id, a: o.id });
+    if (o.vuela) { o.vuela = false; o.metaY = 0; o.vy = 0; } // lo bajan de un golpe
     if (o.recibidos.length >= cfg.golpesKo) { poner(e, o, "ko", cfg.koMs); ev.push({ tipo: "ko", id: o.id }); }
     else poner(e, o, "herido", cfg.heridoMs);
   }

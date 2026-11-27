@@ -1,5 +1,6 @@
 // Formato de personajes v3 (ALV_FORMATO_PERSONAJES_V3.md, con los ajustes de la sección 12).
 // Solo tipos y constantes: sin 3D, sin DOM.
+import type { PoderPlano } from "./poderes";
 
 export type Id = string;
 export const ID = /^[a-z0-9][a-z0-9-]{1,59}$/;
@@ -61,6 +62,9 @@ export interface Ficha {
   /** Opcional (CONTRATO-ENTREGA.md §3, aprobado por Codex el 2026-11-26): GLB del mismo personaje con sus clips más las
    *  acciones de los minijuegos. `clips`: acción lógica → nombre exacto del clip en ese GLB. */
   juego?: { glb: string; clips: Partial<Record<AccionJuego, string>> };
+  /** Opcional (Elías, 27 nov 2026): GLB «poderes» con los clips de sus poderes del juego. `clips`: poder → clip. Qué se ofrece
+   *  y con qué efecto lo decide src/personajes/poderes.ts. */
+  poderes?: { glb: string; clips: Record<string, string> };
 }
 
 /** Acciones de los minijuegos (bloque `juego` de la ficha). */
@@ -129,6 +133,8 @@ export interface Plano {
   /** Gestos tomados de otro GLB (personalizador, sección Movimientos): lógica → GLB y nombre del clip. El motor los agrega
    *  y la lógica los toca en lugar del clip propio; si no bajan, se queda el propio. */
   clipsExt?: Partial<Record<Logica, { glb: string; clip: string; carga?: Carga }>>;
+  /** Poderes que la escena puede tocar (clip de otro GLB + efectos), en orden. */
+  poderes?: PoderPlano[];
 }
 
 /** Cómo se tiñe una pieza: `material` = nombre de material (o "*" = todos los de la pieza); `hex` ya resuelto. */

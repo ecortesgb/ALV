@@ -7,6 +7,8 @@ import { colorJugador } from "/src/app/colorJugador.ts";
 import qrcode from "qrcode-generator";
 import { cliente } from "/src/servicios/cliente.ts";
 import { fuentePrivada } from "/src/servicios/personajesPrivados.ts";
+import { poderesDeFicha } from "/src/personajes/plano.ts";
+import { sonarPoder } from "/src/app/sonido.ts";
 
 const q = new URLSearchParams(location.search);
 /** ?canal=pestanas: modo de prueba sin servidor (BroadcastChannel). Por omisión, WebSocket al servidor de sala (D8). */
@@ -43,6 +45,35 @@ export function crearEncuadreFranjas(escena) {
     }
   }
   return { franja, encuadrar };
+}
+
+/** Lanza el poder i de un jugador (clip del GLB de poderes y sus efectos). Sin i: el primero que no sea de volar.
+ *  → Promise<duración en s, o 0 si no tiene o no bajó>. Lo usan el cuarto y ¡Desenfunda! (el disparo). */
+// Efectos que mueven la figura (vuelo, supervelocidad): aquí la posición la pone el juego cada cuadro, así que van sobre
+// un punto a sus pies (hijo de la figura) y solo se ve su estela alrededor.
+const MUEVEN = new Set(["volar", "velocidad"]);
+/** Lanza un efecto de poder sobre el jugador, con su sonido y el tope de cámara. → { fin() } o null. */
+export function lanzarEfecto(j, escena, ef, cambios) {
+  const f = j && j.figura;
+  if (!f || !self.EfectosALV || !ef) return null;
+  let obj = f.obj;
+  if (MUEVEN.has(ef.tipo)) { if (!j.pies) { j.pies = new THREE.Object3D(); f.obj.add(j.pies); } obj = j.pies; }
+  try {
+    return self.EfectosALV.lanzar(escena.scene, { obj, hueso: f.hueso }, cambios ? Object.assign({}, ef, cambios) : ef,
+      { escala: f.alto(), sonar: sonarPoder, camara: escena.camera });
+  } catch (e) { console.warn("efecto", e); return null; }
+}
+
+export function lucirPoder(j, escena, i) {
+  const f = j && j.figura;
+  if (!f || !f.poder || !f.poderes) return Promise.resolve(0);
+  const k = i != null ? i : f.poderes.findIndex(p => p.id !== "volar" && p.id !== "levitar");
+  if (k < 0 || !f.poderes[k]) return Promise.resolve(0);
+  return f.poder(k).then(r => {
+    if (!r) return 0;
+    if (self.EfectosALV) r.efectos.forEach(ef => lanzarEfecto(j, escena, ef));
+    return r.dur;
+  });
 }
 
 export function crearTV({ juego, escena, alUnirse, alMensaje, alSalir, alDesconectar, alAnfitrion, topeEtiquetas = 118 }) {
@@ -153,7 +184,8 @@ export function crearTV({ juego, escena, alUnirse, alMensaje, alSalir, alDescone
       const mio = (j.carga = (j.carga || 0) + 1);
       try {
         if (FALLAR.has(personaje)) throw new Error("carga fallida a propósito (?fallar)");
-        const f = await FigurasMJ.crear(ficha, { base: catalogo.get(personaje).base, idFigura: id });
+        const base = catalogo.get(personaje).base;
+        const f = await FigurasMJ.crear(ficha, { base, idFigura: id, poderes: ficha.id ? poderesDeFicha(ficha, base, catalogo) : [] });
         if (mio !== j.carga || !jugadores.has(id)) { f.quitar(); return; }
         if (j.figura) j.figura.quitar();
         j.figura = f; j.alto = 0; j.estado = "listo";
@@ -204,7 +236,8 @@ export function crearTV({ juego, escena, alUnirse, alMensaje, alSalir, alDescone
   function difundir() {
     canal.enviar("estado", Object.assign({
       juego, fase, sala, personajes: disponibles(),
-      jugadores: [...jugadores.values()].map(j => ({ id: j.id, cuenta: j.cuenta || null, nombre: j.nombre, personaje: j.personaje, n: j.n, color: j.color.base, bot: j.bot, estado: j.estado, desconectado: j.desconectado })),
+      jugadores: [...jugadores.values()].map(j => ({ id: j.id, cuenta: j.cuenta || null, nombre: j.nombre, personaje: j.personaje, n: j.n, color: j.color.base, bot: j.bot, estado: j.estado, desconectado: j.desconectado,
+        poderes: j.figura && j.figura.poderes ? j.figura.poderes.map(x => x.nombre).slice(0, 2) : [] })),
       anfitrionId: anfitrionId(),
     }, extra()));
   }

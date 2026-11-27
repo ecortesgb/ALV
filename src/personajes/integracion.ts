@@ -13,8 +13,9 @@ import { BASE_CREAR, piezasDeCatalogo, planoConstructor, type PiezaCons, type Pi
 import { piezasGenericas } from "./genericas";
 import { baseGenerica, conMovimientos, type BaseGenerica } from "./movimientos";
 import { leerFigura } from "./figura";
+import { caretaEn, conEspecialAlSalir, cuantasFormas, figuraEnForma, type Careta } from "./formas";
 import { cargarIndice, type Indice } from "./indice";
-import { resolver, type Catalogo } from "./plano";
+import { poderesDeFicha, resolver, type Catalogo } from "./plano";
 import type { FiguraV3, Plano } from "./tipos";
 export type { FiguraV3 } from "./tipos";
 
@@ -243,4 +244,33 @@ export function paraEscena<T extends { id: string; figura?: unknown }>(x: T, cat
   const v3 = leerV3(x.figura);
   const plano = v3 ? resolverFigura(x.id, v3, cat.catalogo, cat.piezas, cat.base ?? null) : null;
   return { ...x, figura: sinV3(x.figura as FiguraV2Puente), ...(plano ? { plano3: plano } : {}) };
+}
+
+// ---------- Transformaciones (Elías, 27 nov: Banner ↔ Hulk, Tony / Iron Man / casco, Peter ↔ Spider-Man) ----------
+
+/** Cuántas formas tiene la figura (0 = no se transforma). No necesita el catálogo. */
+export function formasDe(f: unknown): number { return cuantasFormas(leerV3(f)); }
+
+/** La figura (v2 con su v3 en el puente) en el paso `paso` de su ciclo; sin ciclo, paso 0 o sin catálogo, la misma. */
+export function enForma(f: FiguraV2Puente, paso: number, cat: CatalogoV3 | null): FiguraV2Puente {
+  const v3 = paso ? leerV3(f) : null;
+  if (!v3 || !cat) return f;
+  const otra = figuraEnForma(v3, paso, cat.catalogo, cat.piezas);
+  return otra === v3 ? f : empaquetarV3(otra, sinV3(f)) ?? f;
+}
+
+/** ¿Al dejar la forma de `paso` se hace antes la animación especial (Banner se transforma)? */
+export function especialAlSalir(f: unknown, paso: number): boolean { const v3 = leerV3(f); return !!v3 && conEspecialAlSalir(v3, paso); }
+
+/** Careta levantada en ese paso (Iron Man), para la escena. null = cerrada. */
+export function caretaDe(f: unknown, paso: number): Careta | null { const v3 = paso ? leerV3(f) : null; return v3 ? caretaEn(v3, paso) : null; }
+
+// ---------- Poderes (Elías, 27 nov: escudo del Capi, rayo de Cíclope, telaraña, fuego, vuelo…) ----------
+
+/** Los poderes que se le ofrecen a la figura (en orden; el primero es el principal). Vacío si su personaje no tiene. */
+export function poderesDe(f: unknown, cat: CatalogoV3 | null): { id: string; nombre: string }[] {
+  const v3 = leerV3(f);
+  if (!v3 || !cat || v3.origen.tipo !== "catalogo") return [];
+  const en = cat.catalogo.get(v3.origen.personaje);
+  return en ? poderesDeFicha(en.ficha, en.base, cat.catalogo).map(p => ({ id: p.id, nombre: p.nombre })) : [];
 }

@@ -1,11 +1,14 @@
+import { sonarPoder } from "./sonido";
 // Figuras 3D (Minifig Studio, copiado en public/minifig): cápsulas por jugador, escena de varias figuras,
 // fotos para las listas chicas y el editor. El 3D vive en iframes del mismo origen; aquí solo se mandan mensajes.
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import type { FiguraV2 } from "../content/personaje";
 import { paramsEscena } from "./preferencias";
 import { alPedirGesto, animacionDe, esGesto, terminarGesto } from "./animaciones";
+import { alPedirPoder } from "./poderes";
 import { PRIORIDAD_VIDA, animPerfil, perfilDe, soloApariencia, type Contexto } from "./perfiles";
 import { alVida, nombreVida, useVidaPerfil } from "./vidaPerfil";
+import { conForma, useVersionFormas } from "./formas";
 import { catalogoParaEscena, modoCorteV3, paraEscena, useCatalogoV3, useEscenaV3, type CatalogoV3 } from "../personajes/integracion";
 
 const BASE = `${import.meta.env.BASE_URL}minifig/`;
@@ -287,7 +290,7 @@ export function Escena3D({ figuras, momentos, className, alto, modo, columnas, s
   // Animaciones de la biblioteca que tiene ESTA escena (las avisa biblioteca-anim.js).
   const bib = useRef(new Set<string>());
   const hay = (n: string) => bib.current.has(n);
-  const mandarFiguras = () => { const u = ultimas.current; enviar({ tipo: "figuras", lista: conAnim(u.figuras, u.vida, hay).map(x => paraEscena(x, u.v3)), columnas: u.columnas, asientos: u.asientos }); };
+  const mandarFiguras = () => { const u = ultimas.current; enviar({ tipo: "figuras", lista: conAnim(u.figuras.map(x => conForma(x, u.v3)), u.vida, hay).map(x => paraEscena(x, u.v3)), columnas: u.columnas, asientos: u.asientos }); };
   useEffect(() => { if (v3 && listoRef.current) mandarFiguras(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [v3]);
   useEffect(() => {
     const f = (e: MessageEvent) => {
@@ -296,6 +299,7 @@ export function Escena3D({ figuras, momentos, className, alto, modo, columnas, s
       if (e.data.tipo === "vuelo" && typeof e.data.d === "number") ultimas.current.alVolar?.(e.data.d);
       if (e.data.tipo === "cabezas" && e.data.pos && typeof e.data.pos === "object") ultimas.current.alCabezas?.(e.data.pos);
       if (e.data.tipo === "listo") { listoRef.current = true; setListo(true); mandarFiguras(); }
+      if (e.data.tipo === "sonido") sonarPoder(e.data.cual); // poderes: suena cuando sale el efecto
       if (e.data.tipo === "biblioteca" && Array.isArray(e.data.registradas)) { bib.current = new Set(e.data.registradas.filter((x: unknown) => typeof x === "string")); if (listoRef.current && ultimas.current.vida) mandarFiguras(); }
       avisoDelMotor(e.data);
     };
@@ -307,10 +311,14 @@ export function Escena3D({ figuras, momentos, className, alto, modo, columnas, s
       if (!listoRef.current || !ultimas.current.vida || !ultimas.current.figuras.some(x => x.id === v.jugador)) return;
       enviar({ tipo: "momento", id: v.jugador, cual: nombreVida(v, hay), prio: PRIORIDAD_VIDA, vel: v.vel, int: v.int, ...(v.dur ? { dur: v.dur } : {}) });
     });
-    return () => { removeEventListener("message", f); fuera(); fueraVida(); };
+    // Poderes (rueda o mando): la escena toca el clip del juego y dibuja sus efectos.
+    const fueraPoder = alPedirPoder(p => { if (listoRef.current && ultimas.current.figuras.some(x => x.id === p.jugador)) enviar({ tipo: "poder", id: p.jugador, poder: p.poder }); });
+    return () => { removeEventListener("message", f); fuera(); fueraVida(); fueraPoder(); };
   }, []);
   const firma = figuras.map(x => `${x.id}:${x.figura ? huella(x.figura) : "s" + x.semilla}:${x.foco ? 1 : 0}:${x.color ?? ""}:${x.columna ?? ""}`).join("|") + "#" + (columnas ?? "") + "#" + (asientos ?? []).join(",");
-  useEffect(() => { if (listo) mandarFiguras(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [listo, firma, vida]);
+  // Transformaciones (formas.ts): al cambiar la forma de alguien se vuelven a mandar las figuras.
+  const formas = useVersionFormas();
+  useEffect(() => { if (listo) mandarFiguras(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [listo, firma, vida, formas]);
   useEffect(() => { if (listo && modo === "nave") enviar({ tipo: "nave", boton: boton ?? "quieto" }); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [listo, boton]);
   useEffect(() => { if (listo && modo === "nave" && expulsar) enviar({ tipo: "expulsar", id: expulsar }); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [listo, expulsar]);
   const vistos = useRef(new Map<string, number>());

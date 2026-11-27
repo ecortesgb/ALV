@@ -7,7 +7,7 @@ import codigoParacaidasTv from "../../../tools/personajes/minijuegos/tv-paracaid
 import * as alto from "./altoTotal";
 import { acotarToque, estimar, muestra, relojListo } from "./reloj";
 import { aireDe, avanzar, crearPartida, empezar, enElAire, llegada, posBala, ranking, saltar, CONFIG_BALA, type Bala, type EstadoBala, type Evento } from "./bala";
-import { crearCuarto, entrar, mandar, pasoCuarto } from "./cuarto";
+import { alargar, crearCuarto, entrar, mandar, pasoCuarto } from "./cuarto";
 import { abrirCanalNube, crearSecuencias, deLaTv, idDeLlave, leer, validarDeCelular, SERVIDOR, TV, type Mensaje } from "./canal";
 import { JUEGO_XP, RONDAS_XP, resultadosXp } from "./xpSala";
 
@@ -935,6 +935,86 @@ describe("cuarto de Físico", () => {
     mandar(e, "a", { x: 0, z: 0 });
     pasoCuarto(e, 16);
     expect(c.anim).toBe("reposo");
+  });
+
+  it("RT (poder) hace el movimiento especial en el piso, avisa y no se mueve mientras dura", () => {
+    const e = crearCuarto({ forma: "caja", ancho: 10, fondo: 6 });
+    const c = entrar(e, "a");
+    for (let i = 0; i < 120; i++) pasoCuarto(e, 16); // que llegue al piso
+    mandar(e, "a", { x: 0, z: 0, poder: true });
+    const ev = pasoCuarto(e, 16);
+    expect(c.anim).toBe("poder");
+    expect(ev).toContainEqual({ tipo: "poder", id: "a" });
+    const x = c.x;
+    mandar(e, "a", { x: 1, z: 0 }); pasoCuarto(e, 100);
+    expect(c.x).toBe(x);
+    expect(validarDeCelular({ de: "c1", tipo: "boton", d: { n: 1, b: "poder" } })).toEqual({ n: 1, b: "poder" });
+  });
+
+  it("X (poder2) hace el segundo poder y la TV alarga el poder al largo de su clip (entre 0.4 y 6 s)", () => {
+    const e = crearCuarto({ forma: "caja", ancho: 10, fondo: 6 });
+    const c = entrar(e, "a");
+    for (let i = 0; i < 120; i++) pasoCuarto(e, 16);
+    mandar(e, "a", { x: 0, z: 0, poder2: true });
+    expect(pasoCuarto(e, 16)).toContainEqual({ tipo: "poder", id: "a", n: 2 });
+    expect(c.anim).toBe("poder2");
+    alargar(e, "a", 3500);
+    for (let i = 0; i < 180; i++) { mandar(e, "a", { x: 0, z: 0 }); pasoCuarto(e, 16); } // 2.9 s: sigue
+    expect(c.anim).toBe("poder2");
+    for (let i = 0; i < 60; i++) { mandar(e, "a", { x: 0, z: 0 }); pasoCuarto(e, 16); }
+    expect(c.anim).toBe("reposo");
+    alargar(e, "a", 99999); // ya no está en un poder: nada
+    expect(c.hasta).toBe(0);
+    mandar(e, "a", { x: 0, z: 0, poder: true }); pasoCuarto(e, 16);
+    alargar(e, "a", 99999);
+    expect(c.hasta - c.animDesde).toBe(6000);
+    expect(validarDeCelular({ de: "c1", tipo: "boton", d: { n: 1, b: "poder2" } })).toEqual({ n: 1, b: "poder2" });
+  });
+
+  it("vuelo: despega a su altura, A sube, B baja, se mueve rápido sin gravedad y aterriza con el mismo botón o bajando", () => {
+    const e = crearCuarto({ forma: "caja", ancho: 20, fondo: 12 });
+    const c = entrar(e, "a");
+    for (let i = 0; i < 120; i++) pasoCuarto(e, 16);
+    mandar(e, "a", { x: 0, z: 0, volar: true });
+    expect(pasoCuarto(e, 16)).toContainEqual({ tipo: "despega", id: "a" });
+    expect(c.vuela).toBe(true); expect(c.anim).toBe("volar");
+    for (let i = 0; i < 90; i++) { mandar(e, "a", { x: 0, z: 0 }); pasoCuarto(e, 16); }
+    expect(c.y).toBeCloseTo(e.cfg.vueloAlto, 1);
+    mandar(e, "a", { x: 0, z: 0, saltar: true }); pasoCuarto(e, 16);
+    for (let i = 0; i < 90; i++) { mandar(e, "a", { x: 0, z: 0 }); pasoCuarto(e, 16); }
+    expect(c.y).toBeCloseTo(e.cfg.vueloAlto + e.cfg.vueloPaso, 1);
+    const x0 = c.x;
+    for (let i = 0; i < 30; i++) { mandar(e, "a", { x: 1, z: 0 }); pasoCuarto(e, 16); }
+    expect(c.x - x0).toBeGreaterThan(e.cfg.correr * 0.48); // más rápido que corriendo
+    expect(c.anim).toBe("volar");
+    mandar(e, "a", { x: 0, z: 0, volar: true });
+    expect(pasoCuarto(e, 16)).toContainEqual({ tipo: "aterriza", id: "a" });
+    for (let i = 0; i < 120; i++) { mandar(e, "a", { x: 0, z: 0 }); pasoCuarto(e, 16); }
+    expect(c.enPiso).toBe(true); expect(c.y).toBe(0);
+    // Bajando con B hasta el piso también aterriza; en el aire B no golpea.
+    mandar(e, "a", { x: 0, z: 0, volar: true }); pasoCuarto(e, 16);
+    mandar(e, "a", { x: 0, z: 0, golpe: true }); pasoCuarto(e, 16);
+    expect(c.vuela).toBe(true); expect(c.anim).toBe("volar");
+    mandar(e, "a", { x: 0, z: 0, golpe: true }); pasoCuarto(e, 16);
+    expect(c.vuela).toBe(false);
+  });
+
+  it("la rueda del mando pone los 4 gestos, se queda quieto mientras duran e ignora gestos raros", () => {
+    const e = crearCuarto({ forma: "caja", ancho: 10, fondo: 6 });
+    const c = entrar(e, "a");
+    for (let i = 0; i < 120; i++) pasoCuarto(e, 16);
+    for (const g of ["saludo", "festejo", "especial", "derrota"] as const) {
+      mandar(e, "a", { x: 0, z: 0, gesto: g }); pasoCuarto(e, 16);
+      expect(c.anim).toBe(g);
+      const x = c.x;
+      mandar(e, "a", { x: 1, z: 0 }); pasoCuarto(e, 100);
+      expect(c.x).toBe(x);
+      for (let i = 0; i < 160; i++) { mandar(e, "a", { x: 0, z: 0 }); pasoCuarto(e, 16); } // termina el gesto
+      expect(c.anim).toBe("reposo");
+    }
+    mandar(e, "a", { x: 0, z: 0, gesto: "toString" as never }); pasoCuarto(e, 16);
+    expect(c.anim).toBe("reposo");
+    expect(validarDeCelular({ de: "c1", tipo: "gesto", d: { n: 1, g: "derrota" } })).toEqual({ n: 1, g: "derrota" });
   });
 
   it("si el celular deja de mandar, a los 500 ms la palanca vuelve al centro", () => {
