@@ -772,3 +772,8 @@ button.a-logo:focus-visible { outline: 3px solid #ffd23f; outline-offset: 4px; b
 .D .a-fondo-esc .a-fa-capa, .D:not(.wide) .a-fondo-esc .a-fa-capa { background-position: center 60%; }
 .D .a-fondo-esc::after { background-image: linear-gradient(180deg, rgba(8,10,40,.5), rgba(8,10,40,.18) 30%, rgba(8,10,40,.22) 65%, rgba(8,10,40,.65)); background-size: auto; }
 @media (prefers-reduced-motion: reduce) { .D .a-fa-sol::before, .D .a-fa-calor, .D .a-fa-capa.nueva { animation: none !important; } }
+/* 057: datos de acceso de «Entrar sin cuenta» (se ven una sola vez). */
+.D .a-tarjeta .a-acceso { display: flex; flex-direction: column; gap: 8px; margin: 0; }
+.D .a-tarjeta .a-acceso div { padding: 10px 14px; border-radius: 12px; background: #fff; border: 2.5px solid #8fa9df; }
+.D .a-tarjeta .a-acceso dt { font: 800 12px/1 "Barlow", sans-serif; letter-spacing: .08em; text-transform: uppercase; color: #26407f; }
+.D .a-tarjeta .a-acceso dd { margin: 6px 0 0; color: #0a1030; font: 800 22px/1.1 ui-monospace, "Cascadia Mono", Menlo, monospace; letter-spacing: .04em; user-select: all; word-break: break-all; }

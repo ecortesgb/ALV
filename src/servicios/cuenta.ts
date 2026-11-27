@@ -33,8 +33,11 @@ export async function registrar(nick: string, pass: string): Promise<string | nu
   } catch (e) { console.error("registrar", e); return GENERICO; }
 }
 
-/** Los apodos que empiezan con «inv_» son de las cuentas de invitado: no se pueden registrar a mano. */
-export const esNickInvitado = (n: string) => n.trim().toLowerCase().startsWith("inv_");
+/**
+ * Nombres reservados: «inv_…» (invitados de prueba) y «usuario» + número (cuentas que crea ALV, 053 y 057).
+ * No se pueden registrar ni poner a mano.
+ */
+export const esNickInvitado = (n: string) => /^(inv_|usuario[0-9]+$)/.test(n.trim().toLowerCase());
 const azar = (n: number) => Array.from(crypto.getRandomValues(new Uint8Array(n)), b => "abcdefghijklmnopqrstuvwxyz0123456789"[b % 36]).join("");
 
 /**
@@ -219,6 +222,31 @@ export async function cambiarClaveConActual(actual: string, nueva: string): Prom
     if (error) return "La contraseña actual no es correcta.";
   } catch (e) { console.error("cambiarClaveConActual", e); return "No se pudo comprobar. Intenta otra vez."; }
   return cambiarClave(nueva);
+}
+
+/**
+ * Cambia el nombre de usuario con el que se entra (función cambiar-usuario: pide la contraseña actual). Luego vuelve a
+ * entrar con el nombre nuevo para que la sesión lo traiga. Devuelve null si salió bien, o un mensaje.
+ */
+export async function cambiarUsuario(nuevo: string, clave: string): Promise<string | null> {
+  if (!cliente) return GENERICO;
+  const nick = nuevo.trim().toLowerCase();
+  if (!nickValido(nick) || esNickInvitado(nick)) return "Usa de 3 a 20 letras, números o _. No puede empezar con inv_ ni ser usuario y un número.";
+  if (nick === cuentaActiva()) return "Ese ya es tu usuario.";
+  if (!clave) return "Escribe tu contraseña actual.";
+  try {
+    const { error } = await cliente.functions.invoke("cambiar-usuario", { body: { usuario: nick, clave } });
+    if (error) {
+      let msg: string | null = null;
+      try { msg = (await (error as { context?: Response }).context?.json())?.error ?? null; } catch { /* sin cuerpo */ }
+      console.error("cambiarUsuario", error.message);
+      return typeof msg === "string" ? msg : "No se pudo cambiar. Intenta otra vez.";
+    }
+    const r = await cliente.auth.signInWithPassword({ email: correoInterno(nick), password: clave });
+    if (r.error) { console.error("cambiarUsuario: volver a entrar", r.error.message); return "Tu usuario cambió. Vuelve a entrar con el nombre nuevo."; }
+    fijarUsuario(nick);
+    return null;
+  } catch (e) { console.error("cambiarUsuario", e); return "No se pudo cambiar. Intenta otra vez."; }
 }
 
 /** Cierra la sesión en todos los aparatos donde esté abierta esta cuenta (también en este). */

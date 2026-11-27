@@ -13,7 +13,7 @@ import { tituloPorNivel } from "../../engine/economia";
 import { hayMusica } from "../../app/musica";
 import { adminAjustarXp, adminBorrarCuenta, adminBorrarInvitados, adminJugadores, restablecerClave, type CuentaAdmin } from "../../servicios/admin";
 import { hayNube } from "../../servicios/cliente";
-import { cambiarClaveConActual, salir, salirDeTodos, ultimoInicio } from "../../servicios/cuenta";
+import { cambiarClaveConActual, cambiarUsuario, esNickInvitado, nickValido, salir, salirDeTodos, ultimoInicio } from "../../servicios/cuenta";
 import { borrarMiCuenta, cambiarNombreVisible, nombreDeUsuario } from "../../servicios/preferencias";
 import { Marco, aviso, confirmar, useAncho } from "../comun";
 import { useRecursos } from "../Recursos";
@@ -177,11 +177,12 @@ function PanelCuenta() {
       ) : (
         <>
           <Bloque titulo="Datos de la cuenta">
-            <Fila titulo="Nombre de usuario" ayuda="Con este nombre entras a ALV. No se puede cambiar." control={<span className="cf-dato">@{nombreDeUsuario() ?? s.nombre}</span>} />
+            <Fila titulo="Nombre de usuario" ayuda="Con este nombre entras a ALV. Lo cambias abajo." control={<span className="cf-dato">@{nombreDeUsuario() ?? s.nombre}</span>} />
             <Fila titulo="Correo" ayuda={s.admin ? "Tu cuenta no usa correo. Si olvidas tu contraseña, se cambia desde el panel de Supabase." : "Tu cuenta no usa correo. Si olvidas tu contraseña, pídele una nueva al administrador."}
               control={<span className="cf-dato suave">Sin correo</span>} />
           </Bloque>
           <FormNombre />
+          <FormUsuario />
           <FormClave />
           <Bloque titulo="Seguridad">
             <Fila titulo="Último inicio de sesión" control={<span className="cf-dato">{ultimo ? fecha(ultimo) : "…"}</span>} />
@@ -218,6 +219,35 @@ function FormNombre() {
       <form className="cf-form cf-form-linea" onSubmit={e => void enviar(e)}>
         <label className="cf-campo"><span>Tu nombre</span><span className="cf-campo-caja"><input value={nombre} onChange={e => setNombre(e.target.value)} maxLength={20} autoComplete="nickname" /></span></label>
         <Boton tipo="principal" submit desactivado={!listo}>{ocupado ? "Guardando…" : "Guardar"}</Boton>
+      </form>
+    </Bloque>
+  );
+}
+
+/** Cambiar el nombre de usuario con el que se entra (función cambiar-usuario). Pide la contraseña actual. */
+function FormUsuario() {
+  const [, repintar] = useState(0);
+  const actual = nombreDeUsuario() ?? "";
+  const [nuevo, setNuevo] = useState(""), [clave, setClave] = useState(""), [ocupado, setOcupado] = useState(false);
+  const limpio = nuevo.trim().toLowerCase();
+  const error = limpio && !nickValido(limpio) ? "De 3 a 20 letras, números o _." : limpio && esNickInvitado(limpio) ? "Ese nombre está reservado. Prueba con otro." : null;
+  const listo = !!limpio && !error && limpio !== actual && clave.length > 0 && !ocupado;
+  const enviar = async (e?: FormEvent) => {
+    e?.preventDefault();
+    if (!listo) return;
+    setOcupado(true);
+    const r = await cambiarUsuario(limpio, clave);
+    setOcupado(false);
+    aviso(r ?? `Ahora entras como ${limpio}`);
+    if (!r) { setNuevo(""); setClave(""); repintar(n => n + 1); await refrescarSesion(); }
+  };
+  return (
+    <Bloque titulo="Nombre de usuario" nota="Es con el que entras a ALV. Tu XP, figuras y monedas se quedan igual.">
+      <form className="cf-form" onSubmit={e => void enviar(e)}>
+        <label className="cf-campo"><span>Usuario nuevo</span><span className="cf-campo-caja"><input value={nuevo} onChange={e => setNuevo(e.target.value.replace(/\s/g, "").slice(0, 20))} maxLength={20} autoComplete="username" autoCapitalize="none" spellCheck={false} placeholder={actual} /></span></label>
+        <CampoClave etiqueta="Contraseña actual" valor={clave} alCambiar={setClave} auto="current-password" />
+        {error && <p className="cf-error" role="alert">{error}</p>}
+        <Boton tipo="principal" submit desactivado={!listo}>{ocupado ? "Cambiando…" : "Cambiar usuario"}</Boton>
       </form>
     </Bloque>
   );
