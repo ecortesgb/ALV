@@ -1,0 +1,145 @@
+// Tiempo real (Maestro §22.1): un solo archivo escucha los cambios de la sala.
+// Estados: conectando → vivo. Si el servidor no confirma en 5 s, respaldo: se consulta cada 3 s.
+// Aun en vivo se consulta cada 12 s, por si se perdió un aviso. Cada aparato recibe solo lo que RLS le deja leer.
+import { cliente } from "./cliente";
+const TABLAS = ["partidas", "datos_privados", "acciones", "miembros_evento", "eventos", "figuras_jugador"];
+export const ESPERA_VIVO_MS = 5000, RESPALDO_MS = 3000, LATIDO_MS = 12000;
+/** Escucha la sala. `alCambiar` se llama en cada aviso (o cada consulta de respaldo). Devuelve cómo dejar de escuchar. */
+export function escucharSala(salaId, alCambiar, alEstado) {
+    let estado = "conectando", cerrado = false;
+    let reloj;
+    const fijar = (e) => {
+        if (cerrado || e === estado && reloj)
+            return;
+        estado = e;
+        alEstado?.(e);
+        clearInterval(reloj);
+        reloj = setInterval(alCambiar, e === "vivo" ? LATIDO_MS : RESPALDO_MS);
+    };
+    fijar("conectando");
+    const espera = setTimeout(() => { if (estado !== "vivo")
+        fijar("respaldo"); }, ESPERA_VIVO_MS);
+    if (!cliente) {
+        fijar("respaldo");
+        return () => { cerrado = true; clearInterval(reloj); clearTimeout(espera); };
+    }
+    let canal = cliente.channel(`sala-${salaId}`);
+    for (const t of TABLAS)
+        canal = canal.on("postgres_changes", { event: "*", schema: "public", table: t }, () => { if (!cerrado)
+            alCambiar(); });
+    canal.subscribe(s => {
+        if (cerrado)
+            return;
+        if (s === "SUBSCRIBED") {
+            fijar("vivo");
+            alCambiar();
+        }
+        else if (s === "CHANNEL_ERROR" || s === "TIMED_OUT" || s === "CLOSED")
+            fijar("respaldo");
+    });
+    const visible = () => { if (document.visibilityState === "visible")
+        alCambiar(); };
+    document.addEventListener("visibilitychange", visible);
+    addEventListener("online", alCambiar);
+    return () => {
+        cerrado = true;
+        clearInterval(reloj);
+        clearTimeout(espera);
+        document.removeEventListener("visibilitychange", visible);
+        removeEventListener("online", alCambiar);
+        void cliente?.removeChannel(canal);
+    };
+}
+export const LATIDO_PANTALLA_MS = 1500, SILENCIO_PANTALLA_MS = 4000, REVISION_PANTALLA_MS = 500;
+/** Lleva la cuenta del último latido: «ausente» solo si pasa el silencio sin oír la Pantalla (también al arrancar sin oírla). */
+export function crearDetectorPantalla(alEstado, silencioMs = SILENCIO_PANTALLA_MS) {
+    let actual = "desconocida", desde = Date.now(), ultimo = 0;
+    const poner = (p) => { if (p !== actual) {
+        actual = p;
+        alEstado(p);
+    } };
+    return {
+        /** Se oyó a la Pantalla. */
+        latido() { ultimo = Date.now(); poner("presente"); },
+        /** Llamar cada rato: da la Pantalla por ida si pasó el silencio. */
+        revisar() { if (actual !== "ausente" && Date.now() - Math.max(ultimo, desde) > silencioMs)
+            poner("ausente"); },
+        /** Sin canal (error o cerrado): no se sabe, así que no se avisa. */
+        perdido() { desde = Date.now(); ultimo = 0; poner("desconocida"); },
+        estado: () => actual,
+    };
+}
+/**
+ * Vigila la Pantalla de una sala. Si `soyPantalla`, este aparato manda el latido mientras esté abierto.
+ * Sin servidor (respaldo local) no hay canal: queda «desconocida» y no se avisa nada.
+ */
+export function vigilarPantalla(salaId, soyPantalla, alEstado) {
+    if (!cliente)
+        return () => { };
+    const det = crearDetectorPantalla(alEstado);
+    let cerrado = false, reloj;
+    const canal = cliente.channel(`pantalla-${salaId}`);
+    if (!soyPantalla)
+        canal.on("broadcast", { event: "tv" }, () => { if (!cerrado)
+            det.latido(); });
+    const latir = () => { void canal.send({ type: "broadcast", event: "tv", payload: {} }); };
+    canal.subscribe(s => {
+        if (cerrado)
+            return;
+        clearInterval(reloj);
+        if (s === "SUBSCRIBED") {
+            if (soyPantalla) {
+                latir();
+                reloj = setInterval(latir, LATIDO_PANTALLA_MS);
+            }
+            else {
+                det.perdido();
+                reloj = setInterval(() => det.revisar(), REVISION_PANTALLA_MS);
+            }
+        }
+        else if (s === "CHANNEL_ERROR" || s === "TIMED_OUT" || s === "CLOSED")
+            det.perdido();
+    });
+    return () => { cerrado = true; clearInterval(reloj); void cliente?.removeChannel(canal); };
+}
+// ---------- El lobby único (fase de prueba, 8 personas) ----------
+// Sin tablas ni funciones nuevas: el aparato del anfitrión (su celular en la sala o la Pantalla) anuncia el código del
+// lobby abierto por un canal de difusión (`alv-lobby`, no se guarda). Quien abre ALV lo oye y entra con un toque.
+// Entrar sigue pasando por `unirse_evento` (cuenta, mayor de 18, sala abierta y con lugar): oír un código no da acceso.
+export const ANUNCIO_LOBBY_MS = 2500, OLVIDO_LOBBY_MS = 9000;
+const CODIGO_LOBBY = /^[A-Z0-9]{6}$/;
+/** Anuncia el lobby mientras esté abierto. Devuelve cómo dejar de anunciar. */
+export function anunciarLobby(codigo) {
+    if (!cliente || !CODIGO_LOBBY.test(codigo))
+        return () => { };
+    let reloj;
+    const canal = cliente.channel("alv-lobby");
+    const decir = () => { void canal.send({ type: "broadcast", event: "lobby", payload: { codigo } }); };
+    canal.subscribe(s => { clearInterval(reloj); if (s === "SUBSCRIBED") {
+        decir();
+        reloj = setInterval(decir, ANUNCIO_LOBBY_MS);
+    } });
+    return () => { clearInterval(reloj); void cliente?.removeChannel(canal); };
+}
+/** Escucha el anuncio: da el código mientras se oiga y null si pasa un rato sin oírlo. */
+export function buscarLobby(alCodigo) {
+    if (!cliente)
+        return () => { };
+    let ultimo = null, oido = 0;
+    const poner = (c) => { if (c !== ultimo) {
+        ultimo = c;
+        alCodigo(c);
+    } };
+    const canal = cliente.channel("alv-lobby");
+    canal.on("broadcast", { event: "lobby" }, m => {
+        const c = String(m.payload?.codigo ?? "");
+        if (CODIGO_LOBBY.test(c)) {
+            oido = Date.now();
+            poner(c);
+        }
+    });
+    canal.subscribe();
+    const reloj = setInterval(() => { if (ultimo && Date.now() - oido > OLVIDO_LOBBY_MS)
+        poner(null); }, 1000);
+    return () => { clearInterval(reloj); void cliente?.removeChannel(canal); };
+}

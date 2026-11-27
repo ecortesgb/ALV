@@ -1,0 +1,16 @@
+import { jsx as _jsx } from "react/jsx-runtime";
+// Cuenta regresiva del turno (temporizador, Maestro 6A.11 C6). Solo usa la vista pública: `turnoReloj`.
+// Si el anfitrión no eligió temporizador, no se dibuja nada.
+import { useEffect, useState } from "react";
+import { Reloj } from "../../ds";
+export function RelojTurno({ v, size = "3.6em", className = "" }) {
+    const r = v.turnoReloj;
+    const activo = !!r && v.fase === "contestando" && !v.pausada;
+    const [, set] = useState(0);
+    useEffect(() => { if (!activo)
+        return; const t = setInterval(() => set(x => x + 1), 250); return () => clearInterval(t); }, [activo]);
+    if (!r || !activo)
+        return null;
+    const quedan = Math.max(0, (r.fin - Date.now()) / 1000);
+    return (_jsx("div", { className: "rt " + className, title: "Tiempo del turno", children: _jsx(Reloj, { segundos: quedan, total: r.total, pausado: v.pausada, style: { width: size, height: size } }) }));
+}

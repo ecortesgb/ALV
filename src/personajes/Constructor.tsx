@@ -6,7 +6,7 @@
 // Torso, Brazos, Piernas, Accesorios y Movimientos (saludar, ganar, perder, especial; de un personaje o genéricos).
 // Va dentro de <RaizDS className="az">. Entrada: la página del HUB se voltea; «Atrás»: se voltea de regreso y luego sale.
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type PointerEvent as PE } from "react";
-import { esMascara, PALETAS, paletaDePieza, piezasDe, planoConstructor, ponerPiel, ponerPieza, quitarTinte, teñir, type Color, type PiezaCons, type Piezas } from "./constructorDatos";
+import { caraDeMascara, esMascara, PALETAS, paletaDePieza, piezasDe, planoConstructor, ponerPiel, ponerPieza, quitarTinte, teñir, type Color, type PiezaCons, type Piezas } from "./constructorDatos";
 import { DONANTES_FUERA, VERSION_MINIFIG } from "./cabezas";
 import { caben, paginas, tarjetas, type Tarjeta } from "./galeriaDatos";
 import { GRUPOS_GENERICAS } from "./genericas";
@@ -207,7 +207,7 @@ export function Constructor({ catalogo, piezas, inicial, seccion, escenaUrl, onG
     if (bloqueada) return [];
     // Piel: solo el color de una cabeza lisa (Elías, 2026-11-27); las máscaras van en su propia pestaña.
     if (sub === "cabeza") return [{ tipo: "color" as const, c: null }, ...PALETAS.piel.map(c => ({ tipo: "color" as const, c }))];
-    if (parte) return piezasDe(piezas, parte, familiaPiezas).filter(pz => (sub === "mascara" ? esMascara(pz) : true)).map(pz => ({ tipo: "pieza" as const, pz }));
+    if (parte) return piezasDe(piezas, parte, familiaPiezas).filter(pz => (sub === "mascara" ? esMascara(pz) : !caraDeMascara(pz))).map(pz => ({ tipo: "pieza" as const, pz }));
     return movs.map(op => ({ tipo: "mov" as const, op }));
   }, [sub, vistaTrajes, piezas, parte, familiaPiezas, movs, bloqueada]);
   const origenDe = (it: Item) => (it.tipo === "traje" || it.tipo === "volver" ? "original" : it.tipo === "pieza" ? it.pz.origen ?? "original" : it.tipo === "mov" ? it.op?.origen ?? "ninguna" : "ninguna");
