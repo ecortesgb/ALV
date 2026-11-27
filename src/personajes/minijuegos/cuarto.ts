@@ -17,6 +17,8 @@ export interface ConfigCuarto {
   aterrizarMs: number; reaparecerMs: number;
   /** Vuelo (Iron Man, Thor...): altura al despegar, cuánto sube o baja cada toque, techo y velocidad en el aire. */
   vueloAlto: number; vueloPaso: number; vueloTecho: number; vueloVel: number;
+  /** ¡Al vacío!: el que cae ya no reaparece (sigue cayendo) y nadie vuela. */
+  reaparecer: boolean; sinVuelo: boolean;
   /** Sin mando nuevo en este tiempo, la palanca vuelve al centro (celular suspendido o sin red; Codex O5). */
   caducaMandoMs: number;
 }
@@ -29,6 +31,7 @@ export const CONFIG_CUARTO: ConfigCuarto = {
   heridoMs: 900, empuje: 3.2, golpesKo: 3, ventanaKoMs: 6000, koMs: 4300,
   aterrizarMs: 260, reaparecerMs: 1400, caducaMandoMs: 500,
   vueloAlto: 3, vueloPaso: 1.6, vueloTecho: 7, vueloVel: 7.5,
+  reaparecer: true, sinVuelo: false,
 };
 
 export interface Mando { x: number; z: number; saltar?: boolean; golpe?: boolean; festejo?: boolean; poder?: boolean; poder2?: boolean; gesto?: GestoCuarto;
@@ -75,6 +78,18 @@ export function entrar(e: EstadoCuarto, id: string, escala = 1): Cuerpo {
 }
 
 export function salir(e: EstadoCuarto, id: string) { e.cuerpos.delete(id); }
+
+/** Pone a cada quien de pie en un círculo de radio r (inicio de ronda de ¡Al vacío!), mirando al centro. */
+export function colocar(e: EstadoCuarto, ids: readonly string[], r: number) {
+  ids.forEach((id, i) => {
+    const c = e.cuerpos.get(id);
+    if (!c) return;
+    const a = (i / ids.length) * Math.PI * 2;
+    Object.assign(c, { x: Math.sin(a) * r, z: Math.cos(a) * r, y: 0, vy: 0, rot: a + Math.PI, enPiso: true, cayendo: false, vuela: false,
+      metaY: 0, empujeX: 0, empujeZ: 0, recibidos: [], golpeo: false, mando: { x: 0, z: 0 } });
+    poner(e, c, "reposo");
+  });
+}
 
 /** Alarga (o acorta) el poder que está haciendo al largo de su clip: la TV lo sabe hasta que baja el GLB de poderes.
  *  Entre 0.4 y 6 s desde que empezó. Si ya no está en un poder, no hace nada. */
@@ -130,6 +145,7 @@ export function pasoCuarto(e: EstadoCuarto, dt: number): EventoCuarto[] {
     // Caída por la orilla de la plataforma: cae, y reaparece en el centro.
     if (c.cayendo) {
       c.vy -= cfg.gravedad * s; c.y += c.vy * s;
+      if (c.y < -14 && !cfg.reaparecer) { c.y = Math.max(c.y, -60); c.vy = Math.max(c.vy, -40); continue; }
       if (c.y < -14) { c.cayendo = false; c.x = 0; c.z = 0; c.y = 6; c.vy = 0; c.enPiso = false; poner(e, c, "caer"); }
       continue;
     }
@@ -138,7 +154,7 @@ export function pasoCuarto(e: EstadoCuarto, dt: number): EventoCuarto[] {
     // Vuelo: el botón de su poder de volar despega (desde el piso) o aterriza. En el aire: palanca a cualquier lado,
     // A sube y B baja; si baja hasta el piso, aterriza. No golpea ni hace gestos en el aire.
     if (m.volar && c.vuela) aterrizarVuelo(e, c, ev);
-    else if (m.volar && libre && c.enPiso) {
+    else if (m.volar && libre && c.enPiso && !cfg.sinVuelo) {
       c.vuela = true; c.enPiso = false; c.vy = 0; c.metaY = cfg.vueloAlto; poner(e, c, "volar"); ev.push({ tipo: "despega", id: c.id });
     }
     if (c.vuela) {

@@ -143,6 +143,33 @@
     return g;
   }
 
+  /**
+   * ¡Al vacío! (Elías, 27 nov): plataforma redonda en la azotea de un edificio, sin paredes. El grupo de arriba (piso y aro)
+   * se encoge con setRadio(r); el edificio se queda. → { grupo, setRadio(r), quitar() }.
+   */
+  function azotea(scene, radio) {
+    const g = new T.Group(), arriba = new T.Group();
+    const piso = new T.Mesh(new T.CylinderGeometry(1, 0.94, 1.2, 64), new T.MeshStandardMaterial({ color: col(0x3b4170), roughness: 0.85 }));
+    piso.position.y = -0.6; piso.receiveShadow = true; arriba.add(piso);
+    const aro = new T.Mesh(new T.TorusGeometry(0.98, 0.02, 8, 64), new T.MeshStandardMaterial({ color: col(0xffcf2e), emissive: col(0x553300) }));
+    aro.rotation.x = Math.PI / 2; aro.position.y = 0.02; arriba.add(aro);
+    const centro = new T.Mesh(new T.CircleGeometry(0.27, 40), new T.MeshStandardMaterial({ color: col(0x2f7cf0), roughness: 0.7 }));
+    centro.rotation.x = -Math.PI / 2; centro.position.y = 0.01; arriba.add(centro);
+    g.add(arriba);
+    // Edificio debajo: torre angosta con ventanas encendidas, para que se vea la altura.
+    const torre = new T.Mesh(new T.BoxGeometry(radio * 1.1, 60, radio * 1.1), new T.MeshStandardMaterial({ color: col(0x1d2350), roughness: 0.9 }));
+    torre.position.y = -31.2; g.add(torre);
+    const luz = new T.MeshBasicMaterial({ color: col(0xffd77a) });
+    for (let y = -4; y > -58; y -= 3.2) for (let x = -2; x <= 2; x++) {
+      if ((x * 7 + y * 3) % 5 === 0) continue;
+      const v = new T.Mesh(new T.PlaneGeometry(radio * 0.12, 1.3), luz); v.position.set(x * radio * 0.2, y, radio * 0.551); g.add(v);
+    }
+    const setRadio = r => { arriba.scale.set(r, 1, r); };
+    setRadio(radio);
+    scene.add(g);
+    return { grupo: g, setRadio, quitar: () => scene.remove(g) };
+  }
+
   /** Piso invisible que solo recibe sombras (para dibujar sobre una imagen de fondo). */
   function pisoSombra(scene, ancho) {
     const p = new T.Mesh(new T.PlaneGeometry(ancho, 12), new T.ShadowMaterial({ opacity: 0.35 }));
@@ -157,5 +184,5 @@
     return m;
   }
 
-  raiz.EscenaMJ = { crear, pista, bala, cuarto, aro, pisoSombra };
+  raiz.EscenaMJ = { crear, pista, bala, cuarto, azotea, aro, pisoSombra };
 })(typeof self !== "undefined" ? self : this);

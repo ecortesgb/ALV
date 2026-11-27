@@ -199,6 +199,8 @@ function estado(d) {
     $("boton-x").classList.toggle("oculto", !pod[1]);
     const movs = Array.isArray(j.movs) ? j.movs.filter(m => m && typeof m.id === "string" && typeof m.nombre === "string").slice(0, 24) : [];
     if (movs.map(m => m.id).join() !== misMovs.map(m => m.id).join()) { misMovs = movs; rueda.pintar(); }
+    barraPartida(d, anfitrion);
+    if (d.fase === "fin" && Array.isArray(d.ranking)) void darXp(d);
     return verMando();
   }
   if (d.juego === "fisico") return verFisico(d, j);
@@ -477,6 +479,33 @@ const rueda = (function armarRueda() {
   pintar();
   return { pintar };
 })();
+
+// ---------- ¡Al vacío! (cuarto): barra del anfitrión y estado de la partida ----------
+let modoElegido = null;
+function barraPartida(d, anfitrion) {
+  const modo = modoElegido || (d.modalidad === "equipos" ? "equipos" : "solos");
+  const enJuego = d.fase === "juego", fin = d.fase === "fin";
+  $("pmodo").classList.toggle("oculto", !anfitrion || enJuego || fin);
+  $("pmodo").textContent = modo === "equipos" ? "Equipos" : "Solos";
+  $("pini").classList.toggle("oculto", !anfitrion || enJuego);
+  $("pini").textContent = fin ? "Volver al cuarto" : "¡Al vacío!";
+  let t = "";
+  if (enJuego && typeof d.ronda === "number") {
+    const vivo = Array.isArray(d.vivos) && d.vivos.includes(yo), pts = (d.puntos && d.puntos[yo]) || 0;
+    const eq = d.equipo && d.equipo[yo] !== undefined ? (d.equipo[yo] ? "Azul · " : "Rojo · ") : "";
+    t = `${eq}Ronda ${d.ronda}/${d.rondas} · ${vivo ? "¡en pie!" : "fuera"} · ${pts} pts`;
+  } else if (fin && Array.isArray(d.ranking)) {
+    const l = d.ranking.find(x => x.id === yo);
+    t = l ? (l.lugar === 1 ? "¡Ganaste!" : `Quedaste en ${l.lugar}° lugar`) : "Fin";
+  }
+  $("ptxt").textContent = t;
+}
+$("pmodo").onclick = () => { modoElegido = $("pmodo").textContent === "Solos" ? "equipos" : "solos"; $("pmodo").textContent = modoElegido === "equipos" ? "Equipos" : "Solos"; };
+$("pini").onclick = () => {
+  if ($("pini").textContent === "Volver al cuarto") canal.enviar("otra");
+  else canal.enviar("empezar", { modalidad: $("pmodo").textContent === "Equipos" ? "equipos" : "solos" });
+  vibrar(15);
+};
 
 // ---------- Sala de Físico ----------
 // Todos: gestos para animar a su personaje y el aviso para aceptar (o no) un castigo o reto de contacto.

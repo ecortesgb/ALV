@@ -68,7 +68,9 @@ export function validarDeCelular(m: Mensaje): Record<string, unknown> | null {
       return cuenta ? { n, nombre, personaje, cuenta } : { n, nombre, personaje };
     }
     case "ping": { const t0 = num(d.t0); return t0 !== null ? { n, t0 } : null; }
-    case "adios": case "empezar": case "otra": return { n };
+    case "adios": case "otra": return { n };
+    // empezar: en ¡Al vacío! el anfitrión elige modalidad (solos o equipos).
+    case "empezar": return d.modalidad === "solos" || d.modalidad === "equipos" ? { n, modalidad: d.modalidad } : { n };
     case "salto": {
       const pid = txt(d.pid, 20), s = num(d.s), inc = num(d.inc);
       return pid && s !== null && inc !== null && inc >= 0 ? { n, pid, s, inc } : null;

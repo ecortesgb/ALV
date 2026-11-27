@@ -1301,13 +1301,13 @@ describe("XP de Mini-Juegos desde la sala (049)", () => {
     expect(resultadosXp("x", null)).toBeNull();
   });
   it("cada juego de la TV tiene su id en la base y el hola acepta la cuenta", () => {
-    expect(Object.values(JUEGO_XP).sort()).toEqual(["mj-alto-total", "mj-bala", "mj-desenfunda", "mj-martillazo", "mj-paracaidas"]);
+    expect(Object.values(JUEGO_XP).sort()).toEqual(["mj-alto-total", "mj-bala", "mj-desenfunda", "mj-martillazo", "mj-paracaidas", "mj-plataforma"]);
     expect(validarDeCelular({ de: "c1", tipo: "hola", d: { n: 1, nombre: "a", personaje: "hulk", cuenta: A } })).toEqual({ n: 1, nombre: "a", personaje: "hulk", cuenta: A });
     expect(validarDeCelular({ de: "c1", tipo: "hola", d: { n: 1, nombre: "a", personaje: "hulk", cuenta: "<x>" } })).toEqual({ n: 1, nombre: "a", personaje: "hulk" });
   });
-  it("la 049 acepta exactamente esos ids", async () => {
+  it("la 054 (la última que define terminar_partida_sala) acepta esos ids", async () => {
     const { readFileSync } = await import("node:fs");
-    const sql = readFileSync("supabase/migrations/049_minijuegos_xp.sql", "utf8");
+    const sql = readFileSync("supabase/migrations/054_minijuego_plataforma_xp.sql", "utf8");
     for (const id of Object.values(JUEGO_XP)) expect(sql).toContain(`'${id}'`);
     expect(sql).toContain("privado.es_anfitrion(v_evento)");
   });

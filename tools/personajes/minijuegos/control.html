@@ -81,6 +81,11 @@ input{font:800 18px Nunito,sans-serif;padding:10px 12px;border-radius:12px;borde
 .rueda .nombre{font:400 15px "Lilita One",sans-serif;text-anchor:middle;fill:#fff;text-transform:uppercase;pointer-events:none}
 .rueda .logo{pointer-events:none}
 .rueda .centro{cursor:pointer}
+/* ¡Al vacío!: barra de arriba (el anfitrión elige modalidad e inicia; durante la partida, ronda y si sigues en pie). */
+.pbar{position:absolute;z-index:4;top:-4px;left:50%;translate:-50% 0;display:flex;gap:6px;align-items:center;white-space:nowrap}
+.pbar span{font:400 15px "Lilita One",sans-serif;color:#fff;text-shadow:0 2px 0 rgba(0,0,0,.5)}
+.pbar button{font:400 15px "Lilita One",sans-serif;border:3px solid var(--borde);border-radius:12px;padding:5px 10px;box-shadow:0 3px 0 var(--borde);color:var(--noche);background:#fff}
+.pbar #pini{background:var(--amarillo)}
 .rueda .mov{font:400 11px "Lilita One",sans-serif;text-anchor:middle;fill:#fff;pointer-events:none;text-shadow:0 1px 2px rgba(10,16,48,.6)}
 @media (orientation:portrait){.rueda{top:24%;width:min(46vw,190px)}}
 /* Sala de Físico */
@@ -136,6 +141,7 @@ input{font:800 18px Nunito,sans-serif;padding:10px 12px;border-radius:12px;borde
   <div id="mando" class="oculto">
     <div class="girar oculto" id="girar">Gira tu celular para jugar más cómodo ⟳</div>
     <div class="zona-palanca" id="zona"><div class="palanca" id="palanca"><i id="bolita"></i></div></div>
+    <div class="pbar" id="pbar"><span id="ptxt"></span><button id="pmodo" class="oculto">Solos</button><button id="pini" class="oculto">¡Al vacío!</button></div>
     <div class="rueda" id="rueda" role="menu" aria-label="Animaciones de tu personaje"><span class="vidrio"></span></div>
     <div class="botones">
       <button class="x-rt img" data-b="poder" aria-label="RT: poder"><b>RT</b><small id="rt-txt">Poder</small></button>
