@@ -43,9 +43,9 @@ function Portada({ m }: { m: Minijuego }) {
   return <span className="pt-portada" style={{ "--pc": m.color } as CSSProperties} aria-hidden="true"><span>{m.emoji}</span></span>;
 }
 
-/** Categorías, más «Todos» para ir directo al selector con los 5. */
+/** Categorías, más «Todos» para ir directo al selector con todos. */
 function CategoriasParty({ alElegir }: { alElegir: (c: IdCategoria | "todos") => void }) {
-  const cats = [{ id: "todos" as const, nombre: "Todos", texto: "Los 5 minijuegos en el selector.", color: "#ffcf2e" }, ...CATEGORIAS_PARTY];
+  const cats = [{ id: "todos" as const, nombre: "Todos", texto: "Todos los minijuegos en el selector.", color: "#ffcf2e" }, ...CATEGORIAS_PARTY];
   return (
     <div className="vt-cats" role="list">
       {cats.map((c, i) => {

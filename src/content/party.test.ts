@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 import { CATEGORIAS_PARTY, MINIJUEGOS, motivoParty, salaParty, urlsParty } from "./party";
 
 describe("ALV PARTY", () => {
-  it("los 5 minijuegos tienen su TV, su categoría y el id que acepta la base (049)", () => {
+  it("cada minijuego tiene su TV, su categoría y el id que acepta la base (049 y 054)", () => {
     // Se lee el archivo (la zona de personajes no se importa desde fuera; separacion.test.ts).
     const xp = readFileSync(join(__dirname, "../personajes/minijuegos/xpSala.ts"), "utf8");
     const ids = [...xp.slice(xp.indexOf("JUEGO_XP"), xp.indexOf("};", xp.indexOf("JUEGO_XP"))).matchAll(/"(mj-[a-z-]+)"/g)].map(m => m[1]);
@@ -44,5 +44,14 @@ describe("ALV PARTY", () => {
   });
   it("código de sala de 4 letras sin I ni O", () => {
     for (let i = 0; i < 50; i++) expect(salaParty()).toMatch(/^[A-HJ-NP-Z]{4}$/);
+  });
+});
+
+describe("ALVacío", () => {
+  it("se juega solos o por equipos y pide elegir", () => {
+    expect(motivoParty({ juego: "plataforma", ambiente: "noche", pantalla: "aqui", bots: 0 })).toBe("Elige individual o equipos");
+    const u = urlsParty({ juego: "plataforma", ambiente: "dia", pantalla: "aqui", bots: 1, modalidad: "equipos" }, "ABCD", "https://x.test/");
+    expect(new URL(u.tv).pathname).toBe("/tools/personajes/minijuegos/tv-plataforma.html");
+    expect(new URL(u.tv).searchParams.get("modalidad")).toBe("equipos");
   });
 });

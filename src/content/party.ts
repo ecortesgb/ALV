@@ -2,7 +2,7 @@
 // Solo datos. Las reglas viven en src/personajes/minijuegos/*.ts y la TV en tools/personajes/minijuegos/tv-*.html.
 // XP y monedas: las da el servidor con terminar_partida_sala (049) cuando el anfitrión de la sala tiene sesión.
 
-export type IdMini = "bala" | "desenfunda" | "martillazo" | "alto" | "paracaidas";
+export type IdMini = "bala" | "desenfunda" | "martillazo" | "alto" | "paracaidas" | "plataforma";
 
 export interface Minijuego {
   id: IdMini;
@@ -29,13 +29,14 @@ export const MODALIDADES_PARTY: { id: ModalidadParty; nombre: string; texto: str
   { id: "equipos", nombre: "Equipos", texto: "Gana el último equipo con alguien en pie." },
 ];
 
-export type IdCategoria = "reflejos" | "punteria" | "nervios";
+export type IdCategoria = "reflejos" | "punteria" | "nervios" | "pelea";
 export interface CategoriaParty { id: IdCategoria; nombre: string; texto: string; color: string }
 
 export const CATEGORIAS_PARTY: CategoriaParty[] = [
   { id: "reflejos", nombre: "Reflejos", texto: "Gana el más rápido.", color: "#e8412c" },
   { id: "punteria", nombre: "Puntería", texto: "Gana el que atina al momento exacto.", color: "#1d8fe0" },
   { id: "nervios", nombre: "Nervios", texto: "Gana el que se aguanta.", color: "#3cb043" },
+  { id: "pelea", nombre: "Pelea", texto: "Gana el último en pie.", color: "#c2185b" },
 ];
 
 export const MINIJUEGOS: Minijuego[] = [
@@ -49,6 +50,8 @@ export const MINIJUEGOS: Minijuego[] = [
     mando: "Abre", tv: "tv-paracaidas.html", categoria: "punteria", duracion: "2 min", color: "#7b4fd6", emoji: "🪂" },
   { id: "alto", idBase: "mj-alto-total", nombre: "Alto total", descripcion: "Mantén ¡CORRE! en verde y suelta en rojo. Llega a la meta.",
     mando: "Corre", tv: "tv-alto-total.html", categoria: "nervios", duracion: "1 min", color: "#3cb043", emoji: "🚦" },
+  { id: "plataforma", idBase: "mj-plataforma", nombre: "ALVacío", descripcion: "Empuja y golpea a los demás para tirarlos de la plataforma. Gana el último en pie.",
+    mando: "Golpea", tv: "tv-plataforma.html", categoria: "pelea", duracion: "2 a 4 min", color: "#c2185b", emoji: "🥊", modalidades: ["solos", "equipos"] },
 ];
 
 /** Ambientes de la TV (escena-mj.js los lee de ?ambiente=). */
