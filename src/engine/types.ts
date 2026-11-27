@@ -106,6 +106,8 @@ export interface OpcionesPartida {
   votoSecreto?: boolean;
   /** ¿Qué prefieres? (Elías, 27 nov, 1B): la minoría bebe algo. Apagado de inicio; nunca exige alcohol ni da puntos. */
   minoriaBebe?: boolean;
+  /** Comodines de la colección (Elías, 27 nov, Maestro v1.72): el anfitrión decide si en esta partida se usan. Encendidos de inicio. */
+  comodines?: boolean;
 }
 
 /** Nivel general de la partida en cada eje (Maestro v1.52). */
@@ -206,4 +208,6 @@ export interface Configuracion {
   votoSecreto?: boolean;
   /** ¿Qué prefieres?: la minoría bebe algo (opción apagada de inicio). */
   minoriaBebe?: boolean;
+  /** Comodines de la colección (Maestro v1.72): true si el anfitrión los dejó usar. Sin esto, la partida no acepta comodines de la cuenta. */
+  comodines?: boolean;
 }

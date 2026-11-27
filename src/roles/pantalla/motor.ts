@@ -27,12 +27,15 @@ export async function iniciarPartida(sala: SalaV, miembros: Miembro[], juego: st
   return enlace.enviar(id, `arranque-${id}`.slice(0, 60), "control", { que: "arranque", ...arranque });
 }
 
+/** Comodines ya devueltos desde este aparato (el servidor además solo devuelve una vez cada uno). */
+const devueltos = new Set<string>();
+
 /**
  * Corre el motor mientras `activo`. `tic` cambia con cada aviso del servidor: ahí se leen y aplican las acciones nuevas.
  * `alTerminar` avisa una vez por partida (para refrescar la XP).
  */
 export function useMotor(sala: SalaV | null, partida: PartidaPub | null, activo: boolean, tic: number, alTerminar?: () => void) {
-  const ref = useRef<{ id: string; publicada: number; reloj: { clave: string; fin: number } | null; espera: { clave: string; fin: number } | null; turno?: { clave: string; fin: number } | null; pausaDesde?: number; cerrada: boolean; suspenso?: ReturnType<typeof setTimeout>; tiempo?: ReturnType<typeof setTimeout> }>({ id: "", publicada: 0, reloj: null, espera: null, cerrada: false });
+  const ref = useRef<{ id: string; publicada: number; reloj: { clave: string; fin: number } | null; espera: { clave: string; fin: number } | null; turno?: { clave: string; fin: number; extra?: number; total?: number } | null; pausaDesde?: number; cerrada: boolean; suspenso?: ReturnType<typeof setTimeout>; tiempo?: ReturnType<typeof setTimeout> }>({ id: "", publicada: 0, reloj: null, espera: null, cerrada: false });
   const ocupado = useRef(false), repetir = useRef(false);
   useEffect(() => {
     if (!activo || !sala || !partida || partida.terminada) return;
@@ -46,6 +49,8 @@ export function useMotor(sala: SalaV | null, partida: PartidaPub | null, activo:
         const filas = await enlace.acciones(partida.id);
         const e = reconstruir(filas, sala.anfitrionId);
         if (!e || yo.cerrada) return;
+        // Comodín de la colección que el motor no aceptó (llegó tarde, ya no era su turno…): el servidor lo devuelve una vez.
+        for (const f of filas) if (f.tipo === "comodin" && !e.accionesVistas.includes(f.id) && !devueltos.has(f.id)) { devueltos.add(f.id); void enlace.devolverComodin(f.id); }
         const { claveReloj, conReloj, listos, hayEspera, claveEspera, claveTurno } = relojLogico(e);
         // Pausa: los relojes se congelan. Al reanudar, su fin se recorre lo que duró la pausa (antes el turno empezaba de cero
         // y el reloj de la ronda seguía corriendo; auditoría 27 nov).
@@ -57,7 +62,9 @@ export function useMotor(sala: SalaV | null, partida: PartidaPub | null, activo:
         }
         // Temporizador por turno: cuando cambia el turno se rearma; al vencer se manda «tiempo» (el mismo id en cada aparato).
         if (!claveTurno) { if (!e.pausada) yo.turno = null; }
-        else if (yo.turno?.clave !== claveTurno) { yo.turno = { clave: claveTurno, fin: Date.now() + (e.cfg.temporizador ?? 0) * 1000 }; yo.publicada = 0; }
+        else if (yo.turno?.clave !== claveTurno) { yo.turno = { clave: claveTurno, fin: Date.now() + (e.cfg.temporizador ?? 0) * 1000, extra: e.efectos?.extra ?? 0, total: e.cfg.temporizador ?? 0 }; yo.publicada = 0; }
+        // Prórroga (comodín): el turno que corre suma los segundos nuevos.
+        else if ((e.efectos?.extra ?? 0) > (yo.turno.extra ?? 0)) { const d = (e.efectos?.extra ?? 0) - (yo.turno.extra ?? 0); yo.turno.fin += d * 1000; yo.turno.total = (yo.turno.total ?? 0) + d; yo.turno.extra = e.efectos?.extra ?? 0; yo.publicada = 0; }
         clearTimeout(yo.tiempo);
         if (yo.turno && !e.pausada) { const t = yo.turno; yo.tiempo = setTimeout(() => { void enlace.enviar(partida.id, idTiempo(partida.id, t.clave), "control", { que: "tiempo" }); }, Math.max(0, t.fin - Date.now())); }
         if (conReloj && yo.reloj?.clave !== claveReloj) { yo.reloj = { clave: claveReloj, fin: Date.now() + e.segundos! * 1000 }; yo.publicada = 0; }
@@ -68,7 +75,7 @@ export function useMotor(sala: SalaV | null, partida: PartidaPub | null, activo:
         // repetición la `partida` de este cierre es vieja y, con el respaldo Local (sin pausas entre avisos), publicaba sin fin
         // y congelaba la pantalla al iniciar (Elías, 24 nov).
         if (e.version > yo.publicada) {
-          const { publico, privados } = paraPublicar(e, e.fase === "contestando" ? yo.reloj?.fin ?? null : null, yo.espera?.fin ?? null, yo.turno?.fin ?? null);
+          const { publico, privados } = paraPublicar(e, e.fase === "contestando" ? yo.reloj?.fin ?? null : null, yo.espera?.fin ?? null, yo.turno?.fin ?? null, yo.turno?.total);
           if (await enlace.publicar(partida.id, e.version, publico, privados)) yo.publicada = e.version;
         }
         // Todos contestaron: 2 s de suspenso y la revelación sale sola (decisión 1 de §21.4).

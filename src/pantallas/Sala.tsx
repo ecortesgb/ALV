@@ -256,8 +256,10 @@ export function Sala({ codigo }: { codigo: string }) {
     const yo = compartido ? mano : ses.uid;
     const yoNombre = s.miembros.find(x => x.id === yo)?.nombre ?? ses.nombre;
     const estoy = v.jugadores.some(j => j.id === yo);
-    const sec = (s.secreto ?? {}) as { mio?: unknown; miRespuesta?: unknown; miMano?: string[] };
-    const mi: MiVista = { yo, mio: sec.mio ?? null, miRespuesta: sec.miRespuesta ?? null, miMano: sec.miMano ?? [] };
+    const sec = (s.secreto ?? {}) as { mio?: unknown; miRespuesta?: unknown; miMano?: string[]; misComodines?: string[] };
+    // Comodines de la colección (Maestro v1.72): solo la cuenta abierta en su propio celular (no el modo de un solo aparato).
+    const mi: MiVista = { yo, mio: sec.mio ?? null, miRespuesta: sec.miRespuesta ?? null, miMano: sec.miMano ?? [],
+      misComodines: Array.isArray(sec.misComodines) ? sec.misComodines : [], partida: pid, cuenta: !local && yo === ses.uid };
     const ultima = esFinalDeJuego(v);
     // Ceremonia de copas de la noche: sin ronda, sin barra del anfitrión ni marcador; al final se cierra la sala.
     const copas = v.juegoId === "copas";

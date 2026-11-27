@@ -1,6 +1,6 @@
 # ALV — Amigos Legendarios Verdaderos
 ## Documento Maestro del Producto
-**Versión:** 1.71  
+**Versión:** 1.72  
 **Última actualización:** 27 de noviembre de 2026  
 **Estado:** Documento vivo de producto; decisiones y propuestas identificadas por separado.
 
@@ -351,6 +351,17 @@ La lista de 6.2 incluía Botella, Micrófono, Votaciones y Tablero. La botella q
 | Protegerse de ciertas penalizaciones | Idea pendiente (se parece a Escudo y Salvavidas). | v1.45. |
 | Modificar el resultado de una ronda | Idea pendiente. | v1.45. |
 | Alterar condiciones que el juego permita | Idea pendiente. | v1.45. |
+
+**DECISIÓN (v1.72, Elías, 27 de noviembre) — comodines de la colección en la partida:** resuelve el PENDIENTE de 13.1 (v1.67) y la parte de C3 que faltaba en código.
+1. **De dónde salen:** solo de **sobres o de la colección** (compra o reposición). Ya no se ganan jugando: se quita el regalo de una carta cada 3 retos cumplidos y no se dan al ganar partidas. Sustituye en eso a 6A.11 C3 («al ganar partidas»).
+2. **¿Voy a tener suerte? es comodín** (como se vende desde v1.67). Sustituye el interruptor de v1.53. Al usarlo, la app sortea con la misma probabilidad: se suaviza (a la mitad), se duplica (dos veces y, si se cumple, el doble de puntos), se anula (pasa sin cumplir ni tomar, 0 puntos), pasa a otra persona o lo hace toda la mesa (los puntos siguen siendo de quien tenía el turno). Un reto de contacto nunca pasa a otra persona ni a toda la mesa, y «toda la mesa» solo sale con la carta de la app a la vista.
+3. **Primera tanda, aprobada tal cual:** 8 comodines en Verdad o reto y en los juegos por turno: Pasa turno, Escudo, Cambio de pregunta, Dos caminos, Rebaja, Segundo intento, Prórroga (+30 s, solo con temporizador) y ¿Voy a tener suerte?. Los de castigo, mesero y trampa esperan a los juegos que tienen esas mecánicas. Dados HOT queda fuera: ahí pasar ya es gratis (6A.14) y sus retos son de contacto de la pareja.
+4. **En la partida:** quien hace el reto ve un botón «Comodines» con los de su colección que sirven en ese juego y en ese momento, y usa el que quiera. Uno por persona y por turno. Si ya gastó todas las copias de uno que descubrió, el mismo botón le ofrece **comprarlo y usarlo de una vez** al precio de reposición de la tienda (65 a 130 monedas). Sustituye el precio de 50 monedas de v1.53. Una carta que nunca le salió en un sobre no se puede comprar ahí.
+5. **La copia se descuenta en el servidor** en el mismo paso en que se escribe la jugada (migración 056). Si el motor no la acepta (llegó tarde o ya no era su turno), el anfitrión la devuelve sola: la copia regresa o se reembolsan las monedas.
+6. **Configurador:** el anfitrión decide si en esa partida se pueden usar comodines (encendidos de inicio).
+7. **Animación especial:** al usar un comodín, la figura de quien lo usó hace su movimiento especial en la TV y sale la carta con su nombre. Es de adorno: no cambia puntos ni turnos.
+
+Por ahora no funciona en el modo de un solo aparato (lobby local), porque ahí el celular no es de una sola cuenta. **PENDIENTE:** cómo usarlos en ese modo.
 
 ## 6A.5 Recompensas: tres sistemas independientes
 
@@ -1003,7 +1014,7 @@ Ningún sobre da ventaja dentro de una partida. Las rarezas (común, épica, leg
 ## 13.1 Tienda e inventario
 
 **DECISIÓN (v1.48, Elías, 18 de noviembre) — tienda nueva, enfoque A:** se levanta D-001 y se construye la tienda con monedas que guarda y cobra el servidor, sobres que se tiran en el servidor y dan piezas bloqueadas de la 033 (lo común ya es libre), personajes (trajes), compra directa, colección con contador, ofertas diarias y comodines con inventario por cuenta. Los tres archivos congelados (`Tienda.tsx`, `servicios/tienda.ts`, `engine/inventario.ts`, tienda 2D que cobraba XP) se reemplazan. Se construye en 5 etapas; la 1 es solo visual en la demostración sin nube. Sin dinero real. Plan completo: `ALV_PLAN_TIENDA.md` (fuera del repo).
-**DECISIÓN (v1.67, Elías, 27 de noviembre) — tienda completa:** (1) los **18 comodines** se venden y salen en el sobre de comodines, todos con la misma probabilidad; reponer una carta que ya descubriste y gastaste cuesta de 65 a 130 monedas según la carta (Pasa turno 65, Cambio 75; migraciones 050 y 052). Sustituye lo de v1.49 «solo Pasa turno y Cambio de pregunta». Comprados aún no entran a la mano de la partida: sigue **PENDIENTE** (C3). (2) **Personajes en venta:** 18 iniciales libres; los demás se consiguen en sobres por saga (Marvel, DC, Star Wars, Harry Potter) a 80 monedas por carta, hasta 3 por sobre y sin repetidas, o comprados directo desde su carta: rara 260, épica 360, legendaria 520, +40 si es Bigfig (migración 051). En el personalizador los no conseguidos salen con candado. Quien ya tenía guardada una figura con un personaje en venta lo conserva. (3) **Premios por nivel:** cada nivel desde el 2 regala un personaje al azar que no tengas; 7 de cada 10 salen del grupo que más usas (X-Men, Avengers, Guardianes, Villanos, DC, Star Wars…), con lo raro menos probable (migración 052). Sustituye la PROPUESTA de piezas por nivel de 6A.11 C1 (035, que ya no se aplica). **PROPUESTA:** desbloquear personajes de una saga al cumplir retos relacionados con ella (por ejemplo, «usa este traje»).
+**DECISIÓN (v1.67, Elías, 27 de noviembre) — tienda completa:** (1) los **18 comodines** se venden y salen en el sobre de comodines, todos con la misma probabilidad; reponer una carta que ya descubriste y gastaste cuesta de 65 a 130 monedas según la carta (Pasa turno 65, Cambio 75; migraciones 050 y 052). Sustituye lo de v1.49 «solo Pasa turno y Cambio de pregunta». Comprados aún no entran a la mano de la partida: sigue **PENDIENTE** (C3). **Resuelto en v1.72** (6A.4): se usan desde la colección. (2) **Personajes en venta:** 18 iniciales libres; los demás se consiguen en sobres por saga (Marvel, DC, Star Wars, Harry Potter) a 80 monedas por carta, hasta 3 por sobre y sin repetidas, o comprados directo desde su carta: rara 260, épica 360, legendaria 520, +40 si es Bigfig (migración 051). En el personalizador los no conseguidos salen con candado. Quien ya tenía guardada una figura con un personaje en venta lo conserva. (3) **Premios por nivel:** cada nivel desde el 2 regala un personaje al azar que no tengas; 7 de cada 10 salen del grupo que más usas (X-Men, Avengers, Guardianes, Villanos, DC, Star Wars…), con lo raro menos probable (migración 052). Sustituye la PROPUESTA de piezas por nivel de 6A.11 C1 (035, que ya no se aplica). **PROPUESTA:** desbloquear personajes de una saga al cumplir retos relacionados con ella (por ejemplo, «usa este traje»).
 
 **DECISIÓN (v1.49, Elías, 19 de noviembre):** aprobó tal cual la propuesta de abajo (decisiones 2 a 6 del plan). Comodines a la venta: solo **Pasa turno** y **Cambio de pregunta**; Escudo no se vende hasta confirmarlo (6A.4). Sobres de piezas sin repetidas. El desbloqueo directo de piezas pasa de XP a monedas (rara 80, épica 200, legendaria 400), y los retos ya cumplidos dan +15 monedas en lugar de +40 XP (etapa 3). El bono de monedas por lugar sigue la misma regla de podio que la XP (1 lugar con 2 o 3 jugadores, 2 con 4 o 5, 3 con 6 o más).
 ~~**PROPUESTA (v1.48)**~~ **Aprobada en v1.49:** monedas 10 por jugar + 8/5/3 por lugar, tope 300 al día y regalo de bienvenida de 150; sobres Básico 50 (2 piezas), Accesorios 120 (3), Comodines 150 (3 comodines), Mixto 180 (2 piezas + 2 comodines) y Épico 200 (3 piezas, al menos 1 épica), con probabilidades a la vista; garantía de épica al 8.º sobre sin épica y de legendaria al 25.º; piezas sin repetidas (v1.20) y comodines repetibles hasta 9 por tipo; compra directa rara 80, épica 200, legendaria 400 monedas (sustituiría el desbloqueo con XP de la 033); ofertas: 3 al día. La tienda vieja de la 004 y 005 (`comprar_sobre`, cobra XP) se apaga quitando el permiso, sin borrar tablas.
@@ -1841,6 +1852,9 @@ Decisiones del usuario del 12 de noviembre de 2026:
 
 ## v1.6
 - Primeros logros (14.2), con ámbito de sesión o histórico (ver DECISIÓN v1.6 en 14.2).
+
+## v1.72
+- 27 nov 2026. Comodines de la colección en la partida (6A.4): solo salen de sobres o de la colección, ¿Voy a tener suerte? es comodín con sorteo, 8 comodines en Verdad o reto y juegos por turno, botón en el celular con compra en vivo al precio de reposición, interruptor en el configurador y animación especial en la TV. Migración 056. Decisiones de Elías.
 
 ## v1.71
 - 27 nov 2026. Juegos de risa en ALV FÍSICO (6A.15): 16 juegos con turno, carta, cronómetro, reglas y castigo por lugar en pantalla; se guardan como «fisico» en el servidor. Decisión de Elías.

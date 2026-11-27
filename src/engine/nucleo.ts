@@ -8,11 +8,12 @@ import { ESCENARIOS, JUEGOS } from "../content/catalogo";
 import { aplicar, conEliminacion, conVerdadReto, crearPartida, enCarga, etapaImpostor, etapaVR, HERRAMIENTAS_VR, maxImpostores, parejasPorDecidir, type Accion, type EstadoPartida, type HerramientaVR } from "./partida";
 import { adultoPorEjes } from "./filtros";
 import { limpiarSalieron } from "./yaSalieron";
+import { MOTORES_CON_COMODINES } from "../content/comodinesPartida";
 import type { Configuracion, EjesPartida, Jugador, NivelEje, OpcionesPartida } from "./types";
 import { vistaJugador, vistaPublica } from "./vistas";
 
 /** Misma forma que la fila de `servicios/enlace.ts` (se repite aquí para no depender de servicios). */
-export type TipoFila = "contestar" | "carta" | "pista" | "control";
+export type TipoFila = "contestar" | "carta" | "pista" | "control" | "comodin";
 export interface FilaAccion { id: string; jugador: string; tipo: TipoFila; datos: Record<string, unknown>; creada: string }
 
 export interface Arranque { semilla: number; juego: string; rondas: number; cfg: Configuracion }
@@ -123,6 +124,8 @@ export function armarArranque(miembros: { id: string; nombre: string }[], juego:
     ...(salieron ? { yaSalieron: salieron } : {}),
     ...(op.votoSecreto === true && def.motor === "senalar" ? { votoSecreto: true } : {}),
     ...(op.minoriaBebe === true && def.motor === "votacion" ? { minoriaBebe: true } : {}),
+    // Comodines de la colección (Maestro v1.72): solo en los juegos donde ya sirven y si el anfitrión no los apagó.
+    ...(op.comodines !== false && MOTORES_CON_COMODINES.includes(def.motor) ? { comodines: true } : {}),
   };
   if (juego === "verdad-reto") {
     // Verdad o reto siempre arranca con elección y herramienta (Maestro 6A.6 B); el modo anterior queda para partidas guardadas.
@@ -157,7 +160,11 @@ export function aAccion(f: FilaAccion, controlan: string[]): Accion | null {
   if (f.tipo === "contestar") return { id, tipo: "contestar", jugador: f.jugador, valor: d.valor };
   // Papeles en la mesa: «Ya lo vi» viaja como fila `carta` (tipo que la base ya acepta, sin migración).
   if (f.tipo === "carta" && d.que === "visto") return { id, tipo: "visto", jugador: f.jugador };
+  // Dos caminos: quien lo usó elige una de las dos cartas (fila `carta`, no cuesta nada).
+  if (f.tipo === "carta" && d.que === "camino" && (d.i === 0 || d.i === 1)) return { id, tipo: "camino", jugador: f.jugador, i: d.i };
   if (f.tipo === "carta" && typeof d.carta === "string") return { id, tipo: "usar-carta", jugador: f.jugador, carta: d.carta };
+  // Comodín de la colección: esta fila solo la escribe el servidor después de descontar la copia o cobrarla (migración 056).
+  if (f.tipo === "comodin" && typeof d.carta === "string") return { id, tipo: "usar-carta", jugador: f.jugador, carta: d.carta, cuenta: true };
   if (f.tipo === "pista" && typeof d.texto === "string") return { id, tipo: "pista", jugador: f.jugador, texto: d.texto };
   if (f.tipo !== "control" || !controlan.includes(f.jugador)) return null;
   const que = String(d.que ?? "");
@@ -184,14 +191,14 @@ export function reconstruir(filas: FilaAccion[], anfitrion: string): EstadoParti
 }
 
 /** Lo que se publica: la vista pública (con el reloj) y, por jugador, solo lo suyo. */
-export function paraPublicar(e: EstadoPartida, relojFin: number | null, esperaFin: number | null = null, turnoFin: number | null = null) {
+export function paraPublicar(e: EstadoPartida, relojFin: number | null, esperaFin: number | null = null, turnoFin: number | null = null, turnoTotal?: number) {
   const publico = {
     ...vistaPublica(e), reloj: relojFin && e.segundos ? { fin: relojFin, total: e.segundos } : null, espera: esperaFin ? { fin: esperaFin } : null,
     // Temporizador por turno: solo existe si el anfitrión lo eligió (así las partidas sin él publican lo mismo que antes).
-    ...(turnoFin && e.cfg.temporizador ? { turnoReloj: { fin: turnoFin, total: e.cfg.temporizador } } : {}),
+    ...(turnoFin && e.cfg.temporizador ? { turnoReloj: { fin: turnoFin, total: turnoTotal ?? e.cfg.temporizador } } : {}),
   };
   const privados: Record<string, unknown> = {};
-  for (const j of e.cfg.jugadores) { const v = vistaJugador(e, j.id); privados[j.id] = { mio: v.mio ?? null, miRespuesta: v.miRespuesta ?? null, miMano: v.miMano }; }
+  for (const j of e.cfg.jugadores) { const v = vistaJugador(e, j.id); privados[j.id] = { mio: v.mio ?? null, miRespuesta: v.miRespuesta ?? null, miMano: v.miMano, ...(v.misComodines.length ? { misComodines: v.misComodines } : {}) }; }
   return { publico, privados };
 }
 

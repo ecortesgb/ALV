@@ -9,6 +9,7 @@ import { useSesion } from "../../app/sesion";
 import { enlace } from "../../servicios/enlace";
 import { EscenaTv } from "../../juegos/general/tv";
 import { EmotesVolando } from "../../juegos/general/Emotes";
+import { ComodinTv } from "../../juegos/general/ComodinTv";
 import { esPublico, marcador, nombreDe, nombreJuego } from "../../juegos/general/texto";
 import { Conexion, useDespierta, usePantalla, useQuedan } from "../../pantallas/Sala";
 import { Posiciones, esFinalDeJuego } from "../../juegos/general/Copas";
@@ -113,6 +114,7 @@ export function PantallaTv({ codigo }: { codigo: string }) {
       </header>
       <main className="a-tv-main">{conMesa ? <MesaJuego v={v} miembros={s.miembros} modo="tv"><EscenaTv v={v} miembros={s.miembros} /></MesaJuego> : <EscenaTv v={v} miembros={s.miembros} />}{v.fase === "revelada" && v.ausentes?.length > 0 && <p className="a-tv-sub">Sin respuesta en esta ronda: {v.ausentes.map(j => nombreDe(v, j)).join(", ")}</p>}</main>
       <EmotesVolando v={v} />
+      {!copas && <ComodinTv v={v} miembros={s.miembros} />}
       {!copas && !conMesa && <footer className="a-tv-pie">
         <ul className="a-tv-marcador" aria-label="Marcador">
           {/* Fichas con la cabina de cada jugador (pantallas/lobby/Ficha.tsx) y sus puntos. */}

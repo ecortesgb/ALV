@@ -13,12 +13,16 @@ import { CelularVerdadReto } from "../verdadReto/celular";
 import { CelularFisico } from "../fisico/celular";
 import { ComoJugar, tocaExplicar } from "./ComoJugar";
 import { CeremoniaCopas, PodioJuego, esFinalDeJuego } from "./Copas";
-import { SelectorComodines } from "./SelectorComodines";
+import { EfectosComodines, SelectorComodines, SelectorComodinesMano } from "./SelectorComodines";
+import { comodinPorId } from "../../content/tienda";
+import { MOTORES_CON_COMODINES } from "../../content/comodinesPartida";
 import { BarraEmotes } from "./Emotes";
 
 const lista2 = (ns: string[]) => (ns.length <= 1 ? ns.join("") : ns.slice(0, -1).join(", ") + " y " + ns.at(-1));
 
-export interface MiVista { yo: string; mio: unknown; miRespuesta: unknown; miMano: string[] }
+export interface MiVista { yo: string; mio: unknown; miRespuesta: unknown; miMano: string[];
+  /** Comodines que sirven ahora mismo (los decide el motor). */ misComodines?: string[];
+  /** La partida en curso y si este celular puede usar la colección de la cuenta (no en el modo de un solo aparato). */ partida?: string; cuenta?: boolean }
 type Mandar = (tipo: "contestar" | "carta" | "pista", datos: Record<string, unknown>) => Promise<boolean>;
 
 /** Elegir a alguien: burbujas en anillo con el color de cada quien; un toque marca y el botón confirma. */
@@ -71,15 +75,19 @@ function HerramientaGeneral({ v, mi, miembros, mandar }: { v: Publico; mi: MiVis
   if (v.pausada) return <Panel className="a-herr"><span className="dsp ol a-t1">En pausa</span><p className="a-suave">El anfitrión detuvo la partida un momento.</p></Panel>;
 
   const cartas = mano.length > 0 && v.fase === "contestando" && (
-    <SelectorComodines key={clave} cantidad={mano.length}>
+    <SelectorComodinesMano key={clave} cantidad={mano.length}>
       {mano.map((c, i) => {
         const def = CARTAS_PODER.find(x => x.id === c);
         const deTurno = c === "escudo" || c === "turno" || c === "cambio";
         const puede = !deTurno || (soyTurno && !recibido && ["turnos-cartas", "botella", "ruleta", "dados"].includes(v.motor));
         return <button key={c + i} type="button" className="d-chip a-comodin" disabled={!puede} title={def?.efecto} onClick={() => void mandar("carta", { carta: c })}>{def?.nombre ?? c}</button>;
       })}
-    </SelectorComodines>
+    </SelectorComodinesMano>
   );
+  const comodines = MOTORES_CON_COMODINES.includes(v.motor) && <>
+    <EfectosComodines v={v} yo={yo} alElegir={i => void mandar("carta", { que: "camino", i })} />
+    <SelectorComodines v={v} mi={mi} />
+  </>;
   const espera = <p className="a-estado" role="status">{recibido ? "La TV ya lo recibió" : "Enviado…"}</p>;
 
   let cuerpo: JSX.Element;
@@ -89,7 +97,7 @@ function HerramientaGeneral({ v, mi, miembros, mandar }: { v: Publico; mi: MiVis
         <>
           <span className="a-kick">Te toca · {v.carta?.tipo ?? "carta"}</span>
           <p className="a-carta">{v.carta?.texto ?? "Sin carta para este nivel"}</p>
-          {yaEnvie ? espera : <div className="a-pila">
+          {yaEnvie ? espera : v.efectos?.caminos ? null : <div className="a-pila">
             <Boton color="verde" texto="Lo cumplí" icono="star" onClick={() => void contestar("cumplio")} />
             <Boton color="rojo" texto="No lo cumplí" sub="0 puntos" onClick={() => void contestar("paso")} />
           </div>}
@@ -236,5 +244,5 @@ function HerramientaGeneral({ v, mi, miembros, mandar }: { v: Publico; mi: MiVis
       cuerpo = <></>;
       break;
   }
-  return <Panel className="a-herr a-entra" como="section">{cuerpo}{cartas}{v.cartaUsada && v.cartaUsada.ronda === v.ronda && <Chip texto={`${nombreDe(v, v.cartaUsada.jugador)} usó ${CARTAS_PODER.find(c => c.id === v.cartaUsada!.carta)?.nombre ?? "un comodín"}`} icono="bolt" />}</Panel>;
+  return <Panel className="a-herr a-entra" como="section">{cuerpo}{cartas}{comodines}{v.cartaUsada && v.cartaUsada.ronda === v.ronda && <Chip texto={`${nombreDe(v, v.cartaUsada.jugador)} usó ${comodinPorId(v.cartaUsada.carta)?.nombre ?? CARTAS_PODER.find(c => c.id === v.cartaUsada!.carta)?.nombre ?? "un comodín"}`} icono="bolt" />}</Panel>;
 }
