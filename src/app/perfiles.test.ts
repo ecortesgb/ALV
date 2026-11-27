@@ -2,7 +2,7 @@
 import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
 import {
-  CON_VIDA, DATOS, PERFILES, PRIORIDAD_VIDA, animPerfil, azarSembrado, crearDirector, esPerfil, perfilDe, ponerPersonalidad,
+  CON_VIDA, DATOS, PERFILES, PRIORIDAD_VIDA, animPerfil, azarSembrado, crearDirector, esPerfil, perfilDe, perfilEfectivo, ponerPersonalidad,
   soloApariencia, vidaPermitida, type Perfil,
 } from "./perfiles";
 import { completar, figuraNueva, ponerMomentos, MOMENTOS_NORMALES } from "./editarFigura";
@@ -117,5 +117,19 @@ describe("personalidad separada de la apariencia y de los paquetes", () => {
     expect(comprado.momentos).toEqual(ponerMomentos(figuraNueva(), { ...paquete }).momentos);
     expect(animPerfil(ponerMomentos(con, MOMENTOS_NORMALES), todo).espera).toBe("lib:personality_idle");
     expect(animPerfil(figuraNueva(), todo)).toEqual({}); // sin perfil: como siempre
+  });
+});
+
+describe("personalidad por defecto del personaje (27 nov)", () => {
+  const conPersonaje = (personaje: string, extra: Record<string, unknown> = {}) => ({ version: 2, extensiones: { alv: { ...extra, v3: {
+    version: 3, familia: "minifig", origen: { tipo: "catalogo", personaje, version: "base", revision: 1 }, piezas: {},
+    momentos: { paquete: null, espera: "respirar", victoria: "festejo", derrota: "tristeza", punto: "saltito" }, extensiones: {} } } } }) as never;
+  it("sin perfil elegido usa el del personaje; el elegido manda; sin personaje conocido no hay", () => {
+    expect(perfilEfectivo(conPersonaje("deadpool"))).toBe("comico");
+    expect(perfilEfectivo(conPersonaje("hulk"))).toBe("agresivo");
+    expect(perfilDe(conPersonaje("deadpool"))).toBeNull();
+    expect(perfilEfectivo(conPersonaje("deadpool", { personalidad: { perfil: "timido" } }))).toBe("timido");
+    expect(perfilEfectivo(conPersonaje("no-existe"))).toBeNull();
+    expect(perfilEfectivo(null)).toBeNull();
   });
 });

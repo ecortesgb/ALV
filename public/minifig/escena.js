@@ -979,7 +979,11 @@
         return;
       }
       const vel = Lg && Lg.velocidadClip ? Lg.velocidadClip(op.vel) : 1; // clips del juego: siempre a velocidad 1
-      if (!e.v3.tocar(l, { vel })) { enviar({ tipo: "gesto", id: e.id, cual, ok: false }); return; }
+      // Vida automática (personalidad): a veces usa un clip propio del personaje de esa misma lógica (CHEER, CLAP, Shrug…)
+      // para que no repita siempre el mismo.
+      const propios = p <= 0.5 && Lg ? ((e.v3.obj.userData.plano && e.v3.obj.userData.plano.vida) || []).filter(c => Lg.logicaDe(c) === l) : [];
+      const clip = propios.length && Math.random() < 0.5 ? propios[Math.floor(Math.random() * propios.length)] : l;
+      if (!(clip !== l && e.v3.tocar(clip, { vel })) && !e.v3.tocar(l, { vel })) { enviar({ tipo: "gesto", id: e.id, cual, ok: false }); return; }
       fin(Math.max(0.5, e.v3.duracion(e.v3.estado().clip) / vel), l);
       return;
     }

@@ -16,6 +16,7 @@ import { leerFigura } from "./figura";
 import { caretaEn, conEspecialAlSalir, cuantasFormas, figuraEnForma, type Careta } from "./formas";
 import { cargarIndice, type Indice } from "./indice";
 import { poderesDeFicha, resolver, type Catalogo } from "./plano";
+import { PERFIL_PERSONAJE, type PerfilPersonaje } from "./caracter";
 import type { FiguraV3, Plano } from "./tipos";
 export type { FiguraV3 } from "./tipos";
 
@@ -273,4 +274,12 @@ export function poderesDe(f: unknown, cat: CatalogoV3 | null): { id: string; nom
   if (!v3 || !cat || v3.origen.tipo !== "catalogo") return [];
   const en = cat.catalogo.get(v3.origen.personaje);
   return en ? poderesDeFicha(en.ficha, en.base, cat.catalogo).map(p => ({ id: p.id, nombre: p.nombre })) : [];
+}
+
+// ---------- Personalidad por defecto (Elías, 27 nov: «personalidad a todos los personajes, a los que sean similares») ----------
+
+/** El perfil de conducta que trae el personaje de la figura (src/personajes/caracter.ts). null si no tiene. */
+export function perfilDelPersonaje(f: unknown): PerfilPersonaje | null {
+  const v3 = leerV3(f);
+  return v3 && v3.origen.tipo === "catalogo" ? PERFIL_PERSONAJE[v3.origen.personaje] ?? null : null;
 }
