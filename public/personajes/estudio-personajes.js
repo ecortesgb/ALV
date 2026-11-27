@@ -3,7 +3,7 @@
 // pieza (la cara, además, sobre su cabeza lisa: sin pelo ni casco), la encuadra y devuelve la imagen. Nada se guarda en
 // disco: la página de arriba la tiene en memoria mientras está abierta (los modelos son privados, de un juego).
 // Mensajes (mismo origen, {origen:"alv"}):
-//   {tipo:"foto", clave, plano, ver:[ranuras], tam?, pose?: "especial"} → responde {origen:"minifig", tipo:"foto", clave, url} o {…, error}
+//   {tipo:"foto", clave, plano, ver:[ranuras], tam?, pose?: "especial" | "reposo"} → responde {origen:"minifig", tipo:"foto", clave, url} o {…, error}
 // Responde {tipo:"listo"} al cargar. Las fotos se sacan de una en una, en el orden en que se piden.
 (function () {
   "use strict";
@@ -21,7 +21,9 @@
   scene.add(new T.HemisphereLight(0xdfe8ff, 0x3a3020, 0.85));
   const clave = new T.DirectionalLight(0xffffff, 1.15); scene.add(clave, clave.target);
   const contra = new T.DirectionalLight(0x9fb8ff, 0.45); scene.add(contra);
-  const GIRO = -0.26; // ~15°: el rostro se ve casi de frente (Codex D2: giro máximo ~15°, ojos a la misma altura)
+  const GIRO = -0.26;
+  /** Altura del hueso Head de una minifigura en reposo (escala del catálogo): la medida fija de los nichos. */
+  const ALTO_CABEZA_MINIFIG = 1.82; // ~15°: el rostro se ve casi de frente (Codex D2: giro máximo ~15°, ojos a la misma altura)
 
   // Caja de lo visible ya posado (las mallas con esqueleto se miden vértice por vértice, con muestreo).
   const v = new T.Vector3();
@@ -51,25 +53,28 @@
       // girada; Codex D2 pide el rostro visible y los ojos a la misma altura). Figura completa (nichos de «Mi
       // colección», Elías 2026-11-27): todas del mismo tamaño y centradas en su cuadro, en un cuadro de su movimiento
       // especial (el elegido o el propio); si no tiene, el primer cuadro del reposo.
-      const figura = pose === "especial";
-      const cabeza = figura ? p.obj.getObjectByName("Head") : null;
-      p.obj.updateMatrixWorld(true);
-      const altoCabeza = cabeza ? cabeza.getWorldPosition(new T.Vector3()).y : 0;
-      if (figura && p.tocar("especial", { mezcla: 0 })) {
+      const figura = pose === "especial" || pose === "reposo";
+      if (pose === "especial" && p.tocar("especial", { mezcla: 0 })) {
         const e = p.estado();
         p.update(0); p.update(Math.max(0, p.duracion(e.clip) * 0.45));
+      } else if (figura) { p.update(0); p.update(0.05); // reposo: aplicar su primer cuadro (sin esto queda en pose de enlace)
       } else if (!figura) { p.mixer.stopAllAction(); p.obj.traverse(o => { if (o.isSkinnedMesh) o.skeleton.pose(); }); }
       const mostrar = new Set(ver);
       p.obj.traverse(o => { if (o.isMesh && !o.userData.alvOclusor) o.visible = mostrar.has(o.userData.slot) && !o.userData.alvFuera; }); // lo que una pieza reemplazó sigue escondido
       p.obj.rotation.y = GIRO;
       scene.add(p.obj);
+      const b = caja(p.obj);
+      if (b.isEmpty()) throw new Error("la pieza no tiene nada visible");
       let centro, radio;
-      if (figura && altoCabeza > 0) {
-        // Mismo encuadre para todas: medido con la altura de la cabeza en reposo, no con lo que abulta (capas, pelo).
-        centro = new T.Vector3(0, altoCabeza * 0.68, 0); radio = altoCabeza * 0.74;
+      if (figura) {
+        // Mismo encuadre para todas, con los pies en la misma línea y a la misma escala: el cuadro alcanza para una figura
+        // grande (Hulk, ~4.2) y una minifigura ocupa unos dos tercios; así la grande se ve más grande (Elías, 2026-11-27,
+        // ronda 5). Solo si algo no cabe, el cuadro crece lo justo.
+        const R = ALTO_CABEZA_MINIFIG * 1.24, Y = ALTO_CABEZA_MINIFIG * 1.14;
+        const arriba = Y + R * 0.98, ancho = R * 0.95;
+        const k = Math.max(1, (b.max.y + 0.05) / arriba, Math.max(Math.abs(b.min.x), Math.abs(b.max.x)) / ancho);
+        radio = R * k; centro = new T.Vector3(0, Y * k - (k - 1) * R * 0.2, 0);
       } else {
-        const b = caja(p.obj);
-        if (b.isEmpty()) throw new Error("la pieza no tiene nada visible");
         const med = b.getSize(new T.Vector3());
         centro = b.getCenter(new T.Vector3()); radio = Math.max(med.x, med.y, med.z) / 2;
       }

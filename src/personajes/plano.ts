@@ -1,6 +1,6 @@
 // Resolver: figura v3 + catálogo → plano para el motor (§7 del formato). Aquí se decide todo; el motor solo dibuja.
 import { familia } from "./familias";
-import { SETS, setsDe } from "./sets";
+import { SETS, setsDe, sonidosDe } from "./sets";
 import { PODERES, PRESTADOS, type Efecto, type PoderDef, type PoderPlano } from "./poderes";
 import { LOGICAS, type Ficha, type FiguraV3, type Logica, type Plano } from "./tipos";
 
@@ -97,7 +97,9 @@ export function movimientosDeFicha(f: Ficha, catalogo: Catalogo): PoderPlano[] {
     const glb = unir(host.base, s.glb);
     for (const [mid, m] of Object.entries(def.movs)) {
       const clip = s.clips[mid];
-      if (clip) fuera.push({ id: `${sid}-${mid}`, nombre: m.nombre, glb, clip, efectos: [] });
+      if (!clip) continue;
+      const sonidos = sonidosDe(f.id, `${sid}-${mid}`);
+      fuera.push({ id: `${sid}-${mid}`, nombre: m.nombre, glb, clip, efectos: [], ...(sonidos.length ? { sonidos } : {}) });
     }
   }
   return fuera;
