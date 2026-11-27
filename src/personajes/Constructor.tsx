@@ -95,13 +95,14 @@ export interface ConstructorProps {
   /** Grados máximos que el cuerpo se aparta del frente en reposo (0 = como venga el clip). Decidió Codex: 10° (encargo
    *  2026-11-25-constructor-diseno-r5). */
   frente?: number;
+  puedeUsar?: (id: string) => boolean;
 }
 
 const sinMovimiento = () => typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches;
 const fotoValida = (u: string | null | undefined) => !!u;
 
 export function Constructor({ catalogo, piezas, inicial, seccion, escenaUrl, onGuardar, onSalir, base = null, paginaAnterior = `${ARTE}azotea-pedestal-noche-1920.webp`,
-  estudioUrl = escenaUrl.replace(/escena\.html.*$/, "estudio.html"), frente = 10 }: ConstructorProps) {
+  estudioUrl = escenaUrl.replace(/escena\.html.*$/, "estudio.html"), frente = 10, puedeUsar }: ConstructorProps) {
   const mini = useMiniaturas(estudioUrl, catalogo);
   const [figura, setFigura] = useState(inicial);
   const [historia, setHistoria] = useState<FiguraV3[]>([]);
@@ -198,6 +199,10 @@ export function Constructor({ catalogo, piezas, inicial, seccion, escenaUrl, onG
   const tinte = parte && paleta ? figura.piezas[parte]?.tintes?.[paleta] ?? null : null;
   const baseId = figura.origen.tipo === "catalogo" ? figura.origen.personaje : null;
   const visible = (it: Item) => it.tipo === "traje" ? it.id === baseId : it.tipo === "pieza" ? it.pz.id === puesta || (!puesta && it.pz.donante === baseId) : (it.op?.id ?? null) === (gesto ? elegidos[gesto] ?? null : null);
+  const bloqueado = (it: Item) => {
+    const id = it.tipo === "traje" ? it.id : it.tipo === "pieza" && it.pz.origen === "original" ? it.pz.donante : null;
+    return !!id && !!puedeUsar && !puedeUsar(id) && !visible(it);
+  };
   const losa = LOSAS.find(l => l.id === pestana)!;
   /** Palomita de cada sección: algo cambió respecto al personaje base. */
   const hecha = (t: Pestana) => t === "trajes" ? baseId !== (inicial.origen.tipo === "catalogo" ? inicial.origen.personaje : null) : t === "movimientos" ? Object.keys(elegidos).length > 0 : SUBPARTES[t].some(x => !!figura.piezas[x as Parte]);
@@ -249,6 +254,7 @@ export function Constructor({ catalogo, piezas, inicial, seccion, escenaUrl, onG
   const rehacer = () => { if (!futuro.length) return; setHistoria(h => [...h.slice(-29), figura]); setFigura(futuro[0]!); setFuturo(f => f.slice(1)); setGuardado(false); };
   const restablecer = () => { if (figura !== inicial) cambiar(inicial); };
   const tocarItem = (it: Item) => {
+    if (bloqueado(it)) { setAviso("Consigue este personaje en la tienda para usarlo."); return; }
     // Traje completo: el personaje tal cual (sin piezas cambiadas); conserva movimientos y extensiones.
     if (it.tipo === "traje") { if (it.id !== baseId || Object.keys(figura.piezas).length) cambiar({ ...figura, origen: { tipo: "catalogo", personaje: it.id, version: "base", revision: 1 }, piezas: {} }); return; }
     if (it.tipo === "pieza") { cambiar(ponerPieza(figura, it.pz, piezas)); return; }
@@ -430,6 +436,7 @@ export function Constructor({ catalogo, piezas, inicial, seccion, escenaUrl, onG
             const on = visible(it);
             return (
               <button key={clave} type="button" className={"pz-pieza" + (on ? " on" : "")} aria-pressed={on} onClick={() => tocarItem(it)}
+                data-bloqueado={bloqueado(it) || undefined}
                 title={it.tipo === "mov" && it.op ? `${it.op.nombre} · ${it.op.sub}` : nombre}>
                 {(() => {
                   if (it.tipo === "traje") return it.foto ? <img src={it.foto} alt="" draggable={false} loading="lazy" /> : <span className="pz-sin" aria-hidden="true">—</span>;
@@ -449,6 +456,7 @@ export function Constructor({ catalogo, piezas, inicial, seccion, escenaUrl, onG
                 <span>{nombre}</span>
                 {it.tipo === "mov" && it.op && <small className="pz-mov-sub">{it.op.sub}</small>}
                 {on && <i className="pz-check" aria-hidden="true">✓</i>}
+                {bloqueado(it) && <i className="pz-candado" aria-label="Por conseguir">🔒</i>}
               </button>
             );
           })}

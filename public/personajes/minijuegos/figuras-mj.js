@@ -154,7 +154,7 @@
       return clipsPoder.get(pd.id);
     }
     poderes.forEach(clipPoder); // se bajan de una vez, para que el primer RT no espere
-    let corte = 0;
+    let corte = 0, repite = 0; // repite: segundos que le quedan a un poder en bucle
     /** Toca el poder i (0 = RT, 1 = X). op.bucle: lo repite hasta otra animación (vuelo). → { dur (s), efectos } o null. */
     async function poder(i, op3) {
       const pd = poderes[i];
@@ -162,11 +162,12 @@
       const clip = await clipPoder(pd);
       if (!clip) return null;
       elegido["poder:" + pd.id] = clip;
-      const bucle = !!(op3 && op3.bucle);
-      anim("poder:" + pd.id, { mezcla: 0.08, bucle });
-      const hasta = !bucle && Number(pd.hasta) > 0 && Number(pd.hasta) < clip.duration ? Number(pd.hasta) : 0;
-      corte = hasta;
-      return { dur: hasta || clip.duration, efectos: Array.isArray(pd.efectos) ? pd.efectos : [] };
+      // op.bucle: se repite hasta otra animación (vuelo del cuarto). pd.bucle (s): se repite esos segundos y vuelve a reposo.
+      const siempre = !!(op3 && op3.bucle), seg = !siempre && Number(pd.bucle) > 0 ? Math.min(12, Number(pd.bucle)) : 0;
+      anim("poder:" + pd.id, { mezcla: 0.08, bucle: siempre || !!seg });
+      const hasta = !siempre && !seg && Number(pd.hasta) > 0 && Number(pd.hasta) < clip.duration ? Number(pd.hasta) : 0;
+      corte = hasta; repite = seg;
+      return { dur: seg || hasta || clip.duration, efectos: Array.isArray(pd.efectos) ? pd.efectos : [] };
     }
 
     return {
@@ -181,6 +182,7 @@
         if (pararEn && actual && actual.time >= pararEn) { actual.time = pararEn; actual.paused = true; }
         // Poder con corte (su final se ve mal): al llegar, de vuelta a reposo.
         if (corte && String(nombreActual).startsWith("poder:") && actual && actual.time >= corte) { corte = 0; anim("reposo"); }
+        if (repite) { if (!String(nombreActual).startsWith("poder:")) repite = 0; else if ((repite -= dt) <= 0) { repite = 0; anim("reposo"); } }
       },
       poderes: poderes.map(x => ({ id: x.id, nombre: x.nombre })), poder, hueso: p.hueso,
       alto: p.alto, ancho: p.ancho,

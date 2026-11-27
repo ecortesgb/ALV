@@ -2,7 +2,7 @@
 // En la nube la tirada la hace el servidor; esta función es la referencia que el SQL debe imitar
 // y es la que usa la demostración sin nube.
 import type { Azar } from "./azar";
-import { COMODINES, GARANTIA, MONEDAS_SI_TOPE, PESO_ESPECIAL, TOPE_COMODIN, piezasDeSobre, type RarezaSobre, type Sobre } from "../content/tienda";
+import { COMODINES, GARANTIA, MONEDAS_SI_TOPE, TOPE_COMODIN, piezasDeSobre, type RarezaSobre, type Sobre } from "../content/tienda";
 
 export const ORDEN: RarezaSobre[] = ["rara", "epica", "legendaria"];
 const nivel = (r: RarezaSobre) => ORDEN.indexOf(r);
@@ -10,6 +10,7 @@ const nivel = (r: RarezaSobre) => ORDEN.indexOf(r);
 export type Carta =
   | { tipo: "pieza"; id: string; rareza: RarezaSobre }
   | { tipo: "comodin"; id: string; especial: boolean }
+  | { tipo: "personaje"; id: string; rareza: RarezaSobre }
   | { tipo: "monedas"; cantidad: number; comodin: string };
 
 /** Sobres de piezas abiertos sin sacar épica (o mejor) y sin sacar legendaria. */
@@ -89,11 +90,9 @@ export function probabilidadPiezas(s: Sobre, tengo: ReadonlySet<string>, racha: 
   };
 }
 
-export function probabilidadComodines(s: Sobre, tengo: Readonly<Record<string, number>>, demo: boolean) {
+export function probabilidadComodines(s: Sobre, tengo: Readonly<Record<string, number>>) {
   return COMODINES.map(c => {
-    const grupo = COMODINES.filter(x => x.especial === c.especial).length;
-    const porCarta = !demo ? 1 / COMODINES.length : (c.especial ? PESO_ESPECIAL : 1 - PESO_ESPECIAL) / grupo
-      + (COMODINES.some(x => x.especial !== c.especial) ? 0 : (c.especial ? 1 - PESO_ESPECIAL : PESO_ESPECIAL) / grupo);
+    const porCarta = 1 / COMODINES.length;
     const alTope = (tengo[c.id] ?? 0) >= TOPE_COMODIN;
     return { ...c, porCarta, alTope, enSobre: 1 - (1 - porCarta) ** s.comodines };
   }).filter(c => s.comodines > 0 && c.porCarta > 0);
@@ -136,9 +135,7 @@ export function abrirSobre(s: Sobre, tengo: ReadonlySet<string>, comodines: Read
   const cuenta = { ...comodines };
   const extras: Carta[] = [];
   for (let j = 0; j < s.comodines; j++) {
-    const especial = azar.siguiente() < PESO_ESPECIAL;
-    const lista = COMODINES.filter(c => c.especial === especial);
-    const c = azar.elegir(lista.length ? lista : COMODINES);
+    const c = azar.elegir(COMODINES);
     if ((cuenta[c.id] ?? 0) >= TOPE_COMODIN) { extras.push({ tipo: "monedas", cantidad: MONEDAS_SI_TOPE, comodin: c.id }); continue; }
     cuenta[c.id] = (cuenta[c.id] ?? 0) + 1;
     extras.push({ tipo: "comodin", id: c.id, especial: c.especial });

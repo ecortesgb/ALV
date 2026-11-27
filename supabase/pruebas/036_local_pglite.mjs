@@ -211,4 +211,127 @@ if (process.argv.includes("--reposicion")) {
   });
 }
 
+if (process.argv.includes("--personajes")) {
+  await admin();
+  await db.exec(`create function public.puedo_ver_personajes() returns boolean
+    language sql stable as $$ select auth.uid() in ('${A}', '${B}') $$;`);
+  await db.exec(readFileSync(join(MIG, "051_tienda_personajes.sql"), "utf8"));
+  const comprarPj = async (modo, objetivo, precio, id = pedido()) =>
+    (await uno("select public.comprar_personajes($1,$2,$3,$4) r", [modo, objetivo, precio, id])).r;
+  const estadoPj = async () => (await uno("select public.estado_personajes_tienda() r")).r;
+
+  await prueba("051: solo sortea personajes de la saga, sin duplicados y cobra una vez", async () => {
+    await admin();
+    await db.query("insert into public.movimientos_monedas(jugador,cantidad,motivo) values ($1,1800,'prueba-personajes')", [A]);
+    await como(A);
+    const saldo = await monedas(), id = pedido();
+    const { catalogo } = await estadoPj();
+    const idsDc = new Set(catalogo.filter(x => x.saga === "dc").map(x => x.id));
+    const primero = await comprarPj("sobre", "dc", 240, id);
+    igual(primero.monedas, saldo - 240);
+    igual(new Set(primero.cartas.map(x => x.id)).size, 3);
+    cierto(primero.cartas.every(c => idsDc.has(c.id)), "todos de DC");
+    igual(await comprarPj("sobre", "dc", 240, id), primero);
+    const segundo = await comprarPj("sobre", "dc", 240);
+    cierto(segundo.cartas.every(c => !primero.cartas.some(x => x.id === c.id)), "ninguna carta repetida");
+  });
+
+  await prueba("051: el precio directo distingue legendarios y Bigfig", async () => {
+    await como(A);
+    const saldo = await monedas();
+    await falla("select public.comprar_personajes($1,$2,$3,$4)", ["carta","hulkbuster",520,pedido()], "precio cambió");
+    const compra = await comprarPj("carta", "hulkbuster", 560);
+    igual(compra.cartas, [{ id: "hulkbuster", tipo: "personaje", rareza: "legendaria" }]);
+    igual(compra.monedas, saldo - 560);
+    await falla("select public.comprar_personajes($1,$2,$3,$4)", ["carta","hulkbuster",560,pedido()], "disponibles");
+  });
+
+  await prueba("051: saga con una carta cobra 80, inventario por cuenta y acceso registrado", async () => {
+    await admin();
+    await db.query("insert into public.movimientos_monedas(jugador,cantidad,motivo) values ($1,300,'prueba-personajes')", [B]);
+    await como(B);
+    igual((await estadoPj()).personajes, []);
+    await falla("select public.comprar_personajes($1,$2,$3,$4)", ["sobre","harry-potter",240,pedido()], "precio cambió");
+    igual((await comprarPj("sobre", "harry-potter", 80)).cartas.map(c => c.id), ["voldemort"]);
+    await como(C);
+    igual(await estadoPj(), null);
+    await falla("select public.comprar_personajes($1,$2,$3,$4)", ["sobre","marvel",240,pedido()], "sin acceso");
+  });
+}
+
+if (process.argv.includes("--premios")) {
+  // Requiere --reposicion y --personajes antes (050 y 051).
+  await admin();
+  await db.exec(`create function public.nivel_por_xp(p_xp int) returns int language plpgsql immutable set search_path = '' as $$
+    declare n int := 1; resto int := greatest(p_xp, 0);
+    begin while resto >= 100 + 20 * (n - 1) loop resto := resto - (100 + 20 * (n - 1)); n := n + 1; end loop; return n; end $$;`);
+  const fig = pj => JSON.stringify({ version: 2, extensiones: { v3: { origen: { tipo: "catalogo", personaje: pj, version: "base", revision: 1 } } } });
+  await db.query("delete from public.figuras_jugador where jugador in ($1,$2,$3)", [A, B, C]);
+  await db.query("insert into public.figuras_jugador (jugador, capsula, figura, activa) values ($1,1,$2,true),($1,2,$3,false),($1,3,$4,false),($5,1,$6,true),($7,1,$8,true)",
+    [A, fig("wolverine"), fig("ciclope"), fig("tormenta"), C, fig("thanos"), B, fig("hulkbuster")]);
+  await db.exec(readFileSync(join(MIG, "052_comodines_y_premios_personajes.sql"), "utf8"));
+  const premios = async () => (await db.query("select * from public.reclamar_premios_nivel()")).rows;
+  const xp = async (j, n) => { await admin(); await db.query("insert into public.movimientos_xp (jugador, tipo, xp, motivo) values ($1,'ganada',$2,'prueba')", [j, n]); };
+
+  await prueba("052: los 18 comodines a la venta con precio de reposición", async () => {
+    await como(A);
+    const filas = (await db.query("select id, precio_reposicion from public.comodines_tienda")).rows;
+    igual(filas.length, 18);
+    cierto(filas.every(f => f.precio_reposicion > 50), "todos con precio");
+  });
+
+  await prueba("052: el sobre de comodines ya saca de los 18", async () => {
+    await admin();
+    await db.query("insert into public.movimientos_monedas(jugador,cantidad,motivo) values ($1,6000,'prueba')", [D]);
+    await db.query("delete from public.comodines_jugador where jugador = $1", [D]);
+    await como(D);
+    const vistos = new Set();
+    for (let i = 0; i < 30; i++) for (const c of (await abrir("comodines")).cartas) if (c.tipo === "comodin") vistos.add(c.id);
+    cierto(vistos.size > 2, "salieron " + [...vistos].join(","));
+  });
+
+  await prueba("052: quien ya usaba un personaje en venta lo conserva (regalo)", async () => {
+    await admin();
+    igual((await db.query("select jugador, personaje, origen from privado.personajes_comprados where origen = 'regalo' order by personaje")).rows
+      .map(r => [r.jugador, r.personaje]), [[B, "hulkbuster"], [C, "thanos"]]);
+  });
+
+  await prueba("052: premios por nivel, uno por nivel, sin repetir y sin cobrar", async () => {
+    await xp(A, 100 + 120 + 140 + 160); // nivel 5
+    await como(A);
+    const saldo = await monedas();
+    const r = await premios();
+    igual(r.map(x => x.nivel), [2, 3, 4, 5]);
+    igual(new Set(r.map(x => x.personaje)).size, 4);
+    igual(await premios(), []);
+    igual(await monedas(), saldo);
+    const dueño = (await db.query("select public.estado_personajes_tienda() e")).rows[0].e.personajes;
+    cierto(r.every(x => dueño.includes(x.personaje)), "quedan en su álbum");
+  });
+
+  await prueba("052: la mayoría sale del grupo que más usa (X-Men)", async () => {
+    await admin();
+    await db.exec("select setseed(0.42)");
+    await xp(A, 180 + 200 + 220 + 240 + 260 + 280 + 300 + 320 + 340); // nivel 14
+    await como(A);
+    await premios();
+    await admin();
+    const ya = (await db.query("select g.grupo from privado.premios_nivel p join privado.grupo_personaje g on g.id = p.personaje where p.jugador = $1", [A])).rows;
+    const xmen = ya.filter(x => x.grupo === "x-men").length;
+    igual(ya.length, 13);
+    cierto(xmen >= 6, `X-Men ${xmen} de 13`);
+    console.log("    X-Men:", xmen, "de 13");
+  });
+
+  await prueba("052: sin acceso a personajes o sin sesión no hay premios", async () => {
+    await xp(C, 1000);
+    await como(C);
+    igual(await premios(), []);
+    await anon();
+    await falla("select * from public.reclamar_premios_nivel()", [], "permission denied");
+    await como(B);
+    await falla("select * from privado.premios_nivel", [], "permission denied");
+  });
+}
+
 process.exit(mal ? 1 : 0);

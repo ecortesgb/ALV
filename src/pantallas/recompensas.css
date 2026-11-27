@@ -44,3 +44,6 @@
 @keyframes rwFlota { 50% { translate: 0 -10px; rotate: -3deg; } }
 .D .rw-pow { position: relative; z-index: 1; font-size: 3em; color: var(--amarillo); }
 @media (prefers-reduced-motion: reduce) { .D .rw, .D .rw-subio, .D .rw-premio, .D .rw-pedestal::before, .D .rw-pedestal img { animation: none !important; } }
+/* Premio por nivel: la carta del personaje (Maestro v1.67). */
+.D .rw-pedestal-carta { width: min(12em, 46vw); aspect-ratio: 5 / 7; }
+.D .rw-pedestal-carta .t-carta { position: relative; height: 100%; box-sizing: border-box; overflow: hidden; }

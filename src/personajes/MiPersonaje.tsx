@@ -33,6 +33,7 @@ export interface MiPersonajeProps {
   onGuardar: (espacio: number, figura: FiguraV3, nombre: string) => Promise<ResultadoGuardar>;
   onActivar: (espacio: number) => void;
   onSalir: () => void;
+  puedeUsar?: (id: string) => boolean;
 }
 
 const BASE = import.meta.env.BASE_URL;
@@ -49,7 +50,7 @@ const TEXTO: Record<ResultadoGuardar, (n: string) => string> = {
   error: () => "No se pudo guardar. Intenta otra vez.",
 };
 
-export function MiPersonaje({ catalogo, estadoCatalogo = catalogo ? "listo" : "cargando", onReintentar, espacios, activa, onGuardar, onActivar, onSalir }: MiPersonajeProps) {
+export function MiPersonaje({ catalogo, estadoCatalogo = catalogo ? "listo" : "cargando", onReintentar, espacios, activa, onGuardar, onActivar, onSalir, puedeUsar }: MiPersonajeProps) {
   const [ancho, setAncho] = useState(() => innerWidth >= 860);
   const [vista, setVista] = useState<Vista>({ cual: "inicio" });
   const [aviso, setAviso] = useState<string | null>(null);
@@ -142,7 +143,7 @@ export function MiPersonaje({ catalogo, estadoCatalogo = catalogo ? "listo" : "c
         </div>
       )}
       {catalogo && vista.cual === "crear" && (
-        <Constructor catalogo={catalogo.catalogo} piezas={catalogo.piezas} base={catalogo.base ?? null} inicial={vista.figura} escenaUrl={ESCENA} seccion={vista.trajes ? "trajes" : undefined}
+        <Constructor catalogo={catalogo.catalogo} piezas={catalogo.piezas} base={catalogo.base ?? null} inicial={vista.figura} escenaUrl={ESCENA} seccion={vista.trajes ? "trajes" : undefined} puedeUsar={puedeUsar}
           onGuardar={f => void guardar(f, nombreDe(f))} onSalir={() => setVista({ cual: "inicio" })} />
       )}
       {aviso && <div role="status" className="mp-aviso">{aviso}</div>}

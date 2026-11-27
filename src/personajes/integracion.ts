@@ -305,3 +305,8 @@ export function movimientosDe(f: unknown, cat: CatalogoV3 | null): SetRueda[] {
   }
   return fuera;
 }
+
+// Tienda y álbum de personajes (fuera de la zona): entran por aquí, igual que el resto de la app.
+export { deCatalogo } from "./figura";
+export { categorias, nombreSaga, paginas, tarjetas, type Tarjeta } from "./galeriaDatos";
+export { useMiniaturas } from "./useMiniaturas";
