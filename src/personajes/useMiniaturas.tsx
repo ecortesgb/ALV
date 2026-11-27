@@ -44,9 +44,9 @@ export function useMiniaturas(url: string | null, catalogo: Catalogo) {
     if (!plano) { fotos.set(pz.id, null); return; }
     pedidas.current.add(pz.id);
     setTimeout(() => { if (!fotos.has(pz.id)) { fotos.set(pz.id, null); setVersion(v => v + 1); } }, 8000);
-    ref.current?.contentWindow?.postMessage({ origen: "alv", tipo: "foto", clave: pz.id, plano, ver: ranurasFoto(pz), tam: 192 }, location.origin);
+    ref.current?.contentWindow?.postMessage({ origen: "alv", tipo: "foto", clave: pz.id, plano, ver: ranurasFoto(pz), tam: 192, pose: "union" }, location.origin);
   };
-  /** Foto de la figura completa (los nichos de «Mi colección»): todas las ranuras, en pose de unión. */
+  /** Foto de la figura completa (los nichos de «Mi colección»): todas las ranuras, en el primer cuadro de su reposo. */
   const pedirFigura = (clave: string, plano: Plano) => {
     if (!url || !listo || fotos.has(clave) || pedidas.current.has(clave)) return;
     pedidas.current.add(clave);

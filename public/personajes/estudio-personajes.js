@@ -3,7 +3,7 @@
 // pieza (la cara, además, sobre su cabeza lisa: sin pelo ni casco), la encuadra y devuelve la imagen. Nada se guarda en
 // disco: la página de arriba la tiene en memoria mientras está abierta (los modelos son privados, de un juego).
 // Mensajes (mismo origen, {origen:"alv"}):
-//   {tipo:"foto", clave, plano, ver:[ranuras], tam?} → responde {origen:"minifig", tipo:"foto", clave, url} o {…, error}
+//   {tipo:"foto", clave, plano, ver:[ranuras], tam?, pose?: "union"} → responde {origen:"minifig", tipo:"foto", clave, url} o {…, error}
 // Responde {tipo:"listo"} al cargar. Las fotos se sacan de una en una, en el orden en que se piden.
 (function () {
   "use strict";
@@ -44,12 +44,15 @@
     return b;
   }
 
-  async function foto({ plano, ver, tam }) {
+  async function foto({ plano, ver, tam, pose }) {
     const p = await MotorPersonajes.crear(plano);
     try {
       // Pose de unión del modelo (sin animación): la cabeza queda derecha y de frente en todos (en reposo algunos,
       // como Doctor Octopus, la tienen girada; Codex D2 pide el rostro visible y los ojos a la misma altura).
-      p.mixer.stopAllAction(); p.obj.traverse(o => { if (o.isSkinnedMesh) o.skeleton.pose(); });
+      // Figura completa (nichos): primer cuadro de su reposo, como en su tarjeta (Elías, 2026-11-27: la pose de unión sale
+      // tiesa). Piezas sueltas: pose de unión, con la cabeza derecha y de frente.
+      if (pose === "union") { p.mixer.stopAllAction(); p.obj.traverse(o => { if (o.isSkinnedMesh) o.skeleton.pose(); }); }
+      else p.mixer.update(0);
       const mostrar = new Set(ver);
       p.obj.traverse(o => { if (o.isMesh && !o.userData.alvOclusor) o.visible = mostrar.has(o.userData.slot) && !o.userData.alvFuera; }); // lo que una pieza reemplazó sigue escondido
       p.obj.rotation.y = GIRO;

@@ -47,6 +47,16 @@ describe("armar y teñir", () => {
     expect(ponerPieza(f1, piezas.get("sin-cabello")!).piezas.cabello).toEqual({ id: "sin-cabello", tintes: { pelo: "rubio" } });
     expect(leerFigura(f1)).toEqual(f1); // sigue siendo una v3 válida
   });
+  it("una cara original llega con la piel de su personaje; la piel genérica se respeta", () => {
+    const f1 = ponerPieza(f0, piezas.get("iron-man--cara")!, piezas);
+    expect(f1.piezas).toEqual({ cara: { id: "iron-man--cara" }, cabeza: { id: "iron-man--cabeza" } });
+    expect(ponerPieza(f1, piezas.get(`${BASE_CREAR}--cara`)!, piezas).piezas).toEqual({ cara: { id: `${BASE_CREAR}--cara` } });
+    const generica = [...piezas.values()].find(p => p.parte === "cabeza" && p.origen === "generica");
+    if (generica) {
+      const f2 = ponerPieza(ponerPieza(f0, generica, piezas), piezas.get("iron-man--cara")!, piezas);
+      expect(f2.piezas.cabeza).toEqual({ id: generica.id });
+    }
+  });
   it("el plano lleva cada pieza con su ranura y el color ya resuelto", () => {
     let f = ponerPieza(f0, piezas.get("iron-man--torso")!);
     f = teñir(f, "cabeza", "piel", "morena");

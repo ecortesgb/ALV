@@ -40,8 +40,8 @@ const LOSAS: { id: Pestana; titulo: string; cartela: string; c1: string; c2: str
 const NOMBRE_SUB: Record<string, string> = { traje: "Traje completo", cabeza: "Piel", cara: "Cara", cabello: "Pelo", torso: "Torso", brazos: "Brazos", manos: "Manos", cadera: "Cadera", piernas: "Piernas",
   accesorio: "Capas y objetos", sombrero: "Cascos", ...NOMBRE_GESTO };
 const NOMBRE_PALETA = { piel: "Piel", pelo: "Pelo", ropa: "Color" } as const;
-/** Sub-partes de cada sección, en el orden en que salen (la cabeza empieza por la cara). */
-const SUBPARTES: Record<Pestana, Sub[]> = { trajes: ["traje"], cabeza: ["cara", "cabello", "cabeza"], torso: ["torso"], brazos: ["brazos", "manos"], piernas: ["piernas", "cadera"],
+/** Sub-partes de cada sección, en el orden en que salen (la cabeza: piel, cara y pelo). */
+const SUBPARTES: Record<Pestana, Sub[]> = { trajes: ["traje"], cabeza: ["cabeza", "cara", "cabello"], torso: ["torso"], brazos: ["brazos", "manos"], piernas: ["piernas", "cadera"],
   accesorios: ["accesorio", "sombrero"], movimientos: [...GESTOS] };
 const esGesto = (x: Sub): x is Gesto => (GESTOS as readonly string[]).includes(x);
 /** Sagas de las piezas originales (ficha.grupo), en el orden de los chips. */
@@ -107,7 +107,7 @@ export function Constructor({ catalogo, piezas, inicial, seccion, escenaUrl, onG
   const [historia, setHistoria] = useState<FiguraV3[]>([]);
   const [futuro, setFuturo] = useState<FiguraV3[]>([]);
   const [pestana, setPestana] = useState<Pestana>(seccion ?? "cabeza");
-  const [sub, setSub] = useState<Sub>(seccion ? "traje" : "cara");
+  const [sub, setSub] = useState<Sub>(seccion ? "traje" : "cabeza");
   /** Switch Originales / Genéricas, recordado por sub-parte. */
   /** Switch Originales / Común: uno para todo el taller (Elías, 2026-11-26). Cambia las piezas que se ofrecen y el fondo:
    *  cómic con las originales, clóset con las comunes. */
@@ -194,7 +194,7 @@ export function Constructor({ catalogo, piezas, inicial, seccion, escenaUrl, onG
   const elegidos = movimientosElegidos(figura);
   const puesta = parte ? figura.piezas[parte]?.id ?? null : null;
   const pzPuesta = puesta ? piezas.get(puesta) : undefined;
-  const paleta = parte ? paletaDePieza(pzPuesta, parte) : undefined;
+  const paleta = parte && pzPuesta?.origen === "generica" ? paletaDePieza(pzPuesta, parte) : undefined; // las originales ya traen su color
   const tinte = parte && paleta ? figura.piezas[parte]?.tintes?.[paleta] ?? null : null;
   const baseId = figura.origen.tipo === "catalogo" ? figura.origen.personaje : null;
   const visible = (it: Item) => it.tipo === "traje" ? it.id === baseId : it.tipo === "pieza" ? it.pz.id === puesta || (!puesta && it.pz.donante === baseId) : (it.op?.id ?? null) === (gesto ? elegidos[gesto] ?? null : null);
@@ -251,7 +251,7 @@ export function Constructor({ catalogo, piezas, inicial, seccion, escenaUrl, onG
   const tocarItem = (it: Item) => {
     // Traje completo: el personaje tal cual (sin piezas cambiadas); conserva movimientos y extensiones.
     if (it.tipo === "traje") { if (it.id !== baseId || Object.keys(figura.piezas).length) cambiar({ ...figura, origen: { tipo: "catalogo", personaje: it.id, version: "base", revision: 1 }, piezas: {} }); return; }
-    if (it.tipo === "pieza") { cambiar(ponerPieza(figura, it.pz)); return; }
+    if (it.tipo === "pieza") { cambiar(ponerPieza(figura, it.pz, piezas)); return; }
     if (!gesto) return;
     const nueva = elegirMovimiento(figura, gesto, it.op?.id ?? null);
     if (nueva.extensiones.alv?.animaciones?.propias?.[gesto] === elegidos[gesto]) { setMomento(m => ({ cual: RUEDA_DE[gesto], n: (m?.n ?? 0) + 1 })); return; }
