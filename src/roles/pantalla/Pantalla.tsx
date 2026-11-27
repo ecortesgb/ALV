@@ -1,6 +1,8 @@
 // La Pantalla (#/tv/código): la laptop o TV que todos ven. No juega: corre el motor y dibuja lo público.
 // Sin QR (Elías, 18 nov): quien abre ALV entra al lobby único con «¡Jugar!». Tiene controles de respaldo para quien tiene el control.
 import { useEffect, useState } from "react";
+import { cancionesDe, useFondoTema } from "../../app/temas";
+import { tocarFanfarria } from "../../app/musica";
 import { RaizDS, Reloj } from "../../ds";
 import { ir } from "../../app/rutas";
 import { useSesion } from "../../app/sesion";
@@ -67,7 +69,24 @@ export function PantallaTv({ codigo }: { codigo: string }) {
   // «¡Todos listos!» se celebra solo al pasar a todos listos, no al abrir la TV con todos listos.
   const fiesta = useCelebracion(s.sala && s.miembros.length ? preparados(s.miembros).todos : null);
   useEffect(() => { if (!s.sala) return; return escucharSalirPantalla(s.sala.id, dejar); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [s.sala?.id]);
-  const marco = (hijos: React.ReactNode) => <RaizDS ancho className={"alv a-tv az pt" + (escPartida ? " pt-esc" : "")}>{escPartida ? <FondoEscenario escenario={escPartida} /> : <FondoCuarto oscuro />}{hijos}
+  // Resultados (Elías, 26 nov): el fondo del tema del ganador y ~8 s de su canción (temas.ts). Con empate, el cuarto.
+  const podio = final ? marcador(final) : [];
+  const ganador = podio.length && podio.filter(j => j.lugar === 1).length === 1 ? podio[0]!.id : null;
+  const figuraGanador = ganador ? s.miembros.find(m => m.id === ganador)?.figura ?? null : null;
+  const fondoGanador = useFondoTema(figuraGanador, "g").css;
+  const idFinal = final ? s.partida?.id ?? "" : "";
+  useEffect(() => {
+    if (!idFinal || !figuraGanador) return;
+    let vivo = true;
+    void cancionesDe(figuraGanador).then(l => { if (vivo && l.length) tocarFanfarria(l[Math.floor(Math.random() * l.length)]!); });
+    return () => { vivo = false; };
+    // Una vez por partida terminada.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [idFinal, ganador]);
+  const fondoTv = escPartida ? <FondoEscenario escenario={escPartida} />
+    : fondoGanador ? <div className="d-bg a-fondo-alv a-fondo-tema" aria-hidden="true"><div className="a-fa-capa" style={{ "--arte-g": fondoGanador, "--arte-c": fondoGanador } as React.CSSProperties} /><div className="a-fa-capa" style={{ background: "linear-gradient(180deg, rgba(5,6,12,.55), rgba(5,6,12,.35) 40%, rgba(5,6,12,.7))" }} /></div>
+    : <FondoCuarto oscuro />;
+  const marco = (hijos: React.ReactNode) => <RaizDS ancho className={"alv a-tv az pt" + (escPartida ? " pt-esc" : "")}>{fondoTv}{hijos}
     <button type="button" className="cs-boton on tv-dejar" onClick={dejar} aria-label="Dejar de proyectar"><span aria-hidden="true">✕</span> Dejar de proyectar</button>
     <AvisoLogro tv={s.sala?.id ?? ""} /></RaizDS>;
   if (s.error || s.cerrada) return marco(<div className="lb-vacio a-tv-msj"><b>{s.cerrada ? "La sala se cerró" : "No se pudo abrir la pantalla"}</b>{s.error && <p>{s.error}</p>}<button type="button" className="lb-listo" onClick={() => ir("inicio")}>Ir al inicio</button></div>);

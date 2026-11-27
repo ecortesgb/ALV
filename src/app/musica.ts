@@ -16,6 +16,9 @@ export const hayMusica = Object.values(PISTAS).some(Boolean);
 /** El volumen 100 de la app es 60 % del volumen real: la música va de fondo, debajo de los efectos. */
 const TOPE = 0.6, FUNDIDO_MS = 700;
 let escenaRuta: EscenaMusica = "hub";
+/** Canción del tema de tu personaje (temas.ts): suena en vez de la del HUB en las pantallas de RUTAS_TEMA. */
+let pistaTema: string | null = null;
+let enRutaTema = false;
 let enCarga = false;
 let desbloqueado = false;
 let actual: { src: string; el: HTMLAudioElement } | null = null;
@@ -26,7 +29,7 @@ const volumenMeta = () => { const p = preferencias(); return p.musica ? (p.volum
 
 function elemento(src: string) {
   let el = elementos.get(src);
-  if (!el) { el = new Audio(BASE + src); el.loop = true; el.preload = "auto"; el.volume = 0; elementos.set(src, el); }
+  if (!el) { el = new Audio(src.startsWith("blob:") ? src : BASE + src); el.loop = true; el.preload = "auto"; el.volume = 0; elementos.set(src, el); }
   return el;
 }
 
@@ -43,7 +46,7 @@ function fundir(el: HTMLAudioElement, hasta: number, alTerminar?: () => void) {
 
 function actualizar() {
   const escena = enCarga ? "carga" : escenaRuta;
-  const src = PISTAS[escena];
+  const src = escena === "hub" && enRutaTema && pistaTema ? pistaTema : PISTAS[escena];
   const vol = volumenMeta();
   const debeSonar = desbloqueado && !!src && vol > 0 && document.visibilityState === "visible";
   if (actual && (!debeSonar || actual.src !== src)) {
@@ -68,11 +71,35 @@ export function escenaDeRuta(hash: string): EscenaMusica {
   return r === "juego" || r === "tv" ? "partida" : "hub";
 }
 
+/** Pantallas donde suena la canción de tu personaje: HUB, taller, colección y perfil. En el lobby no (cada celular
+ *  sonaría distinto) ni en partida. */
+const RUTAS_TEMA = new Set(["", "inicio", "hub", "personalizar", "editor", "coleccion", "figura", "perfil"]);
+export function rutaConTema(hash: string): boolean {
+  return RUTAS_TEMA.has(hash.replace(/^#\/?/, "").split(/[/?]/)[0] ?? "");
+}
+
+/** Pone (o quita con null) la canción del tema de tu personaje. */
+export function ponerPistaTema(src: string | null) { if (pistaTema === src) return; pistaTema = src; actualizar(); }
+
+/** Fragmento de la canción del ganador en la TV: suena `ms` y se apaga con fundido. Respeta música apagada y volumen. */
+let fanfarria: HTMLAudioElement | null = null;
+export function tocarFanfarria(src: string, ms = 8000) {
+  const vol = volumenMeta();
+  if (vol <= 0 || typeof Audio === "undefined") return;
+  if (fanfarria) { fanfarria.pause(); fanfarria = null; }
+  const el = new Audio(src); el.volume = 0; fanfarria = el;
+  void el.play().then(() => {
+    fundir(el, vol);
+    setTimeout(() => fundir(el, 0, () => { el.pause(); if (fanfarria === el) fanfarria = null; }), Math.max(0, ms - FUNDIDO_MS));
+  }).catch(() => { /* el navegador no deja sonar sin un toque */ });
+}
+
 let instalada = false;
 export function instalarMusica() {
   if (instalada || !hayMusica || typeof window === "undefined") return;
   instalada = true;
   escenaRuta = escenaDeRuta(location.hash);
+  enRutaTema = rutaConTema(location.hash);
   const desbloquear = () => {
     if (desbloqueado) return;
     desbloqueado = true;
@@ -80,7 +107,7 @@ export function instalarMusica() {
     actualizar();
   };
   addEventListener("pointerdown", desbloquear); addEventListener("keydown", desbloquear);
-  addEventListener("hashchange", () => { escenaRuta = escenaDeRuta(location.hash); actualizar(); });
+  addEventListener("hashchange", () => { escenaRuta = escenaDeRuta(location.hash); enRutaTema = rutaConTema(location.hash); actualizar(); });
   document.addEventListener("visibilitychange", actualizar);
   suscribirPreferencias(actualizar);
 }

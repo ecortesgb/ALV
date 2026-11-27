@@ -18,6 +18,7 @@ import { useRecursos } from "../Recursos";
 import { PanelChat } from "../Vivo";
 import { CabeceraJugador, RecursosAzotea } from "./Cabecera";
 import { EscenarioFondo } from "./Escenario";
+import { useFondoTema } from "../../app/temas";
 import { EscenaAzotea, type AccionFigura, type MandoAzotea } from "./EscenaAzotea";
 import { useVidaPropia } from "../../app/vidaPerfil";
 import { MenuGestos } from "../gestos/MenuGestos";
@@ -64,7 +65,11 @@ export function HubAzotea() {
   useVidaPropia({ activo: true, jugador: s.uid, figura: f, contexto: "hub" });
   const momento = useMomentoAzotea();
   const esc = escenarioActual();
-  const amb = esc.ambientes[momento];
+  // Tema de tu personaje (temas.ts): su fondo reemplaza la azotea y la figura va sobre su plataforma (sin pedestal
+  // pintado). La escena se arma cuando ya se sabe si hay tema, para no cargarla dos veces.
+  const tema = useFondoTema(f);
+  const ambAzotea = esc.ambientes[momento];
+  const amb = tema.css ? { ...ambAzotea, pedestal: undefined } : ambAzotea;
   const mando = useRef<MandoAzotea>(null);
   const raiz = useRef<HTMLDivElement>(null);
   const vivo = useHubVivo();
@@ -106,7 +111,7 @@ export function HubAzotea() {
   ];
 
   return (
-    <Marco clase={`az m-${momento}`} fondo={<EscenarioFondo ambiente={amb} momento={momento} velo={esc.velo} />}>
+    <Marco clase={`az m-${momento}`} fondo={<EscenarioFondo ambiente={amb} momento={momento} velo={esc.velo} tema={tema.css} />}>
       <div ref={raiz} className={"az-caja" + (entra ? " entra" : " vuelve")} style={{ "--az-acento": esc.acento } as CSSProperties}>
         <header className="az-top">
           <CabeceraJugador id={s.uid} nombre={s.nombre} figura={f} nivel={r.nivel} xp={r.xp} costo={r.costo} compacta={!ancho || bajo} />
@@ -124,7 +129,7 @@ export function HubAzotea() {
             {!modoCorteV3() && <Boleto compacto={!ancho || bajo} />}
           </div>
           <span className="az-reflector" aria-hidden="true" /><span className="az-reflector dos" aria-hidden="true" />
-          <EscenaAzotea ref={mando} id={s.uid} figura={f} ambiente={amb} plataforma={esc.plataforma} vida="hub" />
+          {tema.listo && <EscenaAzotea key={tema.css ? "tema" : "azotea"} ref={mando} id={s.uid} figura={f} ambiente={amb} plataforma={esc.plataforma} vida="hub" />}
           <MenuGestos jugador={s.uid} figura={f} />
           {!ancho && <BotonChat mando={mando} />}
         </section>

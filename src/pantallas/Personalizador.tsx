@@ -10,6 +10,7 @@ import { enlace } from "../servicios/enlace";
 import { cargarPiezas } from "../servicios/piezas";
 import { Cabecera, Marco, aviso } from "./comun";
 import { FondoHub } from "./Hub";
+import { FondoMiTema } from "./Fondos";
 import { Libro, type Cambiar, type ModoEditor } from "./Libro";
 import { cambiosEntre, pideAviso, type Cambio } from "../app/cambiosFigura";
 import { createPortal } from "react-dom";
@@ -188,7 +189,7 @@ export function Personalizador() {
   const i = fase.cual === "muro" ? -1 : fase.i;
   const c = i >= 0 ? caps.slots[i] : null;
   return (
-    <Marco clase={"p-taller p-fase-" + fase.cual} fondo={<FondoHub />}>
+    <Marco clase={"p-taller p-fase-" + fase.cual} fondo={<FondoMiTema><FondoHub /></FondoMiTema>}>
       {fase.cual !== "libro" && (
         <div className="p-muro-caja">
           <Cabecera titulo="Personalizar" icono="shirt" />

@@ -2,6 +2,7 @@
 // La usan el celular (Sala.tsx) y la Pantalla (roles/pantalla/Pantalla.tsx). Solo lee lo público de la sala:
 // nombre, figura, anfitrión, «listo» y el último gesto de cada miembro. El color de cada quien sale del orden de entrada.
 import { useRef, type CSSProperties, type ReactNode } from "react";
+import { useFondosTema } from "../app/temas";
 import { GESTOS, type Gesto, type Miembro } from "../servicios/enlace";
 import { claveArchivo, colorDe, colorJugador, coloresLibres, varsColor } from "../app/colorJugador";
 import { Escena3D, enEscena, type EnEscena, type Momento } from "../app/figura3d";
@@ -96,6 +97,9 @@ export function Pedestales({ miembros, yo, className = "", fiesta, vida }: { mie
   const ids = miembros.map(m => m.id);
   const colorEn = (i: number) => (miembros[i] ? colorDe(miembros[i]!.id, ids) : null) ?? colorJugador(i);
   const figuras: EnEscena[] = miembros.map((m, i) => ({ ...enEscena(m.id, m.figura), color: colorEn(i).base, columna: i }));
+  // Pared de cada cabina con el fondo del tema de su personaje (temas.ts); sin tema, la pared de color de siempre.
+  const temas = useFondosTema(miembros.map(m => m.figura), "c");
+  const pared = (i: number): Record<string, string> => { const css = temas[i]?.css; return css ? { "--pj-pared": css, "--pj-forma": "none" } : {}; };
   // Lobby nuevo: cada lugar libre ya sale con el color que tomaría el siguiente en entrar.
   const libres = LOBBY_NUEVO ? coloresLibres(miembros.map((_, i) => colorEn(i)), miembros.length) : [];
   const cols = Array.from({ length: lugares }, (_, i) => ({ i, m: miembros[i], c: (i >= miembros.length ? libres[i - miembros.length] : undefined) ?? colorEn(i) }));
@@ -104,7 +108,7 @@ export function Pedestales({ miembros, yo, className = "", fiesta, vida }: { mie
     <div className={"a-sala-escenario" + (lugares > 4 ? " muchos" : "") + (fiesta ? " fiesta" : "") + (className ? " " + className : "")} style={estilo}>
       <div className="a-sala-cols" aria-hidden="true">
         {cols.map(({ i, m, c }) => fiesta?.escenarios
-          ? <div key={i} className={"a-sala-col lb-cab" + (m ? "" : " vacia") + (m?.listo ? " listo" : "")} style={{ ...varsColor(c), "--pj-arte": urlArte(`${carpetaLobby}/cabina-${m || LOBBY_NUEVO ? claveArchivo(c) : "vacia"}.webp`), ...piezasCabina(m || LOBBY_NUEVO ? claveArchivo(c) : null) } as CSSProperties}>
+          ? <div key={i} className={"a-sala-col lb-cab" + (m ? "" : " vacia") + (m?.listo ? " listo" : "")} style={{ ...varsColor(c), "--pj-arte": urlArte(`${carpetaLobby}/cabina-${m || LOBBY_NUEVO ? claveArchivo(c) : "vacia"}.webp`), ...piezasCabina(m || LOBBY_NUEVO ? claveArchivo(c) : null), ...(m ? pared(i) : {}) } as CSSProperties}>
               {m && <img key={"p" + m.id} className="lb-ped" src={LOBBY_NUEVO ? arteLobby(`plataforma/ped-${claveArchivo(c)}`) : arteLobby(`pedestal-${claveArchivo(c)}`)} alt="" draggable={false} />}
               {!m && LOBBY_NUEVO && <>
                 <span className="lb-haz" aria-hidden="true" />
