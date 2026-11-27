@@ -1,4 +1,5 @@
 // Lo que cualquier aparato puede decir de la partida usando solo la vista pública.
+import { RISA } from "../../content/risa";
 import { JUEGOS } from "../../content/catalogo";
 import type { VistaPublica } from "../../engine/vistas";
 import type { Copas } from "../../engine/copas";
@@ -41,7 +42,11 @@ export function instruccion(v: Publico): string {
     case "confesion": return "Yo nunca… ¿o sí? Contesten en su celular";
     case "senalar": return "Señalen a alguien en su celular";
     case "competencia": return "Compitan. El anfitrión marca quién ganó";
-    case "fisico": return "Hagan el reto en persona. El administrador da los puntos";
+    case "fisico": {
+      const r = RISA[v.juegoId];
+      if (!r) return "Hagan el reto en persona. El administrador da los puntos";
+      return r.turno && v.turnoDe ? `${r.turno.rol}: ${nombreDe(v, v.turnoDe)}` : "Juegan todos. El administrador da los puntos";
+    }
   }
 }
 
@@ -102,7 +107,9 @@ export function desenlace(v: Publico): { titular: string; detalle?: string } {
       return { titular: `¡Ganó ${nombreDe(v, r.ganador as string)}!`, detalle: "+3 puntos" };
     case "fisico": {
       const txt = resumenDeltas(v, r.deltas as Record<string, number> | undefined);
-      return txt ? { titular: "¡Ronda terminada!", detalle: txt } : { titular: "Ronda terminada", detalle: "Nadie sumó ni perdió puntos." };
+      // Juegos de risa: lo que estaba tapado (o la respuesta) sale al terminar la ronda.
+      const era = typeof r.oculto === "string" ? ` · Era: «${r.oculto}»` : "";
+      return txt ? { titular: "¡Ronda terminada!", detalle: txt + era } : { titular: "Ronda terminada", detalle: "Nadie sumó ni perdió puntos." + era };
     }
   }
 }

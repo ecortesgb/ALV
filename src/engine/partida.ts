@@ -5,6 +5,7 @@ import { cartasPermitidas } from "./filtros";
 import { yaSalio } from "./yaSalieron";
 import { xpDePartida } from "./economia";
 import { CARTAS_PODER, DADOS } from "../content/catalogo";
+import { RISA, type JuegoRisa } from "../content/risa";
 import type { Carta, Configuracion, DefinicionJuego, Jugador, Motor, TemaImpostor } from "./types";
 
 export type Fase = "contestando" | "revelada" | "terminada";
@@ -748,32 +749,99 @@ export interface SeleccionFisico {
     /** Palabra o pregunta que salió (id de la carta, texto ya personalizado y, en la palabra, sus prohibidas). */
     texto?: { id: string; texto: string; prohibidas?: string[] };
   };
+  /** Juegos de risa: la respuesta o el texto secreto, ya destapado por el administrador o quien tiene el turno. */
+  mostrar?: string;
+  /** Para el reloj: milisegundos en que cada quien paró su cronómetro a ciegas. */
+  reloj?: Record<string, number>;
+  /** Cuántas cartas van en la ronda (sube con «Siguiente»). */
+  vuelta?: number;
 }
+/** Tope del cronómetro a ciegas de «Para el reloj». */
+export const MAX_RELOJ_MS = 120_000;
 export const MAX_DELTA_FISICO = 5;
 export const conFisico = (e: Pick<EstadoPartida, "motor">) => e.motor === "fisico";
 export const seleccionFisico = (e: Pick<EstadoPartida, "seleccion">) => (e.seleccion ?? { deltas: {} }) as unknown as SeleccionFisico;
 /** Quien da los puntos: el que tiene el control (el anfitrión) o, si no hay, el primero de la lista. */
 export const adminFisico = (e: EstadoPartida) => e.control ?? e.cfg.jugadores[0]?.id ?? "";
 
+// Juegos de risa (content/risa.ts): corren aquí mismo. Cada ronda le toca a alguien (rota en orden) y la carta sale según el
+// juego: tapada (solo la ve quien tiene el turno; va en su privado), pública, al revés o a la mitad (la respuesta va en el
+// privado del administrador hasta que la destapa). Quien tiene el turno puede pedir la siguiente carta y arrancar el
+// cronómetro; en «Para el reloj» cada quien manda su tiempo a ciegas una vez por ronda.
+export const risaDe = (e: Pick<EstadoPartida, "juegoId">): JuegoRisa | undefined => RISA[e.juegoId];
+/** Quien acompaña a quien tiene el turno (dibuja, maneja…): la persona que sigue. */
+export const segundoDe = (e: Pick<EstadoPartida, "cfg" | "turnoDe">) => {
+  const js = e.cfg.jugadores, i = js.findIndex(j => j.id === e.turnoDe);
+  return i < 0 || js.length < 2 ? undefined : js[(i + 1) % js.length]!.id;
+};
+/** Id con que se guarda la partida en el servidor: los juegos de risa cuentan como «fisico» (la 054 solo acepta esos ids;
+ *  agregarlos pide una migración que no se ha hecho). */
+export const juegoParaGuardar = (e: Pick<EstadoPartida, "juegoId">) => (RISA[e.juegoId] ? "fisico" : e.juegoId);
+const turnoRisa = (e: EstadoPartida) => (risaDe(e)?.turno ? e.cfg.jugadores[(e.ronda - 1) % e.cfg.jugadores.length]?.id : undefined);
+/** Lo que se pone en la mesa para un juego de risa: la carta pública y lo privado (texto tapado o respuesta). */
+function mesaRisa(e: EstadoPartida, r: JuegoRisa, carta: Carta | undefined, turnoDe: string | undefined): Pick<Preparacion, "carta" | "privado"> {
+  if (!carta) return { privado: {}, carta: undefined };
+  if (r.muestra === "tapada") {
+    const quien = turnoDe ?? adminFisico(e);
+    return { privado: { [quien]: { secreto: carta.texto } }, carta: { id: carta.id, texto: `${r.etiqueta} secreta`, tipo: "tapada" } };
+  }
+  const respuesta = r.muestra === "mitad" ? carta.opcionB : r.muestra === "reves" ? carta.texto : undefined;
+  return {
+    privado: respuesta ? { [adminFisico(e)]: { respuesta } } : {},
+    carta: { id: carta.id, texto: carta.texto, tipo: carta.descripcion ?? (carta.prohibidas?.length ? carta.prohibidas.join("|") : "") },
+  };
+}
+/** Lo que se destapa con «Mostrar respuesta»: el texto secreto o la respuesta. */
+const ocultoRisa = (e: EstadoPartida) => {
+  for (const p of Object.values(e.privado ?? {})) {
+    const x = p as { secreto?: string; respuesta?: string };
+    if (x?.secreto || x?.respuesta) return x.secreto ?? x.respuesta;
+  }
+  return undefined;
+};
+
 const fisico: Mecanica = {
   preparar(e, c) {
-    const carta = sacarCarta(e, c, ["competencia"]);
-    return { privado: {}, seleccion: { deltas: {} }, carta: carta && { id: carta.id, texto: carta.texto, tipo: carta.descripcion ?? "" } };
+    const r = risaDe(e);
+    const carta = sacarCarta(e, c, [e.mazo ?? "competencia"]);
+    if (!r) return { privado: {}, seleccion: { deltas: {} }, carta: carta && { id: carta.id, texto: carta.texto, tipo: carta.descripcion ?? "" } };
+    const turnoDe = turnoRisa(e);
+    return { ...mesaRisa(e, r, carta, turnoDe), turnoDe, seleccion: { deltas: {}, vuelta: 1 } };
   },
   quienes: e => [adminFisico(e)],
   valida: (_e, _j, v) => v === "listo",
   puntuar(e) {
     const d = seleccionFisico(e).deltas;
     // Los puntos ya se sumaron al darlos. Quien terminó la ronda arriba cuenta como reto cumplido.
-    return { puntos: {}, retos: Object.fromEntries(Object.entries(d).map(([j, x]) => [j, x > 0 ? 1 : 0])), revelado: { deltas: { ...d } } };
+    const oculto = risaDe(e) ? ocultoRisa(e) : undefined;
+    return { puntos: {}, retos: Object.fromEntries(Object.entries(d).map(([j, x]) => [j, x > 0 ? 1 : 0])), revelado: { deltas: { ...d }, ...(oculto ? { oculto } : {}) } };
   },
 };
 
 /** Aplica lo que manda el administrador en el juego físico. Devuelve null si no es una jugada física. */
 function jugadaFisico(e: EstadoPartida, jugador: string, valor: unknown, c: Contenido): EstadoPartida | null {
-  if (!conFisico(e) || e.fase !== "contestando" || e.pausada || jugador !== adminFisico(e) || typeof valor !== "object" || !valor) return null;
-  const v = valor as { puntos?: { jugador?: unknown; delta?: unknown }; herramienta?: unknown; segundos?: unknown; otro?: unknown };
+  if (!conFisico(e) || e.fase !== "contestando" || e.pausada || typeof valor !== "object" || !valor) return null;
+  let v = valor as { puntos?: { jugador?: unknown; delta?: unknown }; herramienta?: unknown; segundos?: unknown; otro?: unknown; mostrar?: unknown; reloj?: unknown };
   const s = seleccionFisico(e);
+  const r = risaDe(e);
+  // Para el reloj: cada quien (el administrador también) manda su tiempo a ciegas, una sola vez por ronda.
+  if (r && v.reloj !== undefined) {
+    if (r.muestra !== "reloj" || !ids(e).includes(jugador) || !Number.isInteger(v.reloj) || (v.reloj as number) < 0 || (v.reloj as number) > MAX_RELOJ_MS
+      || s.reloj?.[jugador] !== undefined) return e;
+    return { ...e, seleccion: { ...s, reloj: { ...(s.reloj ?? {}), [jugador]: v.reloj as number } } as unknown as Record<string, unknown>,
+      bitacora: registrar(e, "reloj", jugador, { ms: v.reloj }) };
+  }
+  const esAdmin = jugador === adminFisico(e);
+  // Quien tiene el turno en un juego de risa solo pide la siguiente carta, arranca el cronómetro o destapa la respuesta.
+  const esTurno = !!r?.turno && jugador === e.turnoDe;
+  if (!esAdmin && !(esTurno && (v.otro === true || v.herramienta === "cronometro" || v.mostrar === true))) return null;
+  // Sin puntos ni otras herramientas para quien no es el administrador.
+  if (!esAdmin) v = v.mostrar === true ? { mostrar: true } : v.otro === true ? { otro: true } : { herramienta: "cronometro", segundos: v.segundos };
+  if (r && v.mostrar === true) {
+    const oculto = ocultoRisa(e);
+    if (!oculto || s.mostrar === oculto) return e;
+    return { ...e, seleccion: { ...s, mostrar: oculto } as unknown as Record<string, unknown>, bitacora: registrar(e, "mostrar", jugador) };
+  }
   if (v.puntos) {
     const j = v.puntos.jugador, d = v.puntos.delta;
     if (typeof j !== "string" || !ids(e).includes(j) || !Number.isInteger(d) || d === 0 || Math.abs(d as number) > MAX_DELTA_FISICO) return e;
@@ -815,9 +883,17 @@ function jugadaFisico(e: EstadoPartida, jugador: string, valor: unknown, c: Cont
   if (v.otro === true) {
     // Otro reto sugerido: se vuelve a sacar con otra semilla; los puntos y la herramienta de la ronda se quedan.
     // Se intenta hasta 6 veces que salga una distinta a la de la mesa (si el mazo del lugar es chico, puede repetirse).
-    let cambios = e.cambios + 1, carta = sacarCarta({ ...e, cambios }, c, ["competencia"]);
-    for (let t = 0; t < 5 && carta && carta.id === e.carta?.id; t++) carta = sacarCarta({ ...e, cambios: ++cambios }, c, ["competencia"]);
-    return { ...e, cambios, carta: carta && { id: carta.id, texto: carta.texto, tipo: carta.descripcion ?? "" }, bitacora: registrar(e, "otro-reto", jugador) };
+    const mazo = [e.mazo ?? "competencia"];
+    let cambios = e.cambios + 1, carta = sacarCarta({ ...e, cambios }, c, mazo);
+    for (let t = 0; t < 5 && carta && carta.id === e.carta?.id; t++) carta = sacarCarta({ ...e, cambios: ++cambios }, c, mazo);
+    if (!r) return { ...e, cambios, carta: carta && { id: carta.id, texto: carta.texto, tipo: carta.descripcion ?? "" }, bitacora: registrar(e, "otro-reto", jugador) };
+    // Juego de risa: la siguiente carta (y su parte privada); se tapa otra vez lo destapado. Con cronómetro de turno corto
+    // (Dame tres, Rima o paga) el cronómetro vuelve a empezar solo.
+    const mesa = mesaRisa(e, r, carta, e.turnoDe);
+    const n = (s.herr?.n ?? 0) + 1;
+    const herr = r.segundos <= 10 && r.turno ? { tipo: "cronometro" as const, n, segundos: Math.max(5, r.segundos) } : s.herr;
+    const { mostrar: _m, ...resto } = s;
+    return { ...e, cambios, ...mesa, seleccion: { ...resto, herr, vuelta: (s.vuelta ?? 1) + 1 } as unknown as Record<string, unknown>, bitacora: registrar(e, "otro-reto", jugador) };
   }
   return e;
 }

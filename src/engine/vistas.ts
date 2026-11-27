@@ -1,8 +1,8 @@
 // Qué puede ver cada interfaz. La Pantalla (TV) y el Anfitrión reciben la vista pública;
 // cada celular recibe además solo lo suyo. En producción el servidor arma estas vistas
 // y la base de datos (RLS) impide leer lo privado de otro; esto define exactamente qué sale.
-import { conEliminacion, conPapeles, enNave, type EtapaImpostor, conVerdadReto, etapaImpostor, etapaVR, seleccionVR, etapaPareja, parejasCompletas, parejasPorDecidir, porGrupos, puntosPorEquipo, quienesContestan, type EstadoPartida } from "./partida";
-import type { EscenarioId, Modalidad } from "./types";
+import { risaDe, conEliminacion, conPapeles, enNave, type EtapaImpostor, conVerdadReto, etapaImpostor, etapaVR, seleccionVR, etapaPareja, parejasCompletas, parejasPorDecidir, porGrupos, puntosPorEquipo, quienesContestan, type EstadoPartida } from "./partida";
+import type { EscenarioId, LugarId, Modalidad } from "./types";
 
 export interface VistaPublica {
   version: number;
@@ -14,6 +14,8 @@ export interface VistaPublica {
   totalRondas: number;
   fase: EstadoPartida["fase"];
   turnoDe?: string;
+  /** Juegos de risa: el lugar decide el castigo (con agua o harina solo en exterior). Los demás juegos no lo mandan. */
+  lugar?: LugarId;
   carta?: EstadoPartida["carta"];
   seleccion?: EstadoPartida["seleccion"];
   segundos?: number;
@@ -82,6 +84,7 @@ export function vistaPublica(e: EstadoPartida): VistaPublica {
     totalRondas: e.totalRondas,
     fase: e.fase,
     turnoDe: e.turnoDe,
+    ...(risaDe(e) ? { lugar: e.cfg.lugar } : {}),
     carta: e.carta,
     seleccion: e.seleccion,
     segundos: e.segundos,

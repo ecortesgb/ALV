@@ -128,3 +128,44 @@
 @keyframes fiRueda { to { transform: rotate(360deg) translateY(-6px); } }
 @keyframes fiCae { from { transform: translateY(-18px) scale(1.2); } }
 @media (prefers-reduced-motion: reduce) { .D .fi-dados span { animation: none !important; } }
+
+/* Juegos de risa (risa.tsx): turno, carta, reloj a ciegas y reglas en pantalla. */
+.D .ri-carta .ri-oculta { font-size: 20px; color: #fff; }
+.D .ri-carta.grande .ri-oculta { font-size: clamp(22px, 2.2vw, 38px); }
+.D .ri-reves { letter-spacing: .02em; }
+.D .ri-objetivo { font-size: 40px; }
+.D .ri-carta.grande .ri-objetivo { font-size: clamp(40px, 4.5vw, 84px); white-space: nowrap; }
+.D .ri-resp { color: #6ff3e6 !important; font-weight: 800 !important; }
+.D .ri-solo-tu { color: #ffb000 !important; font-size: 14px !important; }
+.D .ri-prohibidas { color: #ff8a80 !important; font-weight: 800 !important; }
+.D .ri-lista { margin: 0; padding-left: 1.2em; display: grid; gap: 4px; font: 700 17px/1.35 var(--f-texto); }
+.D .ri-carta.grande .ri-lista { font-size: clamp(20px, 1.9vw, 34px); }
+.D .ri-ctrl { display: flex; flex-wrap: wrap; gap: 8px; }
+.D .ri-ctrl .ri-crono { color: #3a2200; border-color: rgba(255, 240, 180, .85); background: linear-gradient(180deg, #ffe680, #ffb000); }
+.D .ri-ctrl .ri-mostrar { color: #fff; border-color: rgba(255, 150, 200, .8); background: linear-gradient(180deg, #ff5fa8, #d11c6d); }
+.D .ri-empezar, .D .ri-ya { min-height: 88px; }
+.D .ri-ya { background: linear-gradient(180deg, #ff6b5f, #c9271c) !important; }
+.D .ri-reglas { padding: 10px 12px; border-radius: 14px; background: rgba(255, 255, 255, .05); border: 1px solid rgba(255, 255, 255, .14); }
+.D .ri-reglas summary { cursor: pointer; font: 800 14px/1.3 var(--f-texto); color: #6ff3e6; }
+.D .ri-pasos { margin: 8px 0; padding-left: 1.2em; display: grid; gap: 6px; font: 600 14.5px/1.4 var(--f-texto); }
+.D .ri-linea { margin: 4px 0 0; font: 600 14.5px/1.4 var(--f-texto); }
+.D .ri-castigo b { color: #ff8a80; }
+.D .ri-tabla { margin: 0; padding: 0; list-style: none; display: grid; gap: 6px; width: min(100%, 420px); }
+.D .ri-tabla li { display: grid; grid-template-columns: 1fr auto auto; align-items: center; gap: 4px 10px; padding: 8px 12px; border-radius: 12px;
+  background: rgba(255, 255, 255, .06); border: 1px solid rgba(255, 255, 255, .14); font: 700 15px/1.2 var(--f-texto); }
+.D .ri-tabla li span { font-variant-numeric: tabular-nums; }
+.D .ri-tabla li small { color: rgba(255, 255, 255, .7); font-variant-numeric: tabular-nums; }
+.D .ri-tabla li i { grid-column: 1 / -1; font: 800 12px/1 var(--f-texto); font-style: normal; text-transform: uppercase; letter-spacing: .06em; }
+.D .ri-tabla li.cerca { border-color: #4ff3e4; } .D .ri-tabla li.cerca i { color: #6ff3e6; }
+.D .ri-tabla li.lejos { border-color: #ff6b5f; } .D .ri-tabla li.lejos i { color: #ff8a80; }
+.D .ri-tabla.grande { width: min(100%, 640px); } .D .ri-tabla.grande li { font-size: clamp(18px, 1.6vw, 28px); }
+.D .ri-reloj-esp.grande { font-size: clamp(18px, 1.6vw, 28px); text-align: center; }
+
+/* TV: centro con la carta y columna con las reglas */
+.D .ri-tv-cuerpo { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(16em, 1fr); gap: 1.4em; align-items: start; }
+.D .ri-tv-centro { display: flex; flex-direction: column; align-items: center; gap: 1em; min-width: 0; }
+.D .ri-tv-turno { display: flex; gap: 1.6em; justify-content: center; }
+.D .ri-tv-quien { display: flex; flex-direction: column; align-items: center; gap: .3em; font: 800 clamp(14px, 1.2vw, 22px)/1.2 var(--f-texto); color: var(--pj-claro, #fff); }
+.D .ri-tv .ri-reglas.abierto { padding: 1em 1.2em; }
+.D .ri-tv .ri-pasos, .D .ri-tv .ri-linea { font-size: clamp(15px, 1.25vw, 24px); }
+@media (max-width: 900px) { .D .ri-tv-cuerpo { grid-template-columns: 1fr; } }

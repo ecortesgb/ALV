@@ -9,6 +9,7 @@ import { CONTENIDO } from "../content";
 import { EJE_DE_MAZO, ESCENARIOS, JUEGOS, NIVELES_EJE } from "../content/catalogo";
 import { ARTE_ESCENARIOS, ARTE_JUEGOS, ARTE_TIPOS } from "../content/arteJuegos";
 import { INSTRUMENTOS, JUEGOS_FISICO, MODALIDADES, MODALIDADES_JUEGO, admite } from "../content/configurar";
+import { RISA, esRisa } from "../content/risa";
 import { GRUPOS_EQUIPOS, JUEGOS_CON_TEMPORIZADOR, armarArranque, armarGrupos, conParejas, intensidadVieja } from "../engine/nucleo";
 import { adultoPorEjes, cartasPermitidas } from "../engine/filtros";
 import { maxImpostores } from "../engine/partida";
@@ -263,9 +264,10 @@ export function ConfigurarPartida({ miembros, alIniciar, alCancelar, iniciando, 
   const [deCero, setDeCero] = useState(0);
   // Categoría abierta en «Elige el juego» (null: las tarjetas de categoría). En Físico abre directo la de competencias.
   // ALV FÍSICO (Elías, 27 nov): en ese modo solo salen los juegos físicos (herramientas de complemento).
-  const cats = useMemo(() => categoriasDe(id => id in MODALIDADES_JUEGO && (!modoFisico || JUEGOS_FISICO.includes(id))), [modoFisico]);
+  // Los juegos de risa (content/risa.ts) solo salen en ALV FÍSICO; ahí se abre la lista de categorías (competir y las dos de risa).
+  const cats = useMemo(() => categoriasDe(id => id in MODALIDADES_JUEGO && (modoFisico ? JUEGOS_FISICO.includes(id) : !esRisa(id))), [modoFisico]);
   const catDe = (id: string) => cats.find(c => c.juegos.includes(id))?.id ?? null;
-  const [filtro, setFiltro] = useState<string | null>(() => (modoFisico ? catDe(JUEGOS_FISICO[0]!) : null));
+  const [filtro, setFiltro] = useState<string | null>(null);
 
   // Temporizador por turno (herramienta opcional, 6A.11 C6). null: sin tiempo.
   const [temporizador, setTemporizador] = useState<number | null>(inicial?.opciones.temporizador ?? null);
@@ -431,7 +433,10 @@ export function ConfigurarPartida({ miembros, alIniciar, alCancelar, iniciando, 
               <p className="a-nota">{temporizador ? `Cada turno dura ${temporizador} s; si se acaba, el turno pasa al siguiente.` : "Sin tiempo por turno: si alguien tarda, el anfitrión decide esperar o seguir."}</p>
             </section>}
           </> : <>
-            {j?.motor === "fisico" ? <section className="a-pila"><span className="cfg-sub dsp ol">Herramientas en tu celular</span>
+            {j?.motor === "fisico" && RISA[j.id] ? <section className="a-pila"><span className="cfg-sub dsp ol">Lo que necesitan</span>
+              <ul className="a-nota">{RISA[j.id]!.material.map(m => <li key={m}>{m}</li>)}</ul>
+              <p className="a-nota">El cronómetro ({RISA[j.id]!.segundos} s), {RISA[j.id]!.etiqueta.toLowerCase()} y castigo salen en la pantalla. Tú das los puntos.</p>
+            </section> : j?.motor === "fisico" ? <section className="a-pila"><span className="cfg-sub dsp ol">Herramientas en tu celular</span>
               <div className="cfg-temas grandes">
                 {HERRAMIENTAS_FISICO_CFG.map(x => (
                   <div key={x.id} className="cfg-tema">

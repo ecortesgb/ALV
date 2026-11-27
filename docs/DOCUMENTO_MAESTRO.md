@@ -1,6 +1,6 @@
 # ALV — Amigos Legendarios Verdaderos
 ## Documento Maestro del Producto
-**Versión:** 1.70  
+**Versión:** 1.71  
 **Última actualización:** 27 de noviembre de 2026  
 **Estado:** Documento vivo de producto; decisiones y propuestas identificadas por separado.
 
@@ -572,6 +572,15 @@ Revisión de las reglas de los 13 juegos que se pueden elegir contra lo que calc
 7. **¿Cuánto conoces a tu pareja?** Después de escribir, la pareja ve las dos respuestas y marca «¿Coinciden?». Si los dos dicen que sí, +2 a cada uno; si no se ponen de acuerdo, decide el anfitrión.
 8. **Reto del lugar.** Además del ganador (+3), el anfitrión puede marcar «Empate» (+1 a cada quien empató) o «Nadie ganó».
 9. **Textos.** La ficha del impostor dice las reglas con eliminación (empate: nadie sale); la de Verdad o reto, «pasar solo con comodín» y tomar +1, y su carga muestra sus 5 láminas; Más probable explica el empate y que puedes votarte. El reloj y Ruleta de castigos salen del catálogo (ya no se podían elegir).
+
+## 6A.15 Juegos de risa en ALV FÍSICO — DECISIÓN (v1.71)
+Elías, 27 nov 2026: adaptar a ALV FÍSICO las dinámicas de programas de comedia en vivo, como juegos a elegir, con instrucciones, cronómetro, categorías y palabras en pantalla, pensados para exterior.
+1. Dieciséis juegos con nombre propio (sin la marca del programa): Pinzas, Sin decirla, Ni sí ni no, Para el reloj, Dame tres, Al revés, Termina el dicho, Al contrario, Chisme descompuesto, Rima o paga, Retrato hablado, El taxi, Sombras, Sopla y tira, Pásala sin tirarla y El mantel. Solo salen en ALV FÍSICO, en dos categorías: «Risa con palabras» y «Risa en acción».
+2. Corren en el motor físico: el administrador da los puntos. Cada ronda le toca a alguien (rota en orden) y la app pone en la TV y en los celulares el turno, la carta, el cronómetro del juego, cómo se juega, los puntos y el castigo. La palabra secreta solo llega al celular de quien tiene el turno; la respuesta de Termina el dicho solo al administrador, hasta «Mostrar respuesta».
+3. Castigos con agua, harina, espuma o slime solo en alberca, bosque, campo o terraza. En interior y junto al fuego (fogata, asador) sale el castigo de interior: post-it o beber algo (lo que cada quien quiera). Nada de toques, golpes, comida asquerosa ni caídas.
+4. Fuera por ahora: Canción distinta y Apaga la vela (necesitan música con licencia).
+5. En el servidor se guardan como «fisico»: la 054 solo acepta esos ids. Contar cada juego por separado pide una migración (PENDIENTE de Elías).
+6. Contenido inicial: 747 textos (content/packs/risa.json), PROPUESTA de Claude para que Elías tache lo que no quiera.
 
 ---
 
@@ -1832,6 +1841,9 @@ Decisiones del usuario del 12 de noviembre de 2026:
 
 ## v1.6
 - Primeros logros (14.2), con ámbito de sesión o histórico (ver DECISIÓN v1.6 en 14.2).
+
+## v1.71
+- 27 nov 2026. Juegos de risa en ALV FÍSICO (6A.15): 16 juegos con turno, carta, cronómetro, reglas y castigo por lugar en pantalla; se guardan como «fisico» en el servidor. Decisión de Elías.
 
 ## v1.70
 - 27 nov 2026. Reglas de los juegos revisadas (6A.14): la minoría bebe algo en ¿Qué prefieres? (opción), Yo nunca sin puntos ni podio, Mímica y Descríbelo con quién adivinó, «¿Coinciden?» en ¿Cuánto conoces a tu pareja?, empate y «Nadie» en Reto del lugar, promedio por equipo donde todos contestan y fichas corregidas. La Ronda de bienvenida pasa a Misión secreta (PROPUESTA).

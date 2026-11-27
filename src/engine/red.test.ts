@@ -62,8 +62,8 @@ function jugar(juego: DefinicionJuego, semilla: number) {
 }
 
 describe("Los 15 juegos completos", () => {
-  it("hay 15 juegos que corren en el motor", () => {
-    expect(JUGABLES).toHaveLength(15);
+  it("hay 15 juegos que corren en el motor, más los 16 de risa de ALV FÍSICO", () => {
+    expect(JUGABLES).toHaveLength(31);
   });
   for (const juego of JUGABLES) {
     it(`${juego.nombre}: de crear a terminar, con puntos y XP`, () => {

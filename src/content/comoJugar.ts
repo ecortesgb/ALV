@@ -2,6 +2,7 @@
 // Solo datos. Los juegos sin láminas propias se explican con sus reglas (content/reglas.ts).
 import { ESCENARIOS, JUEGOS, LUGARES } from "./catalogo";
 import { reglasDe } from "./reglas";
+import { RISA } from "./risa";
 import { ARTE_ESCENARIOS, ARTE_JUEGOS } from "./arteJuegos";
 import type { EscenarioId, Modalidad } from "../engine/types";
 import { MOTORES_PROMEDIO, VR_PUNTOS } from "../engine/partida";
@@ -25,6 +26,19 @@ const PROPIAS: Record<string, Lamina[]> = {
   ],
 };
 
+/** Juegos de risa de ALV FÍSICO: una lámina por paso, el material, los puntos y el castigo (según el lugar, se dicen los dos). */
+function laminasRisa(id: string): Lamina[] | undefined {
+  const r = RISA[id];
+  if (!r) return undefined;
+  const iconos = ["1️⃣", "2️⃣", "3️⃣", "4️⃣"];
+  return [
+    ...r.pasos.map((t, i) => ({ titulo: i === 0 ? "Cómo se juega" : `Paso ${i + 1}`, texto: t, icono: iconos[i] })),
+    { titulo: "Lo que necesitan", texto: r.material.join(". ") + ".", icono: "🧺" },
+    { titulo: "Puntos", texto: r.puntos.join(". ") + ". El administrador los da en su celular.", icono: "⭐" },
+    { titulo: "Castigo", texto: `En alberca, bosque, campo o terraza: ${r.castigo.exterior}. En interior o junto al fuego: ${r.castigo.interior}.`, icono: "💦" },
+  ];
+}
+
 const GANA: Record<Modalidad, string> = {
   individual: "Gana la persona con más puntos.",
   parejas: "Los puntos se suman por pareja. Gana la pareja con más puntos.",
@@ -40,7 +54,7 @@ const ganaGrupo = (mod: Exclude<Modalidad, "individual">, motor: string) =>
 export function laminas(juegoId: string, modalidad: Modalidad = "individual"): Lamina[] {
   const j = JUEGOS.find(x => x.id === juegoId);
   if (!j?.motor) return [];
-  const propias = PROPIAS[juegoId];
+  const propias = PROPIAS[juegoId] ?? laminasRisa(juegoId);
   const r = reglasDe({ id: j.id, motor: j.motor });
   const base = propias ?? [
     { titulo: "De qué se trata", texto: r.objetivo, icono: "🎯" },

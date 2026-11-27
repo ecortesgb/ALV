@@ -13,6 +13,11 @@ export const FILAS: { id: string; nombre: string; color: string; juegos: string[
   { id: "reir", nombre: "Para reír", color: "var(--fila-reir)", juegos: ["mimica", "prohibida"] },
   { id: "competir", nombre: "A competir", color: "var(--fila-competir)", juegos: ["reto-lugar", "fisico"] },
   { id: "pareja", nombre: "En pareja", color: "var(--fila-pareja)", juegos: ["conoces", "dados-hot"] },
+  // Juegos de risa de ALV FÍSICO (content/risa.ts).
+  { id: "risa-palabras", nombre: "Risa con palabras", color: "var(--fila-reir)",
+    juegos: ["pinzas", "sin-decirla", "ni-si-ni-no", "dame-tres", "rima-o-paga", "al-reves", "termina-frase", "chisme"] },
+  { id: "risa-accion", nombre: "Risa en acción", color: "var(--fila-competir)",
+    juegos: ["para-el-reloj", "al-contrario", "retrato-hablado", "el-taxi", "sombras", "sopla-y-tira", "pasala", "el-mantel"] },
 ];
 export const NIVELES = ["", "Tranquilo", "Picante", "Sin filtro", "Salvaje"] as const;
 export const colorDe = (id: string) => FILAS.find(f => f.juegos.includes(id))?.color ?? "var(--fila-empezar)";

@@ -5,7 +5,7 @@
 // La lógica pura (reconstruir, aAccion, paraPublicar, reloj lógico) vive en engine/nucleo.ts, sin React ni navegador,
 // para poder correrla también en el servidor. Aquí quedan los timers, la hora del aparato y el enlace con la base.
 import { useEffect, useRef } from "react";
-import { resultados } from "../../engine/partida";
+import { juegoParaGuardar, resultados } from "../../engine/partida";
 import { datosDeRepeticion, datosPorJugador } from "../../engine/estadisticas";
 import { armarArranque, ESPERA_MS, idAutoRevelar, idTiempo, paraPublicar, reconstruir, relojLogico, SUSPENSO_MS } from "../../engine/nucleo";
 import { enlace, type Miembro, type PartidaPub, type SalaV } from "../../servicios/enlace";
@@ -70,7 +70,7 @@ export function useMotor(sala: SalaV | null, partida: PartidaPub | null, activo:
           yo.cerrada = true;
           const datos = datosPorJugador(e), rep = datosDeRepeticion(filas, sala.anfitrionId);
           for (const [j, x] of Object.entries(rep)) datos[j] = { ...datos[j], ...x };
-          await enlace.terminar(partida.id, e.juegoId, e.cfg.jugadores.length, resultados(e).map(r => ({
+          await enlace.terminar(partida.id, juegoParaGuardar(e), e.cfg.jugadores.length, resultados(e).map(r => ({
             jugador: r.jugador, rondas: r.rondas, retos: r.retos, lugar: r.lugar, puntos: r.puntos, ...(datos[r.jugador] ? { datos: { ...datos[r.jugador] } } : {}),
           })));
           alTerminar?.();

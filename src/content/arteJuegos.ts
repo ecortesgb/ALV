@@ -38,4 +38,7 @@ export const EMOJI_JUEGO: Record<string, string> = {
   bienvenida: "👋", "verdad-reto": "🔥", conoces: "💞", mimica: "🎭", prohibida: "🤐", impostor: "🕵️",
   "reto-lugar": "🏅", lista: "⚡", reloj: "🍾", "yo-nunca": "🙊", "mas-probable": "👉", "que-prefieres": "🤔",
   ruleta: "🎡", "dados-hot": "🎲", fisico: "💪",
+  pinzas: "📎", "sin-decirla": "🤐", "ni-si-ni-no": "🙅", "para-el-reloj": "⏱️", "dame-tres": "3️⃣", "al-reves": "🔄", "termina-frase": "💬",
+  "al-contrario": "🙃", chisme: "👂", "rima-o-paga": "🎤", "retrato-hablado": "✏️", "el-taxi": "🚕", sombras: "🔦", "sopla-y-tira": "🥤",
+  pasala: "💧", "el-mantel": "🍽️",
 };
