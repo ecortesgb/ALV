@@ -1451,7 +1451,9 @@
     // Sets de movimientos (27 nov): mismos campos que un poder, sin efectos.
     if (p.movs != null) p.movs = Array.isArray(p.movs) ? p.movs.slice(0, 64).filter(x => x && typeof x.id === "string" && /^[a-z][a-z0-9-]{0,23}$/.test(x.id)
       && typeof x.glb === "string" && URL_OK.test(x.glb) && typeof x.clip === "string" && x.clip.length <= 80)
-      .map(x => ({ id: x.id, glb: x.glb, clip: x.clip, hasta: 0, bucle: 0, efectos: [] })) : [];
+      .map(x => ({ id: x.id, glb: x.glb, clip: x.clip, hasta: 0, bucle: 0, efectos: [],
+        sonidos: Array.isArray(x.sonidos) ? x.sonidos.slice(0, 8).filter(z => z && typeof z.cual === "string" && /^[a-z][a-z0-9-]{0,23}$/.test(z.cual)
+          && Number(z.t) >= 0 && Number(z.t) <= 10).map(z => ({ cual: z.cual, t: Number(z.t) })) : [] })) : [];
     return p;
   }
   // Poderes (Elías, 27 nov 2026): el clip del GLB «poderes» del personaje y sus efectos (efectos.js). Prioridad de especial:
@@ -1472,6 +1474,8 @@
       e.prio = 2; e.cual = "poder"; e.hasta = t1 + largo; e.poderHasta = t1 + largo + 0.3; e.ultG = t1;
       const fx = window.EfectosALV;
       if (fx) pd.efectos.forEach(f => fx.lanzar(scene, { obj: inst.obj, hueso: inst.hueso }, f, { camara: camera, sonar: cual => enviar({ tipo: "sonido", id: e.id, cual }) }));
+      // Movimientos: cada sonido en su segundo del clip (disparo, espadazo, golpe…), si el movimiento sigue.
+      if (dur) (pd.sonidos || []).forEach(z => setTimeout(() => { if (e.v3 === inst && e.cual === "poder") enviar({ tipo: "sonido", id: e.id, cual: z.cual }); }, z.t * 1000));
       enviar({ tipo: "poder", id: e.id, poder: pd.id, ok: true, dur: largo });
     });
   }
