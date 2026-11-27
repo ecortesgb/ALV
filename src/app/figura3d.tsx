@@ -9,7 +9,7 @@ import { alPedirPoder } from "./poderes";
 import { PRIORIDAD_VIDA, animPerfil, perfilEfectivo, soloApariencia, type Contexto } from "./perfiles";
 import { alVida, nombreVida, useVidaPerfil } from "./vidaPerfil";
 import { conForma, useVersionFormas } from "./formas";
-import { catalogoParaEscena, modoCorteV3, paraEscena, useCatalogoV3, useEscenaV3, type CatalogoV3 } from "../personajes/integracion";
+import { catalogoParaEscena, leerV3, modoCorteV3, paraEscena, useEscenaV3, useEstadoCatalogoV3, type CatalogoV3 } from "../personajes/integracion";
 
 const BASE = `${import.meta.env.BASE_URL}minifig/`;
 export const N_CAPSULAS = 3;
@@ -196,13 +196,17 @@ export const semillaDe = (texto: string) => parseInt(huella(texto), 16) % 214748
 
 /** Foto de la figura (sale del 3D la primera vez y luego se guarda). Sin figura, una al azar fija por `semilla`. */
 export function useFoto(figura: FiguraV2 | null | undefined, semilla?: number, encuadre: Encuadre = "cuerpo"): string | null {
-  const cat = useCatalogoV3();
+  const { catalogo: cat, estado } = useEstadoCatalogoV3();
+  // Figura nueva y el catálogo aún cargando: no se enseña la foto de respaldo (salía un personaje genérico y luego se
+  // cambiaba por el real; Elías, 27 nov). Se ve el aro de carga hasta tener la real; si el catálogo falla, sale el respaldo.
+  const esperaV3 = estado === "cargando" && !!figura && !!leerV3(figura);
   const [fallo, setFallo] = useState(0); // sube cuando una foto nueva falla: se recalcula y sale la de respaldo
   const nueva = useMemo(() => fotoNueva(figura, encuadre, cat), [figura, encuadre, cat, fallo]); // eslint-disable-line react-hooks/exhaustive-deps
   const h = useMemo(() => {
     if (nueva) return nueva.pid;
+    if (esperaV3) return null;
     const b = figura ? huella(figura) : semilla != null ? "s" + semilla : null; return b && encuadre === "busto" ? "B:" + b : b;
-  }, [nueva, figura, semilla, encuadre]);
+  }, [nueva, esperaV3, figura, semilla, encuadre]);
   const deMemoria = (k: string) => (esV3(k) ? fotosV3.get(k) : fotos.get(k)) ?? null;
   const [url, setUrl] = useState<string | null>(() => (h ? deMemoria(h) : null));
   useEffect(() => {
