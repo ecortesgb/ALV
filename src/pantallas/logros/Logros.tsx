@@ -7,6 +7,7 @@ import { createPortal } from "react-dom";
 import { atras } from "../../app/rutas";
 import { refrescarSesion, useSesion } from "../../app/sesion";
 import { JUEGOS } from "../../content/catalogo";
+import { MINIJUEGOS } from "../../content/party";
 import { ORDEN_RAREZA, RAREZA_TEXTO } from "../../content/logros";
 import { destacarLogro, miProgresoLogros, misObjetivos, reclamarObjetivo, usarTitulo, type FilaLogro, type Objetivo } from "../../servicios/logros";
 import { Marco, aviso } from "../comun";
@@ -157,7 +158,7 @@ function Repisa({ titulo, logros, alAbrir }: { titulo: string; logros: FilaLogro
 
 function PorJuego({ logros, alAbrir }: { logros: FilaLogro[]; alAbrir: (l: FilaLogro) => void }) {
   const juegos = [...new Set(logros.map(l => l.juego ?? ""))];
-  return <>{juegos.map(j => <Repisa key={j} titulo={JUEGOS.find(x => x.id === j)?.nombre ?? j} logros={ordenar(logros.filter(l => (l.juego ?? "") === j))} alAbrir={alAbrir} />)}</>;
+  return <>{juegos.map(j => <Repisa key={j} titulo={JUEGOS.find(x => x.id === j)?.nombre ?? MINIJUEGOS.find(x => x.idBase === j)?.nombre ?? j} logros={ordenar(logros.filter(l => (l.juego ?? "") === j))} alAbrir={alAbrir} />)}</>;
 }
 
 function Recompensas({ ganados, destacados, alAbrir, alTitulo }: { ganados: FilaLogro[]; destacados: FilaLogro[]; alAbrir: (l: FilaLogro) => void; alTitulo: (c: string | null) => void }) {

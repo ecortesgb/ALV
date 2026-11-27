@@ -14,7 +14,7 @@ import "./cast.css";
 export const enlacePantalla = (codigo: string) => `${location.origin}${import.meta.env.BASE_URL}#/tv/${codigo}`;
 
 /** Código QR dibujado con elementos SVG (sin insertar HTML). */
-function Qr({ texto }: { texto: string }) {
+export function Qr({ texto }: { texto: string }) {
   const celdas = useMemo(() => {
     const q = qrcode(0, "M"); q.addData(texto); q.make();
     const n = q.getModuleCount(), r: [number, number][] = [];

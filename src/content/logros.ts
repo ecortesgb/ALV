@@ -39,6 +39,13 @@ export const LOGROS_ETAPA1: DefLogro[] = [
   { clave: "alv-legendario", categoria: "progresion", juego: null, rareza: "legendaria", nombre: "ALV Legendario", descripcion: "Llega al nivel 20.", meta: 20, recompensa: "Insignia legendaria", orden: 420 },
   { clave: "campeon-temporada", categoria: "progresion", juego: null, rareza: "legendaria", nombre: "Campeón de temporada", descripcion: "Termina un mes en primer lugar por Puntos ALV.", meta: 1, recompensa: "Insignia legendaria", orden: 440 },
   { clave: "constante", categoria: "progresion", juego: null, rareza: "rara", nombre: "Constante", descripcion: "Completa 10 objetivos.", meta: 10, recompensa: "Insignia rara", orden: 430 },
+  // ALV PARTY (migración 053, pendiente de aplicar).
+  { clave: "pistolero", categoria: "minijuego", juego: "mj-desenfunda", rareza: "comun", nombre: "Pistolero", descripcion: "Gana 3 veces ¡Desenfunda!.", meta: 3, recompensa: "Insignia común", orden: 510 },
+  { clave: "a-prueba-de-balas", categoria: "minijuego", juego: "mj-bala", rareza: "comun", nombre: "A prueba de balas", descripcion: "Gana 3 veces Esquiva la bala.", meta: 3, recompensa: "Insignia común", orden: 520 },
+  { clave: "mano-de-piedra", categoria: "minijuego", juego: "mj-martillazo", rareza: "comun", nombre: "Mano de piedra", descripcion: "Gana 3 veces Martillazo.", meta: 3, recompensa: "Insignia común", orden: 530 },
+  { clave: "aterrizaje-perfecto", categoria: "minijuego", juego: "mj-paracaidas", rareza: "comun", nombre: "Aterrizaje perfecto", descripcion: "Gana 3 veces Paracaídas.", meta: 3, recompensa: "Insignia común", orden: 540 },
+  { clave: "sangre-fria", categoria: "minijuego", juego: "mj-alto-total", rareza: "comun", nombre: "Sangre fría", descripcion: "Gana 3 veces Alto total.", meta: 3, recompensa: "Insignia común", orden: 550 },
+  { clave: "alma-de-la-party", categoria: "coleccion", juego: null, rareza: "rara", nombre: "Alma de la party", descripcion: "Juega los 5 minijuegos de ALV PARTY.", meta: 5, recompensa: "Insignia rara", orden: 560 },
 ];
 
 export const RAREZA_TEXTO: Record<Rareza, string> = { comun: "Común", rara: "Rara", epica: "Épica", legendaria: "Legendaria" };
