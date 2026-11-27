@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { crearAzar } from "./azar";
-import { RACHA_CERO, abrirSobre, faltanParaGarantia, sobreDisponible, tirarRareza, type Racha } from "./sobresTienda";
+import { RACHA_CERO, abrirSobre, faltanParaGarantia, probabilidadComodines, probabilidadPiezas, sobreDisponible, tirarRareza, type Racha } from "./sobresTienda";
 import { GARANTIA, PIEZAS_COLECCION, SOBRES, TOPE_COMODIN, piezasDeSobre, sobrePorId } from "../content/tienda";
 import { RAREZA } from "../content/rarezas";
 
@@ -8,6 +8,27 @@ const S = (id: string) => sobrePorId(id)!;
 const nada = new Set<string>();
 
 describe("sobres de la tienda", () => {
+  it("distingue el 50 % por extracción del 87.5 % por sobre y respeta el tope", () => {
+    for (const demo of [true, false]) {
+      const tasas = probabilidadComodines(S("comodines"), { turno: TOPE_COMODIN }, demo);
+      expect(tasas).toHaveLength(2);
+      expect(tasas.every(c => c.porCarta === 0.5 && c.enSobre === 0.875)).toBe(true);
+      expect(tasas.find(c => c.id === "turno")?.alTope).toBe(true);
+      expect(tasas.find(c => c.id === "cambio")?.alTope).toBe(false);
+    }
+  });
+
+  it("calcula la garantía por pieza y el reparto sin repetidas", () => {
+    const sobre = { ...S("basico"), piezas: 1, pesos: { rara: 100, epica: 0, legendaria: 0 } };
+    const legendarias = piezasDeSobre(sobre).filter(p => p.rareza === "legendaria");
+    const tasas = probabilidadPiezas(sobre, nada, { sinEpica: 0, sinLegendaria: GARANTIA.legendaria - 1 });
+    expect(tasas.legendaria).toBeCloseTo(1 / legendarias.length);
+    expect(tasas.rara).toBe(0);
+    expect(tasas.epica).toBe(0);
+    const par = S("basico");
+    const tasasPar = probabilidadPiezas(par, nada, RACHA_CERO);
+    expect(piezasDeSobre(par).reduce((s, p) => s + tasasPar[p.rareza], 0)).toBeCloseTo(par.piezas);
+  });
   it("los 5 sobres de Elías con sus precios", () => {
     expect(SOBRES.map(s => [s.id, s.precio])).toEqual([["basico", 50], ["accesorios", 120], ["comodines", 150], ["mixto", 180], ["epico", 200]]);
   });

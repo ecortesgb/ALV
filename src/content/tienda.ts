@@ -32,10 +32,10 @@ export type Seccion = "pelo" | "casco" | "rostro" | "detalle" | "cuello" | "tors
 export const SOBRES: Sobre[] = [
   { id: "basico", nombre: "Sobre básico", precio: 50, arte: "sobre-basico.webp", piezas: 2, comodines: 0,
     pesos: { rara: 88, epica: 11, legendaria: 1 }, color: "#3fb6ff", frase: "Dos piezas para empezar tu colección." },
-  { id: "accesorios", nombre: "Sobre de accesorios", precio: 120, arte: "sobre-accesorios.webp", piezas: 3, comodines: 0,
+  { id: "accesorios", nombre: "Sobre de accesorios", precio: 120, arte: "sobre-accesorios-v2.webp", piezas: 3, comodines: 0,
     pesos: { rara: 65, epica: 28, legendaria: 7 }, secciones: ["casco", "detalle", "cuello", "objeto"], color: "#2ee6c5",
     frase: "Cascos, lentes, cuellos, capas y objetos." },
-  { id: "comodines", nombre: "Sobre de comodines", precio: 150, arte: "sobre-comodines.webp", piezas: 0, comodines: 3,
+  { id: "comodines", nombre: "Sobre de comodines", precio: 150, arte: "sobre-comodines-v2.webp", piezas: 0, comodines: 3,
     pesos: { rara: 0, epica: 0, legendaria: 0 }, color: "#ff3fb4", frase: "Tres comodines para salvarte en la partida." },
   { id: "mixto", nombre: "Sobre mixto", precio: 180, arte: "sobre-mixto.webp", piezas: 2, comodines: 2,
     pesos: { rara: 60, epica: 32, legendaria: 8 }, color: "#b06bff", frase: "Dos piezas y dos comodines." },
@@ -48,12 +48,12 @@ export const sobrePorId = (id: string) => SOBRES.find(s => s.id === id) ?? null;
 export const GARANTIA = { epica: 8, legendaria: 25 } as const;
 
 // ---------- Comodines ----------
-export interface ComodinTienda { id: string; nombre: string; efecto: string; especial: boolean; icono: string; porConfirmar?: boolean }
+export interface ComodinTienda { id: string; nombre: string; efecto: string; especial: boolean; icono: string; arte?: string; porConfirmar?: boolean }
 /** Comodines a la venta (Maestro v1.49: solo los de efecto definido en 6A.4). Ids iguales a CARTAS_PODER de catalogo.ts.
  *  Escudo y los especiales entran cuando Elías los confirme; mientras, el sobre de comodines trae solo básicos. */
 export const COMODINES: ComodinTienda[] = [
-  { id: "turno", nombre: "Pasa turno", efecto: "Tu turno pasa al siguiente jugador.", especial: false, icono: "⏭️" },
-  { id: "cambio", nombre: "Cambio de pregunta", efecto: "Cambia la carta que te tocó por otra.", especial: false, icono: "🔄" },
+  { id: "turno", nombre: "Pasa turno", efecto: "Tu turno pasa al siguiente jugador.", especial: false, icono: "⏭️", arte: "carta-pasa-turno.webp" },
+  { id: "cambio", nombre: "Cambio de pregunta", efecto: "Cambia la carta que te tocó por otra.", especial: false, icono: "🔄", arte: "carta-cambio-pregunta.webp" },
 ];
 export const comodinPorId = (id: string) => COMODINES.find(c => c.id === id) ?? null;
 /** Probabilidad de que un comodín salga especial (0 mientras no haya especiales a la venta). */

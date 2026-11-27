@@ -1,6 +1,6 @@
-// Apertura de un sobre: sacudir, rasgar, luz por rareza, cartas una por una, «¡NUEVO!» y «Ponérmelo».
+// Apertura de un sobre: rasgar, luz por rareza y revelar las cartas del mazo una por una.
 // El resultado ya viene decidido (servidor o, en la demostración, la tirada local): la animación solo lo muestra.
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { createPortal } from "react-dom";
 import { FiguraViva, figuraActiva, useCapsulas } from "../app/figura3d";
 import { ponerPieza } from "../app/equiparPieza";
@@ -11,101 +11,129 @@ import { RaizDS } from "../ds";
 import { NOMBRE_RAREZA } from "../content/rarezas";
 import { comodinPorId, type Sobre } from "../content/tienda";
 import type { Apertura as Resultado, Carta } from "../engine/sobresTienda";
-import { ponermelo, useTienda } from "../servicios/tienda";
+import { ponermelo } from "../servicios/tienda";
 import { aviso } from "./comun";
 import { infoPieza } from "./Desbloqueo";
 import { miniatura } from "./Libro";
-import { Momento, srcArte } from "./Tienda";
+import { ComodinIcono, Momento, srcArte } from "./Tienda";
+import { arteHub } from "./azotea/Cabecera";
 
-type Fase = "sacudir" | "rasgar" | "luz" | "cartas" | "resumen";
-const GOLPES = 3;
+type Fase = "rasgar" | "extraer" | "cartas" | "resumen";
 const quieto = movimientoReducido;
+const REVERSO = `${import.meta.env.BASE_URL}arte/tienda/carta-reverso-alv.webp`;
+const DORSO_SOBRE = `${import.meta.env.BASE_URL}arte/tienda/sobre-dorso-alv.webp`;
 
-export function Apertura({ sobre, apertura, alOtro, alColeccion }: { sobre: Sobre; apertura: Resultado; alOtro: () => void; alColeccion: () => void }) {
-  const [fase, setFase] = useState<Fase>("sacudir");
-  const [golpes, setGolpes] = useState(0);
+export function Apertura({ sobre, apertura, fondo, alOtro, alColeccion }: { sobre: Sobre; apertura: Resultado; fondo: string; alOtro: () => void; alColeccion: () => void }) {
+  const [fase, setFase] = useState<Fase>("rasgar");
+  const [revelada, setRevelada] = useState(false);
+  const [sobreDeEspaldas, setSobreDeEspaldas] = useState(false);
   const [vistas, setVistas] = useState(0);
   const [corte, setCorte] = useState(0);
   const arrastre = useRef<number | null>(null);
-  const t = useTienda();
+  const toqueCarta = useRef<number | null>(null);
+  const deslizoCarta = useRef(false);
+  const dialogo = useRef<HTMLDivElement>(null);
   const n = apertura.cartas.length, mejor = apertura.mejor;
+  useEffect(() => { dialogo.current?.focus(); }, [fase]);
 
-  // Luz por rareza: después pasan las cartas.
+  // El sello se separa primero. El mazo sale por detrás del cuerpo del sobre.
   useEffect(() => {
-    if (fase !== "luz") return;
-    sonar(mejor);
-    vibrar(mejor === "legendaria" ? [60, 40, 60, 40, 180] : mejor === "epica" ? [50, 40, 90] : 40);
-    const ms = quieto() ? 500 : mejor === "legendaria" ? 2300 : mejor === "epica" ? 1700 : 1200;
-    const id = setTimeout(() => setFase("cartas"), ms);
-    return () => clearTimeout(id);
-  }, [fase, mejor]);
+    if (fase !== "extraer") return;
+    const reduce = quieto();
+    const id = setTimeout(() => {
+      setRevelada(!sobreDeEspaldas);
+      setFase(n ? "cartas" : "resumen");
+    }, reduce ? 0 : 1000);
+    const luz = reduce ? undefined : setTimeout(() => { sonar(mejor); vibrar(40); }, 240);
+    return () => { clearTimeout(id); clearTimeout(luz); };
+  }, [fase, mejor, n, sobreDeEspaldas]);
 
-  const sacudir = () => {
-    if (fase !== "sacudir") return;
-    const g = golpes + 1;
-    sonar("sacudir"); vibrar(25 + g * 20);
-    setGolpes(g);
-    if (g >= GOLPES) setTimeout(() => setFase("rasgar"), 350);
-  };
-  const rasgar = () => { if (fase !== "rasgar") return; setCorte(1); sonar("rasgar"); vibrar([30, 30, 60]); setTimeout(() => setFase("luz"), quieto() ? 150 : 650); };
-  const voltear = (k: number) => {
-    if (fase !== "cartas" || k !== vistas) return;
-    const c = apertura.cartas[k]!;
-    sonar("voltear");
-    if (c.tipo === "pieza" && c.rareza !== "rara") setTimeout(() => { sonar(c.rareza); vibrar(c.rareza === "legendaria" ? [80, 40, 120] : 50); }, 220);
-    setVistas(k + 1);
-  };
-  const abrirTodas = () => {
-    for (let k = vistas; k < n; k++) setTimeout(() => { sonar("voltear"); setVistas(v => Math.max(v, k + 1)); }, (k - vistas) * 260);
-  };
+  const rasgar = () => { if (fase !== "rasgar" || corte) return; setCorte(1); sonar("rasgar"); vibrar([30, 30, 60]); };
   useEffect(() => {
-    if (fase !== "cartas" || vistas < n) return;
-    const id = setTimeout(() => setFase("resumen"), quieto() ? 300 : 1300);
+    if (fase !== "rasgar" || !corte) return;
+    const id = setTimeout(() => setFase("extraer"), quieto() ? 0 : 280);
     return () => clearTimeout(id);
-  }, [fase, vistas, n]);
+  }, [fase, corte]);
+  const carta = apertura.cartas[vistas];
+  const siguiente = () => {
+    if (!revelada) { sonar("voltear"); setRevelada(true); return; }
+    if (vistas + 1 >= n) setFase("resumen");
+    else { setVistas(vistas + 1); setRevelada(!sobreDeEspaldas); }
+  };
+  const frenteSobre = srcArte("tienda/" + sobre.arte);
 
   // Capa propia sobre todo (como los avisos): dentro del marco la posición fija no cubría la pantalla.
   return createPortal(
-    <RaizDS className="a-capa t-tienda t-ap-raiz">
-    <div className={`t-ap t-fase-${fase} t-luz-${mejor}`} role="dialog" aria-modal="true" aria-label={`Abriendo ${sobre.nombre}`}
-      style={{ ["--c" as string]: sobre.color }}>
+    <RaizDS className="az a-capa t-tienda t-ap-raiz">
+    <div ref={dialogo} tabIndex={-1} className={`t-ap t-fase-${fase} t-luz-${mejor}`} role="dialog" aria-modal="true" aria-label={`Abriendo ${sobre.nombre}`}
+      style={{ "--c": sobre.color, "--t-fondo": fondo } as CSSProperties}>
       <div className="t-ap-rayos" aria-hidden="true" />
-      {(fase === "luz" || (fase === "cartas" && mejor === "legendaria")) && <div className="t-ap-destello" aria-hidden="true" />}
-      {mejor === "legendaria" && (fase === "luz" || fase === "cartas") && <Confeti />}
+      {mejor === "legendaria" && fase === "extraer" && <Confeti />}
 
-      {(fase === "sacudir" || fase === "rasgar" || fase === "luz") && (
+      {(fase === "rasgar" || fase === "extraer") && (
         <div className="t-ap-centro">
-          <div className={`t-ap-sobre g-${golpes}` + (corte ? " t-rasgado" : "")} key={golpes}
-            onClick={fase === "sacudir" ? sacudir : fase === "rasgar" ? rasgar : undefined}
-            onPointerDown={e => { if (fase === "rasgar") arrastre.current = e.clientX; }}
-            onPointerMove={e => { if (fase === "rasgar" && arrastre.current != null && Math.abs(e.clientX - arrastre.current) > 60) { arrastre.current = null; rasgar(); } }}>
-            <img className="t-ap-cuerpo" src={srcArte("tienda/" + sobre.arte)} alt="" draggable={false} />
-            <img className="t-ap-tira" src={srcArte("tienda/" + sobre.arte)} alt="" draggable={false} />
-            {fase === "rasgar" && <div className="t-ap-guia" aria-hidden="true"><span>✂</span></div>}
+          <div className="t-ap-escenario" data-cortado={!!corte}>
+          {fase === "extraer" && n > 0 && <div className="t-ap-salida" aria-hidden="true">
+            {sobreDeEspaldas || !carta ? <img src={REVERSO} alt="" /> : <CartaFrente c={carta} />}
+          </div>}
+          <button type="button" className={"t-ap-sobre" + (corte ? " t-rasgado" : "")}
+            disabled={!!corte}
+            aria-label={sobreDeEspaldas ? "Girar sobre al frente" : "Girar sobre al reverso"}
+            onClick={() => { if (arrastre.current === null && !corte) { sonar("tic"); setSobreDeEspaldas(v => !v); } }}
+            onPointerDown={e => { arrastre.current = e.clientX; e.currentTarget.setPointerCapture(e.pointerId); }}
+            onPointerMove={e => {
+              if (arrastre.current === null) return;
+              const distancia = e.clientX - arrastre.current;
+              if (!quieto()) e.currentTarget.style.setProperty("--t-inclinacion", `${distancia / 15}deg`);
+              if (Math.abs(distancia) > 60) { arrastre.current = null; rasgar(); }
+            }}
+            onLostPointerCapture={e => { arrastre.current = null; e.currentTarget.style.removeProperty("--t-inclinacion"); }}>
+            <span className={"t-sobre-caras" + (sobreDeEspaldas ? " de-espaldas" : "")}>
+              {[frenteSobre, DORSO_SOBRE].map((arte, i) => (
+                <span className={"t-sobre-cara" + (i ? " t-sobre-dorso" : "")} key={arte}>
+                  <img className="t-ap-cuerpo" src={arte} alt="" draggable={false} />
+                  <img className="t-ap-tira" src={arte} alt="" draggable={false} />
+                </span>
+              ))}
+            </span>
+          </button>
+          {!corte && <button type="button" className="t-ap-guia" aria-label="Rasgar sello" onClick={rasgar}
+            onPointerDown={e => { arrastre.current = e.clientX; e.currentTarget.setPointerCapture(e.pointerId); }}
+            onPointerMove={e => { if (arrastre.current !== null && Math.abs(e.clientX - arrastre.current) > 60) rasgar(); }}
+            onLostPointerCapture={() => { arrastre.current = null; }} />}
           </div>
           <p className="t-ap-texto t-sfx">
-            {fase === "sacudir" ? `¡Toca para sacudir! ${golpes}/${GOLPES}` : fase === "rasgar" ? "¡Desliza para abrir!" : NOMBRE_RAREZA[mejor] === "Rara" ? "…" : `¡${NOMBRE_RAREZA[mejor]}!`}
+            {!corte ? "Toca para girar · Desliza para rasgar" : "¡Sobre abierto!"}
           </p>
+          <button type="button" className="t-ap-todas t-ap-saltar" onClick={() => setFase("resumen")}>Ver resultado</button>
         </div>
       )}
 
-      {fase === "cartas" && (
+      {fase === "cartas" && carta && (
         <div className="t-ap-mesa">
-          <div className="t-ap-cartas" style={{ ["--n" as string]: n }}>
-            {apertura.cartas.map((c, k) => (
-              <button key={k} type="button" className={"t-carta-3d" + (k < vistas ? " t-volteada" : "") + (k === vistas ? " t-siguiente" : "")}
-                style={{ ["--k" as string]: k }} onClick={() => voltear(k)} aria-label={k < vistas ? nombreCarta(c) : "Carta boca abajo"}>
-                <span className="t-cara t-reverso"><span className="t-sfx">ALV</span></span>
-                <span className="t-cara t-frente"><CartaFrente c={c} /></span>
-              </button>
-            ))}
-          </div>
-          <p className="t-ap-texto t-sfx">{vistas < n ? "Toca la carta" : "¡Listo!"}</p>
-          {vistas < n && <button type="button" className="t-ap-todas" onClick={abrirTodas}>Abrir todas</button>}
+          <p className="t-ap-progreso" aria-live="polite">Carta {vistas + 1} de {n}{revelada ? " · " + nombreCarta(carta) : ""}</p>
+          <button type="button" className="t-mazo" data-restantes={Math.min(3, n - vistas - 1)}
+            aria-label={!revelada ? "Revelar carta" : vistas + 1 === n ? "Ver resultado" : "Siguiente carta"}
+            onPointerDown={e => { toqueCarta.current = e.clientX; deslizoCarta.current = false; e.currentTarget.setPointerCapture(e.pointerId); }}
+            onPointerCancel={() => { toqueCarta.current = null; }}
+            onPointerUp={e => {
+              if (toqueCarta.current !== null && Math.abs(e.clientX - toqueCarta.current) >= 40) {
+                deslizoCarta.current = true;
+                siguiente();
+              }
+              toqueCarta.current = null;
+            }}
+            onClick={e => { if (e.detail === 0 || !deslizoCarta.current) siguiente(); deslizoCarta.current = false; }}>
+            <span key={vistas} className={"t-mazo-carta" + (revelada ? " t-volteada" : "")}>
+              <span className="t-cara t-reverso" aria-hidden="true"><img src={REVERSO} alt="" /></span>
+              <span className="t-cara t-frente" aria-hidden={!revelada}><CartaFrente c={carta} /></span>
+            </span>
+          </button>
+          <p className="t-ap-instruccion">{revelada ? "Desliza para " + (vistas + 1 === n ? "ver el resumen" : "pasar de carta") : "Toca la carta para voltearla"}</p>
         </div>
       )}
 
-      {fase === "resumen" && <Resumen apertura={apertura} sobre={sobre} monedas={t.monedas} alOtro={alOtro} alColeccion={alColeccion} />}
+      {fase === "resumen" && <Resumen apertura={apertura} alOtro={alOtro} alColeccion={alColeccion} />}
     </div>
     </RaizDS>,
     document.body,
@@ -114,7 +142,7 @@ export function Apertura({ sobre, apertura, alOtro, alColeccion }: { sobre: Sobr
 
 const nombreCarta = (c: Carta) => (c.tipo === "pieza" ? infoPieza(c.id).nombre : c.tipo === "comodin" ? comodinPorId(c.id)?.nombre ?? c.id : `${c.cantidad} monedas`);
 
-function CartaFrente({ c }: { c: Carta }) {
+export function CartaFrente({ c }: { c: Carta }) {
   if (c.tipo === "pieza") {
     const info = infoPieza(c.id);
     return (
@@ -122,30 +150,44 @@ function CartaFrente({ c }: { c: Carta }) {
         <span className="t-carta-banda">{NOMBRE_RAREZA[c.rareza]}</span>
         <span className="t-carta-arte">{info.mini ? <img src={miniatura(info.mini)} alt="" /> : <Momento />}</span>
         <span className="t-carta-nombre">{info.nombre}</span>
+        <span className="t-carta-efecto">Pieza para personalizar tu figura.</span>
         <span className="t-nuevo t-sfx">¡Nuevo!</span>
       </span>
     );
   }
   if (c.tipo === "comodin") {
     const x = comodinPorId(c.id);
+    if (x?.arte) return (
+      <span className="t-carta t-carta-comodin ilustrada" data-comodin={c.id}>
+        <span className="t-comodin-cab">
+          <span className="t-comodin-sello">{c.especial ? "Especial" : "Comodín"}</span>
+          <span className="t-carta-nombre">{x.nombre}</span>
+          <span className="t-comodin-glifo"><ComodinIcono id={c.id} alterno={x.icono} /></span>
+        </span>
+        <span className="t-carta-arte"><img src={srcArte("tienda/" + x.arte)} alt="" draggable={false} /></span>
+        <span className="t-carta-efecto">{x.efecto}</span>
+      </span>
+    );
     return (
       <span className={"t-carta t-carta-comodin" + (c.especial ? " t-especial" : "")}>
         <span className="t-carta-banda">{c.especial ? "Comodín especial" : "Comodín"}</span>
-        <span className="t-carta-arte"><span className="t-mini-ico">{x?.icono ?? "🃏"}</span></span>
+        <span className="t-carta-arte"><ComodinIcono id={c.id} alterno={x?.icono ?? "🃏"} /></span>
         <span className="t-carta-nombre">{x?.nombre ?? c.id}</span>
+        <span className="t-carta-efecto">{x?.efecto}</span>
       </span>
     );
   }
   return (
     <span className="t-carta t-carta-monedas">
       <span className="t-carta-banda">Ya tienes 9</span>
-      <span className="t-carta-arte"><span className="t-moneda t-moneda-xl" /></span>
+      <span className="t-carta-arte"><img className="t-moneda t-moneda-xl" src={arteHub("moneda")} alt="" /></span>
       <span className="t-carta-nombre">+{c.cantidad} monedas</span>
+      <span className="t-carta-efecto">Se agregaron a tu saldo.</span>
     </span>
   );
 }
 
-function Resumen({ apertura, sobre, monedas, alOtro, alColeccion }: { apertura: Resultado; sobre: Sobre; monedas: number; alOtro: () => void; alColeccion: () => void }) {
+function Resumen({ apertura, alOtro, alColeccion }: { apertura: Resultado; alOtro: () => void; alColeccion: () => void }) {
   const piezas = apertura.cartas.filter((c): c is Extract<Carta, { tipo: "pieza" }> => c.tipo === "pieza");
   const [elegida, setElegida] = useState<string | null>(piezas[piezas.length - 1]?.id ?? null);
   const [puestas, setPuestas] = useState<Set<string>>(new Set());
@@ -163,7 +205,7 @@ function Resumen({ apertura, sobre, monedas, alOtro, alColeccion }: { apertura: 
   };
 
   return (
-    <div className="t-ap-resumen">
+    <div className={"t-ap-resumen" + (piezas.length ? "" : " sin-figura")}>
       {piezas.length > 0 && (
         <div className="t-ap-figura">
           <FiguraViva figura={vista} className="t-ap-viva" />
@@ -184,7 +226,7 @@ function Resumen({ apertura, sobre, monedas, alOtro, alColeccion }: { apertura: 
         </div>
         <div className="t-ap-botones">
           {elegida && <button type="button" className="t-comprar t-chico" disabled={puestas.has(elegida)} onClick={poner}>{puestas.has(elegida) ? "¡Ya la traes!" : "Ponérmelo"}</button>}
-          <button type="button" className="t-boton-azul" onClick={alOtro}>{monedas >= sobre.precio ? "Abrir otro" : "Volver a la tienda"}</button>
+          <button type="button" className="t-boton-azul" onClick={alOtro}>Guardar y volver</button>
           <button type="button" className="t-boton-azul" onClick={alColeccion}>Ver colección</button>
         </div>
       </div>
