@@ -2,7 +2,7 @@
 // Lógica pura que corre en la TV; los celulares mandan el mando (palanca y botones). La escena 3D solo lee `anim`.
 // Unidades de la escena de ALV (una minifigura mide ~2.7). Sin DOM ni 3D: lo prueba minijuegos.test.ts.
 
-export type Anim = "reposo" | "caminar" | "correr" | "saltar" | "caer" | "aterrizar" | "golpe" | "herido" | "ko" | "festejo" | "poder" | "poder2" | "saludo" | "derrota" | "especial" | "volar";
+export type Anim = "reposo" | "caminar" | "correr" | "saltar" | "caer" | "aterrizar" | "golpe" | "herido" | "ko" | "festejo" | "poder" | "poder2" | "saludo" | "derrota" | "especial" | "volar" | "mov";
 /** Gestos de la rueda del mando (Elías, 27 nov): Saludar, Ganar (festejo), Especial y Perder. */
 export type GestoCuarto = "saludo" | "festejo" | "derrota" | "especial";
 const GESTO_MS: Record<GestoCuarto, number> = { saludo: 2000, festejo: 2300, derrota: 2300, especial: 2000 };
@@ -33,7 +33,9 @@ export const CONFIG_CUARTO: ConfigCuarto = {
 
 export interface Mando { x: number; z: number; saltar?: boolean; golpe?: boolean; festejo?: boolean; poder?: boolean; poder2?: boolean; gesto?: GestoCuarto;
   /** Despega o aterriza (lo manda la TV cuando el botón es el poder de volar del personaje). En el aire A sube y B baja. */
-  volar?: boolean }
+  volar?: boolean;
+  /** Un movimiento de sus sets (baile, burla, combo...): la TV sabe cuál y alarga al largo del clip. */
+  mov?: boolean }
 
 export interface Cuerpo {
   id: string; x: number; z: number; y: number; vy: number; rot: number;
@@ -78,7 +80,7 @@ export function salir(e: EstadoCuarto, id: string) { e.cuerpos.delete(id); }
  *  Entre 0.4 y 6 s desde que empezó. Si ya no está en un poder, no hace nada. */
 export function alargar(e: EstadoCuarto, id: string, ms: number) {
   const c = e.cuerpos.get(id);
-  if (!c || (c.anim !== "poder" && c.anim !== "poder2") || !Number.isFinite(ms)) return;
+  if (!c || (c.anim !== "poder" && c.anim !== "poder2" && c.anim !== "mov") || !Number.isFinite(ms)) return;
   c.hasta = c.animDesde + Math.min(6000, Math.max(400, ms));
 }
 
@@ -89,7 +91,7 @@ export function mandar(e: EstadoCuarto, id: string, m: Mando) {
   let x = Number.isFinite(m.x) ? m.x : 0, z = Number.isFinite(m.z) ? m.z : 0;
   const l = Math.hypot(x, z);
   if (l > 1) { x /= l; z /= l; }
-  c.mando = { x, z, saltar: c.mando.saltar || !!m.saltar, golpe: c.mando.golpe || !!m.golpe, festejo: c.mando.festejo || !!m.festejo, poder: c.mando.poder || !!m.poder, poder2: c.mando.poder2 || !!m.poder2, volar: c.mando.volar || !!m.volar,
+  c.mando = { x, z, saltar: c.mando.saltar || !!m.saltar, golpe: c.mando.golpe || !!m.golpe, festejo: c.mando.festejo || !!m.festejo, poder: c.mando.poder || !!m.poder, poder2: c.mando.poder2 || !!m.poder2, volar: c.mando.volar || !!m.volar, mov: c.mando.mov || !!m.mov,
     gesto: m.gesto && Object.hasOwn(GESTO_MS, m.gesto) ? m.gesto : c.mando.gesto };
   c.mandoT = e.t;
 }
@@ -100,7 +102,7 @@ function aterrizarVuelo(e: EstadoCuarto, c: Cuerpo, ev: EventoCuarto[]) {
 }
 
 const ocupado = (c: Cuerpo) => c.anim === "golpe" || c.anim === "herido" || c.anim === "ko" || c.anim === "festejo" || c.anim === "poder" || c.anim === "poder2" || c.anim === "aterrizar"
-  || c.anim === "saludo" || c.anim === "derrota" || c.anim === "especial";
+  || c.anim === "saludo" || c.anim === "derrota" || c.anim === "especial" || c.anim === "mov";
 const angulo = (a: number) => Math.atan2(Math.sin(a), Math.cos(a));
 function poner(e: EstadoCuarto, c: Cuerpo, a: Anim, ms = 0) {
   if (c.anim !== a) c.animDesde = e.t;
@@ -160,6 +162,7 @@ export function pasoCuarto(e: EstadoCuarto, dt: number): EventoCuarto[] {
     // Gesto de la rueda (o el festejo de antes): se queda quieto mientras lo hace.
     const gesto = m.gesto ?? (m.festejo ? "festejo" : undefined);
     if (gesto && libre && c.enPiso) poner(e, c, gesto, GESTO_MS[gesto]);
+    else if (m.mov && libre && c.enPiso) poner(e, c, "mov", 2000);
     // Poder (gatillo RT): el movimiento especial del personaje (rayos de Cíclope, pecho de Iron Man...). Solo animación.
     if (m.poder && libre && c.enPiso) { poner(e, c, "poder", 2000); ev.push({ tipo: "poder", id: c.id }); }
     // Segundo poder (botón X), si el personaje lo trae. La TV alarga los dos al largo real del clip (alargar).

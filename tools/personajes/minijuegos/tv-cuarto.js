@@ -35,6 +35,10 @@ const tv = crearTV({
       const vuela = (b === "poder" || b === "poder2") && slotVuelo(j) === (b === "poder" ? 0 : 1);
       mandar(cuarto, j.id, { x: c.mando.x, z: c.mando.z, saltar: b === "saltar", golpe: b === "golpe", festejo: b === "festejo",
         poder: b === "poder" && !vuela, poder2: b === "poder2" && !vuela, volar: vuela });
+    } else if (m.tipo === "mov") { // rueda, 2ª página: un movimiento de sus sets (canal.ts revisó la forma; aquí, que lo tenga)
+      const c = cuarto.cuerpos.get(j.id); if (!c || !j.figura || !j.figura.tieneMov || !j.figura.tieneMov(m.d.m)) return;
+      j.movPedido = m.d.m;
+      mandar(cuarto, j.id, { x: c.mando.x, z: c.mando.z, mov: true });
     } else if (m.tipo === "gesto") { // rueda de animaciones del mando (canal.ts ya revisó que sea uno de los 4)
       const c = cuarto.cuerpos.get(j.id); if (!c) return;
       mandar(cuarto, j.id, { x: c.mando.x, z: c.mando.z, gesto: m.d.g });
@@ -73,6 +77,15 @@ function animar(j, cu) {
     case "poder": lanzarPoder(j, 0); break;
     case "poder2": lanzarPoder(j, 1); break;
     case "volar": despegar(j); break;
+    case "mov": {
+      const desde = cu.animDesde;
+      f.mov(j.movPedido).then(r => {
+        const ya = cuarto.cuerpos.get(j.id);
+        if (!ya || ya.animDesde !== desde) return;
+        if (r) alargar(cuarto, j.id, r.dur * 1000); else f.anim("reposo");
+      });
+      break;
+    }
     case "caminar": f.anim("caminar"); break;
     case "correr": f.anim("correr"); break;
     default: f.anim("reposo");
@@ -101,6 +114,12 @@ function despegar(j) {
   const f = j.figura, i = slotVuelo(j), desde = cuarto.cuerpos.get(j.id)?.animDesde;
   f.anim("caer"); // mientras baja el clip (o si no hay): brazos en el aire
   if (i < 0) return;
+  j.vueloClip = null;
+  // Con el set «vuelo» (Iron Man, Thor...): flota quieto y vuela al moverse (lo cambia estela() cada cuadro).
+  if (f.tieneMov && f.tieneMov("vuelo-flotar")) {
+    j.efVuelo = (f.poderes[i].efectos || []).find(ef => ef && ef.tipo === "volar") || null; j.estelaT = 0;
+    return;
+  }
   f.poder(i, { bucle: true }).then(r => {
     const cu = cuarto.cuerpos.get(j.id);
     if (!cu || cu.animDesde !== desde || !cu.vuela) return;
@@ -110,6 +129,10 @@ function despegar(j) {
   });
 }
 function estela(j, cu, dt) {
+  if (cu.vuela && j.figura.tieneMov && j.figura.tieneMov("vuelo-flotar")) {
+    const quiere = Math.hypot(cu.mando.x, cu.mando.z) > 0.08 && j.figura.tieneMov("vuelo-volar") ? "vuelo-volar" : "vuelo-flotar";
+    if (quiere !== j.vueloClip) { j.vueloClip = quiere; j.figura.mov(quiere, { bucle: true }); }
+  } else j.vueloClip = null;
   if (!cu.vuela || !j.efVuelo || !window.EfectosALV) { if (j.estela && !cu.vuela) { try { j.estela.fin(); } catch (_) { /* ya terminó */ } j.estela = null; } return; }
   j.estelaT = (j.estelaT || 0) - dt;
   if (j.estelaT > 0) return;

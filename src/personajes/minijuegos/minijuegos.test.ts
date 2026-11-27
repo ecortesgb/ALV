@@ -999,6 +999,23 @@ describe("cuarto de Físico", () => {
     expect(c.vuela).toBe(false);
   });
 
+  it("movimiento de sus sets (rueda, 2ª página): se queda quieto, la TV lo alarga y el celular solo manda ids con forma de set", () => {
+    const e = crearCuarto({ forma: "caja", ancho: 10, fondo: 6 });
+    const c = entrar(e, "a");
+    for (let i = 0; i < 120; i++) pasoCuarto(e, 16);
+    mandar(e, "a", { x: 0, z: 0, mov: true }); pasoCuarto(e, 16);
+    expect(c.anim).toBe("mov");
+    alargar(e, "a", 3000);
+    expect(c.hasta - c.animDesde).toBe(3000);
+    const x = c.x;
+    mandar(e, "a", { x: 1, z: 0 }); pasoCuarto(e, 100);
+    expect(c.x).toBe(x);
+    expect(validarDeCelular({ de: "c1", tipo: "mov", d: { n: 1, m: "base-bailar" } })).toEqual({ n: 1, m: "base-bailar" });
+    expect(validarDeCelular({ de: "c1", tipo: "mov", d: { n: 1, m: "vuelo-volar-rapido" } })).toEqual({ n: 1, m: "vuelo-volar-rapido" });
+    expect(validarDeCelular({ de: "c1", tipo: "mov", d: { n: 1, m: "<b>" } })).toBeNull();
+    expect(validarDeCelular({ de: "c1", tipo: "mov", d: { n: 1, m: "bailar" } })).toBeNull();
+  });
+
   it("la rueda del mando pone los 4 gestos, se queda quieto mientras duran e ignora gestos raros", () => {
     const e = crearCuarto({ forma: "caja", ancho: 10, fondo: 6 });
     const c = entrar(e, "a");

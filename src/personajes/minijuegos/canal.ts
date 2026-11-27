@@ -93,6 +93,8 @@ export function validarDeCelular(m: Mensaje): Record<string, unknown> | null {
       return fuera;
     }
     case "gesto": { const g = txt(d.g, 12); return g && GESTOS.has(g) ? { n, g } : null; }
+    // Movimiento de sus sets (rueda, 2ª página): «<set>-<mov>»; la TV revisa que el personaje lo tenga.
+    case "mov": { const m = txt(d.m, 32); return m && /^[a-z0-9]+-[a-z0-9-]+$/.test(m) ? { n, m } : null; }
     case "acepta": return typeof d.si === "boolean" ? { n, si: d.si } : null;
     default: return null;
   }
