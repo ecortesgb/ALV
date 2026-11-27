@@ -121,24 +121,18 @@ export async function reclamar(id: string, capsula: number): Promise<{ pieza: st
   return fila;
 }
 
+export interface PremioNivel { personaje: string; nivel: number; rareza: string }
 /**
- * Premios por nivel (migración 035, Maestro 6A.11 C1): pide al servidor las piezas de premio de su nivel que todavía no
- * tiene y las devuelve. Sin la 035 aplicada devuelve [] (no se inventa nada). En demostración regala los premios entre
- * `antes` y `ahora`.
+ * Premios por nivel (migración 052, Maestro v1.67): el servidor regala un personaje por cada nivel nuevo y los devuelve.
+ * Sin la 052, sin acceso a personajes o en demostración devuelve [] (no se inventa nada).
  */
-export async function reclamarPremiosNivel(antes: number, ahora: number): Promise<string[]> {
-  const { premiosEntre } = await import("../content/premiosNivel");
-  if (!hayNube) {
-    const uid = sesionAhora().uid, d = leerDemo(uid);
-    const nuevas = premiosEntre(antes, ahora).map(p => p.pieza).filter(p => !d.tengo.includes(p));
-    if (nuevas.length) { escribirDemo(uid, { ...d, tengo: [...d.tengo, ...nuevas] }); fijar({ tengo: new Set([...d.tengo, ...nuevas]) }); }
-    return nuevas;
-  }
+export async function reclamarPremiosNivel(): Promise<PremioNivel[]> {
+  if (!hayNube) return [];
   try {
     const { data, error } = await cliente!.rpc("reclamar_premios_nivel");
-    if (error) return []; // sin la 035: todavía no hay premios por nivel
-    const nuevas = ((data ?? []) as { pieza: string }[]).map(x => String(x.pieza));
-    if (nuevas.length) await cargarPiezas();
-    return nuevas;
+    if (error) { console.error("reclamar_premios_nivel", error.message); return []; }
+    const nuevos = ((data ?? []) as PremioNivel[]).map(x => ({ personaje: String(x.personaje), nivel: Number(x.nivel), rareza: String(x.rareza) }));
+    if (nuevos.length) { const { cargarPersonajesTienda } = await import("./tienda"); await cargarPersonajesTienda(); }
+    return nuevos;
   } catch (e) { console.error("reclamarPremiosNivel", e); return []; }
 }

@@ -32,13 +32,12 @@
 .t-sobres { flex: 1; display: grid; grid-template-columns: 45% minmax(0, 1fr); column-gap: clamp(12px, 2vw, 32px);
   padding: 18px max(16px, 5vw) max(16px, env(safe-area-inset-bottom)) max(16px, 4vw); align-content: end; }
 .t-escaparate { position: absolute; z-index: 0; left: 30.2%; bottom: 24%; translate: -50% 0; width: min(34vw, 56dvh); display: grid; justify-items: center; pointer-events: none; }
-.t-sobre-zona { position: relative; width: min(68%, 37dvh, max(110px, calc(62dvh - 190px))); aspect-ratio: 322 / 395; }
+.t-sobre-zona { position: relative; width: min(68%, 37dvh, max(110px, calc(62dvh - 201px))); aspect-ratio: 322 / 395; }
 .t-sobre-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; object-position: center bottom; user-select: none; filter: drop-shadow(0 12px 12px rgba(0,0,0,.48)); }
-.D.alv .t-flecha, .D.alv .t-girar { position: absolute; z-index: 1; width: 44px; height: 44px; padding: 0; border-radius: 50%;
+.D.alv .t-flecha { position: absolute; z-index: 1; width: 44px; height: 44px; padding: 0; border-radius: 50%;
   border: 1px solid #a1b2f88c; background: #161d3ef2; color: #fff1c8; font: 800 26px/1 var(--f-texto); cursor: pointer; pointer-events: auto; }
 .t-flecha { top: 44%; }
 .t-izq { right: 100%; } .t-der { left: 100%; }
-.t-girar { left: 100%; bottom: 0; }
 .t-lado { grid-column: 2; justify-self: end; width: min(100%, 370px); box-sizing: border-box; display: grid; gap: 4px; padding: 12px 14px 4px;
   border: 1px solid rgba(169, 181, 255, .42); border-radius: 14px; background: rgba(13, 17, 48, .88);
   box-shadow: inset 0 1px 0 rgba(255,255,255,.14), 0 8px 20px rgba(0,0,0,.3); }
@@ -47,6 +46,11 @@
 .t-precio { position: absolute; z-index: 1; bottom: calc(100% + 5px); left: 50%; translate: -50% 0; display: flex; align-items: center; gap: 5px;
   margin: 0; padding: 5px 10px; border: 1px solid #e1be6b90; border-radius: 999px; background: #16162a; color: #ffe188;
   font: 400 17px/1 var(--f-titulo); white-space: nowrap; }
+.D.alv .t-precio-comprar { min-height: 44px; gap: 8px; padding: 5px 10px; border-color: #fff0a7; background: linear-gradient(#ffe9a2, #efb045);
+  color: #302034; box-shadow: 0 3px 0 #714321, 0 5px 12px #0009; cursor: pointer; pointer-events: auto; }
+.D.alv .t-precio-comprar > span { display: flex; align-items: center; gap: 3px; padding: 2px 5px; border-radius: 8px; background: #62372925; }
+.D.alv .t-precio-comprar:active { box-shadow: 0 1px 0 #714321; translate: -50% 2px; }
+.D.alv .t-precio-comprar:disabled { cursor: default; opacity: .7; }
 .t-frase { margin: 8px 0 0; color: #e3eeff; font-size: clamp(15px, 1.5vw, 22px); }
 .t-lado .t-frase { margin-top: 4px; font-size: 13px; line-height: 1.3; }
 .t-contenido-posible { border-top: 1px solid #a9b5ff44; }
@@ -105,7 +109,7 @@
   .t-categorias { width: auto; margin: 5px 12px 0; }
   .t-sobres { display: flex; flex-direction: column; gap: 0; padding: 0 12px max(20px, env(safe-area-inset-bottom)); position: relative; }
   .t-escaparate { position: relative; inset: auto; translate: none; width: 100%; height: 249px; flex: none; }
-  .t-sobre-zona { position: absolute; left: calc(71px + 16vw); bottom: 25px; translate: -50% 0; width: min(40vw, 150px); }
+  .t-sobre-zona { position: absolute; left: calc(71px + 16vw); bottom: 25px; translate: -50% 0; width: min(38vw, 142px); }
   .t-lado { align-self: center; width: min(100%, 370px); }
 }
 @media (max-width: 360px) {
@@ -260,7 +264,7 @@
 .t-mazo-carta.t-volteada { transform: rotateY(180deg); }
 .t-mazo .t-reverso { border: 0; overflow: hidden; box-shadow: 0 12px 30px #080819ac; }
 .t-reverso img, .t-ap-salida img { display: block; width: 100%; height: 100%; object-fit: cover; border-radius: inherit; }
-.t-mazo .t-carta { grid-template-rows: auto minmax(0,1fr) auto auto; background: linear-gradient(155deg,#302454,#14152f); color: #fff; }
+.t-mazo .t-carta:not(.t-carta-personaje) { grid-template-rows: auto minmax(0,1fr) auto auto; background: linear-gradient(155deg,#302454,#14152f); color: #fff; }
 .t-mazo .t-carta-arte { margin: 8px; border-radius: 10px; border: 1px solid #fff4;
   background: radial-gradient(ellipse at 50% 66%, color-mix(in srgb, var(--rc, #aa64ff) 45%, transparent), transparent 72%), repeating-linear-gradient(135deg,#ffffff0b 0 2px,transparent 2px 15px); }
 .t-mazo .t-carta-arte .t-mini-ico { font-size: clamp(46px, 12vmin, 92px); text-shadow: 0 5px 18px #0008; }
@@ -311,6 +315,10 @@
 .t-sobre-caras { position: absolute; inset: 0; transform-style: preserve-3d; transition: transform .4s cubic-bezier(.2,.8,.2,1); }
 .t-sobre-caras.de-espaldas, .t-sobre-dorso { transform: rotateY(180deg); }
 .t-sobre-cara { position: absolute; inset: 0; backface-visibility: hidden; }
+.t-sobre-identidad { position: absolute; left: 50%; bottom: 7%; translate: -50% 0; width: 59%; height: 15%;
+  display: grid; place-items: center; box-sizing: border-box; padding: 3px 6px; border: 1px solid #e6b764a3; border-radius: 5px;
+  background: linear-gradient(155deg, #21152b, #100c1b); box-shadow: 0 2px 6px #000b; }
+.t-sobre-identidad img { display: block; width: 100%; height: 100%; min-height: 0; object-fit: contain; }
 .t-giro-exhibidor { transform: rotateY(calc(var(--giro-sobre) + var(--arrastre-sobre, 0deg))); transition: transform .25s cubic-bezier(.23, 1, .32, 1); }
 .t-giro-exhibidor[data-arrastre] { transition: none; }
 .alv-quieto .t-portada { animation: none; }
@@ -366,12 +374,36 @@ button.t-album-carta { cursor: zoom-in; }
 .t-album-detalle { width: min(300px, 76vw, 57dvh); max-height: 95dvh; padding: 8px; border: 0; background: transparent; color: white; overflow: visible; }
 .t-album-detalle::backdrop { background: #08091be6; }
 .t-album-detalle .t-ap-todas { display: block; margin: 16px auto 0; min-height: 44px; background: #17152d; }
-.t-personajes-rejilla { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 112px), 1fr)); gap: 8px; list-style: none; margin: 8px 0 14px; padding: 0; }
-.t-personajes-rejilla li { display: grid; grid-template-rows: 76px auto auto; align-items: end; gap: 4px; padding: 8px; border: 1px solid #a9b5ff50; border-radius: 10px; background: #211936; text-align: center; font-size: 13px; }
-.t-personajes-rejilla img { width: 100%; height: 100%; object-fit: contain; }
-.t-personajes-rejilla [data-bloqueado="true"] img { filter: brightness(.28) saturate(.15); }
-.t-personajes-rejilla small { color: #e1d4f2; }
-.t-personajes-rejilla small .ic { vertical-align: middle; }
+.t-album-nav { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.D.alv .t-album-nav button { min-height: 44px; padding: 6px 16px; border: 1px solid #a1b2f86b; border-radius: 9px; color: #e9e1ff;
+  background: #161d3e; font: 800 14px/1.15 var(--f-texto); cursor: pointer; }
+.D.alv .t-album-nav button[aria-pressed="true"] { color: #20152c; background: linear-gradient(#ffecab, #e7b55e); border-color: #ffe8a5; }
+.D.alv .t-album-nav button:disabled { opacity: .48; cursor: default; }
+.t-album-sagas, .t-album-grupos { margin-bottom: 10px; }
+.D.alv .t-album-grupos button { border-color: #bd9feb55; background: #291f45; }
+.D.alv .t-album-grupos button[aria-pressed="true"] { border-color: #d9b9ff; background: #5b3d7c; color: #fff; }
+.t-album-tamanos { margin-top: 10px; }
+.D.alv .t-album-tamanos button { border-radius: 999px; }
+.t-album-tamanos button span { margin-inline-start: 3px; font-size: .85em; opacity: .82; }
+.t-album-formato { margin-top: 18px; }
+.t-album-formato h4 { margin: 0; color: #fff1cf; font: 400 22px/1.15 var(--f-titulo); }
+.t-album-paginacion { margin-top: 12px; }
+.t-album-paginacion { justify-content: center; }
+.t-album-vacio p { color: #e1d4f2; }
+[data-revelado="epica"] { --destello: #dfb9ff; }
+[data-revelado="legendaria"] { --destello: #ffe4a3; }
+.t-carta-personaje[data-revelado]::after, .t-mazo .t-volteada .t-frente[data-revelado]::after {
+  content: ""; position: absolute; inset: 0; border-radius: inherit; z-index: 2; pointer-events: none;
+  background: linear-gradient(125deg, transparent 28%, var(--destello) 49%, #fff 51%, transparent 69%);
+  animation: t-destello-raro .72s .13s ease-out both;
+}
+@keyframes t-destello-raro {
+  from { opacity: 0; transform: translateX(-75%); }
+  40% { opacity: .72; }
+  to { opacity: 0; transform: translateX(75%); }
+}
+.alv-quieto [data-revelado]::after { animation: none; opacity: 0; }
+@media (prefers-reduced-motion: reduce) { [data-revelado]::after { animation: none; opacity: 0; } }
 @media (max-width: 420px) {
   .t-album-rejilla { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }

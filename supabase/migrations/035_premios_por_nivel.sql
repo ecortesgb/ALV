@@ -1,3 +1,4 @@
+-- NO APLICAR: reemplazada por la 052 (premios por nivel con personajes, Elías 27 nov 2026). Se conserva como historia.
 -- 035 · Premios por nivel: subir de nivel regala piezas del personalizador (Maestro 6A.11 C1, decisión de Elías 2026-11-18).
 -- ESCRITA, NO APLICADA: requiere autorización expresa de Elías (D-002), prueba en transacción deshecha con usuarios
 -- simulados y el asesor de seguridad. Qué pieza da cada nivel es PROPUESTA (src/content/premiosNivel.ts; una prueba
