@@ -1,5 +1,6 @@
 import { execSync } from "node:child_process";
 import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 
@@ -17,6 +18,14 @@ export default defineConfig({
   base: "./",
   plugins: [react()],
   define: { __ALV_VERSION__: JSON.stringify(version()) },
+  // Mini-Juegos: páginas aparte de la TV y del celular (zona de personajes), por Realtime de Supabase (?canal=nube).
+  // Físico, el cuarto y la mesa de prueba siguen solo en desarrollo.
+  build: {
+    rollupOptions: {
+      input: Object.fromEntries(["index.html", ...["index", "control", "tv-bala", "tv-desenfunda", "tv-martillazo", "tv-alto-total", "tv-paracaidas"]
+        .map(n => `tools/personajes/minijuegos/${n}.html`)].map(f => [f.replace(/\.html$/, "").replace(/\//g, "-"), fileURLToPath(new URL(f, import.meta.url))])),
+    },
+  },
   // css: la prueba del Design System lee sus estilos copiados (src/ds) para revisar que sean los aprobados.
   test: { environment: "node", include: ["src/**/*.test.ts"], css: { include: [/src[\\/]ds[\\/].*\.css/] } },
 });

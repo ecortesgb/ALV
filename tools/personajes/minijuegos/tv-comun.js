@@ -2,13 +2,19 @@
 // Sala, canal con los celulares, reloj (contesta pings), registro de jugadores, carga de personajes y etiquetas.
 // Lo que llega pasa por el contrato (`validarDeCelular`) y por la secuencia de cada celular (Codex O3).
 // Durante una partida nadie se borra: quien se va queda «desconectado» hasta volver al lobby (Codex O1).
-import { abrirCanal, abrirCanalWs, ahora, crearSecuencias, redDeUrl, salaNueva, urlSala, validarDeCelular, SERVIDOR } from "/src/personajes/minijuegos/canal.ts";
+import { abrirCanal, abrirCanalNube, abrirCanalWs, ahora, crearSecuencias, redDeUrl, salaNueva, urlSala, validarDeCelular, SERVIDOR } from "/src/personajes/minijuegos/canal.ts";
 import { colorJugador } from "/src/app/colorJugador.ts";
 import qrcode from "qrcode-generator";
+import { cliente } from "/src/servicios/cliente.ts";
+import { fuentePrivada } from "/src/servicios/personajesPrivados.ts";
 
 const q = new URLSearchParams(location.search);
 /** ?canal=pestanas: modo de prueba sin servidor (BroadcastChannel). Por omisión, WebSocket al servidor de sala (D8). */
 export const PESTANAS = q.get("canal") === "pestanas";
+/** ?canal=nube: Realtime de Supabase (no necesita la PC). Sin nube configurada, cae a pestañas. */
+// Publicado (sin servidor de desarrollo) la nube es la opción por omisión: no hay PC ni servidor 4200.
+const CANAL = q.get("canal") || (import.meta.env.DEV ? "" : "nube");
+export const NUBE = CANAL === "nube" && !!cliente;
 // Modelos del mismo aparato que sirvió la página: en esta PC, localhost; si la TV abre la página desde otro aparato de la
 // casa (http://192.168.x.x:4202/…), la PC tiene que correr el servidor de personajes con --red (launch: personajes-privados-red).
 export const FUENTE = (q.get("fuente") || `http://${location.hostname}:4193/`).replace(/\/?$/, "/");
@@ -45,7 +51,15 @@ export function crearTV({ juego, escena, alUnirse, alMensaje, alSalir, alDescone
   // id → { id, nombre, personaje, n, color, figura, estado: "cargando"|"listo"|"error", desconectado, bot, visto }
   const jugadores = new Map();
   let catalogo = new Map();
-  const listo = FigurasMJ.indice(FUENTE).then(m => { catalogo = m; return m; });
+  // En la nube: los personajes de la entrega privada (service worker + bucket, como el HUB); la TV necesita sesión.
+  // La base es la raíz de la app (donde vive sw-privados.js), no esta carpeta.
+  const fuente = NUBE && !q.get("fuente")
+    ? fuentePrivada({ cliente, base: new URL("../../../", location.href).href }).then(f => {
+      if (!f) { const e = document.getElementById("como"); if (e) e.textContent = "Inicia sesión en ALV en esta TV para ver los personajes"; throw new Error("sin fuente privada"); }
+      return f;
+    })
+    : Promise.resolve(FUENTE);
+  const listo = fuente.then(f => FigurasMJ.indice(f)).then(m => { catalogo = m; return m; });
   const capa = document.getElementById("capa");
   const seq = crearSecuencias();
   let fase = "lobby", extra = () => ({}), anfitrionServidor = null;
@@ -72,7 +86,11 @@ export function crearTV({ juego, escena, alUnirse, alMensaje, alSalir, alDescone
     if (j && !j.desconectado && alMensaje) alMensaje(j, m);
   };
   const estadoConexion = document.getElementById("como");
-  const canal = PESTANAS ? abrirCanal(sala, "tv", alLlegar, redDeUrl(q))
+  const canal = PESTANAS || (CANAL === "nube" && !cliente) ? abrirCanal(sala, "tv", alLlegar, redDeUrl(q))
+    : NUBE ? abrirCanalNube(cliente, sala, "tv", alLlegar, redDeUrl(q), abierto => {
+      if (estadoConexion) estadoConexion.textContent = abierto ? "" : "Sin conexión: reintentando…";
+      if (abierto) mostrarDirecciones([location.host], true);
+    })
     : abrirCanalWs(urlSala(q, sala, "tv"), alLlegar, redDeUrl(q), (abierto, motivo) => {
       if (!estadoConexion) return;
       if (!abierto) estadoConexion.textContent = motivo === "la sala ya tiene TV" ? "Esta sala ya tiene TV abierta" : "Sin servidor de sala (4200): reintentando…";
@@ -83,7 +101,7 @@ export function crearTV({ juego, escena, alUnirse, alMensaje, alSalir, alDescone
    * se toma el primero de la fila (solo pruebas).
    */
   function anfitrionId() {
-    if (!PESTANAS) { const j = jugadores.get(anfitrionServidor); return j && !j.desconectado ? j.id : null; }
+    if (!PESTANAS && !NUBE) { const j = jugadores.get(anfitrionServidor); return j && !j.desconectado ? j.id : null; }
     const vivos = [...jugadores.values()].filter(j => !j.bot && !j.desconectado).sort((a, b) => a.n - b.n);
     return vivos.length ? vivos[0].id : null;
   }
@@ -95,7 +113,7 @@ export function crearTV({ juego, escena, alUnirse, alMensaje, alSalir, alDescone
     const ruta = location.pathname.replace(/[^/]+$/, "control.html");
     const ip = ips[0];
     if (!enRed || !ip) { estadoConexion.textContent = "Solo esta PC (servidor sin --red)"; return; }
-    const url = `http://${ip}:${location.port || 80}${ruta}?sala=${sala}`;
+    const url = NUBE ? `${location.origin}${ruta}?canal=nube&sala=${sala}` : `http://${ip}:${location.port || 80}${ruta}?sala=${sala}`;
     estadoConexion.textContent = url;
     let qr = caja.querySelector(".qr");
     if (!qr) { qr = document.createElement("div"); qr.className = "qr"; caja.appendChild(qr); }

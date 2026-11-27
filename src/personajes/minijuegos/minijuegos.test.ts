@@ -8,7 +8,7 @@ import * as alto from "./altoTotal";
 import { acotarToque, estimar, muestra, relojListo } from "./reloj";
 import { aireDe, avanzar, crearPartida, empezar, enElAire, llegada, posBala, ranking, saltar, CONFIG_BALA, type Bala, type EstadoBala, type Evento } from "./bala";
 import { crearCuarto, entrar, mandar, pasoCuarto } from "./cuarto";
-import { crearSecuencias, deLaTv, leer, validarDeCelular } from "./canal";
+import { abrirCanalNube, crearSecuencias, deLaTv, idDeLlave, leer, validarDeCelular, SERVIDOR, TV, type Mensaje } from "./canal";
 
 describe("Paracaídas", () => {
   const jugadores = ["a", "b", "c", "d", "e"].map(id => ({ id }));
@@ -1135,5 +1135,54 @@ describe("sala de Físico: Palabra prohibida", () => {
     expect(m("gesto", { n: 1, g: "bailar" })).toBeNull();
     expect(m("acepta", { n: 1, si: true })).toEqual({ n: 1, si: true });
     expect(m("acepta", { n: 1, si: "sí" })).toBeNull();
+  });
+});
+
+describe("canal por la nube (Realtime de Supabase)", () => {
+  // Un Realtime de mentira: todos los canales con el mismo nombre se oyen entre sí (sin eco propio).
+  function nubeFalsa() {
+    const salas = new Map<string, { key: string; bc: ((m: { payload: unknown }) => void)[]; join: ((m: { newPresences: unknown[] }) => void)[]; leave: ((m: { leftPresences: unknown[] }) => void)[] }[]>();
+    return {
+      channel(nombre: string, op: { config: { presence: { key: string } } }) {
+        const yo = { key: op.config.presence.key, bc: [] as never[], join: [] as never[], leave: [] as never[] } as never as { key: string; bc: ((m: { payload: unknown }) => void)[]; join: ((m: { newPresences: unknown[] }) => void)[]; leave: ((m: { leftPresences: unknown[] }) => void)[] };
+        const lista = salas.get(nombre) ?? []; salas.set(nombre, lista);
+        const c = {
+          on(tipo: string, f: { event: string }, g: never) { if (tipo === "broadcast") yo.bc.push(g); else if (f.event === "join") yo.join.push(g); else yo.leave.push(g); return c; },
+          subscribe(f?: (e: string) => void) { lista.push(yo); f?.("SUBSCRIBED"); return c; },
+          send(m: { payload: unknown }) { lista.filter(o => o !== yo).forEach(o => o.bc.forEach(g => g({ payload: m.payload }))); },
+          track(d: Record<string, unknown>) { lista.filter(o => o !== yo).forEach(o => o.join.forEach(g => g({ newPresences: [d] }))); },
+          _salir() { lista.splice(lista.indexOf(yo), 1); lista.forEach(o => o.leave.forEach(g => g({ leftPresences: [{ id: yo.key }] }))); },
+        };
+        return c;
+      },
+      removeChannel(c: { _salir: () => void }) { c._salir(); },
+    };
+  }
+
+  it("entrega mensajes, avisa bienvenida, entro y salio, y descarta remitentes falsos", async () => {
+    const nube = nubeFalsa() as never;
+    const tv: Mensaje[] = [], cel: Mensaje[] = [];
+    const cTv = abrirCanalNube(nube, "ABCD", TV, m => tv.push(m));
+    const idCel = idDeLlave("secreto");
+    expect(idCel).toMatch(/^c[0-9a-f]{12}$/);
+    const cCel = abrirCanalNube(nube, "ABCD", idCel, m => cel.push(m));
+    expect(cel[0]).toEqual({ de: SERVIDOR, tipo: "bienvenida", d: { yo: idCel } });
+    expect(tv.some(m => m.de === SERVIDOR && m.tipo === "entro" && m.d.id === idCel)).toBe(true);
+    cCel.enviar("salto", { pid: "p1", s: 5, inc: 1 });
+    expect(tv.at(-1)).toEqual({ de: idCel, tipo: "salto", d: { pid: "p1", s: 5, inc: 1, n: 1 } });
+    cTv.enviar("estado", { fase: "lobby" });
+    expect(cel.at(-1)?.de).toBe(TV);
+    // Un celular no puede hacerse pasar por el «servidor».
+    const falso = abrirCanalNube(nube, "ABCD", SERVIDOR, () => {});
+    const antes = tv.length;
+    falso.enviar("anfitrion", { id: idCel });
+    expect(tv.slice(antes).some(m => m.tipo === "anfitrion")).toBe(false);
+    cCel.cerrar();
+    expect(tv.some(m => m.de === SERVIDOR && m.tipo === "salio" && m.d.id === idCel)).toBe(true);
+    // Otra sala no se oye.
+    const otra: Mensaje[] = [];
+    abrirCanalNube(nube, "ZZZZ", "x", m => otra.push(m));
+    cTv.enviar("estado", {});
+    expect(otra.filter(m => m.de !== SERVIDOR)).toEqual([]);
   });
 });

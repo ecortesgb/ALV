@@ -13,7 +13,7 @@ export interface Canal {
   cerrar: () => void;
   /** Quién soy: en WebSocket lo dice el servidor al conectar («bienvenida»); en pestañas, el id local. */
   yo: () => string;
-  tipo: "ws" | "pestanas";
+  tipo: "ws" | "pestanas" | "nube";
 }
 export interface Red { lat: number; jit: number; perdida: number }
 
@@ -169,6 +169,78 @@ export function abrirCanalWs(url: string, alMensaje: (m: Mensaje) => void, red: 
     },
     cerrar: () => { cerrado = true; ws?.close(); },
     yo: () => yo, tipo: "ws",
+  };
+}
+
+/** Lo mínimo de un canal de Realtime de Supabase que usa `abrirCanalNube` (así se prueba sin la librería). */
+export interface CanalRealtime {
+  on(tipo: "broadcast", filtro: { event: string }, f: (m: { payload: unknown }) => void): CanalRealtime;
+  on(tipo: "presence", filtro: { event: "join" | "leave" }, f: (m: { newPresences?: unknown[]; leftPresences?: unknown[] }) => void): CanalRealtime;
+  subscribe(f?: (estado: string) => void): unknown;
+  send(m: { type: "broadcast"; event: string; payload: unknown }): unknown;
+  track(datos: Record<string, unknown>): unknown;
+}
+export interface ClienteRealtime {
+  channel(nombre: string, op: { config: { broadcast: { self: boolean }; presence: { key: string } } }): CanalRealtime;
+  removeChannel(c: CanalRealtime): unknown;
+}
+
+/** id estable del celular a partir de su llave local (FNV-1a de 48 bits; en la nube el id no es secreto). */
+export function idDeLlave(llave: string): string {
+  let a = 0x811c9dc5, b = 0x050c5d1f;
+  for (let i = 0; i < llave.length; i++) {
+    const c = llave.charCodeAt(i);
+    a = Math.imul(a ^ c, 0x01000193) >>> 0;
+    b = Math.imul(b ^ c ^ (a & 0xff), 0x01000193) >>> 0;
+  }
+  return "c" + a.toString(16).padStart(8, "0") + (b & 0xffff).toString(16).padStart(4, "0");
+}
+
+/**
+ * Canal por Realtime de Supabase (difusión + presencia), para la app publicada: no necesita la PC.
+ * Imita lo que hacía el servidor de la PC: avisa «bienvenida» con mi id, «entro» y «salio» (por presencia).
+ * Ojo: aquí el remitente lo pone el propio mensaje (como en pestañas). Sirve para juegos de reflejos sin secretos ni
+ * premios; el anfitrión lo elige la TV (primer celular de la fila). Nada que deba ser secreto viaja por aquí.
+ */
+export function abrirCanalNube(cli: ClienteRealtime, sala: string, yo: string, alMensaje: (m: Mensaje) => void,
+  red: Red = { lat: 0, jit: 0, perdida: 0 }, alConexion?: (abierto: boolean, motivo?: string) => void): Canal {
+  let cerrado = false, listo = false, n = 0;
+  const cola: unknown[] = [];
+  const c = cli.channel(`alv-mj-${sala}`, { config: { broadcast: { self: false }, presence: { key: yo } } });
+  const deServidor = (tipo: string, d: Record<string, unknown>) => { if (!cerrado) alMensaje({ de: SERVIDOR, tipo, d }); };
+  const llaves = (lista: unknown[] | undefined) =>
+    (lista || []).map(p => (p as { id?: unknown })?.id).filter((x): x is string => typeof x === "string" && x !== yo && x.length <= 40);
+  c.on("broadcast", { event: "mj" }, ({ payload }) => {
+    if (cerrado) return;
+    const m = leer(payload);
+    if (m && m.de !== yo && m.de !== SERVIDOR) alMensaje(m);
+  });
+  c.on("presence", { event: "join" }, ({ newPresences }) => llaves(newPresences).forEach(id => deServidor("entro", { id })));
+  c.on("presence", { event: "leave" }, ({ leftPresences }) => llaves(leftPresences).forEach(id => deServidor("salio", { id })));
+  c.subscribe(estado => {
+    if (cerrado) return;
+    if (estado === "SUBSCRIBED") {
+      listo = true;
+      void c.track({ id: yo });
+      deServidor("bienvenida", { yo });
+      alConexion?.(true);
+      for (const p of cola.splice(0)) void c.send({ type: "broadcast", event: "mj", payload: p });
+    } else if (estado === "CHANNEL_ERROR" || estado === "TIMED_OUT" || estado === "CLOSED") { listo = false; alConexion?.(false, estado); }
+  });
+  const salir = (p: unknown) => {
+    if (listo) void c.send({ type: "broadcast", event: "mj", payload: p });
+    else if (cola.length < 50) cola.push(p);
+  };
+  return {
+    enviar: (tipo, d = {}) => {
+      if (cerrado) return;
+      const p = { de: yo, tipo, d: { ...d, n: ++n } };
+      if (red.perdida && Math.random() < red.perdida) return;
+      const espera = red.lat + (red.jit ? (Math.random() * 2 - 1) * red.jit : 0);
+      if (espera <= 0) salir(p); else setTimeout(() => { if (!cerrado) salir(p); }, espera);
+    },
+    cerrar: () => { cerrado = true; void cli.removeChannel(c); },
+    yo: () => yo, tipo: "nube",
   };
 }
 
