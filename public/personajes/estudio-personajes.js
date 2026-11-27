@@ -57,6 +57,7 @@
       if (pose === "especial" && p.tocar("especial", { mezcla: 0 })) {
         const e = p.estado();
         p.update(0); p.update(Math.max(0, p.duracion(e.clip) * 0.45));
+      } else if (figura) { p.update(0); p.update(0.05); // reposo: aplicar su primer cuadro (sin esto queda en pose de enlace)
       } else if (!figura) { p.mixer.stopAllAction(); p.obj.traverse(o => { if (o.isSkinnedMesh) o.skeleton.pose(); }); }
       const mostrar = new Set(ver);
       p.obj.traverse(o => { if (o.isMesh && !o.userData.alvOclusor) o.visible = mostrar.has(o.userData.slot) && !o.userData.alvFuera; }); // lo que una pieza reemplazó sigue escondido

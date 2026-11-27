@@ -6,8 +6,9 @@ import { escribirCapsulas, leerCapsulas } from "../app/figura3d";
 import { ponerPieza } from "../app/equiparPieza";
 import { sesionAhora } from "../app/sesion";
 import { COMODINES, MONEDAS_DEMO, sobrePorId } from "../content/tienda";
+import { CARTAS_POR_SOBRE_PERSONAJES, PESO_PERSONAJE, precioSobrePersonajes, type PersonajeEnVenta } from "../content/personajesTienda";
 import { crearAzar } from "../engine/azar";
-import { RACHA_CERO, abrirSobre, type Apertura, type Carta, type Racha } from "../engine/sobresTienda";
+import { ORDEN, RACHA_CERO, abrirSobre, type Apertura, type Carta, type Racha } from "../engine/sobresTienda";
 import { cliente, hayNube } from "./cliente";
 import { agregarPiezasDemo, cargarPiezas, piezasAhora } from "./piezas";
 
@@ -17,30 +18,43 @@ export interface EstadoTienda {
   monedas: number;
   comodines: Record<string, number>;
   preciosReposicion: Record<string, number>;
+  catalogoPersonajes: PersonajeEnVenta[] | null;
+  personajes: ReadonlySet<string>;
   racha: Racha;
   /** Piezas ganadas que todavía no se ven en la colección (punto azul). */ nuevas: Set<string>;
 }
-let estado: EstadoTienda = { activa: !hayNube, demo: !hayNube, monedas: 0, comodines: {}, preciosReposicion: {}, racha: RACHA_CERO, nuevas: new Set() };
+let estado: EstadoTienda = { activa: !hayNube, demo: !hayNube, monedas: 0, comodines: {}, preciosReposicion: {}, catalogoPersonajes: null,
+  personajes: new Set(), racha: RACHA_CERO, nuevas: new Set() };
 const oyentes = new Set<() => void>();
 const fijar = (e: Partial<EstadoTienda>) => { estado = { ...estado, ...e }; oyentes.forEach(f => f()); };
 export const useTienda = () => useSyncExternalStore(f => { oyentes.add(f); return () => oyentes.delete(f); }, () => estado);
 
 // ---------- Demostración ----------
-type Demo = { monedas: number; comodines: Record<string, number>; racha: Racha; nuevas: string[] };
+type Demo = { monedas: number; comodines: Record<string, number>; racha: Racha; nuevas: string[]; personajes: string[] };
 const CLAVE = (uid: string) => "alv-tienda-demo-" + (uid.replace(/[^a-zA-Z0-9_-]/g, "").slice(0, 64) || "local");
 function leerDemo(uid: string): Demo {
   try {
     const d = JSON.parse(localStorage.getItem(CLAVE(uid)) ?? "null") as Demo | null;
-    if (d && typeof d.monedas === "number") return { monedas: d.monedas, comodines: d.comodines ?? {}, racha: d.racha ?? RACHA_CERO, nuevas: d.nuevas ?? [] };
+    if (d && typeof d.monedas === "number") return { monedas: d.monedas, comodines: d.comodines ?? {}, racha: d.racha ?? RACHA_CERO,
+      nuevas: d.nuevas ?? [], personajes: Array.isArray(d.personajes) ? d.personajes : [] };
   } catch { /* nada */ }
-  return { monedas: MONEDAS_DEMO, comodines: {}, racha: RACHA_CERO, nuevas: [] };
+  return { monedas: MONEDAS_DEMO, comodines: {}, racha: RACHA_CERO, nuevas: [], personajes: [] };
 }
 function escribirDemo(uid: string, d: Demo) { try { localStorage.setItem(CLAVE(uid), JSON.stringify(d)); } catch { /* sin espacio */ } }
-const desdeDemo = (d: Demo): Partial<EstadoTienda> => ({ monedas: d.monedas, comodines: d.comodines, racha: d.racha, nuevas: new Set(d.nuevas) });
+const desdeDemo = (d: Demo): Partial<EstadoTienda> => ({ monedas: d.monedas, comodines: d.comodines, racha: d.racha, nuevas: new Set(d.nuevas), personajes: new Set(d.personajes) });
+
+export async function cargarPersonajesTienda() {
+  const uid = sesionAhora().uid;
+  if (!hayNube) { fijar({ personajes: new Set(leerDemo(uid).personajes) }); return; }
+  const { data, error } = await cliente!.rpc("estado_personajes_tienda");
+  if (uid !== sesionAhora().uid) return;
+  const resultado = !error && data as { catalogo: PersonajeEnVenta[]; personajes: string[] } | null;
+  fijar({ catalogoPersonajes: resultado ? resultado.catalogo : null, personajes: new Set(resultado ? resultado.personajes : []) });
+}
 
 /** Lee el saldo y lo ganado. Llamar al abrir la tienda. */
 export async function cargarTienda(): Promise<void> {
-  await cargarPiezas();
+  await Promise.all([cargarPiezas(), cargarPersonajesTienda()]);
   if (!hayNube) {
     fijar({ activa: true, demo: true, preciosReposicion: Object.fromEntries(COMODINES.map(c => [c.id, c.reposicion])), ...desdeDemo(leerDemo(sesionAhora().uid)) });
     return;
@@ -57,6 +71,44 @@ export async function cargarTienda(): Promise<void> {
     fijar({ preciosReposicion: Object.fromEntries((precios ?? []).flatMap(c =>
       typeof c.precio_reposicion === "number" ? [[c.id, c.precio_reposicion]] : [])) });
   } catch (e) { console.error("cargarTienda", e); fijar({ activa: false, demo: false, preciosReposicion: {} }); }
+}
+
+export async function comprarPersonajes(modo: "sobre" | "carta", destino: string, precio: number,
+  catalogoDemo: readonly PersonajeEnVenta[]): Promise<Apertura | string> {
+  const uid = sesionAhora().uid;
+  let cartas: Extract<Carta, { tipo: "personaje" }>[];
+  if (estado.demo) {
+    const d = leerDemo(uid), adquiridos = new Set(d.personajes);
+    const lista = catalogoDemo.filter(x => (modo === "sobre" ? x.saga === destino : x.id === destino) && !adquiridos.has(x.id));
+    if (!lista.length) return "Ya no quedan personajes disponibles.";
+    if (precio !== (modo === "sobre" ? precioSobrePersonajes(lista.length) : lista[0]!.precio)) return "El precio cambió. Revisa el saldo y vuelve a intentar.";
+    if (d.monedas < precio) return "No te alcanzan las monedas.";
+    const cantidad = modo === "sobre" ? Math.min(CARTAS_POR_SOBRE_PERSONAJES, lista.length) : 1;
+    cartas = Array.from({ length: cantidad }, () => {
+      let tiro = Math.random() * lista.reduce((suma, c) => suma + PESO_PERSONAJE[c.rareza], 0);
+      const i = lista.findIndex(c => (tiro -= PESO_PERSONAJE[c.rareza]) < 0);
+      const [c] = lista.splice(i, 1);
+      return { tipo: "personaje", id: c!.id, rareza: c!.rareza };
+    });
+    const nuevo = { ...d, monedas: d.monedas - precio, personajes: [...d.personajes, ...cartas.map(c => c.id)] };
+    escribirDemo(uid, nuevo);
+    fijar(desdeDemo(nuevo));
+  } else {
+    if (!estado.catalogoPersonajes || !cliente) return "La venta de personajes todavía no está activa.";
+    const datos = { p_modo: modo, p_destino: destino, p_precio: precio, p_pedido: crypto.randomUUID() };
+    let r = await cliente.rpc("comprar_personajes", datos);
+    if (r.error && /fetch|network|failed/i.test(r.error.message)) r = await cliente.rpc("comprar_personajes", datos);
+    if (uid !== sesionAhora().uid) return "Cambió la sesión.";
+    if (r.error) {
+      if (/precio|disponibles/.test(r.error.message)) { await cargarPersonajesTienda(); return "Cambió la disponibilidad. Revisa la colección."; }
+      return r.error.message.includes("saldo") ? "No te alcanzan las monedas." : "No se pudo completar la compra.";
+    }
+    const compra = r.data as { cartas: typeof cartas; monedas: number };
+    cartas = compra.cartas;
+    fijar({ monedas: compra.monedas, personajes: new Set([...estado.personajes, ...cartas.map(c => c.id)]) });
+  }
+  cartas.sort((a, b) => ORDEN.indexOf(a.rareza) - ORDEN.indexOf(b.rareza));
+  return { cartas, racha: estado.racha, mejor: cartas.at(-1)!.rareza };
 }
 
 export async function reponerComodin(id: string): Promise<string | null> {
@@ -124,9 +176,9 @@ export async function abrir(id: string): Promise<Apertura | string> {
   for (const c of a.cartas) {
     if (c.tipo === "pieza") piezas.push(c.id);
     else if (c.tipo === "comodin") comodines[c.id] = (comodines[c.id] ?? 0) + 1;
-    else monedas += c.cantidad;
+    else if (c.tipo === "monedas") monedas += c.cantidad;
   }
-  const nuevo: Demo = { monedas, comodines, racha: a.racha, nuevas: [...new Set([...d.nuevas, ...piezas])] };
+  const nuevo: Demo = { ...d, monedas, comodines, racha: a.racha, nuevas: [...new Set([...d.nuevas, ...piezas])] };
   escribirDemo(uid, nuevo);
   agregarPiezasDemo(piezas);
   fijar(desdeDemo(nuevo));

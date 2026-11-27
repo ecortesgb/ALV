@@ -52,3 +52,6 @@ begin
 end $$;
 revoke all on function public.reponer_comodin(text, uuid) from public, anon;
 grant execute on function public.reponer_comodin(text, uuid) to authenticated;
+
+-- RLS activo sin políticas: solo las funciones del servidor (dueñas de las tablas) las tocan.
+alter table privado.reposiciones_comodines enable row level security;

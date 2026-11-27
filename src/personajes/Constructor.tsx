@@ -7,8 +7,8 @@
 // Va dentro de <RaizDS className="az">. Entrada: la página del HUB se voltea; «Atrás»: se voltea de regreso y luego sale.
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type PointerEvent as PE } from "react";
 import { esMascara, PALETAS, paletaDePieza, piezasDe, planoConstructor, ponerPiel, ponerPieza, quitarTinte, teñir, type Color, type PiezaCons, type Piezas } from "./constructorDatos";
-import { VERSION_MINIFIG } from "./cabezas";
-import { caben, paginas } from "./galeriaDatos";
+import { DONANTES_FUERA, VERSION_MINIFIG } from "./cabezas";
+import { caben, paginas, tarjetas, type Tarjeta } from "./galeriaDatos";
 import { GRUPOS_GENERICAS } from "./genericas";
 import { esOtros, grupoMostrado, juntarVersiones, nombreBase } from "./agrupar";
 import { conMovimientos, elegirMovimiento, GESTOS, movimientosElegidos, NOMBRE_GESTO, opcionesMovimiento, type BaseGenerica, type Gesto, type OpcionMov } from "./movimientos";
@@ -17,6 +17,7 @@ import type { FiguraV3, Id, Parte } from "./tipos";
 import { RUEDA, RuedaGestos, TrazosGesto } from "../pantallas/gestos/RuedaGestos";
 import { useMiniaturas } from "./useMiniaturas";
 import { Vista3D } from "./Vista3D";
+import { CartaPersonaje } from "../pantallas/CartaPersonaje";
 import "../pantallas/azotea/azotea.css";
 import "../pantallas/perfil/perfil.css";
 import "../pantallas/lobby/lobby.css";
@@ -99,6 +100,7 @@ export interface ConstructorProps {
   /** Grados máximos que el cuerpo se aparta del frente en reposo (0 = como venga el clip). Decidió Codex: 10° (encargo
    *  2026-11-25-constructor-diseno-r5). */
   frente?: number;
+  puedeUsar?: (id: string) => boolean;
 }
 
 const sinMovimiento = () => typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -111,7 +113,7 @@ function sinMovimientosSi(si: boolean, f: FiguraV3): FiguraV3 {
 const fotoValida = (u: string | null | undefined) => !!u;
 
 export function Constructor({ catalogo, piezas, inicial, seccion, escenaUrl, onGuardar, onSalir, base = null, paginaAnterior = `${ARTE}azotea-pedestal-noche-1920.webp`,
-  estudioUrl = escenaUrl.replace(/escena\.html.*$/, "estudio.html"), frente = 10 }: ConstructorProps) {
+  estudioUrl = escenaUrl.replace(/escena\.html.*$/, "estudio.html"), frente = 10, puedeUsar }: ConstructorProps) {
   const mini = useMiniaturas(estudioUrl, catalogo);
   const [figura, setFigura] = useState(inicial);
   const [historia, setHistoria] = useState<FiguraV3[]>([]);
@@ -126,7 +128,7 @@ export function Constructor({ catalogo, piezas, inicial, seccion, escenaUrl, onG
   const [grupo, setGrupo] = useState<Id>("todas");
   const [saga, setSaga] = useState<Id>("todas");
   const [pagina, setPagina] = useState(0);
-  const [caja, setCaja] = useState({ columnas: 4, filas: 2 });
+  const [cajas, setCajas] = useState({ piezas: { columnas: 4, filas: 2 }, cartas: { columnas: 4, filas: 2 } });
   const [guardado, setGuardado] = useState(false);
   const [momento, setMomento] = useState<{ cual: string; n: number } | null>(null);
   /** Gesto que se toca en cuanto la escena arme la figura con el movimiento recién elegido. */
@@ -156,7 +158,9 @@ export function Constructor({ catalogo, piezas, inicial, seccion, escenaUrl, onG
   useEffect(() => {
     const el = rejilla.current;
     if (!el) return;
-    const medir = () => setCaja(caben(el.clientWidth, el.clientHeight, { min: el.clientWidth < 520 ? 92 : 128, proporcion: 1.05, hueco: 8 }));
+    // Los trajes van en carta (5:7, más alta): caben menos, para que el nombre se lea.
+    const medir = () => setCajas({ piezas: caben(el.clientWidth, el.clientHeight, { min: el.clientWidth < 520 ? 92 : 128, proporcion: 1.05, hueco: 8 }),
+      cartas: caben(el.clientWidth, el.clientHeight, { min: innerWidth < 700 ? 78 : 100, proporcion: 1.4, hueco: 8 }) });
     medir();
     const ro = new ResizeObserver(medir);
     ro.observe(el);
@@ -177,10 +181,12 @@ export function Constructor({ catalogo, piezas, inicial, seccion, escenaUrl, onG
   const bloqueada = grande && !pareja && sub !== "traje";
   const movs = useMemo(() => (gesto ? opcionesMovimiento(catalogo, base, gesto, figura.familia) : []), [catalogo, base, gesto, figura.familia]);
   /** Trajes completos originales: cada personaje de la familia, con su foto de tarjeta (pedido de Elías, 2026-11-26). */
-  const trajes = useMemo<Item[]>(() => [...catalogo.values()].filter(e => e.ficha.familia === "minifig" || e.ficha.familia === "bigfig")
+  const trajes = useMemo<Item[]>(() => [...catalogo.values()].filter(e => (e.ficha.familia === "minifig" || e.ficha.familia === "bigfig") && !DONANTES_FUERA.has(e.ficha.id))
     .sort((a, b) => a.ficha.nombre.localeCompare(b.ficha.nombre, "es"))
     .map(({ ficha: f, base: carpeta }) => ({ tipo: "traje" as const, id: f.id, nombre: f.nombre, grupo: f.grupo,
       foto: /\.(webp|png|jpg)$/i.test(f.fotos.tarjeta) && !/no-hay/.test(f.fotos.tarjeta) ? new URL(f.fotos.tarjeta, carpeta).href : null })), [catalogo]);
+  /** Carta de cada personaje (el mismo diseño del Álbum de la tienda; Elías, 2026-11-27). */
+  const cartas = useMemo(() => new Map<Id, Tarjeta>(tarjetas(catalogo, { conBorradores: true }).map(t => [t.id, t])), [catalogo]);
   /** Trajes a mostrar: uno por personaje (con sus versiones) o, con uno abierto, sus versiones y «Volver». */
   const vistaTrajes = useMemo<Item[]>(() => {
     const solo = trajes as Extract<Item, { tipo: "traje" }>[];
@@ -230,6 +236,7 @@ export function Constructor({ catalogo, piezas, inicial, seccion, escenaUrl, onG
     return ninguno ? [ninguno, ...l] : l;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [todas, fuente, sg, g, ninguno, grupoDe]);
+  const caja = sub === "traje" ? cajas.cartas : cajas.piezas;
   const pags = useMemo(() => paginas(lista, caja.columnas * caja.filas), [lista, caja]);
   const p = Math.min(pagina, pags.length - 1);
   const elegidos = movimientosElegidos(figura);
@@ -240,6 +247,10 @@ export function Constructor({ catalogo, piezas, inicial, seccion, escenaUrl, onG
   const baseId = figura.origen.tipo === "catalogo" ? figura.origen.personaje : null;
   const piel = figura.piezas.cabeza?.tintes?.piel ?? null;
   const visible = (it: Item) => it.tipo === "volver" ? false : it.tipo === "color" ? (it.c?.id ?? null) === piel && !esMascara(piezas.get(figura.piezas.cabeza?.id ?? "")) : it.tipo === "traje" ? (it.versiones ? !!baseId && it.versiones.includes(baseId) : it.id === baseId) : it.tipo === "pieza" ? it.pz.id === puesta || (!puesta && it.pz.donante === baseId) : (it.op?.id ?? null) === (gesto ? elegidos[gesto] ?? null : null);
+  const bloqueado = (it: Item) => {
+    const id = it.tipo === "traje" && !it.versiones ? it.id : it.tipo === "pieza" && it.pz.origen === "original" ? it.pz.donante : null;
+    return !!id && !!puedeUsar && !puedeUsar(id) && !visible(it);
+  };
   const losa = LOSAS.find(l => l.id === pestana)!;
   /** Palomita de cada sección: algo cambió respecto al personaje base. */
   const hecha = (t: Pestana) => t === "trajes" ? baseId !== (inicial.origen.tipo === "catalogo" ? inicial.origen.personaje : null) : t === "movimientos" ? Object.keys(elegidos).length > 0 : SUBPARTES[t].some(x => !!figura.piezas[x as Parte]);
@@ -249,7 +260,7 @@ export function Constructor({ catalogo, piezas, inicial, seccion, escenaUrl, onG
   // cada elemento al cambiar de sección»). Va después de la página que se ve y una a la vez, para no tapar al estudio.
   useEffect(() => {
     if (!mini.listo) return;
-    const n = Math.max(8, caja.columnas * caja.filas);
+    const n = Math.max(8, cajas.piezas.columnas * cajas.piezas.filas);
     const cola = (Object.values(SUBPARTES).flat().filter(x => !esGesto(x) && x !== "traje") as Parte[])
       .filter(pt => pt !== "mascara" && pt !== "cabeza")
       .flatMap(pt => piezasDe(piezas, pt, familiaPiezas).filter(pz => pz.origen !== "generica" && pz.glb).slice(0, n));
@@ -292,6 +303,7 @@ export function Constructor({ catalogo, piezas, inicial, seccion, escenaUrl, onG
   const rehacer = () => { if (!futuro.length) return; setHistoria(h => [...h.slice(-29), figura]); setFigura(futuro[0]!); setFuturo(f => f.slice(1)); setGuardado(false); };
   const restablecer = () => { if (figura !== inicial) cambiar(inicial); };
   const tocarItem = (it: Item) => {
+    if (bloqueado(it)) { setAviso("Consigue este personaje en la tienda para usarlo."); return; }
     // Traje completo: el personaje tal cual (sin piezas cambiadas); conserva movimientos y extensiones.
     if (it.tipo === "volver") { setAbierto(null); setPagina(0); setPasa(null); return; }
     // Figura grande con versión minifigura: al cambiar una pieza o la piel pasa a ser esa versión.
@@ -485,10 +497,12 @@ export function Constructor({ catalogo, piezas, inicial, seccion, escenaUrl, onG
             const nombre = it.tipo === "volver" ? "Volver" : it.tipo === "traje" ? it.nombre : it.tipo === "pieza" ? (it.pz.glb ? it.pz.nombre : "Ninguno") : it.tipo === "color" ? it.c?.nombre ?? "Original" : it.op ? it.op.nombre : "De siempre";
             const on = visible(it);
             return (
-              <button key={clave} type="button" className={"pz-pieza" + (on ? " on" : "")} aria-pressed={on} onClick={() => tocarItem(it)}
+              <button key={clave} type="button" className={"pz-pieza" + (on ? " on" : "") + (it.tipo === "traje" && cartas.has(it.id) ? " pz-carta" : "")} aria-pressed={on} onClick={() => tocarItem(it)}
+                data-bloqueado={bloqueado(it) || undefined}
                 title={it.tipo === "mov" && it.op ? `${it.op.nombre} · ${it.op.sub}` : nombre}>
                 {(() => {
                   if (it.tipo === "volver") return <span className="pz-sin pz-volver" aria-hidden="true">‹</span>;
+                  if (it.tipo === "traje" && cartas.has(it.id)) return <CartaPersonaje tarjeta={{ ...cartas.get(it.id)!, nombre: it.nombre }} conseguida={!puedeUsar || puedeUsar(it.id)} />;
                   if (it.tipo === "traje") return it.foto ? <img src={it.foto} alt="" draggable={false} loading="lazy" /> : <span className="pz-sin" aria-hidden="true">—</span>;
                   if (it.tipo === "mov") {
                     if (it.op?.foto) return <img src={it.op.foto} alt="" draggable={false} loading="lazy" />;
@@ -504,10 +518,11 @@ export function Constructor({ catalogo, piezas, inicial, seccion, escenaUrl, onG
                   if (m === undefined) return <span className="pz-espera" aria-hidden="true" />;
                   return <span className="pz-sin" aria-hidden="true">—</span>;
                 })()}
-                <span>{nombre}</span>
+                {!(it.tipo === "traje" && cartas.has(it.id)) && <span>{nombre}</span>}
                 {it.tipo === "mov" && it.op && <small className="pz-mov-sub">{it.op.sub}</small>}
                 {it.tipo === "traje" && it.versiones && <small className="pz-mov-sub">{it.versiones.length} versiones</small>}
                 {on && <i className="pz-check" aria-hidden="true">✓</i>}
+                {bloqueado(it) && <i className="pz-candado" aria-label="Por conseguir">🔒</i>}
               </button>
             );
           })}

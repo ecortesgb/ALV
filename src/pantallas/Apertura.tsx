@@ -9,7 +9,7 @@ import { movimientoReducido, vibrar } from "../app/preferencias";
 import { sonar } from "../app/sonido";
 import { RaizDS } from "../ds";
 import { NOMBRE_RAREZA } from "../content/rarezas";
-import { comodinPorId, DORSO_SOBRE, type Sobre } from "../content/tienda";
+import { comodinPorId, DORSO_SOBRE, type SobreVisual } from "../content/tienda";
 import type { Apertura as Resultado, Carta } from "../engine/sobresTienda";
 import { ponermelo } from "../servicios/tienda";
 import { aviso } from "./comun";
@@ -17,11 +17,13 @@ import { infoPieza } from "./Desbloqueo";
 import { miniatura } from "./Libro";
 import { ComodinIcono, Momento, srcArte } from "./Tienda";
 import { arteHub } from "./azotea/Cabecera";
+import { CartaPersonaje } from "./CartaPersonaje";
+import type { Tarjeta } from "../personajes/integracion";
 
 type Fase = "rasgar" | "extraer" | "cartas" | "resumen";
 const quieto = movimientoReducido;
 const REVERSO = `${import.meta.env.BASE_URL}arte/tienda/carta-reverso-alv.webp`;
-export function Apertura({ sobre, apertura, fondo, deEspaldas = false, alOtro, alColeccion }: { sobre: Sobre; apertura: Resultado; fondo: string; deEspaldas?: boolean; alOtro: () => void; alColeccion: () => void }) {
+export function Apertura({ sobre, apertura, fondo, deEspaldas = false, personajes, alOtro, alColeccion }: { sobre: SobreVisual; apertura: Resultado; fondo: string; deEspaldas?: boolean; personajes: ReadonlyMap<string, Tarjeta>; alOtro: () => void; alColeccion: () => void }) {
   const [fase, setFase] = useState<Fase>("rasgar");
   const [revelada, setRevelada] = useState(false);
   const [sobreDeEspaldas, setSobreDeEspaldas] = useState(deEspaldas);
@@ -53,6 +55,7 @@ export function Apertura({ sobre, apertura, fondo, deEspaldas = false, alOtro, a
     return () => clearTimeout(id);
   }, [fase, corte]);
   const carta = apertura.cartas[vistas];
+  const personaje = carta?.tipo === "personaje" ? personajes.get(carta.id) : undefined;
   const siguiente = () => {
     if (!revelada) { sonar("voltear"); setRevelada(true); return; }
     if (vistas + 1 >= n) setFase("resumen");
@@ -72,7 +75,7 @@ export function Apertura({ sobre, apertura, fondo, deEspaldas = false, alOtro, a
         <div className="t-ap-centro">
           <div className="t-ap-escenario" data-cortado={!!corte}>
           {fase === "extraer" && n > 0 && <div className="t-ap-salida" aria-hidden="true">
-            {sobreDeEspaldas || !carta ? <img src={REVERSO} alt="" /> : <CartaFrente c={carta} />}
+            {sobreDeEspaldas || !carta ? <img src={REVERSO} alt="" /> : <CartaFrente c={carta} personaje={personaje} />}
           </div>}
           <button type="button" className={"t-ap-sobre" + (corte ? " t-rasgado" : "")}
             disabled={!!corte}
@@ -109,7 +112,7 @@ export function Apertura({ sobre, apertura, fondo, deEspaldas = false, alOtro, a
 
       {fase === "cartas" && carta && (
         <div className="t-ap-mesa">
-          <p className="t-ap-progreso" aria-live="polite">Carta {vistas + 1} de {n}{revelada ? " · " + nombreCarta(carta) : ""}</p>
+          <p className="t-ap-progreso" aria-live="polite">Carta {vistas + 1} de {n}{revelada ? " · " + nombreCarta(carta, personaje) : ""}</p>
           <button type="button" className="t-mazo" data-restantes={Math.min(3, n - vistas - 1)}
             aria-label={!revelada ? "Revelar carta" : vistas + 1 === n ? "Ver resultado" : "Siguiente carta"}
             onPointerDown={e => { toqueCarta.current = e.clientX; deslizoCarta.current = false; e.currentTarget.setPointerCapture(e.pointerId); }}
@@ -124,23 +127,28 @@ export function Apertura({ sobre, apertura, fondo, deEspaldas = false, alOtro, a
             onClick={e => { if (e.detail === 0 || !deslizoCarta.current) siguiente(); deslizoCarta.current = false; }}>
             <span key={vistas} className={"t-mazo-carta" + (revelada ? " t-volteada" : "")}>
               <span className="t-cara t-reverso" aria-hidden="true"><img src={REVERSO} alt="" /></span>
-              <span className="t-cara t-frente" aria-hidden={!revelada}><CartaFrente c={carta} /></span>
+              <span className="t-cara t-frente" aria-hidden={!revelada} data-revelado={revelada ? destelloDe(carta, personaje) : undefined}><CartaFrente c={carta} personaje={personaje} /></span>
             </span>
           </button>
           <p className="t-ap-instruccion">{revelada ? "Desliza para " + (vistas + 1 === n ? "ver el resumen" : "pasar de carta") : "Toca la carta para voltearla"}</p>
         </div>
       )}
 
-      {fase === "resumen" && <Resumen apertura={apertura} alOtro={alOtro} alColeccion={alColeccion} />}
+      {fase === "resumen" && <Resumen apertura={apertura} personajes={personajes} alOtro={alOtro} alColeccion={alColeccion} />}
     </div>
     </RaizDS>,
     document.body,
   );
 }
 
-const nombreCarta = (c: Carta) => (c.tipo === "pieza" ? infoPieza(c.id).nombre : c.tipo === "comodin" ? comodinPorId(c.id)?.nombre ?? c.id : `${c.cantidad} monedas`);
+const nombreCarta = (c: Carta, t?: Tarjeta) => c.tipo === "personaje" ? t?.nombre ?? c.id
+  : c.tipo === "pieza" ? infoPieza(c.id).nombre : c.tipo === "comodin" ? comodinPorId(c.id)?.nombre ?? c.id : `${c.cantidad} monedas`;
+const destelloDe = (c: Carta, t?: Tarjeta) => (c.tipo === "pieza" || c.tipo === "personaje") && (c.rareza === "epica" || c.rareza === "legendaria")
+  ? c.rareza : (c.tipo === "comodin" && c.especial) || t?.tamano === "grande" ? "epica" : undefined;
 
-export function CartaFrente({ c }: { c: Carta }) {
+export function CartaFrente({ c, personaje }: { c: Carta; personaje?: Tarjeta }) {
+  if (c.tipo === "personaje") return personaje ? <CartaPersonaje tarjeta={personaje} nivel={c.rareza} conseguida />
+    : <span className={"t-carta r-" + c.rareza}><span className="t-carta-nombre">{nombreCarta(c)}</span></span>;
   if (c.tipo === "pieza") {
     const info = infoPieza(c.id);
     return (
@@ -185,7 +193,7 @@ export function CartaFrente({ c }: { c: Carta }) {
   );
 }
 
-function Resumen({ apertura, alOtro, alColeccion }: { apertura: Resultado; alOtro: () => void; alColeccion: () => void }) {
+function Resumen({ apertura, personajes, alOtro, alColeccion }: { apertura: Resultado; personajes: ReadonlyMap<string, Tarjeta>; alOtro: () => void; alColeccion: () => void }) {
   const piezas = apertura.cartas.filter((c): c is Extract<Carta, { tipo: "pieza" }> => c.tipo === "pieza");
   const [elegida, setElegida] = useState<string | null>(piezas[piezas.length - 1]?.id ?? null);
   const [puestas, setPuestas] = useState<Set<string>>(new Set());
@@ -217,7 +225,7 @@ function Resumen({ apertura, alOtro, alColeccion }: { apertura: Resultado; alOtr
             <button key={k} type="button" disabled={c.tipo !== "pieza"}
               className={"t-ap-item" + (c.tipo === "pieza" && c.id === elegida ? " t-on" : "")}
               onClick={() => { if (c.tipo === "pieza") { sonar("tic"); setElegida(c.id); } }}>
-              <CartaFrente c={c} />
+              <CartaFrente c={c} personaje={c.tipo === "personaje" ? personajes.get(c.id) : undefined} />
               {c.tipo === "pieza" && puestas.has(c.id) && <span className="t-puesta">Puesta</span>}
             </button>
           ))}

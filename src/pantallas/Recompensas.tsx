@@ -10,17 +10,14 @@ import { ir, useRuta } from "../app/rutas";
 import { useSesion } from "../app/sesion";
 import { sonar } from "../app/sonido";
 import { costoNivel, nivelPorXp, xpParaNivel } from "../engine/economia";
-import { PREMIOS_NIVEL, siguientePremio } from "../content/premiosNivel";
-import { NOMBRE_RAREZA, rarezaDe } from "../content/rarezas";
-import { reclamarPremiosNivel } from "../servicios/piezas";
-import { infoPieza } from "./Desbloqueo";
-import { miniatura } from "./Libro";
+import { siguientePremio } from "../content/premiosNivel";
+import { NOMBRE_RAREZA, type Rareza } from "../content/rarezas";
+import { tarjetas, useCatalogoV3 } from "../personajes/integracion";
+import { reclamarPremiosNivel, type PremioNivel } from "../servicios/piezas";
+import { CartaPersonaje } from "./CartaPersonaje";
 import "./recompensas.css";
 
 interface Evento { antes: number; despues: number }
-
-/** Nivel con el que se regala cada pieza (para la tarjeta del premio). */
-const NIVEL_DE_PREMIO = new Map(Object.entries(PREMIOS_NIVEL).flatMap(([n, ids]) => ids.map(id => [id, Number(n)] as const)));
 
 export function Recompensas() {
   const ses = useSesion();
@@ -47,7 +44,8 @@ function PantallaRecompensas({ antes, despues, alCerrar }: Evento & { alCerrar: 
   const ses = useSesion();
   const caps = useCapsulas(ses.uid);
   const [mostrado, setMostrado] = useState(antes);
-  const [premios, setPremios] = useState<string[] | null>(null);
+  const [premios, setPremios] = useState<PremioNivel[] | null>(null);
+  const cat = useCatalogoV3();
   const [k, setK] = useState(-1); // -1: experiencia; 0…: tarjeta de premio
   const nivelAntes = nivelPorXp(antes), nivelDespues = nivelPorXp(despues);
   const subio = nivelDespues > nivelAntes;
@@ -70,14 +68,14 @@ function PantallaRecompensas({ antes, despues, alCerrar }: Evento & { alCerrar: 
     const fin = setTimeout(() => { cancelAnimationFrame(raf); setMostrado(despues); }, dur + 300);
     return () => { cancelAnimationFrame(raf); clearTimeout(fin); };
   }, [antes, despues, subio]);
-  // Premios del nivel: los da el servidor (migración 035); sin ella no hay ninguno.
+  // Premios del nivel: un personaje por nivel, lo da el servidor (migración 052); sin ella no hay ninguno.
   // Se reclama una sola vez: una segunda llamada devolvería [] (ya las tiene) y taparía la lista buena.
   const reclamado = useRef(false);
   useEffect(() => {
     if (!subio) { setPremios([]); return; }
     if (reclamado.current) return;
     reclamado.current = true;
-    void reclamarPremiosNivel(nivelAntes, nivelDespues).then(setPremios);
+    void reclamarPremiosNivel().then(setPremios);
   }, [subio, nivelAntes, nivelDespues]);
 
   const nivel = nivelPorXp(mostrado), dentro = mostrado - xpParaNivel(nivel), costo = costoNivel(nivel);
@@ -87,15 +85,16 @@ function PantallaRecompensas({ antes, despues, alCerrar }: Evento & { alCerrar: 
 
   if (!raiz) return <span ref={ancla} hidden />;
   const premio = premios && k >= 0 ? premios[k] : undefined;
+  const tarjeta = premio && cat ? tarjetas(cat.catalogo).find(t => t.id === premio.personaje) : undefined;
   return createPortal(
     <div className="rw" role="dialog" aria-modal="true" aria-label="Recompensas">
       <span className="rw-cinta dsp ol">Recompensas</span>
       {premio ? (
-        <div className="rw-premio" key={premio}>
-          <span className="rw-premio-t dsp ol">¡Nuevo! {infoPieza(premio).nombre}</span>
-          <small className="rw-premio-sub">Premio por llegar a nivel {NIVEL_DE_PREMIO.get(premio) ?? nivelDespues} · {NOMBRE_RAREZA[rarezaDe(premio)]}</small>
-          <div className="rw-pedestal">
-            {infoPieza(premio).mini ? <img src={miniatura(infoPieza(premio).mini!)} alt="" /> : <span className="rw-pow dsp ol">¡POW!</span>}
+        <div className="rw-premio" key={premio.personaje}>
+          <span className="rw-premio-t dsp ol">¡Nuevo! {tarjeta?.nombre ?? "personaje"}</span>
+          <small className="rw-premio-sub">Premio por llegar a nivel {premio.nivel} · {NOMBRE_RAREZA[premio.rareza as Rareza] ?? premio.rareza}</small>
+          <div className="rw-pedestal rw-pedestal-carta">
+            {tarjeta ? <CartaPersonaje tarjeta={tarjeta} nivel={premio.rareza as Rareza} revelada conseguida /> : <span className="rw-pow dsp ol">¡POW!</span>}
           </div>
           <div className="rw-botones">
             <button type="button" className="d-btn k-yel" onClick={() => (k + 1 < (premios?.length ?? 0) ? setK(k + 1) : alCerrar())}><span className="dsp">¡Genial!</span></button>
@@ -119,10 +118,10 @@ function PantallaRecompensas({ antes, despues, alCerrar }: Evento & { alCerrar: 
               <span className="rw-carril"><i style={{ width: `${Math.min(100, (dentro / costo) * 100)}%` }} /></span>
               <span className="rw-nivel sig dsp ol">{nivel + 1}</span>
             </div>
-            {prox && (
+            {(
               <div className="rw-prox" title={`Premio en nivel ${prox.nivel}`}>
-                {infoPieza(prox.pieza).mini ? <img src={miniatura(infoPieza(prox.pieza).mini!)} alt="" /> : <span aria-hidden="true">🎁</span>}
-                <span><small>Próximo premio · nivel {prox.nivel}</small><b>{infoPieza(prox.pieza).nombre}</b></span>
+                <span aria-hidden="true">🎁</span>
+                <span><small>Próximo premio · nivel {prox.nivel}</small><b>Un personaje sorpresa</b></span>
                 <span className="rw-candado" aria-hidden="true">🔒</span>
               </div>
             )}

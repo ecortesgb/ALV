@@ -9,6 +9,8 @@ import { banderaV3, empaquetarV3, leerV3, modoCorteV3, proyectar, sinV3, useEsta
 import { useSesion } from "../app/sesion";
 import { sonar } from "../app/sonido";
 import { hayNube } from "../servicios/cliente";
+import { cargarPersonajesTienda, useTienda } from "../servicios/tienda";
+import { rarezaPersonaje } from "../content/personajesTienda";
 import { cargarCapsulasNube, guardarCapsulasNube } from "../servicios/cuenta";
 import { enlace } from "../servicios/enlace";
 import { aviso } from "./comun";
@@ -130,6 +132,10 @@ function MiPersonajeApp() {
   const { uid } = useSesion();
   const caps = useCapsulas(uid);
   const { catalogo: cat, estado, reintentar } = useEstadoCatalogoV3();
+  const { demo, catalogoPersonajes, personajes } = useTienda();
+  useEffect(() => { void cargarPersonajesTienda(); }, [uid]);
+  const puedeUsar = (id: string) => rarezaPersonaje(id) === "comun" || personajes.has(id)
+    || (!demo && !catalogoPersonajes?.some(c => c.id === id));
   const espacios = caps.slots.map(c => ({ figura: c ? leerV3(c.figura) : null, nombre: c?.nombre ?? "", antes: !!c }));
   const activar = (i: number) => {
     if (!caps.slots[i] || caps.activa === i) return;
@@ -140,7 +146,7 @@ function MiPersonajeApp() {
   return (
     <Suspense fallback={null}>
       <MiPersonaje jugador={uid} catalogo={cat} estadoCatalogo={estado} onReintentar={reintentar} espacios={espacios} activa={caps.activa}
-        onGuardar={(i, f, n) => guardarFiguraNueva(uid, i, f, n)} onActivar={activar} onSalir={atras} />
+        onGuardar={(i, f, n) => guardarFiguraNueva(uid, i, f, n)} onActivar={activar} onSalir={atras} puedeUsar={puedeUsar} />
     </Suspense>
   );
 }
