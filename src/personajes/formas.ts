@@ -45,8 +45,17 @@ export const CICLOS: readonly (readonly Forma[])[] = [
   [{ p: "stan-lee", conEspecial: true }, { p: "hulk" }],
 ];
 
+/** Transformación que eligió el jugador en el personalizador (Elías, 27 nov: «cualquiera que la elija se pueda
+ *  transformar… en prácticamente cualquier personaje»). Manda sobre los ciclos fijos. */
+export const transformacionDe = (v3: FiguraV3): Id | null => {
+  const t = v3.extensiones.alv?.transformacion;
+  return typeof t === "string" && /^[a-z0-9][a-z0-9-]{0,63}$/.test(t) && !(v3.origen.tipo === "catalogo" && v3.origen.personaje === t) ? t : null;
+};
+
 /** Ciclo y lugar de la figura (por su personaje del catálogo). La forma con `cabezaDe` no es punto de partida. */
 function lugar(v3: FiguraV3): { ciclo: readonly Forma[]; i: number } | null {
+  const elegida = transformacionDe(v3);
+  if (elegida) return { ciclo: [{ p: v3.origen.tipo === "catalogo" ? v3.origen.personaje : "" }, { p: elegida }], i: 0 };
   if (v3.origen.tipo !== "catalogo") return null;
   const id = v3.origen.personaje;
   for (const ciclo of CICLOS) {

@@ -1400,8 +1400,9 @@
       cuerpo.position.x = x0 + Math.sin(reloj.getElapsedTime() * 55) * 0.035 * k;
       if (k < 1) setTimeout(() => temblar(dur), 30);
     };
-    const salida = tr0 && tr0.salir
-      ? inst0.tocarExt(tr0.glb, tr0.salir, { fijo: true, mezcla: 0.15 }).then(d => Number(d) > 0 ? Math.min(7, d) : 0).catch(() => 0) : Promise.resolve(0);
+    const sal = tr0 && (p3.familia === "bigfig" ? tr0.salirGrande || tr0.salir : tr0.salir || tr0.salirGrande);
+    const salida = sal
+      ? inst0.tocarExt(sal.glb, sal.clip, { fijo: true, mezcla: 0.15 }).then(d => Number(d) > 0 ? Math.min(7, d) : 0).catch(() => 0) : Promise.resolve(0);
     const nueva = motorV3().then(M => M.crear(p3));
     salida.then(d => {
       const t = reloj.getElapsedTime();
@@ -1436,7 +1437,7 @@
       const tr1 = p3.transformar;
       if (tr1 && tr1.llegar) {
         e.prio = 9; e.cual = "transformar"; e.hasta = t + 1;
-        inst.tocarExt(tr1.glb, tr1.llegar, { fijo: true, mezcla: 0 }).then(d => {
+        inst.tocarExt(tr1.llegar.glb, tr1.llegar.clip, { fijo: true, mezcla: 0 }).then(d => {
           if (e.v3 !== inst) return;
           if (Number(d) > 0) { e.prio = 2; e.cual = "poder"; e.hasta = reloj.getElapsedTime() + Math.min(6, d); }
           else { e.prio = 0; e.cual = null; e.hasta = 0; }
@@ -1472,11 +1473,11 @@
       .map(x => ({ id: x.id, glb: x.glb, clip: x.clip, hasta: Number(x.hasta) > 0 ? Math.min(20, Number(x.hasta)) : 0, bucle: Number(x.bucle) > 0 ? Math.min(20, Number(x.bucle)) : 0, efectos: Array.isArray(x.efectos) ? x.efectos.slice(0, 3).filter(f => f && typeof f === "object" && typeof f.tipo === "string") : [] })) : [];
     // Sets de movimientos (27 nov): mismos campos que un poder, sin efectos y en su lugar (fijo: los golpes del juego
     // avanzan hacia el enemigo y sacaban a la figura del pedestal).
-    // Transformar (27 nov): clips del juego con que la forma sale y llega.
+    // Transformar (27 nov): clips del juego con que la forma sale (hacia minifigura o hacia figura grande) y llega.
     if (p.transformar != null) {
-      const t = p.transformar, clip = c => (typeof c === "string" && c.length > 0 && c.length <= 80 ? c : null);
-      p.transformar = t && typeof t === "object" && typeof t.glb === "string" && URL_OK.test(t.glb) && (clip(t.salir) || clip(t.llegar))
-        ? { glb: t.glb, salir: clip(t.salir), llegar: clip(t.llegar) } : null;
+      const t = p.transformar, c = x => (x && typeof x === "object" && typeof x.glb === "string" && URL_OK.test(x.glb) && typeof x.clip === "string" && x.clip.length > 0 && x.clip.length <= 80 ? { glb: x.glb, clip: x.clip } : null);
+      const v = t && typeof t === "object" ? { salir: c(t.salir), salirGrande: c(t.salirGrande), llegar: c(t.llegar) } : null;
+      p.transformar = v && (v.salir || v.salirGrande || v.llegar) ? v : null;
     }
     if (p.movs != null) p.movs = Array.isArray(p.movs) ? p.movs.slice(0, 64).filter(x => x && typeof x.id === "string" && /^[a-z][a-z0-9-]{0,23}$/.test(x.id)
       && typeof x.glb === "string" && URL_OK.test(x.glb) && typeof x.clip === "string" && x.clip.length <= 80)

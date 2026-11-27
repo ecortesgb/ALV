@@ -84,7 +84,8 @@ export interface FiguraV3 {
   origen: { tipo: "catalogo"; personaje: Id; version: Id; revision: number } | { tipo: "creado" };
   piezas: Record<string, PiezaPuesta>;
   momentos: { paquete: string | null; espera: string; victoria: string; derrota: string; punto: string };
-  extensiones: { alv?: { apodo?: string; personalidad?: { perfil?: string }; animaciones?: { propias?: Record<string, string> }; editor?: "basico" | "avanzado" } } & Record<string, unknown>;
+  extensiones: { alv?: { apodo?: string; personalidad?: { perfil?: string }; animaciones?: { propias?: Record<string, string> }; editor?: "basico" | "avanzado";
+    /** Personaje del catálogo en que se convierte al presionar «Transformar» (personalizador, Elías 27 nov). */ transformacion?: Id } } & Record<string, unknown>;
 }
 
 /** Pieza del catálogo (§3 del formato, solo lo que usan las reglas por ahora). */
@@ -140,11 +141,15 @@ export interface Plano {
   poderes?: PoderPlano[];
   /** Movimientos de sus sets compartidos (bailar, burla, combo de espada, hechizo…), sin efectos. */
   movs?: PoderPlano[];
-  /** Transformar (27 nov): clips del juego con que esta forma sale (antes del cambio) y llega (después). */
-  transformar?: { glb: string; salir?: string; llegar?: string };
+  /** Transformar (27 nov): clips del juego con que esta forma sale antes del cambio (hacia una minifigura o hacia una
+   *  figura grande) y con el que llega después. */
+  transformar?: { salir?: ClipExt; salirGrande?: ClipExt; llegar?: ClipExt };
 }
 
 /** Cómo se tiñe una pieza: `material` = nombre de material (o "*" = todos los de la pieza); `hex` ya resuelto. */
+/** Un clip de otro GLB. */
+export interface ClipExt { glb: string; clip: string }
+
 export interface TintePlano { material: string; hex: string }
 export interface PiezaPlano { glb: string; ranuras: string[]; tintes: TintePlano[];
   /** Acabado del GLB de la pieza (el de su donante), si es distinto del base. */
