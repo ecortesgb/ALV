@@ -247,6 +247,7 @@
     const v = m.getWorldPosition(new T.Vector3()).sub(p.getWorldPosition(new T.Vector3()));
     return v.dot(frente(c.fig, new T.Vector3())) / c.u;
   }
+  const OJOS = 0.09; // altos de figura del cuello a los ojos
   const LADO = -0.5; // ~30° hacia un lado de la figura
   function altoDe(fig) {
     fig.obj.updateMatrixWorld(true);
@@ -274,13 +275,14 @@
         paso(t, dt) {
           const k = sobre(t, c.d, 0.15, 0.25);
           origen(c.fig, c.ef.desde, o); apunta(c, f);
-          if (c.ef.desde === "cabeza") o.addScaledVector(f, 0.12 * c.u);
+          // El hueso de la cabeza nace en el cuello: el rayo de los ojos sube a la altura de los ojos.
+          if (c.ef.desde === "cabeza") { o.y += OJOS * c.u; o.addScaledVector(f, 0.1 * c.u); }
           if (!salio && t >= 0) { salio = true; destello(c, o, c.col, 0.7, 0.2); }
           const L = largo * Math.min(1, t / 0.15);
           haz.position.copy(o); alma.position.copy(o); aura.position.copy(o);
           fin.copy(o).addScaledVector(f, L); haz.lookAt(fin); alma.lookAt(fin); aura.lookAt(fin);
           const w = grueso * (0.85 + 0.3 * Math.sin(t * 60)) * k;
-          haz.scale.set(w, w, L); alma.scale.set(w * 0.35, w * 0.35, L); aura.scale.set(w * 2.6, w * 2.6, L);
+          haz.scale.set(w, w, L); alma.scale.set(w * 0.35, w * 0.35, L); aura.scale.set(w * 1.8, w * 1.8, L);
           mat.opacity = 0.8 * k; nucleo.opacity = 0.9 * k; halo.opacity = 0.22 * k;
           luz.position.copy(o); luz.scale.setScalar((0.55 + 0.1 * Math.sin(t * 40)) * c.u * k + 1e-4);
           pega.position.copy(fin); pega.material.rotation = t * 3; pega.scale.setScalar(t > 0.12 ? (0.5 + 0.15 * Math.random()) * c.u * k + 1e-4 : 1e-4);
