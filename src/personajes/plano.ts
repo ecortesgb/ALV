@@ -2,7 +2,8 @@
 import { familia } from "./familias";
 import { SETS, setsDe, sonidosDe } from "./sets";
 import { PODERES, PRESTADOS, type Efecto, type PoderDef, type PoderPlano } from "./poderes";
-import { LOGICAS, type Ficha, type FiguraV3, type Logica, type Plano } from "./tipos";
+import { LOGICAS, type ClipExt, type Ficha, type FiguraV3, type Id, type Logica, type Plano } from "./tipos";
+import { transformacionDe } from "./formas";
 
 /** Personaje del catálogo ya cargado: su ficha y la URL de su carpeta (termina en «/»). */
 export interface EnCatalogo { ficha: Ficha; base: string }
@@ -45,7 +46,7 @@ export function resolver(id: string, figura: FiguraV3, catalogo: Catalogo): Plan
     carga: { ...f.carga, metal: [...f.carga.metal] }, piezas: [],
     ...(() => { const p = poderesDeFicha(f, en.base, catalogo); return p.length ? { poderes: p } : {}; })(),
     ...(() => { const m = movimientosDeFicha(f, catalogo); return m.length ? { movs: m } : {}; })(),
-    ...(() => { const t = transformarDeFicha(f, en.base); return t ? { transformar: t } : {}; })(),
+    ...(() => { const t = transformarDeFicha(f, en.base, catalogo, !!transformacionDe(figura)); return t ? { transformar: t } : {}; })(),
   };
 }
 
@@ -106,9 +107,23 @@ export function movimientosDeFicha(f: Ficha, catalogo: Catalogo): PoderPlano[] {
   return fuera;
 }
 
-/** Clips de transformación propios de la forma (set «transformar» de su ficha): con cuál sale y con cuál llega. */
-export function transformarDeFicha(f: Ficha, base: string): { glb: string; salir?: string; llegar?: string } | null {
-  const s = f.sets?.transformar;
-  if (!s || (!s.clips.salir && !s.clips.llegar)) return null;
-  return { glb: unir(base, s.glb), ...(s.clips.salir ? { salir: s.clips.salir } : {}), ...(s.clips.llegar ? { llegar: s.clips.llegar } : {}) };
+/** Animación genérica para quien no trae la suya o eligió su transformación en el personalizador: todos los minifig y
+ *  los grandes comparten esqueleto, así que sirven para cualquiera (cambio de traje de Peter, Banner → Hulk, Hulk → Banner). */
+const GENERICA: Record<string, { salir?: [Id, string]; salirGrande?: [Id, string] }> = {
+  minifig: { salir: ["peter-parker", "salir"], salirGrande: ["bruce-banner", "salir"] },
+  bigfig: { salir: ["hulk", "salir"] },
+};
+
+/** Clips de Transformar de una forma: los suyos (set «transformar» de su ficha) y, si faltan, los genéricos. Si el jugador
+ *  eligió su transformación en el personalizador, la salida es siempre la genérica (la propia va con su pareja fija). */
+export function transformarDeFicha(f: Ficha, base: string, catalogo?: Catalogo | null, elegida = false): Plano["transformar"] | null {
+  const propio = f.sets?.transformar, clip = (en: { ficha: Ficha; base: string } | undefined, mov: string): ClipExt | undefined => {
+    const s = en?.ficha.sets?.transformar, c = s?.clips[mov];
+    return s && c && en ? { glb: unir(en.base, s.glb), clip: c } : undefined;
+  };
+  const yo = { ficha: f, base }, salirPropio = elegida ? undefined : clip(yo, "salir");
+  const gen = GENERICA[f.familia], deGen = (g?: [Id, string]) => (g && catalogo ? clip(catalogo.get(g[0]), g[1]) : undefined);
+  const t = { salir: salirPropio ?? deGen(gen?.salir), salirGrande: salirPropio ?? deGen(gen?.salirGrande), llegar: propio ? clip(yo, "llegar") : undefined };
+  const fuera = Object.fromEntries(Object.entries(t).filter(([, v]) => v)) as NonNullable<Plano["transformar"]>;
+  return Object.keys(fuera).length ? fuera : null;
 }

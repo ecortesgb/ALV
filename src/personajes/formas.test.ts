@@ -59,6 +59,16 @@ describe("transformaciones", () => {
     expect(cuantasFormas(de("gwen-stacy"))).toBe(0);
     expect(cuantasFormas(de("peter-parker"))).toBe(2);
   });
+  it("la transformación elegida en el personalizador manda (cualquiera en cualquiera)", () => {
+    const con = (id: string, t: string): FiguraV3 => { const f = de(id); return { ...f, extensiones: { alv: { ...f.extensiones.alv, transformacion: t } } }; };
+    const b = con("batman", "hulk");
+    expect(cuantasFormas(b)).toBe(2);
+    expect(quien(figuraEnForma(b, 1, catalogo, piezas))).toBe("hulk");
+    expect(figuraEnForma(b, 2, catalogo, piezas)).toBe(b);
+    expect(quien(figuraEnForma(con("bruce-banner", "spider-man"), 1, catalogo, piezas))).toBe("spider-man");
+    expect(cuantasFormas(con("batman", "batman"))).toBe(0);
+    expect(cuantasFormas(con("batman", "../x"))).toBe(0);
+  });
   it("si falta el personaje, se queda la misma figura", () => {
     const sinHulk: Catalogo = new Map([...catalogo].filter(([k]) => k !== "hulk"));
     const b = de("bruce-banner");
