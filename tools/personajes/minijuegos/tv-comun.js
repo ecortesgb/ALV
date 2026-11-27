@@ -7,7 +7,8 @@ import { colorJugador } from "/src/app/colorJugador.ts";
 import qrcode from "qrcode-generator";
 import { cliente } from "/src/servicios/cliente.ts";
 import { fuentePrivada } from "/src/servicios/personajesPrivados.ts";
-import { poderesDeFicha } from "/src/personajes/plano.ts";
+import { movimientosDeFicha, poderesDeFicha } from "/src/personajes/plano.ts";
+import { SETS } from "/src/personajes/sets.ts";
 import { sonarPoder } from "/src/app/sonido.ts";
 
 const q = new URLSearchParams(location.search);
@@ -62,6 +63,14 @@ export function lanzarEfecto(j, escena, ef, cambios) {
     return self.EfectosALV.lanzar(escena.scene, { obj, hueso: f.hueso }, cambios ? Object.assign({}, ef, cambios) : ef,
       { escala: f.alto(), sonar: sonarPoder, camara: escena.camera });
   } catch (e) { console.warn("efecto", e); return null; }
+}
+
+/** Movimientos de sus sets que salen en la rueda del mando (los de andar no), hasta 24 (6 páginas de 4). */
+export function deRueda(j) {
+  const f = j && j.figura;
+  if (!f || !Array.isArray(f.movs)) return [];
+  return f.movs.filter(m => { const i = m.id.indexOf("-"), set = SETS[m.id.slice(0, i)]; return !!set?.movs[m.id.slice(i + 1)]?.rueda; })
+    .slice(0, 24).map(m => ({ id: m.id, nombre: m.nombre }));
 }
 
 export function lucirPoder(j, escena, i) {
@@ -185,7 +194,8 @@ export function crearTV({ juego, escena, alUnirse, alMensaje, alSalir, alDescone
       try {
         if (FALLAR.has(personaje)) throw new Error("carga fallida a propósito (?fallar)");
         const base = catalogo.get(personaje).base;
-        const f = await FigurasMJ.crear(ficha, { base, idFigura: id, poderes: ficha.id ? poderesDeFicha(ficha, base, catalogo) : [] });
+        const f = await FigurasMJ.crear(ficha, { base, idFigura: id, poderes: ficha.id ? poderesDeFicha(ficha, base, catalogo) : [],
+          movs: ficha.id && juego === "cuarto" ? movimientosDeFicha(ficha, catalogo) : [] });
         if (mio !== j.carga || !jugadores.has(id)) { f.quitar(); return; }
         if (j.figura) j.figura.quitar();
         j.figura = f; j.alto = 0; j.estado = "listo";
@@ -237,7 +247,8 @@ export function crearTV({ juego, escena, alUnirse, alMensaje, alSalir, alDescone
     canal.enviar("estado", Object.assign({
       juego, fase, sala, personajes: disponibles(),
       jugadores: [...jugadores.values()].map(j => ({ id: j.id, cuenta: j.cuenta || null, nombre: j.nombre, personaje: j.personaje, n: j.n, color: j.color.base, bot: j.bot, estado: j.estado, desconectado: j.desconectado,
-        poderes: j.figura && j.figura.poderes ? j.figura.poderes.map(x => x.nombre).slice(0, 2) : [] })),
+        poderes: j.figura && j.figura.poderes ? j.figura.poderes.map(x => x.nombre).slice(0, 2) : [],
+        ...(juego === "cuarto" ? { movs: deRueda(j) } : {}) })),
       anfitrionId: anfitrionId(),
     }, extra()));
   }

@@ -68,7 +68,9 @@ export function validarDeCelular(m: Mensaje): Record<string, unknown> | null {
       return cuenta ? { n, nombre, personaje, cuenta } : { n, nombre, personaje };
     }
     case "ping": { const t0 = num(d.t0); return t0 !== null ? { n, t0 } : null; }
-    case "adios": case "empezar": case "otra": return { n };
+    case "adios": case "otra": return { n };
+    // empezar: en ALVacío el anfitrión elige modalidad (solos o equipos).
+    case "empezar": return d.modalidad === "solos" || d.modalidad === "equipos" ? { n, modalidad: d.modalidad } : { n };
     case "salto": {
       const pid = txt(d.pid, 20), s = num(d.s), inc = num(d.inc);
       return pid && s !== null && inc !== null && inc >= 0 ? { n, pid, s, inc } : null;
@@ -93,6 +95,8 @@ export function validarDeCelular(m: Mensaje): Record<string, unknown> | null {
       return fuera;
     }
     case "gesto": { const g = txt(d.g, 12); return g && GESTOS.has(g) ? { n, g } : null; }
+    // Movimiento de sus sets (rueda, 2ª página): «<set>-<mov>»; la TV revisa que el personaje lo tenga.
+    case "mov": { const m = txt(d.m, 32); return m && /^[a-z0-9]+-[a-z0-9-]+$/.test(m) ? { n, m } : null; }
     case "acepta": return typeof d.si === "boolean" ? { n, si: d.si } : null;
     default: return null;
   }

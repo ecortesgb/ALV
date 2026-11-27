@@ -197,6 +197,10 @@ function estado(d) {
     document.querySelector(".x-a small").textContent = vuela ? "Sube" : "Salta";
     document.querySelector(".x-b small").textContent = vuela ? "Baja" : "Golpe";
     $("boton-x").classList.toggle("oculto", !pod[1]);
+    const movs = Array.isArray(j.movs) ? j.movs.filter(m => m && typeof m.id === "string" && typeof m.nombre === "string").slice(0, 24) : [];
+    if (movs.map(m => m.id).join() !== misMovs.map(m => m.id).join()) { misMovs = movs; rueda.pintar(); }
+    barraPartida(d, anfitrion);
+    if (d.fase === "fin" && Array.isArray(d.ranking)) void darXp(d);
     return verMando();
   }
   if (d.juego === "fisico") return verFisico(d, j);
@@ -411,14 +415,17 @@ document.querySelectorAll(".botones button").forEach(b => b.addEventListener("po
 // ---------- Rueda de animaciones del mando (Elías, 27 nov) ----------
 // Al centro y siempre visible. Mismos gajos, colores e íconos que la rueda del HUB: izquierda Saludar, arriba Ganar,
 // derecha Especial, abajo Perder. Cada gajo manda «gesto» y la TV del cuarto pone la animación.
-(function armarRueda() {
+// 2ª página en adelante (Elías, 27 nov: sets de movimientos): bailes, burlas, combos... de su personaje, de 4 en 4. Tocar el
+// centro cambia de página. La TV manda la lista (movs) y revisa que el personaje tenga el que se pide.
+let misMovs = [];
+const rueda = (function armarRueda() {
   const NS = "http://www.w3.org/2000/svg", ICONOS = "../../../arte/ui/gestos/";
-  const R0 = 34, R1 = 96, HUECO = 3;
+  const R0 = 34, R1 = 96, HUECO = 3, ANG = [180, 270, 0, 90];
   const GESTOS = [
-    { g: "saludo", txt: "Saludar", c1: "#9be04a", img: "gesto-saludar.webp", a: 180 },
-    { g: "festejo", txt: "Ganar", c1: "#ffd84a", img: "gesto-victoria.webp", a: 270 },
-    { g: "especial", txt: "Especial", c1: "#ff9a3a", img: "gesto-especial.webp", a: 0 },
-    { g: "derrota", txt: "Perder", c1: "#4f86e8", img: "gesto-derrota.webp", a: 90 },
+    { g: "saludo", txt: "Saludar", c1: "#9be04a", img: "gesto-saludar.webp" },
+    { g: "festejo", txt: "Ganar", c1: "#ffd84a", img: "gesto-victoria.webp" },
+    { g: "especial", txt: "Especial", c1: "#ff9a3a", img: "gesto-especial.webp" },
+    { g: "derrota", txt: "Perder", c1: "#4f86e8", img: "gesto-derrota.webp" },
   ];
   const el = (tag, at) => { const n = document.createElementNS(NS, tag); for (const k in at) n.setAttribute(k, at[k]); return n; };
   const p = (a, r) => { const t = (a * Math.PI) / 180; return `${(r * Math.cos(t)).toFixed(2)} ${(r * Math.sin(t)).toFixed(2)}`; };
@@ -426,28 +433,79 @@ document.querySelectorAll(".botones button").forEach(b => b.addEventListener("po
   const svg = el("svg", { viewBox: "-100 -100 200 200" });
   const logo = el("image", { href: ICONOS + "centro-logo-alv.webp", x: -40, y: -29, width: 80, height: 59, class: "logo" });
   const nombre = el("text", { y: 6, class: "nombre" });
-  let quitar = 0;
-  for (const x of GESTOS) {
-    const t = (x.a * Math.PI) / 180, cx = 66 * Math.cos(t), cy = 66 * Math.sin(t);
-    const g = el("g", { class: "gajo", role: "menuitem", "aria-label": x.txt,
-      style: `--c1:${x.c1};--dx:${(Math.cos(t) * 6).toFixed(1)}px;--dy:${(Math.sin(t) * 6).toFixed(1)}px` });
-    g.append(el("path", { d: gajo(x.a - 45 + HUECO / 2, x.a + 45 - HUECO / 2), class: "forma" }),
-      el("image", { href: ICONOS + x.img, x: cx - 29, y: cy - 29, width: 58, height: 58 }));
+  const pagina = el("text", { y: 6, class: "nombre" });
+  let quitar = 0, pag = 0;
+  const gajos = ANG.map((a, i) => {
+    const t = (a * Math.PI) / 180, cx = 66 * Math.cos(t), cy = 66 * Math.sin(t);
+    const g = el("g", { class: "gajo", role: "menuitem",
+      style: `--c1:${GESTOS[i].c1};--dx:${(Math.cos(t) * 6).toFixed(1)}px;--dy:${(Math.sin(t) * 6).toFixed(1)}px` });
+    const img = el("image", { x: cx - 29, y: cy - 29, width: 58, height: 58 });
+    const txt = el("text", { x: cx, y: cy + 4, class: "mov" });
+    g.append(el("path", { d: gajo(a - 45 + HUECO / 2, a + 45 - HUECO / 2), class: "forma" }), img, txt);
+    const item = { g, img, txt, que: null };
     g.addEventListener("pointerdown", e => {
       e.preventDefault();
-      canal.enviar("gesto", { g: x.g });
+      if (!item.que) return;
+      if (item.que.g) canal.enviar("gesto", { g: item.que.g }); else canal.enviar("mov", { m: item.que.id });
       vibrar(10);
       svg.querySelectorAll(".gajo.on").forEach(o => o.classList.remove("on"));
       g.classList.add("on");
-      nombre.textContent = x.txt; logo.style.display = "none";
+      nombre.textContent = item.que.txt || item.que.nombre; logo.style.display = "none"; pagina.style.display = "none";
       clearTimeout(quitar);
-      quitar = setTimeout(() => { g.classList.remove("on"); nombre.textContent = ""; logo.style.display = ""; }, 700);
+      quitar = setTimeout(() => { g.classList.remove("on"); nombre.textContent = ""; pintarCentro(); }, 700);
     });
     svg.append(g);
+    return item;
+  });
+  const paginas = () => 1 + Math.ceil(misMovs.length / 4);
+  function pintarCentro() { logo.style.display = pag ? "none" : ""; pagina.style.display = pag ? "" : "none"; pagina.textContent = `${pag + 1}/${paginas()}`; }
+  function pintar() {
+    if (pag >= paginas()) pag = 0;
+    const lista = pag ? misMovs.slice((pag - 1) * 4, pag * 4) : GESTOS;
+    gajos.forEach((it, i) => {
+      const x = lista[i] || null;
+      it.que = x;
+      it.g.style.opacity = x ? "" : "0.35";
+      it.g.setAttribute("aria-label", x ? x.txt || x.nombre : "");
+      if (x && x.img) { it.img.setAttribute("href", ICONOS + x.img); it.img.style.display = ""; it.txt.textContent = ""; }
+      else { it.img.style.display = "none"; it.txt.textContent = x ? String(x.nombre).slice(0, 14) : ""; }
+    });
+    pintarCentro();
   }
-  svg.append(el("circle", { r: R0 - 3, class: "centro" }), logo, nombre);
+  const centro = el("circle", { r: R0 - 3, class: "centro" });
+  centro.addEventListener("pointerdown", e => { e.preventDefault(); if (paginas() > 1) { pag = (pag + 1) % paginas(); pintar(); vibrar(6); } });
+  svg.append(centro, logo, nombre, pagina);
   $("rueda").append(svg);
+  pintar();
+  return { pintar };
 })();
+
+// ---------- ALVacío (cuarto): barra del anfitrión y estado de la partida ----------
+let modoElegido = null;
+function barraPartida(d, anfitrion) {
+  const modo = modoElegido || (d.modalidad === "equipos" ? "equipos" : "solos");
+  const enJuego = d.fase === "juego", fin = d.fase === "fin";
+  $("pmodo").classList.toggle("oculto", !anfitrion || enJuego || fin);
+  $("pmodo").textContent = modo === "equipos" ? "Equipos" : "Solos";
+  $("pini").classList.toggle("oculto", !anfitrion || enJuego);
+  $("pini").textContent = fin ? "Volver al cuarto" : "ALVacío";
+  let t = "";
+  if (enJuego && typeof d.ronda === "number") {
+    const vivo = Array.isArray(d.vivos) && d.vivos.includes(yo), pts = (d.puntos && d.puntos[yo]) || 0;
+    const eq = d.equipo && d.equipo[yo] !== undefined ? (d.equipo[yo] ? "Azul · " : "Rojo · ") : "";
+    t = `${eq}Ronda ${d.ronda}/${d.rondas} · ${vivo ? "¡en pie!" : "fuera"} · ${pts} pts`;
+  } else if (fin && Array.isArray(d.ranking)) {
+    const l = d.ranking.find(x => x.id === yo);
+    t = l ? (l.lugar === 1 ? "¡Ganaste!" : `Quedaste en ${l.lugar}° lugar`) : "Fin";
+  }
+  $("ptxt").textContent = t;
+}
+$("pmodo").onclick = () => { modoElegido = $("pmodo").textContent === "Solos" ? "equipos" : "solos"; $("pmodo").textContent = modoElegido === "equipos" ? "Equipos" : "Solos"; };
+$("pini").onclick = () => {
+  if ($("pini").textContent === "Volver al cuarto") canal.enviar("otra");
+  else canal.enviar("empezar", { modalidad: $("pmodo").textContent === "Equipos" ? "equipos" : "solos" });
+  vibrar(15);
+};
 
 // ---------- Sala de Físico ----------
 // Todos: gestos para animar a su personaje y el aviso para aceptar (o no) un castigo o reto de contacto.

@@ -22,7 +22,7 @@ export default defineConfig({
   // Con el cuarto de Modo libre. Físico y la mesa de prueba siguen solo en desarrollo.
   build: {
     rollupOptions: {
-      input: Object.fromEntries(["index.html", ...["index", "control", "tv-bala", "tv-desenfunda", "tv-martillazo", "tv-alto-total", "tv-paracaidas", "tv-cuarto"]
+      input: Object.fromEntries(["index.html", ...["index", "control", "tv-bala", "tv-desenfunda", "tv-martillazo", "tv-alto-total", "tv-paracaidas", "tv-cuarto", "tv-plataforma"]
         .map(n => `tools/personajes/minijuegos/${n}.html`)].map(f => [f.replace(/\.html$/, "").replace(/\//g, "-"), fileURLToPath(new URL(f, import.meta.url))])),
     },
   },
