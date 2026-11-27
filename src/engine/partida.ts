@@ -518,7 +518,8 @@ const pareja: Mecanica = {
     for (const [a, b] of parejasDe(e)) {
       const sujeto = e.ronda % 2 === 1 ? a : b, adivina = sujeto === a ? b : a;
       const pregunta = (carta?.texto ?? "").replaceAll("{pareja}", nombre(e, sujeto));
-      privado[sujeto] = { papel: "contesta", pregunta: pregunta.replace(nombre(e, sujeto), "ti") };
+      // Quien contesta ve la pregunta con su propio nombre: cambiarlo por «ti» dejaba frases rotas («según ti», «le gusta a ti»).
+      privado[sujeto] = { papel: "contesta", pregunta };
       privado[adivina] = { papel: "adivina", pregunta };
     }
     return { privado, carta: carta && { id: carta.id, texto: "Cada pareja contesta en secreto" } };
