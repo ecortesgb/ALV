@@ -3,7 +3,7 @@
 // pieza (la cara, además, sobre su cabeza lisa: sin pelo ni casco), la encuadra y devuelve la imagen. Nada se guarda en
 // disco: la página de arriba la tiene en memoria mientras está abierta (los modelos son privados, de un juego).
 // Mensajes (mismo origen, {origen:"alv"}):
-//   {tipo:"foto", clave, plano, ver:[ranuras], tam?, pose?: "union"} → responde {origen:"minifig", tipo:"foto", clave, url} o {…, error}
+//   {tipo:"foto", clave, plano, ver:[ranuras], tam?, pose?: "especial"} → responde {origen:"minifig", tipo:"foto", clave, url} o {…, error}
 // Responde {tipo:"listo"} al cargar. Las fotos se sacan de una en una, en el orden en que se piden.
 (function () {
   "use strict";
@@ -47,22 +47,34 @@
   async function foto({ plano, ver, tam, pose }) {
     const p = await MotorPersonajes.crear(plano);
     try {
-      // Pose de unión del modelo (sin animación): la cabeza queda derecha y de frente en todos (en reposo algunos,
-      // como Doctor Octopus, la tienen girada; Codex D2 pide el rostro visible y los ojos a la misma altura).
-      // Figura completa (nichos): primer cuadro de su reposo, como en su tarjeta (Elías, 2026-11-27: la pose de unión sale
-      // tiesa). Piezas sueltas: pose de unión, con la cabeza derecha y de frente.
-      if (pose === "union") { p.mixer.stopAllAction(); p.obj.traverse(o => { if (o.isSkinnedMesh) o.skeleton.pose(); }); }
-      else p.mixer.update(0);
+      // Piezas sueltas: pose de unión, con la cabeza derecha y de frente (en reposo algunos, como Doctor Octopus, la tienen
+      // girada; Codex D2 pide el rostro visible y los ojos a la misma altura). Figura completa (nichos de «Mi
+      // colección», Elías 2026-11-27): todas del mismo tamaño y centradas en su cuadro, en un cuadro de su movimiento
+      // especial (el elegido o el propio); si no tiene, el primer cuadro del reposo.
+      const figura = pose === "especial";
+      const cabeza = figura ? p.obj.getObjectByName("Head") : null;
+      p.obj.updateMatrixWorld(true);
+      const altoCabeza = cabeza ? cabeza.getWorldPosition(new T.Vector3()).y : 0;
+      if (figura && p.tocar("especial", { mezcla: 0 })) {
+        const e = p.estado();
+        p.update(0); p.update(Math.max(0, p.duracion(e.clip) * 0.45));
+      } else if (!figura) { p.mixer.stopAllAction(); p.obj.traverse(o => { if (o.isSkinnedMesh) o.skeleton.pose(); }); }
       const mostrar = new Set(ver);
       p.obj.traverse(o => { if (o.isMesh && !o.userData.alvOclusor) o.visible = mostrar.has(o.userData.slot) && !o.userData.alvFuera; }); // lo que una pieza reemplazó sigue escondido
       p.obj.rotation.y = GIRO;
       scene.add(p.obj);
-      const b = caja(p.obj);
-      if (b.isEmpty()) throw new Error("la pieza no tiene nada visible");
-      const centro = b.getCenter(new T.Vector3()), med = b.getSize(new T.Vector3());
-      const radio = Math.max(med.x, med.y, med.z) / 2;
+      let centro, radio;
+      if (figura && altoCabeza > 0) {
+        // Mismo encuadre para todas: medido con la altura de la cabeza en reposo, no con lo que abulta (capas, pelo).
+        centro = new T.Vector3(0, altoCabeza * 0.68, 0); radio = altoCabeza * 0.74;
+      } else {
+        const b = caja(p.obj);
+        if (b.isEmpty()) throw new Error("la pieza no tiene nada visible");
+        const med = b.getSize(new T.Vector3());
+        centro = b.getCenter(new T.Vector3()); radio = Math.max(med.x, med.y, med.z) / 2;
+      }
       const dist = (radio / Math.tan((camera.fov * Math.PI) / 360)) * 1.18;
-      camera.position.set(centro.x, centro.y + radio * 0.25, centro.z + dist);
+      camera.position.set(centro.x, centro.y + radio * (figura ? 0.1 : 0.25), centro.z + dist);
       camera.lookAt(centro);
       camera.near = dist / 50; camera.far = dist * 20; camera.updateProjectionMatrix();
       clave.position.set(centro.x + dist, centro.y + dist * 1.6, centro.z + dist * 1.2); clave.target.position.copy(centro);
