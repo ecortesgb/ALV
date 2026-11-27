@@ -18,6 +18,8 @@ export interface Forma {
   careta?: Careta;
   /** Al salir de esta forma la transformación es más larga y verde (Bruce Banner se está volviendo Hulk). */
   conEspecial?: boolean;
+  /** Forma de paso que no es punto de partida (Mística disfrazada de Gwen o Pepper: quien elige a Gwen no se transforma). */
+  disfraz?: boolean;
 }
 
 /** Mallas de la careta (por nombre, dentro del hueso del casco), bisagra en coordenadas de ese hueso y ángulo en grados. */
@@ -30,10 +32,17 @@ const CARETA_IRON_MAN: Careta = {
   bisagra: [0, 0.01, -0.01], angulo: -135,
 };
 
+// Con qué animación sale y llega cada forma lo trae su ficha (set «transformar», clips del juego); si no trae, temblor y humo.
 export const CICLOS: readonly (readonly Forma[])[] = [
   [{ p: "bruce-banner", conEspecial: true }, { p: "hulk" }],
   [{ p: "tony-stark" }, { p: "iron-man" }, { p: "iron-man", careta: CARETA_IRON_MAN }],
   [{ p: "peter-parker" }, { p: "spider-man" }],
+  // Segunda tanda (27 nov 5:32 AM): salir del Hulkbuster, Venom, el traje negro, Mística disfrazada y Stan Lee como en el juego.
+  [{ p: "hulkbuster" }, { p: "iron-man" }],
+  [{ p: "venom" }, { p: "venom-grande" }],
+  [{ p: "spider-man-negro" }, { p: "peter-parker" }],
+  [{ p: "mistica" }, { p: "gwen-stacy", disfraz: true }, { p: "pepper-potts", disfraz: true }],
+  [{ p: "stan-lee", conEspecial: true }, { p: "hulk" }],
 ];
 
 /** Ciclo y lugar de la figura (por su personaje del catálogo). La forma con `cabezaDe` no es punto de partida. */
@@ -41,7 +50,7 @@ function lugar(v3: FiguraV3): { ciclo: readonly Forma[]; i: number } | null {
   if (v3.origen.tipo !== "catalogo") return null;
   const id = v3.origen.personaje;
   for (const ciclo of CICLOS) {
-    const i = ciclo.findIndex(f => f.p === id && !f.cabezaDe && !f.careta);
+    const i = ciclo.findIndex(f => f.p === id && !f.cabezaDe && !f.careta && !f.disfraz);
     if (i >= 0) return { ciclo, i };
   }
   return null;
