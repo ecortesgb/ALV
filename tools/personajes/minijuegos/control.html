@@ -65,6 +65,7 @@ input{font:800 18px Nunito,sans-serif;padding:10px 12px;border-radius:12px;borde
 .botones .img b{display:none}
 .botones .x-a{width:38%;height:38%;left:31%;bottom:0;background-image:url(../../../arte/ui/mando/x-a.webp)!important}
 .botones .x-b{width:38%;height:38%;right:0;top:31%;background-image:url(../../../arte/ui/mando/x-b.webp)!important}
+.botones .x-x{width:38%;height:38%;left:-8%;top:31%;background-image:url(../../../arte/ui/mando/x-x.webp)!important}
 .botones .x-rt{width:34%!important;height:38%!important;right:6%;top:-14%;border-radius:0!important;background-image:url(../../../arte/ui/mando/x-rt.webp)!important}
 /* Rueda de animaciones (Elías, 27 nov: en lugar de ¡Eh!, «nuestro círculo de animaciones» al centro, siempre visible).
    Mismo vidrio, colores e íconos que la rueda del HUB (src/pantallas/gestos): Saludar, Ganar, Especial y Perder. */
@@ -135,7 +136,8 @@ input{font:800 18px Nunito,sans-serif;padding:10px 12px;border-radius:12px;borde
     <div class="zona-palanca" id="zona"><div class="palanca" id="palanca"><i id="bolita"></i></div></div>
     <div class="rueda" id="rueda" role="menu" aria-label="Animaciones de tu personaje"><span class="vidrio"></span></div>
     <div class="botones">
-      <button class="x-rt img" data-b="poder" aria-label="RT: poder"><b>RT</b><small>Poder</small></button>
+      <button class="x-rt img" data-b="poder" aria-label="RT: poder"><b>RT</b><small id="rt-txt">Poder</small></button>
+      <button class="x-x img oculto" id="boton-x" data-b="poder2" aria-label="X: segundo poder"><b>X</b><small id="x-txt">Poder</small></button>
       <button class="x-b img" data-b="golpe" aria-label="B: golpe"><b>B</b><small>Golpe</small></button>
       <button class="x-a img" data-b="saltar" aria-label="A: salta"><b>A</b><small>Salta</small></button>
     </div>

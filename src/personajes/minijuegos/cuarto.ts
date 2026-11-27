@@ -2,7 +2,7 @@
 // Lógica pura que corre en la TV; los celulares mandan el mando (palanca y botones). La escena 3D solo lee `anim`.
 // Unidades de la escena de ALV (una minifigura mide ~2.7). Sin DOM ni 3D: lo prueba minijuegos.test.ts.
 
-export type Anim = "reposo" | "caminar" | "correr" | "saltar" | "caer" | "aterrizar" | "golpe" | "herido" | "ko" | "festejo" | "poder" | "saludo" | "derrota" | "especial";
+export type Anim = "reposo" | "caminar" | "correr" | "saltar" | "caer" | "aterrizar" | "golpe" | "herido" | "ko" | "festejo" | "poder" | "poder2" | "saludo" | "derrota" | "especial";
 /** Gestos de la rueda del mando (Elías, 27 nov): Saludar, Ganar (festejo), Especial y Perder. */
 export type GestoCuarto = "saludo" | "festejo" | "derrota" | "especial";
 const GESTO_MS: Record<GestoCuarto, number> = { saludo: 2000, festejo: 2300, derrota: 2300, especial: 2000 };
@@ -28,7 +28,7 @@ export const CONFIG_CUARTO: ConfigCuarto = {
   aterrizarMs: 260, reaparecerMs: 1400, caducaMandoMs: 500,
 };
 
-export interface Mando { x: number; z: number; saltar?: boolean; golpe?: boolean; festejo?: boolean; poder?: boolean; gesto?: GestoCuarto }
+export interface Mando { x: number; z: number; saltar?: boolean; golpe?: boolean; festejo?: boolean; poder?: boolean; poder2?: boolean; gesto?: GestoCuarto }
 
 export interface Cuerpo {
   id: string; x: number; z: number; y: number; vy: number; rot: number;
@@ -44,7 +44,7 @@ export type EventoCuarto =
   | { tipo: "ko"; id: string }
   | { tipo: "cae"; id: string }
   | { tipo: "salto"; id: string }
-  | { tipo: "poder"; id: string };
+  | { tipo: "poder"; id: string; n?: 2 };
 
 export function crearCuarto(cfg: Partial<ConfigCuarto> = {}): EstadoCuarto {
   return { cfg: { ...CONFIG_CUARTO, ...cfg }, cuerpos: new Map(), t: 0 };
@@ -65,6 +65,14 @@ export function entrar(e: EstadoCuarto, id: string, escala = 1): Cuerpo {
 
 export function salir(e: EstadoCuarto, id: string) { e.cuerpos.delete(id); }
 
+/** Alarga (o acorta) el poder que está haciendo al largo de su clip: la TV lo sabe hasta que baja el GLB de poderes.
+ *  Entre 0.4 y 6 s desde que empezó. Si ya no está en un poder, no hace nada. */
+export function alargar(e: EstadoCuarto, id: string, ms: number) {
+  const c = e.cuerpos.get(id);
+  if (!c || (c.anim !== "poder" && c.anim !== "poder2") || !Number.isFinite(ms)) return;
+  c.hasta = c.animDesde + Math.min(6000, Math.max(400, ms));
+}
+
 /** Lo que manda el celular. La palanca se acota a un círculo de radio 1; los botones son «se tocó» (se gastan). */
 export function mandar(e: EstadoCuarto, id: string, m: Mando) {
   const c = e.cuerpos.get(id);
@@ -72,12 +80,12 @@ export function mandar(e: EstadoCuarto, id: string, m: Mando) {
   let x = Number.isFinite(m.x) ? m.x : 0, z = Number.isFinite(m.z) ? m.z : 0;
   const l = Math.hypot(x, z);
   if (l > 1) { x /= l; z /= l; }
-  c.mando = { x, z, saltar: c.mando.saltar || !!m.saltar, golpe: c.mando.golpe || !!m.golpe, festejo: c.mando.festejo || !!m.festejo, poder: c.mando.poder || !!m.poder,
+  c.mando = { x, z, saltar: c.mando.saltar || !!m.saltar, golpe: c.mando.golpe || !!m.golpe, festejo: c.mando.festejo || !!m.festejo, poder: c.mando.poder || !!m.poder, poder2: c.mando.poder2 || !!m.poder2,
     gesto: m.gesto && Object.hasOwn(GESTO_MS, m.gesto) ? m.gesto : c.mando.gesto };
   c.mandoT = e.t;
 }
 
-const ocupado = (c: Cuerpo) => c.anim === "golpe" || c.anim === "herido" || c.anim === "ko" || c.anim === "festejo" || c.anim === "poder" || c.anim === "aterrizar"
+const ocupado = (c: Cuerpo) => c.anim === "golpe" || c.anim === "herido" || c.anim === "ko" || c.anim === "festejo" || c.anim === "poder" || c.anim === "poder2" || c.anim === "aterrizar"
   || c.anim === "saludo" || c.anim === "derrota" || c.anim === "especial";
 const angulo = (a: number) => Math.atan2(Math.sin(a), Math.cos(a));
 function poner(e: EstadoCuarto, c: Cuerpo, a: Anim, ms = 0) {
@@ -118,6 +126,8 @@ export function pasoCuarto(e: EstadoCuarto, dt: number): EventoCuarto[] {
     if (gesto && libre && c.enPiso) poner(e, c, gesto, GESTO_MS[gesto]);
     // Poder (gatillo RT): el movimiento especial del personaje (rayos de Cíclope, pecho de Iron Man...). Solo animación.
     if (m.poder && libre && c.enPiso) { poner(e, c, "poder", 2000); ev.push({ tipo: "poder", id: c.id }); }
+    // Segundo poder (botón X), si el personaje lo trae. La TV alarga los dos al largo real del clip (alargar).
+    else if (m.poder2 && libre && c.enPiso) { poner(e, c, "poder2", 2000); ev.push({ tipo: "poder", id: c.id, n: 2 }); }
     if (m.saltar && libre && c.enPiso) { c.vy = cfg.salto; c.enPiso = false; poner(e, c, "saltar"); ev.push({ tipo: "salto", id: c.id }); }
     // Moverse (también en el aire; no mientras golpea, está herido o tirado).
     let vx = 0, vz = 0;

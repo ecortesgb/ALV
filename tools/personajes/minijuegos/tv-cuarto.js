@@ -2,7 +2,7 @@
 // segundo con lo que mandan los celulares (palanca y botones) y le pone a cada personaje el clip que toca.
 // Decidió Codex (encargo 2026-11-26-minijuegos-r1, D6): caja con cámara fija; la plataforma y la cámara que sigue
 // quedan fuera de esta entrega (la plataforma sigue en cuarto.ts, con sus pruebas).
-import { crearCuarto, entrar, mandar, pasoCuarto, salir } from "/src/personajes/minijuegos/cuarto.ts";
+import { alargar, crearCuarto, entrar, mandar, pasoCuarto, salir } from "/src/personajes/minijuegos/cuarto.ts";
 import { crearTV } from "./tv-comun.js";
 
 const q = new URLSearchParams(location.search);
@@ -23,7 +23,7 @@ const tv = crearTV({
       if (j.figura) j.figura.anim("saludo");
     }
     visto.delete(j.id);
-    $("sub").textContent = `${tv.jugadores.size} en el cuarto · palanca para moverte · A salta · B golpe · RT poder · rueda: gestos`;
+    $("sub").textContent = `${tv.jugadores.size} en el cuarto · palanca para moverte · A salta · B golpe · RT y X poderes · rueda: gestos`;
   },
   alSalir: j => { salir(cuarto, j.id); visto.delete(j.id); },
   alMensaje: (j, m) => {
@@ -31,7 +31,7 @@ const tv = crearTV({
     else if (m.tipo === "boton") {
       const c = cuarto.cuerpos.get(j.id); if (!c) return;
       const b = String(m.d.b);
-      mandar(cuarto, j.id, { x: c.mando.x, z: c.mando.z, saltar: b === "saltar", golpe: b === "golpe", festejo: b === "festejo", poder: b === "poder" });
+      mandar(cuarto, j.id, { x: c.mando.x, z: c.mando.z, saltar: b === "saltar", golpe: b === "golpe", festejo: b === "festejo", poder: b === "poder", poder2: b === "poder2" });
     } else if (m.tipo === "gesto") { // rueda de animaciones del mando (canal.ts ya revisó que sea uno de los 4)
       const c = cuarto.cuerpos.get(j.id); if (!c) return;
       mandar(cuarto, j.id, { x: c.mando.x, z: c.mando.z, gesto: m.d.g });
@@ -67,11 +67,26 @@ function animar(j, cu) {
     case "saludo": f.anim("saludo"); break;
     case "derrota": f.anim("derrota"); break;
     case "especial": f.anim("especial", { mezcla: 0.08 }); break;
-    case "poder": f.anim("especial", { mezcla: 0.08 }); break;
+    case "poder": lanzarPoder(j, 0); break;
+    case "poder2": lanzarPoder(j, 1); break;
     case "caminar": f.anim("caminar"); break;
     case "correr": f.anim("correr"); break;
     default: f.anim("reposo");
   }
+}
+
+// ---------- Poderes (RT = el primero, X = el segundo): clip del GLB «poderes» y sus efectos (tools/personajes/efectos.js) ----------
+// Sin GLB de poderes (personaje sin ellos o aún sin subir): RT hace el movimiento especial de siempre, X nada.
+function lanzarPoder(j, i) {
+  const f = j.figura, desde = cuarto.cuerpos.get(j.id)?.animDesde;
+  if (!f.poder || !(f.poderes && f.poderes[i])) { if (i === 0) f.anim("especial", { mezcla: 0.08 }); return; }
+  f.poder(i).then(r => {
+    const cu = cuarto.cuerpos.get(j.id);
+    if (!cu || cu.animDesde !== desde) return; // ya hace otra cosa
+    if (!r) { if (i === 0) f.anim("especial", { mezcla: 0.08 }); return; }
+    alargar(cuarto, j.id, r.dur * 1000);
+    if (window.EfectosALV) r.efectos.forEach(ef => { try { EfectosALV.lanzar(escena.scene, { obj: f.obj, hueso: f.hueso }, ef); } catch (e) { console.warn("efecto", e); } });
+  });
 }
 
 // ---------- Jugadores de prueba (?bots=N): pasean, a veces corren, saltan o golpean ----------
@@ -100,7 +115,7 @@ setInterval(() => {
     resto -= 1000 / 60;
     for (const ev of pasoCuarto(cuarto, 1000 / 60)) {
       if (ev.tipo === "golpe") tv.pop(tv.jugadores.get(ev.a), "¡Pum!", "#ff8a1f");
-      if (ev.tipo === "poder") tv.pop(tv.jugadores.get(ev.id), "¡Poder!", "#b46cff");
+      if (ev.tipo === "poder") { const j = tv.jugadores.get(ev.id), nom = j && j.figura && j.figura.poderes && j.figura.poderes[ev.n === 2 ? 1 : 0]; tv.pop(j, nom ? nom.nombre : "¡Poder!", "#b46cff"); }
       if (ev.tipo === "ko") tv.pop(tv.jugadores.get(ev.id), "¡K.O.!", "#e8343a");
       if (ev.tipo === "cae") { const j = tv.jugadores.get(ev.id); if (j) { j.vieneDeLejos = true; tv.pop(j, "¡Aaah!", "#7cc0ff"); } }
     }
