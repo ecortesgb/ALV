@@ -28,7 +28,7 @@ import { RuedaFigura, type MandoRueda } from "../gestos/RuedaFigura";
 import { useVidaPropia } from "../../app/vidaPerfil";
 import { Confeti, NumeroLetrero, useCelebracion } from "../LetreroVivo";
 
-/** 053: la sala espejo de la nube de un lobby local (una sola vez aunque se pida dos veces). Null si no se pudo. */
+/** 055: la sala espejo de la nube de un lobby local (una sola vez aunque se pida dos veces). Null si no se pudo. */
 const pidiendoEspejo = new Map<string, Promise<Espejo | null>>();
 export function asegurarEspejo(sala: SalaV): Promise<Espejo | null> {
   const ya = modoLocal.espejo(sala);
@@ -42,7 +42,7 @@ export function asegurarEspejo(sala: SalaV): Promise<Espejo | null> {
   return p;
 }
 
-/** 053: pasar del lobby en línea (o de la espera) al lobby de un solo aparato, con tu cuenta como P1. */
+/** 055: pasar del lobby en línea (o de la espera) al lobby de un solo aparato, con tu cuenta como P1. */
 export function jugarEnEsteAparato(yo: { id: string; nombre: string; figura: Miembro["figura"] }) {
   const sl = modoLocal.abrir(yo);
   void asegurarEspejo(sl);
@@ -72,7 +72,7 @@ export function Lobby({ sala, miembros, yo, soyAnfitrion, final, red, refrescar,
   // Modo Local: un solo teléfono; el anfitrión agrega personajes sin cuenta y les cambia la figura.
   const local = esLocal(sala.id);
   const [editar, setEditar] = useState<{ tipo: "elegir" } | { tipo: "nuevo" } | { tipo: "rapido" } | { tipo: "cuenta" } | { tipo: "figura"; m: Miembro } | null>(null);
-  // 053: personaje rápido recién creado (sus datos de acceso se ven una sola vez) y su estado mientras se crea.
+  // 055: personaje rápido recién creado (sus datos de acceso se ven una sola vez) y su estado mientras se crea.
   const [acceso, setAcceso] = useState<PersonajeRapido | null>(null);
   const [creando, setCreando] = useState(false), [errorRapido, setErrorRapido] = useState<string | null>(null);
   // La sala espejo se abre en cuanto el anfitrión entra a su lobby local, así también él gana sus puntos.

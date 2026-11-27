@@ -1,4 +1,4 @@
-// Recupera una cuenta de personaje rápido (053): usuario + código de recuperación + contraseña nueva.
+// Recupera una cuenta de personaje rápido (055): usuario + código de recuperación + contraseña nueva.
 // No pide sesión (la persona olvidó su contraseña). La llave secreta (service role) la pone Supabase como variable del
 // servidor: nunca está en el código ni llega al navegador. El código se compara en la base (hash bcrypt) y 5 fallos lo
 // bloquean. Errores hacia la app: un solo mensaje genérico. El detalle va al log (sin código ni contraseña).

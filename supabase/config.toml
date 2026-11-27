@@ -431,6 +431,6 @@ enabled = true
 # and column/key alignment. Set to "null" to emit raw, unformatted SQL.
 # format_options = "{\"keywordCase\":\"upper\",\"indent\":2,\"maxWidth\":180,\"commaStyle\":\"trailing\"}"
 
-# ALV 053: recuperar-cuenta no pide sesión (la persona olvidó su contraseña); valida usuario + código en la base.
+# ALV 055: recuperar-cuenta no pide sesión (la persona olvidó su contraseña); valida usuario + código en la base.
 [functions.recuperar-cuenta]
 verify_jwt = false

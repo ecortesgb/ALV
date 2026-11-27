@@ -1,4 +1,4 @@
-// Jugar varios en un mismo aparato (053, Elías 27 nov): «Agregar jugador» en el lobby de un aparato.
+// Jugar varios en un mismo aparato (055, Elías 27 nov): «Agregar jugador» en el lobby de un aparato.
 // Tres caminos: personaje rápido (cuenta real UsuarioN con contraseña aleatoria), entrar con una cuenta que ya existe,
 // o sin cuenta (como antes: juega pero no gana puntos). Los datos de acceso del personaje rápido se ven UNA sola vez.
 import { useEffect, useState, type FormEvent, type ReactNode } from "react";

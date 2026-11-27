@@ -1,4 +1,4 @@
-// Jugar varios en un mismo aparato (053, pedido de Elías del 27 nov).
+// Jugar varios en un mismo aparato (055, pedido de Elías del 27 nov).
 // En el lobby de un aparato se agrega una cuenta existente (usuario y contraseña) o un «personaje rápido»: una cuenta real
 // UsuarioN con contraseña aleatoria y código de recuperación, que se muestran UNA sola vez.
 // Cada cuenta entra con SU sesión, en un cliente aparte que no guarda nada, a la sala espejo de la nube («ALV en un
@@ -10,7 +10,7 @@ import { desdeBase, haciaBase } from "../personajes/integracion";
 import { cliente, clienteAparte, hayNube } from "./cliente";
 import { nickValido, passValida } from "./cuenta";
 
-/** Nombre de la sala espejo en la nube. lobby_abierto (053) la ignora para que nadie entre solo a ella. */
+/** Nombre de la sala espejo en la nube. lobby_abierto (055) la ignora para que nadie entre solo a ella. */
 export const NOMBRE_ESPEJO = "ALV en un aparato";
 export interface Espejo { id: string; codigo: string }
 export interface CuentaEnAparato { id: string; nombre: string; figura: FiguraV2 | null }

@@ -11,7 +11,7 @@ export const cliente: SupabaseClient | null = URL && LLAVE
   : null;
 
 /**
- * Cliente aparte para una cuenta que entra en el aparato de otro (lobby de un aparato, 053). No guarda la sesión ni la
+ * Cliente aparte para una cuenta que entra en el aparato de otro (lobby de un aparato, 055). No guarda la sesión ni la
  * renueva: se usa unos segundos para crear o comprobar la cuenta y entrar a la sala espejo, y se cierra. Nunca toca la
  * sesión del dueño del aparato.
  */
