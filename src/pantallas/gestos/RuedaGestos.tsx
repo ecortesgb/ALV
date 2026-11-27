@@ -156,19 +156,24 @@ export const RUEDA: GestoRueda[] = [
   { cual: "derrota", txt: "Perder", c1: "#4f86e8", c2: "#1f4fb0", dibujo: <TrazosGesto cual="derrota" />, img: `${ICONOS}gesto-derrota.webp` },
 ];
 /** Quinto gajo, solo en personajes que se transforman (Banner ↔ Hulk, Tony / Iron Man, Peter ↔ Spider-Man; Elías, 27 nov). */
-export const GAJO_PODERES: GestoRueda = { cual: "poderes", txt: "Poderes", c1: "#4fd8ff", c2: "#1479c9", dibujo: <TrazosGesto cual="poderes" /> };
+export const GAJO_PODERES: GestoRueda = { cual: "poderes", txt: "Poderes", c1: "#4fd8ff", c2: "#1479c9", dibujo: <TrazosGesto cual="poderes" />, img: `${ICONOS}gesto-poderes.webp` };
 const COLORES_PODER: [string, string][] = [["#4fd8ff", "#1479c9"], ["#ff7a59", "#d0341a"], ["#b7f04a", "#4f9f12"], ["#ffd84a", "#e0a400"]];
 /** Un gajo por poder del personaje (segunda rueda de «Poderes»). */
 export const gajosPoder = (lista: { id: string; nombre: string }[]): GestoRueda[] => lista.slice(0, 8).map((p, i) => {
   const [c1, c2] = COLORES_PODER[i % COLORES_PODER.length]!;
   return { cual: "poder:" + p.id, txt: p.nombre, c1, c2, dibujo: <TrazosGesto cual="poder:" /> };
 });
-export const GAJO_MOVIMIENTOS: GestoRueda = { cual: "movimientos", txt: "Movimientos", c1: "#ffb347", c2: "#e06a00", dibujo: <TrazosGesto cual="movimientos" /> };
+// Íconos de Elías (27 nov): «Acción» abre los sets de movimientos; Golpear y Patada son atajos de la Pelea que tienen todos.
+export const GAJO_MOVIMIENTOS: GestoRueda = { cual: "movimientos", txt: "Acción", c1: "#ffb347", c2: "#e06a00", dibujo: <TrazosGesto cual="movimientos" />, img: `${ICONOS}gesto-accion.webp` };
+export const GAJO_GOLPEAR: GestoRueda = { cual: "mov:pelea-golpe1", txt: "Golpear", c1: "#ff7a59", c2: "#d0341a", dibujo: <TrazosGesto cual="mov:" />, img: `${ICONOS}gesto-golpear.webp` };
+export const GAJO_PATADA: GestoRueda = { cual: "mov:pelea-golpe2", txt: "Patada", c1: "#c8b6ff", c2: "#6f4fd6", dibujo: <TrazosGesto cual="mov:" />, img: `${ICONOS}gesto-patada.webp` };
+/** Ícono propio de un set en la rueda de «Acción» (Volar). */
+const IMG_SET: Record<string, string> = { vuelo: `${ICONOS}gesto-volar.webp` };
 const COLORES_MOV: [string, string][] = [["#ffb347", "#e06a00"], ["#ff8fd8", "#c2368f"], ["#7fe0c8", "#1f9e80"], ["#c8b6ff", "#6f4fd6"]];
 /** Un gajo por set de movimientos (segunda rueda de «Movimientos»). */
 export const gajosSet = (lista: { set: string; nombre: string }[]): GestoRueda[] => lista.slice(0, 8).map((g, i) => {
   const [c1, c2] = COLORES_MOV[i % COLORES_MOV.length]!;
-  return { cual: "set:" + g.set, txt: g.nombre, c1, c2, dibujo: <TrazosGesto cual="movimientos" /> };
+  return { cual: "set:" + g.set, txt: g.nombre, c1, c2, dibujo: <TrazosGesto cual="movimientos" />, ...(IMG_SET[g.set] ? { img: IMG_SET[g.set] } : {}) };
 });
 /** Un gajo por movimiento de un set (tercera rueda). */
 export const gajosMovimiento = (lista: { id: string; nombre: string }[]): GestoRueda[] => lista.slice(0, 8).map((m, i) => {

@@ -7,7 +7,7 @@ import { sonar } from "../../app/sonido";
 import { tocarVoz } from "../../app/musica";
 import { prepararVoz, urlObjeto, vozDe } from "../../app/temas";
 import type { FiguraV2 } from "../../content/personaje";
-import { GAJO_MOVIMIENTOS, GAJO_PODERES, GAJO_TRANSFORMAR, RUEDA, RuedaGestos, gajosMovimiento, gajosPoder, gajosSet } from "./RuedaGestos";
+import { GAJO_GOLPEAR, GAJO_MOVIMIENTOS, GAJO_PATADA, GAJO_PODERES, GAJO_TRANSFORMAR, RUEDA, RuedaGestos, gajosMovimiento, gajosPoder, gajosSet } from "./RuedaGestos";
 import { conForma, seTransforma, transformar, useVersionFormas } from "../../app/formas";
 import { pedirPoder } from "../../app/poderes";
 import { movimientosDe, poderesDe, useCatalogoV3 } from "../../personajes/integracion";
@@ -102,6 +102,13 @@ export const RuedaFigura = forwardRef<MandoRueda, { jugador: string; figura?: Fi
   if (pos) ultimaPos.current = pos;
   const cerrar = useCallback(() => { cerro.current = performance.now(); setPos(null); setSub(null); }, []);
 
+  // Rueda principal (hasta 8): gestos, Transformar, Poderes, Golpear, Patada y Acción. Si no caben, Patada se queda solo
+  // dentro de Acción → Pelea.
+  const pelea = movimientos.find(x => x.set === "pelea")?.movs ?? [];
+  const atajos = [GAJO_GOLPEAR, GAJO_PATADA].filter(g => pelea.some(m => "mov:" + m.id === g.cual));
+  const fijos = [...RUEDA, ...(figura && seTransforma(figura) ? [GAJO_TRANSFORMAR] : []), ...(poderes.length ? [GAJO_PODERES] : [])];
+  const accion = movimientos.length ? [GAJO_MOVIMIENTOS] : [];
+  const principal = [...fijos, ...atajos.slice(0, Math.max(0, 8 - fijos.length - accion.length)), ...accion];
   if (!pos && !pista) return null;
   return (
     <div className="rg-capa">
@@ -111,7 +118,7 @@ export const RuedaFigura = forwardRef<MandoRueda, { jugador: string; figura?: Fi
           ? <RuedaGestos key="movimientos" gestos={gajosSet(movimientos)} x={pos.x} y={pos.y} onElegir={elegir} onCerrar={cerrar} />
           : sub?.startsWith("set:")
             ? <RuedaGestos key={sub} gestos={gajosMovimiento(movimientos.find(x => x.set === sub.slice(4))?.movs ?? [])} x={pos.x} y={pos.y} onElegir={elegir} onCerrar={cerrar} />
-          : <RuedaGestos key="gestos" gestos={[...RUEDA, ...(figura && seTransforma(figura) ? [GAJO_TRANSFORMAR] : []), ...(poderes.length ? [GAJO_PODERES] : []), ...(movimientos.length ? [GAJO_MOVIMIENTOS] : [])]} x={pos.x} y={pos.y} onElegir={elegir} onCerrar={cerrar} />)}
+          : <RuedaGestos key="gestos" gestos={principal} x={pos.x} y={pos.y} onElegir={elegir} onCerrar={cerrar} />)}
       {!pos && pista && <p className="rg-pista" style={{ left: pista.x, top: pista.y }} aria-hidden="true">Toca a tu personaje para animarlo</p>}
     </div>
   );

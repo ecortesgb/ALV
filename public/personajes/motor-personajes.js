@@ -273,7 +273,8 @@
         const g2 = await bajar(e.glb, e.carga || plano.carga);
         const c0 = g2.animations.find(a => a.name === e.clip);
         // Solo las pistas de huesos o mallas que esta figura tiene (las caras de otro personaje traen las suyas).
-        const c = c0 && new T.AnimationClip(c0.name, c0.duration, c0.tracks.filter(t => obj.getObjectByName(T.PropertyBinding.parseTrackName(t.name).nodeName)));
+        const c = c0 && new T.AnimationClip(c0.name, c0.duration, c0.tracks.filter(t => { const pt = T.PropertyBinding.parseTrackName(t.name);
+              return obj.getObjectByName(pt.nodeName) && !(fijo && pt.nodeName === "Character" && pt.propertyName === "position"); }));
         if (c && c.tracks.length) { porNombre.set("ext:" + l, c); clips[l] = "ext:" + l; }
       } catch (_) { /* se queda el clip propio */ }
     }
@@ -380,12 +381,14 @@
       /** Toca una vez un clip de otro GLB del mismo personaje (poderes: <id>-poderes.glb, mismo esqueleto) y vuelve a reposo
        *  al terminar. Promesa con la duración en segundos (0 si no bajó o no está: no cambia lo que se toca). */
       tocarExt: async (glb, nombre, op) => {
-        const k = "poder:" + String(glb).split("/").pop() + "#" + nombre;
+        // `fijo`: sin el avance del cuerpo entero (pista position de «Character»): el movimiento se hace en su lugar.
+        const fijo = !!(op && op.fijo), k = "poder:" + String(glb).split("/").pop() + "#" + nombre + (fijo ? "#fijo" : "");
         if (!porNombre.has(k)) {
           try {
             const g2 = await bajar(glb, (op && op.carga) || plano.carga);
             const c0 = g2.animations.find(a => a.name === nombre);
-            const c = c0 && new T.AnimationClip(k, c0.duration, c0.tracks.filter(t => obj.getObjectByName(T.PropertyBinding.parseTrackName(t.name).nodeName)));
+            const c = c0 && new T.AnimationClip(k, c0.duration, c0.tracks.filter(t => { const pt = T.PropertyBinding.parseTrackName(t.name);
+              return obj.getObjectByName(pt.nodeName) && !(fijo && pt.nodeName === "Character" && pt.propertyName === "position"); }));
             if (!c || !c.tracks.length) return 0;
             porNombre.set(k, c);
           } catch (_) { return 0; }
