@@ -10,12 +10,14 @@ const arte = (base: string) => ({ "--arte-g": url(`${base}-1920.webp`), "--arte-
 // Foquitos de feria: colores pastel, alegres (nada de neón oscuro).
 const FOCOS = ["#ff7eb6", "#ffe066", "#5ff0e2", "#9fd0ff", "#ffb066"];
 
-export function EscenarioFondo({ ambiente, momento, velo }: { ambiente: Ambiente; momento: MomentoAzotea; velo: number }) {
+export function EscenarioFondo({ ambiente, momento, velo, tema }: { ambiente: Ambiente; momento: MomentoAzotea; velo: number;
+  /** url() del fondo del tema de tu personaje (temas.ts): reemplaza la azotea entera. */ tema?: string | null }) {
   const c = ambiente.capas;
   return (
     <div className={`az-escenario m-${momento}${ambiente.foquitos ? " foquitos" : ""}`} style={{ "--az-velo": velo } as CSSProperties} aria-hidden="true">
       {/* Con pedestal pintado el fondo no se mueve con el cursor: la figura va clavada encima. */}
-      {ambiente.fondo ? <div className={"az-capa az-fondo" + (ambiente.pedestal ? "" : " az-p2")} style={arte(ambiente.fondo)} />
+      {tema ? <div className="az-capa az-fondo az-p2 az-tema" style={{ "--arte-g": tema, "--arte-c": tema } as CSSProperties} />
+      : ambiente.fondo ? <div className={"az-capa az-fondo" + (ambiente.pedestal ? "" : " az-p2")} style={arte(ambiente.fondo)} />
       : c ? <>
         <div className="az-capa az-p0" style={{ backgroundImage: url(c.cielo) }} />
         <div className="az-capa az-p1" style={{ backgroundImage: url(c.lejos) }} />

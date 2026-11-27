@@ -644,3 +644,7 @@
 .D .azm .azc-nivel b { font-size: calc(var(--m) * .16); margin-top: 5%; }
 .D .azm .azc-punto { border-width: max(2px, calc(var(--m) * .02)); }
 .D .azm .azc-fondo { background: radial-gradient(circle at 50% 30%, #fff 0, color-mix(in srgb, var(--pj, #5a8de0) 35%, #fff) 35%, var(--pj, #5a8de0) 75%, var(--pj-oscuro, #1d3a8f) 100%); }
+
+/* Tema de tu personaje (temas.ts, Elías 26 nov): la imagen cubre toda la pantalla, sin el piso de la azotea. */
+.D.az .az-escenario:has(.az-tema) .az-capa.az-fondo.az-tema { background-size: cover; background-position: center 60%; inset: 0; }
+.D.az .az-escenario:has(.az-tema)::after { display: none; }

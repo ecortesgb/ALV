@@ -21,6 +21,7 @@ import { PantallaTv } from "../roles/pantalla/Pantalla";
 import { refrescarSesion, useSesion } from "./sesion";
 import { instalarClics } from "./sonido";
 import { useRuta } from "./rutas";
+import { TemaMusical } from "./TemaMusical";
 
 /** Página interna del Design System (sin enlace en la app): se carga aparte. */
 const PaginaDS = lazy(() => import("../pantallas/ds"));
@@ -61,5 +62,5 @@ export function App() {
     : ruta === "admin" ? <Admin />
     // HUB «La Azotea» (antes Hub.tsx; de ahí solo queda Jugar).
     : <HubAzotea />;
-  return <>{pantalla}{fase === "dentro" && <SincroCapsulas />}{fase === "dentro" && <Recompensas />}{fase === "dentro" && ruta !== "tv" && <AvisoLogro />}{!inicio && fase === "dentro" && invitado && ruta !== "tv" && ruta !== "editor" && <span className="a-prueba" aria-label="Estás en una entrada de prueba">Prueba</span>}<Avisos /></>;
+  return <>{pantalla}{fase === "dentro" && <SincroCapsulas />}{fase === "dentro" && ruta !== "tv" && <TemaMusical />}{fase === "dentro" && <Recompensas />}{fase === "dentro" && ruta !== "tv" && <AvisoLogro />}{!inicio && fase === "dentro" && invitado && ruta !== "tv" && ruta !== "editor" && <span className="a-prueba" aria-label="Estás en una entrada de prueba">Prueba</span>}<Avisos /></>;
 }

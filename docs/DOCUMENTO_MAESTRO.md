@@ -1,6 +1,6 @@
 # ALV — Amigos Legendarios Verdaderos
 ## Documento Maestro del Producto
-**Versión:** 1.64  
+**Versión:** 1.65  
 **Última actualización:** 26 de noviembre de 2026  
 **Estado:** Documento vivo de producto; decisiones y propuestas identificadas por separado.
 
@@ -828,6 +828,13 @@ Reglas propuestas:
 7. **Producción privada:** los personajes y las piezas se arman con Figure Forge a partir de los juegos LEGO de PC de Elías. Lo que sale de un juego nunca va al repo ni a una página pública; se sirve solo desde almacenamiento privado. La app es de uso personal con amigos.
 8. **Personajes antiguos:** los 49 personajes y el personalizador de libro de cómic salen de la app y se conservan como respaldo. Las figuras guardadas por los jugadores se respaldan y salen con la migración de la fase 5, que se presenta antes con su procedimiento y plan de reversión (D-002).
 9. **Primera tanda real:** 123 personajes de LEGO Marvel Super Heroes (126 exportados; Legolas, Aragorn y Gandalf salen del catálogo por ahora porque el juego no trae sus texturas). Todos siguen «sin revisar» hasta que Elías los apruebe a la vista. Los personajes de otros juegos (DC, Star Wars, Harry Potter, Piratas, Sonic) quedan para tandas siguientes.
+
+**DECISIÓN (v1.65, Elías, 26 de noviembre) — Fondo y canción por personaje.** Cada personaje trae un tema (fondo + canción), **por saga con excepciones**: X-Men, Marvel general (respaldo de todo Marvel), Liga de la Justicia, Suicide Squad, Star Wars, futbolistas; y propios para Iron Man, Capitán América, Deadpool, Spider-Man, Thor, Hulk, Batman, Joker, etc. Al personaje que le falte fondo o canción usa el de su saga. Lo creado desde cero no tiene tema. Momentos:
+1. **HUB y taller (Personalizar), en tu celular:** el fondo de tu personaje en juego reemplaza la azotea (la figura va en su plataforma) y su canción suena en vez de la del HUB (también en Perfil). Varias canciones en un tema: una al azar por carga.
+2. **Lobby (celulares y TV):** la pared de cada cabina lleva el fondo del personaje de cada quien, sin canción.
+3. **Resultados en la TV:** el fondo del ganador y unos 8 segundos de su canción (con empate, el cuarto de siempre y sin canción).
+4. **En partida:** nada cambia.
+Licencias: la música tiene derechos de terceros, solo uso privado. No va en el repo ni en GitHub Pages: vive en el bucket privado `temas-privados` (migración 047) y solo la baja quien puede ver personajes privados. El material y los scripts viven en `juegos-fiesta\audio-personajes` (`preparar-temas.py`, `subir-temas.mjs`, `temas.csv` para excepciones). **PENDIENTE:** música libre o propia antes de abrir ALV a más gente.
 
 **DECISIÓN (v1.64, Elías, 26 de noviembre) — D3, rediseño del personalizador.** Cambia los puntos 1 y 3 de D3 v1.62 (y del 4 solo los accesorios, que pasan al básico). Se publica cuando Elías apruebe las capturas.
 1. **Entrada:** el mueble de madera «Mi colección» (arte de Elías) con los 3 personajes parados en sus nichos. Nicho vacío: «Crear» o «Elegir» ahí. Nicho ocupado: tocarlo lo pone en juego; tocarlo otra vez lo abre para editarlo. Abajo, «Crear figura» (grande) y «Elegir personaje». Lo nuevo cae en el primer nicho vacío; con la colección llena, reemplaza la figura en juego.
@@ -1775,6 +1782,9 @@ Decisiones del usuario del 12 de noviembre de 2026:
 ## v1.6
 - Primeros logros (14.2), con ámbito de sesión o histórico (ver DECISIÓN v1.6 en 14.2).
 
+## v1.65
+- 26 nov 2026. Fondo y canción por personaje (por saga con excepciones) en HUB, taller, cabinas del lobby y resultados en la TV; bucket privado `temas-privados` (047).
+
 ## v1.64
 - 26 nov 2026. D3 (sección 10): rediseño del personalizador pedido por Elías: entrada con el mueble «Mi colección», editor como el «Armario» del Centro de Mando GB en estilo cómic, seis secciones en viñetas con vuelta de hoja, switch Originales / Genéricas por parte (por saga y por tipo), Accesorios y Movimientos especiales por gesto; después, sección Trajes con los personajes originales completos. Cambia los puntos 1 y 3 de D3 v1.62. Sin publicar hasta que Elías apruebe las capturas. Sin cambios de base.
 
@@ -1982,5 +1992,5 @@ Decisiones del usuario del 12 de noviembre de 2026:
 
 ---
 
-**Fin del Documento Maestro ALV v1.64**  
+**Fin del Documento Maestro ALV v1.65**  
 Este documento debe actualizarse de forma incremental y conservar la distinción entre decisiones aprobadas, propuestas, pendientes y descartadas.
