@@ -15,7 +15,8 @@ import { baseGenerica, conMovimientos, type BaseGenerica } from "./movimientos";
 import { leerFigura } from "./figura";
 import { caretaEn, conEspecialAlSalir, cuantasFormas, figuraEnForma, type Careta } from "./formas";
 import { cargarIndice, type Indice } from "./indice";
-import { poderesDeFicha, resolver, type Catalogo } from "./plano";
+import { movimientosDeFicha, poderesDeFicha, resolver, type Catalogo } from "./plano";
+import { SETS } from "./sets";
 import { PERFIL_PERSONAJE, type PerfilPersonaje } from "./caracter";
 import type { FiguraV3, Plano } from "./tipos";
 export type { FiguraV3 } from "./tipos";
@@ -282,4 +283,17 @@ export function poderesDe(f: unknown, cat: CatalogoV3 | null): { id: string; nom
 export function perfilDelPersonaje(f: unknown): PerfilPersonaje | null {
   const v3 = leerV3(f);
   return v3 && v3.origen.tipo === "catalogo" ? PERFIL_PERSONAJE[v3.origen.personaje] ?? null : null;
+}
+
+// ---------- Sets de movimientos (Elías, 27 nov: «que todos los personajes tengan su set de movimientos generales») ----------
+
+/** Los movimientos de la rueda (a lo más 8: primero los de sus sets propios, luego bailes y burlas de «base»). */
+export function movimientosDe(f: unknown, cat: CatalogoV3 | null): { id: string; nombre: string }[] {
+  const v3 = leerV3(f);
+  if (!v3 || !cat || v3.origen.tipo !== "catalogo") return [];
+  const en = cat.catalogo.get(v3.origen.personaje);
+  if (!en) return [];
+  return movimientosDeFicha(en.ficha, cat.catalogo)
+    .filter(m => { const i = m.id.indexOf("-"); return SETS[m.id.slice(0, i)]?.movs[m.id.slice(i + 1)]?.rueda; })
+    .slice(0, 8).map(m => ({ id: m.id, nombre: m.nombre }));
 }

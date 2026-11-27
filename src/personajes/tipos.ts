@@ -65,6 +65,9 @@ export interface Ficha {
   /** Opcional (Elías, 27 nov 2026): GLB «poderes» con los clips de sus poderes del juego. `clips`: poder → clip. Qué se ofrece
    *  y con qué efecto lo decide src/personajes/poderes.ts. */
   poderes?: { glb: string; clips: Record<string, string> };
+  /** Opcional (Elías, 27 nov 2026): sets de movimientos compartidos que este personaje ALOJA (laboratorio
+   *  entregar_sets.py): set → GLB «<id>-set-<set>.glb» y movimiento → clip. Quién los usa lo decide src/personajes/sets.ts. */
+  sets?: Record<string, { glb: string; clips: Record<string, string> }>;
 }
 
 /** Acciones de los minijuegos (bloque `juego` de la ficha). */
@@ -135,6 +138,8 @@ export interface Plano {
   clipsExt?: Partial<Record<Logica, { glb: string; clip: string; carga?: Carga }>>;
   /** Poderes que la escena puede tocar (clip de otro GLB + efectos), en orden. */
   poderes?: PoderPlano[];
+  /** Movimientos de sus sets compartidos (bailar, burla, combo de espada, hechizo…), sin efectos. */
+  movs?: PoderPlano[];
 }
 
 /** Cómo se tiñe una pieza: `material` = nombre de material (o "*" = todos los de la pieza); `hex` ya resuelto. */

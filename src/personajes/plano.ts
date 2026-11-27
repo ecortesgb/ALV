@@ -1,5 +1,6 @@
 // Resolver: figura v3 + catálogo → plano para el motor (§7 del formato). Aquí se decide todo; el motor solo dibuja.
 import { familia } from "./familias";
+import { SETS, setsDe } from "./sets";
 import { PODERES, PRESTADOS, type Efecto, type PoderDef, type PoderPlano } from "./poderes";
 import { LOGICAS, type Ficha, type FiguraV3, type Logica, type Plano } from "./tipos";
 
@@ -43,6 +44,7 @@ export function resolver(id: string, figura: FiguraV3, catalogo: Catalogo): Plan
     huesos: { ...f.huesos }, clips: resolverClips(f), vida: [...f.animaciones.vida], sentado: f.animaciones.sentado,
     carga: { ...f.carga, metal: [...f.carga.metal] }, piezas: [],
     ...(() => { const p = poderesDeFicha(f, en.base, catalogo); return p.length ? { poderes: p } : {}; })(),
+    ...(() => { const m = movimientosDeFicha(f, catalogo); return m.length ? { movs: m } : {}; })(),
   };
 }
 
@@ -78,6 +80,25 @@ function prestadosDe(f: Ficha, catalogo: Catalogo): PoderPlano[] {
     const hasta = pr.hasta ?? orig?.hasta, bucle = pr.bucle ?? orig?.bucle;
     fuera.push(plano(id, { nombre, efecto, efectos: pr.efectos ?? orig?.efectos, ...(hasta ? { hasta } : {}), ...(bucle ? { bucle } : {}) },
       unir(don.base, don.ficha.poderes.glb), clip));
+  }
+  return fuera;
+}
+
+/**
+ * Movimientos de los sets compartidos del personaje (sets.ts), en orden: los de sus sets propios y al final los de «base».
+ * Un set se ofrece solo si su anfitrión está en el catálogo, es de la misma familia y trae ese set en su ficha.
+ * Id = «<set>-<movimiento>» (el mismo formato que un poder: viaja por la red igual).
+ */
+export function movimientosDeFicha(f: Ficha, catalogo: Catalogo): PoderPlano[] {
+  const fuera: PoderPlano[] = [];
+  for (const sid of setsDe(f.id)) {
+    const def = SETS[sid], host = def && catalogo.get(def.anfitrion), s = host?.ficha.sets?.[sid];
+    if (!def || !host || !s || host.ficha.familia !== f.familia) continue;
+    const glb = unir(host.base, s.glb);
+    for (const [mid, m] of Object.entries(def.movs)) {
+      const clip = s.clips[mid];
+      if (clip) fuera.push({ id: `${sid}-${mid}`, nombre: m.nombre, glb, clip, efectos: [] });
+    }
   }
   return fuera;
 }
