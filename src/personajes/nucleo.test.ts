@@ -172,7 +172,7 @@ describe("lógicas del motor (tools/personajes/logicas.js)", () => {
     for (const v of [1.22, 1.15, 0.82, 0.5, 1.6, undefined, NaN]) expect(L.velocidadClip(v)).toBe(1);
     // Las dos escenas que dibujan figuras v3 la usan (app: adaptador de escena.js; galería y «Mi personaje»: escena-personajes.js).
     // (El camino v2 de escena.js conserva su velocidad: es para las tablas rígidas del motor viejo.)
-    for (const f of ["tools/minifig/escena.js", "public/minifig/escena.js"]) expect(readFileSync(f, "utf8"), f).toMatch(/const vel = Lg && Lg\.velocidadClip \? Lg\.velocidadClip\(op\.vel\) : 1;[^\n]*\n\s*if \(!e\.v3\.tocar\(l, \{ vel \}\)\)/);
+    for (const f of ["tools/minifig/escena.js", "public/minifig/escena.js"]) { const js = readFileSync(f, "utf8"); expect(js, f).toMatch(/const vel = Lg && Lg\.velocidadClip \? Lg\.velocidadClip\(op\.vel\) : 1;/); expect(js, f).toMatch(/e\.v3\.tocar\(clip, \{ vel \}\)\) && !e\.v3\.tocar\(l, \{ vel \}\)/); }
     for (const f of ["tools/personajes/escena-personajes.js", "public/personajes/escena-personajes.js"]) expect(readFileSync(f, "utf8"), f).toMatch(/p\.tocar\(d\.cual, \{ vel: window\.LogicasALV && window\.LogicasALV\.velocidadClip \? window\.LogicasALV\.velocidadClip\(d\.vel\) : 1 \}\)/);
   });
   it("traduce momentos, gestos y vida", () => {

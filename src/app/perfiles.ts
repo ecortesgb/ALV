@@ -11,6 +11,7 @@
 import datos from "../content/perfiles-animacion.json";
 import { completar, type Figura } from "./editarFigura";
 import type { FiguraV2 } from "../content/personaje";
+import { perfilDelPersonaje } from "../personajes/integracion";
 
 export type Perfil = "alegre" | "heroico" | "comico" | "timido" | "agresivo" | "elegante";
 export const PERFILES: readonly Perfil[] = ["alegre", "heroico", "comico", "timido", "agresivo", "elegante"];
@@ -38,6 +39,16 @@ export const DATOS = (datos as unknown as { perfiles: Record<Perfil, DatosPerfil
 export function perfilDe(f: FiguraV2 | Figura | null | undefined): Perfil | null {
   const p = (f as { extensiones?: { alv?: { personalidad?: { perfil?: unknown } } } } | null | undefined)?.extensiones?.alv?.personalidad?.perfil;
   return esPerfil(p) ? p : null;
+}
+/**
+ * El perfil con el que se mueve la figura: el que eligió el jugador o, si no eligió, el que trae su personaje
+ * (Superman heroico, Deadpool cómico…). null = sin vida automática.
+ */
+export function perfilEfectivo(f: FiguraV2 | Figura | null | undefined): Perfil | null {
+  const p = perfilDe(f);
+  if (p) return p;
+  const d = perfilDelPersonaje(f);
+  return esPerfil(d) ? d : null;
 }
 /** Pone o quita la personalidad. Solo cambia extensiones.alv.personalidad: piezas, traje y momentos quedan igual. */
 export function ponerPersonalidad(f: FiguraV2 | Figura, perfil: Perfil | null): Figura {
@@ -69,7 +80,7 @@ export interface AnimPerfil { espera?: string; vel?: number; int?: number }
  * (lo comprado manda). `hay(nombre)` dice si el motor conoce esa animación (las «lib:» pueden no estar cargadas).
  */
 export function animPerfil(f: FiguraV2 | Figura | null | undefined, hay: (n: string) => boolean = () => false): AnimPerfil {
-  const p = perfilDe(f); if (!p) return {};
+  const p = perfilEfectivo(f); if (!p) return {};
   const d = DATOS[p], paquete = (f as { momentos?: { paquete?: unknown } } | null | undefined)?.momentos?.paquete;
   const r: AnimPerfil = { vel: d.velocidad, int: d.intensidad };
   if (!paquete) r.espera = d.espera.lib && hay(d.espera.lib) ? d.espera.lib : d.espera.respaldo;

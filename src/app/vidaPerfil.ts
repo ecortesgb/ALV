@@ -4,7 +4,7 @@
 // el jugador está probando algo); si la pestaña está oculta, espera. El motor además rechaza la vida si algo más
 // importante suena (misma regla de prioridades de siempre).
 import { useEffect, useRef } from "react";
-import { ESPACIADO, crearDirector, perfilDe, vidaPermitida, type Accion, type Contexto, type Perfil } from "./perfiles";
+import { ESPACIADO, crearDirector, perfilEfectivo, vidaPermitida, type Accion, type Contexto, type Perfil } from "./perfiles";
 import { estadoGesto } from "./animaciones";
 import type { FiguraV2 } from "../content/personaje";
 
@@ -51,7 +51,7 @@ export function emitirVidaPropia(jugador: string, a: Accion, ahora = Date.now())
 
 /** El director de la figura de ESTE aparato (dueño). Solo en contextos con vida; nunca para figuras ajenas. */
 export function useVidaPropia({ activo, jugador, figura, contexto }: { activo: boolean; jugador: string; figura: FiguraV2 | null | undefined; contexto: Contexto }) {
-  const perfil = perfilDe(figura);
+  const perfil = perfilEfectivo(figura);
   useEffect(() => {
     if (!activo || !jugador || !perfil || !vidaPermitida(contexto) || contexto === "tv") return;
     const dir = crearDirector(perfil, Math.random, () => true, ESPACIADO[contexto]);

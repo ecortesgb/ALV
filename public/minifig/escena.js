@@ -979,7 +979,11 @@
         return;
       }
       const vel = Lg && Lg.velocidadClip ? Lg.velocidadClip(op.vel) : 1; // clips del juego: siempre a velocidad 1
-      if (!e.v3.tocar(l, { vel })) { enviar({ tipo: "gesto", id: e.id, cual, ok: false }); return; }
+      // Vida automática (personalidad): a veces usa un clip propio del personaje de esa misma lógica (CHEER, CLAP, Shrug…)
+      // para que no repita siempre el mismo.
+      const propios = p <= 0.5 && Lg ? ((e.v3.obj.userData.plano && e.v3.obj.userData.plano.vida) || []).filter(c => Lg.logicaDe(c) === l) : [];
+      const clip = propios.length && Math.random() < 0.5 ? propios[Math.floor(Math.random() * propios.length)] : l;
+      if (!(clip !== l && e.v3.tocar(clip, { vel })) && !e.v3.tocar(l, { vel })) { enviar({ tipo: "gesto", id: e.id, cual, ok: false }); return; }
       fin(Math.max(0.5, e.v3.duracion(e.v3.estado().clip) / vel), l);
       return;
     }
@@ -1444,6 +1448,10 @@
     if (p.poderes != null) p.poderes = Array.isArray(p.poderes) ? p.poderes.slice(0, 8).filter(x => x && typeof x.id === "string" && /^[a-z][a-z0-9-]{0,23}$/.test(x.id)
       && typeof x.glb === "string" && URL_OK.test(x.glb) && typeof x.clip === "string" && x.clip.length <= 80)
       .map(x => ({ id: x.id, glb: x.glb, clip: x.clip, hasta: Number(x.hasta) > 0 ? Math.min(20, Number(x.hasta)) : 0, bucle: Number(x.bucle) > 0 ? Math.min(20, Number(x.bucle)) : 0, efectos: Array.isArray(x.efectos) ? x.efectos.slice(0, 3).filter(f => f && typeof f === "object" && typeof f.tipo === "string") : [] })) : [];
+    // Sets de movimientos (27 nov): mismos campos que un poder, sin efectos.
+    if (p.movs != null) p.movs = Array.isArray(p.movs) ? p.movs.slice(0, 64).filter(x => x && typeof x.id === "string" && /^[a-z][a-z0-9-]{0,23}$/.test(x.id)
+      && typeof x.glb === "string" && URL_OK.test(x.glb) && typeof x.clip === "string" && x.clip.length <= 80)
+      .map(x => ({ id: x.id, glb: x.glb, clip: x.clip, hasta: 0, bucle: 0, efectos: [] })) : [];
     return p;
   }
   // Poderes (Elías, 27 nov 2026): el clip del GLB «poderes» del personaje y sus efectos (efectos.js). Prioridad de especial:
@@ -1452,8 +1460,10 @@
     const e = figuras.get(String(id)), t = reloj.getElapsedTime();
     const no = () => enviar({ tipo: "poder", id: String(id), poder: String(cual), ok: false });
     if (!e || !e.v3 || NAVE) return no();
-    const pl = e.v3.obj.userData.plano, pd = pl && (pl.poderes || []).find(x => x.id === cual);
-    if (!pd || ((e.prio || 0) > 0 && t < e.hasta) || t < (e.poderHasta || 0)) return no();
+    const pl = e.v3.obj.userData.plano, pd = pl && ((pl.poderes || []).find(x => x.id === cual) || (pl.movs || []).find(x => x.id === cual));
+    // Lo que pide el jugador corta la vida automática y los gestos menores (prioridad 1); un especial, otro poder o una
+    // transformación no se cortan.
+    if (!pd || ((e.prio || 0) >= 2 && t < e.hasta) || t < (e.poderHasta || 0)) return no();
     const inst = e.v3;
     e.poderHasta = t + 1; e.prio = 2; e.cual = "poder"; e.hasta = t + 1; e.accion = null;
     inst.tocarExt(pd.glb, pd.clip, { hasta: pd.hasta, bucle: pd.bucle }).then(dur => {
