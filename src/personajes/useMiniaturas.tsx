@@ -5,6 +5,10 @@ import { useEffect, useRef, useState } from "react";
 import type { PiezaCons } from "./constructorDatos";
 import { deCatalogo } from "./figura";
 import { resolver, type Catalogo } from "./plano";
+import type { Plano } from "./tipos";
+
+/** Todas las ranuras de una minifigura (foto de la figura entera). */
+const RANURAS_FIGURA = ["head", "face", "hair", "headgear", "neck", "torso", "arms", "hands", "hips", "legs", "accessory"];
 
 const fotos = new Map<string, string | null>(); // id de pieza → url de la foto, o null si no se pudo
 /** Ranuras que se ven en la foto: la de la pieza y, para la cara, la cabeza que la sostiene. */
@@ -42,6 +46,14 @@ export function useMiniaturas(url: string | null, catalogo: Catalogo) {
     setTimeout(() => { if (!fotos.has(pz.id)) { fotos.set(pz.id, null); setVersion(v => v + 1); } }, 8000);
     ref.current?.contentWindow?.postMessage({ origen: "alv", tipo: "foto", clave: pz.id, plano, ver: ranurasFoto(pz), tam: 192 }, location.origin);
   };
+  /** Foto de la figura completa (los nichos de «Mi colección»): todas las ranuras, en pose de unión. */
+  const pedirFigura = (clave: string, plano: Plano) => {
+    if (!url || !listo || fotos.has(clave) || pedidas.current.has(clave)) return;
+    pedidas.current.add(clave);
+    setTimeout(() => { if (!fotos.has(clave)) { fotos.set(clave, null); setVersion(v => v + 1); } }, 12000);
+    ref.current?.contentWindow?.postMessage({ origen: "alv", tipo: "foto", clave, plano: { ...plano, clipsExt: undefined }, ver: RANURAS_FIGURA, tam: 384 }, location.origin);
+  };
+  const fotoDe = (clave: string): string | null | undefined => (!url || (caido && !listo) ? fotos.get(clave) ?? null : fotos.get(clave));
   /** url lista, null si falló (usar la foto del donante) o undefined si aún no llega. */
   const foto = (pz: PiezaCons): string | null | undefined => (!url || (caido && !listo) ? fotos.get(pz.id) ?? null : fotos.get(pz.id));
   const marco = url ? (
@@ -49,5 +61,5 @@ export function useMiniaturas(url: string | null, catalogo: Catalogo) {
       style={{ position: "absolute", left: 0, top: 0, width: 1, height: 1, opacity: 0, border: 0, pointerEvents: "none" }} />
   ) : null;
   (window as unknown as { __miniaturas?: unknown }).__miniaturas = fotos; // para revisar las fotos en la página de prueba
-  return { marco, pedir, foto, listo };
+  return { marco, pedir, foto, listo, pedirFigura, fotoDe };
 }

@@ -126,6 +126,9 @@ export interface Plano {
   /** Piezas que cambian ranuras del cuerpo base: de `glb` se toman solo las mallas de esas `ranuras` y se pegan al
    *  esqueleto del base (mismos nombres de hueso); las mallas del base en esas ranuras se esconden. */
   piezas: PiezaPlano[];
+  /** Gestos tomados de otro GLB (personalizador, sección Movimientos): lógica → GLB y nombre del clip. El motor los agrega
+   *  y la lógica los toca en lugar del clip propio; si no bajan, se queda el propio. */
+  clipsExt?: Partial<Record<Logica, { glb: string; clip: string; carga?: Carga }>>;
 }
 
 /** Cómo se tiñe una pieza: `material` = nombre de material (o "*" = todos los de la pieza); `hex` ya resuelto. */

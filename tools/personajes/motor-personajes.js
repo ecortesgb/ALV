@@ -75,6 +75,13 @@
 
   const TOLERANCIA_ENLACE = 1e-3;
   const iguales = (a, b) => a.elements.every((v, i) => Math.abs(v - b.elements[i]) <= TOLERANCIA_ENLACE);
+  /** Inversa de la pose del hueso `nombre` respecto a la raíz de su archivo (sin la escala de la escena). null si no está. */
+  function poseRelativa(raiz, nombre) {
+    const n = raiz.getObjectByName(nombre);
+    if (!n) return null;
+    raiz.updateMatrixWorld(true);
+    return new T.Matrix4().copy(raiz.matrixWorld).invert().multiply(n.matrixWorld).invert();
+  }
 
   /**
    * Piezas del constructor (CONTRATO-ENTREGA.md §6): por cada pieza se esconden las mallas del cuerpo base de esas
@@ -125,9 +132,12 @@
         if (!m.isSkinnedMesh) {
           padre = huesos.get(m.parent.name);
           if (!padre) throw new Error("la pieza va pegada al hueso «" + m.parent.name + "», que este cuerpo no tiene (" + pz.glb + ")");
-          const inv = inversaPieza.get(m.parent.name);
-          if (!inv || !inversaBase.has(m.parent.name)) throw new Error("no se puede comprobar el enlace del hueso «" + m.parent.name + "» (" + pz.glb + ")");
-          if (!iguales(inv, inversaBase.get(m.parent.name))) throw new Error("la pieza está enlazada a un esqueleto distinto (hueso «" + m.parent.name + "», " + pz.glb + ")");
+          let inv = inversaPieza.get(m.parent.name), invBase = inversaBase.get(m.parent.name);
+          // Las piezas genéricas de producción (cara, pelo, gorras) traen la malla fija sin piel: no hay enlace que leer.
+          // Entonces se compara la pose de unión del hueso tal como viene en los dos archivos (la misma regla, Codex O3).
+          if (!inv || !invBase) { inv = poseRelativa(g.scene, m.parent.name); invBase = poseRelativa(obj, m.parent.name); }
+          if (!inv || !invBase) throw new Error("no se puede comprobar el enlace del hueso «" + m.parent.name + "» (" + pz.glb + ")");
+          if (!iguales(inv, invBase)) throw new Error("la pieza está enlazada a un esqueleto distinto (hueso «" + m.parent.name + "», " + pz.glb + ")");
         } else if (m.parent && m.parent.name) padre = obj.getObjectByName(m.parent.name) || obj;
         return { c, padre };
       });
@@ -136,7 +146,7 @@
     // 2) Todo es válido: esconder las del base y pegar las nuevas.
     const propios = [];
     for (const { ran, mallas, tintes } of listas) {
-      mallasBase.forEach(m => { if (ran.has(m.userData.slot)) m.visible = false; });
+      mallasBase.forEach(m => { if (ran.has(m.userData.slot)) { m.visible = false; m.userData.alvFuera = true; } }); // alvFuera: el estudio no la vuelve a mostrar
       for (const { c, padre } of mallas) { padre.add(c); c.visible = true; c.userData.pieza = true; propios.push(...teñir(c, tintes)); }
     }
     return propios;
@@ -204,7 +214,18 @@
       if (!acciones.has(nombre)) acciones.set(nombre, mixer.clipAction(porNombre.get(nombre)));
       return acciones.get(nombre);
     };
-    const clips = plano.clips || {};
+    const clips = { ...(plano.clips || {}) };
+    // Movimientos de otro GLB (personalizador: el gesto de otro personaje o uno genérico de la base). Mismo esqueleto, mismos
+    // nombres de hueso: el clip se agrega con otro nombre y la lógica apunta a él. Si no baja o no está, se queda el propio.
+    for (const [l, e] of Object.entries(plano.clipsExt || {})) {
+      try {
+        const g2 = await bajar(e.glb, e.carga || plano.carga);
+        const c0 = g2.animations.find(a => a.name === e.clip);
+        // Solo las pistas de huesos o mallas que esta figura tiene (las caras de otro personaje traen las suyas).
+        const c = c0 && new T.AnimationClip(c0.name, c0.duration, c0.tracks.filter(t => obj.getObjectByName(T.PropertyBinding.parseTrackName(t.name).nodeName)));
+        if (c && c.tracks.length) { porNombre.set("ext:" + l, c); clips[l] = "ext:" + l; }
+      } catch (_) { /* se queda el clip propio */ }
+    }
     const vida = new Set(plano.vida || []);
     let actual = null, logica = null, clipActual = null;
     let pesos = new Map(), cruce = null, mezclaCruce = MEZCLA;

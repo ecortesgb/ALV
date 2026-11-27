@@ -1,16 +1,19 @@
+// Rediseño 2026-11-26 (pedido de Elías): la entrada es el mueble «Mi colección» con los 3 personajes parados en sus nichos;
+// tocar un nicho vacío ofrece crear o elegir ahí; uno ocupado lo pone en juego y, si ya lo está, lo abre para editarlo.
 // Fase 5 · «Mi personaje» en la app (Codex D5, encargo 2026-11-26-fase5-r1): con la bandera encendida reemplaza a
 // Personalizar (HUB, Perfil, lobby). Elegir personaje (galería) · Crear mi personaje (constructor) · Mi colección (los 3
 // espacios = las 3 cápsulas de siempre, con la figura nueva dentro por el puente). Este archivo NO toca las cápsulas: la app
 // le pasa los espacios y las funciones para guardar y activar (src/pantallas/Personalizar.tsx), así la zona no depende del
 // sistema viejo (candado separacion.test.ts).
-import { useEffect, useMemo, useState } from "react";
-import { Boton, FondoCiudad, Panel, RaizDS } from "../ds";
+import { useEffect, useMemo, useState, type CSSProperties } from "react";
+import { Boton, FondoCiudad, RaizDS } from "../ds";
 import { Constructor } from "./Constructor";
 import { figuraInicial, sePuedePersonalizar } from "./constructorDatos";
 import { destinoGuardado } from "./espacios";
 import { Galeria } from "./Galeria";
 import { tarjetas } from "./galeriaDatos";
-import type { CatalogoV3 } from "./integracion";
+import { resolverFigura, type CatalogoV3 } from "./integracion";
+import { useMiniaturas } from "./useMiniaturas";
 import type { FiguraV3 } from "./tipos";
 import "./mi-personaje.css";
 
@@ -37,6 +40,9 @@ const BASE = import.meta.env.BASE_URL;
 // La escena y el estudio publicados (copias de tools/personajes en public/personajes): tools/ no entra al build, y en lo
 // publicado esa ruta no existía (lo halló el ensayo del corte, 2026-11-26).
 const ESCENA = `${BASE}personajes/escena.html?fondo=no`;
+const ESTUDIO = `${BASE}personajes/estudio.html`;
+/** Centro de cada nicho en el arte del mueble (arte/mi-coleccion/mueble.webp), en % del ancho. */
+const NICHOS = ["18.3%", "50.1%", "82%"];
 type Vista = { cual: "inicio" } | { cual: "galeria" } | { cual: "crear"; figura: FiguraV3 };
 const TEXTO: Record<ResultadoGuardar, (n: string) => string> = {
   sincronizado: n => `${n}: guardado`,
@@ -55,6 +61,9 @@ export function MiPersonaje({ jugador, catalogo, estadoCatalogo = catalogo ? "li
   const fotos = useMemo(() => new Map((catalogo ? tarjetas(catalogo.catalogo, { conBorradores: true }) : []).map(t => [t.id, t])), [catalogo]);
   // El vacío elegido tiene prioridad; después se conserva la regla del espacio en juego.
   const destino = destinoGuardado(espacios, activa, elegido);
+  /** Dónde cae una figura nueva: el nicho vacío tocado o el primer vacío (null = colección llena: reemplaza la en juego). */
+  const primerVacio = espacios.findIndex(e => !e.figura && !e.antes);
+  const nuevoEn = elegido ?? (primerVacio >= 0 ? primerVacio : null);
   const activaV3 = activa != null ? espacios[activa]?.figura ?? null : null;
 
   const guardar = async (f: FiguraV3, nombre: string) => {
@@ -66,13 +75,26 @@ export function MiPersonaje({ jugador, catalogo, estadoCatalogo = catalogo ? "li
     if (r !== "error") { setElegido(null); setVista({ cual: "inicio" }); }
   };
   const conservar = (f: FiguraV3): FiguraV3 => (activaV3 ? { ...f, momentos: activaV3.momentos, extensiones: activaV3.extensiones } : f);
-  const crear = () => { const f = catalogo && figuraInicial(catalogo.catalogo, activaV3); if (f) setVista({ cual: "crear", figura: f }); };
+  /** Crear desde cero: en el nicho tocado o, si no, en el primer espacio vacío (así no se reemplaza la figura en juego). */
+  const crear = (en?: number) => {
+    const f = catalogo && figuraInicial(catalogo.catalogo, activaV3);
+    if (!f) return;
+    setElegido(en ?? nuevoEn);
+    setVista({ cual: "crear", figura: f });
+  };
+  // Foto de cuerpo entero de cada figura para su nicho: la saca el estudio con el motor real (así sale con sus piezas);
+  // mientras llega, la foto de tarjeta del personaje del catálogo.
+  const mini = useMiniaturas(vista.cual === "inicio" && catalogo ? ESTUDIO : null, catalogo?.catalogo ?? new Map());
+  const planos = useMemo(() => espacios.map((e, i) => (catalogo && e.figura ? resolverFigura("nicho" + i, e.figura, catalogo.catalogo, catalogo.piezas, catalogo.base ?? null) : null)), [espacios, catalogo]);
+  const claves = planos.map(p => (p ? "fig:" + JSON.stringify(p) : null));
+  useEffect(() => { planos.forEach((p, i) => { if (p) mini.pedirFigura(claves[i]!, p); }); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [mini.listo, claves.join("|")]);
+  const fotoNicho = (i: number, respaldo: string | null) => { const c = claves[i]; return (c && mini.fotoDe(c)) || respaldo; };
 
   return (
     <RaizDS ancho={ancho} className={"mp" + (vista.cual === "crear" ? " az" : "")} style={{ position: "fixed", inset: 0, overflow: "hidden" }}>
       {vista.cual !== "crear" && <div className="d-bg"><FondoCiudad /></div>}
       {vista.cual === "inicio" && (
-        <div className="mp-inicio">
+        <div className="mp-inicio mp-cuarto">
           <header className="mp-top">
             <button type="button" className="mp-atras" onClick={onSalir} aria-label="Regresar">‹</button>
             <h1 className="dsp ol mp-titulo">Mi personaje</h1>
@@ -84,37 +106,37 @@ export function MiPersonaje({ jugador, catalogo, estadoCatalogo = catalogo ? "li
               {onReintentar && <Boton color="amarillo" texto="Reintentar" icono="wheel" onClick={onReintentar} />}
             </div>
           )}
-          <div className="mp-opciones">
-            <Panel className="mp-opcion">
-              <h2 className="dsp ol">Elegir personaje</h2>
-              <p>{catalogo ? `${catalogo.catalogo.size} personajes listos para jugar.` : estadoCatalogo === "sin-acceso" ? "No disponibles por ahora." : "…"}</p>
-              <Boton color="amarillo" texto="Ver galería" icono="users" cargando={!catalogo && estadoCatalogo === "cargando"} desactivado={!catalogo && estadoCatalogo === "sin-acceso"} onClick={() => setVista({ cual: "galeria" })} />
-            </Panel>
-            <Panel className="mp-opcion">
-              <h2 className="dsp ol">Crear mi personaje</h2>
-              <p>Cabeza, torso, brazos y piernas.</p>
-              <Boton color="azul" texto="Empezar" icono="shirt" cargando={!catalogo && estadoCatalogo === "cargando"} desactivado={!catalogo && estadoCatalogo === "sin-acceso"} onClick={crear} />
-            </Panel>
-          </div>
-          <section className="mp-coleccion" aria-label="Mi colección">
-            <h2 className="dsp ol mp-sub">Mi colección</h2>
-            <div className="mp-espacios" role="group">
-              {espacios.map((e, i) => {
-                const o = e.figura?.origen, t = o?.tipo === "catalogo" ? fotos.get(o.personaje) : null, en = activa === i;
-                const vacio = !e.figura && !e.antes, aqui = vacio && elegido === i;
-                const titulo = e.figura ? e.nombre || t?.nombre || "Mi personaje" : e.antes ? "Figura de antes" : "Vacío";
-                return (
-                  <button key={i} type="button" className={"d-pnl mp-espacio" + (en ? " on" : "") + (aqui ? " elegido" : "")} aria-pressed={en || aqui}
-                    onClick={() => { if (vacio) setElegido(i); else { setElegido(null); if (!en) onActivar(i); } }}
-                    aria-label={vacio ? `Espacio ${i + 1}: vacío${aqui ? ", aquí se guarda lo que elijas" : ". Tócalo para guardar ahí"}` : `Espacio ${i + 1}: ${titulo}${en ? ", en juego" : ""}`}>
-                    {t?.foto ? <img src={t.foto} alt="" draggable={false} /> : <span className="dsp mp-mas" aria-hidden="true">{e.antes ? "?" : "+"}</span>}
-                    <small>{aqui ? "Aquí se guarda" : en ? "En juego" : titulo}</small>
+          <section className="mp-mueble" aria-label="Mi colección" style={{ "--mueble": `url(${BASE}arte/mi-coleccion/mueble.webp)` } as CSSProperties}>
+            {espacios.map((e, i) => {
+              const o = e.figura?.origen, t = o?.tipo === "catalogo" ? fotos.get(o.personaje) : null, en = activa === i;
+              const vacio = !e.figura && !e.antes, aqui = elegido === i;
+              const titulo = e.figura ? e.nombre || t?.nombre || "Mi personaje" : e.antes ? "Figura de antes" : "Vacío";
+              const foto = fotoNicho(i, t?.foto ?? null);
+              return (
+                <div key={i} className={"mp-nicho" + (en ? " on" : "") + (aqui ? " elegido" : "") + (vacio ? " vacio" : "")} style={{ "--x": NICHOS[i] } as CSSProperties}>
+                  <button type="button" className="mp-nicho-toca" aria-pressed={en || aqui}
+                    onClick={() => { if (vacio) setElegido(aqui ? null : i); else if (!en) { setElegido(null); onActivar(i); } else if (e.figura) { setElegido(null); setVista({ cual: "crear", figura: e.figura }); } }}
+                    aria-label={vacio ? `Espacio ${i + 1}: vacío. Tócalo para crear o elegir aquí` : `Espacio ${i + 1}: ${titulo}${en ? ", en juego. Tócalo para editarlo" : ". Tócalo para ponerlo en juego"}`}>
+                    {foto ? <img src={foto} alt="" draggable={false} /> : !vacio ? <span className="dsp mp-mas" aria-hidden="true">?</span> : null}
                   </button>
-                );
-              })}
-            </div>
-            <p className="mp-nota">Lo que elijas o crees se guarda en el espacio {destino + 1}.</p>
+                  {!vacio && <span className="mp-placa">{titulo}</span>}
+                  {en && <span className="mp-en-juego">En juego</span>}
+                  {vacio && aqui && (
+                    <div className="mp-nicho-menu">
+                      <Boton color="azul" compacto texto="Crear" icono="shirt" desactivado={!catalogo} onClick={() => crear(i)} />
+                      <Boton color="amarillo" compacto texto="Elegir" icono="users" desactivado={!catalogo} onClick={() => setVista({ cual: "galeria" })} />
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </section>
+          <div className="mp-acciones">
+            <Boton color="verde" principal={ancho} texto="Crear figura" icono="shirt" cargando={!catalogo && estadoCatalogo === "cargando"} desactivado={!catalogo && estadoCatalogo === "sin-acceso"} onClick={() => crear()} />
+            <Boton color="amarillo" texto="Elegir personaje" icono="users" cargando={!catalogo && estadoCatalogo === "cargando"} desactivado={!catalogo && estadoCatalogo === "sin-acceso"} onClick={() => { setElegido(nuevoEn); setVista({ cual: "galeria" }); }} />
+          </div>
+          <p className="mp-nota">{nuevoEn === null ? `Tu colección está llena: lo nuevo reemplaza la figura en juego (espacio ${destino + 1}).` : `Lo nuevo se guarda en el espacio ${nuevoEn + 1}. Toca una figura para ponerla en juego; tócala otra vez para editarla.`}</p>
+          {mini.marco}
         </div>
       )}
       {catalogo && vista.cual === "galeria" && (
@@ -127,7 +149,7 @@ export function MiPersonaje({ jugador, catalogo, estadoCatalogo = catalogo ? "li
           onSalir={() => setVista({ cual: "inicio" })} />
       )}
       {catalogo && vista.cual === "crear" && (
-        <Constructor catalogo={catalogo.catalogo} piezas={catalogo.piezas} inicial={vista.figura} escenaUrl={ESCENA}
+        <Constructor catalogo={catalogo.catalogo} piezas={catalogo.piezas} base={catalogo.base ?? null} inicial={vista.figura} escenaUrl={ESCENA}
           onGuardar={f => void guardar(f, "Mi personaje")} onSalir={() => setVista({ cual: "inicio" })} />
       )}
       {aviso && <div role="status" className="mp-aviso">{aviso}</div>}
