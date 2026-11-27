@@ -104,14 +104,24 @@ export function figuraInicial(catalogo: Catalogo, antes?: FiguraV3 | null): Figu
   return { ...deCatalogo(en.ficha, antes), origen: { tipo: "catalogo", personaje: en.ficha.id, version: "base", revision: 1 } };
 }
 
-/** Pone una pieza (o «Sin …»), quitando la que estorba; conserva los tintes de esa parte. */
-export function ponerPieza(f: FiguraV3, pz: PiezaCons): FiguraV3 {
+/** Pone una pieza (o «Sin …»), quitando la que estorba; conserva los tintes de esa parte.
+ *  Una cara original llega con la piel de su personaje (Elías, 2026-11-27: las caras se enciman en cabezas con la cara
+ *  impresa, como Cíclope), salvo que la piel elegida sea genérica: esa se respeta. */
+export function ponerPieza(f: FiguraV3, pz: PiezaCons, todas?: Piezas): FiguraV3 {
   if (!deFamilia(pz, f.familia)) return f; // otra familia: no se pone
   const piezas = { ...f.piezas };
   const antes = piezas[pz.parte];
-  piezas[pz.parte] = antes?.tintes ? { id: pz.id, tintes: { ...antes.tintes } } : { id: pz.id };
+  piezas[pz.parte] = antes?.tintes && pz.origen !== "original" ? { id: pz.id, tintes: { ...antes.tintes } } : { id: pz.id };
   const otra = ESTORBA[pz.parte];
   if (otra && pz.glb) piezas[otra] = { id: sinId(otra) };
+  if (pz.parte === "cara" && pz.origen === "original" && pz.donante && todas) {
+    const piel = piezas.cabeza, generica = piel && todas.get(piel.id)?.origen === "generica";
+    const base = f.origen.tipo === "catalogo" ? f.origen.personaje : BASE_CREAR;
+    if (!generica) {
+      if (pz.donante === base) delete piezas.cabeza;
+      else if (todas.has(`${pz.donante}--cabeza`)) piezas.cabeza = { id: `${pz.donante}--cabeza` };
+    }
+  }
   return { ...f, piezas };
 }
 

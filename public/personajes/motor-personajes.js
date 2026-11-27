@@ -141,14 +141,15 @@
         } else if (m.parent && m.parent.name) padre = obj.getObjectByName(m.parent.name) || obj;
         return { c, padre };
       });
-      listas.push({ ran, mallas, tintes: pz.tintes });
+      listas.push({ ran, mallas, tintes: pz.tintes, glb: pz.glb });
     }
     // 2) Todo es válido: esconder las del base y pegar las nuevas.
     const propios = [];
-    for (const { ran, mallas, tintes } of listas) {
+    for (const { ran, mallas, tintes, glb } of listas) {
       mallasBase.forEach(m => { if (ran.has(m.userData.slot)) { m.visible = false; m.userData.alvFuera = true; } }); // alvFuera: el estudio no la vuelve a mostrar
-      for (const { c, padre } of mallas) { padre.add(c); c.visible = true; c.userData.pieza = true; propios.push(...teñir(c, tintes)); }
+      for (const { c, padre } of mallas) { padre.add(c); c.visible = true; c.userData.pieza = true; c.userData.alvDonante = glb; propios.push(...teñir(c, tintes)); }
     }
+    propios.push(...alisarCabezas(obj, plano.glb));
     return propios;
   }
 
@@ -197,6 +198,56 @@
   }
   function verticesDePies(obj) {
     return verticesPorParte(obj).filter(([, p]) => p.length).map(([o, p]) => [o, p]);
+  }
+
+  /**
+   * Cabezas con la cara impresa (Cíclope, Capitán América, Doctor Doom, Loki, Spider-Man…): si la cara que se ve es de
+   * otro personaje, las dos se enciman (Elías, 2026-11-27). Entonces la cabeza pierde su impresión y queda lisa, del
+   * color que más tiene su textura. Las texturas de un solo color miden 8×8; las impresas, más.
+   */
+  function alisarCabezas(obj, glbBase) {
+    const donante = o => o.userData.alvDonante || glbBase;
+    const vivas = [];
+    obj.traverse(o => { if (o.isMesh && o.visible && !o.userData.alvFuera && !o.userData.alvOclusor) vivas.push(o); });
+    const caras = new Set(vivas.filter(o => o.userData.slot === "face").map(donante));
+    if (!caras.size) return [];
+    const nuevos = [];
+    for (const o of vivas) {
+      if (o.userData.slot !== "head" || caras.has(donante(o))) continue;
+      const lista = Array.isArray(o.material) ? o.material : [o.material];
+      const cambiados = lista.map(m => {
+        const img = m && m.map && m.map.image;
+        if (!img || !(img.width > 8)) return m;
+        const color = colorQueMas(img);
+        if (!color) return m;
+        const lienzo = document.createElement("canvas"); lienzo.width = lienzo.height = 1;
+        const cx = lienzo.getContext("2d"); cx.fillStyle = color; cx.fillRect(0, 0, 1, 1);
+        const tex = new T.CanvasTexture(lienzo);
+        tex.encoding = m.map.encoding; tex.flipY = m.map.flipY;
+        const n = m.clone(); n.map = tex; n.needsUpdate = true; // el material del GLB es compartido: se clona
+        nuevos.push(n, tex);
+        return n;
+      });
+      o.material = Array.isArray(o.material) ? cambiados : cambiados[0];
+    }
+    return nuevos;
+  }
+  /** Color más repetido de una imagen (en 24×24, agrupado de 16 en 16 por canal). */
+  function colorQueMas(img) {
+    try {
+      const c = document.createElement("canvas"); c.width = c.height = 24;
+      const cx = c.getContext("2d"); cx.drawImage(img, 0, 0, 24, 24);
+      const d = cx.getImageData(0, 0, 24, 24).data, cuenta = new Map();
+      let mejor = null, max = 0;
+      for (let i = 0; i < d.length; i += 4) {
+        if (d[i + 3] < 128) continue;
+        const k = (d[i] >> 4) + "," + (d[i + 1] >> 4) + "," + (d[i + 2] >> 4);
+        const e = cuenta.get(k) || { n: 0, r: 0, g: 0, b: 0 };
+        e.n++; e.r += d[i]; e.g += d[i + 1]; e.b += d[i + 2]; cuenta.set(k, e);
+        if (e.n > max) { max = e.n; mejor = e; }
+      }
+      return mejor ? "rgb(" + Math.round(mejor.r / mejor.n) + "," + Math.round(mejor.g / mejor.n) + "," + Math.round(mejor.b / mejor.n) + ")" : null;
+    } catch (_) { return null; }
   }
 
   async function crear(plano) {
