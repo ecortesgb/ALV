@@ -7,7 +7,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { FiguraV2 } from "../content/personaje";
 import { desdeBase, haciaBase } from "../personajes/integracion";
-import { cliente, clienteAparte, clienteSostenido, hayNube } from "./cliente";
+import { cliente, clienteAparte, clienteSostenido, fijarUsuario, hayNube } from "./cliente";
 import { nickValido, passValida } from "./cuenta";
 
 /** Nombre de la sala espejo en la nube. lobby_abierto (053) la ignora para que nadie entre solo a ella. */
@@ -80,11 +80,10 @@ export async function crearPersonajeRapido(apodo: string, figura: FiguraV2 | nul
   const limpio = apodo.replace(/\s+/g, " ").trim();
   if (limpio.length < 2 || limpio.length > 20) return "El nombre va de 2 a 20 letras.";
   if (!cliente || !hayNube) return "Sin servidor no se pueden crear cuentas.";
-  const sig = await cliente.rpc("siguiente_usuario");
-  if (sig.error || typeof sig.data !== "number") { log("siguiente_usuario", sig.error); return "No se pudo crear el personaje. Intenta otra vez."; }
+  const primero = await numeroLibre();
   const clave = claveAleatoria();
   // Si otro aparato ganó el número, se prueba con los siguientes.
-  for (let n = sig.data, intento = 0; intento < 5; n++, intento++) {
+  for (let n = primero, intento = 0; intento < 5; n++, intento++) {
     const nick = `usuario${n}`;
     // En la sala en línea su sesión se queda en este celular para jugar por él si no entra en el suyo.
     const claveSesion = `alv-sost-${nick}-${Math.random().toString(36).slice(2, 8)}`;
@@ -111,6 +110,43 @@ export async function crearPersonajeRapido(apodo: string, figura: FiguraV2 | nul
     } catch (e) { log("crearPersonajeRapido", e); return "No se pudo crear el personaje. Intenta otra vez."; }
   }
   return "No se pudo crear el personaje. Intenta otra vez.";
+}
+
+/** El siguiente UsuarioN libre. Sin la 057 (pantalla de acceso, sin sesión) no se puede preguntar: se usa un número al azar. */
+async function numeroLibre(): Promise<number> {
+  try {
+    const sig = await cliente!.rpc("siguiente_usuario");
+    if (!sig.error && typeof sig.data === "number") return sig.data;
+    log("siguiente_usuario", sig.error);
+  } catch (e) { log("siguiente_usuario", e); }
+  return 10000 + (crypto.getRandomValues(new Uint32Array(1))[0]! % 90000);
+}
+
+export interface MiCuentaRapida { usuario: string; clave: string; codigo: string }
+
+/**
+ * «Entrar sin cuenta» en la pantalla de acceso (Elías, 27 nov): crea una cuenta UsuarioN con contraseña aleatoria y código
+ * de recuperación, y la deja abierta en este aparato. Ya no hay entradas sin historial. Devuelve los datos o un mensaje.
+ */
+export async function crearMiCuentaRapida(apodo: string): Promise<MiCuentaRapida | string> {
+  const limpio = apodo.replace(/\s+/g, " ").trim();
+  if (limpio.length < 2 || limpio.length > 20) return "El apodo va de 2 a 20 letras.";
+  if (!cliente || !hayNube) return "Sin servidor no se pueden crear cuentas.";
+  const FALLO = "No se pudo crear tu cuenta. Intenta otra vez.";
+  const primero = await numeroLibre();
+  const clave = claveAleatoria();
+  for (let n = primero, intento = 0; intento < 5; n++, intento++) {
+    const nick = `usuario${n}`;
+    try {
+      const { data, error } = await cliente.auth.signUp({ email: correo(nick), password: clave });
+      if (error || !data.user || !data.session) { if (error && /registered|exists/i.test(error.message)) continue; log("crearMiCuentaRapida", error ?? "sin sesión"); return FALLO; }
+      const r = await cliente.rpc("crear_cuenta_rapida", { p_apodo: limpio });
+      if (r.error || typeof r.data !== "string") { log("crear_cuenta_rapida", r.error); await cliente.auth.signOut({ scope: "local" }); return FALLO; }
+      fijarUsuario(nick);
+      return { usuario: `Usuario${n}`, clave, codigo: r.data };
+    } catch (e) { log("crearMiCuentaRapida", e); return FALLO; }
+  }
+  return FALLO;
 }
 
 /** Olvidó la contraseña de su personaje rápido: usuario + código de recuperación + contraseña nueva (función recuperar-cuenta). */

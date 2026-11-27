@@ -434,3 +434,6 @@ enabled = true
 # ALV 053: recuperar-cuenta no pide sesión (la persona olvidó su contraseña); valida usuario + código en la base.
 [functions.recuperar-cuenta]
 verify_jwt = false
+
+[functions.cambiar-usuario]
+verify_jwt = true
