@@ -1389,6 +1389,9 @@
       const alto = inst.alto(), TOPE = 3.4;
       // Decidió Codex (fase5-paso2-verif, b): tope 3.4 con escala uniforme, solo en sala, nave y azotea.
       if ((SALA || NAVE || AZOTEA) && !/[?&]bigfig=real/.test(location.search) && alto > TOPE) inst.obj.scale.multiplyScalar(TOPE / alto);
+      // La figura nueva proyecta sombra pero no la recibe: a la escala de ALV, piezas escondidas dentro del GLB (la
+      // entrepierna) dejaban rayas oscuras encima del torso (Elías, 2026-11-26).
+      inst.obj.traverse(o => { if (o.isMesh) o.receiveShadow = false; });
       const sombra = new THREE.Mesh(sombraGeo, sombraMat); sombra.rotation.x = -Math.PI / 2; sombra.position.y = 0.003; grupo.add(sombra);
       grupo.position.copy(e.obj.position); grupo.rotation.copy(e.obj.rotation); grupo.scale.copy(e.obj.scale); grupo.visible = e.obj.visible;
       if (e.cara) { e.cara.malla.material.map = e.cara.base; [e.cara.parpadeo, e.cara.sonrisa, e.cara.especial].forEach(x => x && x.dispose()); e.cara = null; }

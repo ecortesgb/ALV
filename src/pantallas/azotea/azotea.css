@@ -395,6 +395,9 @@
 .D .az-figura { pointer-events: auto; cursor: grab; touch-action: pan-y; user-select: none; -webkit-user-select: none; }
 .D .az-figura:active { cursor: grabbing; }
 .D .az-figura iframe { pointer-events: none; }
+/* Anclada al pedestal la caja es angosta (alto × 0.8) y cortaba brazos y poses abiertas: el lienzo se ensancha a los
+   lados sin cambiar la caja que se arrastra. La escena encuadra por el alto, así que la figura queda igual de grande y al centro. */
+.D .az-figura.anclada iframe { width: 180%; margin-left: -40%; }
 
 
 /* =====================================================================
