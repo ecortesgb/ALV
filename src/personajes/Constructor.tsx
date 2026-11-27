@@ -22,10 +22,11 @@ import "../pantallas/gestos/menu-gestos.css";
 import "./constructor.css";
 
 /** Secciones del editor (pedido de Elías, 2026-11-26: orden del «Armario» del Centro de Mando GB, en viñetas de cómic). */
-type Pestana = "cabeza" | "torso" | "brazos" | "piernas" | "accesorios" | "movimientos";
-type Sub = Parte | Gesto;
+type Pestana = "trajes" | "cabeza" | "torso" | "brazos" | "piernas" | "accesorios" | "movimientos";
+type Sub = Parte | Gesto | "traje";
 const ARTE = `${import.meta.env.BASE_URL}arte/`;
 const LOSAS: { id: Pestana; titulo: string; cartela: string; c1: string; c2: string; lab: string; ico: string }[] = [
+  { id: "trajes", titulo: "Trajes", cartela: "Trajes completos", c1: "#ff8a6b", c2: "#e0392b", lab: "#8f1d14", ico: "ico-armaduras" },
   { id: "cabeza", titulo: "Cabeza", cartela: "Capítulo 1: una cara nueva", c1: "#6fb6ff", c2: "#1f5fd6", lab: "#123e9c", ico: "ico-cabeza" },
   { id: "torso", titulo: "Torso", cartela: "Capítulo 2: el traje", c1: "#c08bff", c2: "#6f2fd6", lab: "#4a1c9c", ico: "ico-torso" },
   { id: "brazos", titulo: "Brazos", cartela: "Capítulo 3: brazos y manos", c1: "#7bea92", c2: "#1fa84a", lab: "#137033", ico: "ico-brazos" },
@@ -33,11 +34,11 @@ const LOSAS: { id: Pestana; titulo: string; cartela: string; c1: string; c2: str
   { id: "accesorios", titulo: "Accesorios", cartela: "Capítulo 5: el equipo", c1: "#ff8fb3", c2: "#d6246a", lab: "#8c1242", ico: "ico-accesorios" },
   { id: "movimientos", titulo: "Movimientos", cartela: "Capítulo 6: movimientos especiales", c1: "#ffe066", c2: "#e0a400", lab: "#8a6200", ico: "ico-efectos" },
 ];
-const NOMBRE_SUB: Record<string, string> = { cabeza: "Piel", cara: "Cara", cabello: "Pelo", torso: "Torso", brazos: "Brazos", manos: "Manos", cadera: "Cadera", piernas: "Piernas",
+const NOMBRE_SUB: Record<string, string> = { traje: "Traje completo", cabeza: "Piel", cara: "Cara", cabello: "Pelo", torso: "Torso", brazos: "Brazos", manos: "Manos", cadera: "Cadera", piernas: "Piernas",
   accesorio: "Capas y objetos", sombrero: "Cascos", ...NOMBRE_GESTO };
 const NOMBRE_PALETA = { piel: "Piel", pelo: "Pelo", ropa: "Color" } as const;
 /** Sub-partes de cada sección, en el orden en que salen (la cabeza empieza por la cara). */
-const SUBPARTES: Record<Pestana, Sub[]> = { cabeza: ["cara", "cabello", "cabeza"], torso: ["torso"], brazos: ["brazos", "manos"], piernas: ["piernas", "cadera"],
+const SUBPARTES: Record<Pestana, Sub[]> = { trajes: ["traje"], cabeza: ["cara", "cabello", "cabeza"], torso: ["torso"], brazos: ["brazos", "manos"], piernas: ["piernas", "cadera"],
   accesorios: ["accesorio", "sombrero"], movimientos: [...GESTOS] };
 const esGesto = (x: Sub): x is Gesto => (GESTOS as readonly string[]).includes(x);
 /** Sagas de las piezas originales (ficha.grupo), en el orden de los chips. */
@@ -49,7 +50,8 @@ const SAGAS: { id: Id; nombre: string }[] = [
 const RUEDA_DE: Record<Gesto, string> = { saludo: "saludar", victoria: "victoria", derrota: "derrota", especial: "especial" };
 type Fuente = "original" | "generica";
 /** Elemento de la rejilla: pieza o movimiento. */
-type Item = { tipo: "pieza"; pz: PiezaCons } | { tipo: "mov"; op: OpcionMov | null };
+/** Elemento de la rejilla: pieza, movimiento o traje completo (un personaje del catálogo tal cual). */
+type Item = { tipo: "pieza"; pz: PiezaCons } | { tipo: "mov"; op: OpcionMov | null } | { tipo: "traje"; id: Id; nombre: string; grupo: Id; foto: string | null };
 
 /** Ícono ilustrado de Elías (arte/ui/personalizar/<id>.webp); mientras no exista, su lugar queda vacío. */
 const faltan = new Set<string>();
@@ -151,12 +153,17 @@ export function Constructor({ catalogo, piezas, inicial, escenaUrl, onGuardar, o
   const firma = plano ? JSON.stringify(plano) : "";
   const sePuedeGuardar = !!plano && firma === confirmada;
   const gesto = esGesto(sub) ? sub : null;
-  const parte = gesto ? null : (sub as Parte);
+  const parte = gesto || sub === "traje" ? null : (sub as Parte);
   const movs = useMemo(() => (gesto ? opcionesMovimiento(catalogo, base, gesto, figura.familia) : []), [catalogo, base, gesto, figura.familia]);
-  const todas = useMemo<Item[]>(() => (parte ? piezasDe(piezas, parte, figura.familia).map(pz => ({ tipo: "pieza" as const, pz })) : movs.map(op => ({ tipo: "mov" as const, op }))),
-    [piezas, parte, figura.familia, movs]);
-  const origenDe = (it: Item) => (it.tipo === "pieza" ? it.pz.origen ?? "original" : it.op?.origen ?? "ninguna");
-  const grupoDe = (it: Item) => (it.tipo === "pieza" ? it.pz.grupo ?? "" : it.op?.grupo ?? "");
+  /** Trajes completos originales: cada personaje de la familia, con su foto de tarjeta (pedido de Elías, 2026-11-26). */
+  const trajes = useMemo<Item[]>(() => [...catalogo.values()].filter(e => e.ficha.familia === figura.familia)
+    .sort((a, b) => a.ficha.nombre.localeCompare(b.ficha.nombre, "es"))
+    .map(({ ficha: f, base: carpeta }) => ({ tipo: "traje" as const, id: f.id, nombre: f.nombre, grupo: f.grupo,
+      foto: /\.(webp|png|jpg)$/i.test(f.fotos.tarjeta) && !/no-hay/.test(f.fotos.tarjeta) ? new URL(f.fotos.tarjeta, carpeta).href : null })), [catalogo, figura.familia]);
+  const todas = useMemo<Item[]>(() => (sub === "traje" ? trajes : parte ? piezasDe(piezas, parte, figura.familia).map(pz => ({ tipo: "pieza" as const, pz })) : movs.map(op => ({ tipo: "mov" as const, op }))),
+    [sub, trajes, piezas, parte, figura.familia, movs]);
+  const origenDe = (it: Item) => (it.tipo === "traje" ? "original" : it.tipo === "pieza" ? it.pz.origen ?? "original" : it.op?.origen ?? "ninguna");
+  const grupoDe = (it: Item) => (it.tipo === "traje" ? it.grupo : it.tipo === "pieza" ? it.pz.grupo ?? "" : it.op?.grupo ?? "");
   const hay = (f: Fuente) => todas.some(it => origenDe(it) === f);
   const fuente: Fuente = modo;
   void hay;
@@ -182,10 +189,10 @@ export function Constructor({ catalogo, piezas, inicial, escenaUrl, onGuardar, o
   const paleta = parte ? paletaDePieza(pzPuesta, parte) : undefined;
   const tinte = parte && paleta ? figura.piezas[parte]?.tintes?.[paleta] ?? null : null;
   const baseId = figura.origen.tipo === "catalogo" ? figura.origen.personaje : null;
-  const visible = (it: Item) => it.tipo === "pieza" ? it.pz.id === puesta || (!puesta && it.pz.donante === baseId) : (it.op?.id ?? null) === (gesto ? elegidos[gesto] ?? null : null);
+  const visible = (it: Item) => it.tipo === "traje" ? it.id === baseId : it.tipo === "pieza" ? it.pz.id === puesta || (!puesta && it.pz.donante === baseId) : (it.op?.id ?? null) === (gesto ? elegidos[gesto] ?? null : null);
   const losa = LOSAS.find(l => l.id === pestana)!;
   /** Palomita de cada sección: algo cambió respecto al personaje base. */
-  const hecha = (t: Pestana) => t === "movimientos" ? Object.keys(elegidos).length > 0 : SUBPARTES[t].some(x => !!figura.piezas[x as Parte]);
+  const hecha = (t: Pestana) => t === "trajes" ? baseId !== (inicial.origen.tipo === "catalogo" ? inicial.origen.personaje : null) : t === "movimientos" ? Object.keys(elegidos).length > 0 : SUBPARTES[t].some(x => !!figura.piezas[x as Parte]);
   // Pide las fotos de las piezas de la página que se ve (las demás, cuando se llegue a ellas).
   useEffect(() => { pags[p]?.forEach(it => { if (it.tipo === "pieza") mini.pedir(it.pz); }); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [mini.listo, pags, p]);
 
@@ -223,6 +230,8 @@ export function Constructor({ catalogo, piezas, inicial, escenaUrl, onGuardar, o
   const rehacer = () => { if (!futuro.length) return; setHistoria(h => [...h.slice(-29), figura]); setFigura(futuro[0]!); setFuturo(f => f.slice(1)); setGuardado(false); };
   const restablecer = () => { if (figura !== inicial) cambiar(inicial); };
   const tocarItem = (it: Item) => {
+    // Traje completo: el personaje tal cual (sin piezas cambiadas); conserva movimientos y extensiones.
+    if (it.tipo === "traje") { if (it.id !== baseId || Object.keys(figura.piezas).length) cambiar({ ...figura, origen: { tipo: "catalogo", personaje: it.id, version: "base", revision: 1 }, piezas: {} }); return; }
     if (it.tipo === "pieza") { cambiar(ponerPieza(figura, it.pz)); return; }
     if (!gesto) return;
     const nueva = elegirMovimiento(figura, gesto, it.op?.id ?? null);
@@ -299,8 +308,8 @@ export function Constructor({ catalogo, piezas, inicial, escenaUrl, onGuardar, o
   };
   function irA(n: number) { const m = Math.max(0, Math.min(pags.length - 1, n)); if (m === p) return; setPasa(m > p ? "sig" : "ant"); setPagina(m); }
 
-  const pocas = lista.filter(it => (it.tipo === "pieza" ? !!it.pz.glb : !!it.op)).length;
-  const indiceSel = lista.filter(it => (it.tipo === "pieza" ? !!it.pz.glb : !!it.op)).findIndex(visible);
+  const pocas = lista.filter(it => (it.tipo === "traje" || (it.tipo === "pieza" ? !!it.pz.glb : !!it.op))).length;
+  const indiceSel = lista.filter(it => (it.tipo === "traje" || (it.tipo === "pieza" ? !!it.pz.glb : !!it.op))).findIndex(visible);
   const comun = modo === "generica";
 
   return (
@@ -388,13 +397,14 @@ export function Constructor({ catalogo, piezas, inicial, escenaUrl, onGuardar, o
         <div className={"pz-rejilla" + (pasa ? " pasa-" + pasa : "")} ref={rejilla} onPointerDown={bajar} onPointerUp={subir}
           style={{ gridTemplateColumns: `repeat(${caja.columnas}, minmax(0, 1fr))`, gridTemplateRows: `repeat(${caja.filas}, minmax(0, 1fr))` }}>
           {(pags[p] ?? []).map(it => {
-            const clave = it.tipo === "pieza" ? it.pz.id : it.op?.id ?? "de-siempre";
-            const nombre = it.tipo === "pieza" ? (it.pz.glb ? it.pz.nombre : "Ninguno") : it.op ? it.op.nombre : "De siempre";
+            const clave = it.tipo === "traje" ? "traje-" + it.id : it.tipo === "pieza" ? it.pz.id : it.op?.id ?? "de-siempre";
+            const nombre = it.tipo === "traje" ? it.nombre : it.tipo === "pieza" ? (it.pz.glb ? it.pz.nombre : "Ninguno") : it.op ? it.op.nombre : "De siempre";
             const on = visible(it);
             return (
               <button key={clave} type="button" className={"pz-pieza" + (on ? " on" : "")} aria-pressed={on} onClick={() => tocarItem(it)}
                 title={it.tipo === "mov" && it.op ? `${it.op.nombre} · ${it.op.sub}` : nombre}>
                 {(() => {
+                  if (it.tipo === "traje") return it.foto ? <img src={it.foto} alt="" draggable={false} loading="lazy" /> : <span className="pz-sin" aria-hidden="true">—</span>;
                   if (it.tipo === "mov") {
                     if (it.op?.foto) return <img src={it.op.foto} alt="" draggable={false} loading="lazy" />;
                     return <svg className="pz-mov-ico" viewBox="0 0 24 24" aria-hidden="true"><TrazosGesto cual={gesto ? RUEDA_DE[gesto] : "especial"} /></svg>;
