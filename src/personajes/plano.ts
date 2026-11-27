@@ -45,6 +45,7 @@ export function resolver(id: string, figura: FiguraV3, catalogo: Catalogo): Plan
     carga: { ...f.carga, metal: [...f.carga.metal] }, piezas: [],
     ...(() => { const p = poderesDeFicha(f, en.base, catalogo); return p.length ? { poderes: p } : {}; })(),
     ...(() => { const m = movimientosDeFicha(f, catalogo); return m.length ? { movs: m } : {}; })(),
+    ...(() => { const t = transformarDeFicha(f, en.base); return t ? { transformar: t } : {}; })(),
   };
 }
 
@@ -103,4 +104,11 @@ export function movimientosDeFicha(f: Ficha, catalogo: Catalogo): PoderPlano[] {
     }
   }
   return fuera;
+}
+
+/** Clips de transformación propios de la forma (set «transformar» de su ficha): con cuál sale y con cuál llega. */
+export function transformarDeFicha(f: Ficha, base: string): { glb: string; salir?: string; llegar?: string } | null {
+  const s = f.sets?.transformar;
+  if (!s || (!s.clips.salir && !s.clips.llegar)) return null;
+  return { glb: unir(base, s.glb), ...(s.clips.salir ? { salir: s.clips.salir } : {}), ...(s.clips.llegar ? { llegar: s.clips.llegar } : {}) };
 }
