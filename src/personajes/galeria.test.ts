@@ -25,6 +25,10 @@ const C = cat(
 );
 
 describe("galería", () => {
+  it("una saga chica sin botón propio va a «Otros» con su nombre de grupo", () => {
+    const t = tarjetas(cat(ficha("iron-man"), ficha("marty", { saga: "volver-al-futuro", grupo: "volver-al-futuro" }), ficha("sonic", { saga: "sonic", grupo: "sonic" })));
+    expect(t.map(x => [x.id, x.saga, x.grupo])).toEqual([["iron-man", "marvel", "avengers"], ["marty", "otros", "volver-al-futuro"], ["sonic", "otros", "sonic"]]);
+  });
   it("ordena por saga y nombre, sin borradores", () => {
     const t = tarjetas(C);
     expect(t.map(x => x.id)).toEqual(["hulk", "iron-man", "loki", "batman"]);
