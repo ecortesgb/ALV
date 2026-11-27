@@ -682,12 +682,20 @@ const competencia: Mecanica = {
 // una carta, un orden al azar o un cronómetro. Lo que sale es público. Al tocar «Terminar ronda» se revela el resumen.
 // Todo llega como «contestar» del administrador: { puntos }, { herramienta }, { otro } o "listo".
 
-export type HerramientaFisico = "dados" | "ruleta" | "carta" | "orden" | "cronometro";
-export const HERRAMIENTAS_FISICO: HerramientaFisico[] = ["dados", "ruleta", "carta", "orden", "cronometro"];
+// ALV FÍSICO (Elías, 27 nov): el modo es un complemento para jugar en persona. Además de dados, ruleta, carta, orden y
+// cronómetro, salen una palabra (mazo «palabra», con sus prohibidas) y una pregunta (mazo «verdad») para alguien al azar.
+// Las dos respetan los mismos filtros del motor (lugar, escenario, Temperatura, Drunk, parejas). Nadie gana puntos por
+// usar una herramienta: los puntos solo los da el administrador.
+export type HerramientaFisico = "dados" | "ruleta" | "carta" | "orden" | "cronometro" | "palabra" | "pregunta";
+export const HERRAMIENTAS_FISICO: HerramientaFisico[] = ["dados", "ruleta", "carta", "orden", "cronometro", "palabra", "pregunta"];
 /** Lo público de la ronda física: puntos dados en la ronda y la última herramienta usada (`n` sube con cada uso). */
 export interface SeleccionFisico {
   deltas: Record<string, number>;
-  herr?: { tipo: HerramientaFisico; n: number; dados?: [number, number]; jugador?: string; carta?: { v: number; p: number }; orden?: string[]; segundos?: number };
+  herr?: {
+    tipo: HerramientaFisico; n: number; dados?: [number, number]; jugador?: string; carta?: { v: number; p: number }; orden?: string[]; segundos?: number;
+    /** Palabra o pregunta que salió (id de la carta, texto ya personalizado y, en la palabra, sus prohibidas). */
+    texto?: { id: string; texto: string; prohibidas?: string[] };
+  };
 }
 export const MAX_DELTA_FISICO = 5;
 export const conFisico = (e: Pick<EstadoPartida, "motor">) => e.motor === "fisico";
@@ -732,7 +740,20 @@ function jugadaFisico(e: EstadoPartida, jugador: string, valor: unknown, c: Cont
     else if (tipo === "ruleta") herr.jugador = azar.elegir(js);
     else if (tipo === "carta") herr.carta = { v: 2 + azar.entero(13), p: azar.entero(4) };
     else if (tipo === "orden") herr.orden = azar.mezclar(js);
-    else {
+    else if (tipo === "palabra" || tipo === "pregunta") {
+      const mazo = tipo === "palabra" ? "palabra" : "verdad";
+      const antes = s.herr?.tipo === tipo ? s.herr.texto?.id : undefined;
+      // Otra semilla por uso; hasta 6 intentos para que no repita la que está en la mesa.
+      let carta: Carta | undefined;
+      for (let t = 0; t < 6 && (!carta || carta.id === antes); t++) carta = sacarCarta({ ...e, cambios: e.cambios + n * 131 + t * 17 }, c, [mazo]);
+      if (!carta) return e;
+      if (tipo === "pregunta") {
+        herr.jugador = azar.elegir(js);
+        const para = e.cfg.jugadores.find(j => j.id === herr.jugador);
+        const otro = azar.elegir(e.cfg.jugadores.filter(j => j.id !== herr.jugador));
+        herr.texto = { id: carta.id, texto: personalizar(carta.texto, e, para, otro) };
+      } else herr.texto = { id: carta.id, texto: carta.texto, ...(carta.prohibidas?.length ? { prohibidas: carta.prohibidas.slice(0, 5) } : {}) };
+    } else {
       const seg = v.segundos;
       if (!Number.isInteger(seg) || (seg as number) < 5 || (seg as number) > 300) return e;
       herr.segundos = seg as number;

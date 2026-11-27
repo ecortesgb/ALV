@@ -111,7 +111,7 @@ export const JUEGOS: DefinicionJuego[] = [
   { id: "reto-lugar", seccion: "gdlv", nombre: "Reto del lugar", sigla: "PVP", descripcion: "Una competencia real según dónde estén.",
     mecanicas: ["duelo", "tablero"], motor: "competencia", minJugadores: 2, maxJugadores: 8, lugares: [], intensidadMin: 1, intensidadMax: 2, mazo: "competencia" },
   // Modo Físico (ALV_PLAN_MODOS_DE_JUEGO.md §5): sin cartas que contestar; el administrador da y quita puntos.
-  { id: "fisico", seccion: "gdlv", nombre: "Juego físico", sigla: "PVP", descripcion: "Retos en persona. Tú das y quitas puntos y usas dados, ruleta, carta, orden o cronómetro.",
+  { id: "fisico", seccion: "gdlv", nombre: "Juego físico", sigla: "PVP", descripcion: "Retos en persona. Tú das y quitas puntos y usas dados, ruleta, carta, orden, palabra, pregunta o cronómetro.",
     mecanicas: ["duelo", "dados", "ruleta", "temporizador"], motor: "fisico", minJugadores: 2, maxJugadores: 8, lugares: [], intensidadMin: 1, intensidadMax: 2, mazo: "competencia" },
   { id: "lista", seccion: "pvt", nombre: "Lista relámpago", sigla: "LOL", descripcion: "30 segundos por persona. Gana quien diga más.",
     mecanicas: ["temporizador", "turnos"], motor: "conteo", segundos: 30, minJugadores: 2, maxJugadores: 8, lugares: [], intensidadMin: 1, intensidadMax: 3, mazo: "lista" },

@@ -5,6 +5,7 @@ import { JUEGOS } from "../content/catalogo";
 import { aplicar, crearPartida, resultados, type Accion, type AccionSinId, type EstadoPartida, type SeleccionFisico } from "./partida";
 import { armarArranque, reconstruir } from "./nucleo";
 import { vistaPublica } from "./vistas";
+import { cartasPermitidas } from "./filtros";
 
 const def = JUEGOS.find(j => j.id === "fisico")!;
 const gente = (n: number) => Array.from({ length: n }, (_, i) => ({ id: `j${i}`, nombre: `J${i}` }));
@@ -122,5 +123,31 @@ describe("juego físico", () => {
     expect(e.puntos.j2).toBe(3);
     expect(sel(e).herr?.tipo).toBe("dados");
     expect(reconstruir(filas as never, "j0")!.seleccion).toEqual(e.seleccion);
+  });
+
+  it("ALV FÍSICO: palabra y pregunta salen de su mazo con los filtros del motor y no dan puntos", () => {
+    let e = partida();
+    const herr = (h: string) => { e = juega(e, { tipo: "contestar", jugador: "j0", valor: { herramienta: h } }); return sel(e).herr!; };
+    const palabras = cartasPermitidas(e.cfg, CONTENIDO.cartas, ["palabra"]).map(c => c.id);
+    const preguntas = cartasPermitidas(e.cfg, CONTENIDO.cartas, ["verdad"]).map(c => c.id);
+    const p1 = herr("palabra");
+    expect(p1.tipo).toBe("palabra");
+    expect(palabras).toContain(p1.texto!.id);
+    const p2 = herr("palabra");
+    if (palabras.length > 1) expect(p2.texto!.id).not.toBe(p1.texto!.id);
+    const q = herr("pregunta");
+    expect(preguntas).toContain(q.texto!.id);
+    expect(["j0", "j1", "j2", "j3"]).toContain(q.jugador);
+    expect(q.texto!.texto).not.toMatch(/\{alguien\}|\{pareja\}/);
+    expect(Object.values(e.puntos).every(x => x === 0)).toBe(true);
+    expect(vistaPublica(e).seleccion).toMatchObject({ herr: { tipo: "pregunta" } });
+  });
+
+  it("ALV FÍSICO: solo el administrador saca palabra o pregunta", () => {
+    let e = partida();
+    const antes = e.version;
+    e = juega(e, { tipo: "contestar", jugador: "j1", valor: { herramienta: "palabra" } });
+    e = juega(e, { tipo: "contestar", jugador: "j0", valor: { herramienta: "trivia" } });
+    expect(e.version).toBe(antes);
   });
 });

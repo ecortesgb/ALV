@@ -177,6 +177,8 @@ const HERRAMIENTAS_FISICO_CFG = [
   { id: "carta", nombre: "Carta", detalle: "Saca un naipe de póker.", icono: "herr-poker" },
   { id: "orden", nombre: "Orden", detalle: "Revuelve quién va primero.", icono: "herr-orden" },
   { id: "cronometro", nombre: "Cronómetro", detalle: "30 s, 1 min o 2 min.", icono: "herr-tiempo" },
+  { id: "palabra", nombre: "Palabra", detalle: "Sale tapada, para mímica o descríbela.", icono: "herr-cartas" },
+  { id: "pregunta", nombre: "Pregunta", detalle: "Una pregunta para alguien al azar.", icono: "termometro-2" },
 ];
 
 /** Equipos por orden de llegada: A, B, A, B… */
@@ -258,7 +260,8 @@ export function ConfigurarPartida({ miembros, alIniciar, alCancelar, iniciando, 
   const [soloNuevas, setSoloNuevas] = useState(leerSoloNuevas);
   const [deCero, setDeCero] = useState(0);
   // Categoría abierta en «Elige el juego» (null: las tarjetas de categoría). En Físico abre directo la de competencias.
-  const cats = useMemo(() => categoriasDe(id => id in MODALIDADES_JUEGO), []);
+  // ALV FÍSICO (Elías, 27 nov): en ese modo solo salen los juegos físicos (herramientas de complemento).
+  const cats = useMemo(() => categoriasDe(id => id in MODALIDADES_JUEGO && (!modoFisico || JUEGOS_FISICO.includes(id))), [modoFisico]);
   const catDe = (id: string) => cats.find(c => c.juegos.includes(id))?.id ?? null;
   const [filtro, setFiltro] = useState<string | null>(() => (modoFisico ? catDe(JUEGOS_FISICO[0]!) : null));
 
