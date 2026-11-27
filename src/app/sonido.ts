@@ -112,12 +112,63 @@ const SONIDOS = {
   "poder-velocidad": [{ f: 400, a: 3000, t: 0, d: 0.35, ruido: "bandpass", q: 1.2, v: 0.14 }, { f: 3000, t: 0.35, d: 1.2, ruido: "bandpass", q: 1.5, v: 0.07 },
     { f: 3000, a: 500, t: 1.55, d: 0.4, ruido: "bandpass", q: 1.2, v: 0.1 }, { f: 4200, a: 1500, t: 0.1, d: 0.08, ruido: "bandpass", q: 3, v: 0.06 }, { f: 3800, a: 1400, t: 0.8, d: 0.08, ruido: "bandpass", q: 3, v: 0.06 }],
   "poder-hormigas": [0, 0.07, 0.15, 0.2, 0.29, 0.36, 0.44, 0.5].map((t, i) => ({ f: 2500 + (i % 3) * 500, t, d: 0.025, tipo: "square" as OscillatorType, v: 0.02 })),
+  // ---- Movimientos de los sets (Elías, 27 nov): personajes/sets.ts SONIDOS_MOV dice cuál y en qué segundo ----
+  "mov-zas": [{ f: 600, a: 2500, t: 0, d: 0.16, ruido: "bandpass", q: 1.2, v: 0.3 }],
+  "mov-salto": [{ f: 300, a: 900, t: 0, d: 0.12, tipo: "triangle", v: 0.05 }, { f: 800, a: 2400, t: 0, d: 0.15, ruido: "bandpass", q: 1, v: 0.2 }],
+  "mov-aterrizar": [{ f: 120, a: 50, t: 0, d: 0.18, tipo: "sine", v: 0.16 }, { f: 500, a: 150, t: 0, d: 0.14, ruido: "lowpass", v: 0.12 }],
+  "mov-espada": [{ f: 1500, a: 5000, t: 0, d: 0.14, ruido: "bandpass", q: 2, v: 0.14 }, { f: 2800, t: 0.08, d: 0.25, tipo: "triangle", v: 0.025 }, { f: 4200, t: 0.08, d: 0.18, tipo: "sine", v: 0.015 }],
+  "mov-desenvainar": [{ f: 2500, a: 6000, t: 0, d: 0.35, ruido: "bandpass", q: 4, v: 0.25 }, { f: 3100, t: 0.33, d: 0.5, tipo: "triangle", v: 0.03 }, { f: 4650, t: 0.33, d: 0.4, tipo: "sine", v: 0.015 }],
+  /** Sable láser: zumbido grave que sube y baja con el movimiento. */
+  "mov-sable": [{ f: 90, a: 140, t: 0, d: 0.35, tipo: "sawtooth", v: 0.07 }, { f: 180, a: 120, t: 0.15, d: 0.3, tipo: "sawtooth", v: 0.05 }, { f: 400, a: 1600, t: 0, d: 0.3, ruido: "bandpass", q: 3, v: 0.06 }],
+  "mov-sable-encender": [{ f: 60, a: 110, t: 0, d: 0.35, tipo: "sawtooth", v: 0.07 }, { f: 110, t: 0.35, d: 0.7, tipo: "sawtooth", v: 0.05 }, { f: 113, t: 0.35, d: 0.7, tipo: "sawtooth", v: 0.04 },
+    { f: 1500, a: 300, t: 0, d: 0.3, ruido: "bandpass", q: 2, v: 0.08 }],
+  "mov-varita": [{ f: 1568, t: 0, d: 0.12, tipo: "sine", v: 0.04 }, { f: 2093, t: 0.06, d: 0.12, tipo: "sine", v: 0.04 }, { f: 2637, t: 0.12, d: 0.2, tipo: "sine", v: 0.04 },
+    { f: 3136, t: 0.18, d: 0.3, tipo: "sine", v: 0.035 }, { f: 6000, a: 2500, t: 0, d: 0.5, ruido: "highpass", v: 0.05 }, { f: 300, a: 900, t: 0, d: 0.25, tipo: "triangle", v: 0.04 }],
+  "mov-conjuro": [{ f: 330, a: 440, t: 0, d: 0.9, tipo: "sine", v: 0.05 }, { f: 495, a: 660, t: 0.05, d: 0.85, tipo: "sine", v: 0.04 }, { f: 1500, a: 4000, t: 0, d: 0.9, ruido: "bandpass", q: 5, v: 0.04 }],
+  "mov-golpe-seco": [{ f: 180, a: 60, t: 0, d: 0.15, tipo: "sine", v: 0.16 }, { f: 1200, a: 300, t: 0, d: 0.06, ruido: "bandpass", q: 1, v: 0.12 }],
+  "mov-disparo": [{ f: 3000, a: 600, t: 0, d: 0.08, ruido: "bandpass", q: 0.8, v: 0.25 }, { f: 200, a: 60, t: 0, d: 0.18, tipo: "sine", v: 0.18 }, { f: 800, a: 200, t: 0.02, d: 0.3, ruido: "lowpass", v: 0.08 }],
+  "mov-blaster": [{ f: 1800, a: 220, t: 0, d: 0.2, tipo: "sawtooth", v: 0.07 }, { f: 2400, a: 300, t: 0, d: 0.16, tipo: "square", v: 0.03 }, { f: 3000, a: 800, t: 0, d: 0.05, ruido: "bandpass", v: 0.08 }],
+  "mov-enfundar": [{ f: 2000, a: 800, t: 0, d: 0.2, ruido: "bandpass", q: 2, v: 0.15 }, { f: 2600, a: 1300, t: 0.2, d: 0.025, tipo: "square", v: 0.04 }, { f: 1800, a: 900, t: 0.25, d: 0.03, tipo: "square", v: 0.04 }],
+  "mov-rifle": [{ f: 2500, a: 400, t: 0, d: 0.1, ruido: "bandpass", q: 0.7, v: 0.3 }, { f: 150, a: 40, t: 0, d: 0.3, tipo: "sine", v: 0.22 }, { f: 700, a: 150, t: 0.03, d: 0.5, ruido: "lowpass", v: 0.1 },
+    { f: 2600, a: 1300, t: 0.35, d: 0.025, tipo: "square", v: 0.03 }],
+  "mov-arco-tensar": [{ f: 180, a: 260, t: 0, d: 0.4, tipo: "sawtooth", v: 0.04 }, { f: 900, a: 1400, t: 0, d: 0.4, ruido: "bandpass", q: 6, v: 0.15 }],
+  "mov-flecha": [{ f: 196, a: 180, t: 0, d: 0.3, tipo: "triangle", v: 0.08 }, { f: 392, a: 360, t: 0, d: 0.15, tipo: "triangle", v: 0.04 }, { f: 2000, a: 800, t: 0.02, d: 0.3, ruido: "bandpass", q: 2, v: 0.08 }],
+  /** Garras que salen: «snikt». */
+  "mov-garras": [{ f: 5000, a: 2500, t: 0, d: 0.07, ruido: "bandpass", q: 3, v: 0.14 }, { f: 3200, t: 0.05, d: 0.25, tipo: "triangle", v: 0.03 }, { f: 4800, t: 0.05, d: 0.2, tipo: "sine", v: 0.02 },
+    { f: 5500, a: 3000, t: 0.08, d: 0.06, ruido: "highpass", v: 0.08 }],
+  "mov-despegue": [{ f: 60, a: 120, t: 0, d: 0.9, tipo: "sawtooth", v: 0.05 }, { f: 200, a: 1200, t: 0, d: 0.9, ruido: "lowpass", q: 0.8, v: 0.35 }],
+  "mov-puno": [{ f: 900, a: 2200, t: 0, d: 0.07, ruido: "bandpass", q: 1, v: 0.1 }, { f: 150, a: 55, t: 0.06, d: 0.16, tipo: "sine", v: 0.2 }, { f: 700, a: 200, t: 0.06, d: 0.08, ruido: "lowpass", v: 0.15 }],
+  "mov-golpe-fuerte": [{ f: 110, a: 35, t: 0, d: 0.4, tipo: "sine", v: 0.24 }, { f: 600, a: 100, t: 0, d: 0.3, ruido: "lowpass", v: 0.2 }, { f: 2500, a: 800, t: 0, d: 0.05, ruido: "bandpass", v: 0.1 }],
+  "mov-festejo": [{ f: 659, t: 0, d: 0.1, tipo: "triangle", v: 0.06 }, { f: 880, t: 0.1, d: 0.1, tipo: "triangle", v: 0.06 }, { f: 1319, t: 0.2, d: 0.3, tipo: "triangle", v: 0.06 },
+    { f: 2500, a: 6000, t: 0.2, d: 0.4, ruido: "highpass", v: 0.03 }],
+  "mov-puntitas": [{ f: 1400, a: 900, t: 0, d: 0.03, tipo: "triangle", v: 0.06 }],
+  "mov-barrida": [{ f: 1200, a: 500, t: 0, d: 0.7, ruido: "bandpass", q: 0.8, v: 0.2 }, { f: 200, a: 80, t: 0, d: 0.3, ruido: "lowpass", v: 0.06 }],
+  "mov-recibir": [{ f: 160, a: 60, t: 0, d: 0.15, tipo: "sine", v: 0.18 }, { f: 320, a: 180, t: 0.03, d: 0.18, tipo: "triangle", v: 0.05 }],
+  /** Pajaritos de mareado. */
+  "mov-mareo": [0, 0.15, 0.3, 0.45, 0.6].map((t, i) => ({ f: 2400 + (i % 2) * 600, a: 1800 + (i % 2) * 400, t, d: 0.09, tipo: "sine" as OscillatorType, v: 0.06 })),
+  "mov-caer": [{ f: 100, a: 40, t: 0, d: 0.3, tipo: "sine", v: 0.22 }, { f: 500, a: 120, t: 0, d: 0.25, ruido: "lowpass", v: 0.16 }],
+  "mov-aplastar": [{ f: 900, a: 200, t: 0, d: 0.2, ruido: "lowpass", q: 2, v: 0.18 }, { f: 90, a: 40, t: 0, d: 0.2, tipo: "sine", v: 0.18 }, { f: 300, a: 600, t: 0.25, d: 0.3, tipo: "triangle", v: 0.04 }],
+  "mov-esfuerzo": [{ f: 70, a: 90, t: 0, d: 1, tipo: "sawtooth", v: 0.04 }, { f: 150, a: 250, t: 0, d: 1, ruido: "lowpass", v: 0.22 }],
+  "mov-arrancar": [{ f: 3000, a: 900, t: 0, d: 0.12, ruido: "bandpass", q: 1, v: 0.2 }, { f: 1500, a: 400, t: 0.1, d: 0.25, ruido: "bandpass", q: 1, v: 0.12 }, { f: 120, a: 50, t: 0, d: 0.25, tipo: "sine", v: 0.16 }],
+  "mov-derrumbe": [{ f: 900, a: 150, t: 0, d: 0.8, ruido: "lowpass", v: 0.22 }, { f: 100, a: 35, t: 0, d: 0.6, tipo: "sine", v: 0.24 }, { f: 2500, a: 1000, t: 0.05, d: 0.08, ruido: "bandpass", v: 0.1 },
+    { f: 2200, a: 900, t: 0.25, d: 0.07, ruido: "bandpass", v: 0.08 }, { f: 1800, a: 800, t: 0.45, d: 0.06, ruido: "bandpass", v: 0.06 }],
+  "mov-levitar": [{ f: 220, a: 440, t: 0, d: 1.2, tipo: "sine", v: 0.05 }, { f: 330, a: 660, t: 0.1, d: 1.1, tipo: "sine", v: 0.035 }, { f: 3000, a: 6000, t: 0, d: 1.2, ruido: "highpass", v: 0.02 }],
+  /** Presentir peligro: cosquilleo agudo. */
+  "mov-sentido": [0, 0.06, 0.12, 0.18, 0.24, 0.3].map((t, i) => ({ f: i % 2 ? 2200 : 2600, t, d: 0.06, tipo: "sine" as OscillatorType, v: 0.06 })),
+  "mov-gadget": [{ f: 1200, t: 0, d: 0.06, tipo: "square", v: 0.03 }, { f: 1600, t: 0.08, d: 0.06, tipo: "square", v: 0.03 }, { f: 2000, t: 0.16, d: 0.1, tipo: "square", v: 0.03 },
+    { f: 300, a: 1200, t: 0.25, d: 0.2, tipo: "sine", v: 0.04 }],
 } satisfies Record<string, Nota[]>;
 
 /** Sonido del efecto de un poder (lo pide la escena al salir el efecto). Nombre desconocido: no suena. */
 export function sonarPoder(tipo: unknown) {
-  const k = `poder-${String(tipo)}`;
-  if (k in SONIDOS) sonar(k as Sonido);
+  const k = existeSonido(tipo);
+  if (k) sonar(k);
+}
+
+/** Nombre del sonido de un poder o movimiento («hechizo» → poder-hechizo, «disparo» → mov-disparo), o null. */
+export function existeSonido(tipo: unknown): Sonido | null {
+  for (const k of [`poder-${String(tipo)}`, `mov-${String(tipo)}`]) if (k in SONIDOS) return k as Sonido;
+  return null;
 }
 
 export type Sonido = keyof typeof SONIDOS;

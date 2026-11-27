@@ -116,3 +116,46 @@ export const SETS_TODOS = ["base", "pelea", "gestos", "reacciones"] as const;
 
 /** Los sets que usa un personaje, en orden (los propios primero; luego los de todos). */
 export const setsDe = (id: Id): string[] => [...(SETS_DE[id] ?? []), ...SETS_TODOS];
+
+// ---------- Sonidos de los movimientos (Elías, 27 nov: «al disparar, mover espada láser, volar, golpear…») ----------
+// [sonido, segundo del clip en que suena]. El sonido es un nombre de src/app/sonido.ts (sintetizado, sin archivos).
+// Bailes, burlas y nervios no llevan: ya se entienden sin sonido y taparían la música.
+type Toque = readonly [string, number];
+export const SONIDOS_MOV: Readonly<Record<string, readonly Toque[]>> = {
+  "base-combo": [["zas", 0.08], ["zas", 0.28], ["zas", 0.48]], "base-voltereta": [["zas", 0.15]], "base-salto": [["salto", 0.05], ["aterrizar", 0.8]],
+  "espada-combo": [["espada", 0.05], ["espada", 0.28]], "espada-estocada": [["espada", 0.25]], "espada-desenvainar": [["desenvainar", 0.4]],
+  "magia-hechizo": [["hechizo", 0.6]], "magia-conjuro": [["conjuro", 0.3]], "magia-levantar": [["campo", 0.1]], "magia-escudo": [["escudo", 0.2]],
+  "magia-baston": [["zas", 0.05], ["golpe-seco", 0.3]],
+  "pistola-disparar": [["disparo", 0.3]], "pistola-sacar": [["enfundar", 0.4]],
+  "dospistolas-disparar": [["disparo", 0.2], ["disparo", 0.45]], "dospistolas-sacar": [["enfundar", 0.4]],
+  "rifle-disparar": [["rifle", 0.15]], "rifle-combo": [["zas", 0.1], ["golpe-seco", 0.3]],
+  "arco-disparar": [["arco-tensar", 0.2], ["flecha", 0.75]],
+  "garras-voltereta": [["garras", 0], ["zas", 0.3]],
+  "vuelo-despegar": [["despegue", 0]],
+  "pelea-golpe1": [["zas", 0.2], ["puno", 0.35]], "pelea-golpe2": [["zas", 0.3], ["puno", 0.5]], "pelea-golpe3": [["puno", 0.3], ["puno", 0.6]],
+  "pelea-golpe4": [["puno", 0.4], ["puno", 0.8], ["golpe-fuerte", 1.3]], "pelea-golpe5": [["puno", 0.3], ["puno", 0.7], ["puno", 1.1], ["golpe-fuerte", 1.6]],
+  "pelea-estocada": [["zas", 0.15]],
+  "gestos-festejo": [["festejo", 0.2]], "gestos-festejo2": [["festejo", 0.2]], "gestos-sigilo": [["puntitas", 0.1], ["puntitas", 0.75]], "gestos-deslizarse": [["barrida", 0.2]],
+  "reacciones-golpeado": [["recibir", 0.05]], "reacciones-golpeado2": [["recibir", 0.05]], "reacciones-aturdido": [["mareo", 0.1]],
+  "reacciones-al-suelo": [["recibir", 0], ["caer", 0.6]], "reacciones-aplastado": [["aplastar", 0.15]],
+  "fuerza-levantar": [["esfuerzo", 0.3], ["golpe-seco", 1.6]], "fuerza-arrancar": [["arrancar", 0.9]], "fuerza-golpe-muro": [["zas", 0.6], ["derrumbe", 0.85]],
+  "fuerza-agarrar": [["zas", 0.2]], "fuerza-azotar": [["golpe-fuerte", 0.9], ["golpe-fuerte", 1.6]],
+  "mente-control": [["campo", 0.3]], "mente-levitar": [["levitar", 0.1]], "mente-sentido": [["sentido", 0.1]],
+  "acrobacia-barra": [["zas", 0.2], ["zas", 0.5]], "acrobacia-columpio": [["zas", 0.2]], "acrobacia-salto-pared": [["salto", 0.1], ["aterrizar", 0.7]],
+  "acrobacia-impulso": [["salto", 0.1]],
+  "tecno-gadget": [["gadget", 0.15]],
+};
+
+/** Personajes que suenan distinto con el mismo set: sable láser en Star Wars, bláster, varita en Harry Potter. */
+const cambia = (ids: string, de: Record<string, string>): [string, Record<string, string>][] => ids.trim().split(/\s+/).map(id => [id, de]);
+export const SONIDO_PROPIO: Readonly<Record<Id, Readonly<Record<string, string>>>> = Object.fromEntries([
+  ...cambia("darth-vader darth-maul luke-skywalker anakin-skywalker yoda", { espada: "sable", desenvainar: "sable-encender" }),
+  ...cambia("jango-fett mandaloriano", { disparo: "blaster", rifle: "blaster" }),
+  ...cambia("harry-potter hermione-granger ron-weasley voldemort", { hechizo: "varita", conjuro: "varita" }),
+]);
+
+/** Sonidos de un movimiento («<set>-<mov>») para un personaje, ya con sus cambios. */
+export function sonidosDe(id: Id, mov: string): { cual: string; t: number }[] {
+  const propio = SONIDO_PROPIO[id] ?? {};
+  return (SONIDOS_MOV[mov] ?? []).map(([s, t]) => ({ cual: propio[s] ?? s, t }));
+}

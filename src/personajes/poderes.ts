@@ -184,4 +184,5 @@ export const PRESTADOS: Readonly<Record<Id, Readonly<Record<string, Prestado>>>>
 };
 
 /** Un poder listo para la escena: el GLB y el clip (null si se dibuja solo el efecto), y sus efectos. */
-export interface PoderPlano { id: string; nombre: string; glb: string; clip: string; efectos: Efecto[]; hasta?: number; bucle?: number }
+export interface PoderPlano { id: string; nombre: string; glb: string; clip: string; efectos: Efecto[]; hasta?: number; bucle?: number;
+  /** Movimientos: sonidos y el segundo del clip en que suenan (sets.ts SONIDOS_MOV). */ sonidos?: { cual: string; t: number }[] }
