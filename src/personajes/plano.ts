@@ -1,5 +1,6 @@
 // Resolver: figura v3 + catálogo → plano para el motor (§7 del formato). Aquí se decide todo; el motor solo dibuja.
 import { familia } from "./familias";
+import { PODERES, type PoderPlano } from "./poderes";
 import { LOGICAS, type Ficha, type FiguraV3, type Logica, type Plano } from "./tipos";
 
 /** Personaje del catálogo ya cargado: su ficha y la URL de su carpeta (termina en «/»). */
@@ -41,5 +42,14 @@ export function resolver(id: string, figura: FiguraV3, catalogo: Catalogo): Plan
     id, familia: f.familia, rig: f.rig, glb: unir(en.base, f.glb), escala: fam.escala,
     huesos: { ...f.huesos }, clips: resolverClips(f), vida: [...f.animaciones.vida], sentado: f.animaciones.sentado,
     carga: { ...f.carga, metal: [...f.carga.metal] }, piezas: [],
+    ...(() => { const p = poderesDeFicha(f, en.base); return p.length ? { poderes: p } : {}; })(),
   };
+}
+
+/** Los poderes que se ofrecen de un personaje: los de poderes.ts (en su orden) cuyo clip trae su ficha. */
+export function poderesDeFicha(f: Ficha, base: string): PoderPlano[] {
+  const defs = PODERES[f.id], clips = f.poderes?.clips;
+  if (!defs || !clips || !f.poderes) return [];
+  const glb = unir(base, f.poderes.glb);
+  return Object.entries(defs).filter(([k]) => clips[k]).map(([id, d]) => ({ id, nombre: d.nombre, glb, clip: clips[id]!, efectos: [d.efecto, ...(d.efectos ?? [])] }));
 }

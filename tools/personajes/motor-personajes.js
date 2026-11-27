@@ -376,6 +376,25 @@
         if (logica === "reposo" || logica === null) { const a = accion(nombre); if (a !== actual) { iniciar(a, true, MEZCLA, 1); logica = "reposo"; clipActual = nombre; } }
         return true;
       },
+      /** Toca una vez un clip de otro GLB del mismo personaje (poderes: <id>-poderes.glb, mismo esqueleto) y vuelve a reposo
+       *  al terminar. Promesa con la duración en segundos (0 si no bajó o no está: no cambia lo que se toca). */
+      tocarExt: async (glb, nombre, op) => {
+        const k = "poder:" + nombre;
+        if (!porNombre.has(k)) {
+          try {
+            const g2 = await bajar(glb, (op && op.carga) || plano.carga);
+            const c0 = g2.animations.find(a => a.name === nombre);
+            const c = c0 && new T.AnimationClip(k, c0.duration, c0.tracks.filter(t => obj.getObjectByName(T.PropertyBinding.parseTrackName(t.name).nodeName)));
+            if (!c || !c.tracks.length) return 0;
+            porNombre.set(k, c);
+          } catch (_) { return 0; }
+        }
+        const a = accion(k);
+        if (!a) return 0;
+        iniciar(a, false, (op && op.mezcla) == null ? MEZCLA : op.mezcla, 1);
+        logica = "poder"; clipActual = k;
+        return porNombre.get(k).duration;
+      },
       update: dt => { aplicarCruce(dt); return mixer.update(dt); },
       estado: () => ({ logica, clip: clipActual, tiempo: actual ? actual.time : 0, clips: [...porNombre.keys()].length }),
       /** Nombres de todos los clips del GLB (para verificar fichas). */

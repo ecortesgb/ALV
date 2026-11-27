@@ -3,6 +3,7 @@
 import { useEffect, useImperativeHandle, useRef, useState, forwardRef } from "react";
 import { avisoDelMotor, huella, semillaDe } from "../../app/figura3d";
 import { alPedirGesto, animacionDe } from "../../app/animaciones";
+import { alPedirPoder } from "../../app/poderes";
 import { calidadAzotea, movimientoReducido, paramBiblioteca } from "../../app/preferencias";
 import type { FiguraV2 } from "../../content/personaje";
 import { PRIORIDAD_VIDA, animPerfil, soloApariencia, type Contexto } from "../../app/perfiles";
@@ -85,7 +86,8 @@ export const EscenaAzotea = forwardRef<MandoAzotea, { id: string; figura: Figura
         if (!listoRef.current || !datos.current.vida || v.jugador !== datos.current.id) return;
         enviar({ tipo: "momento", id: v.jugador, cual: nombreVida(v, hay), prio: PRIORIDAD_VIDA, vel: v.vel, int: v.int, ...(v.dur ? { dur: v.dur } : {}) });
       });
-      return () => { removeEventListener("message", f); fuera(); fueraVida(); };
+      const fueraPoder = alPedirPoder(p => { if (listoRef.current && p.jugador === datos.current.id) enviar({ tipo: "poder", id: p.jugador, poder: p.poder }); });
+      return () => { removeEventListener("message", f); fuera(); fueraVida(); fueraPoder(); };
     }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
     // Recolocar al cambiar el tamaño de la ventana o cuando el fondo ya tiene su tamaño.

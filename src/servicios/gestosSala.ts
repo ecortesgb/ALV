@@ -6,6 +6,7 @@ import { ENFRIAR_MS, alGestoPropio, aplicarGestoRemoto, esGesto, type Gesto } fr
 import { abrirDifusion } from "./difusion";
 import { alVidaPropia, aplicarVidaRemota, type EventoVida } from "../app/vidaPerfil";
 import { alFormaPropia, aplicarFormaRemota, estadoForma } from "../app/formas";
+import { alPoderPropio, aplicarPoderRemoto, esPoder } from "../app/poderes";
 
 export interface MensajeGesto { g: Gesto; j: string; p: string | null; n: number }
 
@@ -51,6 +52,15 @@ export function revisarForma(d: Record<string, unknown>, miembros: ReadonlySet<s
   return { j, k, n, e: d.e === true };
 }
 
+export interface MensajePoder { j: string; k: string; n: number }
+/** Revisa un aviso de poder: de un miembro (no de este aparato), nombre válido y orden válido. */
+export function revisarPoder(d: Record<string, unknown>, miembros: ReadonlySet<string>, yo: string): MensajePoder | null {
+  const j = d.j, k = d.k, n = d.n;
+  if (typeof j !== "string" || j.length > 64 || !miembros.has(j) || j === yo || !esPoder(k)) return null;
+  if (typeof n !== "number" || !Number.isInteger(n) || n < 1 || n > 1e13) return null;
+  return { j, k, n };
+}
+
 /** Abre el canal de gestos de la sala mientras la pantalla está montada. `yo` vacío (la TV): solo escucha. */
 export function useGestosSala(salaId: string | null | undefined, yo: string, miembros: readonly { id: string }[]) {
   const ids = useRef<Set<string>>(new Set());
@@ -62,6 +72,7 @@ export function useGestosSala(salaId: string | null | undefined, yo: string, mie
     const canal = abrirDifusion(`gestos-${salaId}`, (evento, d) => {
       if (evento === "v") { const v = revisarVida(d, ids.current, yo); if (v) aplicarVidaRemota(v); return; }
       if (evento === "f") { const f = revisarForma(d, ids.current, yo); if (f) aplicarFormaRemota(f.j, f.k, f.n, f.e); return; }
+      if (evento === "p") { const p = revisarPoder(d, ids.current, yo); if (p) aplicarPoderRemoto(p.j, p.k, p.n); return; }
       if (evento !== "g") return;
       const m = revisarGesto(d, ids.current, yo, ultimo, Date.now());
       if (m) aplicarGestoRemoto(m.j, m.g, m.n, m.p);
@@ -72,9 +83,10 @@ export function useGestosSala(salaId: string | null | undefined, yo: string, mie
     // Forma propia (transformaciones): al cambiarla, y otra vez cuando entra alguien a la sala (no la vio cambiar).
     const mandarForma = () => { const f = estadoForma(yo); if (yo && f.n && ids.current.has(yo)) canal.enviar("f", { j: yo, k: f.paso, n: f.n, e: false }); };
     const fueraForma = yo ? alFormaPropia(e => { if (e.jugador === yo && ids.current.has(yo)) canal.enviar("f", { j: yo, k: e.paso, n: e.n, e: e.conEspecial }); }) : () => {};
+    const fueraPoder = yo ? alPoderPropio(e => { if (e.jugador === yo && ids.current.has(yo)) canal.enviar("p", { j: yo, k: e.poder, n: e.n }); }) : () => {};
     mandarForma();
     reenviar.current = mandarForma;
-    return () => { fuera(); fueraVida(); fueraForma(); reenviar.current = () => {}; canal.cerrar(); };
+    return () => { fuera(); fueraVida(); fueraForma(); fueraPoder(); reenviar.current = () => {}; canal.cerrar(); };
   }, [salaId, yo]);
   // Alguien nuevo en la sala: se le vuelve a decir la forma propia (sin animación: e = false).
   const firma = miembros.map(m => m.id).sort().join(",");

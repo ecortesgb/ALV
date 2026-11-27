@@ -1441,7 +1441,29 @@
   function planoV3(p) {
     if (!p || typeof p !== "object" || typeof p.id !== "string" || typeof p.glb !== "string" || !URL_OK.test(p.glb)) return null;
     if (!(Number(p.escala) > 0) || !p.clips || typeof p.clips !== "object") return null;
+    if (p.poderes != null) p.poderes = Array.isArray(p.poderes) ? p.poderes.slice(0, 8).filter(x => x && typeof x.id === "string" && /^[a-z][a-z0-9-]{0,23}$/.test(x.id)
+      && typeof x.glb === "string" && URL_OK.test(x.glb) && typeof x.clip === "string" && x.clip.length <= 80)
+      .map(x => ({ id: x.id, glb: x.glb, clip: x.clip, efectos: Array.isArray(x.efectos) ? x.efectos.slice(0, 3).filter(f => f && typeof f === "object" && typeof f.tipo === "string") : [] })) : [];
     return p;
+  }
+  // Poderes (Elías, 27 nov 2026): el clip del GLB «poderes» del personaje y sus efectos (efectos.js). Prioridad de especial:
+  // no lo corta la vida automática ni un gesto menor. Avisa {tipo:"poder", id, poder, ok, dur}.
+  function poder(id, cual) {
+    const e = figuras.get(String(id)), t = reloj.getElapsedTime();
+    const no = () => enviar({ tipo: "poder", id: String(id), poder: String(cual), ok: false });
+    if (!e || !e.v3 || NAVE) return no();
+    const pl = e.v3.obj.userData.plano, pd = pl && (pl.poderes || []).find(x => x.id === cual);
+    if (!pd || ((e.prio || 0) > 0 && t < e.hasta) || t < (e.poderHasta || 0)) return no();
+    const inst = e.v3;
+    e.poderHasta = t + 1; e.prio = 2; e.cual = "poder"; e.hasta = t + 1; e.accion = null;
+    inst.tocarExt(pd.glb, pd.clip).then(dur => {
+      if (e.v3 !== inst) return;
+      const t1 = reloj.getElapsedTime(), largo = Math.max(dur || 0, ...pd.efectos.map(f => (Number(f.retraso) || 0) + (Number(f.dura) || 1)));
+      e.prio = 2; e.cual = "poder"; e.hasta = t1 + largo; e.poderHasta = t1 + largo + 0.3; e.ultG = t1;
+      const fx = window.EfectosALV;
+      if (fx) pd.efectos.forEach(f => fx.lanzar(scene, { obj: inst.obj, hueso: inst.hueso }, f));
+      enviar({ tipo: "poder", id: e.id, poder: pd.id, ok: true, dur: largo });
+    });
   }
   function motorV3() {
     if (window.MotorPersonajes) return Promise.resolve(window.MotorPersonajes);
@@ -1451,6 +1473,7 @@
       V3.cargando = js("https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js")
         .then(() => js("https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/utils/SkeletonUtils.js"))
         .then(() => js(base + "logicas.js")).then(() => js(base + "motor-personajes.js"))
+        .then(() => js(base + "efectos.js").catch(() => {})) // poderes: sin efectos, el movimiento igual se ve
         .then(() => { if (!window.MotorPersonajes) throw new Error("falta MotorPersonajes"); return window.MotorPersonajes; });
       V3.cargando.catch(() => { V3.cargando = null; });
     }
@@ -1558,7 +1581,7 @@
     AZ.usuario = Math.atan2(Math.sin(AZ.usuario), Math.cos(AZ.usuario));
     const frente = Math.max(m.w, e.accion ? 1 : 0);
     e.obj.rotation.y = AZ_GIRO + AZ.usuario * (1 - frente) + m.ax * 0.5 * m.w;
-    AZ.quieto = !L_activa() && !e.accion && m.w < 0.01 && AZ.vel === 0;
+    AZ.quieto = !L_activa() && !e.accion && m.w < 0.01 && AZ.vel === 0 && !(window.EfectosALV && window.EfectosALV.activos()) && !(e.cual === "poder" && reloj.getElapsedTime() < e.hasta);
     void a;
   }
   // Acciones breves de la azotea (al señalar botones): prioridad baja. No interrumpen un gesto que suena (ni su
@@ -1710,6 +1733,7 @@
     }
     else if (NAVE && d.tipo === "expulsar") { const e = figuras.get(String(d.id)); if (e && e.vuela == null) e.vuela = reloj.getElapsedTime(); }
     else if (d.tipo === "momento") momento(d.id, String(d.cual), Number(d.prio), d);
+    else if (d.tipo === "poder") poder(d.id, String(d.poder));
     else if (d.tipo === "foto" || d.tipo === "miniatura") {
       let url = null;
       // `vista` {y, alto, giro, x}: encuadre a la medida (herramientas de revisión, p. ej. tools/miniaturas/agarre.html).

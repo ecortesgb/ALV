@@ -15,7 +15,7 @@ import { baseGenerica, conMovimientos, type BaseGenerica } from "./movimientos";
 import { leerFigura } from "./figura";
 import { caretaEn, conEspecialAlSalir, cuantasFormas, figuraEnForma, type Careta } from "./formas";
 import { cargarIndice, type Indice } from "./indice";
-import { resolver, type Catalogo } from "./plano";
+import { poderesDeFicha, resolver, type Catalogo } from "./plano";
 import type { FiguraV3, Plano } from "./tipos";
 export type { FiguraV3 } from "./tipos";
 
@@ -264,3 +264,13 @@ export function especialAlSalir(f: unknown, paso: number): boolean { const v3 = 
 
 /** Careta levantada en ese paso (Iron Man), para la escena. null = cerrada. */
 export function caretaDe(f: unknown, paso: number): Careta | null { const v3 = paso ? leerV3(f) : null; return v3 ? caretaEn(v3, paso) : null; }
+
+// ---------- Poderes (Elías, 27 nov: escudo del Capi, rayo de Cíclope, telaraña, fuego, vuelo…) ----------
+
+/** Los poderes que se le ofrecen a la figura (en orden; el primero es el principal). Vacío si su personaje no tiene. */
+export function poderesDe(f: unknown, cat: CatalogoV3 | null): { id: string; nombre: string }[] {
+  const v3 = leerV3(f);
+  if (!v3 || !cat || v3.origen.tipo !== "catalogo") return [];
+  const en = cat.catalogo.get(v3.origen.personaje);
+  return en ? poderesDeFicha(en.ficha, en.base).map(p => ({ id: p.id, nombre: p.nombre })) : [];
+}

@@ -39,3 +39,27 @@ describe("forma de cada jugador", () => {
     expect(revisarForma({ j: "beto", k: 1, n: 1.5 }, m, "ana")).toBeNull();
   });
 });
+
+import { aplicarPoderRemoto, alPedirPoder, pedirPoder, reiniciarPoderes } from "./poderes";
+import { revisarPoder } from "../servicios/gestosSala";
+describe("poderes de cada jugador", () => {
+  beforeEach(() => reiniciarPoderes());
+  it("pide, enfría y descarta los viejos de la red", () => {
+    const vistos: string[] = [];
+    const fuera = alPedirPoder(e => vistos.push(`${e.jugador}:${e.poder}`));
+    expect(pedirPoder("ana", "rayo", 1_000_000)).toBe(true);
+    expect(pedirPoder("ana", "rayo", 1_000_300)).toBe(false);
+    expect(pedirPoder("ana", "<x>", 1_005_000)).toBe(false);
+    expect(aplicarPoderRemoto("beto", "escudo", 7)).toBe(true);
+    expect(aplicarPoderRemoto("beto", "escudo", 7)).toBe(false);
+    expect(vistos).toEqual(["ana:rayo", "beto:escudo"]);
+    fuera();
+  });
+  it("revisa lo que llega por la red", () => {
+    const m = new Set(["ana", "beto"]);
+    expect(revisarPoder({ j: "beto", k: "rayo", n: 3 }, m, "ana")).toEqual({ j: "beto", k: "rayo", n: 3 });
+    expect(revisarPoder({ j: "ana", k: "rayo", n: 3 }, m, "ana")).toBeNull();
+    expect(revisarPoder({ j: "beto", k: "Rayo!", n: 3 }, m, "ana")).toBeNull();
+    expect(revisarPoder({ j: "beto", k: "rayo", n: 0 }, m, "ana")).toBeNull();
+  });
+});

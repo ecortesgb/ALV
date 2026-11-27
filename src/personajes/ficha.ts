@@ -82,6 +82,22 @@ export function leerFicha(x: unknown, opciones: { rutasLibres?: boolean } = {}):
     juego = { glb: j.glb as string, clips };
   }
 
+  // Bloque opcional `poderes` (Elías, 27 nov 2026): <id>-poderes.glb junto a la ficha y poder → clip (a lo más 8).
+  let poderes: Ficha["poderes"];
+  if (f.poderes != null) {
+    const p = f.poderes as Record<string, unknown>;
+    const clips: Record<string, string> = {};
+    if (!okRuta(p.glb) || String(p.glb) !== `${String(f.id)}-poderes.glb`) e.push("poderes.glb");
+    const lista = Object.entries((p.clips ?? {}) as Record<string, unknown>);
+    if (lista.length > 8) e.push("poderes.clips");
+    for (const [k, v] of lista.slice(0, 8)) {
+      if (!/^[a-z][a-z0-9-]{0,23}$/.test(k) || !clip(v)) { e.push("poderes.clips." + k.slice(0, 24)); continue; }
+      clips[k] = v;
+    }
+    if (!Object.keys(clips).length) e.push("poderes.clips");
+    poderes = { glb: p.glb as string, clips };
+  }
+
   if (e.length) return { ok: false, errores: e };
   return {
     ok: true,
@@ -97,6 +113,7 @@ export function leerFicha(x: unknown, opciones: { rutasLibres?: boolean } = {}):
       publica: f.publica as boolean,
       calidad: { estado: cal.estado as Ficha["calidad"]["estado"], notas: typeof cal.notas === "string" ? cal.notas.slice(0, 300) : undefined },
       ...(juego ? { juego } : {}),
+      ...(poderes ? { poderes } : {}),
     },
   };
 }
