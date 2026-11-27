@@ -9,11 +9,16 @@ import "../azotea/azotea.css";
 import "../perfil/perfil.css";
 import "./lobby.css";
 import { FondoCuarto } from "./Cuarto";
+import { jugarEnEsteAparato } from "./Lobby";
+import { useSesion } from "../../app/sesion";
+import { figuraActiva, useCapsulas } from "../../app/figura3d";
 
 export function EsperaLobby() {
   const info = useLobbyAbierto();
   const anunciado = useLobby();
   const codigo = info?.codigo ?? anunciado;
+  const ses = useSesion();
+  const caps = useCapsulas(ses.uid);
   useEffect(() => { if (codigo) ir("sala", codigo); }, [codigo]);
   return (
     <Marco clase="az lb" fondo={<FondoCuarto />}>
@@ -27,6 +32,8 @@ export function EsperaLobby() {
           <b>Esperando al administrador</b>
           <p>En cuanto abra el lobby entras solo. Sin él no se puede empezar.</p>
           <span className="lb-puntitos" aria-hidden="true"><i /><i /><i /></span>
+          {/* 053: sin esperar a nadie: todos juegan en este aparato y cada cuenta gana sus puntos. */}
+          <button type="button" className="lb-aparato" onClick={() => jugarEnEsteAparato({ id: ses.uid, nombre: ses.nombre, figura: figuraActiva(caps) })}>Jugar en este aparato</button>
         </div>
       </div>
     </Marco>

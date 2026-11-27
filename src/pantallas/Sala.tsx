@@ -157,7 +157,7 @@ export function Sala({ codigo }: { codigo: string }) {
 
   const salir = async () => {
     const caja = LOBBY_NUEVO ? { lobby: colorDe(ses.uid, s.miembros.map(m => m.id)) } : {};
-    if (!(await confirmar(local ? { titulo: "¿Terminar la sesión local?", texto: "Se borran los personajes y las partidas de este teléfono.", si: "Terminar sesión", peligro: true, ...caja }
+    if (!(await confirmar(local ? { titulo: "¿Terminar la sesión local?", texto: "Todos salen de este aparato. Las cuentas se quedan con sus puntos; los personajes sin cuenta se borran.", si: "Terminar sesión", peligro: true, ...caja }
       : soyAnfitrion ? { titulo: "¿Cerrar la sala?", texto: "Todos salen y la sesión termina.", si: "Cerrar sala", peligro: true, ...caja } : { titulo: "¿Salir de la sala?", si: "Salir", ...caja }))) return;
     await (soyAnfitrion ? enlace.cerrar(sala) : enlace.salir(sala));
     ir("inicio");

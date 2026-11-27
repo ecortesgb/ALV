@@ -29,16 +29,19 @@ const colorVista = (g: Genero): ColorJugador => ({ ...PALETA_SALA[COLOR_VISTA[g]
 export interface DatosPersonaje { nombre: string; genero: Genero; figura: FiguraV2 | null }
 
 /** `soloFigura`: cambiar la figura de alguien que ya está (sin nombre ni género). `color`: el suyo, si ya tiene. */
-export function PersonajeLocal({ titulo, inicial, soloFigura, color, alListo, alCerrar }: {
+/** `rapido` (053): personaje rápido con cuenta; pide confirmar mayoría de edad y avisa que se crea su acceso. */
+export function PersonajeLocal({ titulo, inicial, soloFigura, color, alListo, alCerrar, rapido, ocupado, error }: {
   titulo: string; inicial?: Partial<DatosPersonaje>; soloFigura?: boolean; color?: ColorJugador | null; alListo: (d: DatosPersonaje) => void; alCerrar: () => void;
+  rapido?: boolean; ocupado?: boolean; error?: string | null;
 }) {
+  const [mayor, setMayor] = useState(false);
   const trajes = useTrajes();
   const [nombre, setNombre] = useState(inicial?.nombre ?? "");
   const [genero, setGenero] = useState<Genero>(inicial?.genero ?? "otro");
   const [figura, setFigura] = useState<FiguraV2 | null>(inicial?.figura ?? null);
   const [elegido, setElegido] = useState<string | null>(null);
   const limpio = nombre.replace(/\s+/g, " ").trim();
-  const valido = soloFigura || (limpio.length >= 2 && limpio.length <= 20);
+  const valido = (soloFigura || (limpio.length >= 2 && limpio.length <= 20)) && (!rapido || mayor) && !ocupado;
   const azar = () => { if (!trajes?.length) return; const t = trajes[Math.floor(Math.random() * trajes.length)]!; setFigura(t.figura); setElegido(t.id); };
   const c = color ?? colorVista(genero);
   const foto = useFoto(figura, figura ? undefined : semillaDe(elegido ?? (limpio || "nuevo")), "busto");
@@ -65,6 +68,11 @@ export function PersonajeLocal({ titulo, inicial, soloFigura, color, alListo, al
                 {GENEROS.map(g => <button key={g.id} type="button" className={"pl-chip" + (genero === g.id ? " si" : "")} aria-pressed={genero === g.id} onClick={() => setGenero(g.id)}>{g.texto}</button>)}
               </div>
             </>}
+            {rapido && <>
+              <p className="pl-nota">Se crea su acceso (Usuario y contraseña) para que después entre a ver lo que ganó.</p>
+              <label className="pl-check"><input type="checkbox" checked={mayor} onChange={e => setMayor(e.target.checked)} /><span>Es mayor de 18 y juega con respeto: nadie está obligado a tomar ni a cumplir un reto.</span></label>
+            </>}
+            {error && <p className="pl-error" role="alert">{error}</p>}
             <span className="pl-sub">Elige su figura</span>
             <div className="pl-trajes" aria-label="Elige su figura">
               {trajes ? trajes.map(t => (
@@ -75,7 +83,7 @@ export function PersonajeLocal({ titulo, inicial, soloFigura, color, alListo, al
             </div>
           </div>
         </div>
-        <button type="button" className="pl-listo" disabled={!valido} onClick={() => alListo({ nombre: limpio, genero, figura })}>{soloFigura ? "Usar esta figura" : "Agregar al lobby"}</button>
+        <button type="button" className="pl-listo" disabled={!valido} onClick={() => alListo({ nombre: limpio, genero, figura })}>{ocupado ? "Creando…" : soloFigura ? "Usar esta figura" : rapido ? "Crear personaje" : "Agregar al lobby"}</button>
       </div>
     </div>
   );

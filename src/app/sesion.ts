@@ -46,18 +46,20 @@ export async function refrescarSesion(): Promise<void> {
   if (!ses) { fijarUsuario(null); olvidarPreferenciasCuenta(); fijar({ ...VACIA, fase: "fuera" }); return; }
   const uid = (await uidActual()) ?? ses.user.id;
   try {
-    const [perfil, registro, saldos, admin] = await Promise.all([
+    const [perfil, registro, saldos, admin, rapida] = await Promise.all([
       cliente.from("perfiles").select("nombre, mayor_18, invitado").eq("id", uid).maybeSingle(),
       miRegistro(),
       cliente.rpc("mis_saldos"),
       soyAdmin(),
+      // Personaje rápido (053). Consulta aparte: sin la 053 la columna no existe y no debe tumbar la entrada.
+      cliente.from("perfiles").select("rapida").eq("id", uid).maybeSingle().then(r => r.data?.rapida === true, () => false),
     ]);
     if (mio !== turno) return;
     const nombre = (perfil.data?.nombre as string | undefined) ?? ses.user.email?.split("@")[0] ?? "Jugador";
     const fila = (saldos.data as { acumulada: number; disponible: number; nivel: number }[] | null)?.[0];
     const invitado = perfil.data?.invitado === true;
-    // El invitado no tiene fecha de nacimiento: confirmó ser mayor al entrar y el servidor lo marcó.
-    const fase: Fase = invitado && perfil.data?.mayor_18 === true ? "dentro" : !registro ? "registro" : perfil.data?.mayor_18 === true ? "dentro" : "menor";
+    // El invitado y el personaje rápido no tienen fecha de nacimiento: confirmaron ser mayores al entrar y el servidor los marcó.
+    const fase: Fase = (invitado || rapida) && perfil.data?.mayor_18 === true ? "dentro" : !registro ? "registro" : perfil.data?.mayor_18 === true ? "dentro" : "menor";
     fijar({ fase, uid, nombre, acumulada: fila?.acumulada ?? 0, disponible: fila?.disponible ?? 0, nivel: fila?.nivel ?? 1, admin, invitado });
     // Preferencias de «Mi experiencia» guardadas en la cuenta (039): se leen una vez por sesión.
     if (fase === "dentro") void cargarPreferenciasCuenta(uid);
