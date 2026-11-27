@@ -4,6 +4,7 @@
 // Los clips salen del juego (laboratorio entregar_sets.py) y viven en el GLB «<anfitrión>-set-<set>.glb» de un personaje
 // del catálogo. Todos los minifig comparten el esqueleto, así que cualquier minifig los puede usar. Aquí solo hay datos:
 // qué movimientos tiene cada set, cómo se llaman, cuáles salen en la rueda y qué personaje usa qué sets.
+import type { Efecto } from "./poderes";
 import type { Id } from "./tipos";
 
 export interface MovDef { nombre: string; /** Sale en la rueda (los de andar son para minijuegos y vida). */ rueda?: boolean }
@@ -178,6 +179,25 @@ export const SONIDO_PROPIO: Readonly<Record<Id, Readonly<Record<string, string>>
   ...cambia(`harry-potter-quidditch harry-potter-chamarra-abierta harry-potter-chamarra-azul harry-potter-dimensions
     hermione-chamarra voldemort-dimensions bellatrix-lestrange`, { hechizo: "varita", conjuro: "varita" }),
 ]);
+
+// ---------- Efectos de los movimientos (Elías, 27 nov: «mejorar los efectos visuales de los disparos») ----------
+// Mismo dibujo que los poderes (tools/personajes/efectos.js). `retraso` = segundo del clip en que sale, igual que su sonido.
+// Mudos: el sonido ya lo pone SONIDOS_MOV en su segundo.
+const BALA = "#ffd27a", BLASTER = "#ff3b30";
+export const EFECTOS_MOV: Readonly<Record<string, readonly Efecto[]>> = {
+  "pistola-disparar": [{ tipo: "disparo", desde: "mano_der", color: BALA, retraso: 0.3, mudo: true }],
+  "dospistolas-disparar": [{ tipo: "disparo", modo: "doble", color: BALA, retraso: 0.2, tiros: [0, 0.25], mudo: true }],
+  "rifle-disparar": [{ tipo: "disparo", modo: "rafaga", desde: "mano_der", color: BALA, retraso: 0.15, mudo: true }],
+  "arco-disparar": [{ tipo: "disparo", modo: "flecha", desde: "mano_izq", color: "#cfe8ff", retraso: 0.75, mudo: true }],
+  "fuerza-golpe-muro": [{ tipo: "golpe", color: "#d8c7a8", retraso: 0.85, dura: 0.6, mudo: true }],
+  "fuerza-azotar": [{ tipo: "golpe", color: "#d8c7a8", retraso: 0.9, dura: 0.6, mudo: true }],
+};
+
+/** Efectos de un movimiento para un personaje: con bláster (sonido propio) la bala es roja. */
+export function efectosDe(id: Id, mov: string): Efecto[] {
+  const blaster = SONIDO_PROPIO[id]?.disparo === "blaster";
+  return (EFECTOS_MOV[mov] ?? []).map(e => (blaster && e.tipo === "disparo" ? { ...e, color: BLASTER } : { ...e }));
+}
 
 /** Sonidos de un movimiento («<set>-<mov>») para un personaje, ya con sus cambios. */
 export function sonidosDe(id: Id, mov: string): { cual: string; t: number }[] {

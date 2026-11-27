@@ -5,7 +5,7 @@
 import type { Id } from "./tipos";
 
 export type TipoEfecto = "rayo" | "electrico" | "fuego" | "telarana" | "escudo" | "invisible" | "encoger" | "golpe" | "onda" | "campo"
-  | "hechizo" | "volar" | "estirar" | "hielo" | "hormigas" | "velocidad";
+  | "hechizo" | "volar" | "estirar" | "hielo" | "hormigas" | "velocidad" | "disparo";
 export interface Efecto {
   tipo: TipoEfecto;
   /** Hueso lógico de donde sale (cabeza, mano_der, mano_izq, torso). */
@@ -18,8 +18,13 @@ export interface Efecto {
   dura?: number;
   /** Rayo que baja del cielo (Tormenta, Thor). */
   cielo?: boolean;
-  /** fuego: "cuerpo" (se enciende entero) o bola; telaraña: "arriba" (columpio); rayo: "fino". */
-  modo?: "cuerpo" | "arriba" | "fino";
+  /** fuego: "cuerpo" (se enciende entero) o bola; telaraña: "arriba" (columpio); rayo: "fino";
+   *  disparo: "doble" (alterna manos), "rafaga" (3 tiros) o "flecha". */
+  modo?: "cuerpo" | "arriba" | "fino" | "doble" | "rafaga" | "flecha";
+  /** disparo: segundo de cada tiro, contado desde `retraso`. */
+  tiros?: number[];
+  /** No pide su sonido (los movimientos de los sets ya suenan con SONIDOS_MOV). */
+  mudo?: boolean;
   /** encoger: tamaño al que llega; volar: altura en altos de figura. */
   a?: number;
 }

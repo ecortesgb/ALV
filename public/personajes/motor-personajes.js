@@ -6,6 +6,10 @@
 (function (raiz) {
   "use strict";
   const T = raiz.THREE, L = raiz.LogicasALV;
+  // `fijo`: la pista position de «Character» queda fija en su primer cuadro (sin avanzar). Quitarla dejaba al hueso en su
+  // pose de reposo del GLB (0.15 más arriba que en los clips) y la figura flotaba sobre el pedestal (pistola, 27 nov).
+  const quieto = t => { const pt = T.PropertyBinding.parseTrackName(t.name);
+    return pt.nodeName === "Character" && pt.propertyName === "position" ? new T.VectorKeyframeTrack(t.name, [0], Array.from(t.values.slice(0, 3))) : t; };
   if (!T || !T.GLTFLoader || !T.SkeletonUtils || !L) { raiz.MotorPersonajes = null; return; }
   const MEZCLA = 0.35;
   const cache = new Map(); // url → Promise<gltf>
@@ -282,7 +286,7 @@
         const c0 = g2.animations.find(a => a.name === e.clip);
         // Solo las pistas de huesos o mallas que esta figura tiene (las caras de otro personaje traen las suyas).
         const c = c0 && new T.AnimationClip(c0.name, c0.duration, c0.tracks.filter(t => { const pt = T.PropertyBinding.parseTrackName(t.name);
-              return obj.getObjectByName(pt.nodeName) && !(fijo && pt.nodeName === "Character" && pt.propertyName === "position"); }));
+              return obj.getObjectByName(pt.nodeName); }).map(t => (fijo ? quieto(t) : t)));
         if (c && c.tracks.length) { porNombre.set("ext:" + l, c); clips[l] = "ext:" + l; }
       } catch (_) { /* se queda el clip propio */ }
     }
@@ -396,7 +400,7 @@
             const g2 = await bajar(glb, (op && op.carga) || plano.carga);
             const c0 = g2.animations.find(a => a.name === nombre);
             const c = c0 && new T.AnimationClip(k, c0.duration, c0.tracks.filter(t => { const pt = T.PropertyBinding.parseTrackName(t.name);
-              return obj.getObjectByName(pt.nodeName) && !(fijo && pt.nodeName === "Character" && pt.propertyName === "position"); }));
+              return obj.getObjectByName(pt.nodeName); }).map(t => (fijo ? quieto(t) : t)));
             if (!c || !c.tracks.length) return 0;
             porNombre.set(k, c);
           } catch (_) { return 0; }
