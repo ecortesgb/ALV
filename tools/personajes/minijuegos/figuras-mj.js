@@ -119,7 +119,7 @@
       const q = op2 || {};
       const clip = elegido[nombre] || (nombre === "eliminado" ? elegido.ko : null) || elegido.reposo;
       if (!clip) return false;
-      const bucle = !!EN_BUCLE[nombre];
+      const bucle = q.bucle != null ? !!q.bucle : !!EN_BUCLE[nombre];
       const a = accionDe(clip);
       if (a === actual && bucle && nombreActual === nombre) return true;
       const vel = q.dura ? clip.duration / q.dura : (q.vel || 1);
@@ -155,15 +155,16 @@
     }
     poderes.forEach(clipPoder); // se bajan de una vez, para que el primer RT no espere
     let corte = 0;
-    /** Toca el poder i (0 = RT, 1 = X). → { dur (s), efectos } o null si no lo tiene o no bajó. */
-    async function poder(i) {
+    /** Toca el poder i (0 = RT, 1 = X). op.bucle: lo repite hasta otra animación (vuelo). → { dur (s), efectos } o null. */
+    async function poder(i, op3) {
       const pd = poderes[i];
       if (!pd) return null;
       const clip = await clipPoder(pd);
       if (!clip) return null;
       elegido["poder:" + pd.id] = clip;
-      anim("poder:" + pd.id, { mezcla: 0.08 });
-      const hasta = Number(pd.hasta) > 0 && Number(pd.hasta) < clip.duration ? Number(pd.hasta) : 0;
+      const bucle = !!(op3 && op3.bucle);
+      anim("poder:" + pd.id, { mezcla: 0.08, bucle });
+      const hasta = !bucle && Number(pd.hasta) > 0 && Number(pd.hasta) < clip.duration ? Number(pd.hasta) : 0;
       corte = hasta;
       return { dur: hasta || clip.duration, efectos: Array.isArray(pd.efectos) ? pd.efectos : [] };
     }

@@ -971,6 +971,34 @@ describe("cuarto de Físico", () => {
     expect(validarDeCelular({ de: "c1", tipo: "boton", d: { n: 1, b: "poder2" } })).toEqual({ n: 1, b: "poder2" });
   });
 
+  it("vuelo: despega a su altura, A sube, B baja, se mueve rápido sin gravedad y aterriza con el mismo botón o bajando", () => {
+    const e = crearCuarto({ forma: "caja", ancho: 20, fondo: 12 });
+    const c = entrar(e, "a");
+    for (let i = 0; i < 120; i++) pasoCuarto(e, 16);
+    mandar(e, "a", { x: 0, z: 0, volar: true });
+    expect(pasoCuarto(e, 16)).toContainEqual({ tipo: "despega", id: "a" });
+    expect(c.vuela).toBe(true); expect(c.anim).toBe("volar");
+    for (let i = 0; i < 90; i++) { mandar(e, "a", { x: 0, z: 0 }); pasoCuarto(e, 16); }
+    expect(c.y).toBeCloseTo(e.cfg.vueloAlto, 1);
+    mandar(e, "a", { x: 0, z: 0, saltar: true }); pasoCuarto(e, 16);
+    for (let i = 0; i < 90; i++) { mandar(e, "a", { x: 0, z: 0 }); pasoCuarto(e, 16); }
+    expect(c.y).toBeCloseTo(e.cfg.vueloAlto + e.cfg.vueloPaso, 1);
+    const x0 = c.x;
+    for (let i = 0; i < 30; i++) { mandar(e, "a", { x: 1, z: 0 }); pasoCuarto(e, 16); }
+    expect(c.x - x0).toBeGreaterThan(e.cfg.correr * 0.48); // más rápido que corriendo
+    expect(c.anim).toBe("volar");
+    mandar(e, "a", { x: 0, z: 0, volar: true });
+    expect(pasoCuarto(e, 16)).toContainEqual({ tipo: "aterriza", id: "a" });
+    for (let i = 0; i < 120; i++) { mandar(e, "a", { x: 0, z: 0 }); pasoCuarto(e, 16); }
+    expect(c.enPiso).toBe(true); expect(c.y).toBe(0);
+    // Bajando con B hasta el piso también aterriza; en el aire B no golpea.
+    mandar(e, "a", { x: 0, z: 0, volar: true }); pasoCuarto(e, 16);
+    mandar(e, "a", { x: 0, z: 0, golpe: true }); pasoCuarto(e, 16);
+    expect(c.vuela).toBe(true); expect(c.anim).toBe("volar");
+    mandar(e, "a", { x: 0, z: 0, golpe: true }); pasoCuarto(e, 16);
+    expect(c.vuela).toBe(false);
+  });
+
   it("la rueda del mando pone los 4 gestos, se queda quieto mientras duran e ignora gestos raros", () => {
     const e = crearCuarto({ forma: "caja", ancho: 10, fondo: 6 });
     const c = entrar(e, "a");

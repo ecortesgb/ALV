@@ -189,8 +189,13 @@ function estado(d) {
   if (d.juego === "cuarto") {
     // Nombre de sus poderes en RT y X (la TV los manda); sin segundo poder no sale X.
     const pod = Array.isArray(j.poderes) ? j.poderes.filter(x => typeof x === "string").map(x => x.slice(0, 22)) : [];
-    $("rt-txt").textContent = pod[0] || "Poder";
-    $("x-txt").textContent = pod[1] || "";
+    // En vuelo (la TV manda quiénes vuelan): A sube, B baja y el botón de volar aterriza.
+    const vuela = Array.isArray(d.vuelan) && d.vuelan.includes(yo);
+    const volar = t => (vuela && /^(Volar|Levitar)$/.test(t) ? "Aterrizar" : t);
+    $("rt-txt").textContent = volar(pod[0] || "Poder");
+    $("x-txt").textContent = volar(pod[1] || "");
+    document.querySelector(".x-a small").textContent = vuela ? "Sube" : "Salta";
+    document.querySelector(".x-b small").textContent = vuela ? "Baja" : "Golpe";
     $("boton-x").classList.toggle("oculto", !pod[1]);
     return verMando();
   }
