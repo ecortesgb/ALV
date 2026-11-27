@@ -2,7 +2,9 @@
 // Encendido y volumen salen de las preferencias del aparato (app/preferencias.ts). Nada en la app depende solo del sonido.
 import { cambiarPreferencias, preferencias, usePreferencias, vibrar } from "./preferencias";
 
-type Nota = { f: number; a?: number; t: number; d: number; tipo?: OscillatorType; v?: number };
+type Nota = { f: number; a?: number; t: number; d: number; tipo?: OscillatorType; v?: number;
+  /** Ruido filtrado en lugar de tono (fuego, viento, chispas): `f`→`a` es la frecuencia del filtro. */
+  ruido?: BiquadFilterType; q?: number };
 
 let ctx: AudioContext | null = null;
 /** Volumen 70 = el volumen de siempre; 0 = mudo; 100 ≈ 1.4 veces. */
@@ -24,6 +26,7 @@ function tocar(notas: Nota[]) {
   const c = contexto();
   if (!c) return;
   for (const n of notas) {
+    if (n.ruido) { tocarRuido(c, n); continue; }
     const osc = c.createOscillator(), gan = c.createGain();
     const t0 = c.currentTime + n.t, v = Math.max(0.0002, (n.v ?? 0.08) * factor());
     osc.type = n.tipo ?? "square";
@@ -36,6 +39,27 @@ function tocar(notas: Nota[]) {
     osc.start(t0);
     osc.stop(t0 + n.d + 0.02);
   }
+}
+
+let bufRuido: AudioBuffer | null = null;
+function tocarRuido(c: AudioContext, n: Nota) {
+  if (!bufRuido) {
+    bufRuido = c.createBuffer(1, c.sampleRate, c.sampleRate);
+    const d = bufRuido.getChannelData(0);
+    for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+  }
+  const src = c.createBufferSource(), fil = c.createBiquadFilter(), gan = c.createGain();
+  const t0 = c.currentTime + n.t, v = Math.max(0.0002, (n.v ?? 0.08) * factor());
+  src.buffer = bufRuido; src.loop = true;
+  fil.type = n.ruido!; fil.Q.value = n.q ?? 1;
+  fil.frequency.setValueAtTime(n.f, t0);
+  if (n.a) fil.frequency.exponentialRampToValueAtTime(n.a, t0 + n.d);
+  gan.gain.setValueAtTime(0.0001, t0);
+  gan.gain.exponentialRampToValueAtTime(v, t0 + Math.min(0.03, n.d / 3));
+  gan.gain.exponentialRampToValueAtTime(0.0001, t0 + n.d);
+  src.connect(fil).connect(gan).connect(c.destination);
+  src.start(t0, Math.random() * 0.5);
+  src.stop(t0 + n.d + 0.02);
 }
 
 const SONIDOS = {
@@ -67,7 +91,34 @@ const SONIDOS = {
   /** Logro legendario: subida con acorde final. */
   logroLegendario: [{ f: 659, t: 0, d: 0.1, tipo: "sine", v: 0.07 }, { f: 880, t: 0.09, d: 0.1, tipo: "sine", v: 0.07 }, { f: 1319, t: 0.18, d: 0.45, tipo: "sine", v: 0.07 },
     { f: 1047, t: 0.18, d: 0.45, tipo: "triangle", v: 0.04 }, { f: 2637, t: 0.22, d: 0.3, tipo: "triangle", v: 0.02 }],
+  // ---- Poderes (Elías, 27 nov): uno por efecto de tools/personajes/efectos.js; suena cuando el efecto sale ----
+  "poder-rayo": [{ f: 1800, a: 380, t: 0, d: 0.35, tipo: "sawtooth", v: 0.05 }, { f: 900, a: 260, t: 0, d: 0.45, tipo: "sine", v: 0.07 }, { f: 3000, a: 1200, t: 0, d: 0.25, ruido: "bandpass", q: 2, v: 0.05 }],
+  "poder-electrico": [{ f: 4000, a: 1800, t: 0, d: 0.09, ruido: "bandpass", q: 3, v: 0.12 }, { f: 3500, a: 1500, t: 0.12, d: 0.1, ruido: "bandpass", q: 3, v: 0.1 }, { f: 4200, a: 1600, t: 0.27, d: 0.12, ruido: "bandpass", q: 3, v: 0.1 },
+    { f: 70, a: 55, t: 0, d: 0.6, tipo: "sawtooth", v: 0.05 }, { f: 300, a: 80, t: 0, d: 0.5, ruido: "lowpass", v: 0.12 }],
+  "poder-fuego": [{ f: 300, a: 1400, t: 0, d: 0.55, ruido: "lowpass", q: 0.7, v: 0.16 }, { f: 1400, a: 500, t: 0.4, d: 0.7, ruido: "lowpass", q: 0.7, v: 0.1 }],
+  "poder-telarana": [{ f: 5000, a: 1800, t: 0, d: 0.13, ruido: "highpass", v: 0.12 }, { f: 1400, a: 500, t: 0, d: 0.12, tipo: "sine", v: 0.05 }],
+  "poder-escudo": [{ f: 700, a: 2200, t: 0, d: 0.45, ruido: "bandpass", q: 1.5, v: 0.12 }, { f: 2200, a: 700, t: 0.5, d: 0.45, ruido: "bandpass", q: 1.5, v: 0.1 },
+    { f: 1450, t: 0.95, d: 0.35, tipo: "triangle", v: 0.06 }, { f: 2180, t: 0.95, d: 0.25, tipo: "triangle", v: 0.04 }],
+  "poder-invisible": [{ f: 660, a: 1320, t: 0, d: 0.6, tipo: "sine", v: 0.05 }, { f: 990, a: 1980, t: 0.05, d: 0.6, tipo: "sine", v: 0.04 }, { f: 6000, a: 3000, t: 0, d: 0.6, ruido: "highpass", v: 0.03 }],
+  "poder-encoger": [{ f: 1500, a: 180, t: 0, d: 0.45, tipo: "triangle", v: 0.06 }, { f: 2600, t: 0.05, d: 0.08, tipo: "sine", v: 0.03 }, { f: 3100, t: 0.15, d: 0.08, tipo: "sine", v: 0.03 }],
+  "poder-golpe": [{ f: 130, a: 38, t: 0, d: 0.6, tipo: "sine", v: 0.22 }, { f: 400, a: 90, t: 0, d: 0.5, ruido: "lowpass", v: 0.2 }],
+  "poder-onda": [{ f: 1800, a: 900, t: 0, d: 0.08, ruido: "bandpass", q: 1, v: 0.2 }, { f: 160, a: 50, t: 0.02, d: 0.45, tipo: "sine", v: 0.14 }, { f: 600, a: 120, t: 0.05, d: 0.5, ruido: "lowpass", v: 0.08 }],
+  "poder-campo": [{ f: 110, t: 0, d: 1.1, tipo: "sawtooth", v: 0.035 }, { f: 220, a: 330, t: 0, d: 1.1, tipo: "sine", v: 0.05 }, { f: 440, a: 660, t: 0.1, d: 0.9, tipo: "sine", v: 0.03 }],
+  "poder-hechizo": [{ f: 784, t: 0, d: 0.25, tipo: "triangle", v: 0.05 }, { f: 1175, t: 0.08, d: 0.25, tipo: "triangle", v: 0.05 }, { f: 1568, t: 0.16, d: 0.4, tipo: "triangle", v: 0.05 },
+    { f: 2000, a: 600, t: 0, d: 0.8, ruido: "bandpass", q: 4, v: 0.05 }],
+  "poder-volar": [{ f: 250, a: 900, t: 0, d: 0.7, ruido: "lowpass", q: 0.8, v: 0.18 }, { f: 900, t: 0.7, d: 1.6, ruido: "lowpass", q: 0.8, v: 0.1 }, { f: 900, a: 200, t: 2.3, d: 0.7, ruido: "lowpass", q: 0.8, v: 0.1 }],
+  "poder-estirar": [{ f: 220, a: 880, t: 0, d: 0.3, tipo: "triangle", v: 0.07 }, { f: 880, a: 330, t: 0.3, d: 0.35, tipo: "triangle", v: 0.06 }, { f: 330, a: 660, t: 0.65, d: 0.25, tipo: "triangle", v: 0.05 }],
+  "poder-hielo": [{ f: 7000, a: 3500, t: 0, d: 0.7, ruido: "highpass", v: 0.06 }, { f: 2093, t: 0.1, d: 0.2, tipo: "triangle", v: 0.04 }, { f: 2637, t: 0.25, d: 0.2, tipo: "triangle", v: 0.04 }, { f: 3136, t: 0.4, d: 0.3, tipo: "triangle", v: 0.04 }],
+  "poder-velocidad": [{ f: 400, a: 3000, t: 0, d: 0.35, ruido: "bandpass", q: 1.2, v: 0.14 }, { f: 3000, t: 0.35, d: 1.2, ruido: "bandpass", q: 1.5, v: 0.07 },
+    { f: 3000, a: 500, t: 1.55, d: 0.4, ruido: "bandpass", q: 1.2, v: 0.1 }, { f: 4200, a: 1500, t: 0.1, d: 0.08, ruido: "bandpass", q: 3, v: 0.06 }, { f: 3800, a: 1400, t: 0.8, d: 0.08, ruido: "bandpass", q: 3, v: 0.06 }],
+  "poder-hormigas": [0, 0.07, 0.15, 0.2, 0.29, 0.36, 0.44, 0.5].map((t, i) => ({ f: 2500 + (i % 3) * 500, t, d: 0.025, tipo: "square" as OscillatorType, v: 0.02 })),
 } satisfies Record<string, Nota[]>;
+
+/** Sonido del efecto de un poder (lo pide la escena al salir el efecto). Nombre desconocido: no suena. */
+export function sonarPoder(tipo: unknown) {
+  const k = `poder-${String(tipo)}`;
+  if (k in SONIDOS) sonar(k as Sonido);
+}
 
 export type Sonido = keyof typeof SONIDOS;
 

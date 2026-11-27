@@ -1,3 +1,4 @@
+import { sonarPoder } from "../../app/sonido";
 // La figura 3D del HUB sobre la Plataforma ALV (modo «azotea» de tools/minifig/escena.js, el mismo motor de siempre).
 // Desde aquí se le pide que voltee, que haga una pose breve, que llegue o que deje de dibujar.
 import { useEffect, useImperativeHandle, useRef, useState, forwardRef } from "react";
@@ -72,6 +73,7 @@ export const EscenaAzotea = forwardRef<MandoAzotea, { id: string; figura: Figura
       const f = (e: MessageEvent) => {
         if (e.origin !== location.origin || e.source !== ref.current?.contentWindow || e.data?.origen !== "minifig") return;
         if (e.data.tipo === "listo") { listoRef.current = true; setListo(true); mandarTodo(); }
+        if (e.data.tipo === "sonido") sonarPoder(e.data.cual); // poderes: suena cuando sale el efecto
         if (e.data.tipo === "biblioteca" && Array.isArray(e.data.registradas)) { bib.current = new Set(e.data.registradas.filter((x: unknown) => typeof x === "string")); if (listoRef.current && datos.current.vida) mandarTodo(); }
         avisoDelMotor(e.data);
         if (e.data.tipo === "pies" && [e.data.x, e.data.y, e.data.alto].every(Number.isFinite) && e.data.alto > 0.1) {

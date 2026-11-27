@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
 import { leerFicha } from "./ficha";
 import { poderesDeFicha } from "./plano";
-import { PODERES } from "./poderes";
+import { PODERES, PRESTADOS } from "./poderes";
 import type { Ficha } from "./tipos";
 
 const FICHA = {
@@ -38,5 +38,36 @@ describe("poderes de personaje", () => {
     const tipos = JSON.parse(js.match(/const TIPOS = (\[[^\]]+\])/)![1]!.replace(/"/g, '"').replace(/\s+/g, " "));
     for (const [pj, defs] of Object.entries(PODERES)) for (const [k, d] of Object.entries(defs))
       for (const e of [d.efecto, ...(d.efectos ?? [])]) expect(tipos, `${pj}.${k}`).toContain(e.tipo);
+  });
+});
+
+describe("poderes prestados", () => {
+  const leer = (extra: Record<string, unknown>) => { const r = leerFicha(ficha(extra)); if (!r.ok) throw new Error(r.errores.join()); return r.ficha as Ficha; };
+  const donante = leer({ poderes: { glb: "iron-man-poderes.glb", clips: { volar: "Hover", repulsor: "shoot" } } });
+  const catalogo = new Map([["iron-man", { ficha: donante, base: "https://x/iron-man/" }]]);
+  it("un personaje sin poderes propios toma los del donante, con sus cambios", () => {
+    const sm = leer({ id: "superman" }), p = poderesDeFicha(sm, "https://x/superman/", catalogo);
+    expect(p.map(x => x.id)).toEqual(["volar"]); // golpe (thor) y rayo (cíclope) no están en este catálogo
+    expect(p[0]).toMatchObject({ glb: "https://x/iron-man/iron-man-poderes.glb", clip: "Hover", nombre: "Volar", bucle: 3 });
+    expect(p[0]!.efectos[0]).toMatchObject({ tipo: "volar", color: "#ffffff", color2: "#9fd0ff" });
+    expect(poderesDeFicha(sm, "https://x/superman/")).toEqual([]);
+  });
+  it("sin donante de la misma familia no hay préstamo", () => {
+    const big = new Map([["iron-man", { ficha: { ...donante, familia: "bigfig" } as Ficha, base: "https://x/iron-man/" }]]);
+    expect(poderesDeFicha(leer({ id: "superman" }), "https://x/superman/", big)).toEqual([]);
+  });
+  it("cada préstamo apunta a un donante con ese poder o trae nombre y efecto propios, y su efecto existe", () => {
+    const js = readFileSync("tools/personajes/efectos.js", "utf8");
+    const tipos = JSON.parse(js.match(/const TIPOS = (\[[^\]]+\])/)![1]!.replace(/\s+/g, " "));
+    for (const [pj, defs] of Object.entries(PRESTADOS)) {
+      expect(PODERES[pj], pj).toBeUndefined();
+      for (const [k, pr] of Object.entries(defs)) {
+        const orig = PODERES[pr.de]?.[pr.poder];
+        const tipo = pr.efecto?.tipo ?? orig?.efecto.tipo;
+        expect(tipo, `${pj}.${k}`).toBeTruthy();
+        expect(pr.nombre ?? orig?.nombre, `${pj}.${k}`).toBeTruthy();
+        expect(tipos, `${pj}.${k}`).toContain(tipo);
+      }
+    }
   });
 });

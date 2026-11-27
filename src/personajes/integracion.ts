@@ -272,5 +272,5 @@ export function poderesDe(f: unknown, cat: CatalogoV3 | null): { id: string; nom
   const v3 = leerV3(f);
   if (!v3 || !cat || v3.origen.tipo !== "catalogo") return [];
   const en = cat.catalogo.get(v3.origen.personaje);
-  return en ? poderesDeFicha(en.ficha, en.base).map(p => ({ id: p.id, nombre: p.nombre })) : [];
+  return en ? poderesDeFicha(en.ficha, en.base, cat.catalogo).map(p => ({ id: p.id, nombre: p.nombre })) : [];
 }
