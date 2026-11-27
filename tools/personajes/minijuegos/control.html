@@ -37,6 +37,11 @@ input{font:800 18px Nunito,sans-serif;padding:10px 12px;border-radius:12px;borde
 /* «¡DISPARA!», «¡GOLPEA!», «¡CORRE!» y «¡ABRE!»: texto más chico para celulares angostos. */
 #salto.duelo #salto-accion{font-size:clamp(30px,11vw,80px)}
 #salto.toca{transform:translateY(8px);box-shadow:0 2px 0 var(--borde)}
+/* Letra estilo Xbox del botón del minijuego (A salta, B golpea, RT dispara). */
+.letra{display:flex;align-items:center;justify-content:center;width:clamp(64px,20vw,96px);height:clamp(64px,20vw,96px);border-radius:50%;
+  background:radial-gradient(circle at 50% 30%,#3a3f4d,#14161d 70%);border:4px solid #05081a;box-shadow:0 4px 0 #05081a;
+  font:900 clamp(34px,11vw,54px)/1 Nunito,system-ui,sans-serif;color:#5fd34b;text-shadow:none}
+.letra.b{color:#e8343a}.letra.rt{border-radius:22px 22px 14px 14px;width:clamp(84px,26vw,120px);color:#fff;font-size:clamp(28px,9vw,44px)}
 #salto small{font:800 16px Nunito,sans-serif;text-shadow:none;opacity:.85}
 #salto.fuera{filter:grayscale(1) brightness(.6)}
 #salto.espera{filter:saturate(.3) brightness(.75)}
@@ -48,12 +53,19 @@ input{font:800 18px Nunito,sans-serif;padding:10px 12px;border-radius:12px;borde
 .zona-palanca{position:absolute;left:0;top:0;bottom:0;width:58%}
 .palanca{position:absolute;width:140px;height:140px;margin:-70px 0 0 -70px;border-radius:50%;border:4px solid rgba(255,255,255,.5);background:rgba(10,16,48,.45)}
 .palanca i{position:absolute;left:50%;top:50%;width:62px;height:62px;margin:-31px 0 0 -31px;border-radius:50%;background:var(--yo);border:4px solid var(--borde);box-shadow:0 4px 0 var(--borde)}
-.botones{position:absolute;right:4px;bottom:20px;width:min(48vw,240px);height:min(48vw,240px)}
-.botones button{position:absolute;border-radius:50%;border:4px solid var(--borde);box-shadow:0 6px 0 var(--borde);font:400 18px/1 "Lilita One",sans-serif;color:var(--noche)}
-.botones button:active,.botones button.toca{transform:translateY(5px);box-shadow:0 1px 0 var(--borde)}
-.b-saltar{background:var(--amarillo);width:50%;height:50%;right:0;bottom:0;font-size:22px!important}
-.b-golpe{background:#ff8a1f;width:40%;height:40%;left:0;bottom:4%}
-.b-festejo{background:#8cf09a;width:34%;height:34%;right:8%;top:0}
+/* Mando estilo Xbox (Elías, 27 nov): solo los botones que hacen algo. A salta, B golpe, RT poder (movimiento especial),
+   y ¡Eh! (festejo) chico. X (patada) y Y (transformación) se agregan cuando existan sus movimientos. */
+.botones{position:absolute;right:4px;bottom:16px;width:min(50vw,250px);height:min(50vw,250px)}
+.botones button{position:absolute;border-radius:50%;border:4px solid #05081a;box-shadow:0 6px 0 #05081a,inset 0 -6px 10px rgba(0,0,0,.45);
+  background:radial-gradient(circle at 50% 30%,#3a3f4d,#14161d 70%);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:0}
+.botones button b{font:900 clamp(26px,9vw,44px)/1 Nunito,system-ui,sans-serif;text-shadow:0 2px 0 rgba(0,0,0,.6)}
+.botones button small{font:800 11px/1 Nunito,sans-serif;color:#dfe4ff;letter-spacing:.04em;text-transform:uppercase}
+.botones button:active,.botones button.toca{transform:translateY(5px);box-shadow:0 1px 0 #05081a,inset 0 -3px 8px rgba(0,0,0,.45)}
+.x-a{width:38%;height:38%;left:31%;bottom:0}.x-a b{color:#5fd34b}
+.x-b{width:38%;height:38%;right:0;top:31%}.x-b b{color:#e8343a}
+.x-rt{width:42%!important;height:24%!important;right:2%;top:-6%;border-radius:22px 22px 14px 14px!important;background:linear-gradient(#4a4f5e,#1d2029)!important}
+.x-rt b{font-size:clamp(20px,6vw,28px)!important;color:#fff}
+.x-eh{width:24%;height:24%;left:4%;top:8%}.x-eh b{font-size:clamp(14px,4.5vw,20px)!important;color:#ffcf2e}
 /* Sala de Físico */
 #fisico{flex:1;display:flex;flex-direction:column;gap:8px;min-height:0;margin-top:8px}
 .mis-pts{font:400 20px/1 "Lilita One",sans-serif;text-align:center}
@@ -103,14 +115,15 @@ input{font:800 18px Nunito,sans-serif;padding:10px 12px;border-radius:12px;borde
     <button class="grande oculto" id="empezar">¡Empezar!</button>
     <button class="grande oculto" id="otra">Otra vez</button>
   </section>
-  <button id="salto" class="oculto"><span id="salto-accion">SALTA</span><small id="salto-txt">Toca cuando llegue la bala</small></button>
+  <button id="salto" class="oculto"><span id="salto-letra" class="letra">A</span><span id="salto-accion">SALTA</span><small id="salto-txt">Toca cuando llegue la bala</small></button>
   <div id="mando" class="oculto">
     <div class="girar oculto" id="girar">Gira tu celular para jugar más cómodo ⟳</div>
     <div class="zona-palanca" id="zona"><div class="palanca" id="palanca"><i id="bolita"></i></div></div>
     <div class="botones">
-      <button class="b-festejo" data-b="festejo">¡Eh!</button>
-      <button class="b-golpe" data-b="golpe">Golpe</button>
-      <button class="b-saltar" data-b="saltar">Salta</button>
+      <button class="x-rt" data-b="poder" aria-label="RT: poder"><b>RT</b><small>Poder</small></button>
+      <button class="x-eh" data-b="festejo" aria-label="Festejo"><b>¡Eh!</b></button>
+      <button class="x-b" data-b="golpe" aria-label="B: golpe"><b>B</b><small>Golpe</small></button>
+      <button class="x-a" data-b="saltar" aria-label="A: salta"><b>A</b><small>Salta</small></button>
     </div>
   </div>
   <section id="fisico" class="oculto">

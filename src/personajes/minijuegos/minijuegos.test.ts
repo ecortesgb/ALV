@@ -937,6 +937,20 @@ describe("cuarto de Físico", () => {
     expect(c.anim).toBe("reposo");
   });
 
+  it("RT (poder) hace el movimiento especial en el piso, avisa y no se mueve mientras dura", () => {
+    const e = crearCuarto({ forma: "caja", ancho: 10, fondo: 6 });
+    const c = entrar(e, "a");
+    for (let i = 0; i < 120; i++) pasoCuarto(e, 16); // que llegue al piso
+    mandar(e, "a", { x: 0, z: 0, poder: true });
+    const ev = pasoCuarto(e, 16);
+    expect(c.anim).toBe("poder");
+    expect(ev).toContainEqual({ tipo: "poder", id: "a" });
+    const x = c.x;
+    mandar(e, "a", { x: 1, z: 0 }); pasoCuarto(e, 100);
+    expect(c.x).toBe(x);
+    expect(validarDeCelular({ de: "c1", tipo: "boton", d: { n: 1, b: "poder" } })).toEqual({ n: 1, b: "poder" });
+  });
+
   it("si el celular deja de mandar, a los 500 ms la palanca vuelve al centro", () => {
     const e = crearCuarto();
     const c = entrar(e, "a");
