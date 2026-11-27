@@ -2,7 +2,7 @@
 // Cuatro tarjetas: Local, En línea y Físico con las ilustraciones de Elías (marco dorado y título ya dibujados;
 // no se les pone texto encima), y Modo libre con un sustituto CSS hasta tener su ilustración.
 // Fondo, recursos y «Atrás» son los del HUB «La Azotea» y del Perfil.
-// En línea lleva al lobby (si hay uno abierto o ya estás en uno, directo). Local y Físico se construyen después.
+// En línea lleva al lobby (si hay uno abierto o ya estás en uno, directo). Modo libre abre el menú de Mini-Juegos.
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { atras, ir } from "../../app/rutas";
 import { useSesion } from "../../app/sesion";
@@ -28,7 +28,8 @@ const MODOS: Modo[] = [
   { id: "local", nombre: "Local", lema: "Un solo teléfono, sin cuentas", listo: true, arte: true },
   { id: "en-linea", nombre: "En línea", lema: "Cada quien en su celular", listo: true, arte: true },
   { id: "fisico", nombre: "Juego físico", lema: "Retos en persona, el administrador da los puntos", listo: true, arte: true },
-  { id: "libre", nombre: "Modo libre", lema: "Prueba trajes, poderes y saltos sin reglas", listo: false, arte: true },
+  // Elías, 26 nov: los Mini-Juegos viven en Modo libre (abre su menú; la TV con sesión, los celulares con el QR).
+  { id: "libre", nombre: "Modo libre", lema: "Mini-Juegos de reflejos en la TV", listo: true, arte: true },
 ];
 
 export function ModosJuego() {
@@ -79,6 +80,7 @@ export function ModosJuego() {
     setElegido(m.id);
     try { sessionStorage.setItem("alv-modo", m.id); } catch { /* sin almacenamiento */ }
     const ir2 = async () => {
+      if (m.id === "libre") { location.assign(`${BASE}tools/personajes/minijuegos/`); return; }
       // Local: este teléfono abre (o retoma) su lobby; dura hasta «Terminar sesión».
       if (m.id === "local") { const sl = modoLocal.abrir({ id: s.uid, nombre: s.nombre, figura: figuraActiva(caps) }); ir("sala", sl.codigo); return; }
       if (destinoLinea) { ir("sala", destinoLinea); return; }
