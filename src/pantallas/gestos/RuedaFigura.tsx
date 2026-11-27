@@ -7,7 +7,7 @@ import { sonar } from "../../app/sonido";
 import { tocarVoz } from "../../app/musica";
 import { prepararVoz, urlObjeto, vozDe } from "../../app/temas";
 import type { FiguraV2 } from "../../content/personaje";
-import { GAJO_MOVIMIENTOS, GAJO_PODERES, GAJO_TRANSFORMAR, RUEDA, RuedaGestos, gajosMovimiento, gajosPoder } from "./RuedaGestos";
+import { GAJO_MOVIMIENTOS, GAJO_PODERES, GAJO_TRANSFORMAR, RUEDA, RuedaGestos, gajosMovimiento, gajosPoder, gajosSet } from "./RuedaGestos";
 import { conForma, seTransforma, transformar, useVersionFormas } from "../../app/formas";
 import { pedirPoder } from "../../app/poderes";
 import { movimientosDe, poderesDe, useCatalogoV3 } from "../../personajes/integracion";
@@ -27,8 +27,9 @@ export const RuedaFigura = forwardRef<MandoRueda, { jugador: string; figura?: Fi
   pistaSobre?: string }>(function RuedaFigura({ jugador, figura, pistaSobre }, mando) {
   const [pos, setPos] = useState<{ x: number; y: number } | null>(null);
   // Segunda rueda: los poderes del personaje (en su forma de ahora: Spider-Man tiene los suyos, Peter no).
-  // Segunda rueda: poderes o movimientos (sets compartidos: bailes, burlas, espada, hechizos…).
-  const [sub, setSub] = useState<"poderes" | "movimientos" | null>(null);
+  // Segunda rueda: poderes o movimientos (sets compartidos: bailes, burlas, espada, hechizos…). Los movimientos van en
+  // dos pasos: primero el set («Pelea», «Espada»…) y luego sus movimientos («set:<id>»).
+  const [sub, setSub] = useState<"poderes" | "movimientos" | `set:${string}` | null>(null);
   const cat = useCatalogoV3();
   useVersionFormas();
   const enForma = figura ? conForma({ id: jugador, figura }, cat).figura : null;
@@ -78,6 +79,13 @@ export const RuedaFigura = forwardRef<MandoRueda, { jugador: string; figura?: Fi
       return;
     }
     if (cual === "movimientos") { setTimeout(() => { setSub("movimientos"); setPos(p => p ?? ultimaPos.current); }, 240); return; }
+    // Un set con un solo movimiento se toca directo, como los poderes.
+    if (cual.startsWith("set:")) {
+      const g = movimientos.find(x => x.set === cual.slice(4));
+      if (g?.movs.length === 1) setTimeout(() => sonar(pedirPoder(jugador, g.movs[0]!.id) ? "clic" : "tic"), 220);
+      else if (g) setTimeout(() => { setSub(`set:${g.set}`); setPos(p => p ?? ultimaPos.current); }, 240);
+      return;
+    }
     if (cual.startsWith("poder:")) { setTimeout(() => sonar(pedirPoder(jugador, cual.slice(6)) ? "poder" : "tic"), 220); return; }
     // Un movimiento viaja igual que un poder (la escena lo busca en los movimientos de la figura).
     if (cual.startsWith("mov:")) { setTimeout(() => sonar(pedirPoder(jugador, cual.slice(4)) ? "clic" : "tic"), 220); return; }
@@ -100,7 +108,9 @@ export const RuedaFigura = forwardRef<MandoRueda, { jugador: string; figura?: Fi
       {pos && (sub === "poderes"
         ? <RuedaGestos key="poderes" gestos={gajosPoder(poderes)} x={pos.x} y={pos.y} onElegir={elegir} onCerrar={cerrar} />
         : sub === "movimientos"
-          ? <RuedaGestos key="movimientos" gestos={gajosMovimiento(movimientos)} x={pos.x} y={pos.y} onElegir={elegir} onCerrar={cerrar} />
+          ? <RuedaGestos key="movimientos" gestos={gajosSet(movimientos)} x={pos.x} y={pos.y} onElegir={elegir} onCerrar={cerrar} />
+          : sub?.startsWith("set:")
+            ? <RuedaGestos key={sub} gestos={gajosMovimiento(movimientos.find(x => x.set === sub.slice(4))?.movs ?? [])} x={pos.x} y={pos.y} onElegir={elegir} onCerrar={cerrar} />
           : <RuedaGestos key="gestos" gestos={[...RUEDA, ...(figura && seTransforma(figura) ? [GAJO_TRANSFORMAR] : []), ...(poderes.length ? [GAJO_PODERES] : []), ...(movimientos.length ? [GAJO_MOVIMIENTOS] : [])]} x={pos.x} y={pos.y} onElegir={elegir} onCerrar={cerrar} />)}
       {!pos && pista && <p className="rg-pista" style={{ left: pista.x, top: pista.y }} aria-hidden="true">Toca a tu personaje para animarlo</p>}
     </div>

@@ -165,7 +165,12 @@ export const gajosPoder = (lista: { id: string; nombre: string }[]): GestoRueda[
 });
 export const GAJO_MOVIMIENTOS: GestoRueda = { cual: "movimientos", txt: "Movimientos", c1: "#ffb347", c2: "#e06a00", dibujo: <TrazosGesto cual="movimientos" /> };
 const COLORES_MOV: [string, string][] = [["#ffb347", "#e06a00"], ["#ff8fd8", "#c2368f"], ["#7fe0c8", "#1f9e80"], ["#c8b6ff", "#6f4fd6"]];
-/** Un gajo por movimiento de sus sets (segunda rueda de «Movimientos»). */
+/** Un gajo por set de movimientos (segunda rueda de «Movimientos»). */
+export const gajosSet = (lista: { set: string; nombre: string }[]): GestoRueda[] => lista.slice(0, 8).map((g, i) => {
+  const [c1, c2] = COLORES_MOV[i % COLORES_MOV.length]!;
+  return { cual: "set:" + g.set, txt: g.nombre, c1, c2, dibujo: <TrazosGesto cual="movimientos" /> };
+});
+/** Un gajo por movimiento de un set (tercera rueda). */
 export const gajosMovimiento = (lista: { id: string; nombre: string }[]): GestoRueda[] => lista.slice(0, 8).map((m, i) => {
   const [c1, c2] = COLORES_MOV[i % COLORES_MOV.length]!;
   return { cual: "mov:" + m.id, txt: m.nombre, c1, c2, dibujo: <TrazosGesto cual="mov:" /> };

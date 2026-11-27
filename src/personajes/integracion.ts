@@ -287,13 +287,21 @@ export function perfilDelPersonaje(f: unknown): PerfilPersonaje | null {
 
 // ---------- Sets de movimientos (Elías, 27 nov: «que todos los personajes tengan su set de movimientos generales») ----------
 
-/** Los movimientos de la rueda (a lo más 8: primero los de sus sets propios, luego bailes y burlas de «base»). */
-export function movimientosDe(f: unknown, cat: CatalogoV3 | null): { id: string; nombre: string }[] {
+/** Los movimientos de la rueda, por set (a lo más 8 sets y 8 movimientos en cada uno): primero sus sets propios, luego
+ *  los de todos (bailes y burlas, pelea, festejos, reacciones). */
+export interface SetRueda { set: string; nombre: string; movs: { id: string; nombre: string }[] }
+export function movimientosDe(f: unknown, cat: CatalogoV3 | null): SetRueda[] {
   const v3 = leerV3(f);
   if (!v3 || !cat || v3.origen.tipo !== "catalogo") return [];
   const en = cat.catalogo.get(v3.origen.personaje);
   if (!en) return [];
-  return movimientosDeFicha(en.ficha, cat.catalogo)
-    .filter(m => { const i = m.id.indexOf("-"); return SETS[m.id.slice(0, i)]?.movs[m.id.slice(i + 1)]?.rueda; })
-    .slice(0, 8).map(m => ({ id: m.id, nombre: m.nombre }));
+  const fuera: SetRueda[] = [];
+  for (const m of movimientosDeFicha(en.ficha, cat.catalogo)) {
+    const i = m.id.indexOf("-"), sid = m.id.slice(0, i), def = SETS[sid];
+    if (!def?.movs[m.id.slice(i + 1)]?.rueda) continue;
+    let g = fuera.find(x => x.set === sid);
+    if (!g) { if (fuera.length >= 8) continue; fuera.push(g = { set: sid, nombre: def.nombre, movs: [] }); }
+    if (g.movs.length < 8) g.movs.push({ id: m.id, nombre: m.nombre });
+  }
+  return fuera;
 }

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { leerFicha } from "./ficha";
 import { movimientosDeFicha } from "./plano";
-import { SETS, SETS_DE, setsDe } from "./sets";
+import { SETS, SETS_DE, SETS_TODOS, setsDe } from "./sets";
 import { PERFIL_PERSONAJE } from "./caracter";
 import type { Ficha } from "./tipos";
 
@@ -37,6 +37,15 @@ describe("sets de movimientos", () => {
   it("cada set de la tabla existe, sus ids caben en un evento de poder y todo personaje conocido tiene base", () => {
     for (const [id, sets] of Object.entries(SETS_DE)) for (const s of sets) expect(SETS[s], `${id}: ${s}`).toBeTruthy();
     for (const [sid, d] of Object.entries(SETS)) for (const mid of Object.keys(d.movs)) expect(`${sid}-${mid}`).toMatch(/^[a-z][a-z0-9-]{0,23}$/);
-    for (const id of Object.keys(PERFIL_PERSONAJE)) expect(setsDe(id).at(-1)).toBe("base");
+    for (const id of Object.keys(PERFIL_PERSONAJE)) expect(setsDe(id).slice(-SETS_TODOS.length)).toEqual([...SETS_TODOS]);
+  });
+  it("ningún personaje pasa de 8 sets ni de 64 movimientos, y cada set cabe en una rueda", () => {
+    for (const id of Object.keys(PERFIL_PERSONAJE)) {
+      const sets = setsDe(id);
+      expect(sets.length, id).toBeLessThanOrEqual(8);
+      expect(new Set(sets).size, id).toBe(sets.length);
+      expect(sets.reduce((n, s) => n + Object.keys(SETS[s]!.movs).length, 0), id).toBeLessThanOrEqual(64);
+    }
+    for (const [sid, d] of Object.entries(SETS)) expect(Object.values(d.movs).filter(m => m.rueda).length, sid).toBeLessThanOrEqual(8);
   });
 });
