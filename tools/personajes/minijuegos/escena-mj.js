@@ -8,6 +8,13 @@
   /** Color en sRGB (como se escribe en CSS) pasado a lineal: r128 no lo convierte solo y sin esto todo sale deslavado. */
   const col = h => new T.Color(h).convertSRGBToLinear();
 
+  /** Cielo y luces de cada ambiente. */
+  const AMBIENTES = {
+    noche: { cielo: 0x141a3a, cieloLuz: 0xcfe0ff, suelo: 0x30253a, hemi: 0.85, sol: 0xfff2dd, fuerza: 1.15 },
+    atardecer: { cielo: 0xd9693a, cieloLuz: 0xffc9a0, suelo: 0x4a2a3a, hemi: 0.9, sol: 0xffb070, fuerza: 1.25 },
+    dia: { cielo: 0x5fb2ec, cieloLuz: 0xe6f3ff, suelo: 0x5a6a48, hemi: 1.05, sol: 0xffffff, fuerza: 1.35 },
+  };
+
   function crear(lienzo, op) {
     const o = op || {};
     // o.transparente: sin cielo ni niebla; la página pone su fondo (la sala de Físico usa la imagen del escenario).
@@ -17,13 +24,17 @@
     renderer.shadowMap.enabled = true; renderer.shadowMap.type = T.PCFSoftShadowMap;
     renderer.setPixelRatio(Math.min(raiz.devicePixelRatio || 1, 1.5));
     const scene = new T.Scene();
+    // Ambiente que eligió el configurador de ALV PARTY (?ambiente=noche|atardecer|dia). Sin él, la noche de siempre.
+    const elegido = AMBIENTES[new URLSearchParams(raiz.location.search).get("ambiente")];
+    const amb = elegido || AMBIENTES.noche;
     if (!o.transparente) {
-      scene.background = col(o.cielo || 0x141a3a);
-      scene.fog = new T.Fog(col(o.cielo || 0x141a3a), 40, 120);
+      const cielo = (elegido ? amb.cielo : o.cielo) || amb.cielo;
+      scene.background = col(cielo);
+      scene.fog = new T.Fog(col(cielo), 40, 120);
     }
     const camera = new T.PerspectiveCamera(o.fov || 32, 1, 0.1, 300);
-    scene.add(new T.HemisphereLight(0xcfe0ff, 0x30253a, 0.85));
-    const clave = new T.DirectionalLight(0xfff2dd, 1.15);
+    scene.add(new T.HemisphereLight(amb.cieloLuz, amb.suelo, amb.hemi));
+    const clave = new T.DirectionalLight(amb.sol, amb.fuerza);
     clave.position.set(8, 18, 14); clave.castShadow = true; clave.shadow.mapSize.set(2048, 2048);
     Object.assign(clave.shadow.camera, { left: -16, right: 16, top: 14, bottom: -10, near: 1, far: 60 });
     scene.add(clave, clave.target);
@@ -143,6 +154,33 @@
     return g;
   }
 
+  /**
+   * ALVacío (Elías, 27 nov): plataforma redonda en la azotea de un edificio, sin paredes. El grupo de arriba (piso y aro)
+   * se encoge con setRadio(r); el edificio se queda. → { grupo, setRadio(r), quitar() }.
+   */
+  function azotea(scene, radio) {
+    const g = new T.Group(), arriba = new T.Group();
+    const piso = new T.Mesh(new T.CylinderGeometry(1, 0.94, 1.2, 64), new T.MeshStandardMaterial({ color: col(0x3b4170), roughness: 0.85 }));
+    piso.position.y = -0.6; piso.receiveShadow = true; arriba.add(piso);
+    const aro = new T.Mesh(new T.TorusGeometry(0.98, 0.02, 8, 64), new T.MeshStandardMaterial({ color: col(0xffcf2e), emissive: col(0x553300) }));
+    aro.rotation.x = Math.PI / 2; aro.position.y = 0.02; arriba.add(aro);
+    const centro = new T.Mesh(new T.CircleGeometry(0.27, 40), new T.MeshStandardMaterial({ color: col(0x2f7cf0), roughness: 0.7 }));
+    centro.rotation.x = -Math.PI / 2; centro.position.y = 0.01; arriba.add(centro);
+    g.add(arriba);
+    // Edificio debajo: torre angosta con ventanas encendidas, para que se vea la altura.
+    const torre = new T.Mesh(new T.BoxGeometry(radio * 1.1, 60, radio * 1.1), new T.MeshStandardMaterial({ color: col(0x1d2350), roughness: 0.9 }));
+    torre.position.y = -31.2; g.add(torre);
+    const luz = new T.MeshBasicMaterial({ color: col(0xffd77a) });
+    for (let y = -4; y > -58; y -= 3.2) for (let x = -2; x <= 2; x++) {
+      if ((x * 7 + y * 3) % 5 === 0) continue;
+      const v = new T.Mesh(new T.PlaneGeometry(radio * 0.12, 1.3), luz); v.position.set(x * radio * 0.2, y, radio * 0.551); g.add(v);
+    }
+    const setRadio = r => { arriba.scale.set(r, 1, r); };
+    setRadio(radio);
+    scene.add(g);
+    return { grupo: g, setRadio, quitar: () => scene.remove(g) };
+  }
+
   /** Piso invisible que solo recibe sombras (para dibujar sobre una imagen de fondo). */
   function pisoSombra(scene, ancho) {
     const p = new T.Mesh(new T.PlaneGeometry(ancho, 12), new T.ShadowMaterial({ opacity: 0.35 }));
@@ -157,5 +195,5 @@
     return m;
   }
 
-  raiz.EscenaMJ = { crear, pista, bala, cuarto, aro, pisoSombra };
+  raiz.EscenaMJ = { crear, pista, bala, cuarto, azotea, aro, pisoSombra };
 })(typeof self !== "undefined" ? self : this);

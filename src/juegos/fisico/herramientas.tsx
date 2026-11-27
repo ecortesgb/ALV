@@ -1,5 +1,6 @@
-// Juego físico: lo que salió de la última herramienta del administrador (dados, ruleta, carta, orden o cronómetro).
-// Solo usa la vista pública: la ven la TV y todos los celulares.
+// Juego físico: lo que salió de la última herramienta del administrador (dados, ruleta, carta, orden, cronómetro,
+// palabra o pregunta). Solo usa la vista pública: la ven la TV y todos los celulares.
+// La palabra sale tapada en cada aparato: quien la va a describir o actuar la destapa en el suyo.
 import { useEffect, useState, type CSSProperties } from "react";
 import { colorDe, varsColor } from "../../app/colorJugador";
 import { ArteCfg } from "../../pantallas/TarjetasConfig";
@@ -19,6 +20,9 @@ export const HERR_FISICO: Record<HerramientaFisico, { nombre: string; icono: str
   carta: { nombre: "Carta", icono: "herr-poker" },
   orden: { nombre: "Orden", icono: "herr-orden" },
   cronometro: { nombre: "Cronómetro", icono: "herr-tiempo" },
+  // Sin arte propio todavía: palabra usa el de cartas y pregunta el termómetro de Temperatura.
+  palabra: { nombre: "Palabra", icono: "herr-cartas" },
+  pregunta: { nombre: "Pregunta", icono: "termometro-2" },
 };
 
 export const selFisico = (v: Publico) => (v.seleccion ?? { deltas: {} }) as unknown as SeleccionFisico;
@@ -55,6 +59,23 @@ function DadosRuedan({ dados }: { dados: [number, number] }) {
   );
 }
 
+/** Palabra tapada: se destapa solo en este aparato. Cada palabra nueva vuelve a salir tapada. */
+function PalabraTapada({ texto, prohibidas, grande }: { texto: string; prohibidas?: string[]; grande?: boolean }) {
+  const [ver, setVer] = useState(false);
+  if (!ver) return (
+    <button type="button" className="fi-tapada" onClick={() => setVer(true)}>
+      <b>Palabra lista</b><small>{grande ? "Que no la vea quien adivina. Toca para verla." : "Toca para verla (que no la vea quien adivina)"}</small>
+    </button>
+  );
+  return (
+    <div className="fi-palabra">
+      <b>{texto}</b>
+      {prohibidas?.length ? <p>Sin decir: {prohibidas.join(", ")}</p> : null}
+      <button type="button" className="fi-chip" onClick={() => setVer(false)}>Tapar</button>
+    </div>
+  );
+}
+
 /** Resultado de la última herramienta. `grande` para la TV. */
 export function ResultadoHerramienta({ v, miembros, grande }: { v: Publico; miembros: Miembro[]; grande?: boolean }) {
   const h = selFisico(v).herr;
@@ -72,6 +93,11 @@ export function ResultadoHerramienta({ v, miembros, grande }: { v: Publico; miem
     cuerpo = <span className={"fi-naipe" + (rojo ? " rojo" : "")} aria-label={`${VALOR(h.carta.v)} de ${PALO[h.carta.p]}`}><b>{VALOR(h.carta.v)}</b><span>{PALO[h.carta.p]}</span></span>;
   } else if (h.tipo === "orden" && h.orden) {
     cuerpo = <ol className="fi-orden">{h.orden.map((id, i) => <li key={id} style={varsColor(colorDe(id, ids))}><i>{i + 1}</i>{nombreDe(v, id)}</li>)}</ol>;
+  } else if (h.tipo === "palabra" && h.texto) {
+    cuerpo = <PalabraTapada key={h.n} texto={h.texto.texto} prohibidas={h.texto.prohibidas} grande={grande} />;
+  } else if (h.tipo === "pregunta" && h.texto) {
+    const c = h.jugador ? colorDe(h.jugador, ids) : undefined;
+    cuerpo = <div className="fi-pregunta" style={c ? varsColor(c) : undefined}>{h.jugador && <span className="fi-para">Para {nombreDe(v, h.jugador)}</span>}<b>{h.texto.texto}</b></div>;
   } else if (h.tipo === "cronometro" && h.segundos) {
     cuerpo = <Cronometro key={h.n} segundos={h.segundos} n={h.n} />;
   }

@@ -4,14 +4,14 @@ import { useEffect, useState } from "react";
 
 export type Ruta =
   | "inicio" | "modos" | "jugar" | "catalogo" | "juego" | "sala" | "tv" | "configurar" | "personalizar" | "editor"
-  | "tienda" | "ranking" | "logros" | "perfil" | "ajustes" | "admin" | "ds";
-const RUTAS: Ruta[] = ["inicio", "modos", "jugar", "catalogo", "juego", "sala", "tv", "configurar", "personalizar", "editor", "tienda", "ranking", "logros", "perfil", "ajustes", "admin", "ds"];
+  | "tienda" | "ranking" | "logros" | "perfil" | "ajustes" | "admin" | "ds" | "party";
+const RUTAS: Ruta[] = ["inicio", "modos", "jugar", "catalogo", "juego", "sala", "tv", "configurar", "personalizar", "editor", "tienda", "ranking", "logros", "perfil", "ajustes", "admin", "ds", "party"];
 /** Nombres viejos o alternos que siguen funcionando (enlaces guardados y QR ya impresos). */
 const ALIAS: Record<string, Ruta> = {
   hub: "inicio", "hub-prototipo": "inicio", s: "sala", unirse: "sala", mesa: "sala", proyectar: "jugar", lobby: "jugar", juegos: "catalogo",
   figura: "editor", coleccion: "personalizar", historial: "ranking", grupo: "jugar", fisico: "jugar",
 };
-const CON_CODIGO = new Set<Ruta>(["sala", "tv", "configurar"]);
+const CON_CODIGO = new Set<Ruta>(["sala", "tv", "configurar", "party"]);
 
 /** Código de sala: 6 letras o números, en mayúsculas. Cualquier otra cosa se descarta. */
 const codigo = (a?: string) => {
@@ -29,6 +29,8 @@ export function leerRuta(hash: string): Destino {
   const ruta = (RUTAS as string[]).includes(r) ? (r as Ruta) : ALIAS[r];
   if (!ruta) return { ruta: "inicio" };
   if (CON_CODIGO.has(ruta)) { const c = codigo(arg); return c ? { ruta, arg: c } : { ruta: "jugar" }; }
+  // Modos: con código, el administrador elige el modo de esa sala; sin código, «¡Jugar!» entra al lobby.
+  if (ruta === "modos") { const c = codigo(arg); return c ? { ruta, arg: c } : { ruta }; }
   if (ruta === "juego") return arg && /^[a-z0-9-]{1,40}$/.test(arg) ? { ruta, arg } : { ruta: "catalogo" };
   // Configuración: la categoría abierta (en celular, sin categoría se ve la lista).
   if (ruta === "ajustes") return arg && /^(cuenta|experiencia|admin|acerca)$/.test(arg) ? { ruta, arg } : { ruta };

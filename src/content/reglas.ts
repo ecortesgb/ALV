@@ -61,7 +61,7 @@ export const REGLAS: Record<Motor, Reglas> = {
     gana: "Quien gane más rondas.",
   },
   fisico: {
-    objetivo: "Retos en persona. ALV sugiere uno por ronda (se puede cambiar) y el administrador usa dados, ruleta, carta, orden o cronómetro.",
+    objetivo: "Retos en persona. ALV sugiere uno por ronda (se puede cambiar) y el administrador usa dados, ruleta, carta, orden, palabra, pregunta o cronómetro.",
     puntos: ["El administrador da o quita de 1 a 5 puntos a quien quiera, cuando quiera", "Quien termina la ronda con puntos a favor cumple un reto (cuenta para tu XP)"],
     gana: "Quien junte más puntos al terminar las rondas (o el grupo, según el modo de juego).",
   },

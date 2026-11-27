@@ -5,6 +5,7 @@ import { Acceso, Carga, CompletarRegistro, Inicio, SoloMayores } from "../pantal
 import { Ajustes, Admin } from "../pantallas/Ajustes";
 import { Catalogo, FichaJuego } from "../pantallas/Catalogo";
 import { PaginaConfigurar } from "../pantallas/ConfigurarPartida";
+import { PaginaParty } from "../pantallas/party/ConfigurarParty";
 import { Recompensas } from "../pantallas/Recompensas";
 import { AvisoLogro } from "../pantallas/AvisoLogro";
 import { EsperaLobby } from "../pantallas/lobby/EsperaLobby";
@@ -32,10 +33,10 @@ export function App() {
   useEffect(() => { void refrescarSesion(); }, []);
   useEffect(instalarClics, []);
   // Pantalla de inicio en cada carga o recarga, salvo al entrar por el QR de una sala o de la Pantalla.
-  const [inicio, setInicio] = useState(() => ruta !== "sala" && ruta !== "tv" && ruta !== "configurar");
+  const [inicio, setInicio] = useState(() => ruta !== "sala" && ruta !== "tv" && ruta !== "configurar" && ruta !== "party");
   const terminarInicio = useCallback(() => setInicio(false), []);
   // Cuenta sin figura: primero su personaje. Se deja pasar a una sala o Pantalla por QR (la jornada) y a Ajustes (salir).
-  const sinFigura = useDebeCrearFigura() && !["personalizar", "editor", "sala", "tv", "configurar", "ajustes"].includes(ruta);
+  const sinFigura = useDebeCrearFigura() && !["personalizar", "editor", "sala", "tv", "configurar", "party", "ajustes"].includes(ruta);
 
   if (ruta === "ds") return <Suspense fallback={null}><PaginaDS /></Suspense>;
   // Sin sesión se entra o se crea cuenta aquí mismo: la dirección (por ejemplo la del QR) no cambia y al entrar se sigue a la sala.
@@ -45,13 +46,14 @@ export function App() {
     : fase === "registro" ? <CompletarRegistro />
     : fase === "menor" ? <SoloMayores />
     : sinFigura ? <Personalizar />
-    : ruta === "modos" ? <ModosJuego />
+    : ruta === "modos" ? <ModosJuego key={arg ?? ""} codigo={arg} />
     : ruta === "jugar" ? <EsperaLobby />
     : ruta === "catalogo" ? <Catalogo />
     : ruta === "juego" && arg ? <FichaJuego id={arg} />
     : ruta === "sala" && arg ? <Sala key={arg} codigo={arg} />
     : ruta === "tv" && arg ? <PantallaTv key={arg} codigo={arg} />
     : ruta === "configurar" && arg ? <PaginaConfigurar key={arg} codigo={arg} />
+    : ruta === "party" && arg ? <PaginaParty key={arg} codigo={arg} />
     : ruta === "personalizar" ? <Personalizar />
     : ruta === "editor" ? <Editor />
     : ruta === "ranking" ? <Ranking />

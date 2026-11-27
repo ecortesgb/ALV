@@ -999,6 +999,23 @@ describe("cuarto de Físico", () => {
     expect(c.vuela).toBe(false);
   });
 
+  it("movimiento de sus sets (rueda, 2ª página): se queda quieto, la TV lo alarga y el celular solo manda ids con forma de set", () => {
+    const e = crearCuarto({ forma: "caja", ancho: 10, fondo: 6 });
+    const c = entrar(e, "a");
+    for (let i = 0; i < 120; i++) pasoCuarto(e, 16);
+    mandar(e, "a", { x: 0, z: 0, mov: true }); pasoCuarto(e, 16);
+    expect(c.anim).toBe("mov");
+    alargar(e, "a", 3000);
+    expect(c.hasta - c.animDesde).toBe(3000);
+    const x = c.x;
+    mandar(e, "a", { x: 1, z: 0 }); pasoCuarto(e, 100);
+    expect(c.x).toBe(x);
+    expect(validarDeCelular({ de: "c1", tipo: "mov", d: { n: 1, m: "base-bailar" } })).toEqual({ n: 1, m: "base-bailar" });
+    expect(validarDeCelular({ de: "c1", tipo: "mov", d: { n: 1, m: "vuelo-volar-rapido" } })).toEqual({ n: 1, m: "vuelo-volar-rapido" });
+    expect(validarDeCelular({ de: "c1", tipo: "mov", d: { n: 1, m: "<b>" } })).toBeNull();
+    expect(validarDeCelular({ de: "c1", tipo: "mov", d: { n: 1, m: "bailar" } })).toBeNull();
+  });
+
   it("la rueda del mando pone los 4 gestos, se queda quieto mientras duran e ignora gestos raros", () => {
     const e = crearCuarto({ forma: "caja", ancho: 10, fondo: 6 });
     const c = entrar(e, "a");
@@ -1284,13 +1301,13 @@ describe("XP de Mini-Juegos desde la sala (049)", () => {
     expect(resultadosXp("x", null)).toBeNull();
   });
   it("cada juego de la TV tiene su id en la base y el hola acepta la cuenta", () => {
-    expect(Object.values(JUEGO_XP).sort()).toEqual(["mj-alto-total", "mj-bala", "mj-desenfunda", "mj-martillazo", "mj-paracaidas"]);
+    expect(Object.values(JUEGO_XP).sort()).toEqual(["mj-alto-total", "mj-bala", "mj-desenfunda", "mj-martillazo", "mj-paracaidas", "mj-plataforma"]);
     expect(validarDeCelular({ de: "c1", tipo: "hola", d: { n: 1, nombre: "a", personaje: "hulk", cuenta: A } })).toEqual({ n: 1, nombre: "a", personaje: "hulk", cuenta: A });
     expect(validarDeCelular({ de: "c1", tipo: "hola", d: { n: 1, nombre: "a", personaje: "hulk", cuenta: "<x>" } })).toEqual({ n: 1, nombre: "a", personaje: "hulk" });
   });
-  it("la 049 acepta exactamente esos ids", async () => {
+  it("la 054 (la última que define terminar_partida_sala) acepta esos ids", async () => {
     const { readFileSync } = await import("node:fs");
-    const sql = readFileSync("supabase/migrations/049_minijuegos_xp.sql", "utf8");
+    const sql = readFileSync("supabase/migrations/054_minijuego_plataforma_xp.sql", "utf8");
     for (const id of Object.values(JUEGO_XP)) expect(sql).toContain(`'${id}'`);
     expect(sql).toContain("privado.es_anfitrion(v_evento)");
   });

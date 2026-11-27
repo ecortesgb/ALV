@@ -141,23 +141,34 @@
     // Poderes (contrato del hilo de acciones, 27 nov): o.poderes = poderesDeFicha(ficha, base) → [{ id, nombre, glb, clip,
     // efectos, hasta? }], en orden (el 1º va a RT, el 2º a X). El clip sale del GLB «poderes» y lo toca este mismo
     // controlador (no el del motor, que ya no manda en este mezclador). Los efectos los dibuja quien tiene la escena.
-    const poderes = Array.isArray(o.poderes) ? o.poderes.filter(x => x && typeof x.glb === "string" && typeof x.clip === "string") : [];
-    const clipsPoder = new Map(); // id → Promise<AnimationClip|null>
+    const valido = x => x && typeof x.id === "string" && typeof x.glb === "string" && typeof x.clip === "string";
+    const poderes = Array.isArray(o.poderes) ? o.poderes.filter(valido) : [];
+    // Sets de movimientos compartidos (o.movs = movimientosDeFicha(ficha, catálogo), ids «<set>-<mov>»): mismo formato.
+    const movs = Array.isArray(o.movs) ? o.movs.filter(valido) : [];
+    const clipsPoder = new Map(); // glb|clip → Promise<AnimationClip|null>
     function clipPoder(pd) {
-      if (!clipsPoder.has(pd.id)) clipsPoder.set(pd.id, M.bajar(pd.glb, plano.carga).then(g2 => {
+      const k = pd.glb + "|" + pd.clip;
+      if (!clipsPoder.has(k)) clipsPoder.set(k, M.bajar(pd.glb, plano.carga).then(g2 => {
         const c0 = g2.animations.find(a => a.name === pd.clip);
         if (!c0) return null;
         const c = new T.AnimationClip("poder:" + pd.id, c0.duration,
           c0.tracks.filter(t => p.obj.getObjectByName(T.PropertyBinding.parseTrackName(t.name).nodeName)));
         return c.tracks.length ? limpio(pd.glb, c, raizNombre) : null;
-      }).catch(e => { console.warn("poder sin clip", pd.id, e); return null; }));
-      return clipsPoder.get(pd.id);
+      }).catch(e => { console.warn("movimiento sin clip", pd.id, e); return null; }));
+      return clipsPoder.get(k);
     }
     poderes.forEach(clipPoder); // se bajan de una vez, para que el primer RT no espere
+    // Andar con su set (el primero de la lista manda: espada, pistola, garras... y si no, «base»).
+    for (const k of ["caminar", "correr"]) {
+      const m = movs.find(x => x.id.endsWith("-" + k));
+      if (m) clipPoder(m).then(c => { if (c) { elegido[k] = c; if (nombreActual === k) anim(k, { mezcla: 0.2 }); } });
+    }
     let corte = 0, repite = 0; // repite: segundos que le quedan a un poder en bucle
     /** Toca el poder i (0 = RT, 1 = X). op.bucle: lo repite hasta otra animación (vuelo). → { dur (s), efectos } o null. */
-    async function poder(i, op3) {
-      const pd = poderes[i];
+    function poder(i, op3) { return tocarPlano(poderes[i], op3); }
+    /** Toca un movimiento de sus sets por id («base-bailar», «vuelo-flotar»...). Igual que poder(). */
+    function mov(id, op3) { return tocarPlano(movs.find(x => x.id === id), op3); }
+    async function tocarPlano(pd, op3) {
       if (!pd) return null;
       const clip = await clipPoder(pd);
       if (!clip) return null;
@@ -184,7 +195,8 @@
         if (corte && String(nombreActual).startsWith("poder:") && actual && actual.time >= corte) { corte = 0; anim("reposo"); }
         if (repite) { if (!String(nombreActual).startsWith("poder:")) repite = 0; else if ((repite -= dt) <= 0) { repite = 0; anim("reposo"); } }
       },
-      poderes: poderes.map(x => ({ id: x.id, nombre: x.nombre })), poder, hueso: p.hueso,
+      poderes: poderes.map(x => ({ id: x.id, nombre: x.nombre, efectos: Array.isArray(x.efectos) ? x.efectos : [] })), poder, hueso: p.hueso,
+      movs: movs.map(x => ({ id: x.id, nombre: x.nombre })), mov, tieneMov: id => movs.some(x => x.id === id),
       alto: p.alto, ancho: p.ancho,
       quitar: () => p.quitar(),
     };

@@ -140,6 +140,8 @@ export interface Plano {
   poderes?: PoderPlano[];
   /** Movimientos de sus sets compartidos (bailar, burla, combo de espada, hechizo…), sin efectos. */
   movs?: PoderPlano[];
+  /** Transformar (27 nov): clips del juego con que esta forma sale (antes del cambio) y llega (después). */
+  transformar?: { glb: string; salir?: string; llegar?: string };
 }
 
 /** Cómo se tiñe una pieza: `material` = nombre de material (o "*" = todos los de la pieza); `hex` ya resuelto. */

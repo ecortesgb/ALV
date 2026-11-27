@@ -6,9 +6,9 @@
 // Torso, Brazos, Piernas, Accesorios y Movimientos (saludar, ganar, perder, especial; de un personaje o genéricos).
 // Va dentro de <RaizDS className="az">. Entrada: la página del HUB se voltea; «Atrás»: se voltea de regreso y luego sale.
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type PointerEvent as PE } from "react";
-import { esMascara, PALETAS, paletaDePieza, piezasDe, planoConstructor, ponerPiel, ponerPieza, quitarTinte, teñir, type Color, type PiezaCons, type Piezas } from "./constructorDatos";
+import { caraDeMascara, esMascara, PALETAS, paletaDePieza, piezasDe, planoConstructor, ponerPiel, ponerPieza, quitarTinte, teñir, type Color, type PiezaCons, type Piezas } from "./constructorDatos";
 import { DONANTES_FUERA, VERSION_MINIFIG } from "./cabezas";
-import { caben, paginas, tarjetas, type Tarjeta } from "./galeriaDatos";
+import { caben, nombreSaga, paginas, tarjetas, type Tarjeta } from "./galeriaDatos";
 import { GRUPOS_GENERICAS } from "./genericas";
 import { esOtros, grupoMostrado, juntarVersiones, nombreBase } from "./agrupar";
 import { conMovimientos, elegirMovimiento, GESTOS, movimientosElegidos, NOMBRE_GESTO, opcionesMovimiento, type BaseGenerica, type Gesto, type OpcionMov } from "./movimientos";
@@ -52,11 +52,15 @@ const esGesto = (x: Sub): x is Gesto => (GESTOS as readonly string[]).includes(x
  *  con su id legible al final (Elías, 2026-11-26: «Marvel y dentro Avengers, X-Men…; habrá Harry Potter, Star Wars»). */
 const SAGAS: { id: Id; nombre: string }[] = [
   { id: "marvel", nombre: "Marvel" }, { id: "dc", nombre: "DC" }, { id: "star-wars", nombre: "Star Wars" }, { id: "harry-potter", nombre: "Harry Potter" },
+  { id: "disney", nombre: "Disney" }, { id: "simpsons", nombre: "Los Simpson" }, { id: "looney-tunes", nombre: "Looney Tunes" },
+  { id: "muppets", nombre: "Los Muppets" }, { id: "plaza-sesamo", nombre: "Plaza Sésamo" }, { id: "hora-de-aventura", nombre: "Hora de Aventura" },
+  { id: "chicas-superpoderosas", nombre: "Las Chicas Superpoderosas" },
 ];
 const GRUPOS: { id: Id; nombre: string }[] = [
   { id: "avengers", nombre: "Avengers" }, { id: "x-men", nombre: "X-Men" }, { id: "guardianes", nombre: "Guardianes" },
   { id: "villanos-marvel", nombre: "Villanos" }, { id: "cuatro-fantasticos", nombre: "Los 4 Fantásticos" }, { id: "otros-marvel", nombre: "Otros" },
   { id: "batman", nombre: "Batman" }, { id: "liga-justicia", nombre: "Liga de la Justicia" },
+  { id: "increibles", nombre: "Los Increíbles" },
 ];
 /** Secciones que el Álbum separa aparte de `ficha.grupo` (Los 4 Fantásticos; en DC, Batman y la Liga de la Justicia). */
 const SECCIONES_ALBUM = new Set(["cuatro-fantasticos", "batman", "liga-justicia"]);
@@ -66,11 +70,10 @@ function NombreSeccion({ id, nombre }: { id: Id; nombre: string }) {
   const archivo = id === "guardianes" ? "guardianes-plata" : id === "villanos-marvel" ? "villanos" : id;
   return LOGOS[id] ? <img src={logo(archivo)} alt={nombre} draggable={false} /> : <>{nombre}</>;
 }
-const legible = (id: Id) => id.split("-").map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
 /** Ordena los ids según una lista conocida (los desconocidos al final, por nombre). */
 function ordenar(ids: Iterable<Id>, conocidos: { id: Id; nombre: string }[]): { id: Id; nombre: string }[] {
   const pos = (id: Id) => { const i = conocidos.findIndex(c => c.id === id); return esOtros(id) ? 1000 : i < 0 ? 999 : i; };
-  return [...new Set(ids)].filter(Boolean).map(id => ({ id, nombre: conocidos.find(c => c.id === id)?.nombre ?? (esOtros(id) ? "Otros" : legible(id)) }))
+  return [...new Set(ids)].filter(Boolean).map(id => ({ id, nombre: conocidos.find(c => c.id === id)?.nombre ?? (esOtros(id) ? "Otros" : nombreSaga(id)) }))
     .sort((a, b) => pos(a.id) - pos(b.id) || a.nombre.localeCompare(b.nombre, "es"));
 }
 /** Gesto del menú de la rueda para cada gesto de la figura (para probarlo al elegirlo). */
@@ -207,23 +210,24 @@ export function Constructor({ catalogo, piezas, inicial, seccion, escenaUrl, onG
     if (bloqueada) return [];
     // Piel: solo el color de una cabeza lisa (Elías, 2026-11-27); las máscaras van en su propia pestaña.
     if (sub === "cabeza") return [{ tipo: "color" as const, c: null }, ...PALETAS.piel.map(c => ({ tipo: "color" as const, c }))];
-    if (parte) return piezasDe(piezas, parte, familiaPiezas).filter(pz => (sub === "mascara" ? esMascara(pz) : true)).map(pz => ({ tipo: "pieza" as const, pz }));
+    if (parte) return piezasDe(piezas, parte, familiaPiezas).filter(pz => (sub === "mascara" ? esMascara(pz) : !caraDeMascara(pz))).map(pz => ({ tipo: "pieza" as const, pz }));
     return movs.map(op => ({ tipo: "mov" as const, op }));
   }, [sub, vistaTrajes, piezas, parte, familiaPiezas, movs, bloqueada]);
   const origenDe = (it: Item) => (it.tipo === "traje" || it.tipo === "volver" ? "original" : it.tipo === "pieza" ? it.pz.origen ?? "original" : it.tipo === "mov" ? it.op?.origen ?? "ninguna" : "ninguna");
   const grupoCrudo = (it: Item) => {
-    const g = it.tipo === "traje" ? it.grupo : it.tipo === "pieza" ? it.pz.grupo ?? "" : it.tipo === "mov" ? it.op?.grupo ?? "" : "";
-    if (origenDe(it) !== "original") return g;
+    const g0 = it.tipo === "traje" ? it.grupo : it.tipo === "pieza" ? it.pz.grupo ?? "" : it.tipo === "mov" ? it.op?.grupo ?? "" : "";
+    if (origenDe(it) !== "original") return g0;
     // Mismas secciones que el Álbum de la tienda (Elías, 2026-11-27: «te faltan 4 fantásticos…»).
     const id = it.tipo === "traje" ? it.id : it.tipo === "pieza" ? it.pz.donante : it.tipo === "mov" ? /^p:([^:]+):/.exec(it.op?.id ?? "")?.[1] : undefined;
     const t = id ? cartas.get(id) : undefined;
+    if (t?.saga === "otros") return t.grupo; // saga chica: su nombre es el grupo dentro de «Otros»
     const tema = t ? temaDe(t) : "";
-    return SECCIONES_ALBUM.has(tema) ? tema : g;
+    return SECCIONES_ALBUM.has(tema) ? tema : g0;
   };
   /** Saga del personaje de donde sale el elemento (traje, pieza original o movimiento original). */
   const sagaDe = (it: Item): Id => {
     const id = it.tipo === "traje" ? it.id : it.tipo === "pieza" ? it.pz.donante : it.tipo === "mov" && it.op?.origen === "original" ? /^p:([^:]+):/.exec(it.op.id)?.[1] : undefined;
-    return (id && catalogo.get(id)?.ficha.saga) || "";
+    return (id && (cartas.get(id)?.saga ?? catalogo.get(id)?.ficha.saga)) || "";
   };
   /** Grupos de 3 o menos se juntan en «Otros» de su saga (Elías, 2026-11-27); las comunes conservan su tipo. */
   const grupoDe = useMemo(() => {
@@ -246,13 +250,21 @@ export function Constructor({ catalogo, piezas, inicial, seccion, escenaUrl, onG
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [todas, fuente, parte, sg, grupoDe]);
   const g = grupos.some(x => x.id === grupo) ? grupo : "todas";
+  /** ¿Es de un personaje que aún no tiene? (un traje con versiones, si no tiene ninguna). */
+  const porConseguir = (it: Item) => {
+    if (!puedeUsar) return false;
+    if (it.tipo === "traje") return it.versiones ? it.versiones.every(v => !puedeUsar(v)) : !puedeUsar(it.id);
+    return it.tipo === "pieza" && it.pz.origen === "original" && !!it.pz.donante && !puedeUsar(it.pz.donante);
+  };
   const ninguno: Item | null = gesto ? { tipo: "mov", op: null } : todas.find(it => origenDe(it) === "ninguna") ?? null;
   const lista = useMemo<Item[]>(() => {
     if (todas[0]?.tipo === "volver" || todas[0]?.tipo === "color") return todas; // versiones de un personaje o colores de piel: sin filtros
     const l = todas.filter(it => origenDe(it) === fuente && (!originales || sg === "todas" || sagaDe(it) === sg) && (g === "todas" || grupoDe(it) === g));
-    return ninguno ? [ninguno, ...l] : l;
+    // Lo que ya tiene va primero y lo bloqueado al final (Elías, 2026-11-27: «para que sea más fácil elegirlos»).
+    const orden = [...l.filter(it => !porConseguir(it)), ...l.filter(porConseguir)];
+    return ninguno ? [ninguno, ...orden] : orden;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [todas, fuente, sg, g, ninguno, grupoDe]);
+  }, [todas, fuente, sg, g, ninguno, grupoDe, puedeUsar]);
   const caja = sub === "traje" ? cajas.cartas : cajas.piezas;
   const pags = useMemo(() => paginas(lista, caja.columnas * caja.filas), [lista, caja]);
   const p = Math.min(pagina, pags.length - 1);
@@ -264,10 +276,7 @@ export function Constructor({ catalogo, piezas, inicial, seccion, escenaUrl, onG
   const baseId = figura.origen.tipo === "catalogo" ? figura.origen.personaje : null;
   const piel = figura.piezas.cabeza?.tintes?.piel ?? null;
   const visible = (it: Item) => it.tipo === "volver" ? false : it.tipo === "color" ? (it.c?.id ?? null) === piel && !esMascara(piezas.get(figura.piezas.cabeza?.id ?? "")) : it.tipo === "traje" ? (it.versiones ? !!baseId && it.versiones.includes(baseId) : it.id === baseId) : it.tipo === "pieza" ? it.pz.id === puesta || (!puesta && it.pz.donante === baseId) : (it.op?.id ?? null) === (gesto ? elegidos[gesto] ?? null : null);
-  const bloqueado = (it: Item) => {
-    const id = it.tipo === "traje" && !it.versiones ? it.id : it.tipo === "pieza" && it.pz.origen === "original" ? it.pz.donante : null;
-    return !!id && !!puedeUsar && !puedeUsar(id) && !visible(it);
-  };
+  const bloqueado = (it: Item) => porConseguir(it) && !visible(it);
   const losa = LOSAS.find(l => l.id === pestana)!;
   /** Palomita de cada sección: algo cambió respecto al personaje base. */
   const hecha = (t: Pestana) => t === "trajes" ? baseId !== (inicial.origen.tipo === "catalogo" ? inicial.origen.personaje : null) : t === "movimientos" ? Object.keys(elegidos).length > 0 : SUBPARTES[t].some(x => !!figura.piezas[x as Parte]);
@@ -519,7 +528,7 @@ export function Constructor({ catalogo, piezas, inicial, seccion, escenaUrl, onG
                 title={it.tipo === "mov" && it.op ? `${it.op.nombre} · ${it.op.sub}` : nombre}>
                 {(() => {
                   if (it.tipo === "volver") return <span className="pz-sin pz-volver" aria-hidden="true">‹</span>;
-                  if (it.tipo === "traje" && cartas.has(it.id)) return <CartaPersonaje tarjeta={{ ...cartas.get(it.id)!, nombre: it.nombre }} conseguida={!puedeUsar || puedeUsar(it.id)} />;
+                  if (it.tipo === "traje" && cartas.has(it.id)) return <CartaPersonaje tarjeta={{ ...cartas.get(it.id)!, nombre: it.nombre }} conseguida={!porConseguir(it)} />;
                   if (it.tipo === "traje") return it.foto ? <img src={it.foto} alt="" draggable={false} loading="lazy" /> : <span className="pz-sin" aria-hidden="true">—</span>;
                   if (it.tipo === "mov") {
                     if (it.op?.foto) return <img src={it.op.foto} alt="" draggable={false} loading="lazy" />;

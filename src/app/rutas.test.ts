@@ -35,4 +35,11 @@ describe("rutas", () => {
     expect(leerRuta(href("tv", "K7PQ2M"))).toEqual({ ruta: "tv", arg: "K7PQ2M" });
     expect(href("inicio")).toBe("#/inicio");
   });
+  it("modos con código elige el modo de esa sala; sin código entra al lobby; party pide código (v1.69)", () => {
+    expect(leerRuta("#/modos/k7pq2m")).toEqual({ ruta: "modos", arg: "K7PQ2M" });
+    expect(leerRuta("#/modos")).toEqual({ ruta: "modos" });
+    expect(leerRuta("#/modos/../x")).toEqual({ ruta: "modos" });
+    expect(leerRuta("#/party/K7PQ2M")).toEqual({ ruta: "party", arg: "K7PQ2M" });
+    expect(leerRuta("#/party")).toEqual({ ruta: "jugar" });
+  });
 });

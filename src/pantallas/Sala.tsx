@@ -14,7 +14,8 @@ import { FichaJugador } from "./lobby/Ficha";
 import { AvisoCuarto, FondoCuarto } from "./lobby/Cuarto";
 import { FondoEscenario } from "./Fondos";
 import { ComoJugar, tocaExplicar } from "../juegos/general/ComoJugar";
-import type { PresenciaPantalla } from "../servicios/tiempoReal";
+import { celularesEnSala, type PresenciaPantalla } from "../servicios/tiempoReal";
+import { sostenidos } from "../servicios/aparato";
 import { HerramientaCelular, type MiVista } from "../juegos/general/celular";
 import { EmotesVolando } from "../juegos/general/Emotes";
 import { esPublico, marcador, nombreJuego, quedan, type Publico } from "../juegos/general/texto";
@@ -97,6 +98,8 @@ function XpReto({ v, alDar, cerrar }: { v: Publico; alDar: (jugador: string, xp:
   );
 }
 
+const soyAnfitrionId = (sala: SalaV | null, uid: string) => !!sala && sala.anfitrionId === uid;
+
 export function Sala({ codigo }: { codigo: string }) {
   const ses = useSesion();
   const s = useSala(codigo, ses.uid);
@@ -108,6 +111,20 @@ export function Sala({ codigo }: { codigo: string }) {
   // Modo Local: un solo teléfono. Juega quien lo tiene en la mano (`enMano`); vacío = el anfitrión.
   const local = esLocal(s.sala?.id);
   const [enMano, setEnMano] = useState("");
+  // En línea (Elías, 27 nov): el celular del anfitrión juega por los personajes rápidos que creó, salvo los que ya entraron en
+  // su propio celular (su celular late por un canal; el del anfitrión lo oye). Los demás de la sala juegan cada quien en el suyo.
+  const [enSuCelular, setEnSuCelular] = useState<string[]>([]);
+  const salaId = s.sala?.id;
+  useEffect(() => {
+    if (!salaId || local || !ses.uid) return;
+    return celularesEnSala(salaId, ses.uid, !soyAnfitrionId(s.sala, ses.uid), soyAnfitrionId(s.sala, ses.uid) ? ids => setEnSuCelular(prev => (prev.join() === ids.join() ? prev : ids)) : undefined);
+  }, [salaId, local, ses.uid]); // eslint-disable-line react-hooks/exhaustive-deps
+  const aquiJuegan = !local && s.sala && s.sala.anfitrionId === ses.uid
+    ? sostenidos.de(s.sala.id).filter(id => s.miembros.some(m => m.id === id) && !enSuCelular.includes(id)) : [];
+  // «Compartido»: este celular juega por varios (Local, o el anfitrión con personajes que juegan aquí).
+  const compartido = local || aquiJuegan.length > 0;
+  const enAparato = (id: string) => local || id === s.sala?.anfitrionId || aquiJuegan.includes(id);
+  const pasarA = (id: string) => { if (local) modoLocal.pasarA(id); else sostenidos.pasarA(id); };
   // Local: la pantalla de carga se ve una vez por partida, antes de pasar el teléfono.
   const [cargaVista, setCargaVista] = useState("");
   // Local, El impostor en la nave: quiénes ya vieron su palabra antes de la primera vuelta (Elías, 24 nov).
@@ -139,7 +156,7 @@ export function Sala({ codigo }: { codigo: string }) {
   useEffect(() => { if (terminada) { sonar("exito"); void refrescarSesion(); } }, [terminada, s.partida?.id]);
   useEffect(() => { setRelevo(false); }, [s.partida?.id]);
   // Al volver al lobby (o al cambiar de partida), el teléfono regresa al anfitrión.
-  useEffect(() => { if (local && !v) { modoLocal.pasarA(""); setEnMano(""); } }, [local, !!v, s.partida?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { if (compartido && !v) { pasarA(""); setEnMano(""); } }, [compartido, !!v, s.partida?.id]); // eslint-disable-line react-hooks/exhaustive-deps
   // Lobby: cada quien marca «¡Listo!» y el anfitrión inicia la partida cuando quiera (Elías, 18 nov).
   const listoYo = !!s.miembros.find(m => m.id === ses.uid)?.listo;
   // El anfitrión anuncia su lobby mientras esté abierto: quien abre ALV entra sin código.
@@ -150,14 +167,14 @@ export function Sala({ codigo }: { codigo: string }) {
   const nRuleta = v?.ruleta?.n ?? 0;
   useEffect(() => { if (v?.ruleta && nRuleta > 0) aviso(`Ruleta: ${v.jugadores.find(j => j.id === v.ruleta!.jugador)?.nombre ?? ""} · ${v.ruleta.texto}`); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [nRuleta]);
 
-  if (s.error) return <AvisoCuarto titulo="No se pudo entrar" texto={s.error}><button type="button" className="lb-listo" onClick={() => ir("modos")}>Volver</button></AvisoCuarto>;
+  if (s.error) return <AvisoCuarto titulo="No se pudo entrar" texto={s.error}><button type="button" className="lb-listo" onClick={() => ir("inicio")}>Volver</button></AvisoCuarto>;
   if (s.cerrada) return <AvisoCuarto titulo="La sala se cerró" texto="El anfitrión terminó la sesión."><button type="button" className="lb-listo" onClick={() => ir("inicio")}>Ir al inicio</button></AvisoCuarto>;
   if (!s.sala) return <AvisoCuarto titulo="Entrando al lobby…" />;
   const sala = s.sala, pid = s.partida?.id ?? "";
 
   const salir = async () => {
     const caja = LOBBY_NUEVO ? { lobby: colorDe(ses.uid, s.miembros.map(m => m.id)) } : {};
-    if (!(await confirmar(local ? { titulo: "¿Terminar la sesión local?", texto: "Se borran los personajes y las partidas de este teléfono.", si: "Terminar sesión", peligro: true, ...caja }
+    if (!(await confirmar(local ? { titulo: "¿Terminar la sesión local?", texto: "Todos salen de este aparato. Las cuentas se quedan con sus puntos; los personajes sin cuenta se borran.", si: "Terminar sesión", peligro: true, ...caja }
       : soyAnfitrion ? { titulo: "¿Cerrar la sala?", texto: "Todos salen y la sesión termina.", si: "Cerrar sala", peligro: true, ...caja } : { titulo: "¿Salir de la sala?", si: "Salir", ...caja }))) return;
     await (soyAnfitrion ? enlace.cerrar(sala) : enlace.salir(sala));
     ir("inicio");
@@ -172,39 +189,39 @@ export function Sala({ codigo }: { codigo: string }) {
   if (v) {
     // Local: a quién le toca el teléfono. Mientras alguien deba contestar, a él; si no, al anfitrión.
     const anf = sala.anfitrionId;
-    const pendientes = v.fase === "contestando" ? v.esperados.filter(j => !v.contestaron.includes(j)) : [];
+    const pendientes = v.fase === "contestando" ? v.esperados.filter(j => !v.contestaron.includes(j) && enAparato(j)) : [];
     const mano = enMano || anf;
     const idPartida = s.partida?.id ?? "";
     const yaVieron = vistos.pid === idPartida ? vistos.ids : leerVistos(idPartida);
     const naveSala = !!v.impostor?.palabras;
     // Local: «¡A discutir!» se ve antes de pasar el teléfono al primer turno.
-    if (local && naveSala && anuncioNave) return <Marco clase="az pt ns-marco" fondo={<FondoCuarto oscuro />}><AnuncioDiscusion modo="celular" /></Marco>;
+    if (compartido && naveSala && anuncioNave) return <Marco clase="az pt ns-marco" fondo={<FondoCuarto oscuro />}><AnuncioDiscusion modo="celular" /></Marco>;
     const etapaNave = naveSala ? v.impostor!.etapa : null;
-    const verPalabra = local && !!v.impostor?.nave && !naveSala && v.ronda === 1 && v.fase === "contestando" && v.impostor.etapa === "pistas" && Object.keys(v.pistas).length === 0;
-    const faltaVer = verPalabra ? v.jugadores.map(j => j.id).find(id => !yaVieron.includes(id)) : undefined;
+    const verPalabra = compartido && !!v.impostor?.nave && !naveSala && v.ronda === 1 && v.fase === "contestando" && v.impostor.etapa === "pistas" && Object.keys(v.pistas).length === 0;
+    const faltaVer = verPalabra ? v.jugadores.map(j => j.id).find(id => enAparato(id) && !yaVieron.includes(id)) : undefined;
     // Local, papeles de la nave: el teléfono pasa por cada quien que no ha visto su papel.
-    const faltaPapel = local && etapaNave === "papeles" ? v.jugadores.map(j => j.id).find(id => !(v.impostor!.vistos ?? []).includes(id)) : undefined;
+    const faltaPapel = compartido && etapaNave === "papeles" ? v.jugadores.map(j => j.id).find(id => enAparato(id) && !(v.impostor!.vistos ?? []).includes(id)) : undefined;
     const sigue = faltaPapel ?? faltaVer ?? pendientes[0] ?? anf;
     // Pantalla de carga: en Local siempre aquí; con la sala de espera de la nave también en línea (antes de la sala).
-    if ((local || (naveSala && !(conPantalla && !soyAnfitrion))) && tocaExplicar(v) && cargaVista !== idPartida) {
+    if ((compartido || (naveSala && !(conPantalla && !soyAnfitrion))) && tocaExplicar(v) && cargaVista !== idPartida) {
       return <Marco clase="az pt" fondo={v.escenario ? <FondoEscenario escenario={v.escenario} /> : <FondoCuarto oscuro />}><ComoJugar v={v} modo="celular" alCerrar={() => { setCargaVista(idPartida); if (soyAnfitrion) void control(idPartida, "comenzar"); }} /></Marco>;
     }
-    if (local && mano !== sigue && v.juegoId !== "copas") {
+    if (compartido && mano !== sigue && v.juegoId !== "copas") {
       const m = s.miembros.find(x => x.id === sigue);
       return <PasaTelefono nombre={m?.nombre ?? "el siguiente"} id={sigue} figura={m?.figura ?? null} color={colorDe(sigue, v.jugadores.map(j => j.id))}
-        alListo={() => { modoLocal.pasarA(sigue === anf ? "" : sigue); setEnMano(sigue === anf ? "" : sigue); s.refrescar(); }} />;
+        alListo={() => { pasarA(sigue === anf ? "" : sigue); setEnMano(sigue === anf ? "" : sigue); s.refrescar(); }} />;
     }
     // Papeles de la nave: cada quien ve el suyo (en Local, por turnos); luego el anfitrión abre la discusión.
-    if (etapaNave === "papeles" && (!local || mano === (faltaPapel ?? anf))) {
-      const quien = local ? mano : ses.uid;
+    if (etapaNave === "papeles" && (!compartido || mano === (faltaPapel ?? anf))) {
+      const quien = compartido ? mano : ses.uid;
       const sec = (s.secreto ?? {}) as { mio?: { rol?: string; tema?: string; palabra?: string; companeros?: string[]; pista?: string } | null };
       const vi = (v.impostor!.vistos ?? []).includes(quien) || vistoYo === `${idPartida}:${quien}`;
       return (
         <Marco clase="az pt ns-marco" fondo={<FondoCuarto oscuro />}>
           <div className="pt-caja">
-            <PapelNave v={v} mio={sec.mio ?? null} miembros={s.miembros} yo={quien} vi={vi} local={local}
+            <PapelNave v={v} mio={sec.mio ?? null} miembros={s.miembros} yo={quien} vi={vi} local={compartido}
               alVisto={() => { setVistoYo(`${idPartida}:${quien}`); void jugada(idPartida, "carta", { que: "visto" }); }}
-              soyAnfitrion={soyAnfitrion && (!local || quien === anf)} alDiscutir={() => void control(idPartida, "discutir")} />
+              soyAnfitrion={soyAnfitrion && (!compartido || quien === anf)} alDiscutir={() => void control(idPartida, "discutir")} />
           </div>
         </Marco>
       );
@@ -227,7 +244,7 @@ export function Sala({ codigo }: { codigo: string }) {
         </Marco>
       );
     }
-    const yo = local ? mano : ses.uid;
+    const yo = compartido ? mano : ses.uid;
     const yoNombre = s.miembros.find(x => x.id === yo)?.nombre ?? ses.nombre;
     const estoy = v.jugadores.some(j => j.id === yo);
     const sec = (s.secreto ?? {}) as { mio?: unknown; miRespuesta?: unknown; miMano?: string[] };
@@ -284,7 +301,7 @@ export function Sala({ codigo }: { codigo: string }) {
           {v.fase === "revelada" && v.ausentes?.includes(yo) && <div className="pt-aviso" role="status"><b>La ronda se cerró sin tu respuesta</b><p>No sumaste puntos en esta ronda. Sigues en la partida y juegas la siguiente.</p></div>}
           {/* Mesa (Elías, 24 nov): en celulares, todos a los lados con sus puntos y reacciones; tu herramienta al centro. */}
           {(() => {
-            const juego = estoy ? <div className={"pt-juego" + (sinPantalla ? " a-espera-tv" : "")} {...inerte(sinPantalla)}><HerramientaCelular v={v} mi={mi} miembros={s.miembros} sinCarga={local || (conPantalla && !soyAnfitrion)} alComenzar={soyAnfitrion ? () => void control(pid, "comenzar") : undefined} mandar={async (t, d) => !sinPantalla && jugada(pid, t, d)} /></div>
+            const juego = estoy ? <div className={"pt-juego" + (sinPantalla ? " a-espera-tv" : "")} {...inerte(sinPantalla)}><HerramientaCelular v={v} mi={mi} miembros={s.miembros} sinCarga={compartido || (conPantalla && !soyAnfitrion)} alComenzar={soyAnfitrion ? () => void control(pid, "comenzar") : undefined} mandar={async (t, d) => !sinPantalla && jugada(pid, t, d)} /></div>
               : <div className="pt-aviso"><b>Juegas en la siguiente</b><p>Llegaste con la partida empezada. Mira la pantalla.</p></div>;
             // El impostor con papeles en la mesa ya muestra a todos en su tablero: sin la mesa de los lados (Elías, 24 nov).
             return !copas && !conPantalla && !v.impostor?.palabras ? <MesaJuego v={v} miembros={s.miembros} yo={yo} modo="celular">{juego}</MesaJuego> : juego;
