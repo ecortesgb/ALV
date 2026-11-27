@@ -377,7 +377,7 @@ export function Constructor({ catalogo, piezas, inicial, seccion, escenaUrl, onG
           </div>
           <button type="button" className="pz-gestos" onClick={() => tocar(0.62, 0.6)} aria-label="Probar gestos">★ Gestos</button>
         </div>
-        {rueda && <RuedaGestos gestos={RUEDA} x={rueda.x} y={rueda.y} centro={`${ARTE}ui/personalizar/ico-cabeza.webp`} onElegir={elegirGesto} onCerrar={cerrarRueda} />}
+        {rueda && <RuedaGestos gestos={RUEDA} x={rueda.x} y={rueda.y} onElegir={elegirGesto} onCerrar={cerrarRueda} />}
         {aviso && <div className="pz-aviso" role="status">{aviso}</div>}
       </div>
 
