@@ -1,6 +1,6 @@
 # ALV — Amigos Legendarios Verdaderos
 ## Documento Maestro del Producto
-**Versión:** 1.68  
+**Versión:** 1.70  
 **Última actualización:** 27 de noviembre de 2026  
 **Estado:** Documento vivo de producto; decisiones y propuestas identificadas por separado.
 
@@ -556,6 +556,21 @@ El 26 de noviembre se revisaron repositorios abiertos de juegos de fiesta y sali
 **PROPUESTA (v1.68) — Quizá, como opción o logro:** el impostor adivina la palabra si lo atrapan (opción), rol Bufón (gana si lo votan; opción o logro), pulgar a cada carta (pide tabla nueva), revisar el mazo antes de jugar (opción), segundo al mando (pide permisos en la base), invitar por WhatsApp y Duelo de respuestas. Ninguna se construye sin aprobación de Elías.
 
 **DESCARTADO (v1.68, Elías, 27 de noviembre):** aviso de equilibrio de impostores (el configurador ya limita cuántos caben), relevo del anfitrión, palabra clave por equipos y revoto en empate: se queda la regla de v1.57, con empate nadie sale.
+
+## 6A.14 Reglas de los juegos revisadas — DECISIÓN (v1.70)
+
+Revisión de las reglas de los 13 juegos que se pueden elegir contra lo que calcula el motor. Documento: «ALV — Reglas de los juegos» (https://claude.ai/artifact/M6JnPhUxUuDRT51spmtG1r).
+
+**DECISIÓN (v1.70, Elías, 27 de noviembre):**
+1. **¿Qué prefieres? (1B).** Opción apagada de inicio «La minoría bebe algo». Cada quien elige qué tomar, agua vale; no da puntos ni XP. Con empate entre A y B nadie suma ni bebe. Se quita de la ficha el «castigo leve» que el juego no tenía.
+2. **Yo nunca (2).** Sin puntos: quien sí lo ha hecho bebe algo. No hay podio: todos quedan en el mismo lugar, sin el extra de 1.º a 3.º, y ganan la XP de terminar y de rondas. Las monedas quedan en las 10 fijas por partida; que suban con las rondas pide cambio en la base (PENDIENTE).
+3. **Mímica y Descríbelo sin decirlo (3A).** Quien actúa toca en su celular quién adivinó cada palabra: +1 a quien actúa y +1 a quien adivinó. En Descríbelo, «Dijo una tachada» pierde esa palabra. Se quita la frase «cooperativo» de la ficha.
+4. **Ronda de bienvenida (4).** Se convierte en la Misión secreta: cada quien recibe un papel que cumple al iniciar y, si lo descubren, se vuelve el mesero. Reglas en PROPUESTA en el documento de reglas; no se construye sin aprobación.
+5. **Dados HOT (5B).** Pasar sigue siendo gratis.
+6. **Equipos de distinto tamaño (6A).** En ¿Quién es más probable?, ¿Qué prefieres?, Yo nunca y El impostor el grupo cuenta con el promedio de sus integrantes (con un decimal). En los juegos por turno se sigue sumando. El ranking del servidor (040) todavía suma: alinearlo pide migración (PENDIENTE).
+7. **¿Cuánto conoces a tu pareja?** Después de escribir, la pareja ve las dos respuestas y marca «¿Coinciden?». Si los dos dicen que sí, +2 a cada uno; si no se ponen de acuerdo, decide el anfitrión.
+8. **Reto del lugar.** Además del ganador (+3), el anfitrión puede marcar «Empate» (+1 a cada quien empató) o «Nadie ganó».
+9. **Textos.** La ficha del impostor dice las reglas con eliminación (empate: nadie sale); la de Verdad o reto, «pasar solo con comodín» y tomar +1, y su carga muestra sus 5 láminas; Más probable explica el empate y que puedes votarte. El reloj y Ruleta de castigos salen del catálogo (ya no se podían elegir).
 
 ---
 
@@ -1802,6 +1817,9 @@ Decisiones del usuario del 12 de noviembre de 2026:
 ## v1.6
 - Primeros logros (14.2), con ámbito de sesión o histórico (ver DECISIÓN v1.6 en 14.2).
 
+## v1.70
+- 27 nov 2026. Reglas de los juegos revisadas (6A.14): la minoría bebe algo en ¿Qué prefieres? (opción), Yo nunca sin puntos ni podio, Mímica y Descríbelo con quién adivinó, «¿Coinciden?» en ¿Cuánto conoces a tu pareja?, empate y «Nadie» en Reto del lugar, promedio por equipo donde todos contestan y fichas corregidas. La Ronda de bienvenida pasa a Misión secreta (PROPUESTA).
+
 ## v1.68
 - 27 nov 2026. Ideas revisadas de otros juegos de fiesta (6A.13): Elías marcó 22 ideas. Hechas sin publicar: sin repetir cartas entre noches, gráfica de votos en la TV, voto secreto en ¿Quién es más probable?, emotes al revelar y base despierta. Juegos nuevos con reglas pendientes; siete en PROPUESTA; cuatro descartadas, entre ellas el revoto en empate (sigue v1.57).
 
@@ -2021,5 +2039,5 @@ Decisiones del usuario del 12 de noviembre de 2026:
 
 ---
 
-**Fin del Documento Maestro ALV v1.65**  
+**Fin del Documento Maestro ALV v1.70**  
 Este documento debe actualizarse de forma incremental y conservar la distinción entre decisiones aprobadas, propuestas, pendientes y descartadas.

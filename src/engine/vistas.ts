@@ -1,7 +1,7 @@
 // Qué puede ver cada interfaz. La Pantalla (TV) y el Anfitrión reciben la vista pública;
 // cada celular recibe además solo lo suyo. En producción el servidor arma estas vistas
 // y la base de datos (RLS) impide leer lo privado de otro; esto define exactamente qué sale.
-import { conEliminacion, conPapeles, enNave, type EtapaImpostor, conVerdadReto, etapaImpostor, etapaVR, seleccionVR, porGrupos, puntosPorEquipo, quienesContestan, type EstadoPartida } from "./partida";
+import { conEliminacion, conPapeles, enNave, type EtapaImpostor, conVerdadReto, etapaImpostor, etapaVR, seleccionVR, etapaPareja, parejasCompletas, parejasPorDecidir, porGrupos, puntosPorEquipo, quienesContestan, type EstadoPartida } from "./partida";
 import type { EscenarioId, Modalidad } from "./types";
 
 export interface VistaPublica {
@@ -61,6 +61,9 @@ export interface VistaPublica {
   temporizador?: number;
   /** ¿Quién es más probable? con voto secreto: al revelar no sale quién votó a quién. */
   votoSecreto?: boolean;
+  /** ¿Cuánto conoces a tu pareja? al calificar: lo escrito va en `seleccion.textos`; aquí, las parejas que no se pusieron
+   * de acuerdo y esperan al anfitrión (por su primer integrante). */
+  pareja?: { etapa: "calificar"; parejas: [string, string][]; porDecidir: string[] };
   /** Verdad o reto nuevo: quién pregunta y quién responde, en qué etapa va, qué se eligió y quién ya usó su Verdad.
    * Lo que sacó cada quien con los dados o las cartas de póker va en `seleccion` (es público). */
   verdadReto?: {
@@ -109,6 +112,7 @@ export function vistaPublica(e: EstadoPartida): VistaPublica {
     // Temporizador por turno: solo en partidas que lo eligieron (las guardadas antes salen igual).
     ...(e.cfg.temporizador ? { temporizador: e.cfg.temporizador } : {}),
     ...(e.cfg.votoSecreto ? { votoSecreto: true } : {}),
+    ...(e.motor === "pareja" && e.fase === "contestando" && etapaPareja(e) === "calificar" ? { pareja: { etapa: "calificar" as const, parejas: parejasCompletas(e), porDecidir: parejasPorDecidir(e) } } : {}),
     ...(conVerdadReto(e) ? { verdadReto: {
       herramienta: seleccionVR(e).herramienta, pregunta: seleccionVR(e).pregunta, responde: seleccionVR(e).responde, etapa: etapaVR(e),
       ...(e.vr?.eleccion ? { eleccion: e.vr.eleccion } : {}), ...(e.vr?.fuente ? { fuente: e.vr.fuente } : {}), verdadUsada: [...(e.verdadUsada ?? [])],

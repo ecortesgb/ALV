@@ -1,10 +1,10 @@
 // «Cómo jugar» (Maestro v1.44): láminas que explican un juego antes de la primera ronda.
 // Solo datos. Los juegos sin láminas propias se explican con sus reglas (content/reglas.ts).
 import { ESCENARIOS, JUEGOS, LUGARES } from "./catalogo";
-import { REGLAS } from "./reglas";
+import { reglasDe } from "./reglas";
 import { ARTE_ESCENARIOS, ARTE_JUEGOS } from "./arteJuegos";
 import type { EscenarioId, Modalidad } from "../engine/types";
-import { VR_PUNTOS } from "../engine/partida";
+import { MOTORES_PROMEDIO, VR_PUNTOS } from "../engine/partida";
 
 export interface Lamina { titulo: string; texto: string; icono?: string }
 
@@ -32,12 +32,16 @@ const GANA: Record<Modalidad, string> = {
   sexos: "Ellas contra ellos: los puntos se suman por bando. Gana el bando con más puntos.",
 };
 
+/** Cómo gana el grupo: en los juegos donde todos contestan, con el promedio de sus integrantes (Elías, 27 nov, 6A). */
+const ganaGrupo = (mod: Exclude<Modalidad, "individual">, motor: string) =>
+  MOTORES_PROMEDIO.includes(motor as never) ? GANA[mod].replace(/se suman por (pareja|equipo|bando)/, "cuentan como el promedio de cada $1") : GANA[mod];
+
 /** Láminas de un juego, con una última lámina sobre cómo se gana según el tipo de partida. */
 export function laminas(juegoId: string, modalidad: Modalidad = "individual"): Lamina[] {
   const j = JUEGOS.find(x => x.id === juegoId);
   if (!j?.motor) return [];
   const propias = PROPIAS[juegoId];
-  const r = REGLAS[j.motor];
+  const r = reglasDe({ id: j.id, motor: j.motor });
   const base = propias ?? [
     { titulo: "De qué se trata", texto: r.objetivo, icono: "🎯" },
     { titulo: "Puntos", texto: r.puntos.join(". ") + ".", icono: "⭐" },
@@ -45,7 +49,7 @@ export function laminas(juegoId: string, modalidad: Modalidad = "individual"): L
   ];
   if (modalidad === "individual") return base;
   // Con tipo de partida, la última lámina dice cómo se suma por grupo.
-  return [...(propias ? base : base.slice(0, -1)), { titulo: "Por grupos", texto: GANA[modalidad], icono: "👥" }];
+  return [...(propias ? base : base.slice(0, -1)), { titulo: "Por grupos", texto: ganaGrupo(modalidad, j.motor), icono: "👥" }];
 }
 
 // ---------- Tarjetas al iniciar (pedido de Elías, ALV_PLAN_MODOS_DE_JUEGO.md §10) ----------
@@ -86,9 +90,14 @@ export function tarjetasCarga(o: { juegoId: string; modalidad?: Modalidad; herra
   const j = JUEGOS.find(x => x.id === o.juegoId);
   if (!j?.motor) return [];
   if (o.nave) return [...cargaNave(o.nave), ...tarjetasInicio({ ...o, explicar: false })];
-  const r = REGLAS[j.motor];
+  const r = reglasDe({ id: j.id, motor: j.motor });
   const mod = o.modalidad ?? "individual";
-  const juego: Tarjeta = { grupo: "juego", titulo: j.nombre, texto: r.objetivo, consejo: mod === "individual" ? r.gana : GANA[mod], icono: "🎯", imagen: ARTE_JUEGOS[j.id] };
+  // Verdad o reto tiene sus 5 láminas propias: van todas en la carga (Elías, 27 nov).
+  if (PROPIAS[j.id] && j.id === "verdad-reto") {
+    const propias = PROPIAS[j.id]!.map((l, i, xs) => ({ ...l, grupo: "juego" as const, imagen: ARTE_JUEGOS[j.id], ...(i === xs.length - 1 ? { consejo: mod === "individual" ? r.gana : ganaGrupo(mod, j.motor ?? "") } : {}) }));
+    return [...propias, ...tarjetasInicio({ ...o, explicar: false })];
+  }
+  const juego: Tarjeta = { grupo: "juego", titulo: j.nombre, texto: r.objetivo, consejo: mod === "individual" ? r.gana : ganaGrupo(mod, j.motor), icono: "🎯", imagen: ARTE_JUEGOS[j.id] };
   return [juego, ...tarjetasInicio({ ...o, explicar: false })];
 }
 

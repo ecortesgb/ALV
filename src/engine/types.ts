@@ -104,6 +104,8 @@ export interface OpcionesPartida {
   yaSalieron?: YaSalieron;
   /** ¿Quién es más probable?: votos secretos (nadie sabe por quién votó cada quien). */
   votoSecreto?: boolean;
+  /** ¿Qué prefieres? (Elías, 27 nov, 1B): la minoría bebe algo. Apagado de inicio; nunca exige alcohol ni da puntos. */
+  minoriaBebe?: boolean;
 }
 
 /** Nivel general de la partida en cada eje (Maestro v1.52). */
@@ -202,4 +204,6 @@ export interface Configuracion {
   yaSalieron?: YaSalieron;
   /** ¿Quién es más probable? con voto secreto (Elías, 27 nov): al revelar solo sale cuántos votos tuvo cada quien. */
   votoSecreto?: boolean;
+  /** ¿Qué prefieres?: la minoría bebe algo (opción apagada de inicio). */
+  minoriaBebe?: boolean;
 }

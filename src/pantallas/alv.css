@@ -185,6 +185,9 @@ body { overscroll-behavior: none; -webkit-tap-highlight-color: transparent; }
 .D .a-selector-comodines .a-mano { border-top: 0; padding-top: 8px; }
 .D .a-palabras { margin: 0; padding: 0 0 0 1.4em; display: flex; flex-direction: column; gap: 8px; font: var(--cuerpo); }
 .D .a-palabras li.hecha { opacity: .4; text-decoration: line-through; }
+.D .a-palabras li.actual b { color: var(--amarillo); }
+.D .a-palabras li.tachada, .D .a-palabras li.pasada { opacity: .4; }
+.D .a-palabras li.tachada b { text-decoration: line-through; color: var(--rojo-claro); }
 .D .a-palabras small { display: block; font: var(--chip); color: var(--rojo-claro); }
 .D .a-contador { display: flex; align-items: center; justify-content: center; gap: 24px; }
 .D .a-num { font-size: 3.052em; min-width: 1.6em; text-align: center; }

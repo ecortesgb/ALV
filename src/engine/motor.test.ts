@@ -47,16 +47,19 @@ describe("A · 2 jugadores", () => {
     const q = jugarCompleta(crearPartida(juego("que-prefieres"), cfg(2), 7, CONTENIDO), () => ({ eleccion: "a", prediccion: "a" }));
     expect(q.puntos).toEqual({ j0: 8, j1: 8 });
 
-    const c = jugarCompleta(crearPartida(juego("conoces"), cfg(2), 7, CONTENIDO), () => "Tacos");
+    // Primero escriben y luego marcan «¿Coinciden?» (Elías, 27 nov).
+    const c = jugarCompleta(crearPartida(juego("conoces"), cfg(2), 7, CONTENIDO), e => (e.seleccion?.textos ? "si" : "Tacos"));
     expect(c.puntos).toEqual({ j0: 16, j1: 16 });
   });
 });
 
 describe("B · 4 jugadores en 2 parejas", () => {
-  it("cada pareja suma solo si coinciden sus respuestas", () => {
+  it("cada pareja suma solo si las dos marcan que coinciden", () => {
     let e = crearPartida(juego("conoces"), cfg(4), 3, CONTENIDO, 1);
     const resp: Record<string, string> = { j0: "Pizza", j1: "pizza ", j2: "Sushi", j3: "Tacos" };
     for (const j of Object.keys(resp)) e = juega(e, { tipo: "contestar", jugador: j, valor: resp[j] });
+    const marca: Record<string, string> = { j0: "si", j1: "si", j2: "no", j3: "no" };
+    for (const j of Object.keys(marca)) e = juega(e, { tipo: "contestar", jugador: j, valor: marca[j] });
     e = juega(e, { tipo: "revelar" });
     expect(e.puntos).toEqual({ j0: 2, j1: 2, j2: 0, j3: 0 });
   });
@@ -311,7 +314,8 @@ describe("Mecánicas del paso 3", () => {
     let y = crearPartida(juego("yo-nunca"), cfg(3), 1, CONTENIDO, 1);
     for (const [j, v] of [["j0", "si"], ["j1", "no"], ["j2", "si"]]) y = juega(y, { tipo: "contestar", jugador: j!, valor: v });
     y = juega(y, { tipo: "revelar" });
-    expect(y.puntos).toEqual({ j0: 1, j1: 0, j2: 1 });
+    expect(y.puntos).toEqual({ j0: 0, j1: 0, j2: 0 }); // confesar no da puntos (Elías, 27 nov)
+    expect((y.revelado as { confesaron: string[] }).confesaron).toEqual(["j0", "j2"]);
     let m = crearPartida(juego("mas-probable"), cfg(4), 1, CONTENIDO, 1);
     for (const [j, v] of [["j0", "j2"], ["j1", "j2"], ["j2", "j3"], ["j3", "j2"]]) m = juega(m, { tipo: "contestar", jugador: j!, valor: v });
     m = juega(m, { tipo: "revelar" });

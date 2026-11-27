@@ -86,7 +86,7 @@ export function datosDeRepeticion(filas: FilaAccion[], anfitrion: string): Recor
           if (typeof v === "string" && rol(antes, v) === "impostor" && rol(antes, j) !== "impostor") de(j).votoImpostor = (de(j).votoImpostor ?? 0) + 1;
         }
       }
-      for (const r of resultados(e)) de(r.jugador).peorLugar = Math.max(de(r.jugador).peorLugar ?? 1, r.lugar);
+      if (e.motor !== "confesion") for (const r of resultados(e)) de(r.jugador).peorLugar = Math.max(de(r.jugador).peorLugar ?? 1, r.lugar);
     }
   }
   if (e.motor !== "rol-secreto") for (const j of Object.keys(out)) delete out[j]!.votoImpostor;
