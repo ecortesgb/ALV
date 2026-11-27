@@ -140,6 +140,10 @@
 .D .pz-sub.on::after { content: ""; position: absolute; left: 10%; right: 10%; bottom: -2px; height: 4px; border-radius: 4px; background: var(--pj, var(--acento)); animation: pzSubraya .25s ease-out; }
 @keyframes pzSubraya { from { transform: scaleX(.3); } to { transform: none; } }
 .D .pz-filtros { display: flex; align-items: center; justify-content: space-between; gap: 6px 10px; flex-wrap: wrap; }
+/* Sagas: primer nivel, renglón completo y más marcado; los grupos de la saga van debajo. */
+.D .pz-sagas { flex-basis: 100%; }
+.D .pz-sagas .pz-chip { font-weight: 900; border-width: 2px; }
+.D .pz-sagas .pz-chip.on { background: var(--pj, var(--tinta)); border-color: var(--tinta); color: #fff; box-shadow: 0 2px 0 var(--tinta); }
 .D .pz-chips { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; min-width: 0; flex: 1 1 auto; }
 .D .pz-chips::-webkit-scrollbar { display: none; }
 .D .pz-chip { flex: none; min-height: 30px; padding: 0 12px; border-radius: 999px; border: 1.5px solid var(--borde); background: transparent; color: #4a4f68; cursor: pointer;
@@ -165,7 +169,11 @@
   background: var(--tinta); color: #fff; border: 2.5px solid #fff; font: 900 13px/1 var(--f-texto); animation: pzCheck .4s cubic-bezier(.34, 1.56, .64, 1) .05s both; }
 @keyframes pzCheck { from { transform: scale(0) rotate(-40deg); } to { transform: none; } }
 .D .pz-pieza img { width: 100%; height: 100%; object-fit: contain; min-height: 0; pointer-events: none; }
-.D .pz-pieza > span:not(.pz-sin):not(.pz-espera) { font: 800 12px/1.1 var(--f-texto); text-align: center; padding-top: 3px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* Nombre legible (Elías, 2026-11-26): más grande y en dos renglones antes de cortarse. */
+.D .pz-pieza > span:not(.pz-sin):not(.pz-espera) { font: 800 14px/1.12 var(--f-texto); text-align: center; padding-top: 4px; overflow: hidden;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow-wrap: break-word; hyphens: auto; }
+/* Mientras llega la foto de la pieza se ve la del personaje del que sale, un poco apagada. */
+.D .pz-pieza img.provisional { opacity: .55; filter: saturate(.6); }
 .D .pz-mov-ico { width: 58%; height: 100%; min-height: 0; place-self: center; }
 .D .pz-mov-sub { font: 700 10px/1.1 var(--f-texto); text-align: center; color: #8a8ea3; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .D .pz-espera { width: 34%; aspect-ratio: 1; place-self: center; border-radius: 50%; border: 4px solid #eadfca; border-top-color: var(--acento); animation: pzGira .8s linear infinite; }
@@ -186,23 +194,13 @@
   .D .pz-cab h2 { font-size: 18px; } .D .pz-cab p { font-size: 11px; margin-top: 1px; }
   .D .pz-sub { min-height: 32px; font-size: 13px; }
   .D .pz-rejilla { gap: 7px; }
-  .D .pz-pieza > span:not(.pz-sin):not(.pz-espera) { font-size: 10.5px; }
+  .D .pz-pieza > span:not(.pz-sin):not(.pz-espera) { font-size: 12.5px; }
   .D .pz-color { width: 32px; height: 34px; }
   .D .pz-flecha { width: 36px; height: 36px; }
 }
 
 /* Vuelta de hoja al cambiar de sección (como el libro del personalizador anterior). */
-.D .pz-hoja-sec { position: absolute; inset: -2px; z-index: 6; transform-style: preserve-3d; pointer-events: none; }
-.D .pz-hoja-sec.sig { transform-origin: 0 50%; animation: pzHojaSig .55s cubic-bezier(.45, .05, .35, 1) both; }
-.D .pz-hoja-sec.ant { transform-origin: 100% 50%; animation: pzHojaAnt .55s cubic-bezier(.45, .05, .35, 1) both; }
-.D .pz-hoja-frente, .D .pz-hoja-reverso { position: absolute; inset: 0; backface-visibility: hidden; -webkit-backface-visibility: hidden; border-radius: 18px; border: 2px solid var(--borde);
-  background: radial-gradient(circle, rgba(10, 16, 48, .06) 1px, transparent 1.4px) 0 0 / 7px 7px, #fffdf7; }
-.D .pz-hoja-frente::after { content: ""; position: absolute; inset: 0; border-radius: 18px; background: linear-gradient(90deg, rgba(0, 0, 0, .2), transparent 40%); opacity: 0; animation: pzSombra .55s ease-in both; }
-.D .pz-hoja-sec.ant .pz-hoja-frente::after { background: linear-gradient(270deg, rgba(0, 0, 0, .2), transparent 40%); }
-.D .pz-hoja-reverso { transform: rotateY(180deg); }
-@keyframes pzHojaSig { from { transform: rotateY(0deg); } to { transform: rotateY(-180deg); } }
-@keyframes pzHojaAnt { from { transform: rotateY(0deg); } to { transform: rotateY(180deg); } }
-@keyframes pzSombra { to { opacity: 1; } }
+
 
 /* Barra de abajo: deshacer, rehacer, Restablecer y Guardar personaje */
 .D .pz-pie { grid-area: pie; display: flex; align-items: center; gap: 8px; padding-top: 8px; border-top: 2px solid var(--borde); }
@@ -228,17 +226,21 @@
 @keyframes pzPasaSig { from { opacity: 0; transform: translateX(12px); } to { opacity: 1; transform: none; } }
 @keyframes pzPasaAnt { from { opacity: 0; transform: translateX(-12px); } to { opacity: 1; transform: none; } }
 
-/* Entrada: la página del HUB gira sobre su orilla izquierda como página de cómic. */
-.D .pz-volteo { position: absolute; inset: 0; z-index: 20; perspective: 1800px; pointer-events: none; }
+/* Entrada (Elías, 2026-11-26: «se ve mal como puerta»): una viñeta de acción del cómic tapa la pantalla y se cierra en un
+   círculo hacia el centro, como el iris de las caricaturas; al salir, el círculo se abre y cubre todo. */
+.D .pz-volteo { position: absolute; inset: 0; z-index: 20; pointer-events: none; }
 .D .pz-volteo.sale { pointer-events: auto; }
-.D .pz-hoja { position: absolute; inset: 0; background: center / cover no-repeat #0d1a45; transform-origin: left center; backface-visibility: hidden; box-shadow: 0 0 40px rgba(0, 0, 0, .45); }
-.D .pz-hoja::after { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, rgba(0, 0, 0, 0) 60%, rgba(0, 0, 0, .35)); }
-.D .pz-volteo.entra .pz-hoja { animation: pzHojaSe .75s cubic-bezier(.55, .05, .35, 1) both; }
-.D .pz-volteo.sale .pz-hoja { animation: pzHojaSe .65s cubic-bezier(.55, .05, .35, 1) reverse both; }
-@keyframes pzHojaSe { from { transform: rotateY(0); } to { transform: rotateY(180deg); } }
+.D .pz-hoja { position: absolute; inset: 0; background: center / cover no-repeat #ffc21a; }
+.D .pz-hoja::after { content: ""; position: absolute; inset: 0; background: radial-gradient(circle, transparent 35%, rgba(26, 31, 58, .55)); }
+.D .pz-volteo.entra .pz-hoja { animation: pzIris .55s cubic-bezier(.6, 0, .4, 1) .08s both; }
+.D .pz-volteo.sale .pz-hoja { animation: pzIris .45s cubic-bezier(.6, 0, .4, 1) reverse both; }
+@keyframes pzIris { from { clip-path: circle(75% at 50% 50%); } to { clip-path: circle(0% at 50% 50%); } }
 
 @media (prefers-reduced-motion: reduce) {
   .D .pz-top, .D .pz-sec, .D .pz-pista, .D .pz-rejilla > *, .D .pz-guardar.guarda, .D .pz-espera, .D .pz-pieza.on, .D .pz-check, .D .pz-modo, .D .pz-sec.marca { animation: none; }
-  .D .pz .pz-volteo, .D .pz-hoja-sec { display: none; }
+  .D .pz .pz-volteo { display: none; }
   .D .pz-modo-perilla, .D .pz-escena-fondo { transition: none; }
 }
+/* «Color original»: quita el tinte elegido (Elías, 2026-11-26). */
+.D .pz-color-original::before { background: conic-gradient(#f2cd37 0 25%, #c91a09 0 50%, #0055bf 0 75%, #237841 0); }
+.D .pz-color-original::after { content: "↺"; position: absolute; inset: 0; display: grid; place-items: center; font: 900 14px/1 var(--f-texto); color: #fff; text-shadow: 0 1px 2px #000; }
