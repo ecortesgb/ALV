@@ -218,7 +218,7 @@ function marcador() {
 }
 function eventos(evs) {
   for (const ev of evs) {
-    if (ev.tipo === "ronda") { prepararRonda(); letrero(`Ronda ${ev.n}: ¡tíralos!`); }
+    if (ev.tipo === "ronda") { prepararRonda(); letrero(`Ronda ${ev.n}: ¡ALVacío!`); }
     else if (ev.tipo === "fuera") {
       const j = tv.jugadores.get(ev.id), por = ev.por && tv.jugadores.get(ev.por);
       if (por) tv.pop(por, "+1 ¡Lo tiraste!", "#8cf09a");
