@@ -380,7 +380,7 @@
       /** Toca una vez un clip de otro GLB del mismo personaje (poderes: <id>-poderes.glb, mismo esqueleto) y vuelve a reposo
        *  al terminar. Promesa con la duración en segundos (0 si no bajó o no está: no cambia lo que se toca). */
       tocarExt: async (glb, nombre, op) => {
-        const k = "poder:" + nombre;
+        const k = "poder:" + String(glb).split("/").pop() + "#" + nombre;
         if (!porNombre.has(k)) {
           try {
             const g2 = await bajar(glb, (op && op.carga) || plano.carga);

@@ -109,6 +109,8 @@ const SONIDOS = {
   "poder-volar": [{ f: 250, a: 900, t: 0, d: 0.7, ruido: "lowpass", q: 0.8, v: 0.18 }, { f: 900, t: 0.7, d: 1.6, ruido: "lowpass", q: 0.8, v: 0.1 }, { f: 900, a: 200, t: 2.3, d: 0.7, ruido: "lowpass", q: 0.8, v: 0.1 }],
   "poder-estirar": [{ f: 220, a: 880, t: 0, d: 0.3, tipo: "triangle", v: 0.07 }, { f: 880, a: 330, t: 0.3, d: 0.35, tipo: "triangle", v: 0.06 }, { f: 330, a: 660, t: 0.65, d: 0.25, tipo: "triangle", v: 0.05 }],
   "poder-hielo": [{ f: 7000, a: 3500, t: 0, d: 0.7, ruido: "highpass", v: 0.06 }, { f: 2093, t: 0.1, d: 0.2, tipo: "triangle", v: 0.04 }, { f: 2637, t: 0.25, d: 0.2, tipo: "triangle", v: 0.04 }, { f: 3136, t: 0.4, d: 0.3, tipo: "triangle", v: 0.04 }],
+  "poder-velocidad": [{ f: 400, a: 3000, t: 0, d: 0.35, ruido: "bandpass", q: 1.2, v: 0.14 }, { f: 3000, t: 0.35, d: 1.2, ruido: "bandpass", q: 1.5, v: 0.07 },
+    { f: 3000, a: 500, t: 1.55, d: 0.4, ruido: "bandpass", q: 1.2, v: 0.1 }, { f: 4200, a: 1500, t: 0.1, d: 0.08, ruido: "bandpass", q: 3, v: 0.06 }, { f: 3800, a: 1400, t: 0.8, d: 0.08, ruido: "bandpass", q: 3, v: 0.06 }],
   "poder-hormigas": [0, 0.07, 0.15, 0.2, 0.29, 0.36, 0.44, 0.5].map((t, i) => ({ f: 2500 + (i % 3) * 500, t, d: 0.025, tipo: "square" as OscillatorType, v: 0.02 })),
 } satisfies Record<string, Nota[]>;
 

@@ -15,7 +15,7 @@
   if (!T) return;
   const V = () => new T.Vector3();
   const TIPOS = ["rayo", "electrico", "fuego", "telarana", "escudo", "invisible", "encoger", "golpe", "onda", "campo", "hechizo",
-    "volar", "estirar", "hielo", "hormigas"];
+    "volar", "estirar", "hielo", "hormigas", "velocidad"];
   const color = (c, d) => new T.Color(typeof c === "string" && /^#[0-9a-f]{6}$/i.test(c) ? c : d);
   const num = (x, a, b, d) => (typeof x === "number" && isFinite(x) ? Math.max(a, Math.min(b, x)) : d);
 
@@ -225,7 +225,7 @@
       };
     },
     telarana(c) {
-      const mat = new T.MeshBasicMaterial({ color: 0xffffff, transparent: true }), hilo = palo(c.scene, mat);
+      const mat = new T.MeshBasicMaterial({ color: c.ef.color ? c.col : 0xffffff, transparent: true }), hilo = palo(c.scene, mat);
       const red = new T.Mesh(new T.PlaneGeometry(1, 1), new T.MeshBasicMaterial({ map: telarana(), transparent: true, depthWrite: false, side: T.DoubleSide }));
       c.scene.add(red);
       const o = V(), f = V(), meta = V(), punta = V();
@@ -417,6 +417,27 @@
           return sigue || t < c.d + 0.5;
         },
         quitar() { r.quitar(); cristales.forEach(x => { c.scene.remove(x.m); x.m.geometry.dispose(); }); mat.dispose(); },
+      };
+    },
+    velocidad(c) {
+      // Supervelocidad (Flash): da vueltas rapidísimo alrededor de su lugar dejando estela y chispas, y vuelve a donde estaba.
+      const obj = c.fig.obj, p0 = obj.position.clone(), r0 = obj.rotation.y, o = V(), s = obj.parent ? obj.parent.getWorldScale(V()).y || 1 : 1;
+      const rx = 0.32 * c.u / s, rz = 0.2 * c.u / s;
+      let ang = 0;
+      return {
+        paso(t, dt) {
+          const k = sobre(t, c.d, 0.25, 0.25);
+          if (t < c.d) {
+            ang += dt * (6 + 10 * k);
+            obj.position.set(p0.x + Math.sin(ang) * rx * k, p0.y, p0.z + (Math.cos(ang) - 1) * rz * k);
+            obj.rotation.y = r0 + ang + Math.PI / 2;
+            obj.getWorldPosition(o); o.y += 0.45 * c.u;
+            for (let i = 0; i < 2; i++) c.P.echar(V().copy(o).add(V().set(0, (Math.random() - 0.5) * 0.7 * c.u, 0)), V(), i ? c.col : (c.col2 || c.col), 0.22 * c.u, 0.35);
+            if (Math.random() < 0.45) c.P.echar(o, V().set(Math.random() - 0.5, Math.random() * 0.6, Math.random() - 0.5).multiplyScalar(2.2 * c.u), c.col2 || c.col, 0.08 * c.u, 0.25);
+          } else { obj.position.copy(p0); obj.rotation.y = r0; }
+          return t < c.d || c.P.vivas() > 0;
+        },
+        quitar() { obj.position.copy(p0); obj.rotation.y = r0; },
       };
     },
     hormigas(c) {
