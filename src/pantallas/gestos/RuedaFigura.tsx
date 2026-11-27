@@ -7,7 +7,8 @@ import { sonar } from "../../app/sonido";
 import type { FiguraV2 } from "../../content/personaje";
 import { RUEDA, RuedaGestos } from "./RuedaGestos";
 
-const CABEZA = `${import.meta.env.BASE_URL}arte/ui/personalizar/ico-cabeza.webp`;
+/** Centro de la rueda: el logo ALV (Elías, 26 nov; antes la cabeza LEGO). */
+const CENTRO = `${import.meta.env.BASE_URL}arte/ui/gestos/logo-alv.svg`;
 /** Aviso de primera vez: se queda hasta que abras la rueda una vez en este aparato (Elías, 26 nov). */
 const VISTA = "alv-pista-rueda-juego";
 const pistaVista = () => { try { return localStorage.getItem(VISTA) === "vista"; } catch { return false; } };
@@ -62,7 +63,7 @@ export const RuedaFigura = forwardRef<MandoRueda, { jugador: string; figura?: Fi
   if (!pos && !pista) return null;
   return (
     <div className="rg-capa">
-      {pos && <RuedaGestos gestos={RUEDA} x={pos.x} y={pos.y} centro={CABEZA} onElegir={elegir} onCerrar={cerrar} />}
+      {pos && <RuedaGestos gestos={RUEDA} x={pos.x} y={pos.y} centro={CENTRO} onElegir={elegir} onCerrar={cerrar} />}
       {!pos && pista && <p className="rg-pista" style={{ left: pista.x, top: pista.y }} aria-hidden="true">Toca a tu personaje para animarlo</p>}
     </div>
   );

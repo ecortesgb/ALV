@@ -74,7 +74,7 @@ export function RuedaGestos({ gestos, x, y, centro, onElegir, onCerrar }: {
         })}
         <circle r={R0 - 3} className="rg-centro" />
         {nombre ? <text y={6} className="rg-nombre">{nombre}</text>
-          : centro && <image href={centro} x={-20} y={-20} width={40} height={40} className="rg-cara" />}
+          : centro && <image href={centro} x={-27} y={-27} width={54} height={54} className="rg-cara" />}
       </svg>
     </div>
   );
