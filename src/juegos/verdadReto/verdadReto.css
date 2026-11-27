@@ -27,6 +27,9 @@
 .D .vr-opcion.app { background: linear-gradient(160deg, #5aa2ff, #2453c4); }
 .D .vr-opcion.voz { background: linear-gradient(160deg, #a77bff, #5d1fc0); }
 .D .vr-opcion.cumplio { background: linear-gradient(160deg, #6ee36b, #1f9a3a); }
+/* En celulares angostos «¡Respondió!» y «¡Lo cumplió!» no cabían (auditoría 27 nov): la letra se ajusta al ancho de la tarjeta. */
+.D .vr-opcion.cumplio { container-type: inline-size; }
+.D .vr-opcion.cumplio b { font-size: min(1.7em, 13cqi); }
 .D .vr-opcion.tomo { background: linear-gradient(160deg, #46d6e6, #157f9c); }
 .D .vr-opcion.app b, .D .vr-opcion.voz b { font-size: 1.25em; }
 .D .vr-elegir, .D .vr-fuente, .D .vr-calificar { display: grid; gap: 10px; }

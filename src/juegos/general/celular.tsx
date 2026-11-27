@@ -156,7 +156,7 @@ function HerramientaGeneral({ v, mi, miembros, mandar }: { v: Publico; mi: MiVis
         break;
       }
       cuerpo = !meToca ? <p className="a-suave">Esta ronda la juegan las parejas. Mira la pantalla.</p> : yaEnvie ? <><span className="a-kick">Tu respuesta</span>{espera}</> : (
-        <><span className="a-kick">{m.papel === "adivina" ? "Adivina lo que contestó tu pareja" : "Contesta sobre ti"}</span>
+        <><span className="a-kick">{m.papel === "adivina" ? "Adivina lo que contestó tu pareja" : "Contesta sobre ti: tu pareja va a adivinar"}</span>
           <p className="a-carta">{m.pregunta}</p>
           <form className="a-pila" onSubmit={e => { e.preventDefault(); if (texto.trim()) void contestar(texto.trim()); }}>
             <input className="a-input" value={texto} maxLength={120} onChange={e => setTexto(e.target.value)} placeholder="Escribe aquí" aria-label="Tu respuesta" />
