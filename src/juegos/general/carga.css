@@ -23,6 +23,10 @@
 @keyframes cgBarra { from { scale: 0 1; } to { scale: 1 1; } }
 
 .D .cg-cab { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-width: 0; }
+/* ☰ de la partida dentro de la cabecera (auditoría 27 nov): el botón en línea y su caja flotando debajo. */
+.D .cg-cab .pt-menu { position: relative; top: auto; left: auto; z-index: 2; flex: none; }
+.D .cg-cab .pt-menu-caja { position: absolute; top: 50px; left: 0; }
+.D .cg-cab .cg-juego { margin-right: auto; }
 .D .cg-juego { display: flex; flex-direction: column; gap: 3px; min-width: 0; padding: 6px 16px 7px 12px; border-left: 4px solid #ff8a1f;
   background: repeating-linear-gradient(-55deg, rgba(255, 255, 255, .07) 0 6px, transparent 6px 14px), linear-gradient(90deg, rgba(255, 138, 31, .3), transparent); }
 .D .cg-juego b { font: 400 clamp(20px, 2.6vw, 34px)/1 var(--cg-titulo); text-transform: uppercase; letter-spacing: .03em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-shadow: 0 2px 8px rgba(0, 0, 0, .5); }
