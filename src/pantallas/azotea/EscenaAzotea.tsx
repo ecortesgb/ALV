@@ -8,10 +8,9 @@ import type { FiguraV2 } from "../../content/personaje";
 import { PRIORIDAD_VIDA, animPerfil, soloApariencia, type Contexto } from "../../app/perfiles";
 import { alVida, nombreVida } from "../../app/vidaPerfil";
 import type { Ambiente, Anclaje, ColoresPlataforma } from "./paquetes";
-import { paraEscena, useEscenaV3 } from "../../personajes/integracion";
+import { modoCorteV3, paraEscena, useEscenaV3 } from "../../personajes/integracion";
 
 const BASE = `${import.meta.env.BASE_URL}minifig/`;
-const LLEGADA = "alv-azotea-llegada";
 
 export type AccionFigura = "listo" | "mirarse" | "frotar" | "flexionar" | "orgullo" | "saludar";
 
@@ -24,10 +23,6 @@ export interface MandoAzotea {
 }
 
 const tactil = () => typeof matchMedia !== "undefined" && matchMedia("(pointer: coarse)").matches;
-/** La llegada sale una vez por sesión del navegador (al recargar no se repite). */
-function primeraVez(): boolean {
-  try { if (sessionStorage.getItem(LLEGADA)) return false; sessionStorage.setItem(LLEGADA, "1"); return true; } catch { return false; }
-}
 
 export const EscenaAzotea = forwardRef<MandoAzotea, { id: string; figura: FiguraV2 | null; ambiente: Ambiente; plataforma: ColoresPlataforma; className?: string;
   /** false: nunca hace la entrada (el Perfil no la repite). */ llegada?: boolean;
@@ -36,10 +31,11 @@ export const EscenaAzotea = forwardRef<MandoAzotea, { id: string; figura: Figura
     const ref = useRef<HTMLIFrameElement>(null);
     const [listo, setListo] = useState(false);
     const listoRef = useRef(false);
-    // La dirección se calcula una sola vez: cambiarla recargaría la escena.
+    // La dirección se calcula una sola vez: cambiarla recargaría la escena. La llegada sale cada vez que se entra
+    // (Elías, 2026-11-26); con el corte (&v3=1) la escena pide el motor de personajes desde que arranca.
     const anclaje = ambiente.pedestal;
     // Calidad y movimiento salen de Configuración → Mi experiencia (al volver a esta pantalla ya se ven).
-    const [src] = useState(() => `${BASE}escena.html?modo=azotea&estilo=cine&acabado=brillo&calidad=${calidadAzotea(tactil())}${llegada && primeraVez() ? "&llegada=1" : ""}${anclaje ? "&plataforma=no" : ""}${movimientoReducido() ? "&quieto=1" : ""}${paramBiblioteca()}`);
+    const [src] = useState(() => `${BASE}escena.html?modo=azotea&estilo=cine&acabado=brillo&calidad=${calidadAzotea(tactil())}${llegada ? "&llegada=1" : ""}${modoCorteV3() ? "&v3=1" : ""}${anclaje ? "&plataforma=no" : ""}${movimientoReducido() ? "&quieto=1" : ""}${paramBiblioteca()}`);
     const caja = useRef<HTMLDivElement>(null);
     // Dónde caen los pies dentro del lienzo y cuánto mide la figura (fracciones); la escena lo dice al encuadrar.
     const pies = useRef({ x: 0.5, y: 0.955, alto: 0.83 });
