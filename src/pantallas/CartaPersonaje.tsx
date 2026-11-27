@@ -14,6 +14,10 @@ export const LOGOS: Record<string, string> = {
   "harry-potter": "LEGO Harry Potter", "star-wars": "LEGO Star Wars",
   guardianes: "Guardianes de la Galaxia", venom: "Venom", wolverine: "Wolverine",
   daredevil: "Daredevil", "cuatro-fantasticos": "Los Cuatro Fantásticos", "villanos-marvel": "Villanos",
+  // Sagas de los personajes nuevos (logos de Elías, 2026-11-27).
+  disney: "Disney", increibles: "Los Increíbles", "looney-tunes": "Looney Tunes", simpsons: "Los Simpson",
+  "plaza-sesamo": "Plaza Sésamo", muppets: "Los Muppets", "hora-de-aventura": "Hora de Aventura",
+  "chicas-superpoderosas": "Las Chicas Superpoderosas",
 };
 export const logo = (id: string) => `${import.meta.env.BASE_URL}arte/tienda/sagas/${id}.webp`;
 const CUATRO_FANTASTICOS = new Set(["mr-fantastico", "mujer-invisible", "antorcha-humana", "la-mole"]);
@@ -33,7 +37,8 @@ export function temaDe(t: Tarjeta) {
     if (/^(batman|bruce-wayne|joker|robin)(-|$)/.test(t.id)) return "batman";
     return t.bando === "heroe" ? "liga-justicia" : "dc";
   }
-  return t.saga === "harry-potter" || t.saga === "star-wars" ? t.saga : "alv";
+  if (t.saga === "disney" && LOGOS[t.grupo]) return t.grupo; // Los Increíbles llevan su logo; el resto, el de Disney
+  return t.saga === "harry-potter" || t.saga === "star-wars" || LOGOS[t.saga] ? t.saga : "alv";
 }
 
 export function CartaPersonaje({ tarjeta, foto = tarjeta.foto, revelada = false, nivel = rareza(tarjeta.id), conseguida = false, precio }: {

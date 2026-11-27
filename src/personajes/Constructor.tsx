@@ -52,11 +52,15 @@ const esGesto = (x: Sub): x is Gesto => (GESTOS as readonly string[]).includes(x
  *  con su id legible al final (Elías, 2026-11-26: «Marvel y dentro Avengers, X-Men…; habrá Harry Potter, Star Wars»). */
 const SAGAS: { id: Id; nombre: string }[] = [
   { id: "marvel", nombre: "Marvel" }, { id: "dc", nombre: "DC" }, { id: "star-wars", nombre: "Star Wars" }, { id: "harry-potter", nombre: "Harry Potter" },
+  { id: "disney", nombre: "Disney" }, { id: "simpsons", nombre: "Los Simpson" }, { id: "looney-tunes", nombre: "Looney Tunes" },
+  { id: "muppets", nombre: "Los Muppets" }, { id: "plaza-sesamo", nombre: "Plaza Sésamo" }, { id: "hora-de-aventura", nombre: "Hora de Aventura" },
+  { id: "chicas-superpoderosas", nombre: "Las Chicas Superpoderosas" },
 ];
 const GRUPOS: { id: Id; nombre: string }[] = [
   { id: "avengers", nombre: "Avengers" }, { id: "x-men", nombre: "X-Men" }, { id: "guardianes", nombre: "Guardianes" },
   { id: "villanos-marvel", nombre: "Villanos" }, { id: "cuatro-fantasticos", nombre: "Los 4 Fantásticos" }, { id: "otros-marvel", nombre: "Otros" },
   { id: "batman", nombre: "Batman" }, { id: "liga-justicia", nombre: "Liga de la Justicia" },
+  { id: "increibles", nombre: "Los Increíbles" },
 ];
 /** Secciones que el Álbum separa aparte de `ficha.grupo` (Los 4 Fantásticos; en DC, Batman y la Liga de la Justicia). */
 const SECCIONES_ALBUM = new Set(["cuatro-fantasticos", "batman", "liga-justicia"]);
