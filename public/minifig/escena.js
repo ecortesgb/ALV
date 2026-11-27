@@ -1471,7 +1471,7 @@
     if (p.poderes != null) p.poderes = Array.isArray(p.poderes) ? p.poderes.slice(0, 8).filter(x => x && typeof x.id === "string" && /^[a-z][a-z0-9-]{0,23}$/.test(x.id)
       && typeof x.glb === "string" && URL_OK.test(x.glb) && typeof x.clip === "string" && x.clip.length <= 80)
       .map(x => ({ id: x.id, glb: x.glb, clip: x.clip, hasta: Number(x.hasta) > 0 ? Math.min(20, Number(x.hasta)) : 0, bucle: Number(x.bucle) > 0 ? Math.min(20, Number(x.bucle)) : 0, efectos: Array.isArray(x.efectos) ? x.efectos.slice(0, 3).filter(f => f && typeof f === "object" && typeof f.tipo === "string") : [] })) : [];
-    // Sets de movimientos (27 nov): mismos campos que un poder, sin efectos y en su lugar (fijo: los golpes del juego
+    // Sets de movimientos (27 nov): mismos campos que un poder (efectos de disparo y golpe: sets.ts EFECTOS_MOV) y en su lugar (fijo: los golpes del juego
     // avanzan hacia el enemigo y sacaban a la figura del pedestal).
     // Transformar (27 nov): clips del juego con que la forma sale (hacia minifigura o hacia figura grande) y llega.
     if (p.transformar != null) {
@@ -1481,7 +1481,8 @@
     }
     if (p.movs != null) p.movs = Array.isArray(p.movs) ? p.movs.slice(0, 64).filter(x => x && typeof x.id === "string" && /^[a-z][a-z0-9-]{0,23}$/.test(x.id)
       && typeof x.glb === "string" && URL_OK.test(x.glb) && typeof x.clip === "string" && x.clip.length <= 80)
-      .map(x => ({ id: x.id, glb: x.glb, clip: x.clip, hasta: 0, bucle: 0, efectos: [], fijo: true,
+      .map(x => ({ id: x.id, glb: x.glb, clip: x.clip, hasta: 0, bucle: 0, fijo: true,
+        efectos: Array.isArray(x.efectos) ? x.efectos.slice(0, 3).filter(f => f && typeof f === "object" && typeof f.tipo === "string") : [],
         sonidos: Array.isArray(x.sonidos) ? x.sonidos.slice(0, 8).filter(z => z && typeof z.cual === "string" && /^[a-z][a-z0-9-]{0,23}$/.test(z.cual)
           && Number(z.t) >= 0 && Number(z.t) <= 10).map(z => ({ cual: z.cual, t: Number(z.t) })) : [] })) : [];
     return p;
