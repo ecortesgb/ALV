@@ -9,6 +9,7 @@ import { acotarToque, estimar, muestra, relojListo } from "./reloj";
 import { aireDe, avanzar, crearPartida, empezar, enElAire, llegada, posBala, ranking, saltar, CONFIG_BALA, type Bala, type EstadoBala, type Evento } from "./bala";
 import { crearCuarto, entrar, mandar, pasoCuarto } from "./cuarto";
 import { abrirCanalNube, crearSecuencias, deLaTv, idDeLlave, leer, validarDeCelular, SERVIDOR, TV, type Mensaje } from "./canal";
+import { JUEGO_XP, RONDAS_XP, resultadosXp } from "./xpSala";
 
 describe("Paracaídas", () => {
   const jugadores = ["a", "b", "c", "d", "e"].map(id => ({ id }));
@@ -1184,5 +1185,33 @@ describe("canal por la nube (Realtime de Supabase)", () => {
     abrirCanalNube(nube, "ZZZZ", "x", m => otra.push(m));
     cTv.enviar("estado", {});
     expect(otra.filter(m => m.de !== SERVIDOR)).toEqual([]);
+  });
+});
+
+describe("XP de Mini-Juegos desde la sala (049)", () => {
+  const A = "11111111-1111-4111-8111-111111111111", B = "22222222-2222-4222-8222-222222222222";
+  it("arma los resultados con las cuentas de la sala y deja fuera a quien no tiene", () => {
+    const r = resultadosXp(
+      [{ id: "c1", lugar: 1 }, { id: "c2", lugar: 2 }, { id: "c3", lugar: 2 }, { id: "bot", lugar: 4 }],
+      [{ id: "c1", cuenta: A }, { id: "c2", cuenta: B }, { id: "c3", cuenta: null }, { id: "bot", cuenta: A, bot: true }]);
+    expect(r).toEqual({ jugadores: 4, resultados: [
+      { jugador: A, rondas: RONDAS_XP, retos: 0, lugar: 1 }, { jugador: B, rondas: RONDAS_XP, retos: 0, lugar: 2 }] });
+  });
+  it("una cuenta repetida cuenta una vez; lugares raros y uno solo no cuentan", () => {
+    expect(resultadosXp([{ id: "c1", lugar: 1 }, { id: "c2", lugar: 1 }], [{ id: "c1", cuenta: A }, { id: "c2", cuenta: A }])?.resultados).toHaveLength(1);
+    expect(resultadosXp([{ id: "c1", lugar: 9 }, { id: "c2", lugar: 0 }], [{ id: "c1", cuenta: A }, { id: "c2", cuenta: B }])).toBeNull();
+    expect(resultadosXp([{ id: "c1", lugar: 1 }], [{ id: "c1", cuenta: A }])).toBeNull();
+    expect(resultadosXp("x", null)).toBeNull();
+  });
+  it("cada juego de la TV tiene su id en la base y el hola acepta la cuenta", () => {
+    expect(Object.values(JUEGO_XP).sort()).toEqual(["mj-alto-total", "mj-bala", "mj-desenfunda", "mj-martillazo", "mj-paracaidas"]);
+    expect(validarDeCelular({ de: "c1", tipo: "hola", d: { n: 1, nombre: "a", personaje: "hulk", cuenta: A } })).toEqual({ n: 1, nombre: "a", personaje: "hulk", cuenta: A });
+    expect(validarDeCelular({ de: "c1", tipo: "hola", d: { n: 1, nombre: "a", personaje: "hulk", cuenta: "<x>" } })).toEqual({ n: 1, nombre: "a", personaje: "hulk" });
+  });
+  it("la 049 acepta exactamente esos ids", async () => {
+    const { readFileSync } = await import("node:fs");
+    const sql = readFileSync("supabase/migrations/049_minijuegos_xp.sql", "utf8");
+    for (const id of Object.values(JUEGO_XP)) expect(sql).toContain(`'${id}'`);
+    expect(sql).toContain("privado.es_anfitrion(v_evento)");
   });
 });

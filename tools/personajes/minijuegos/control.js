@@ -2,6 +2,7 @@
 // Mide el reloj de la TV (ping/pong) y manda cada toque con su hora ya traducida al reloj de la TV.
 import { abrirCanal, abrirCanalNube, abrirCanalWs, idDeLlave, ahora as ahoraPc, deLaTv, redDeUrl, urlSala, SERVIDOR } from "/src/personajes/minijuegos/canal.ts";
 import { cliente } from "/src/servicios/cliente.ts";
+import { miCuenta, reportarXp, resultadosXp, salaDondeMando } from "/src/personajes/minijuegos/xpSala.ts";
 import { estimar, muestra, relojListo, MAX_INCERTIDUMBRE } from "/src/personajes/minijuegos/reloj.ts";
 
 const q = new URLSearchParams(location.search);
@@ -24,6 +25,29 @@ const DESFASE = Number(q.get("desfase")) || 0;
 const ahora = () => ahoraPc() + DESFASE;
 // Nombres de las tarjetas: del índice del servidor de personajes. Qué personajes se pueden elegir lo dice la TV.
 const NOMBRES = {};
+// XP desde la sala de ALV (049): cada celular manda su cuenta en «hola»; el del anfitrión de la sala reporta el podio.
+let cuenta = null;
+let cuentaLista = !NUBE_XP();
+const listaCuenta = NUBE_XP() ? miCuenta(cliente).then(c => { cuenta = c; cuentaLista = true; return c; }) : Promise.resolve(null);
+function NUBE_XP() { return !!cliente && (q.get("canal") || (import.meta.env.DEV ? "" : "nube")) === "nube"; }
+const reportadas = new Set();
+async function darXp(d) {
+  const clave = `alv-mj-xp-${d.sala}-${d.pid}`;
+  if (!d.pid || reportadas.has(clave)) return;
+  reportadas.add(clave);
+  try { if (sessionStorage.getItem(clave)) return; } catch { /* sin almacenamiento */ }
+  await listaCuenta;
+  if (!cuenta) return; // sin sesión de ALV: sin XP
+  // Solo reporta el celular del anfitrión de la sala de ALV (puede no ser el primero de la fila).
+  const evento = await salaDondeMando(cliente, cuenta);
+  if (!evento) return; // no soy anfitrión de una sala abierta de ALV: sin XP
+  const r = resultadosXp(d.ranking, d.jugadores);
+  if (!r) return;
+  if (await reportarXp(cliente, evento, d.juego, r)) {
+    try { sessionStorage.setItem(clave, "1"); } catch { /* sin almacenamiento */ }
+    diag("XP guardada en la sala");
+  }
+}
 /** Sin índice (en la nube): «iron-man» → «Iron Man». */
 const legible = id => String(id).split(/[-_]+/).map(p => p.charAt(0).toUpperCase() + p.slice(1)).join(" ").slice(0, 30);
 let personajes = [], elegido = q.get("personaje") || null, dentro = false, ultimo = null, miJ = null;
@@ -124,7 +148,8 @@ function entrar() {
   if (!sala) return;
   if (!elegido) elegido = personajes[Math.floor(Math.random() * personajes.length)];
   if (!PESTANAS && !yo) { setTimeout(entrar, 300); return; } // todavía no llega la bienvenida del servidor
-  canal.enviar("hola", { nombre: $("nombre").value.trim() || "Jugador", personaje: elegido });
+  if (!cuentaLista) { setTimeout(entrar, 200); return; } // primero saber mi cuenta de ALV (XP desde la sala)
+  canal.enviar("hola", { nombre: $("nombre").value.trim() || "Jugador", personaje: elegido, ...(cuenta ? { cuenta } : {}) });
   dentro = true;
   $("unirse").classList.add("oculto");
   if ($("unirse").dataset.reintento) { fallidos.delete(elegido); $("estado").textContent = "Cargando tu personaje en la TV…"; }
@@ -132,7 +157,7 @@ function entrar() {
 $("entrar").onclick = entrar;
 if (q.get("entrar") === "1") setTimeout(entrar, 300);
 // Sigue diciendo «aquí estoy» (si la TV se recarga, vuelve a entrar).
-setInterval(() => { if (dentro && miJ === null) canal.enviar("hola", { nombre: $("nombre").value.trim() || "Jugador", personaje: elegido }); }, 1500);
+setInterval(() => { if (dentro && miJ === null) canal.enviar("hola", { nombre: $("nombre").value.trim() || "Jugador", personaje: elegido, ...(cuenta ? { cuenta } : {}) }); }, 1500);
 addEventListener("pagehide", () => canal.enviar("adios"));
 
 function estado(d) {
@@ -178,6 +203,7 @@ function estado(d) {
   pintarSalto();
   $("otra").classList.toggle("oculto", !(anfitrion && d.fase === "fin"));
   if (d.fase === "lobby") $("espera-txt").textContent = anfitrion ? "Tú empiezas cuando estén todos." : "Ya estás en la fila. Mira la TV.";
+  if (d.fase === "fin" && Array.isArray(d.ranking)) void darXp(d);
   if (d.fase === "fin" && Array.isArray(d.ranking)) {
     const l = d.ranking.find(x => x.id === yo);
     $("estado").textContent = l ? (l.lugar === 1 ? "¡Ganaste!" : `Quedaste en ${l.lugar}° lugar`) : "";

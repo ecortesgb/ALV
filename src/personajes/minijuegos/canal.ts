@@ -60,7 +60,13 @@ export function validarDeCelular(m: Mensaje): Record<string, unknown> | null {
   const d = m.d, n = ent(d.n);
   if (n === null) return null;
   switch (m.tipo) {
-    case "hola": { const nombre = txt(d.nombre, 40), personaje = txt(d.personaje, 40); return nombre !== null && personaje !== null ? { n, nombre, personaje } : null; }
+    case "hola": {
+      const nombre = txt(d.nombre, 40), personaje = txt(d.personaje, 40);
+      if (nombre === null || personaje === null) return null;
+      // cuenta (opcional): id de la cuenta de ALV del celular, para la XP desde la sala (049). El servidor la revisa.
+      const cuenta = typeof d.cuenta === "string" && /^[0-9a-f-]{36}$/i.test(d.cuenta) ? d.cuenta : null;
+      return cuenta ? { n, nombre, personaje, cuenta } : { n, nombre, personaje };
+    }
     case "ping": { const t0 = num(d.t0); return t0 !== null ? { n, t0 } : null; }
     case "adios": case "empezar": case "otra": return { n };
     case "salto": {
