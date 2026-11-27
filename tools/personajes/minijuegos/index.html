@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Mini-Juegos · ALV</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Nunito:wght@700;800&display=swap">
+<style>
+:root{--noche:#0a1030;--amarillo:#ffcf2e}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;background:#070b22;color:#fff;font:700 16px Nunito,system-ui,sans-serif}
+main{max-width:960px;margin:0 auto;padding:32px 16px}
+h1{font:400 clamp(36px,6vw,64px) "Lilita One",sans-serif;color:var(--amarillo);margin:0 0 6px;-webkit-text-stroke:2px #000}
+p{margin:0 0 24px;opacity:.85}
+.juegos{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px}
+a.juego{display:block;padding:20px;border:4px solid #000;border-radius:16px;background:#141a3a;color:#fff;text-decoration:none;box-shadow:0 6px 0 #000}
+a.juego:hover,a.juego:focus-visible{background:#1d2556;outline:3px solid var(--amarillo)}
+a.juego b{display:block;font:400 28px "Lilita One",sans-serif;color:var(--amarillo)}
+a.juego small{font-size:14px;opacity:.85}
+</style>
+</head>
+<body>
+<main>
+<h1>Mini-Juegos</h1>
+<p>Abre el juego en la TV (con tu sesión de ALV iniciada). Cada quien entra desde su celular con el código o el QR que sale en la TV.</p>
+<div class="juegos">
+  <a class="juego" href="tv-bala.html"><b>Esquiva la bala</b><small>Salta cuando pase la bala. Gana el último en pie.</small></a>
+  <a class="juego" href="tv-desenfunda.html"><b>¡Desenfunda!</b><small>Dispara en cuanto salga el ¡YA! Sin adelantarte.</small></a>
+  <a class="juego" href="tv-martillazo.html"><b>Martillazo</b><small>Golpea cuando la barra esté al centro. Más puntos entre más cerca.</small></a>
+  <a class="juego" href="tv-alto-total.html"><b>Alto total</b><small>Mantén ¡CORRE! en verde y suelta en rojo. Llega a la meta.</small></a>
+  <a class="juego" href="tv-paracaidas.html"><b>Paracaídas</b><small>Abre el paracaídas lo más cerca del piso sin estrellarte.</small></a>
+</div>
+</main>
+</body>
+</html>

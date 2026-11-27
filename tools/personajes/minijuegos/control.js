@@ -1,6 +1,7 @@
 // Control del celular (prototipo de Mini-Juegos y cuarto de Físico, zona aparte).
 // Mide el reloj de la TV (ping/pong) y manda cada toque con su hora ya traducida al reloj de la TV.
-import { abrirCanal, abrirCanalWs, ahora as ahoraPc, deLaTv, redDeUrl, urlSala, SERVIDOR } from "/src/personajes/minijuegos/canal.ts";
+import { abrirCanal, abrirCanalNube, abrirCanalWs, idDeLlave, ahora as ahoraPc, deLaTv, redDeUrl, urlSala, SERVIDOR } from "/src/personajes/minijuegos/canal.ts";
+import { cliente } from "/src/servicios/cliente.ts";
 import { estimar, muestra, relojListo, MAX_INCERTIDUMBRE } from "/src/personajes/minijuegos/reloj.ts";
 
 const q = new URLSearchParams(location.search);
@@ -8,6 +9,7 @@ const $ = id => document.getElementById(id);
 // Las fotos de las tarjetas: del servidor privado en la misma máquina que sirvió la página (en la casa, la PC).
 const FUENTE = (q.get("fuente") || `http://${location.hostname}:4193/`).replace(/\/?$/, "/");
 const PESTANAS = q.get("canal") === "pestanas";
+const CANAL = q.get("canal") || (import.meta.env.DEV ? "" : "nube");
 const sala = (q.get("sala") || "").toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 8);
 // Quién soy: con WebSocket lo dice el servidor al conectar, a partir de una llave secreta que solo guarda este
 // navegador (al recargar conserva su lugar y sus puntos; nadie más la conoce). En pestañas, un id local nuevo.
@@ -22,8 +24,11 @@ const DESFASE = Number(q.get("desfase")) || 0;
 const ahora = () => ahoraPc() + DESFASE;
 // Nombres de las tarjetas: del índice del servidor de personajes. Qué personajes se pueden elegir lo dice la TV.
 const NOMBRES = {};
+/** Sin índice (en la nube): «iron-man» → «Iron Man». */
+const legible = id => String(id).split(/[-_]+/).map(p => p.charAt(0).toUpperCase() + p.slice(1)).join(" ").slice(0, 30);
 let personajes = [], elegido = q.get("personaje") || null, dentro = false, ultimo = null, miJ = null;
-fetch(FUENTE + "indice.json").then(r => (r.ok ? r.json() : null)).then(j => {
+// En la nube el celular no lee el índice privado: los nombres y la lista los manda la TV.
+(CANAL === "nube" && !q.get("fuente") ? Promise.resolve(null) : fetch(FUENTE + "indice.json")).then(r => (r && r.ok ? r.json() : null)).then(j => {
   const lista = ((j && j.personajes) || []).filter(p => p && p.ficha && !p.prueba && p.ficha.juego);
   lista.forEach(p => { NOMBRES[p.id] = String(p.ficha.nombre || p.id).slice(0, 30); });
   if (!personajes.length) personajes = lista.map(p => p.id).sort((a, b) => NOMBRES[a].localeCompare(NOMBRES[b], "es"));
@@ -50,7 +55,13 @@ const alLlegar = m => {
   else if (m.tipo === "secreto" && m.d.para === yo && typeof m.d.palabra === "string") $("secreta").textContent = m.d.palabra.slice(0, 40);
   else if (m.tipo === "lleno" && m.d.para === yo) $("estado").textContent = "La sala está llena o ya empezó";
 };
+const NUBE = CANAL === "nube" && !!cliente;
+if (NUBE) yo = idDeLlave(llave);
 const canal = PESTANAS ? abrirCanal(sala, yo, alLlegar, redDeUrl(q))
+  : NUBE ? abrirCanalNube(cliente, sala, yo, alLlegar, redDeUrl(q), abierto => {
+    if (!abierto) $("estado").textContent = "Sin conexión: reintentando…";
+    else if (/conexión|reintentando/.test($("estado").textContent)) $("estado").textContent = "";
+  })
   : abrirCanalWs(urlSala(q, sala, "cel", llave), alLlegar, redDeUrl(q), (abierto, motivo) => {
     if (!abierto) $("estado").textContent = motivo === "abriste otra vez" ? "Abriste este control en otra pestaña" : "Sin conexión con la PC: reintentando…";
     else if (/conexión|reintentando/.test($("estado").textContent)) $("estado").textContent = "";
@@ -83,10 +94,10 @@ function pintarGrid() {
     const c = document.createElement("button");
     c.className = "carta" + (id === elegido ? " si" : "") + (fallidos.has(id) ? " fallo" : "");
     const img = document.createElement("img");
-    img.alt = ""; img.src = `${FUENTE}catalogo/${id}/${id}-tarjeta.webp`;
+    img.alt = ""; if (!(CANAL === "nube" && !q.get("fuente"))) img.src = `${FUENTE}catalogo/${id}/${id}-tarjeta.webp`;
     img.onerror = () => { img.style.visibility = "hidden"; }; // sin foto, queda el nombre
     const nombre = document.createElement("span");
-    nombre.textContent = NOMBRES[id] || id;
+    nombre.textContent = NOMBRES[id] || legible(id);
     c.append(img, nombre);
     c.onclick = () => { if (deslizo) return; elegido = id; pintarGrid(); };
     g.appendChild(c);
