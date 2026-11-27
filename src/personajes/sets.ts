@@ -43,7 +43,7 @@ export const SETS: Readonly<Record<string, SetDef>> = {
   garras: { nombre: "Garras", anfitrion: "wolverine", movs: {
     voltereta: { nombre: "Salto felino", rueda: true }, guardia: { nombre: "En guardia" }, caminar: { nombre: "Acechar" }, correr: { nombre: "Correr" },
   } },
-  vuelo: { nombre: "Vuelo", anfitrion: "war-machine", movs: {
+  vuelo: { nombre: "Volar", anfitrion: "war-machine", movs: {
     despegar: { nombre: "Despegar", rueda: true },
     flotar: { nombre: "Flotar" }, volar: { nombre: "Volar" }, "volar-rapido": { nombre: "Volar rápido" }, izquierda: { nombre: "Volar a la izquierda" },
     derecha: { nombre: "Volar a la derecha" }, subir: { nombre: "Subir" }, bajar: { nombre: "Bajar" },

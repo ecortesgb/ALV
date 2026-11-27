@@ -1448,10 +1448,11 @@
     if (p.poderes != null) p.poderes = Array.isArray(p.poderes) ? p.poderes.slice(0, 8).filter(x => x && typeof x.id === "string" && /^[a-z][a-z0-9-]{0,23}$/.test(x.id)
       && typeof x.glb === "string" && URL_OK.test(x.glb) && typeof x.clip === "string" && x.clip.length <= 80)
       .map(x => ({ id: x.id, glb: x.glb, clip: x.clip, hasta: Number(x.hasta) > 0 ? Math.min(20, Number(x.hasta)) : 0, bucle: Number(x.bucle) > 0 ? Math.min(20, Number(x.bucle)) : 0, efectos: Array.isArray(x.efectos) ? x.efectos.slice(0, 3).filter(f => f && typeof f === "object" && typeof f.tipo === "string") : [] })) : [];
-    // Sets de movimientos (27 nov): mismos campos que un poder, sin efectos.
+    // Sets de movimientos (27 nov): mismos campos que un poder, sin efectos y en su lugar (fijo: los golpes del juego
+    // avanzan hacia el enemigo y sacaban a la figura del pedestal).
     if (p.movs != null) p.movs = Array.isArray(p.movs) ? p.movs.slice(0, 64).filter(x => x && typeof x.id === "string" && /^[a-z][a-z0-9-]{0,23}$/.test(x.id)
       && typeof x.glb === "string" && URL_OK.test(x.glb) && typeof x.clip === "string" && x.clip.length <= 80)
-      .map(x => ({ id: x.id, glb: x.glb, clip: x.clip, hasta: 0, bucle: 0, efectos: [],
+      .map(x => ({ id: x.id, glb: x.glb, clip: x.clip, hasta: 0, bucle: 0, efectos: [], fijo: true,
         sonidos: Array.isArray(x.sonidos) ? x.sonidos.slice(0, 8).filter(z => z && typeof z.cual === "string" && /^[a-z][a-z0-9-]{0,23}$/.test(z.cual)
           && Number(z.t) >= 0 && Number(z.t) <= 10).map(z => ({ cual: z.cual, t: Number(z.t) })) : [] })) : [];
     return p;
@@ -1468,7 +1469,7 @@
     if (!pd || ((e.prio || 0) >= 2 && t < e.hasta) || t < (e.poderHasta || 0)) return no();
     const inst = e.v3;
     e.poderHasta = t + 1; e.prio = 2; e.cual = "poder"; e.hasta = t + 1; e.accion = null;
-    inst.tocarExt(pd.glb, pd.clip, { hasta: pd.hasta, bucle: pd.bucle }).then(dur => {
+    inst.tocarExt(pd.glb, pd.clip, { hasta: pd.hasta, bucle: pd.bucle, fijo: !!pd.fijo }).then(dur => {
       if (e.v3 !== inst) return;
       const t1 = reloj.getElapsedTime(), largo = Math.max(dur || 0, ...pd.efectos.map(f => (Number(f.retraso) || 0) + (Number(f.dura) || 1)));
       e.prio = 2; e.cual = "poder"; e.hasta = t1 + largo; e.poderHasta = t1 + largo + 0.3; e.ultG = t1;
