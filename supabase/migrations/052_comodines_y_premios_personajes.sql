@@ -258,3 +258,7 @@ begin
 end $$;
 revoke all on function public.reclamar_premios_nivel() from public, anon;
 grant execute on function public.reclamar_premios_nivel() to authenticated;
+
+-- RLS activo sin políticas: solo las funciones del servidor (dueñas de las tablas) las tocan.
+alter table privado.grupo_personaje enable row level security;
+alter table privado.premios_nivel enable row level security;

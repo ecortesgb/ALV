@@ -222,3 +222,8 @@ end $$;
 revoke all on function privado.precio_personaje(text,boolean), public.estado_personajes_tienda(),
   public.comprar_personajes(text,text,int,uuid) from public, anon, authenticated;
 grant execute on function public.estado_personajes_tienda(), public.comprar_personajes(text,text,int,uuid) to authenticated;
+
+-- RLS activo sin políticas: solo las funciones del servidor (dueñas de las tablas) las tocan.
+alter table privado.catalogo_tienda_personajes enable row level security;
+alter table privado.personajes_comprados enable row level security;
+alter table privado.pedidos_personajes enable row level security;
