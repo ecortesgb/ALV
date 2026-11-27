@@ -17,7 +17,7 @@ export interface ConfigCuarto {
   aterrizarMs: number; reaparecerMs: number;
   /** Vuelo (Iron Man, Thor...): altura al despegar, cuánto sube o baja cada toque, techo y velocidad en el aire. */
   vueloAlto: number; vueloPaso: number; vueloTecho: number; vueloVel: number;
-  /** ¡Al vacío!: el que cae ya no reaparece (sigue cayendo) y nadie vuela. */
+  /** ALVacío: el que cae ya no reaparece (sigue cayendo) y nadie vuela. */
   reaparecer: boolean; sinVuelo: boolean;
   /** Sin mando nuevo en este tiempo, la palanca vuelve al centro (celular suspendido o sin red; Codex O5). */
   caducaMandoMs: number;
@@ -79,7 +79,7 @@ export function entrar(e: EstadoCuarto, id: string, escala = 1): Cuerpo {
 
 export function salir(e: EstadoCuarto, id: string) { e.cuerpos.delete(id); }
 
-/** Pone a cada quien de pie en un círculo de radio r (inicio de ronda de ¡Al vacío!), mirando al centro. */
+/** Pone a cada quien de pie en un círculo de radio r (inicio de ronda de ALVacío), mirando al centro. */
 export function colocar(e: EstadoCuarto, ids: readonly string[], r: number) {
   ids.forEach((id, i) => {
     const c = e.cuerpos.get(id);

@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { alCaer, anotarGolpe, avanzarPlataforma, crearPlataforma, radioEn, rankingPlataforma, salioDePartida } from "./plataforma";
 import { colocar, crearCuarto, entrar, mandar, pasoCuarto } from "./cuarto";
 
-describe("¡Al vacío!", () => {
+describe("ALVacío", () => {
   it("necesita 2 o más; en equipos reparte alternado", () => {
     expect(crearPlataforma(["a"], "solos", 0)).toBeNull();
     const p = crearPlataforma(["a", "b", "c", "d"], "equipos", 0)!;

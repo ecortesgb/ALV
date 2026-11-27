@@ -18,14 +18,14 @@ const visto = new Map(); // jugador → { anim, desde } ya puesto en su figura
 const tv = crearTV({
   juego: "cuarto", escena, topeEtiquetas: 84,
   alUnirse: j => {
-    if (!cuarto.cuerpos.has(j.id) && !partida) { // a media partida de ¡Al vacío! se espera a que termine
+    if (!cuarto.cuerpos.has(j.id) && !partida) { // a media partida de ALVacío se espera a que termine
       const escala = j.figura ? j.figura.alto() / 2.7 : 1;
       entrar(cuarto, j.id, escala);
       tv.pop(j, "¡Llegó!", j.color.claro);
       if (j.figura) j.figura.anim("saludo");
     }
     visto.delete(j.id);
-    $("sub").textContent = `${tv.jugadores.size} en el cuarto · palanca para moverte · A salta · B golpe · RT y X poderes (los que vuelan despegan) · rueda: gestos · el anfitrión inicia ¡Al vacío!`;
+    $("sub").textContent = `${tv.jugadores.size} en el cuarto · palanca para moverte · A salta · B golpe · RT y X poderes (los que vuelan despegan) · rueda: gestos · el anfitrión inicia ALVacío`;
   },
   alSalir: j => { salir(cuarto, j.id); visto.delete(j.id); if (partida) eventos(salioDePartida(partida, j.id, reloj)); },
   alMensaje: (j, m) => {
@@ -144,7 +144,7 @@ function estela(j, cu, dt) {
   j.estela = lanzarEfecto(j, escena, j.efVuelo, { a: 0.2, dura: 3, retraso: 0 });
   if (!j.estela) j.efVuelo = null;
 }
-// Los celulares de quienes vuelan cambian A y B a «Sube» y «Baja». En ¡Al vacío! van también la ronda, quién sigue en pie,
+// Los celulares de quienes vuelan cambian A y B a «Sube» y «Baja». En ALVacío van también la ronda, quién sigue en pie,
 // los puntos y, al final, el podio (con él, el celular del anfitrión de la sala reporta la XP).
 tv.extra = () => ({
   vuelan: [...cuarto.cuerpos.values()].filter(c => c.vuela).map(c => c.id),
@@ -153,7 +153,7 @@ tv.extra = () => ({
     equipo: partida.modalidad === "equipos" ? partida.equipo : null, ranking: ranking } : {}),
 });
 
-// ---------- ¡Al vacío! (Elías, 27 nov): sin paredes, plataforma en la azotea; tira a los demás, gana el último en pie ----------
+// ---------- ALVacío (Elías, 27 nov): sin paredes, plataforma en la azotea; tira a los demás, gana el último en pie ----------
 // El anfitrión lo inicia desde su celular (o el botón de la TV). Rondas de plataforma que se encoge; al final, podio con
 // puntos y la XP como los otros minijuegos (mj-plataforma, migración 054). Al terminar se vuelve al cuarto de pruebas.
 const EQUIPOS = [{ nombre: "Rojo", base: "#ff4d4d" }, { nombre: "Azul", base: "#3d8bff" }];
@@ -248,7 +248,7 @@ function eventos(evs) {
   }
   tv.difundir();
 }
-$("empezar")?.addEventListener("click", () => { if (!partida) iniciar(); else if (partida.fase === "fin") { aCuarto(); $("empezar").textContent = "¡Al vacío!"; } });
+$("empezar")?.addEventListener("click", () => { if (!partida) iniciar(); else if (partida.fase === "fin") { aCuarto(); $("empezar").textContent = "ALVacío"; } });
 
 // ---------- Jugadores de prueba (?bots=N): pasean, a veces corren, saltan o golpean ----------
 async function ponerBots() {

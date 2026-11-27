@@ -1,4 +1,4 @@
-// ¡Al vacío! (Elías, 27 nov 2026): el cuarto libre se vuelve minijuego. Al iniciar se quitan las paredes y queda una
+// ALVacío (Elías, 27 nov 2026): el cuarto libre se vuelve minijuego. Al iniciar se quitan las paredes y queda una
 // plataforma en lo alto de un edificio; los personajes se empujan y se golpean para tirarse. Gana la ronda el último en
 // pie (o el último equipo); la plataforma se encoge con el tiempo para que ninguna ronda se alargue.
 // Lógica pura (sin DOM ni 3D): el cuerpo de cada personaje lo mueve cuarto.ts; aquí van rondas, quién cayó, puntos y podio.

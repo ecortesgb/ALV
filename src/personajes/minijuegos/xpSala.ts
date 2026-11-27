@@ -6,7 +6,7 @@
 /** Juego de la TV → id del juego en la base (los acepta terminar_partida_sala desde la 049). */
 export const JUEGO_XP: Record<string, string> = {
   bala: "mj-bala", desenfunda: "mj-desenfunda", martillazo: "mj-martillazo", alto: "mj-alto-total", paracaidas: "mj-paracaidas",
-  // ¡Al vacío! corre en la TV del cuarto (juego «cuarto»); solo hay podio cuando se jugó una partida (migración 054).
+  // ALVacío corre en la TV del cuarto (juego «cuarto»); solo hay podio cuando se jugó una partida (migración 054).
   cuarto: "mj-plataforma",
 };
 /** Rondas que cuenta cada minijuego para la fórmula de XP (20 + 2 por ronda + lugar): 30 XP por jugar, +15/10/5 del podio. */

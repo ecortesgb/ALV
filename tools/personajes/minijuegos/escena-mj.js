@@ -144,7 +144,7 @@
   }
 
   /**
-   * ¡Al vacío! (Elías, 27 nov): plataforma redonda en la azotea de un edificio, sin paredes. El grupo de arriba (piso y aro)
+   * ALVacío (Elías, 27 nov): plataforma redonda en la azotea de un edificio, sin paredes. El grupo de arriba (piso y aro)
    * se encoge con setRadio(r); el edificio se queda. → { grupo, setRadio(r), quitar() }.
    */
   function azotea(scene, radio) {

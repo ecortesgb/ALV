@@ -480,7 +480,7 @@ const rueda = (function armarRueda() {
   return { pintar };
 })();
 
-// ---------- ¡Al vacío! (cuarto): barra del anfitrión y estado de la partida ----------
+// ---------- ALVacío (cuarto): barra del anfitrión y estado de la partida ----------
 let modoElegido = null;
 function barraPartida(d, anfitrion) {
   const modo = modoElegido || (d.modalidad === "equipos" ? "equipos" : "solos");
@@ -488,7 +488,7 @@ function barraPartida(d, anfitrion) {
   $("pmodo").classList.toggle("oculto", !anfitrion || enJuego || fin);
   $("pmodo").textContent = modo === "equipos" ? "Equipos" : "Solos";
   $("pini").classList.toggle("oculto", !anfitrion || enJuego);
-  $("pini").textContent = fin ? "Volver al cuarto" : "¡Al vacío!";
+  $("pini").textContent = fin ? "Volver al cuarto" : "ALVacío";
   let t = "";
   if (enJuego && typeof d.ronda === "number") {
     const vivo = Array.isArray(d.vivos) && d.vivos.includes(yo), pts = (d.puntos && d.puntos[yo]) || 0;

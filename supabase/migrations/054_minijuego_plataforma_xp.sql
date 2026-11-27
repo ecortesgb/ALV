@@ -1,4 +1,4 @@
--- 054 · ¡Al vacío! (minijuego de la plataforma) con XP desde la sala de ALV (Elías, 27 nov 2026: «se agrega a ALV PARTY
+-- 054 · ALVacío (minijuego de la plataforma) con XP desde la sala de ALV (Elías, 27 nov 2026: «se agrega a ALV PARTY
 -- como mini juego con experiencia, monedas y puntos»). Igual que la 049 (mismas validaciones, tope de 600 XP al día,
 -- monedas y resultados) y además acepta 'mj-plataforma'. Sin tablas ni permisos nuevos.
 -- Si otra migración posterior redefine terminar_partida_sala, debe conservar los 6 ids mj-*.
