@@ -2,10 +2,9 @@
 // src/personajes/minijuegos/bala.ts con su reloj; los celulares solo dicen «salté a esta hora» (ya en el reloj de la TV).
 // Decidió Codex (encargo 2026-11-26-minijuegos-r1): cámara de frente (D4), juicio con el reloj del celular y la TV como
 // autoridad (D2). Al empezar se congelan participantes, personajes y lugares; quien se va sigue en la fila (O1).
-import { ahora } from "/src/personajes/minijuegos/canal.ts";
 import { acotarToque, MAX_INCERTIDUMBRE } from "/src/personajes/minijuegos/reloj.ts";
 import { avanzar, crearPartida, empezar, llegada, posBala, ranking, saltar, CONFIG_BALA } from "/src/personajes/minijuegos/bala.ts";
-import { crearTV } from "./tv-comun.js";
+import { crearTV, ahoraJuego as ahora, aJuego } from "./tv-comun.js";
 
 const q = new URLSearchParams(location.search);
 const $ = id => document.getElementById(id);
@@ -43,7 +42,7 @@ function recibirSalto(j, d) {
   const no = motivo => tv.canal.enviar("eco", { para: j.id, ok: false, motivo });
   if (!partida || tv.fase !== "juego" || d.pid !== pid) return no("otra partida");
   if (d.inc > MAX_INCERTIDUMBRE) return no("reloj");
-  const s = acotarToque(d.s, llego);
+  const s = acotarToque(aJuego(d.s), llego);
   if (s === null) return no("hora");
   const salto = saltar(partida, j.id, s);
   if (salto) dibujarSalto(j, salto);

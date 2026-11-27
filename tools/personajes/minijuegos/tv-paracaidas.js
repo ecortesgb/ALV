@@ -1,8 +1,7 @@
 // La TV conserva T y juzga. El celular solo manda «abrí a esta hora» en el reloj de la TV.
-import { ahora } from "/src/personajes/minijuegos/canal.ts";
 import { acotarToque, MAX_INCERTIDUMBRE } from "/src/personajes/minijuegos/reloj.ts";
 import { abrir, avanzar, altura, crearPartida, empezar, ranking } from "/src/personajes/minijuegos/paracaidas.ts";
-import { crearEncuadreFranjas, crearTV } from "./tv-comun.js";
+import { crearEncuadreFranjas, crearTV, ahoraJuego as ahora, aJuego } from "./tv-comun.js";
 
 const q = new URLSearchParams(location.search), $ = id => document.getElementById(id);
 const escena = EscenaMJ.crear($("lienzo"), { fov: 32, cielo: 0x293b65 });
@@ -37,7 +36,7 @@ function recibirToque(j, d) {
   if (partida && tv.fase === "juego") eventos(avanzar(partida, llegada));
   if (!partida || tv.fase !== "juego" || partida.fase !== "ronda" || d.pid !== pid) return no("otra ronda");
   if (!Number.isFinite(d.inc) || d.inc < 0 || d.inc > MAX_INCERTIDUMBRE) return no("reloj");
-  const s = acotarToque(d.s, llegada);
+  const s = acotarToque(aJuego(d.s), llegada);
   if (s === null) return no("hora");
   const repetido = partida.aperturas.has(j.id);
   eventos(abrir(partida, j.id, s, llegada));

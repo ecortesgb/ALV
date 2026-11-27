@@ -174,7 +174,7 @@ function estado(d) {
   if (!j) { $("estado").textContent = "Entrando…"; return; }
   document.documentElement.style.setProperty("--yo", j.color);
   $("chip").textContent = `P${j.n + 1} ${j.nombre}`; $("chip").classList.remove("oculto");
-  $("titulo").textContent = d.juego === "paracaidas" ? "Paracaídas" : d.juego === "alto" ? "Alto total" : d.juego === "martillazo" ? "Martillazo" : d.juego === "desenfunda" ? "¡Desenfunda!" : d.juego === "bala" ? "Esquiva la bala" : "El cuarto";
+  $("titulo").textContent = d.juego === "paracaidas" ? "Paracaídas" : d.juego === "alto" ? "Alto total" : d.juego === "martillazo" ? "Martillazo" : d.juego === "desenfunda" ? "¡Desenfunda!" : d.juego === "bala" ? "Esquiva la bala" : d.ronda ? "ALVacío" : "El cuarto";
   document.title = $("titulo").textContent + " · control";
   const letra = d.juego === "martillazo" ? "B" : d.juego === "desenfunda" ? "RT" : "A";
   if ($("salto-letra").textContent !== letra) { $("salto-letra").textContent = letra; $("salto-letra").className = "letra " + letra.toLowerCase(); }
@@ -182,6 +182,7 @@ function estado(d) {
   $("salto").classList.toggle("duelo", d.juego === "paracaidas" || d.juego === "alto" || d.juego === "desenfunda" || d.juego === "martillazo");
   // El anfitrión lo asigna el servidor de sala y la TV lo repite en el estado.
   const anfitrion = d.anfitrionId === yo;
+  menuPartida(d, anfitrion);
   // Su personaje no cargó en la TV (Codex O7): se queda el aviso y vuelve el selector para elegir otro o reintentar.
   if (j.estado === "error") return pedirOtro(j.personaje);
   if ($("unirse").dataset.reintento) { delete $("unirse").dataset.reintento; $("unirse").classList.add("oculto"); }
@@ -579,3 +580,32 @@ function diag(t) {
 }
 setInterval(() => diag(), 2000);
 window.__control = { oir: f => oyentes.push(f), get yo() { return yo; }, get reloj() { return reloj; }, get ultimo() { return ultimo; } };
+
+// ---------- Menú ☰: salir a ALV desde cualquier pantalla; el anfitrión pausa y reanuda (Elías, 27 nov) ----------
+let pausable = false, soyAnfitrion = false;
+function menuPartida(d, anfitrion) {
+  soyAnfitrion = anfitrion;
+  pausable = d.fase === "cuenta" || d.fase === "juego";
+  $("m-pausa").classList.toggle("oculto", !(anfitrion && pausable && !d.pausa));
+  const enPausa = !!d.pausa && pausable;
+  $("pausa").classList.toggle("oculto", !enPausa);
+  $("p-seguir").classList.toggle("oculto", !anfitrion);
+  $("pausa-txt").textContent = anfitrion ? "Tú reanudas cuando estén listos" : "El anfitrión reanuda la partida";
+  if (enPausa) $("menu").classList.add("oculto");
+}
+function salirAAlv() {
+  canal.enviar("adios");
+  const raiz = new URL("../../../", location.href);
+  let mismo = false;
+  try { mismo = !!document.referrer && new URL(document.referrer).origin === location.origin && history.length > 1; } catch { mismo = false; }
+  if (mismo) history.back(); else location.assign(new URL("#/inicio", raiz).href);
+}
+$("menu-b").onclick = () => {
+  $("m-salir").textContent = pausable ? "Salir a ALV (dejas la partida)" : "Salir a ALV";
+  $("menu").classList.remove("oculto");
+};
+$("m-cerrar").onclick = () => $("menu").classList.add("oculto");
+$("m-salir").onclick = salirAAlv;
+$("p-salir").onclick = salirAAlv;
+$("m-pausa").onclick = () => { if (soyAnfitrion) canal.enviar("pausa", { si: true }); $("menu").classList.add("oculto"); };
+$("p-seguir").onclick = () => { if (soyAnfitrion) canal.enviar("pausa", { si: false }); };
