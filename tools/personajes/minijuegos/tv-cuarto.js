@@ -3,7 +3,7 @@
 // Decidió Codex (encargo 2026-11-26-minijuegos-r1, D6): caja con cámara fija; la plataforma y la cámara que sigue
 // quedan fuera de esta entrega (la plataforma sigue en cuarto.ts, con sus pruebas).
 import { alargar, crearCuarto, entrar, mandar, pasoCuarto, salir } from "/src/personajes/minijuegos/cuarto.ts";
-import { crearTV, lucirPoder } from "./tv-comun.js";
+import { crearTV, lanzarEfecto, lucirPoder } from "./tv-comun.js";
 
 const q = new URLSearchParams(location.search);
 const FORMA = "caja";
@@ -114,9 +114,8 @@ function estela(j, cu, dt) {
   j.estelaT = (j.estelaT || 0) - dt;
   if (j.estelaT > 0) return;
   j.estelaT = 2.6; // cada efecto dura 3 s: se encadenan sin hueco
-  if (!j.pies) { j.pies = new THREE.Object3D(); j.figura.obj.add(j.pies); }
-  try { j.estela = EfectosALV.lanzar(escena.scene, { obj: j.pies, hueso: j.figura.hueso }, Object.assign({}, j.efVuelo, { a: 0.2, dura: 3, retraso: 0 }), { escala: j.figura.alto() }); }
-  catch (e) { console.warn("estela", e); j.efVuelo = null; }
+  j.estela = lanzarEfecto(j, escena, j.efVuelo, { a: 0.2, dura: 3, retraso: 0 });
+  if (!j.estela) j.efVuelo = null;
 }
 // Los celulares de quienes vuelan cambian A y B a «Sube» y «Baja».
 tv.extra = () => ({ vuelan: [...cuarto.cuerpos.values()].filter(c => c.vuela).map(c => c.id) });
