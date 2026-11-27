@@ -1,0 +1,50 @@
+/* ALV PARTY (ConfigurarParty.tsx): lo que no trae el configurador común. Prefijo pt-. */
+.D .pt-marca { margin-inline: auto; font-size: clamp(18px, 3.4vw, 26px); color: #ffcf2e; letter-spacing: .04em; text-shadow: 0 2px 0 #000, 0 0 14px rgba(255, 207, 46, .35); }
+
+/* Portada provisional: emoji sobre el color del juego. */
+.D .pt-portada { display: grid; place-items: center; width: 100%; height: 100%; min-height: 80px; border-radius: 10px;
+  background: radial-gradient(70% 70% at 50% 35%, color-mix(in srgb, var(--pc) 75%, #fff), var(--pc) 60%, color-mix(in srgb, var(--pc) 50%, #000)); }
+.D .pt-portada span { font-size: clamp(40px, 9vw, 96px); line-height: 1; filter: drop-shadow(0 4px 6px rgba(0, 0, 0, .45)); }
+.D .vt-cat-carta .pt-portada { min-height: 0; }
+.D .vt-cat-carta .pt-portada span { font-size: 38px; }
+.D .vt-cristal .pt-portada { aspect-ratio: 4 / 3; }
+
+/* Opciones en tarjetas de vidrio. */
+.D .pt-ops { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 240px), 1fr)); gap: 14px; width: min(100%, 980px); margin-inline: auto; }
+.D .pt-op { position: relative; display: flex; flex-direction: column; gap: 6px; padding: 14px; border-radius: 16px; text-align: left; color: #fff; cursor: pointer;
+  border: 1px solid rgba(255, 255, 255, .16); background: radial-gradient(90% 70% at 50% 0%, color-mix(in srgb, var(--pc) 30%, transparent), transparent 70%), rgba(10, 16, 48, .72);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .16), 0 10px 22px rgba(4, 8, 30, .4); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); transition: transform .18s, border-color .18s; }
+.D .pt-op b { font-size: 20px; line-height: 1.1; }
+.D .pt-op small { font: 700 14px/1.3 "Nunito", system-ui, sans-serif; opacity: .85; }
+.D .pt-op.on { border-color: color-mix(in srgb, var(--pc) 70%, #fff); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .2), 0 0 0 2px color-mix(in srgb, var(--pc) 55%, transparent); }
+.D .pt-op:active { transform: scale(.97); }
+.D .pt-op:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
+.D .pt-op .tc-check { position: absolute; top: 8px; right: 10px; font-size: 22px; color: #ffcf2e; }
+
+/* Cielo de cada escenario (muestra). */
+.D .pt-cielo { display: block; width: 100%; aspect-ratio: 16 / 9; border-radius: 10px; border: 1px solid rgba(255, 255, 255, .2); }
+.D .pt-cielo-noche { background: linear-gradient(#0a1030, #141a3a 60%, #2a2f5c); }
+.D .pt-cielo-atardecer { background: linear-gradient(#3b2a6b, #d9693a 55%, #f4b25a); }
+.D .pt-cielo-dia { background: linear-gradient(#2f7fd6, #5fb2ec 55%, #bfe4ff); }
+
+.D .pt-grupo { width: min(100%, 980px); margin: 0 auto 18px; display: flex; flex-direction: column; gap: 10px; }
+.D .pt-nota { margin: 0; font: 700 15px/1.35 "Nunito", system-ui, sans-serif; color: #dfe6ff; text-align: center; }
+.D .pt-bots { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+.D .pt-bot { min-width: 64px; min-height: 48px; padding: 6px 16px; border-radius: 12px; border: 1px solid rgba(255, 255, 255, .2); background: rgba(10, 16, 48, .72); color: #fff;
+  font: 400 20px "Lilita One", system-ui, sans-serif; cursor: pointer; }
+.D .pt-bot.on { background: #ffcf2e; color: #0a1030; border-color: #000; }
+
+.D .pt-resumen { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); grid-auto-rows: auto; gap: 14px; width: min(100%, 980px); margin-inline: auto; }
+.D .pt-resumen .rz-juego { grid-row: span 2; }
+.D .pt-resumen .pt-premio { grid-column: 1 / -1; }
+@media (max-width: 640px) { .D .pt-resumen { grid-template-columns: minmax(0, 1fr); } .D .pt-resumen .rz-juego { grid-row: auto; } }
+
+/* Proyectar y unirse. */
+.D .pt-proy { display: flex; flex-direction: column; align-items: center; gap: 14px; width: min(100%, 560px); margin: auto; padding: 16px; text-align: center; }
+.D .pt-proy .cs-qr { width: min(60vw, 220px); height: auto; aspect-ratio: 1; }
+.D .pt-codigo { margin: 0; font: 800 16px "Nunito", system-ui, sans-serif; }
+.D .pt-codigo b { font-size: 34px; letter-spacing: .18em; color: #ffcf2e; margin-left: 6px; }
+.D .pt-acciones { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; }
+.D .pt-unirse { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; align-items: stretch; }
+.D .pt-input { width: 7.5ch; padding: 8px 12px; border-radius: 12px; border: 2px solid #ffcf2e; background: rgba(10, 16, 48, .8); color: #fff; font-size: 32px;
+  letter-spacing: .2em; text-align: center; text-transform: uppercase; }

@@ -8,6 +8,13 @@
   /** Color en sRGB (como se escribe en CSS) pasado a lineal: r128 no lo convierte solo y sin esto todo sale deslavado. */
   const col = h => new T.Color(h).convertSRGBToLinear();
 
+  /** Cielo y luces de cada ambiente. */
+  const AMBIENTES = {
+    noche: { cielo: 0x141a3a, cieloLuz: 0xcfe0ff, suelo: 0x30253a, hemi: 0.85, sol: 0xfff2dd, fuerza: 1.15 },
+    atardecer: { cielo: 0xd9693a, cieloLuz: 0xffc9a0, suelo: 0x4a2a3a, hemi: 0.9, sol: 0xffb070, fuerza: 1.25 },
+    dia: { cielo: 0x5fb2ec, cieloLuz: 0xe6f3ff, suelo: 0x5a6a48, hemi: 1.05, sol: 0xffffff, fuerza: 1.35 },
+  };
+
   function crear(lienzo, op) {
     const o = op || {};
     // o.transparente: sin cielo ni niebla; la página pone su fondo (la sala de Físico usa la imagen del escenario).
@@ -17,13 +24,17 @@
     renderer.shadowMap.enabled = true; renderer.shadowMap.type = T.PCFSoftShadowMap;
     renderer.setPixelRatio(Math.min(raiz.devicePixelRatio || 1, 1.5));
     const scene = new T.Scene();
+    // Ambiente que eligió el configurador de ALV PARTY (?ambiente=noche|atardecer|dia). Sin él, la noche de siempre.
+    const elegido = AMBIENTES[new URLSearchParams(raiz.location.search).get("ambiente")];
+    const amb = elegido || AMBIENTES.noche;
     if (!o.transparente) {
-      scene.background = col(o.cielo || 0x141a3a);
-      scene.fog = new T.Fog(col(o.cielo || 0x141a3a), 40, 120);
+      const cielo = (elegido ? amb.cielo : o.cielo) || amb.cielo;
+      scene.background = col(cielo);
+      scene.fog = new T.Fog(col(cielo), 40, 120);
     }
     const camera = new T.PerspectiveCamera(o.fov || 32, 1, 0.1, 300);
-    scene.add(new T.HemisphereLight(0xcfe0ff, 0x30253a, 0.85));
-    const clave = new T.DirectionalLight(0xfff2dd, 1.15);
+    scene.add(new T.HemisphereLight(amb.cieloLuz, amb.suelo, amb.hemi));
+    const clave = new T.DirectionalLight(amb.sol, amb.fuerza);
     clave.position.set(8, 18, 14); clave.castShadow = true; clave.shadow.mapSize.set(2048, 2048);
     Object.assign(clave.shadow.camera, { left: -16, right: 16, top: 14, bottom: -10, near: 1, far: 60 });
     scene.add(clave, clave.target);
