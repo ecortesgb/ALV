@@ -6,7 +6,7 @@
 // Torso, Brazos, Piernas, Accesorios y Movimientos (saludar, ganar, perder, especial; de un personaje o genéricos).
 // Va dentro de <RaizDS className="az">. Entrada: la página del HUB se voltea; «Atrás»: se voltea de regreso y luego sale.
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type PointerEvent as PE } from "react";
-import { PALETAS, paletaDePieza, piezasDe, planoConstructor, ponerPieza, teñir, type PiezaCons, type Piezas } from "./constructorDatos";
+import { PALETAS, paletaDePieza, piezasDe, planoConstructor, ponerPieza, quitarTinte, teñir, type PiezaCons, type Piezas } from "./constructorDatos";
 import { caben, paginas } from "./galeriaDatos";
 import { GRUPOS_GENERICAS } from "./genericas";
 import { conMovimientos, elegirMovimiento, GESTOS, movimientosElegidos, NOMBRE_GESTO, opcionesMovimiento, type BaseGenerica, type Gesto, type OpcionMov } from "./movimientos";
@@ -45,10 +45,22 @@ const SUBPARTES: Record<Pestana, Sub[]> = { trajes: ["traje"], cabeza: ["cara", 
   accesorios: ["accesorio", "sombrero"], movimientos: [...GESTOS] };
 const esGesto = (x: Sub): x is Gesto => (GESTOS as readonly string[]).includes(x);
 /** Sagas de las piezas originales (ficha.grupo), en el orden de los chips. */
+/** Sagas (primer nivel del filtro de originales) y sus grupos (segundo nivel), en este orden. Lo que no esté aquí sale
+ *  con su id legible al final (Elías, 2026-11-26: «Marvel y dentro Avengers, X-Men…; habrá Harry Potter, Star Wars»). */
 const SAGAS: { id: Id; nombre: string }[] = [
-  { id: "avengers", nombre: "Avengers" }, { id: "x-men", nombre: "X-Men" }, { id: "guardianes", nombre: "Guardianes" },
-  { id: "villanos-marvel", nombre: "Villanos" }, { id: "otros-marvel", nombre: "Otros Marvel" },
+  { id: "marvel", nombre: "Marvel" }, { id: "dc", nombre: "DC" }, { id: "star-wars", nombre: "Star Wars" }, { id: "harry-potter", nombre: "Harry Potter" },
 ];
+const GRUPOS: { id: Id; nombre: string }[] = [
+  { id: "avengers", nombre: "Avengers" }, { id: "x-men", nombre: "X-Men" }, { id: "guardianes", nombre: "Guardianes" },
+  { id: "villanos-marvel", nombre: "Villanos" }, { id: "otros-marvel", nombre: "Otros" },
+];
+const legible = (id: Id) => id.split("-").map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
+/** Ordena los ids según una lista conocida (los desconocidos al final, por nombre). */
+function ordenar(ids: Iterable<Id>, conocidos: { id: Id; nombre: string }[]): { id: Id; nombre: string }[] {
+  const pos = (id: Id) => { const i = conocidos.findIndex(c => c.id === id); return i < 0 ? 999 : i; };
+  return [...new Set(ids)].filter(Boolean).map(id => ({ id, nombre: conocidos.find(c => c.id === id)?.nombre ?? legible(id) }))
+    .sort((a, b) => pos(a.id) - pos(b.id) || a.nombre.localeCompare(b.nombre, "es"));
+}
 /** Gesto del menú de la rueda para cada gesto de la figura (para probarlo al elegirlo). */
 const RUEDA_DE: Record<Gesto, string> = { saludo: "saludar", victoria: "victoria", derrota: "derrota", especial: "especial" };
 type Fuente = "original" | "generica";
@@ -101,6 +113,7 @@ export function Constructor({ catalogo, piezas, inicial, seccion, escenaUrl, onG
    *  cómic con las originales, clóset con las comunes. */
   const [modo, setModo] = useState<Fuente>("original");
   const [grupo, setGrupo] = useState<Id>("todas");
+  const [saga, setSaga] = useState<Id>("todas");
   const [pagina, setPagina] = useState(0);
   const [caja, setCaja] = useState({ columnas: 4, filas: 2 });
   const [guardado, setGuardado] = useState(false);
@@ -115,8 +128,6 @@ export function Constructor({ catalogo, piezas, inicial, seccion, escenaUrl, onG
   const rejilla = useRef<HTMLDivElement>(null);
   /** Volteo de página: "entra" (el HUB se va), "sale" (el HUB regresa y luego onSalir), null = quieto. */
   const [volteo, setVolteo] = useState<"entra" | "sale" | null>(() => (paginaAnterior && !sinMovimiento() ? "entra" : null));
-  /** Vuelta de página al cambiar de sección: hacia adelante o hacia atrás (n cambia para reiniciar la animación). */
-  const [hoja, setHoja] = useState<{ dir: "sig" | "ant"; n: number } | null>(null);
   /** La primera figura entra con su saltito; las demás no hacen nada al cambiar una pieza. */
   const [llego, setLlego] = useState(false);
   const salio = useRef(false);
@@ -125,13 +136,12 @@ export function Constructor({ catalogo, piezas, inicial, seccion, escenaUrl, onG
     if (volteo === "sale") { if (!salio.current) { salio.current = true; onSalir?.(); } } else setVolteo(null);
   };
   // Si la animación no termina (se canceló o se pidió reducir movimiento a medias), el volteo se cierra igual (Codex O10).
-  useEffect(() => { if (!volteo) return; const t = setTimeout(finVolteo, volteo === "entra" ? 1100 : 1000); return () => clearTimeout(t); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [volteo]);
-  useEffect(() => { if (!hoja) return; const t = setTimeout(() => setHoja(null), 800); return () => clearTimeout(t); }, [hoja]);
+  useEffect(() => { if (!volteo) return; const t = setTimeout(finVolteo, volteo === "entra" ? 900 : 750); return () => clearTimeout(t); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [volteo]);
 
   useEffect(() => {
     const el = rejilla.current;
     if (!el) return;
-    const medir = () => setCaja(caben(el.clientWidth, el.clientHeight, { min: el.clientWidth < 520 ? 70 : 92, proporcion: 1.05, hueco: 8 }));
+    const medir = () => setCaja(caben(el.clientWidth, el.clientHeight, { min: el.clientWidth < 520 ? 92 : 128, proporcion: 1.05, hueco: 8 }));
     medir();
     const ro = new ResizeObserver(medir);
     ro.observe(el);
@@ -153,23 +163,32 @@ export function Constructor({ catalogo, piezas, inicial, seccion, escenaUrl, onG
     [sub, trajes, piezas, parte, figura.familia, movs]);
   const origenDe = (it: Item) => (it.tipo === "traje" ? "original" : it.tipo === "pieza" ? it.pz.origen ?? "original" : it.op?.origen ?? "ninguna");
   const grupoDe = (it: Item) => (it.tipo === "traje" ? it.grupo : it.tipo === "pieza" ? it.pz.grupo ?? "" : it.op?.grupo ?? "");
-  const hay = (f: Fuente) => todas.some(it => origenDe(it) === f);
+  /** Saga del personaje de donde sale el elemento (traje, pieza original o movimiento original). */
+  const sagaDe = (it: Item): Id => {
+    const id = it.tipo === "traje" ? it.id : it.tipo === "pieza" ? it.pz.donante : it.op?.origen === "original" ? /^p:([^:]+):/.exec(it.op.id)?.[1] : undefined;
+    return (id && catalogo.get(id)?.ficha.saga) || "";
+  };
   const fuente: Fuente = modo;
-  void hay;
-  /** Chips de grupo: sagas (originales) o tipos (genéricas), solo los que tienen algo. */
-  const grupos = useMemo(() => {
-    const de = todas.filter(it => origenDe(it) === fuente);
-    const lista = fuente === "original" ? SAGAS : parte ? GRUPOS_GENERICAS[parte] ?? [] : [];
-    return lista.filter(g => de.some(it => grupoDe(it) === g.id));
+  const originales = fuente === "original";
+  /** Primer nivel (solo originales): las sagas que tienen algo aquí. */
+  const sagas = useMemo(() => (originales ? ordenar(todas.filter(it => origenDe(it) === "original").map(sagaDe), SAGAS) : []),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [todas, fuente, parte]);
+    [todas, originales]);
+  const sg = sagas.some(x => x.id === saga) ? saga : "todas";
+  /** Segundo nivel: grupos de la saga elegida (originales) o tipos (comunes), solo los que tienen algo. */
+  const grupos = useMemo(() => {
+    const de = todas.filter(it => origenDe(it) === fuente && (!originales || sg === "todas" || sagaDe(it) === sg));
+    if (originales) return sg === "todas" ? [] : ordenar(de.map(grupoDe), GRUPOS);
+    return (parte ? GRUPOS_GENERICAS[parte] ?? [] : []).filter(x => de.some(it => grupoDe(it) === x.id));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [todas, fuente, parte, sg]);
   const g = grupos.some(x => x.id === grupo) ? grupo : "todas";
   const ninguno: Item | null = gesto ? { tipo: "mov", op: null } : todas.find(it => origenDe(it) === "ninguna") ?? null;
   const lista = useMemo<Item[]>(() => {
-    const l = todas.filter(it => origenDe(it) === fuente && (g === "todas" || grupoDe(it) === g));
+    const l = todas.filter(it => origenDe(it) === fuente && (!originales || sg === "todas" || sagaDe(it) === sg) && (g === "todas" || grupoDe(it) === g));
     return ninguno ? [ninguno, ...l] : l;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [todas, fuente, g, ninguno]);
+  }, [todas, fuente, sg, g, ninguno]);
   const pags = useMemo(() => paginas(lista, caja.columnas * caja.filas), [lista, caja]);
   const p = Math.min(pagina, pags.length - 1);
   const elegidos = movimientosElegidos(figura);
@@ -184,6 +203,18 @@ export function Constructor({ catalogo, piezas, inicial, seccion, escenaUrl, onG
   const hecha = (t: Pestana) => t === "trajes" ? baseId !== (inicial.origen.tipo === "catalogo" ? inicial.origen.personaje : null) : t === "movimientos" ? Object.keys(elegidos).length > 0 : SUBPARTES[t].some(x => !!figura.piezas[x as Parte]);
   // Pide las fotos de las piezas de la página que se ve (las demás, cuando se llegue a ellas).
   useEffect(() => { pags[p]?.forEach(it => { if (it.tipo === "pieza") mini.pedir(it.pz); }); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [mini.listo, pags, p]);
+  // Con el estudio listo, adelanta poco a poco las fotos de la primera página de cada parte (Elías: «tarda mucho en cargar
+  // cada elemento al cambiar de sección»). Va después de la página que se ve y una a la vez, para no tapar al estudio.
+  useEffect(() => {
+    if (!mini.listo) return;
+    const n = Math.max(8, caja.columnas * caja.filas);
+    const cola = (Object.values(SUBPARTES).flat().filter(x => !esGesto(x) && x !== "traje") as Parte[])
+      .flatMap(pt => piezasDe(piezas, pt, figura.familia).filter(pz => pz.origen !== "generica" && pz.glb).slice(0, n));
+    let i = 0;
+    const t = setInterval(() => { const pz = cola[i++]; if (!pz) { clearInterval(t); return; } mini.pedir(pz); }, 180);
+    return () => clearInterval(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mini.listo, piezas, figura.familia]);
 
   const cambiar = (nueva: FiguraV3) => { setHistoria(h => [...h.slice(-29), figura]); setFuturo([]); setFigura(nueva); setGuardado(false); };
   // Respuesta de la escena al plano de la figura actual (las viejas ya las descartó Vista3D). Si una pieza no encaja,
@@ -208,12 +239,11 @@ export function Constructor({ catalogo, piezas, inicial, seccion, escenaUrl, onG
   const [guarda, setGuarda] = useState(false);
   const elegirLosa = (t: Pestana) => {
     if (t === pestana) return;
-    const i = LOSAS.findIndex(l => l.id === t), j = LOSAS.findIndex(l => l.id === pestana);
-    if (!sinMovimiento()) setHoja(h => ({ dir: i > j ? "sig" : "ant", n: (h?.n ?? 0) + 1 }));
     setPestana(t); setSub(SUBPARTES[t][0]!); setGrupo("todas"); setPagina(0); setPasa(null);
   };
   const elegirSub = (x: Sub) => { setSub(x); setGrupo("todas"); setPagina(0); setPasa(null); };
   const elegirModo = (f: Fuente) => { if (f === modo) return; setModo(f); setGrupo("todas"); setPagina(0); setPasa(null); };
+  const elegirSaga = (x: Id) => { setSaga(x); setGrupo("todas"); setPagina(0); setPasa(null); };
   const elegirGrupo = (x: Id) => { setGrupo(x); setPagina(0); setPasa(null); };
   const deshacer = () => { if (!historia.length) return; setFuturo(f => [figura, ...f].slice(0, 30)); setFigura(historia[historia.length - 1]!); setHistoria(h => h.slice(0, -1)); setGuardado(false); };
   const rehacer = () => { if (!futuro.length) return; setHistoria(h => [...h.slice(-29), figura]); setFigura(futuro[0]!); setFuturo(f => f.slice(1)); setGuardado(false); };
@@ -364,10 +394,17 @@ export function Constructor({ catalogo, piezas, inicial, seccion, escenaUrl, onG
             {SUBPARTES[pestana].map(x => <button key={x} type="button" role="tab" className={"pz-sub" + (sub === x ? " on" : "")} aria-selected={sub === x} onClick={() => elegirSub(x)}>{NOMBRE_SUB[x]}</button>)}
           </div>
         )}
-        {(grupos.length > 1 || paleta) && (
+        {(sagas.length > 0 || grupos.length > 1 || paleta) && (
           <div className="pz-filtros">
+            {sagas.length > 0 && (
+              <div className="pz-chips pz-sagas" role="group" aria-label="Sagas">
+                {[{ id: "todas", nombre: "Todas" }, ...sagas].map(x => (
+                  <button key={x.id} type="button" className={"pz-chip" + (sg === x.id ? " on" : "")} aria-pressed={sg === x.id} onClick={() => elegirSaga(x.id)}>{x.nombre}</button>
+                ))}
+              </div>
+            )}
             {grupos.length > 1 && (
-              <div className="pz-chips" role="group" aria-label={fuente === "original" ? "Sagas" : "Tipos"}>
+              <div className="pz-chips" role="group" aria-label={originales ? "Grupos" : "Tipos"}>
                 {[{ id: "todas", nombre: "Todos" }, ...grupos].map(x => (
                   <button key={x.id} type="button" className={"pz-chip" + (g === x.id ? " on" : "")} aria-pressed={g === x.id} onClick={() => elegirGrupo(x.id)}>{x.nombre}</button>
                 ))}
@@ -375,6 +412,8 @@ export function Constructor({ catalogo, piezas, inicial, seccion, escenaUrl, onG
             )}
             {paleta && (
               <div className="pz-colores" role="group" aria-label={NOMBRE_PALETA[paleta]}>
+                <button type="button" className={"pz-color pz-color-original" + (tinte ? "" : " on")} aria-label="Color original" aria-pressed={!tinte}
+                  title="Color original" onClick={() => parte && cambiar(quitarTinte(figura, parte, paleta))} />
                 {PALETAS[paleta].map(c => (
                   <button key={c.id} type="button" className={"pz-color" + (tinte === c.id ? " on" : "")} style={{ "--c": c.hex } as CSSProperties} aria-label={c.nombre} aria-pressed={tinte === c.id}
                     title={c.nombre} onClick={() => parte && cambiar(teñir(figura, parte, paleta, c.id))} />
@@ -403,7 +442,8 @@ export function Constructor({ catalogo, piezas, inicial, seccion, escenaUrl, onG
                   if (pz.origen === "generica") return fotoValida(pz.foto) ? <img src={pz.foto!} alt="" draggable={false} loading="lazy" /> : <span className="pz-sin" aria-hidden="true">—</span>;
                   const m = mini.foto(pz);
                   if (m) return <img src={m} alt="" draggable={false} />;
-                  if (m === undefined) return <span className="pz-espera" aria-hidden="true" />;
+                  // Mientras llega su foto, la del personaje del que sale (no un círculo girando): la rejilla se ve de inmediato.
+                  if (m === undefined) return pz.foto ? <img className="provisional" src={pz.foto} alt="" draggable={false} /> : <span className="pz-espera" aria-hidden="true" />;
                   return pz.foto ? <img src={pz.foto} alt="" draggable={false} loading="lazy" /> : <span className="pz-sin" aria-hidden="true">—</span>;
                 })()}
                 <span>{nombre}</span>
@@ -423,11 +463,6 @@ export function Constructor({ catalogo, piezas, inicial, seccion, escenaUrl, onG
             <button type="button" className="pz-flecha" onClick={() => irA(p + 1)} disabled={p >= pags.length - 1} aria-label="Página siguiente"><span className="pz-flecha-t">›</span></button>
           </div>
         )}
-        {hoja && (
-          <div key={hoja.n} className={"pz-hoja-sec " + hoja.dir} aria-hidden="true">
-            <div className="pz-hoja-frente" /><div className="pz-hoja-reverso" />
-          </div>
-        )}
       </section>
 
       <footer className="pz-pie">
@@ -442,7 +477,7 @@ export function Constructor({ catalogo, piezas, inicial, seccion, escenaUrl, onG
       {mini.marco}
       {volteo && paginaAnterior && (
         <div className={"pz-volteo " + volteo} aria-hidden="true" onAnimationEnd={finVolteo}>
-          <div className="pz-hoja" style={{ backgroundImage: `url(${paginaAnterior})` }} />
+          <div className="pz-hoja" style={{ backgroundImage: `url(${ARTE}personalizar/comic-accion-${innerWidth >= 860 ? "horizontal" : "vertical"}.webp)` }} />
         </div>
       )}
     </div>

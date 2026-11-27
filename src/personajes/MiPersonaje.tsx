@@ -82,6 +82,16 @@ export function MiPersonaje({ catalogo, estadoCatalogo = catalogo ? "listo" : "c
   };
   /** Elegir un personaje = el taller abierto en Trajes (Elías, 2026-11-26: nada del personalizador anterior). */
   const elegir = (en?: number) => crear(en, true);
+  /** Tocar un espacio abre el taller (Elías, 2026-11-26: sin preguntar crear o elegir): vacío, en Trajes para elegir o
+   *  armar; con figura, esa figura (y queda en juego). */
+  const abrir = (i: number) => {
+    if (!catalogo) return;
+    const e = espacios[i];
+    if (!e?.figura) { elegir(i); return; }
+    if (activa !== i) onActivar(i);
+    setElegido(i);
+    setVista({ cual: "crear", figura: e.figura });
+  };
   /** Nombre al guardar: un traje sin cambios se llama como su personaje. */
   const nombreDe = (f: FiguraV3) => (f.origen.tipo === "catalogo" && !Object.keys(f.piezas).length && fotos.get(f.origen.personaje)?.nombre) || "Mi personaje";
   // Foto de cuerpo entero de cada figura para su nicho: la saca el estudio con el motor real (así sale con sus piezas);
@@ -117,27 +127,17 @@ export function MiPersonaje({ catalogo, estadoCatalogo = catalogo ? "listo" : "c
               return (
                 <div key={i} className={"mp-nicho" + (en ? " on" : "") + (aqui ? " elegido" : "") + (vacio ? " vacio" : "")} style={{ "--x": NICHOS[i] } as CSSProperties}>
                   <button type="button" className="mp-nicho-toca" aria-pressed={en || aqui}
-                    onClick={() => { if (vacio) setElegido(aqui ? null : i); else if (!en) { setElegido(null); onActivar(i); } else if (e.figura) { setElegido(null); setVista({ cual: "crear", figura: e.figura }); } }}
-                    aria-label={vacio ? `Espacio ${i + 1}: vacío. Tócalo para crear o elegir aquí` : `Espacio ${i + 1}: ${titulo}${en ? ", en juego. Tócalo para editarlo" : ". Tócalo para ponerlo en juego"}`}>
+                    onClick={() => abrir(i)} disabled={!catalogo}
+                    aria-label={vacio ? `Espacio ${i + 1}: vacío. Tócalo para crear tu personaje aquí` : `Espacio ${i + 1}: ${titulo}${en ? ", en juego" : ""}. Tócalo para editarlo`}>
                     {foto ? <img src={foto} alt="" draggable={false} /> : !vacio ? <span className="dsp mp-mas" aria-hidden="true">?</span> : null}
                   </button>
                   {!vacio && <span className="mp-placa">{titulo}</span>}
                   {en && <span className="mp-en-juego">En juego</span>}
-                  {vacio && aqui && (
-                    <div className="mp-nicho-menu">
-                      <Boton color="azul" compacto texto="Crear" icono="shirt" desactivado={!catalogo} onClick={() => crear(i)} />
-                      <Boton color="amarillo" compacto texto="Elegir" icono="users" desactivado={!catalogo} onClick={() => elegir(i)} />
-                    </div>
-                  )}
                 </div>
               );
             })}
           </section>
-          <div className="mp-acciones">
-            <Boton color="verde" principal={ancho} texto="Crear figura" icono="shirt" cargando={!catalogo && estadoCatalogo === "cargando"} desactivado={!catalogo && estadoCatalogo === "sin-acceso"} onClick={() => crear()} />
-            <Boton color="amarillo" texto="Elegir personaje" icono="users" cargando={!catalogo && estadoCatalogo === "cargando"} desactivado={!catalogo && estadoCatalogo === "sin-acceso"} onClick={() => elegir()} />
-          </div>
-          <p className="mp-nota">{nuevoEn === null ? `Tu colección está llena: lo nuevo reemplaza la figura en juego (espacio ${destino + 1}).` : `Lo nuevo se guarda en el espacio ${nuevoEn + 1}. Toca una figura para ponerla en juego; tócala otra vez para editarla.`}</p>
+          <p className="mp-nota">Toca un espacio para crear o editar tu personaje. El último que guardes queda en juego.</p>
           {mini.marco}
         </div>
       )}
