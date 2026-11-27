@@ -46,7 +46,7 @@ export function App() {
     : fase === "registro" ? <CompletarRegistro />
     : fase === "menor" ? <SoloMayores />
     : sinFigura ? <Personalizar />
-    : ruta === "modos" ? <ModosJuego />
+    : ruta === "modos" ? <ModosJuego key={arg ?? ""} codigo={arg} />
     : ruta === "jugar" ? <EsperaLobby />
     : ruta === "catalogo" ? <Catalogo />
     : ruta === "juego" && arg ? <FichaJuego id={arg} />

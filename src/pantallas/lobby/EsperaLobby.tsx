@@ -1,7 +1,7 @@
 // Lobby vacío (ruta #/jugar): cuando alguien elige En línea o Físico y el administrador todavía no abre el lobby.
 // Sin códigos (Elías, 22 nov): en cuanto el lobby aparece, entra solo. Sin el administrador no se puede empezar.
 import { useEffect } from "react";
-import { atras, ir } from "../../app/rutas";
+import { ir } from "../../app/rutas";
 import { useLobby, useLobbyAbierto } from "../../app/lobby";
 import { Marco } from "../comun";
 import { CUPO_LOBBY } from "../SalaEspera";
@@ -24,7 +24,7 @@ export function EsperaLobby() {
     <Marco clase="az lb" fondo={<FondoCuarto />}>
       <div className="lb-caja">
         <header className="lb-top">
-          <button type="button" className="pf-atras" onClick={atras}><span aria-hidden="true">◀</span>Atrás</button>
+          <button type="button" className="pf-atras" onClick={() => ir("inicio")}><span aria-hidden="true">◀</span>Atrás</button>
           <div className="lb-banner" role="status"><span className="lb-banner-n">0/{CUPO_LOBBY}</span><span className="lb-banner-t">Lobby vacío</span></div>
           <span />
         </header>

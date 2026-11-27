@@ -114,7 +114,7 @@ export function Lobby({ sala, miembros, yo, soyAnfitrion, final, red, refrescar,
     <div className="lb-panel">
       {soyAnfitrion && p.todos ? (
         <>
-          <button type="button" className="lb-continuar" onClick={() => ir("configurar", sala.codigo)}><span>Continuar</span><small>Todos listos: arma la partida</small></button>
+          <button type="button" className="lb-continuar" onClick={() => ir(local ? "configurar" : "modos", sala.codigo)}><span>Continuar</span><small>{local ? "Todos listos: arma la partida" : "Todos listos: elige el modo"}</small></button>
           {/* Con «Continuar» a la vista el administrador también puede quitarse el listo (Elías, 25 nov). */}
           <button type="button" className="lb-mini lb-quitar-listo" onClick={() => listo(m)}>Ya no estoy listo</button>
         </>

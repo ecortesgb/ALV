@@ -688,7 +688,10 @@ export function PaginaConfigurar({ codigo }: { codigo: string }) {
       : <EscenarioFondo ambiente={az.ambientes[momento]} momento={momento} velo={az.velo} />}</div>}>
       {soyAnfitrion
         ? <ConfigurarPartida miembros={s.miembros} generos={generos} alEstadoVivo={setVivo} nombreAnfitrion={ses.nombre}
-          cabExtra={!salaLocal ? <BotonCast sala={sala} pantalla={pantalla} className="cfg-cast" /> : undefined}inicial={pred && (!modoFisico || JUEGOS_FISICO.includes(pred.juego)) ? pred : undefined} abrirEnResumen={predSirve}
+          cabExtra={!salaLocal ? <>
+            <button type="button" className="cfg-cambiar-modo" onClick={() => ir("modos", codigo)} title="Cambiar de modo sin salir del lobby">Cambiar modo</button>
+            <BotonCast sala={sala} pantalla={pantalla} className="cfg-cast" />
+          </> : undefined} inicial={pred && (!modoFisico || JUEGOS_FISICO.includes(pred.juego)) ? pred : undefined} abrirEnResumen={predSirve}
           modoFisico={modoFisico}
           predeterminada={esAdmin ? { actual: pred ?? null, guardando: guardandoPred, alGuardar: c => void guardarPred(c), alQuitar: () => void guardarPred(null) } : undefined} iniciando={iniciando} alIniciar={c => void iniciar(c)} alCancelar={() => ir("sala", codigo)} alEntregarCopas={() => void copas()} alFondo={setFondoEsc} />
         : <Vacio titulo="El anfitrión está configurando" texto="En cuanto toque «Iniciar», empieza la partida."><Boton color="amarillo" texto="Volver a la sala" icono="back" onClick={() => ir("sala", codigo)} /></Vacio>}

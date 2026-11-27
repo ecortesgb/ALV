@@ -118,7 +118,7 @@ export function Jugar() {
   return (
     <Marco>
       <div className="a-ancho a-angosto a-pila">
-        <Cabecera titulo="En línea" icono="play" alVolver={() => ir("modos")} />
+        <Cabecera titulo="En línea" icono="play" alVolver={() => ir("inicio")} />
         <Panel className="a-pila a-entra a-jugar-lobby" como="section">
           <span className="dsp ol a-t2">Lobby ALV</span>
           {soyDelLobby ? (<>
