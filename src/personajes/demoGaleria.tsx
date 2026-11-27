@@ -19,6 +19,8 @@ import type { FiguraV3 } from "./tipos";
 const q = new URLSearchParams(location.search);
 const FUENTE = q.get("fuente") || "http://127.0.0.1:4193/";
 const JUGADOR = q.get("yo") || "prueba";
+/** Solo para probar el candado en la galería de desarrollo: ?bloq=1 deja usar solo personajes de la a a la h. */
+const BLOQUEO = q.has("bloq") ? (id: string) => /^[a-h]/.test(id) : undefined;
 const ESCENA = "/tools/personajes/escena.html?fondo=no";
 type Vista = { cual: "inicio" } | { cual: "galeria" } | { cual: "crear"; figura: FiguraV3 };
 
@@ -91,7 +93,7 @@ function DemoMP() {
       espacios={coleccion.espacios.map(f => ({ figura: f, nombre: "", antes: false }))} activa={coleccion.activa}
       onGuardar={async (i, f) => { const c = ponerEnColeccion(coleccion, f, i); guardarColeccion(JUGADOR, c); setColeccion(c); return "local"; }}
       onActivar={i => { const c = { ...coleccion, activa: i }; guardarColeccion(JUGADOR, c); setColeccion(c); }}
-      onSalir={() => location.reload()} />
+      onSalir={() => location.reload()} puedeUsar={BLOQUEO} />
   );
 }
 
