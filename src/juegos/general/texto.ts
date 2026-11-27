@@ -69,6 +69,14 @@ export function desenlace(v: Publico): { titular: string; detalle?: string } {
         if (r.resultado === "tiempo") return { titular: `Se le acabó el tiempo a ${quien}`, detalle: "Pierde el turno: sin puntos." };
         return { titular: `${quien} pasó con un comodín`, detalle: "Sin puntos esta vez." };
       }
+      // Dados HOT (Maestro v1.72): decir que no resta 1; con Drunk se toma algo y queda en 0; con comodín no resta.
+      if (v.motor === "dados" && typeof r.resultado === "string") {
+        const quien = nombreDe(v, r.jugador as string);
+        if (r.resultado === "cumplio") return { titular: `¡${quien} cumplió!`, detalle: v.efectos?.duplica ? "+2 puntos (doble)" : "+1 punto" };
+        if (r.resultado === "tomo") return { titular: `${quien} tomó algo`, detalle: "Sin puntos esta vez." };
+        if (r.resultado === "comodin") return { titular: `${quien} pasó con un comodín`, detalle: "Sin puntos esta vez." };
+        return { titular: `${quien} no lo hizo`, detalle: "−1 punto" };
+      }
       return r.cumplio ? { titular: `¡${nombreDe(v, r.jugador as string)} cumplió!` } : { titular: `${nombreDe(v, r.jugador as string)} no cumplió`, detalle: "Sin puntos esta vez." };
     case "votacion": {
       const c = r.cuenta as { a: number; b: number } | undefined;

@@ -10,6 +10,7 @@ import { EJE_DE_MAZO, ESCENARIOS, JUEGOS, NIVELES_EJE } from "../content/catalog
 import { ARTE_ESCENARIOS, ARTE_JUEGOS, ARTE_TIPOS } from "../content/arteJuegos";
 import { INSTRUMENTOS, JUEGOS_FISICO, MODALIDADES, MODALIDADES_JUEGO, admite } from "../content/configurar";
 import { RISA, esRisa } from "../content/risa";
+import { MOTORES_CON_COMODINES } from "../content/comodinesPartida";
 import { GRUPOS_EQUIPOS, JUEGOS_CON_TEMPORIZADOR, armarArranque, armarGrupos, conParejas, intensidadVieja } from "../engine/nucleo";
 import { adultoPorEjes, cartasPermitidas } from "../engine/filtros";
 import { maxImpostores } from "../engine/partida";
@@ -196,7 +197,7 @@ function ArteJuego({ id, className = "" }: { id: string; className?: string }) {
 export function mismaPartida(a: PartidaConfigurada, b: PartidaConfigurada | null | undefined): boolean {
   if (!b) return false;
   const o = (c: PartidaConfigurada) => JSON.stringify([c.juego, c.rondas, c.ejes.temperatura, c.ejes.voltaje, c.ejes.drunk, c.opciones.modalidad ?? "individual",
-    c.opciones.escenario ?? null, c.opciones.temporizador ?? null, !!c.opciones.explicar, c.opciones.herramienta ?? null, c.opciones.impostor ?? null, !!c.opciones.votoSecreto, !!c.opciones.minoriaBebe]);
+    c.opciones.escenario ?? null, c.opciones.temporizador ?? null, !!c.opciones.explicar, c.opciones.herramienta ?? null, c.opciones.impostor ?? null, !!c.opciones.votoSecreto, !!c.opciones.minoriaBebe, c.opciones.comodines !== false]);
   return o(a) === o(b);
 }
 
@@ -260,6 +261,8 @@ export function ConfigurarPartida({ miembros, alIniciar, alCancelar, iniciando, 
   const [votoSecreto, setVotoSecreto] = useState(inicial?.opciones.votoSecreto === true);
   // ¿Qué prefieres?: la minoría bebe algo (Elías, 27 nov, 1B). Apagado de inicio.
   const [minoriaBebe, setMinoriaBebe] = useState(inicial?.opciones.minoriaBebe === true);
+  // Comodines de la colección (Elías, 27 nov, Maestro v1.72): el anfitrión decide si se usan. Encendidos de inicio.
+  const [comodines, setComodines] = useState(inicial?.opciones.comodines !== false);
   const [soloNuevas, setSoloNuevas] = useState(leerSoloNuevas);
   const [deCero, setDeCero] = useState(0);
   // Categoría abierta en «Elige el juego» (null: las tarjetas de categoría). En Físico abre directo la de competencias.
@@ -272,6 +275,7 @@ export function ConfigurarPartida({ miembros, alIniciar, alCancelar, iniciando, 
   // Temporizador por turno (herramienta opcional, 6A.11 C6). null: sin tiempo.
   const [temporizador, setTemporizador] = useState<number | null>(inicial?.opciones.temporizador ?? null);
   const conTemporizador = JUEGOS_CON_TEMPORIZADOR.includes(juego);
+  const conComodines = !!defJuego(juego)?.motor && MOTORES_CON_COMODINES.includes(defJuego(juego)!.motor!);
   // «Cómo jugar»: se propone explicar si en este aparato nunca se ha jugado ese juego; el anfitrión puede omitirlo.
   // Pantalla de carga siempre al iniciar (Elías, 24 nov): ya no se elige en el resumen.
   const explicarFinal = true;
@@ -310,6 +314,7 @@ export function ConfigurarPartida({ miembros, alIniciar, alCancelar, iniciando, 
     ...(temporizador && conTemporizador ? { temporizador } : {}),
     ...(votoSecreto && j?.motor === "senalar" ? { votoSecreto: true } : {}),
     ...(minoriaBebe && j?.motor === "votacion" ? { minoriaBebe: true } : {}),
+    ...(!comodines && conComodines ? { comodines: false } : {}),
     ejes,
   };
   const config: PartidaConfigurada = { juego, rondas, ejes, opciones };
@@ -370,6 +375,7 @@ export function ConfigurarPartida({ miembros, alIniciar, alCancelar, iniciando, 
     setPistaNave(imp?.pista === true); setCastigoNave(imp?.castigo !== false);
     setVotoSecreto(o.votoSecreto === true);
     setMinoriaBebe(o.minoriaBebe === true);
+    setComodines(o.comodines !== false);
   };
   const editar = (s: Seccion) => { juegoAlEditar.current = juego; if (s === "juego") setFiltro(catDe(juego)); setDesdeResumen(true); setSec(s); };
   // Elegir y seguir (Elías, 24 nov): en pasos de una sola elección, tocar la tarjeta avanza sola tras una pausa corta.
@@ -468,6 +474,12 @@ export function ConfigurarPartida({ miembros, alIniciar, alCancelar, iniciando, 
               ))}</div>
               <p className="a-nota">{votoSecreto ? "Al revelar solo se ve cuántos votos tuvo cada quien. Nadie sabe por quién votaste." : "Al revelar se ve quién votó por quién."}</p>
             </section>}
+            {conComodines && <section className="a-pila"><span className="cfg-sub dsp ol">Comodines</span>
+              <div className="a-fila a-envuelve">{([[true, "Se pueden usar"], [false, "Sin comodines"]] as const).map(([x, t]) => (
+                <button key={t} type="button" className={"cfg-tiempo" + (comodines === x ? " on" : "")} aria-pressed={comodines === x} onClick={() => setComodines(x)}>{t}</button>
+              ))}</div>
+              <p className="a-nota">{comodines ? "Cada quien puede usar los comodines de su colección que sirven en este juego, uno por turno. Si no tiene, puede comprarlo ahí mismo." : "En esta partida nadie usa comodines."}</p>
+            </section>}
             {j?.motor === "votacion" && <section className="a-pila"><span className="cfg-sub dsp ol">La minoría</span>
               <div className="a-fila a-envuelve">{([[false, "Sin castigo"], [true, "Bebe algo"]] as const).map(([x, t]) => (
                 <button key={t} type="button" className={"cfg-tiempo" + (minoriaBebe === x ? " on" : "")} aria-pressed={minoriaBebe === x} onClick={() => setMinoriaBebe(x)}>{t}</button>
@@ -516,7 +528,7 @@ export function ConfigurarPartida({ miembros, alIniciar, alCancelar, iniciando, 
           : <ArteCfg nombre={usa[0] === "voltaje" ? `voltimetro-${ejes.voltaje}` : `termometro-${ejes.temperatura}`} alterno={arteHub("xp")} />}
         alTocar={() => editar("intensidad")} />,
       <Casilla key="opc" titulo={esImpostor(j) ? "Opciones" : "Herramienta"} valor={esImpostor(j) ? `${Math.min(impostores, maxImp)} ${Math.min(impostores, maxImp) === 1 ? "impostor" : "impostores"}` : inst?.nombre ?? "—"}
-        detalle={esImpostor(j) ? `${nombreCategoria(tema)} · votos ${votosNave === "visibles" ? "a la vista" : "secretos"}${revelarNave ? "" : " · sin revelar"}${pistaNave ? " · con pista" : ""}${castigoNave ? " · con castigo" : ""}` : `${rondas} rondas${temporizador && conTemporizador ? ` · ⏱ ${temporizador} s` : ""}${votoSecreto && j?.motor === "senalar" ? " · votos secretos" : ""}${minoriaBebe && j?.motor === "votacion" ? " · la minoría bebe" : ""}${conMazo && soloNuevas ? " · cartas nuevas" : ""}`}
+        detalle={esImpostor(j) ? `${nombreCategoria(tema)} · votos ${votosNave === "visibles" ? "a la vista" : "secretos"}${revelarNave ? "" : " · sin revelar"}${pistaNave ? " · con pista" : ""}${castigoNave ? " · con castigo" : ""}` : `${rondas} rondas${temporizador && conTemporizador ? ` · ⏱ ${temporizador} s` : ""}${votoSecreto && j?.motor === "senalar" ? " · votos secretos" : ""}${minoriaBebe && j?.motor === "votacion" ? " · la minoría bebe" : ""}${conComodines && !comodines ? " · sin comodines" : ""}${conMazo && soloNuevas ? " · cartas nuevas" : ""}`}
         ico={<ArteCfg nombre={esImpostor(j) ? "sec-herramienta" : `herr-${inst?.id ?? "cartas"}`} alterno={arteHub("ajustes")} />} alTocar={() => editar(esImpostor(j) ? "tipo" : "opciones")} />,
       // Herramientas de El impostor (Elías, 25 nov): se ve aunque no se use el temporizador.
       ...(esImpostor(j) && conTemporizador ? [

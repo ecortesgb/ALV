@@ -22,7 +22,7 @@ export const REGLAS: Record<Motor, Reglas> = {
   },
   dados: {
     objetivo: "Por turnos, cada quien tira los dados con su pareja: acción, zona y tiempo.",
-    puntos: ["Cumplir: +1 punto", "Pasar: 0, sin castigo"],
+    puntos: ["Cumplir: +1 punto", "No hacerlo: −1 punto (con Drunk, toma algo y queda en 0)", "Pasar gratis solo con un comodín"],
     gana: "Quien junte más puntos al terminar las rondas.",
   },
   votacion: {

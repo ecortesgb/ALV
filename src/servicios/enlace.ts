@@ -17,7 +17,7 @@ export interface Miembro { id: string; nombre: string; figura: FiguraV2 | null; 
   /** Último gesto y su contador: cuando sube el contador, la figura lo hace. */
   gesto?: string | null; gestoN?: number }
 export interface PartidaPub { id: string; juego: string; version: number; estado: Record<string, unknown>; terminada: boolean }
-export type TipoFila = "contestar" | "carta" | "pista" | "control";
+export type TipoFila = "contestar" | "carta" | "pista" | "control" | "comodin";
 export interface FilaAccion { id: string; jugador: string; tipo: TipoFila; datos: Record<string, unknown>; creada: string }
 /** `puntos` y `datos` van a `resultados_partida` (migración 040); el servidor recalcula lugar, Puntos ALV y MVP. */
 export interface ResultadoFinal { jugador: string; rondas: number; retos: number; lugar: number; puntos?: number; datos?: Record<string, unknown> }
@@ -52,6 +52,8 @@ export interface Enlace {
   /** Guarda los ganadores de la noche y termina la partida «copas» (sin XP ni monedas). */
   guardarCopas(partida: string, copas: CopasParaGuardar): Promise<void>;
   darXp(sala: SalaV, jugador: string, xp: number): Promise<boolean>;
+  /** Comodín de la colección que el motor no aceptó: el servidor devuelve la copia o las monedas (solo el anfitrión, una vez). */
+  devolverComodin(accion: string): Promise<void>;
   activarCapsula(n: number): Promise<void>;
   escuchar(sala: SalaV, alCambiar: () => void, alEstado?: (e: EstadoRed) => void): () => void;
   /** Dice si la Pantalla de la sala está conectada. Si `soyPantalla`, este aparato se anota como la Pantalla. */
@@ -211,6 +213,9 @@ const nube: Enlace = {
       if (r.error && !esFalta(r.error)) log("guardarCopas", r.error);
     } catch (e) { log("guardarCopas", e); }
   },
+  async devolverComodin(accion) {
+    try { const r = await cliente!.rpc("devolver_comodin", { p_accion: accion }); if (r.error) log("devolverComodin", r.error); } catch (e) { log("devolverComodin", e); }
+  },
   async darXp(sala, jugador, xp) {
     try { const r = await cliente!.rpc("dar_xp_reto", { p_evento: sala.id, p_jugador: jugador, p_xp: xp }); if (r.error) log("darXp", r.error); return !r.error; } catch (e) { log("darXp", e); return false; }
   },
@@ -329,6 +334,7 @@ function crearRespaldo(clave: string, canal: string | null, quien: () => { id: s
     async terminar(partida) { cambiar(t => { const x = porPartida(t, partida); if (x) x.p.terminada = true; }); },
     async guardarCopas() { /* sin servidor las copas solo se ven en la ceremonia */ },
     async darXp() { return true; },
+    async devolverComodin() { /* sin servidor no hay colección en la nube que devolver */ },
     async activarCapsula() { /* sin servidor no hay cápsulas en la nube */ },
     escuchar(_sala, alCambiar, alEstado) {
       oyentes.add(alCambiar); alEstado?.("vivo"); queueMicrotask(alCambiar);
@@ -467,7 +473,8 @@ export const enlace: Enlace = {
     await porSala(sala).cerrar(sala);
     if (espejo) await nube.cerrar({ id: espejo.id, codigo: espejo.codigo, modo: "mesa", anfitrionId: sala.anfitrionId });
     if (esLocal(sala.id)) modoLocal.terminar();
-    else await sostenidos.soltarTodos();
+    // Las sesiones que este aparato guardaba (en línea o en un solo aparato) se cierran con la sala.
+    await sostenidos.soltarTodos();
   },
   partida: sala => porSala(sala).partida(sala),
   historial: sala => porSala(sala).historial(sala),
@@ -487,6 +494,7 @@ export const enlace: Enlace = {
     if (espejo) return nube.darXp({ id: espejo.id, codigo: espejo.codigo, modo: "mesa", anfitrionId: sala.anfitrionId }, j, x);
     return porSala(sala).darXp(sala, j, x);
   },
+  devolverComodin: accion => base.devolverComodin(accion),
   activarCapsula: n => base.activarCapsula(n),
   escuchar: (sala, f, e) => porSala(sala).escuchar(sala, f, e),
   vigilarPantalla: (sala, yo, f) => porSala(sala).vigilarPantalla(sala, yo, f),
@@ -495,7 +503,7 @@ export const enlace: Enlace = {
   lobbyAbierto: () => base.lobbyAbierto(),
   expulsar: async (sala, j) => {
     const ok = await porSala(sala).expulsar(sala, j);
-    if (ok && !esLocal(sala.id)) await sostenidos.soltar(j);
+    if (ok) await sostenidos.soltar(j);
     // 053: quitar a una cuenta del lobby local también la saca de la sala espejo (deja de ganar puntos aquí).
     const espejo = ok && esLocal(sala.id) && hayNube && UUID.test(j) ? modoLocal.espejo(sala) : null;
     if (espejo) await nube.expulsar({ id: espejo.id, codigo: espejo.codigo, modo: "mesa", anfitrionId: sala.anfitrionId }, j);

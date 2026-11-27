@@ -16,6 +16,7 @@ import { FondoEscenario } from "./Fondos";
 import { ComoJugar, tocaExplicar } from "../juegos/general/ComoJugar";
 import { celularesEnSala, type PresenciaPantalla } from "../servicios/tiempoReal";
 import { sostenidos } from "../servicios/aparato";
+import { hayNube } from "../servicios/cliente";
 import { HerramientaCelular, type MiVista } from "../juegos/general/celular";
 import { EmotesVolando } from "../juegos/general/Emotes";
 import { esPublico, marcador, nombreJuego, quedan, type Publico } from "../juegos/general/texto";
@@ -256,8 +257,15 @@ export function Sala({ codigo }: { codigo: string }) {
     const yo = compartido ? mano : ses.uid;
     const yoNombre = s.miembros.find(x => x.id === yo)?.nombre ?? ses.nombre;
     const estoy = v.jugadores.some(j => j.id === yo);
-    const sec = (s.secreto ?? {}) as { mio?: unknown; miRespuesta?: unknown; miMano?: string[] };
-    const mi: MiVista = { yo, mio: sec.mio ?? null, miRespuesta: sec.miRespuesta ?? null, miMano: sec.miMano ?? [] };
+    const sec = (s.secreto ?? {}) as { mio?: unknown; miRespuesta?: unknown; miMano?: string[]; misComodines?: string[] };
+    // Comodines de la colección (Maestro v1.72): los usa la cuenta que tiene el teléfono en su turno, con SU sesión.
+    // En un solo aparato se pagan en la sala espejo de la nube; quien juega sin cuenta no tiene colección.
+    const clienteTurno = yo === ses.uid ? null : sostenidos.cliente(yo);
+    const espejoLocal = local && s.sala && hayNube ? modoLocal.espejo(s.sala)?.id ?? null : null;
+    const conCuenta = yo === ses.uid || !!clienteTurno;
+    const mi: MiVista = { yo, mio: sec.mio ?? null, miRespuesta: sec.miRespuesta ?? null, miMano: sec.miMano ?? [],
+      misComodines: Array.isArray(sec.misComodines) ? sec.misComodines : [], partida: pid, cliente: clienteTurno, espejo: espejoLocal,
+      cuenta: conCuenta && (!local || !!espejoLocal) };
     const ultima = esFinalDeJuego(v);
     // Ceremonia de copas de la noche: sin ronda, sin barra del anfitrión ni marcador; al final se cierra la sala.
     const copas = v.juegoId === "copas";

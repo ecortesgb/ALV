@@ -1,0 +1,35 @@
+/* Comodines en la partida (Maestro v1.72): botón y lista del celular, efectos de la ronda y la animación de la TV. */
+.cm-caja { margin-top: 10px; }
+.cm-boton { width: 100%; min-height: 48px; padding: 10px 14px; border: 2px solid #ffe3a7; border-radius: 12px; background: linear-gradient(180deg, #ff4fbf, #b02a86); color: #fff; font-size: 1.05rem; cursor: pointer; box-shadow: 0 3px 0 #5a1145; }
+.cm-boton[aria-expanded="true"] { background: linear-gradient(180deg, #b06bff, #6b2fc0); }
+.cm-lista { display: grid; gap: 8px; margin-top: 8px; padding: 10px; border: 2px solid #ffe3a780; border-radius: 12px; background: #1a0f2ee6; }
+.cm-item { display: grid; grid-template-columns: 52px 1fr auto; gap: 10px; align-items: center; }
+.cm-arte { width: 52px; height: 72px; object-fit: cover; border-radius: 6px; border: 2px solid #efc878; }
+.cm-ico { display: grid; place-items: center; font-size: 1.6rem; background: #2a1a48; }
+.cm-texto { display: grid; gap: 2px; min-width: 0; color: #fff1c8; }
+.cm-texto b { font-size: 1rem; }
+.cm-texto small { font-size: .82rem; line-height: 1.25; color: #e9dcff; }
+.cm-texto .cm-cuantas { color: #ffd36b; font-weight: 700; }
+.cm-usar { min-width: 84px; min-height: 44px; padding: 6px 12px; border: 2px solid #1d0b33; border-radius: 10px; background: #46d37a; color: #10261a; font-weight: 800; cursor: pointer; display: grid; place-items: center; }
+.cm-usar small { display: block; font-size: .7rem; font-weight: 700; }
+.cm-comprar { background: #ffd36b; color: #3a2400; }
+.cm-usar:disabled { opacity: .5; cursor: not-allowed; }
+.cm-nota { max-width: 84px; font-size: .75rem; color: #cbb8f0; text-align: center; }
+.cm-aviso { margin: 0; color: #ff9b9b; font-weight: 700; }
+.cm-pie { margin: 0; font-size: .78rem; color: #cbb8f0; }
+.cm-efectos { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0 0; padding: 0; list-style: none; }
+.cm-efectos li { padding: 4px 10px; border-radius: 999px; background: #2a1a48; border: 1px solid #ffe3a780; color: #fff1c8; font-size: .85rem; font-weight: 700; }
+.cm-caminos { display: grid; gap: 8px; margin-top: 10px; }
+.cm-camino { min-height: 56px; padding: 10px 12px; border: 2px solid #ffe3a7; border-radius: 12px; background: #2a1a48; color: #fff; text-align: left; font-size: 1rem; cursor: pointer; }
+
+/* TV: la carta entra girando, su nombre abajo; se va sola. */
+.cm-tv { position: fixed; inset: 0; z-index: 40; display: grid; place-content: center; justify-items: center; gap: .4em; pointer-events: none; background: radial-gradient(circle at 50% 45%, #ff4fbf40, transparent 60%); animation: cm-tv-velo 3.6s ease both; }
+.cm-tv-carta { width: 11em; aspect-ratio: 5 / 7; border: .25em solid #efc878; border-radius: .6em; overflow: hidden; background: #2a1a48; box-shadow: 0 0 2.5em #ff4fbf99; animation: cm-tv-carta 3.6s cubic-bezier(.2, 1.4, .4, 1) both; }
+.cm-tv-carta img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.cm-tv-ico { display: grid; place-items: center; height: 100%; font-size: 4em; }
+.cm-tv-texto { margin: 0; font-size: 2.2em; color: #fff; text-shadow: 0 .08em 0 #5a1145; animation: cm-tv-texto 3.6s ease both; }
+.cm-tv-suerte { margin: 0; font-size: 1.6em; color: #ffd36b; animation: cm-tv-texto 3.6s ease .3s both; }
+@keyframes cm-tv-velo { 0% { opacity: 0; } 10%, 85% { opacity: 1; } 100% { opacity: 0; } }
+@keyframes cm-tv-carta { 0% { transform: scale(.2) rotateY(180deg); opacity: 0; } 18% { transform: scale(1.08) rotateY(0); opacity: 1; } 26%, 85% { transform: scale(1); opacity: 1; } 100% { transform: scale(.9) translateY(-.5em); opacity: 0; } }
+@keyframes cm-tv-texto { 0%, 15% { transform: translateY(.6em); opacity: 0; } 28%, 85% { transform: none; opacity: 1; } 100% { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .cm-tv, .cm-tv-carta, .cm-tv-texto, .cm-tv-suerte { animation-duration: .01s; animation-iteration-count: 1; } .cm-tv { animation: none; } }

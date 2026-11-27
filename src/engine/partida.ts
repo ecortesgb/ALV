@@ -6,6 +6,7 @@ import { yaSalio } from "./yaSalieron";
 import { xpDePartida } from "./economia";
 import { CARTAS_PODER, DADOS } from "../content/catalogo";
 import { RISA, type JuegoRisa } from "../content/risa";
+import { MOTORES_CON_COMODINES, PRORROGA_S, SUERTES, esComodinPartida, type IdComodinPartida, type Suerte } from "../content/comodinesPartida";
 import type { Carta, Configuracion, DefinicionJuego, Jugador, Motor, TemaImpostor } from "./types";
 
 export type Fase = "contestando" | "revelada" | "terminada";
@@ -42,8 +43,10 @@ export interface EstadoPartida {
   manos: Record<string, string[]>;
   /** Cuántas veces se cambió la carta en esta ronda (para sacar otra con la misma semilla). */
   cambios: number;
-  /** Última carta de poder usada, pública: «Ana usó Escudo». */
-  cartaUsada?: { jugador: string; carta: string; ronda: number };
+  /** Última carta de poder usada, pública: «Ana usó Escudo». `n` cambia con cada uso (la TV lo anima una vez); `suerte`, lo que salió en ¿Voy a tener suerte?. */
+  cartaUsada?: { jugador: string; carta: string; ronda: number; n?: number; suerte?: Suerte };
+  /** Comodines de la colección usados en esta ronda (Maestro v1.72). Público: la TV y los celulares lo muestran. Se limpia en cada ronda. */
+  efectos?: EfectosRonda;
   /** El anfitrión detuvo la partida: nadie puede contestar hasta reanudar. */
   pausada?: boolean;
   /** El impostor: la pista que cada quien dijo en la ronda (pública, máximo 40 letras). */
@@ -80,6 +83,28 @@ export interface EstadoPartida {
 }
 
 /** ¿La partida sigue en su pantalla de carga? (pidió explicar, nadie ha hecho nada y el anfitrión no ha tocado «¡Iniciar!»). */
+/** Lo que dejaron los comodines en la ronda. */
+export interface EfectosRonda {
+  /** Quienes ya usaron un comodín en esta ronda (uno por persona y por turno). */
+  usados: string[];
+  /** Rebaja (o la suerte lo suavizó): el reto se hace a la mitad. */
+  rebaja?: boolean;
+  /** La suerte lo duplicó: se hace dos veces y, si se cumple, vale el doble. */
+  duplica?: boolean;
+  /** La suerte: lo hace toda la mesa (los puntos siguen siendo de quien tiene el turno). */
+  mesa?: boolean;
+  /** Prórroga: segundos extra del turno. */
+  extra?: number;
+  /** Segundo intento: «listo» = armado; «usado» = ya se repitió una vez. */
+  segundo?: "listo" | "usado";
+  /** Dos caminos: las dos cartas para elegir. Mientras estén aquí, nadie califica. */
+  caminos?: NonNullable<EstadoPartida["carta"]>[];
+  /** ¿Voy a tener suerte?: lo que salió. */
+  suerte?: Suerte;
+  /** La suerte lo pasó a esta persona. */
+  pasoA?: string;
+}
+
 export const enCarga = (e: EstadoPartida) =>
   !!e.cfg.explicar && !e.comenzada && e.ronda === 1 && e.fase === "contestando" && Object.keys(e.respuestas).length === 0 && Object.keys(e.pistas ?? {}).length === 0 && !e.vr;
 
@@ -90,7 +115,10 @@ export type Accion =
   | { id: string; tipo: "terminar" }
   /** El anfitrión entrega una carta ya pagada (la compra la valida el servidor). */
   | { id: string; tipo: "dar-carta"; jugador: string; carta: string }
-  | { id: string; tipo: "usar-carta"; jugador: string; carta: string }
+  /** `cuenta`: comodín de la colección, ya descontado o cobrado por el servidor (fila `comodin`). Sin él, la mano vieja de la partida. */
+  | { id: string; tipo: "usar-carta"; jugador: string; carta: string; cuenta?: boolean }
+  /** Dos caminos: quien lo usó elige la carta 0 o la 1. */
+  | { id: string; tipo: "camino"; jugador: string; i: 0 | 1 }
   | { id: string; tipo: "pausar" }
   | { id: string; tipo: "reanudar" }
   /** Salta la ronda sin puntos (se acabó el tiempo o alguien no contesta). */
@@ -115,7 +143,6 @@ export type Accion =
 export const MAX_PISTA = 40;
 
 export const MAX_EN_MANO = 3;
-export const RETOS_POR_CARTA = 3;
 const IDS_PODER = CARTAS_PODER.map(c => c.id) as string[];
 
 /** Una acción antes de ponerle su id único. */
@@ -624,10 +651,15 @@ const dados: Mecanica = {
     };
   },
   quienes: e => (e.turnoDe ? [e.turnoDe] : []),
-  valida: (_e, _j, v) => v === "cumplio" || v === "paso",
+  // Pasar ya no es gratis (Elías, 27 nov, Maestro v1.72; sustituye 6A.14 5B y sigue v1.53): sin Drunk, decir que no
+  // resta el punto que valía; con Drunk, en vez de eso toma algo (lo que quiera, agua vale) y queda en 0. Gratis solo con comodín.
+  valida: (e, _j, v) => v === "cumplio" || v === "paso" || (v === "tomo" && !!e.cfg.drunk),
   puntuar(e) {
-    const j = e.turnoDe!, cumplio = e.respuestas[j] === "cumplio";
-    return { puntos: { [j]: cumplio ? 1 : 0 }, revelado: { jugador: j, cumplio } };
+    const j = e.turnoDe!, r = e.respuestas[j], cumplio = r === "cumplio";
+    // «paso» por un comodín (Pasa turno, Escudo o la suerte lo anuló) no resta: el comodín ya se pagó.
+    const conComodin = !!e.efectos?.usados.includes(j) && (e.cartaUsada?.carta === "turno" || e.cartaUsada?.carta === "escudo" || e.efectos?.suerte === "anula");
+    const p = cumplio ? 1 : r === "paso" && !conComodin ? -1 : 0;
+    return { puntos: { [j]: p }, revelado: { jugador: j, cumplio, resultado: cumplio ? "cumplio" : r === "tomo" ? "tomo" : conComodin ? "comodin" : "no" } };
   },
 };
 
@@ -913,7 +945,7 @@ export const quienesContestan = (e: EstadoPartida): string[] => mecanica(e).quie
 
 function prepararRonda(e: EstadoPartida, c: Contenido): EstadoPartida {
   const p = mecanica(e).preparar(e, c);
-  return { ...e, fase: "contestando", carta: p.carta, privado: p.privado, turnoDe: p.turnoDe, seleccion: p.seleccion, respuestas: {}, revelado: undefined, pistas: {}, ausentes: undefined, esperas: 0, vr: undefined };
+  return { ...e, fase: "contestando", carta: p.carta, privado: p.privado, turnoDe: p.turnoDe, seleccion: p.seleccion, respuestas: {}, revelado: undefined, pistas: {}, ausentes: undefined, esperas: 0, vr: undefined, efectos: undefined };
 }
 
 /** Da una carta de poder si hay lugar en la mano. */
@@ -945,17 +977,12 @@ export function crearPartida(juego: DefinicionJuego, cfg: Configuracion, semilla
 function revelarRonda(e: EstadoPartida, ausentes: string[], contenido?: Contenido): EstadoPartida {
   const p = mecanica(e).puntuar(e, contenido);
   const puntos = { ...e.puntos }, retos = { ...e.retos };
-  for (const [j, v] of Object.entries(p.puntos)) if (!ausentes.includes(j)) puntos[j] = (puntos[j] ?? 0) + v;
-  let manos = e.manos;
-  const azar = azarDeRonda(e);
-  for (const [j, v] of Object.entries(p.retos ?? {})) {
-    if (ausentes.includes(j)) continue;
-    const antes = retos[j] ?? 0;
-    retos[j] = antes + v;
-    // Cada 3 retos cumplidos se gana una carta de poder.
-    if (v > 0 && Math.floor(retos[j]! / RETOS_POR_CARTA) > Math.floor(antes / RETOS_POR_CARTA)) manos = conCarta(manos, j, azar.elegir(IDS_PODER));
-  }
-  return { ...e, fase: "revelada", puntos, retos, manos, revelado: p.revelado, ...(p.eliminados ? { eliminados: p.eliminados } : {}), ...(ausentes.length ? { ausentes } : {}), bitacora: registrar(e, "revelada", undefined, ausentes.length ? { ...(p.revelado as object), ausentes } : p.revelado) };
+  // ¿Voy a tener suerte? lo duplicó: si se cumplió, quien tiene el turno se lleva el doble.
+  const doble = e.efectos?.duplica && (p.revelado as { cumplio?: unknown } | undefined)?.cumplio === true ? objetivoComodin(e) : undefined;
+  for (const [j, v] of Object.entries(p.puntos)) if (!ausentes.includes(j)) puntos[j] = (puntos[j] ?? 0) + (j === doble ? v * 2 : v);
+  // Los comodines ya no se ganan jugando (Elías, 27 nov, Maestro v1.72): solo salen de sobres o de la colección.
+  for (const [j, v] of Object.entries(p.retos ?? {})) if (!ausentes.includes(j)) retos[j] = (retos[j] ?? 0) + v;
+  return { ...e, fase: "revelada", puntos, retos, revelado: p.revelado, ...(p.eliminados ? { eliminados: p.eliminados } : {}), ...(ausentes.length ? { ausentes } : {}), bitacora: registrar(e, "revelada", undefined, ausentes.length ? { ...(p.revelado as object), ausentes } : p.revelado) };
 }
 
 /** Aplica una acción. Si es repetida o no es válida en este momento, devuelve el mismo estado sin cambios. */
@@ -997,7 +1024,12 @@ export function aplicar(e: EstadoPartida, a: Accion, contenido: Contenido): Esta
         return sube({ ...e, seleccion: { ...(e.seleccion ?? {}), decide: { ...decisionesPareja(e), [dec.decide as string]: dec.coinciden } }, bitacora: registrar(e, "decide", a.jugador, { pareja: dec.decide }) });
       }
       if (e.fase !== "contestando" || !m.quienes(e).includes(a.jugador) || a.jugador in e.respuestas) return e;
+      if (e.efectos?.caminos) return e; // Dos caminos: primero se elige la carta.
       if (!m.valida(e, a.jugador, a.valor)) return e;
+      // Segundo intento: el primer «no lo cumplió» no cuenta; el reto se intenta otra vez.
+      if (e.efectos?.segundo === "listo" && (conVerdadReto(e) ? a.valor === "tomo" : a.valor === "paso")) {
+        return sube({ ...e, efectos: { ...e.efectos, segundo: "usado" }, bitacora: registrar(e, "segundo-intento", objetivoComodin(e)) });
+      }
       const n = { ...e, respuestas: { ...e.respuestas, [a.jugador]: a.valor }, bitacora: registrar(e, "contesto", a.jugador) };
       // Ya escribieron todos: pasan a marcar si coinciden.
       if (e.motor === "pareja" && etapaPareja(e) === "escribir" && m.quienes(n).every(j => j in n.respuestas)) return sube(aCalificar(n));
@@ -1104,8 +1136,19 @@ export function aplicar(e: EstadoPartida, a: Accion, contenido: Contenido): Esta
       if (!ids(e).includes(a.jugador) || a.jugador === e.control) return e;
       return sube({ ...e, control: a.jugador, bitacora: registrar(e, "control", a.jugador) });
     }
+    case "camino": {
+      const ef = e.efectos;
+      if (!ef?.caminos || e.fase !== "contestando" || e.pausada || a.jugador !== objetivoComodin(e)) return e;
+      const carta = ef.caminos[a.i];
+      if (!carta) return e;
+      return sube({ ...e, carta, efectos: { ...ef, caminos: undefined }, bitacora: registrar(e, "camino", a.jugador, { carta: carta.id }) });
+    }
     case "usar-carta": {
       if (e.pausada) return e;
+      if (a.cuenta) {
+        if (!esComodinPartida(a.carta) || !comodinesUsables(e, a.jugador).includes(a.carta)) return e;
+        return sube(efectoComodin(e, a.id, a.jugador, a.carta, contenido));
+      }
       const mano = e.manos[a.jugador] ?? [];
       const i = mano.indexOf(a.carta);
       if (i < 0 || e.fase !== "contestando") return e;
@@ -1169,4 +1212,100 @@ export function resultados(e: EstadoPartida) {
     // rondas y retos van al servidor, que vuelve a calcular la XP con la misma fórmula.
     return { jugador: j.id, nombre: j.nombre, puntos: p, lugar, xp, rondas: rondasJugadas, retos: e.retos[j.id] ?? 0 };
   });
+}
+
+// ---------- Comodines de la colección (Elías, 27 nov, Maestro v1.72) ----------
+
+/** Quién hace el reto ahora: quien responde en Verdad o reto, o quien tiene el turno. */
+export function objetivoComodin(e: EstadoPartida): string | undefined {
+  return conVerdadReto(e) ? seleccionVR(e).responde : e.turnoDe;
+}
+
+/** Qué comodines puede usar este jugador en este momento. Uno por persona y por turno; solo quien hace el reto. */
+export function comodinesUsables(e: EstadoPartida, jugador: string): IdComodinPartida[] {
+  if (!e.cfg.comodines || !MOTORES_CON_COMODINES.includes(e.motor) || e.fase !== "contestando" || e.pausada || enCarga(e)) return [];
+  const ef = e.efectos;
+  if (ef?.usados.includes(jugador) || ef?.caminos || jugador !== objetivoComodin(e)) return [];
+  const lista: IdComodinPartida[] = [];
+  const temporizador = !!e.cfg.temporizador;
+  if (conVerdadReto(e)) {
+    const et = etapaVR(e);
+    if (et === "listo") return [];
+    const conCartaApp = et === "calificar" && e.vr?.fuente === "app" && !!e.carta;
+    const esReto = e.vr?.eleccion === "reto";
+    lista.push("turno", "escudo");
+    if (conCartaApp) lista.push("cambio", "dos-caminos");
+    if (esReto && !ef?.rebaja) lista.push("rebaja");
+    if (esReto && !ef?.segundo) lista.push("segundo-intento");
+    if (temporizador) lista.push("prorroga");
+    if (e.vr?.eleccion && !ef?.suerte) lista.push("suerte");
+    return lista;
+  }
+  if (jugador in e.respuestas) return [];
+  lista.push("turno", "escudo");
+  if (e.carta) lista.push("cambio", "dos-caminos");
+  if (e.carta && !ef?.rebaja) lista.push("rebaja");
+  if (!ef?.segundo) lista.push("segundo-intento");
+  if (temporizador) lista.push("prorroga");
+  if (e.carta && !ef?.suerte) lista.push("suerte");
+  return lista;
+}
+
+/** Otra carta para la misma ronda (Cambio y Dos caminos). En los juegos por turno solo cambia la carta, no el turno. */
+function otraCarta(e: EstadoPartida, c: Contenido, cambios: number): EstadoPartida["carta"] {
+  if (conVerdadReto(e)) return e.vr?.eleccion ? cartaVR(e, c, e.vr.eleccion, cambios) : undefined;
+  return mecanica(e).preparar({ ...e, cambios }, c).carta;
+}
+
+/** Número estable a partir del id de la acción: el sorteo sale igual cada vez que se reconstruye la partida. */
+function numeroDe(id: string): number {
+  let h = 2166136261;
+  for (let i = 0; i < id.length; i++) h = Math.imul(h ^ id.charCodeAt(i), 16777619);
+  return h >>> 0;
+}
+
+function efectoComodin(e: EstadoPartida, idAccion: string, jugador: string, carta: IdComodinPartida, c: Contenido): EstadoPartida {
+  let ef: EfectosRonda = { ...(e.efectos ?? { usados: [] }), usados: [...(e.efectos?.usados ?? []), jugador] };
+  let n: EstadoPartida = { ...e, cartaUsada: { jugador, carta, ronda: e.ronda, n: e.bitacora.length + 1 } };
+  const pasar = () => { n = { ...n, respuestas: { ...n.respuestas, [jugador]: "paso" } }; };
+  switch (carta) {
+    case "turno": case "escudo": pasar(); break;
+    case "cambio": {
+      const nueva = otraCarta(e, c, e.cambios + 1);
+      n = { ...n, cambios: e.cambios + 1, ...(nueva ? { carta: nueva } : {}) };
+      break;
+    }
+    case "dos-caminos": {
+      const otra = otraCarta(e, c, e.cambios + 1);
+      n = { ...n, cambios: e.cambios + 1 };
+      if (e.carta && otra && otra.id !== e.carta.id) ef = { ...ef, caminos: [e.carta, otra] };
+      break;
+    }
+    case "rebaja": ef = { ...ef, rebaja: true }; break;
+    case "segundo-intento": ef = { ...ef, segundo: "listo" }; break;
+    case "prorroga": ef = { ...ef, extra: (ef.extra ?? 0) + PRORROGA_S }; break;
+    case "suerte": {
+      const azar = crearAzar(e.semilla ^ numeroDe(idAccion));
+      const pregunta = conVerdadReto(e) ? seleccionVR(e).pregunta : undefined;
+      const otros = ids(e).filter(j => j !== jugador && j !== pregunta && !(e.eliminados ?? []).includes(j));
+      // Retos de contacto: nunca pasan a otra persona ni a toda la mesa (consentimiento). «Toda la mesa» solo con la carta a la vista.
+      const contacto = e.motor === "dados" || (!!e.carta && !!c.cartas.find(x => x.id === e.carta!.id)?.contacto);
+      const cartaVisible = conVerdadReto(e) ? e.vr?.fuente === "app" && !!e.carta : !!e.carta;
+      const posibles = SUERTES.filter(x => (x !== "pasa" || (otros.length > 0 && !contacto)) && (x !== "mesa" || (cartaVisible && !contacto)));
+      const sale = azar.elegir(posibles);
+      ef = { ...ef, suerte: sale };
+      if (sale === "suaviza") ef = { ...ef, rebaja: true };
+      else if (sale === "duplica") ef = { ...ef, duplica: true };
+      else if (sale === "mesa") ef = { ...ef, mesa: true };
+      else if (sale === "anula") pasar();
+      else {
+        const otro = azar.elegir(otros);
+        ef = { ...ef, pasoA: otro };
+        n = conVerdadReto(e) ? { ...n, turnoDe: otro, seleccion: { ...(e.seleccion ?? {}), responde: otro } } : { ...n, turnoDe: otro };
+      }
+      n = { ...n, cartaUsada: { ...n.cartaUsada!, suerte: sale } };
+      break;
+    }
+  }
+  return { ...n, efectos: ef, bitacora: registrar(e, "carta-usada", jugador, { carta, cuenta: true, ...(ef.suerte && carta === "suerte" ? { suerte: ef.suerte } : {}) }) };
 }

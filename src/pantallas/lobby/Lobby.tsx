@@ -145,7 +145,7 @@ export function Lobby({ sala, miembros, yo, soyAnfitrion, final, red, refrescar,
     setCreando(true); setErrorRapido(null);
     // En línea la cuenta nueva entra directo a esta sala; en Local, a su sala espejo.
     const espejo = local ? await asegurarEspejo(sala) : { id: sala.id, codigo: sala.codigo };
-    const r = espejo ? await crearPersonajeRapido(d.nombre, d.figura, espejo, !local) : "No se pudo conectar con el servidor. Intenta otra vez o agrégalo sin cuenta.";
+    const r = espejo ? await crearPersonajeRapido(d.nombre, d.figura, espejo, true) : "No se pudo conectar con el servidor. Intenta otra vez o agrégalo sin cuenta.";
     setCreando(false);
     if (typeof r === "string") { setErrorRapido(r); return; }
     if (local && !modoLocal.agregarCuenta(sala, { id: r.id, nombre: d.nombre, figura: r.figura, cuenta: "rapida", genero: d.genero })) aviso("No se pudo agregar (máximo 8).");
@@ -154,7 +154,8 @@ export function Lobby({ sala, miembros, yo, soyAnfitrion, final, red, refrescar,
   const entrarConCuenta = async (usuario: string, clave: string): Promise<string | null> => {
     const espejo = await asegurarEspejo(sala);
     if (!espejo) return "No se pudo conectar con el servidor. Intenta otra vez.";
-    const r = await entrarCuentaEnAparato(usuario, clave, espejo, miembros.map(m => m.id));
+    // Su sesión se queda en esta pestaña mientras dura el lobby: así usa sus comodines en su turno (Maestro v1.72).
+    const r = await entrarCuentaEnAparato(usuario, clave, espejo, miembros.map(m => m.id), true);
     if (typeof r === "string") return r;
     if (!modoLocal.agregarCuenta(sala, { ...r, cuenta: "registrada" })) return "El lobby está lleno (8).";
     setEditar(null); refrescar(); aviso(`${r.nombre} entró con su cuenta.`);

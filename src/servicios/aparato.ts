@@ -60,15 +60,22 @@ async function entrarYLeer(c: SupabaseClient, uid: string, espejo: Espejo, cerra
 }
 
 /** Cuenta existente: usuario y contraseña. Devuelve la cuenta o el mensaje para la persona. */
-export async function entrarCuentaEnAparato(nick: string, pass: string, espejo: Espejo, yaDentro: string[]): Promise<CuentaEnAparato | string> {
-  const c = clienteAparte();
+export async function entrarCuentaEnAparato(nick: string, pass: string, espejo: Espejo, yaDentro: string[], sostener = false): Promise<CuentaEnAparato | string> {
+  // Con `sostener`, la sesión queda en esta pestaña mientras dura el lobby (para usar sus comodines en su turno).
+  const claveSesion = `alv-sost-${nick.trim().toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 20)}-${Math.random().toString(36).slice(2, 8)}`;
+  const c = (sostener ? clienteSostenido(claveSesion) : null) ?? clienteAparte();
   if (!c) return "Sin servidor no se pueden agregar cuentas.";
   if (!nickValido(nick) || !passValida(pass)) return "Usuario o contraseña incorrectos.";
   try {
     const { data, error } = await c.auth.signInWithPassword({ email: correo(nick), password: pass });
     if (error || !data.user) return "Usuario o contraseña incorrectos.";
     if (yaDentro.includes(data.user.id)) { await c.auth.signOut({ scope: "local" }); return "Esa cuenta ya está en el lobby."; }
-    return await entrarYLeer(c, data.user.id, espejo);
+    const r = await entrarYLeer(c, data.user.id, espejo, !sostener);
+    if (sostener) {
+      if (typeof r === "string") { try { await c.auth.signOut({ scope: "local" }); } catch { /* nada */ } }
+      else sostenidos.registrar(espejo.id, data.user.id, claveSesion, c);
+    }
+    return r;
   } catch (e) { log("entrarCuentaEnAparato", e); return "No se pudo. Intenta otra vez."; }
 }
 

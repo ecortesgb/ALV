@@ -199,17 +199,15 @@ describe("Seguridad y configurador", () => {
 
 describe("Cartas de poder dentro de la partida", () => {
   const turno = (e: EstadoPartida) => e.turnoDe!;
-  it("cada 3 retos cumplidos se gana una carta (máximo 3 en la mano)", () => {
+  it("jugar ya no regala cartas: los comodines solo salen de sobres o de la colección (Maestro v1.72)", () => {
     let e = crearPartida(juego("verdad-reto"), cfg(2), 4, CONTENIDO, 40);
     while (e.fase !== "terminada") {
       e = juega(e, { tipo: "contestar", jugador: turno(e), valor: "cumplio" });
       e = juega(e, { tipo: "revelar" });
       e = juega(e, { tipo: "siguiente" });
     }
-    for (const j of ["j0", "j1"]) {
-      const esperadas = Math.min(3, Math.floor(e.retos[j]! / 3));
-      expect(e.manos[j]).toHaveLength(esperadas);
-    }
+    expect(e.retos.j0! + e.retos.j1!).toBeGreaterThan(6);
+    for (const j of ["j0", "j1"]) expect(e.manos[j]).toEqual([]);
   });
   it("una carta comprada llega con dar-carta y Escudo salta el reto sin castigo", () => {
     let e = crearPartida(juego("verdad-reto"), cfg(3), 8, CONTENIDO, 2);

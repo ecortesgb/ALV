@@ -2,6 +2,7 @@
 // - Demostración sin nube: monedas, comodines y racha viven en este navegador y la tirada se hace aquí, solo para ver la tienda.
 // - Con nube: las monedas, la tirada y lo ganado son del servidor (migración 036). Sin la 036 aplicada no se puede comprar.
 import { useSyncExternalStore } from "react";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { escribirCapsulas, leerCapsulas } from "../app/figura3d";
 import { ponerPieza } from "../app/equiparPieza";
 import { sesionAhora } from "../app/sesion";
@@ -11,6 +12,7 @@ import { crearAzar } from "../engine/azar";
 import { ORDEN, RACHA_CERO, abrirSobre, type Apertura, type Carta, type Racha } from "../engine/sobresTienda";
 import { cliente, hayNube } from "./cliente";
 import { agregarPiezasDemo, cargarPiezas, piezasAhora } from "./piezas";
+import { enlace } from "./enlace";
 
 export interface EstadoTienda {
   /** Se puede comprar (en demostración sí; en la nube cuando exista la migración). */ activa: boolean;
@@ -138,6 +140,63 @@ export async function reponerComodin(id: string): Promise<string | null> {
   const d = r.data as { monedas: number; cantidad: number };
   fijar({ monedas: d.monedas, comodines: { ...estado.comodines, [id]: d.cantidad } });
   return null;
+}
+
+/** Dónde y con qué cuenta se usa el comodín. Sin `cliente`, la sesión de este aparato. `espejo`: lobby de un solo aparato. */
+export interface DondeComodin { partida: string; cliente?: SupabaseClient | null; espejo?: string | null }
+export interface Inventario { monedas: number; comodines: Record<string, number>; precios: Record<string, number> }
+
+/** Colección y monedas de otra cuenta que juega en este aparato (su propia sesión). */
+export async function inventarioDe(c: SupabaseClient): Promise<Inventario | null> {
+  try {
+    const [{ data, error }, { data: precios }] = await Promise.all([c.rpc("estado_tienda"), c.from("comodines_tienda").select().eq("activo", true)]);
+    if (error) return null;
+    const fila = (data as { monedas: number; comodines: Record<string, number> }[] | null)?.[0];
+    return { monedas: fila?.monedas ?? 0, comodines: fila?.comodines ?? {},
+      precios: Object.fromEntries((precios ?? []).flatMap(x => typeof x.precio_reposicion === "number" ? [[x.id, x.precio_reposicion]] : [])) };
+  } catch (e) { console.error("inventarioDe", e); return null; }
+}
+
+/**
+ * Usa un comodín de la colección en la partida (Maestro v1.72). Si no quedan copias y `comprar`, lo paga con monedas
+ * al precio de reposición y se usa de una vez, aunque nunca haya salido en un sobre. En línea, el servidor descuenta o
+ * cobra y escribe la jugada en un solo paso; en un solo aparato descuenta o cobra y la jugada la escribe el teléfono.
+ * Devuelve el inventario nuevo de esa carta, o el mensaje para el jugador.
+ */
+export async function usarComodin(d: DondeComodin, comodin: string, comprar: boolean): Promise<{ monedas: number; cantidad: number } | string> {
+  const accion = crypto.randomUUID();
+  if (estado.demo && !d.cliente) {
+    const uid = sesionAhora().uid, x = leerDemo(uid), tengo = x.comodines[comodin];
+    const precio = estado.preciosReposicion[comodin] ?? 0;
+    let nuevo: Demo;
+    if (tengo && tengo > 0) nuevo = { ...x, comodines: { ...x.comodines, [comodin]: tengo - 1 } };
+    else if (!comprar) return "Ya no te quedan copias.";
+    else if (x.monedas < precio) return `Te faltan ${precio - x.monedas} monedas.`;
+    else nuevo = { ...x, monedas: x.monedas - precio, comodines: { ...x.comodines, [comodin]: 0 } };
+    if (!(await enlace.enviar(d.partida, accion, "comodin", { carta: comodin }))) return "No se pudo usar. Intenta otra vez.";
+    escribirDemo(uid, nuevo);
+    fijar(desdeDemo(nuevo));
+    return { monedas: nuevo.monedas, cantidad: nuevo.comodines[comodin] ?? 0 };
+  }
+  const c = d.cliente ?? cliente;
+  if (!c) return "No se pudo usar. Intenta otra vez.";
+  const [fn, parametros] = d.espejo
+    ? ["usar_comodin_aparato", { p_espejo: d.espejo, p_accion: accion, p_comodin: comodin, p_comprar: comprar }] as const
+    : ["usar_comodin", { p_partida: d.partida, p_accion: accion, p_comodin: comodin, p_comprar: comprar }] as const;
+  let r = await c.rpc(fn, parametros);
+  if (r.error && /fetch|network|failed/i.test(r.error.message)) r = await c.rpc(fn, parametros);
+  if (r.error) {
+    const m = r.error.message;
+    console.warn("[tienda] usarComodin", r.error);
+    if (m.includes("saldo")) return "No te alcanzan las monedas.";
+    if (m.includes("copias")) return "Ya no te quedan copias.";
+    return "No se pudo usar. Intenta otra vez.";
+  }
+  const res = r.data as { monedas: number; cantidad: number };
+  // Un solo aparato: ya se pagó; la jugada va a la partida del teléfono.
+  if (d.espejo && !(await enlace.enviar(d.partida, accion, "comodin", { carta: comodin }))) return "No se pudo usar. Intenta otra vez.";
+  if (c === cliente) fijar({ monedas: res.monedas, comodines: { ...estado.comodines, [comodin]: res.cantidad } });
+  return res;
 }
 
 /** Nube: el servidor cobra, tira y entrega (abrir_sobre de la 036). Un reintento con el mismo pedido no cobra dos veces. */
