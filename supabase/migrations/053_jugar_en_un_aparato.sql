@@ -1,4 +1,4 @@
--- 055 · Jugar varios en un mismo aparato (pedido de Elías, 27 nov 2026; pendiente 023 del Maestro).
+-- 053 · Jugar varios en un mismo aparato (pedido de Elías, 27 nov 2026; pendiente 023 del Maestro).
 -- En el lobby de un solo aparato se agrega una cuenta existente (usuario y contraseña) o un «personaje rápido»: una cuenta
 -- real UsuarioN con contraseña aleatoria y código de recuperación, que se muestran una sola vez.
 -- Para que cada quien gane sus puntos, el aparato abre en la nube una sala espejo («ALV en un aparato») y cada cuenta entra

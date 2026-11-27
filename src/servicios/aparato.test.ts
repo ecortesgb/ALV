@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { claveAleatoria, codigoLegible } from "./aparato";
 import { passValida } from "./cuenta";
 
-describe("personaje rápido (055)", () => {
+describe("personaje rápido (053)", () => {
   it("la contraseña aleatoria es válida, distinta cada vez y sin letras que se confunden", () => {
     const vistas = new Set<string>();
     for (let i = 0; i < 200; i++) {

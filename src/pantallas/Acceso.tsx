@@ -243,7 +243,7 @@ function Invitado({ volver }: { volver: () => void }) {
   );
 }
 
-/** 055: personaje rápido que olvidó su contraseña: usuario + código de recuperación + contraseña nueva. */
+/** 053: personaje rápido que olvidó su contraseña: usuario + código de recuperación + contraseña nueva. */
 function Recuperar({ volver }: { volver: () => void }) {
   const [usuario, setUsuario] = useState(""), [codigo, setCodigo] = useState(""), [clave, setClave] = useState("");
   const [error, setError] = useState<string | null>(null), [ocupado, setOcupado] = useState(false), [hecho, setHecho] = useState(false);

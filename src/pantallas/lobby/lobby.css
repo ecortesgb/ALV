@@ -391,7 +391,7 @@
   .D .pl-trajes { max-height: 220px; }
 }
 @media (prefers-reduced-motion: reduce) { .D .pl-velo, .D .pl-modal, .D .pl-cabina img { animation: none; } }
-/* 055 · Jugar varios en un mismo aparato: elegir cómo entra, entrar con cuenta y datos de acceso (una sola vez). */
+/* 053 · Jugar varios en un mismo aparato: elegir cómo entra, entrar con cuenta y datos de acceso (una sola vez). */
 .D .pl-chico { width: min(460px, 100%); overflow-y: auto; }
 .D .pl-pila { display: flex; flex-direction: column; gap: 12px; }
 .D .pl-fila { display: flex; gap: 8px; align-items: center; }

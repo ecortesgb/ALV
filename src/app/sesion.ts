@@ -51,7 +51,7 @@ export async function refrescarSesion(): Promise<void> {
       miRegistro(),
       cliente.rpc("mis_saldos"),
       soyAdmin(),
-      // Personaje rápido (055). Consulta aparte: sin la 055 la columna no existe y no debe tumbar la entrada.
+      // Personaje rápido (053). Consulta aparte: sin la 053 la columna no existe y no debe tumbar la entrada.
       cliente.from("perfiles").select("rapida").eq("id", uid).maybeSingle().then(r => r.data?.rapida === true, () => false),
     ]);
     if (mio !== turno) return;

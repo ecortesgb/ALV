@@ -29,7 +29,7 @@ const colorVista = (g: Genero): ColorJugador => ({ ...PALETA_SALA[COLOR_VISTA[g]
 export interface DatosPersonaje { nombre: string; genero: Genero; figura: FiguraV2 | null }
 
 /** `soloFigura`: cambiar la figura de alguien que ya está (sin nombre ni género). `color`: el suyo, si ya tiene. */
-/** `rapido` (055): personaje rápido con cuenta; pide confirmar mayoría de edad y avisa que se crea su acceso. */
+/** `rapido` (053): personaje rápido con cuenta; pide confirmar mayoría de edad y avisa que se crea su acceso. */
 export function PersonajeLocal({ titulo, inicial, soloFigura, color, alListo, alCerrar, rapido, ocupado, error }: {
   titulo: string; inicial?: Partial<DatosPersonaje>; soloFigura?: boolean; color?: ColorJugador | null; alListo: (d: DatosPersonaje) => void; alCerrar: () => void;
   rapido?: boolean; ocupado?: boolean; error?: string | null;
