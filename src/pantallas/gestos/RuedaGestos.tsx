@@ -3,6 +3,7 @@
 // Chica y semitransparente para no tapar la figura; el gajo señalado toma su color. Abre con rebote. Se cierra al elegir, al
 // tocar fuera o con Esc. Con teclado: flechas para moverse, Enter para elegir.
 import React, { useEffect, useRef, useState, type CSSProperties, type KeyboardEvent } from "react";
+import { LogoALV } from "../Logo";
 import "./rueda-gestos.css";
 
 export interface GestoRueda { cual: string; txt: string; c1: string; c2: string; dibujo: JSX.Element;
@@ -76,6 +77,8 @@ export function RuedaGestos({ gestos, x, y, centro, onElegir, onCerrar }: {
         {nombre ? <text y={6} className="rg-nombre">{nombre}</text>
           : centro && <image href={centro} x={-27} y={-27} width={54} height={54} className="rg-cara" />}
       </svg>
+      {/* Sin imagen de centro: el logo ALV completo, con su estallido y la cinta (Elías, 26 nov). */}
+      {!centro && !nombre && <span className="rg-logo" aria-hidden="true"><LogoALV ruleta={false} /></span>}
     </div>
   );
 }
