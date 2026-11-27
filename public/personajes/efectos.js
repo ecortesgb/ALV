@@ -259,7 +259,7 @@
           disco.visible = k < 1;
           disco.position.copy(o).lerp(lejos, ida);
           disco.position.y += Math.sin(k * Math.PI) * 0.3 * c.u;
-          disco.scale.setScalar(0.6 * c.u);
+          disco.scale.setScalar(0.3 * c.u);
           disco.material.rotation = t * 20;
           if (Math.random() < 0.5) c.P.echar(disco.position, V(), new T.Color(0xffffff), 0.35 * c.u, 0.25);
           return k < 1;
