@@ -651,10 +651,15 @@ const dados: Mecanica = {
     };
   },
   quienes: e => (e.turnoDe ? [e.turnoDe] : []),
-  valida: (_e, _j, v) => v === "cumplio" || v === "paso",
+  // Pasar ya no es gratis (Elías, 27 nov, Maestro v1.72; sustituye 6A.14 5B y sigue v1.53): sin Drunk, decir que no
+  // resta el punto que valía; con Drunk, en vez de eso toma algo (lo que quiera, agua vale) y queda en 0. Gratis solo con comodín.
+  valida: (e, _j, v) => v === "cumplio" || v === "paso" || (v === "tomo" && !!e.cfg.drunk),
   puntuar(e) {
-    const j = e.turnoDe!, cumplio = e.respuestas[j] === "cumplio";
-    return { puntos: { [j]: cumplio ? 1 : 0 }, revelado: { jugador: j, cumplio } };
+    const j = e.turnoDe!, r = e.respuestas[j], cumplio = r === "cumplio";
+    // «paso» por un comodín (Pasa turno, Escudo o la suerte lo anuló) no resta: el comodín ya se pagó.
+    const conComodin = !!e.efectos?.usados.includes(j) && (e.cartaUsada?.carta === "turno" || e.cartaUsada?.carta === "escudo" || e.efectos?.suerte === "anula");
+    const p = cumplio ? 1 : r === "paso" && !conComodin ? -1 : 0;
+    return { puntos: { [j]: p }, revelado: { jugador: j, cumplio, resultado: cumplio ? "cumplio" : r === "tomo" ? "tomo" : conComodin ? "comodin" : "no" } };
   },
 };
 
@@ -1284,7 +1289,7 @@ function efectoComodin(e: EstadoPartida, idAccion: string, jugador: string, cart
       const pregunta = conVerdadReto(e) ? seleccionVR(e).pregunta : undefined;
       const otros = ids(e).filter(j => j !== jugador && j !== pregunta && !(e.eliminados ?? []).includes(j));
       // Retos de contacto: nunca pasan a otra persona ni a toda la mesa (consentimiento). «Toda la mesa» solo con la carta a la vista.
-      const contacto = !!e.carta && !!c.cartas.find(x => x.id === e.carta!.id)?.contacto;
+      const contacto = e.motor === "dados" || (!!e.carta && !!c.cartas.find(x => x.id === e.carta!.id)?.contacto);
       const cartaVisible = conVerdadReto(e) ? e.vr?.fuente === "app" && !!e.carta : !!e.carta;
       const posibles = SUERTES.filter(x => (x !== "pasa" || (otros.length > 0 && !contacto)) && (x !== "mesa" || (cartaVisible && !contacto)));
       const sale = azar.elegir(posibles);

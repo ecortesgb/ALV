@@ -1,6 +1,7 @@
 // La herramienta del jugador en su celular: una a la vez, según la mecánica de la ronda.
 // Su secreto solo se ve mientras mantiene el dedo (Escáner). Cada toque se confirma: «Enviado» y luego «La TV ya lo recibió».
 import { useEffect, useState } from "react";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { CARTAS_PODER } from "../../content/catalogo";
 import { MAX_PISTA } from "../../engine/partida";
 import { Boton, Chip, Escaner, Panel } from "../../ds";
@@ -22,7 +23,9 @@ const lista2 = (ns: string[]) => (ns.length <= 1 ? ns.join("") : ns.slice(0, -1)
 
 export interface MiVista { yo: string; mio: unknown; miRespuesta: unknown; miMano: string[];
   /** Comodines que sirven ahora mismo (los decide el motor). */ misComodines?: string[];
-  /** La partida en curso y si este celular puede usar la colección de la cuenta (no en el modo de un solo aparato). */ partida?: string; cuenta?: boolean }
+  /** La partida en curso y si quien tiene el teléfono puede usar la colección de su cuenta. */ partida?: string; cuenta?: boolean;
+  /** Otra cuenta que juega en este aparato: su sesión. Sin esto, la sesión del aparato. */ cliente?: SupabaseClient | null;
+  /** Lobby de un solo aparato: la sala espejo de la nube. */ espejo?: string | null }
 type Mandar = (tipo: "contestar" | "carta" | "pista", datos: Record<string, unknown>) => Promise<boolean>;
 
 /** Elegir a alguien: burbujas en anillo con el color de cada quien; un toque marca y el botón confirma. */
@@ -99,7 +102,10 @@ function HerramientaGeneral({ v, mi, miembros, mandar }: { v: Publico; mi: MiVis
           <p className="a-carta">{v.carta?.texto ?? "Sin carta para este nivel"}</p>
           {yaEnvie ? espera : v.efectos?.caminos ? null : <div className="a-pila">
             <Boton color="verde" texto="Lo cumplí" icono="star" onClick={() => void contestar("cumplio")} />
-            <Boton color="rojo" texto="No lo cumplí" sub="0 puntos" onClick={() => void contestar("paso")} />
+            {v.motor !== "dados" ? <Boton color="rojo" texto="No lo cumplí" sub="0 puntos" onClick={() => void contestar("paso")} />
+              // Dados HOT: decir que no ya no es gratis (Maestro v1.72). Con Drunk se toma algo; sin Drunk resta 1.
+              : v.drunk ? <Boton color="rojo" texto="Toma algo" sub="Lo que quieras · 0 puntos" onClick={() => void contestar("tomo")} />
+              : <Boton color="rojo" texto="No lo hago" sub="−1 punto" onClick={() => void contestar("paso")} />}
           </div>}
         </>
       ) : <><span className="a-kick">{instruccion(v)}</span><p className="a-carta">{v.carta?.texto}</p><p className="a-suave">Mira la pantalla y échale porras.</p></>;

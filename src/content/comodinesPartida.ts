@@ -19,9 +19,9 @@ export const EFECTO_EN_PARTIDA: Record<IdComodinPartida, string> = {
 
 export const COMODINES_PARTIDA = Object.keys(EFECTO_EN_PARTIDA) as IdComodinPartida[];
 
-/** Juegos donde ya se pueden usar: Verdad o reto y los juegos por turno con carta. Dados HOT no: ahí pasar ya es gratis
- * y sus retos son de contacto entre la pareja (la suerte no puede pasarlos a otra persona ni a toda la mesa). */
-export const MOTORES_CON_COMODINES: Motor[] = ["turnos-cartas", "botella", "ruleta"];
+/** Juegos donde ya se pueden usar: Verdad o reto, Dados HOT y los juegos por turno con carta. En Dados HOT todo es de
+ * contacto entre la pareja: la suerte nunca lo pasa a otra persona ni a toda la mesa. */
+export const MOTORES_CON_COMODINES: Motor[] = ["turnos-cartas", "botella", "ruleta", "dados"];
 
 /** Segundos que agrega la Prórroga. */
 export const PRORROGA_S = 30;

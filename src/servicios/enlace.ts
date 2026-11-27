@@ -473,7 +473,8 @@ export const enlace: Enlace = {
     await porSala(sala).cerrar(sala);
     if (espejo) await nube.cerrar({ id: espejo.id, codigo: espejo.codigo, modo: "mesa", anfitrionId: sala.anfitrionId });
     if (esLocal(sala.id)) modoLocal.terminar();
-    else await sostenidos.soltarTodos();
+    // Las sesiones que este aparato guardaba (en línea o en un solo aparato) se cierran con la sala.
+    await sostenidos.soltarTodos();
   },
   partida: sala => porSala(sala).partida(sala),
   historial: sala => porSala(sala).historial(sala),
@@ -502,7 +503,7 @@ export const enlace: Enlace = {
   lobbyAbierto: () => base.lobbyAbierto(),
   expulsar: async (sala, j) => {
     const ok = await porSala(sala).expulsar(sala, j);
-    if (ok && !esLocal(sala.id)) await sostenidos.soltar(j);
+    if (ok) await sostenidos.soltar(j);
     // 053: quitar a una cuenta del lobby local también la saca de la sala espejo (deja de ganar puntos aquí).
     const espejo = ok && esLocal(sala.id) && hayNube && UUID.test(j) ? modoLocal.espejo(sala) : null;
     if (espejo) await nube.expulsar({ id: espejo.id, codigo: espejo.codigo, modo: "mesa", anfitrionId: sala.anfitrionId }, j);

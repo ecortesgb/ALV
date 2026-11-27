@@ -29,6 +29,8 @@ export interface VistaPublica {
   /** Comodines de la colección (Maestro v1.72): si la partida los acepta y lo que dejaron en la ronda. */
   comodines?: boolean;
   efectos?: EstadoPartida["efectos"];
+  /** Dados HOT con Drunk: quien no quiere hacerlo toma algo en vez de perder el punto. */
+  drunk?: boolean;
   jugadores: { id: string; nombre: string }[];
   pausada: boolean;
   /** El impostor: pistas dichas en la ronda. */
@@ -98,6 +100,7 @@ export function vistaPublica(e: EstadoPartida): VistaPublica {
     cartaUsada: e.cartaUsada,
     ...(e.cfg.comodines ? { comodines: true } : {}),
     ...(e.efectos ? { efectos: e.efectos } : {}),
+    ...(e.motor === "dados" && e.cfg.drunk ? { drunk: true } : {}),
     jugadores: e.cfg.jugadores.map(j => ({ id: j.id, nombre: j.nombre })),
     pausada: !!e.pausada,
     pistas: { ...(e.pistas ?? {}) },

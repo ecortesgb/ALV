@@ -28,7 +28,6 @@ describe("configurador y arranque", () => {
     expect(armarArranque(gente(3), "verdad-reto", 8, 2, 1)!.cfg.comodines).toBe(true);
     expect(armarArranque(gente(3), "verdad-reto", 8, 2, 1, { comodines: false })!.cfg.comodines).toBeUndefined();
     expect(armarArranque(gente(3), "que-prefieres", 8, 2, 1)!.cfg.comodines).toBeUndefined();
-    expect(armarArranque(gente(4), "dados-hot", 8, 2, 1)!.cfg.comodines).toBeUndefined();
   });
   it("con los comodines apagados nadie puede usar uno", () => {
     let e = aCalificar(vr({ comodines: false }));
@@ -160,5 +159,39 @@ describe("filas de la base", () => {
     ];
     const e = reconstruir(filas, "j0")!;
     expect(e.accionesVistas).not.toContain("tarde-1234");
+  });
+});
+
+describe("Dados HOT (Maestro v1.72)", () => {
+  const parejas = gente(4);
+  function dados(drunk: boolean) {
+    const a = armarArranque(parejas, "dados-hot", 4, 4, 3, { modalidad: "parejas", ejes: { temperatura: 3, voltaje: 3, drunk } })!;
+    return crearPartida(JUEGOS.find(j => j.id === "dados-hot")!, a.cfg, a.semilla, CONTENIDO, a.rondas);
+  }
+  it("acepta comodines; decir que no resta 1 punto", () => {
+    let e = dados(false);
+    expect(e.cfg.comodines).toBe(true);
+    const t = e.turnoDe!;
+    expect(juega(e, { tipo: "contestar", jugador: t, valor: "tomo" }).respuestas[t]).toBeUndefined();
+    e = juega(e, { tipo: "contestar", jugador: t, valor: "paso" });
+    e = juega(e, { tipo: "revelar" });
+    expect(e.puntos[t]).toBe(-1);
+  });
+  it("con Drunk toma algo y queda en 0; con Pasa turno tampoco resta", () => {
+    let e = dados(true);
+    const t = e.turnoDe!;
+    e = juega(e, { tipo: "contestar", jugador: t, valor: "tomo" });
+    e = juega(e, { tipo: "revelar" });
+    expect(e.puntos[t]).toBe(0);
+    let f = dados(false);
+    f = usa(f, f.turnoDe!, "turno");
+    f = juega(f, { tipo: "revelar" });
+    expect(f.puntos[f.turnoDe!]).toBe(0);
+  });
+  it("la suerte nunca lo pasa a otra persona ni a toda la mesa", () => {
+    for (let i = 0; i < 30; i++) {
+      const e = usa(dados(false), "j0", "suerte", `dados-${i}-abcd`);
+      if (e.efectos?.suerte) expect(["pasa", "mesa"]).not.toContain(e.efectos.suerte);
+    }
   });
 });
