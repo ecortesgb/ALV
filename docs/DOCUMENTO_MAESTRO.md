@@ -1,6 +1,6 @@
 # ALV — Amigos Legendarios Verdaderos
 ## Documento Maestro del Producto
-**Versión:** 1.68  
+**Versión:** 1.69  
 **Última actualización:** 27 de noviembre de 2026  
 **Estado:** Documento vivo de producto; decisiones y propuestas identificadas por separado.
 
@@ -429,6 +429,7 @@ Primer juego físico, **«Palabra prohibida»** (resuelve C16): en la TV salen l
 Modo aparte donde los personajes entran a un cuarto para probar sus trajes, poderes y saltos, interactuar y divertirse sin reglas ni puntos. Se controla desde el celular (palanca, saltar, golpe y festejo) y se ve en la TV. Es la **cuarta tarjeta** de la pantalla Modos, junto a Local, En línea y Físico.
 - Estado: prototipo en una zona aparte del código, sin conectar a la app ni publicar.
 - **DECISIÓN (v1.66, Elías, 27 nov):** la tarjeta Modo libre abre por ahora el menú de los 5 Mini-Juegos (TV con sesión, celulares por QR, canal por Realtime de Supabase), con XP según 6A.6 F punto 6. El cuarto sin reglas queda para después dentro del mismo modo. Publicado el 27 nov.
+- **DECISIÓN (v1.69, Elías, 27 nov):** sustituye lo anterior. Los Mini-Juegos pasan al modo **ALV PARTY** (21.5). Modo libre vuelve a ser una sala de pruebas de los personajes para moverse, pelear y golpearse, sin puntos; se entra con un botón aparte en «Elige cómo jugar».
 
 ## 6A.7 Compatibilidad por juego
 
@@ -1532,6 +1533,21 @@ Fallas de la prueba real del 15 de noviembre y cómo las evita este diseño (su 
 
 **PENDIENTE (Fase 6), riesgos encontrados en el código:** `partidas.semilla` la puede leer cualquier miembro de la sala y, con el motor público, permite calcular el impostor y la palabra: debe pasar a un lugar que solo lea el anfitrión. ~~La cuenta del anfitrión puede leer todas las acciones antes de la revelación (aceptado para fiestas entre amigos; la Fase 5 puede mover el motor al servidor si hace falta).~~ **REEMPLAZADA (v1.39, Elías, 17 de noviembre):** el anfitrión no puede consultar acciones privadas de otros jugadores: ni semillas, ni roles ajenos, ni palabras ajenas, ni respuestas o votos antes de revelar, ni registros que permitan reconstruir secretos. Prevalece la decisión de privacidad P-07 sobre esta frase. Ver `ALV_SEGURIDAD_PARTIDA.md` §1. `Partida.tsx` llama a `vistaJugador` dentro de lo que dibuja la pantalla grande. `revelar` y `siguiente` hoy no se guardan en `acciones`.
 
+## 21.5 Flujo de modos: lobby primero — DECISIÓN (v1.69, Elías, 27 de noviembre)
+
+Sustituye la pantalla de cuatro modos (Local, En línea, Físico y Modo libre) del plan de modos del 22 de noviembre.
+1. **«¡Jugar!» entra directo al lobby.** Ahí se juntan todos, con su cuenta o con un personaje creado en el momento, y todos funcionan igual.
+2. **Después del lobby se elige el modo**, sin salir del lobby, y se puede cambiar entre partidas («Cambiar modo» en el configurador):
+   - **ALV FÍSICO:** para juegos en persona. Solo salen herramientas de complemento: cartas, dados, palabras, preguntas.
+   - **ALV PARTY (Competitivo):** los Mini-Juegos. Se elige categoría o juego en un selector giratorio, opciones y escenario. Cada quien juega en su aparato, con opción de proyectar a otra pantalla o verlo en el suyo. Da logros, XP y monedas.
+   - **ALV DESMADRE (En línea):** cada quien en su celular o tablet, viendo todo en su aparato, con opción de proyectar a otro aparato que muestre el juego a todos. Los aparatos se vuelven herramientas o mandos. Entre partidas se puede personalizar, configurar, comprar y ver logros.
+   - **Modo libre:** botón aparte; sala para probar movimientos de los personajes, pelear y golpearse, sin puntos.
+3. **Un solo aparato (antes «Local»):** celular, laptop o tablet compartido. En el lobby se agrega a alguien con su cuenta (usuario y contraseña) o se crea un personaje nuevo. Un personaje nuevo es una **cuenta rápida**: nombre genérico (Usuario1, Usuario2…) y **contraseña aleatoria por cuenta**, que se muestra una sola vez para que la persona entre después a ver lo que ganó y cambie su usuario y contraseña. Se descartó una contraseña igual para todas: cualquiera entraría a la cuenta de otro y quedaría escrita en el repositorio público. Los personajes rápidos salen del lobby cuando el administrador termina la sesión.
+4. Ilustraciones de Elías: `public/arte/modos/modo-alv-fisico.webp`, `modo-alv-party.webp` y `modo-alv-desmadre.webp` (628×936).
+- Estado (27 nov): base del flujo hecha (lobby directo, «Elige cómo jugar» con las tres tarjetas, «Cambiar modo», `alv-modo` = fisico | party | desmadre). ALV PARTY (`#/party/código`), ALV FÍSICO y un solo aparato con cuentas rápidas se construyen en hilos aparte; mientras, ALV PARTY abre el menú de Mini-Juegos y el lobby de un solo aparato sigue siendo el de Local.
+
+---
+
 # 22. Arquitectura técnica
 
 ## 22.1 Arquitectura técnica de ALV 2.0 — DECISIÓN (v1.23)
@@ -1801,6 +1817,9 @@ Decisiones del usuario del 12 de noviembre de 2026:
 
 ## v1.6
 - Primeros logros (14.2), con ámbito de sesión o histórico (ver DECISIÓN v1.6 en 14.2).
+
+## v1.69
+- 27 nov 2026. Flujo de modos con el lobby primero (21.5): «¡Jugar!» entra al lobby y después se elige ALV FÍSICO, ALV PARTY (Competitivo, los Mini-Juegos) o ALV DESMADRE (En línea); Modo libre vuelve a ser sala de pruebas sin puntos (6A.6 H); un solo aparato con cuentas propias o cuentas rápidas con contraseña aleatoria por cuenta. Decisión de Elías.
 
 ## v1.68
 - 27 nov 2026. Ideas revisadas de otros juegos de fiesta (6A.13): Elías marcó 22 ideas. Hechas sin publicar: sin repetir cartas entre noches, gráfica de votos en la TV, voto secreto en ¿Quién es más probable?, emotes al revelar y base despierta. Juegos nuevos con reglas pendientes; siete en PROPUESTA; cuatro descartadas, entre ellas el revoto en empate (sigue v1.57).

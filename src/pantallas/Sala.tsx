@@ -150,7 +150,7 @@ export function Sala({ codigo }: { codigo: string }) {
   const nRuleta = v?.ruleta?.n ?? 0;
   useEffect(() => { if (v?.ruleta && nRuleta > 0) aviso(`Ruleta: ${v.jugadores.find(j => j.id === v.ruleta!.jugador)?.nombre ?? ""} · ${v.ruleta.texto}`); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [nRuleta]);
 
-  if (s.error) return <AvisoCuarto titulo="No se pudo entrar" texto={s.error}><button type="button" className="lb-listo" onClick={() => ir("modos")}>Volver</button></AvisoCuarto>;
+  if (s.error) return <AvisoCuarto titulo="No se pudo entrar" texto={s.error}><button type="button" className="lb-listo" onClick={() => ir("inicio")}>Volver</button></AvisoCuarto>;
   if (s.cerrada) return <AvisoCuarto titulo="La sala se cerró" texto="El anfitrión terminó la sesión."><button type="button" className="lb-listo" onClick={() => ir("inicio")}>Ir al inicio</button></AvisoCuarto>;
   if (!s.sala) return <AvisoCuarto titulo="Entrando al lobby…" />;
   const sala = s.sala, pid = s.partida?.id ?? "";

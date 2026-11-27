@@ -1,14 +1,17 @@
-// «Modos de juego» (ALV_PLAN_MODOS_DE_JUEGO.md, aprobado 2026-11-22): lo primero que se ve al tocar «¡Jugar!».
-// Cuatro tarjetas: Local, En línea y Físico con las ilustraciones de Elías (marco dorado y título ya dibujados;
-// no se les pone texto encima), y Modo libre con un sustituto CSS hasta tener su ilustración.
-// Fondo, recursos y «Atrás» son los del HUB «La Azotea» y del Perfil.
-// En línea lleva al lobby (si hay uno abierto o ya estás en uno, directo). Modo libre abre el menú de Mini-Juegos.
+// «Elige cómo jugar» (decisión de Elías, 27 nov 2026; Maestro v1.67). «¡Jugar!» entra directo al lobby; ahí se juntan
+// todos (registrados o creados en el momento) y, al «Continuar», el administrador elige el modo aquí, sin salir del lobby:
+// ALV FÍSICO (herramientas para jugar en persona), ALV PARTY (Competitivo: Mini-Juegos) y ALV DESMADRE (En línea: cada quien
+// en su celular, con o sin Pantalla). El modo queda en sessionStorage «alv-modo» = fisico | party | desmadre y lo lee el
+// configurador. Modo libre (sala de pruebas de los personajes) va aparte, en el botón chico de abajo.
+// Las ilustraciones de Elías van tal cual (628×936, marco y título dibujados; no se les pone texto encima).
+// Sin código de sala (#/modos): entra al lobby como antes hacía «En línea».
 import { useEffect, useRef, useState, type CSSProperties } from "react";
-import { atras, ir } from "../../app/rutas";
+import { ir } from "../../app/rutas";
 import { useSesion } from "../../app/sesion";
-import { useLobby, useLobbyAbierto, usePuedeAbrir } from "../../app/lobby";
-import { enlace, modoLocal, type SalaV } from "../../servicios/enlace";
-import { figuraActiva, useCapsulas } from "../../app/figura3d";
+import { useLobby, useLobbyAbierto } from "../../app/lobby";
+import { hayNube } from "../../servicios/cliente";
+import { soyAdmin } from "../../servicios/admin";
+import { enlace, type SalaV } from "../../servicios/enlace";
 import { Marco, aviso, useAncho } from "../comun";
 import { useRecursos } from "../Recursos";
 import { RecursosAzotea } from "../azotea/Cabecera";
@@ -22,39 +25,73 @@ import "./modos.css";
 const BASE = import.meta.env.BASE_URL;
 const MENOS_MOV = typeof matchMedia !== "undefined" && matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-type IdModo = "local" | "en-linea" | "fisico" | "libre";
-interface Modo { id: IdModo; nombre: string; lema: string; listo: boolean; arte: boolean }
-const MODOS: Modo[] = [
-  { id: "local", nombre: "Local", lema: "Un solo teléfono, sin cuentas", listo: true, arte: true },
-  { id: "en-linea", nombre: "En línea", lema: "Cada quien en su celular", listo: true, arte: true },
-  { id: "fisico", nombre: "Juego físico", lema: "Retos en persona, el administrador da los puntos", listo: true, arte: true },
-  // Elías, 26 nov: los Mini-Juegos viven en Modo libre (abre su menú; la TV con sesión, los celulares con el QR).
-  { id: "libre", nombre: "Modo libre", lema: "Mini-Juegos de reflejos en la TV", listo: true, arte: true },
+export type IdModo = "fisico" | "party" | "desmadre";
+interface Modo { id: IdModo; nombre: string; lema: string; arte: string }
+export const MODOS: Modo[] = [
+  { id: "fisico", nombre: "ALV Físico", lema: "En persona: cartas, dados, palabras y preguntas", arte: "modo-alv-fisico" },
+  { id: "party", nombre: "ALV Party", lema: "Competitivo: Mini-Juegos de reflejos", arte: "modo-alv-party" },
+  { id: "desmadre", nombre: "ALV Desmadre", lema: "En línea: cada quien en su celular", arte: "modo-alv-desmadre" },
 ];
 
-export function ModosJuego() {
+/** Modo elegido para esta sala (lo deja la pantalla de modos). Por omisión, En línea. */
+export function modoElegido(): IdModo {
+  try { const m = sessionStorage.getItem("alv-modo"); return m === "fisico" || m === "party" ? m : "desmadre"; } catch { return "desmadre"; }
+}
+
+export function ModosJuego({ codigo }: { codigo?: string }) {
+  return codigo ? <ElegirModo codigo={codigo} /> : <EntrarLobby />;
+}
+
+/** Sin sala: «¡Jugar!» lleva directo al lobby. Si hay uno abierto o ya estás en uno, adentro; si no, el administrador lo abre. */
+function EntrarLobby() {
   const s = useSesion();
+  const momento = useMomentoAzotea();
+  const esc = escenarioActual();
+  const lobby = useLobby();
+  const info = useLobbyAbierto();
+  const [sala, setSala] = useState<SalaV | null | undefined>(undefined);
+  const [espero, setEspero] = useState(true);
+  const hecho = useRef(false);
+  useEffect(() => { let v = true; void enlace.miSala().then(x => { if (v) setSala(x); }); return () => { v = false; }; }, [s.uid]);
+  // El aviso del lobby abierto llega por la red: se le da un momento antes de concluir que no hay ninguno.
+  useEffect(() => { const t = setTimeout(() => setEspero(false), 1500); return () => clearTimeout(t); }, []);
+  useEffect(() => {
+    if (hecho.current || sala === undefined) return;
+    const destino = sala?.codigo ?? info?.codigo ?? lobby;
+    if (destino) { hecho.current = true; ir("sala", destino); return; }
+    if (espero) return;
+    hecho.current = true;
+    void (async () => {
+      const puede = hayNube ? await soyAdmin() : true;
+      if (!puede) { ir("jugar"); return; }
+      const r = await enlace.abrir("mesa");
+      if (typeof r === "string") { aviso(r); ir("inicio"); return; }
+      ir("sala", r.codigo);
+    })();
+  }, [sala, info, lobby, espero]);
+  return (
+    <Marco clase={`az mj m-${momento}`} fondo={<EscenarioFondo ambiente={esc.ambientes[momento]} momento={momento} velo={esc.velo} />}>
+      <p className="a-suave a-pulso mj-entrando" role="status">Entrando al lobby…</p>
+    </Marco>
+  );
+}
+
+/** Con sala: el administrador elige el modo y sigue a la configuración; «Atrás» regresa al lobby. */
+function ElegirModo({ codigo }: { codigo: string }) {
   const r = useRecursos();
   const ancho = useAncho();
   const momento = useMomentoAzotea();
   const esc = escenarioActual();
-  const [sala, setSala] = useState<SalaV | null>(null);
-  useEffect(() => { let v = true; void enlace.miSala().then(x => { if (v) setSala(x); }); return () => { v = false; }; }, [s.uid]);
-  const lobby = useLobby();
-  const info = useLobbyAbierto();
-  const puedeAbrir = usePuedeAbrir(s.uid);
-  const caps = useCapsulas(s.uid);
-  const localAbierto = modoLocal.abierto();
   const [elegido, setElegido] = useState<IdModo | null>(null);
-  const [actual, setActual] = useState(1);
+  const [actual, setActual] = useState(() => MODOS.findIndex(m => m.id === modoElegido()));
   const pista = useRef<HTMLDivElement>(null);
 
-  // Celular: el carrusel arranca centrado en «En línea».
+  // Celular: el carrusel arranca centrado en el modo que ya tenía la sala (o En línea).
   useEffect(() => {
     if (ancho) return;
-    const el = pista.current?.children[1] as HTMLElement | undefined;
+    const el = pista.current?.children[actual] as HTMLElement | undefined;
     el?.scrollIntoView({ inline: "center", block: "nearest", behavior: "instant" as ScrollBehavior });
-  }, [ancho]);
+  }, [ancho]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Cuál tarjeta está al centro del carrusel (para los puntos).
   useEffect(() => {
@@ -71,27 +108,15 @@ export function ModosJuego() {
     return () => { el.removeEventListener("scroll", f); cancelAnimationFrame(pend); };
   }, [ancho]);
 
-  // En línea y Físico entran directo al mismo lobby (Elías, 22 nov): si hay uno, adentro; si no, el administrador lo abre
-  // y los demás esperan en el lobby vacío hasta que él llegue. Nada de códigos.
-  const destinoLinea = sala?.codigo ?? info?.codigo ?? lobby;
   const entrar = (m: Modo) => {
     if (elegido) return;
-    if (!m.listo) { aviso(`${m.nombre}: muy pronto.`); return; }
     setElegido(m.id);
     try { sessionStorage.setItem("alv-modo", m.id); } catch { /* sin almacenamiento */ }
-    const ir2 = async () => {
-      if (m.id === "libre") { location.assign(`${BASE}tools/personajes/minijuegos/`); return; }
-      // Local: este teléfono abre (o retoma) su lobby; dura hasta «Terminar sesión».
-      if (m.id === "local") { const sl = modoLocal.abrir({ id: s.uid, nombre: s.nombre, figura: figuraActiva(caps) }); ir("sala", sl.codigo); return; }
-      if (destinoLinea) { ir("sala", destinoLinea); return; }
-      if (puedeAbrir) {
-        const r = await enlace.abrir("mesa");
-        if (typeof r === "string") { aviso(r); setElegido(null); return; }
-        ir("sala", r.codigo); return;
-      }
-      ir("jugar");
+    const seguir = () => {
+      // ALV Party tiene su propio configurador de Mini-Juegos en #/party/código.
+      ir(m.id === "party" ? "party" : "configurar", codigo);
     };
-    if (MENOS_MOV) void ir2(); else setTimeout(() => void ir2(), 420);
+    if (MENOS_MOV) seguir(); else setTimeout(seguir, 420);
   };
   const irA = (i: number) => (pista.current?.children[i] as HTMLElement | undefined)?.scrollIntoView({ inline: "center", block: "nearest", behavior: MENOS_MOV ? "instant" as ScrollBehavior : "smooth" });
 
@@ -99,35 +124,37 @@ export function ModosJuego() {
     <Marco clase={`az mj m-${momento}`} fondo={<EscenarioFondo ambiente={esc.ambientes[momento]} momento={momento} velo={esc.velo} />}>
       <div className={"mj-caja" + (elegido ? " eligiendo" : "")}>
         <header className="mj-top">
-          <button type="button" className="pf-atras" onClick={atras}><span aria-hidden="true">◀</span>Atrás</button>
+          <button type="button" className="pf-atras" onClick={() => ir("sala", codigo)}><span aria-hidden="true">◀</span>Lobby</button>
           <RecursosAzotea monedas={r.monedas} puntos={r.puntos} />
         </header>
 
         <h1 className="mj-titulo"><span>Elige cómo jugar</span></h1>
 
         <div ref={pista} className="mj-pista" role="list">
-          {MODOS.map((m, i) => {
-            const n = info?.miembros;
-            const marca = m.id === "libre" ? null : m.id === "local" ? (localAbierto ? "Sesión local abierta" : null) : sala ? "Estás en el lobby" : destinoLinea ? (n ? `${n} en el lobby` : "Lobby abierto") : "Lobby vacío";
-            return (
-              <div key={m.id} role="listitem" className="mj-hueco" style={{ "--i": i } as CSSProperties}>
-                <button type="button" className={"mj-carta" + (elegido === m.id ? " elegida" : "") + (m.listo ? "" : " pronto")}
-                  onClick={() => (ancho || actual === i ? entrar(m) : irA(i))}
-                  aria-label={`${m.nombre}. ${m.lema}.${marca ? ` ${marca}.` : ""}${m.listo ? "" : " Próximamente."}`}>
-                  <span className="mj-brillo" aria-hidden="true" />
-                  {m.arte ? <img src={`${BASE}arte/modos/modo-${m.id}.webp`} alt="" draggable={false} width={628} height={1024} />
-                    : <span className="mj-sustituto" aria-hidden="true"><span>{m.nombre}</span></span>}
-                  {marca && <span className={"mj-marca" + (destinoLinea || m.id === "local" ? "" : " vacio")}><i />{marca}</span>}
-                  {!m.listo && <span className="mj-pronto">Próximamente</span>}
-                </button>
-                <p className="mj-lema">{m.lema}</p>
-              </div>
-            );
-          })}
+          {MODOS.map((m, i) => (
+            <div key={m.id} role="listitem" className="mj-hueco" style={{ "--i": i } as CSSProperties}>
+              <button type="button" className={"mj-carta" + (elegido === m.id ? " elegida" : "")}
+                onClick={() => (ancho || actual === i ? entrar(m) : irA(i))} aria-label={`${m.nombre}. ${m.lema}.`}>
+                <span className="mj-brillo" aria-hidden="true" />
+                <img src={`${BASE}arte/modos/${m.arte}.webp`} alt="" draggable={false} width={628} height={936} />
+              </button>
+              <p className="mj-lema">{m.lema}</p>
+            </div>
+          ))}
         </div>
 
         {!ancho && <div className="mj-puntos" aria-hidden="true">{MODOS.map((m, i) => <button key={m.id} type="button" tabIndex={-1} className={i === actual ? "si" : ""} onClick={() => irA(i)} />)}</div>}
+
+        <button type="button" className="mj-libre" onClick={() => location.assign(`${BASE}tools/personajes/minijuegos/tv-cuarto.html`)}>
+          Modo libre: prueba a los personajes, sin puntos
+        </button>
       </div>
     </Marco>
   );
+}
+
+/** #/party/código provisional: hasta que llegue el configurador de ALV Party, abre el menú actual de Mini-Juegos. */
+export function PartyProvisional({ codigo: _codigo }: { codigo: string }) {
+  useEffect(() => { location.assign(`${BASE}tools/personajes/minijuegos/`); }, []);
+  return null;
 }
