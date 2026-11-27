@@ -1,4 +1,4 @@
--- 053 · Logros de ALV PARTY (Competitivo; Elías, 27 nov 2026: «cada minijuego también puede dar logros, experiencia y monedas»).
+-- 055 · Logros de ALV PARTY (Competitivo; Elías, 27 nov 2026: «cada minijuego también puede dar logros, experiencia y monedas»).
 -- NO APLICADA. Se aplica solo con el ok de Elías.
 -- XP y monedas ya las da terminar_partida_sala (049) y los resultados se guardan en resultados_partida (040), así que los
 -- logros generales (Primeros pasos, Polifacético, objetivos del día…) ya cuentan los minijuegos. Esta migración agrega
@@ -56,7 +56,7 @@ language sql stable security definer set search_path = '' as $$
     ('leyenda-local',    (select n from nivel)),
     ('alv-legendario',   (select n from nivel)),
     ('constante',        (select count(*) from public.objetivos_jugador j where j.jugador = p_jugador)),
-    -- 053: ALV PARTY.
+    -- 055: ALV PARTY.
     ('pistolero',        (select count(*) from gano where juego = 'mj-desenfunda')),
     ('a-prueba-de-balas', (select count(*) from gano where juego = 'mj-bala')),
     ('mano-de-piedra',   (select count(*) from gano where juego = 'mj-martillazo')),

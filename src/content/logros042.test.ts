@@ -26,8 +26,8 @@ describe("catálogo de logros = migraciones 042, 041 y 043", () => {
     expect(claves).toEqual(LOGROS_ETAPA1.filter(l => l.orden > 300 && l.orden < 440).map(l => l.clave));
     for (const l of LOGROS_ETAPA1.filter(x => x.oculto)) expect(b).toContain(`'${l.nombre}'`);
   });
-  it("los 6 de ALV PARTY son los de la 053 y su progreso cuenta los 5 minijuegos", () => {
-    const sql = readFileSync(join(__dirname, "../../supabase/migrations/053_logros_party.sql"), "utf8");
+  it("los 6 de ALV PARTY son los de la 055 y su progreso cuenta los 5 minijuegos", () => {
+    const sql = readFileSync(join(__dirname, "../../supabase/migrations/055_logros_party.sql"), "utf8");
     const i = sql.indexOf("insert into public.logros ("), b = sql.slice(i, sql.indexOf(";", i));
     const f = [...b.matchAll(/\(\s*'([a-z0-9-]+)',\s*'([a-z]+)',\s*(null|'[a-z0-9-]+'),\s*'([a-z]+)',\s*'([^']+)',\s*'([^']+)',\s*(\d+),\s*'([^']+)',\s*(\d+)\)/g)]
       .map(m => ({ clave: m[1], categoria: m[2], juego: m[3] === "null" ? null : m[3]!.slice(1, -1), rareza: m[4], nombre: m[5], descripcion: m[6], meta: Number(m[7]), recompensa: m[8], orden: Number(m[9]) }));
