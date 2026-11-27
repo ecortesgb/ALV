@@ -4,6 +4,7 @@
 import { RAREZA, type Rareza } from "./rarezas";
 
 export type IdSobre = "basico" | "accesorios" | "comodines" | "mixto" | "epico";
+export const DORSO_SOBRE = "sobre-dorso-alv.webp";
 /** Rarezas que salen en sobres de piezas (lo común ya es libre en el personalizador). */
 export type RarezaSobre = Exclude<Rareza, "comun">;
 
@@ -48,14 +49,37 @@ export const sobrePorId = (id: string) => SOBRES.find(s => s.id === id) ?? null;
 export const GARANTIA = { epica: 8, legendaria: 25 } as const;
 
 // ---------- Comodines ----------
-export interface ComodinTienda { id: string; nombre: string; efecto: string; especial: boolean; icono: string; arte?: string; porConfirmar?: boolean }
+export interface ComodinTienda { id: string; nombre: string; efecto: string; especial: boolean; icono: string; arte?: string; trampa?: boolean; reposicion: number }
 /** Comodines a la venta (Maestro v1.49: solo los de efecto definido en 6A.4). Ids iguales a CARTAS_PODER de catalogo.ts.
  *  Escudo y los especiales entran cuando Elías los confirme; mientras, el sobre de comodines trae solo básicos. */
 export const COMODINES: ComodinTienda[] = [
-  { id: "turno", nombre: "Pasa turno", efecto: "Tu turno pasa al siguiente jugador.", especial: false, icono: "⏭️", arte: "carta-pasa-turno.webp" },
-  { id: "cambio", nombre: "Cambio de pregunta", efecto: "Cambia la carta que te tocó por otra.", especial: false, icono: "🔄", arte: "carta-cambio-pregunta.webp" },
+  { id: "turno", nombre: "Pasa turno", efecto: "Tu turno pasa al siguiente jugador.", especial: false, icono: "⏭️", arte: "carta-pasa-turno.webp", reposicion: 65 },
+  { id: "cambio", nombre: "Cambio de pregunta", efecto: "Cambia la carta que te tocó por otra.", especial: false, icono: "🔄", arte: "carta-cambio-pregunta.webp", reposicion: 75 },
 ];
-export const comodinPorId = (id: string) => COMODINES.find(c => c.id === id) ?? null;
+
+const cartaEnPreparacion = (id: string, nombre: string, efecto: string, icono: string, reposicion: number, familia: "normal" | "especial" | "trampa" = "normal"): ComodinTienda =>
+  ({ id, nombre, efecto, icono, reposicion, especial: familia !== "normal", trampa: familia === "trampa", arte: "carta-" + id + ".webp" });
+
+/** Visibles en la colección. El sorteo usa únicamente el catálogo activo. */
+export const COMODINES_EN_PREPARACION = [
+  cartaEnPreparacion("escudo", "Escudo", "Cancela un castigo que ya te asignaron.", "🛡️", 85),
+  cartaEnPreparacion("salvavidas", "Salvavidas", "Cancela el castigo de otra persona o líbrala de ser mesero.", "◉", 95, "especial"),
+  cartaEnPreparacion("relevo", "Relevo", "Elige a otra persona para que cumpla tu castigo.", "⇢", 100, "especial"),
+  cartaEnPreparacion("doble-castigo", "Doble castigo", "El siguiente castigo compatible de la persona que elijas se cumple dos veces.", "×2", 115, "trampa"),
+  cartaEnPreparacion("mesero", "Cambio de mesero", "Pasa el delantal de mesero a otra persona.", "♢", 85, "especial"),
+  cartaEnPreparacion("suerte", "¿Voy a tener suerte?", "Al azar, tu reto o castigo se suaviza, se duplica, se anula, pasa a otra persona o lo cumple toda la mesa.", "✦", 130, "especial"),
+  cartaEnPreparacion("prorroga", "Prórroga", "Añade tiempo a tu reto antes de que venza el reloj.", "⌛", 65),
+  cartaEnPreparacion("segundo-intento", "Segundo intento", "Repite una vez un reto compatible antes de registrar el fallo.", "↶", 75),
+  cartaEnPreparacion("rebaja", "Rebaja", "Reduce a la mitad el tiempo o las repeticiones de tu reto o castigo.", "½", 80),
+  cartaEnPreparacion("dos-caminos", "Dos caminos", "La app te muestra dos retos compatibles. Elige cuál cumplir.", "⑂", 95, "especial"),
+  cartaEnPreparacion("mano-amiga", "Mano amiga", "Invita a otra persona a ayudarte en un reto que admita parejas.", "✦", 90, "especial"),
+  cartaEnPreparacion("rebote", "Rebote", "Devuelve una carta dirigida contra ti si su efecto admite ese objetivo.", "↪", 120, "trampa"),
+  cartaEnPreparacion("contrarreloj", "Contrarreloj", "Reduce el tiempo del próximo reto compatible de la persona que elijas.", "◷", 95, "trampa"),
+  cartaEnPreparacion("candado", "Candado", "Bloquea el próximo comodín dirigido contra ti durante esta ronda.", "🔒", 105, "trampa"),
+  cartaEnPreparacion("pista-extra", "Pista extra", "Revela una pista de tu pregunta si hay una disponible.", "⌕", 65),
+  cartaEnPreparacion("duelo-dados", "Duelo de dados", "Reta a otra persona a tirar los dados. Quien pierda cumple el reto que mostró la app.", "⚄", 110, "especial"),
+];
+export const comodinPorId = (id: string) => COMODINES.find(c => c.id === id) ?? COMODINES_EN_PREPARACION.find(c => c.id === id) ?? null;
 /** Probabilidad de que un comodín salga especial (0 mientras no haya especiales a la venta). */
 export const PESO_ESPECIAL = 0;
 /** Máximo por tipo; si ya lo tienes, esa carta se cambia por monedas. */

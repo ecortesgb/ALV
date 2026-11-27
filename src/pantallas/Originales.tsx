@@ -21,7 +21,7 @@ export type PaginaCatalogo = "original" | "originales" | `${Donde}:${string}`;
 
 type Traje = { id: string; nombre: string; mini: string; figura: FiguraV2 };
 let cargados: Map<string, Traje> | null = null;
-function useTrajes() {
+export function useTrajes() {
   const [t, setT] = useState(cargados);
   useEffect(() => {
     if (t) return;

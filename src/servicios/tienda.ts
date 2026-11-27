@@ -5,7 +5,7 @@ import { useSyncExternalStore } from "react";
 import { escribirCapsulas, leerCapsulas } from "../app/figura3d";
 import { ponerPieza } from "../app/equiparPieza";
 import { sesionAhora } from "../app/sesion";
-import { MONEDAS_DEMO, sobrePorId } from "../content/tienda";
+import { COMODINES, MONEDAS_DEMO, sobrePorId } from "../content/tienda";
 import { crearAzar } from "../engine/azar";
 import { RACHA_CERO, abrirSobre, type Apertura, type Carta, type Racha } from "../engine/sobresTienda";
 import { cliente, hayNube } from "./cliente";
@@ -16,10 +16,11 @@ export interface EstadoTienda {
   demo: boolean;
   monedas: number;
   comodines: Record<string, number>;
+  preciosReposicion: Record<string, number>;
   racha: Racha;
   /** Piezas ganadas que todavía no se ven en la colección (punto azul). */ nuevas: Set<string>;
 }
-let estado: EstadoTienda = { activa: !hayNube, demo: !hayNube, monedas: 0, comodines: {}, racha: RACHA_CERO, nuevas: new Set() };
+let estado: EstadoTienda = { activa: !hayNube, demo: !hayNube, monedas: 0, comodines: {}, preciosReposicion: {}, racha: RACHA_CERO, nuevas: new Set() };
 const oyentes = new Set<() => void>();
 const fijar = (e: Partial<EstadoTienda>) => { estado = { ...estado, ...e }; oyentes.forEach(f => f()); };
 export const useTienda = () => useSyncExternalStore(f => { oyentes.add(f); return () => oyentes.delete(f); }, () => estado);
@@ -40,16 +41,51 @@ const desdeDemo = (d: Demo): Partial<EstadoTienda> => ({ monedas: d.monedas, com
 /** Lee el saldo y lo ganado. Llamar al abrir la tienda. */
 export async function cargarTienda(): Promise<void> {
   await cargarPiezas();
-  if (!hayNube) { fijar({ activa: true, demo: true, ...desdeDemo(leerDemo(sesionAhora().uid)) }); return; }
+  if (!hayNube) {
+    fijar({ activa: true, demo: true, preciosReposicion: Object.fromEntries(COMODINES.map(c => [c.id, c.reposicion])), ...desdeDemo(leerDemo(sesionAhora().uid)) });
+    return;
+  }
   try {
     const { data, error } = await cliente!.rpc("estado_tienda");
-    if (error) { fijar({ activa: false, demo: false }); return; } // sin la 036: la tienda sigue cerrada
+    if (error) { fijar({ activa: false, demo: false, preciosReposicion: {} }); return; }
     const fila = (data as { monedas: number; sin_epica: number; sin_legendaria: number; comodines: Record<string, number> }[] | null)?.[0];
     fijar({
       activa: true, demo: false, monedas: fila?.monedas ?? 0, comodines: fila?.comodines ?? {},
       racha: { sinEpica: fila?.sin_epica ?? 0, sinLegendaria: fila?.sin_legendaria ?? 0 },
     });
-  } catch (e) { console.error("cargarTienda", e); fijar({ activa: false, demo: false }); }
+    const { data: precios } = await cliente!.from("comodines_tienda").select().eq("activo", true);
+    fijar({ preciosReposicion: Object.fromEntries((precios ?? []).flatMap(c =>
+      typeof c.precio_reposicion === "number" ? [[c.id, c.precio_reposicion]] : [])) });
+  } catch (e) { console.error("cargarTienda", e); fijar({ activa: false, demo: false, preciosReposicion: {} }); }
+}
+
+export async function reponerComodin(id: string): Promise<string | null> {
+  const precio = estado.preciosReposicion[id];
+  if (!precio) return "Esta carta todavía no está disponible.";
+  if (estado.demo) {
+    const uid = sesionAhora().uid, d = leerDemo(uid);
+    if (d.comodines[id] === undefined) return "Primero consigue la carta en un sobre.";
+    if (d.comodines[id] !== 0) return "Todavía tienes copias de esta carta.";
+    if (d.monedas < precio) return `Te faltan ${precio - d.monedas} monedas.`;
+    const nuevo = { ...d, monedas: d.monedas - precio, comodines: { ...d.comodines, [id]: 1 } };
+    escribirDemo(uid, nuevo);
+    fijar(desdeDemo(nuevo));
+    return null;
+  }
+  const pedido = crypto.randomUUID();
+  const parametros = { p_comodin: id, p_pedido: pedido };
+  let r = await cliente!.rpc("reponer_comodin", parametros);
+  if (r.error && /fetch|network|failed/i.test(r.error.message)) r = await cliente!.rpc("reponer_comodin", parametros);
+  if (r.error) {
+    const m = r.error.message;
+    if (m.includes("saldo")) return "No te alcanzan las monedas.";
+    if (m.includes("copias")) return "Todavía tienes copias de esta carta.";
+    if (m.includes("sobre")) return "Primero consigue la carta en un sobre.";
+    return "No se pudo reponer la carta. Intenta otra vez.";
+  }
+  const d = r.data as { monedas: number; cantidad: number };
+  fijar({ monedas: d.monedas, comodines: { ...estado.comodines, [id]: d.cantidad } });
+  return null;
 }
 
 /** Nube: el servidor cobra, tira y entrega (abrir_sobre de la 036). Un reintento con el mismo pedido no cobra dos veces. */
