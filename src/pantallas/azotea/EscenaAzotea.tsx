@@ -31,8 +31,9 @@ function primeraVez(): boolean {
 
 export const EscenaAzotea = forwardRef<MandoAzotea, { id: string; figura: FiguraV2 | null; ambiente: Ambiente; plataforma: ColoresPlataforma; className?: string;
   /** false: nunca hace la entrada (el Perfil no la repite). */ llegada?: boolean;
-  /** Contexto con vida automática (perfiles.ts), p. ej. «hub». Sin él, la figura se mueve como siempre. */ vida?: Contexto }>(
-  function EscenaAzotea({ id, figura, ambiente, plataforma, className, llegada = true, vida }, mando) {
+  /** Contexto con vida automática (perfiles.ts), p. ej. «hub». Sin él, la figura se mueve como siempre. */ vida?: Contexto;
+  /** Toque sin arrastrar (coordenadas de la ventana): abre la rueda de gestos. Sin él, la figura saluda como antes. */ onToque?: (x: number, y: number) => void }>(
+  function EscenaAzotea({ id, figura, ambiente, plataforma, className, llegada = true, vida, onToque }, mando) {
     const ref = useRef<HTMLIFrameElement>(null);
     const [listo, setListo] = useState(false);
     const listoRef = useRef(false);
@@ -98,7 +99,10 @@ export const EscenaAzotea = forwardRef<MandoAzotea, { id: string; figura: Figura
       return () => { clearTimeout(t); removeEventListener("resize", f); ro?.disconnect(); };
     }, [anclaje]);
 
-    // Girar la figura arrastrando (ratón o dedo); al soltar sigue girando con inercia. Un toque sin arrastrar la hace saludar.
+    // Girar la figura arrastrando (ratón o dedo); al soltar sigue girando con inercia. Un toque sin arrastrar abre la
+    // rueda de gestos (onToque) o, si no hay rueda, la hace saludar.
+    const toque = useRef(onToque);
+    toque.current = onToque;
     const gesto = useRef<{ x: number; t: number; v: number; total: number; id: number } | null>(null);
     const arrastre = {
       onPointerDown: (e: React.PointerEvent<HTMLDivElement>) => {
@@ -112,9 +116,9 @@ export const EscenaAzotea = forwardRef<MandoAzotea, { id: string; figura: Figura
         enviar({ tipo: "girar", cuanto });
         g.v = cuanto / Math.max(0.008, (ahora - g.t) / 1000); g.x = e.clientX; g.t = ahora; g.total += Math.abs(dx);
       },
-      onPointerUp: () => {
+      onPointerUp: (e: React.PointerEvent<HTMLDivElement>) => {
         const g = gesto.current; gesto.current = null; if (!g) return;
-        if (g.total < 6) { enviar({ tipo: "accion", cual: "saludar" }); return; }
+        if (g.total < 6) { if (toque.current) toque.current(e.clientX, e.clientY); else enviar({ tipo: "accion", cual: "saludar" }); return; }
         if (performance.now() - g.t < 90) enviar({ tipo: "impulso", vel: g.v });
       },
       onPointerCancel: () => { gesto.current = null; },
