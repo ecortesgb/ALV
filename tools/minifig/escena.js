@@ -1515,6 +1515,7 @@
       const base = new URL("../personajes/", location.href).href;
       const js = src => new Promise((ok, mal) => { const s = document.createElement("script"); s.src = src; s.onload = ok; s.onerror = () => mal(new Error("no cargó " + src)); document.head.appendChild(s); });
       V3.cargando = js("https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js")
+        .then(() => js("https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/libs/meshopt_decoder.js").catch(() => {})) // modelos comprimidos (meshopt); sin él, los normales igual cargan
         .then(() => js("https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/utils/SkeletonUtils.js"))
         .then(() => js(base + "logicas.js")).then(() => js(base + "motor-personajes.js"))
         .then(() => js(base + "efectos.js").catch(() => {})) // poderes: sin efectos, el movimiento igual se ve
