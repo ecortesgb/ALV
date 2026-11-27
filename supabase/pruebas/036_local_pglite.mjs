@@ -211,4 +211,52 @@ if (process.argv.includes("--reposicion")) {
   });
 }
 
+if (process.argv.includes("--personajes")) {
+  await admin();
+  await db.exec(`create function public.puedo_ver_personajes() returns boolean
+    language sql stable as $$ select auth.uid() in ('${A}', '${B}') $$;`);
+  await db.exec(readFileSync(join(MIG, "051_tienda_personajes.sql"), "utf8"));
+  const comprarPj = async (modo, objetivo, precio, id = pedido()) =>
+    (await uno("select public.comprar_personajes($1,$2,$3,$4) r", [modo, objetivo, precio, id])).r;
+  const estadoPj = async () => (await uno("select public.estado_personajes_tienda() r")).r;
+
+  await prueba("051: solo sortea personajes de la saga, sin duplicados y cobra una vez", async () => {
+    await admin();
+    await db.query("insert into public.movimientos_monedas(jugador,cantidad,motivo) values ($1,1800,'prueba-personajes')", [A]);
+    await como(A);
+    const saldo = await monedas(), id = pedido();
+    const { catalogo } = await estadoPj();
+    const idsDc = new Set(catalogo.filter(x => x.saga === "dc").map(x => x.id));
+    const primero = await comprarPj("sobre", "dc", 240, id);
+    igual(primero.monedas, saldo - 240);
+    igual(new Set(primero.cartas.map(x => x.id)).size, 3);
+    cierto(primero.cartas.every(c => idsDc.has(c.id)), "todos de DC");
+    igual(await comprarPj("sobre", "dc", 240, id), primero);
+    const segundo = await comprarPj("sobre", "dc", 240);
+    cierto(segundo.cartas.every(c => !primero.cartas.some(x => x.id === c.id)), "ninguna carta repetida");
+  });
+
+  await prueba("051: el precio directo distingue legendarios y Bigfig", async () => {
+    await como(A);
+    const saldo = await monedas();
+    await falla("select public.comprar_personajes($1,$2,$3,$4)", ["carta","hulkbuster",520,pedido()], "precio cambió");
+    const compra = await comprarPj("carta", "hulkbuster", 560);
+    igual(compra.cartas, [{ id: "hulkbuster", tipo: "personaje", rareza: "legendaria" }]);
+    igual(compra.monedas, saldo - 560);
+    await falla("select public.comprar_personajes($1,$2,$3,$4)", ["carta","hulkbuster",560,pedido()], "disponibles");
+  });
+
+  await prueba("051: saga con una carta cobra 80, inventario por cuenta y acceso registrado", async () => {
+    await admin();
+    await db.query("insert into public.movimientos_monedas(jugador,cantidad,motivo) values ($1,300,'prueba-personajes')", [B]);
+    await como(B);
+    igual((await estadoPj()).personajes, []);
+    await falla("select public.comprar_personajes($1,$2,$3,$4)", ["sobre","harry-potter",240,pedido()], "precio cambió");
+    igual((await comprarPj("sobre", "harry-potter", 80)).cartas.map(c => c.id), ["voldemort"]);
+    await como(C);
+    igual(await estadoPj(), null);
+    await falla("select public.comprar_personajes($1,$2,$3,$4)", ["sobre","marvel",240,pedido()], "sin acceso");
+  });
+}
+
 process.exit(mal ? 1 : 0);

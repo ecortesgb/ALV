@@ -1,0 +1,19 @@
+.t-album-sagas button:has(img), .t-album-grupos button:has(img) { display: grid; place-items: center; min-width: 62px; height: 46px; }
+.t-album-sagas button img, .t-album-grupos button img { display: block; width: auto; height: 28px; max-width: 94px; object-fit: contain; }
+.D.alv .t-album-sagas button:has(img)[aria-pressed="true"],
+.D.alv .t-album-grupos button:has(img)[aria-pressed="true"] {
+  background: #35294b;
+  border-color: #ffe3a5;
+  box-shadow: inset 0 0 0 1px #d6b96d60;
+}
+@media (max-width: 520px) {
+  .t-album-sagas, .t-album-grupos { flex-wrap: nowrap; overflow-x: auto; padding: 2px; }
+  .D.alv .t-album-sagas button, .D.alv .t-album-grupos button {
+    flex: 1 0 48px;
+    min-width: 48px;
+    padding-inline: 5px;
+  }
+  .t-album-sagas button img, .t-album-grupos button img { max-width: min(100%, 76px); height: 25px; }
+  .D.alv .t-album-grupos button:not(:has(img)) { font-size: 12px; }
+}
+

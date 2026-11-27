@@ -1,0 +1,182 @@
+/* Carta de personaje: se usa en el álbum, la apertura y el personalizador. */
+.t-carta-personaje.t-carta {
+  --metal: #b78bd1;
+  --borde: #614176;
+  --tinta: #170d24;
+  --cabecera: #362047;
+  --escena: radial-gradient(ellipse at 50% 64%, #8d5ba3, #21132e 76%);
+  display: grid;
+  grid-template-rows: 16% minmax(0, 1fr) 24%;
+  gap: 2px;
+  isolation: isolate;
+  padding: 4px;
+  container-type: inline-size;
+  border: 1px solid var(--metal);
+  border-radius: 11px;
+  background: linear-gradient(135deg, var(--metal), var(--borde) 24%, var(--tinta) 54%, var(--metal));
+  box-shadow: 0 5px 12px #0009;
+}
+
+.t-carta-personaje[data-tema="avengers"], .t-carta-personaje[data-tema="marvel"] {
+  --metal: #f3ae89;
+  --borde: #ad292c;
+  --tinta: #230b13;
+  --cabecera: #590e18;
+  --escena: radial-gradient(circle at center, #ffcfb471 0 .65px, transparent 1px) 0 0 / 5px 5px,
+    conic-gradient(from 0deg at 50% 78%, #f0634959 7deg, #6413219e 9deg 27deg, #f063493d 30deg 38deg, #2f0b19af 42deg 64deg, #ffbc6673 66deg 71deg, #96152690 74deg 90deg),
+    radial-gradient(ellipse at 50% 72%, #e96248, #310c1a 78%);
+}
+
+.t-carta-personaje[data-tema="x-men"], .t-carta-personaje[data-tema="wolverine"] {
+  --metal: #ffd65c;
+  --borde: #93522c;
+  --tinta: #25122c;
+  --cabecera: #401b27;
+  --escena: linear-gradient(47deg, transparent 44%, #ffb74742 44% 54%, transparent 54%),
+    linear-gradient(-47deg, transparent 44%, #ffb74742 44% 54%, transparent 54%),
+    repeating-linear-gradient(155deg, #1f111a00 0 6px, #1f111a30 6px 7px),
+    radial-gradient(ellipse at 50% 57%, #e2a440, #522142 78%);
+}
+
+.t-carta-personaje[data-tema="dc"], .t-carta-personaje[data-tema="batman"], .t-carta-personaje[data-tema="liga-justicia"] {
+  --metal: #9bc6e1;
+  --borde: #3b5470;
+  --tinta: #090e1a;
+  --cabecera: #152339;
+  --escena: conic-gradient(from 331deg at 48% 97%, #afd6f45c 0deg 24deg, transparent 25deg),
+    repeating-linear-gradient(90deg, #1015274d 0 4%, transparent 4% 12%),
+    linear-gradient(#090d1c, #3c5875 77%, #141b2b);
+}
+.t-carta-personaje[data-tema="batman"] { --metal: #d4b45c; }
+
+.t-carta-personaje[data-tema="star-wars"] {
+  --metal: #a4d8f8;
+  --borde: #36557a;
+  --tinta: #050c18;
+  --cabecera: #132640;
+  --escena: radial-gradient(circle at 21% 26%, #fff 0 1px, transparent 2px),
+    radial-gradient(circle at 72% 35%, #d5ebff 0 1px, transparent 2px),
+    radial-gradient(circle at 63% 62%, #fff 0 1px, transparent 2px),
+    radial-gradient(circle at 50% 125%, #669bf2 30%, #76e8ff 32%, #1c3f75 35%, transparent 57%),
+    radial-gradient(circle, #bde4ff 0 .65px, transparent 1px) 0 3px / 13px 19px, #0c172c;
+}
+
+.t-carta-personaje[data-tema="harry-potter"] {
+  --metal: #e5c997;
+  --borde: #735848;
+  --tinta: #170f20;
+  --cabecera: #3a2936;
+  --escena: repeating-radial-gradient(ellipse at 50% 89%, transparent 0 16%, #f2ce884a 17% 18%, transparent 19% 25%),
+    radial-gradient(ellipse at 50% 58%, #92633c, #382344 63%, #1c1326);
+}
+.t-carta-personaje[data-tema="guardianes"] {
+  --metal: #e7c48b; --borde: #645166; --tinta: #140b1d; --cabecera: #3a2148;
+  --escena: radial-gradient(circle, #ffe4b8a0 0 .65px, transparent 1.2px) 1px 3px / 13px 17px,
+    linear-gradient(154deg, #110e27, #604477 48%, #a95b52 69%, #251734);
+}
+.t-carta-personaje[data-tema="villanos-marvel"], .t-carta-personaje[data-tema="venom"], .t-carta-personaje[data-tema="daredevil"] {
+  --metal: #9fa6ca; --borde: #4f456d; --tinta: #101019; --cabecera: #302334;
+  --escena: repeating-linear-gradient(125deg, transparent 0 7%, #0d091d4d 7% 8%),
+    radial-gradient(ellipse at 50% 64%, #765782, #231930 72%);
+}
+.t-carta-personaje[data-tema="cuatro-fantasticos"] {
+  --metal: #a3e8fc; --borde: #508ca2; --tinta: #0e2537; --cabecera: #23526b;
+  --escena: linear-gradient(0deg, #7bd6ee33 1px, transparent 1px) 0 0 / 10px 10px,
+    linear-gradient(90deg, #7bd6ee33 1px, transparent 1px) 0 0 / 10px 10px,
+    radial-gradient(ellipse at 50% 69%, #57b4ca, #1b4560 74%);
+}
+
+.t-personaje-cab, .t-personaje-escena, .t-personaje-pie {
+  position: relative;
+  min-width: 0;
+  border: 1px solid color-mix(in srgb, var(--metal) 62%, transparent);
+}
+.t-personaje-cab {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  padding: 2px 7px;
+  border-radius: 6px 6px 1px 1px;
+  background: linear-gradient(120deg, var(--cabecera), var(--tinta));
+}
+.t-personaje-logo, .t-personaje-emblema { display: block; min-width: 0; max-height: 100%; object-fit: contain; object-position: left center; }
+.t-personaje-logo { width: auto; max-width: 100%; }
+.t-personaje-cab:has(.t-personaje-emblema) .t-personaje-logo { max-width: 73%; }
+.t-personaje-emblema { width: 20%; object-position: right center; }
+.t-personaje-marca { color: #fff2d2; font: 400 clamp(12px, 13cqi, 28px)/1 var(--f-titulo); }
+
+.t-personaje-escena { display: grid; place-items: end center; min-height: 0; overflow: hidden; background: var(--escena); }
+.t-personaje-escena::after {
+  content: "";
+  position: absolute;
+  inset: 3px;
+  border: 1px solid color-mix(in srgb, var(--metal) 38%, transparent);
+  pointer-events: none;
+}
+.t-carta-personaje[data-tema="harry-potter"] .t-personaje-escena::after { border-radius: 50% 50% 3px 3px / 29% 29% 3px 3px; }
+.t-personaje-foto {
+  display: block;
+  width: 94%;
+  height: 89%;
+  object-fit: contain;
+  object-position: center bottom;
+  filter: drop-shadow(0 5px 5px #080717aa);
+}
+.t-personaje-rareza {
+  position: absolute;
+  z-index: 1;
+  inset: 4px 4px auto auto;
+  padding: 3px 5px;
+  color: #fff5dc;
+  border: 1px solid var(--metal);
+  border-radius: 3px;
+  background: var(--tinta);
+  font: 800 clamp(7px, 5.8cqi, 13px)/1 var(--f-texto);
+}
+.t-personaje-pie {
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  gap: 2px;
+  min-height: 0;
+  padding: 4px 5px;
+  border-radius: 1px 1px 6px 6px;
+  background: linear-gradient(110deg, var(--cabecera), var(--tinta) 80%);
+  text-align: left;
+}
+.t-personaje-nombre {
+  align-self: center;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  color: #fff2d4;
+  font: 800 clamp(9px, 9.5cqi, 23px)/1.04 var(--letra-display);
+  text-transform: uppercase;
+  overflow-wrap: anywhere;
+}
+.t-personaje-edicion {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+  color: #f1dbbf;
+  font: 800 clamp(8px, 5.8cqi, 13px)/1 var(--f-texto);
+}
+.t-personaje-edicion > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.t-personaje-numero { margin-inline-start: auto; font-variant-numeric: tabular-nums; color: #fff0c6; }
+
+.t-carta-personaje[data-bigfig], .t-carta-personaje[data-rareza="epica"], .t-carta-personaje[data-rareza="legendaria"] {
+  --metal: #e7c0ff;
+  --foil: linear-gradient(132deg, #797de8, #dfc7ff 18%, #8ce9ef 35%, #c58aff 48%, #ffe3ac 74%, #987ace);
+  background: var(--foil);
+  box-shadow: 0 0 13px #bf9bff68, 0 5px 12px #0009;
+}
+.t-carta-personaje[data-bigfig] .t-personaje-foto { width: 100%; height: 94%; }
+.t-carta-personaje[data-bigfig] .t-personaje-pie { border-inline-width: 3px; }
+.t-carta-personaje[data-bigfig] .t-personaje-edicion { text-transform: uppercase; letter-spacing: .09em; }
+.t-carta-personaje[data-rareza="legendaria"] {
+  --metal: #ffe7a2;
+  --foil: linear-gradient(133deg, #945629 2%, #fff4c2 17%, #d89c4b 33%, #ffdc77 55%, #fff1b8 75%, #ae6b34);
+  box-shadow: 0 0 17px #ffd46a80, 0 5px 12px #0009;
+}

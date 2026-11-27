@@ -28,6 +28,8 @@ export interface Sobre {
   frase: string;
 }
 
+export type SobreVisual = Pick<Sobre, "nombre" | "arte" | "color">;
+
 export type Seccion = "pelo" | "casco" | "rostro" | "detalle" | "cuello" | "torso" | "objeto" | "momentos";
 
 export const SOBRES: Sobre[] = [
@@ -40,10 +42,18 @@ export const SOBRES: Sobre[] = [
     pesos: { rara: 0, epica: 0, legendaria: 0 }, color: "#ff3fb4", frase: "Tres comodines para salvarte en la partida." },
   { id: "mixto", nombre: "Sobre mixto", precio: 180, arte: "sobre-mixto.webp", piezas: 2, comodines: 2,
     pesos: { rara: 60, epica: 32, legendaria: 8 }, color: "#b06bff", frase: "Dos piezas y dos comodines." },
-  { id: "epico", nombre: "Sobre épico", precio: 200, arte: "sobre-epico.webp", piezas: 3, comodines: 0,
+  { id: "epico", nombre: "Sobre épico", precio: 200, arte: "sobre-epico-v2.webp", piezas: 3, comodines: 0,
     pesos: { rara: 40, epica: 45, legendaria: 15 }, minimo: "epica", color: "#ffb21f", frase: "Tres piezas, mínimo una épica." },
 ];
 export const sobrePorId = (id: string) => SOBRES.find(s => s.id === id) ?? null;
+
+/** Exhibición de portadas. Estos sobres todavía no forman parte del sorteo de la tienda. */
+export const SOBRES_PERSONAJES = [
+  { id: "marvel", nombre: "Personajes · Marvel", arte: "sobre-personajes-marvel.webp", color: "#fc694e", frase: "Héroes, villanos y Bigfig de Marvel." },
+  { id: "dc", nombre: "Personajes · DC", arte: "sobre-personajes-dc.webp", color: "#7abaff", frase: "Figuras de DC para el álbum de personajes." },
+  { id: "star-wars", nombre: "Personajes · Star Wars", arte: "sobre-personajes-star-wars.webp", color: "#42d4e8", frase: "Figuras de Star Wars para el álbum de personajes." },
+  { id: "harry-potter", nombre: "Personajes · Harry Potter", arte: "sobre-personajes-harry-potter.webp", color: "#d996e8", frase: "Figuras de Harry Potter para el álbum de personajes." },
+];
 
 /** Garantía anti-mala-racha: al sobre número N sin esa rareza, una pieza sale de esa rareza o mejor. */
 export const GARANTIA = { epica: 8, legendaria: 25 } as const;

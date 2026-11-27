@@ -10,6 +10,7 @@ const nivel = (r: RarezaSobre) => ORDEN.indexOf(r);
 export type Carta =
   | { tipo: "pieza"; id: string; rareza: RarezaSobre }
   | { tipo: "comodin"; id: string; especial: boolean }
+  | { tipo: "personaje"; id: string; rareza: RarezaSobre }
   | { tipo: "monedas"; cantidad: number; comodin: string };
 
 /** Sobres de piezas abiertos sin sacar épica (o mejor) y sin sacar legendaria. */

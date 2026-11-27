@@ -274,3 +274,8 @@ export function poderesDe(f: unknown, cat: CatalogoV3 | null): { id: string; nom
   const en = cat.catalogo.get(v3.origen.personaje);
   return en ? poderesDeFicha(en.ficha, en.base).map(p => ({ id: p.id, nombre: p.nombre })) : [];
 }
+
+// Tienda y álbum de personajes (fuera de la zona): entran por aquí, igual que el resto de la app.
+export { deCatalogo } from "./figura";
+export { categorias, nombreSaga, paginas, tarjetas, type Tarjeta } from "./galeriaDatos";
+export { useMiniaturas } from "./useMiniaturas";
