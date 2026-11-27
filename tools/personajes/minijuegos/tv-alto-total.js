@@ -1,8 +1,7 @@
 // Alto total: la TV conserva el historial y juzga; el celular solo comunica su pulsación.
-import { ahora } from "/src/personajes/minijuegos/canal.ts";
 import { acotarToque, MAX_INCERTIDUMBRE } from "/src/personajes/minijuegos/reloj.ts";
 import { avanzar, crearPartida, empezar, posicion, ranking, recibir } from "/src/personajes/minijuegos/altoTotal.ts";
-import { crearTV } from "./tv-comun.js";
+import { crearTV, ahoraJuego as ahora, aJuego } from "./tv-comun.js";
 
 const q = new URLSearchParams(location.search), $ = id => document.getElementById(id);
 const escena = EscenaMJ.crear($("lienzo"), { fov: 3 });
@@ -42,7 +41,7 @@ tv.extra = () => ({
 function listos() { return tv.todosListos() && !!vigilante; }
 function entrada(j, d) {
   if (!partida || tv.fase !== "juego" || d.pid !== pid || d.inc > MAX_INCERTIDUMBRE) return;
-  const llegada = ahora(), s = acotarToque(d.s, llegada);
+  const llegada = ahora(), s = acotarToque(aJuego(d.s), llegada);
   if (s === null) return;
   // recibir incorpora el mensaje antes de avanzar: no cerrar su ventana antes de leer la suelta.
   eventos(recibir(partida, j.id, { a: d.a, s }, llegada));

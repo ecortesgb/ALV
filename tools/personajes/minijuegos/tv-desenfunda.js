@@ -1,8 +1,7 @@
 // La TV decide el plan, recibe horas del reloj compartido y juzga. El celular solo manda un toque.
-import { ahora } from "/src/personajes/minijuegos/canal.ts";
 import { acotarToque, MAX_INCERTIDUMBRE } from "/src/personajes/minijuegos/reloj.ts";
 import { avanzar, crearPartida, empezar, ranking, tocar } from "/src/personajes/minijuegos/desenfunda.ts";
-import { crearEncuadreFranjas, crearTV, lucirPoder } from "./tv-comun.js";
+import { crearEncuadreFranjas, crearTV, lucirPoder, ahoraJuego as ahora, aJuego } from "./tv-comun.js";
 
 const q = new URLSearchParams(location.search);
 const $ = id => document.getElementById(id);
@@ -39,7 +38,7 @@ function recibirToque(j, d) {
   const no = motivo => tv.canal.enviar("eco", { para: j.id, ok: false, motivo });
   if (!partida || tv.fase !== "juego" || partida.fase !== "ronda" || d.pid !== pid) return no("otra ronda");
   if (!Number.isFinite(d.inc) || d.inc > MAX_INCERTIDUMBRE) return no("reloj");
-  const s = acotarToque(d.s, llego);
+  const s = acotarToque(aJuego(d.s), llego);
   if (s === null) return no("hora");
   const repetido = partida.toques.has(j.id);
   eventos(tocar(partida, j.id, s, llego));

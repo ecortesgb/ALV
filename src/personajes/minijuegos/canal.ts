@@ -53,7 +53,7 @@ const id40 = (v: unknown) => (typeof v === "string" && /^[A-Za-z0-9_-]{1,40}$/.t
  * - corre {pid, s, inc, a}: a = aprieta | suelta | latido (Alto total)
  * - mando {x, z} en [-1, 1] · boton {b}
  * - Sala de Físico: fx {a, id?, n?, c?} (acción del anfitrión; la TV revisa que sea el anfitrión) · gesto {g} (anima a
- *   su propio personaje) · acepta {si} (respuesta a un castigo o reto de contacto)
+ *   su propio personaje) · acepta {si} (respuesta a un castigo o reto de contacto) · pausa {si} (solo cuenta la del anfitrión)
  */
 export function validarDeCelular(m: Mensaje): Record<string, unknown> | null {
   if (m.de === TV) return null;
@@ -98,6 +98,8 @@ export function validarDeCelular(m: Mensaje): Record<string, unknown> | null {
     // Movimiento de sus sets (rueda, 2ª página): «<set>-<mov>»; la TV revisa que el personaje lo tenga.
     case "mov": { const m = txt(d.m, 32); return m && /^[a-z0-9]+-[a-z0-9-]+$/.test(m) ? { n, m } : null; }
     case "acepta": return typeof d.si === "boolean" ? { n, si: d.si } : null;
+    // pausa {si}: el anfitrión pausa o reanuda la partida (la TV revisa que sea el anfitrión).
+    case "pausa": return typeof d.si === "boolean" ? { n, si: d.si } : null;
     default: return null;
   }
 }

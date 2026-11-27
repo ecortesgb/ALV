@@ -47,14 +47,16 @@
     raiz.addEventListener("resize", medir); medir();
     const cuadros = [];
     let previo = performance.now();
+    // pausa: la escena se sigue dibujando pero el juego no avanza (nadie se mueve ni corre el tiempo).
+    const api = { renderer, scene, camera, clave, medir, alCuadro: f => cuadros.push(f), pausa: false };
     function bucle(t) {
       const dt = Math.min(0.1, (t - previo) / 1000); previo = t;
-      cuadros.forEach(f => f(dt, t));
+      if (!api.pausa) cuadros.forEach(f => f(dt, t));
       renderer.render(scene, camera);
       raiz.requestAnimationFrame(bucle);
     }
     raiz.requestAnimationFrame(bucle);
-    return { renderer, scene, camera, clave, medir, alCuadro: f => cuadros.push(f) };
+    return api;
   }
 
   /** Edificios de fondo (bloques con ventanas encendidas) para que se sienta azotea de noche. */
