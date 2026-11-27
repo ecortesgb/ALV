@@ -1,7 +1,7 @@
 # ALV — Amigos Legendarios Verdaderos
 ## Documento Maestro del Producto
-**Versión:** 1.65  
-**Última actualización:** 26 de noviembre de 2026  
+**Versión:** 1.66  
+**Última actualización:** 27 de noviembre de 2026  
 **Estado:** Documento vivo de producto; decisiones y propuestas identificadas por separado.
 
 ---
@@ -411,7 +411,7 @@ Lista inicial, en este orden: Esquiva la bala, ¡Desenfunda!, Martillazo, Alto t
 3. **Opciones del anfitrión:** ninguna en la primera versión.
 4. **Fases:** fila (cada jugador entra con su personaje; se empieza cuando todos cargaron) → cuenta 3-2-1 → rondas (aviso del lado por donde viene, pasa la bala, cada quien salta) → fin con podio → «Otra vez». TV: la fila, la bala, quién cae, el marcador y el podio. Celular: un botón SALTA del color del jugador, gris al quedar fuera, y el resultado al final.
 5. **Puntos:** lugar por orden de eliminación; el último en pie gana; los que caen en la misma ronda empatan.
-6. **XP y monedas:** **PENDIENTE** (C7: la regla de 5 rondas no aplica igual a este juego).
+6. **XP y monedas:** ~~**PENDIENTE**~~ **DECISIÓN (v1.66, Elías, 27 nov):** desde la sala de ALV, igual para los 5 Mini-Juegos. El celular del anfitrión de la sala reporta el podio y el servidor (`terminar_partida_sala`, migración 049) da la XP con la fórmula de siempre contando 5 rondas: 30 por jugar y 15, 10 o 5 extra para el podio, más monedas, con los topes diarios. Sin cuenta o fuera de la sala se juega igual, sin XP.
 7. **Comodines:** ninguno por ahora (**PROPUESTA:** «Escudo» aguanta una bala).
 8. **Fin:** queda uno, o se acaban los 60 s (los que siguen en pie empatan). La bala acelera cada ronda, el tiempo en el aire baja de 650 a 450 ms en las primeras 10 y desde la ronda 3 pueden venir dos balas seguidas. Mismo ancho de cuerpo para todos los personajes.
 9. **Desconexión:** al empezar se congelan los participantes; quien se desconecta sigue en la fila y cae con la siguiente bala.
@@ -428,6 +428,7 @@ Primer juego físico, **«Palabra prohibida»** (resuelve C16): en la TV salen l
 ### H. Modo libre — DECISIÓN (v1.63, Elías, 26 de noviembre)
 Modo aparte donde los personajes entran a un cuarto para probar sus trajes, poderes y saltos, interactuar y divertirse sin reglas ni puntos. Se controla desde el celular (palanca, saltar, golpe y festejo) y se ve en la TV. Es la **cuarta tarjeta** de la pantalla Modos, junto a Local, En línea y Físico.
 - Estado: prototipo en una zona aparte del código, sin conectar a la app ni publicar.
+- **DECISIÓN (v1.66, Elías, 27 nov):** la tarjeta Modo libre abre por ahora el menú de los 5 Mini-Juegos (TV con sesión, celulares por QR, canal por Realtime de Supabase), con XP según 6A.6 F punto 6. El cuarto sin reglas queda para después dentro del mismo modo. Publicado el 27 nov.
 
 ## 6A.7 Compatibilidad por juego
 
@@ -1781,6 +1782,9 @@ Decisiones del usuario del 12 de noviembre de 2026:
 
 ## v1.6
 - Primeros logros (14.2), con ámbito de sesión o histórico (ver DECISIÓN v1.6 en 14.2).
+
+## v1.66
+- 27 nov 2026. Mini-Juegos publicados en Modo libre (6A.6 H) y con XP desde la sala de ALV (6A.6 F punto 6, migración 049). Decisiones de Elías. Cambia lo que 6A.6 H decía de «sin puntos».
 
 ## v1.65
 - 26 nov 2026. Fondo y canción por personaje (por saga con excepciones) en HUB, taller, cabinas del lobby y resultados en la TV; bucket privado `temas-privados` (047).
