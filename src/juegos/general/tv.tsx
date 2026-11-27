@@ -9,6 +9,7 @@ import { TvImpostor } from "../impostor/tv";
 import { TvVerdadReto } from "../verdadReto/tv";
 import { TvFisico } from "../fisico/tv";
 import { ComoJugar, tocaExplicar } from "./ComoJugar";
+import { GraficaVotos } from "./GraficaVotos";
 import { CeremoniaCopas, PodioJuego, esFinalDeJuego } from "./Copas";
 
 const figuraDe = (ms: Miembro[], id: string) => ms.find(m => m.id === id)?.figura;
@@ -54,6 +55,16 @@ function Escena({ v, miembros }: { v: Publico; miembros: Miembro[] }) {
       </div>
     );
   }
+
+  // ¿Quién es más probable? al revelar: gráfica de votos con la figura de cada quien (Elías, 27 nov).
+  if (v.motor === "senalar" && revelada && d) return (
+    <div className="a-tv-escena">
+      <Cartel titulo={nombreJuego(v.juegoId)} sub={v.carta?.texto ?? ""} />
+      <span className="dsp ol a-tv-t1">{d.titular}</span>
+      <GraficaVotos v={v} miembros={miembros} />
+      {v.votoSecreto && <p className="a-tv-votos">Voto secreto</p>}
+    </div>
+  );
 
   const turno = v.turnoDe && ["turnos-cartas", "botella", "ruleta", "dados", "conteo"].includes(v.motor) ? v.turnoDe : undefined;
   return (

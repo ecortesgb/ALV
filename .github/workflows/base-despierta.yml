@@ -1,0 +1,27 @@
+name: Base despierta
+# Supabase gratis pausa la base si pasa una semana sin uso y entonces la app no abre (idea de Rea-games, Elías, 27 nov).
+# Cada 6 horas hace una lectura pequeña de una tabla pública para que cuente como uso. Usa las mismas variables del
+# repo que la publicación (URL y llave PUBLICABLE); nunca la secret key. También se puede correr a mano desde Actions.
+on:
+  schedule:
+    - cron: "17 */6 * * *"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  tocar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Leer una fila de la biblioteca pública
+        env:
+          URL: ${{ vars.VITE_SUPABASE_URL }}
+          LLAVE: ${{ vars.VITE_SUPABASE_PUBLISHABLE_KEY }}
+        run: |
+          if [ -z "$URL" ] || [ -z "$LLAVE" ]; then echo "Faltan las variables VITE_SUPABASE_URL o VITE_SUPABASE_PUBLISHABLE_KEY"; exit 1; fi
+          case "$LLAVE" in sb_publishable_*) ;; *) echo "La llave no es la publicable"; exit 1;; esac
+          codigo=$(curl -s -o /dev/null -w "%{http_code}" --max-time 30 \
+            -H "apikey: $LLAVE" \
+            "$URL/rest/v1/biblioteca_colecciones?select=*&limit=1")
+          echo "Respuesta de la base: $codigo"
+          [ "$codigo" = "200" ]

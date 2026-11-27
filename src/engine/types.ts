@@ -1,3 +1,4 @@
+import type { YaSalieron } from "./yaSalieron";
 // Tipos del motor. El motor no sabe de pantallas: Anfitrión, Jugador y Pantalla solo leen lo que devuelve.
 
 export type Intensidad = 1 | 2 | 3 | 4; // Tranquilo · Picante · Sin filtro · Salvaje
@@ -99,6 +100,10 @@ export interface OpcionesPartida {
   explicar?: boolean;
   /** Temperatura + Voltaje (Maestro v1.52): nivel general de la partida y el interruptor Drunk. */
   ejes?: EjesPartida & { drunk: boolean };
+  /** Sin repetir entre noches: máscara de las cartas que ya salieron en este aparato (ver engine/yaSalieron.ts). */
+  yaSalieron?: YaSalieron;
+  /** ¿Quién es más probable?: votos secretos (nadie sabe por quién votó cada quien). */
+  votoSecreto?: boolean;
 }
 
 /** Nivel general de la partida en cada eje (Maestro v1.52). */
@@ -193,4 +198,8 @@ export interface Configuracion {
   temporizador?: number;
   /** Temperatura + Voltaje (Maestro v1.52): con esto se filtra por eje y nivel 1 a 3. Sin esto, el filtro de 4 niveles de siempre. */
   ejes?: EjesPartida;
+  /** Sin repetir entre noches (Elías, 27 nov): cartas que ya salieron en este aparato. El motor saca primero las demás. */
+  yaSalieron?: YaSalieron;
+  /** ¿Quién es más probable? con voto secreto (Elías, 27 nov): al revelar solo sale cuántos votos tuvo cada quien. */
+  votoSecreto?: boolean;
 }

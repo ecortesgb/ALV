@@ -26,6 +26,7 @@ import { useSala } from "../roles/sala";
 import { usePuedeAbrir } from "../app/lobby";
 import { esLocal, modoLocal } from "../servicios/enlace";
 import { guardarPartidaPredeterminada, leerPartidaPredeterminada } from "../servicios/partidaPredeterminada";
+import { mascaraSalieron, olvidarMazos, salieronDe } from "../app/cartasSalieron";
 import { candado, colorDe, gente } from "./Catalogo";
 import { SeccionIntensidad, ejesDeJuego, nivelMinimo, type ValorIntensidad } from "./Intensidad";
 import { Categorias, Vitrinas, categoriasDe } from "./VitrinasJuego";
@@ -147,6 +148,21 @@ function jugados(): string[] { try { return JSON.parse(localStorage.getItem(CLAV
 export const yaJugado = (juego: string) => jugados().includes(juego);
 function marcarJugado(juego: string) { try { localStorage.setItem(CLAVE_JUGADOS, JSON.stringify([...new Set([...jugados(), juego])].slice(-40))); } catch { /* sin almacenamiento: se vuelve a proponer */ } }
 
+/** Sin repetir entre noches (Elías, 27 nov): se recuerda en este aparato si el anfitrión quiere solo cartas nuevas. Encendido por defecto. */
+const CLAVE_NUEVAS = "alv-solo-cartas-nuevas";
+function leerSoloNuevas(): boolean { try { return localStorage.getItem(CLAVE_NUEVAS) !== "no"; } catch { return true; } }
+function guardarSoloNuevas(si: boolean) { try { localStorage.setItem(CLAVE_NUEVAS, si ? "si" : "no"); } catch { /* sin almacenamiento */ } }
+
+/** Cuántas cartas puede sacar esta configuración y cuántas no han salido en este aparato. */
+export function cuentaNuevas(miembros: { id: string; nombre: string }[], juego: string, rondas: number, opciones: OpcionesPartida, salieron: string[]) {
+  const mazos = (defJuego(juego)?.mazo ?? "").split("+").filter(Boolean);
+  const a = mazos.length ? armarArranque(miembros, juego, rondas, 1, 1, opciones) : null;
+  if (!a) return undefined;
+  const pool = cartasPermitidas(a.cfg, CONTENIDO.cartas, mazos);
+  const ya = new Set(salieron);
+  return { total: pool.length, nuevas: pool.filter(c => !ya.has(c.id)).length, mazos };
+}
+
 const LOBBY = (n: string) => `${import.meta.env.BASE_URL}arte/lobby/${n}.webp`;
 /** Icono de cada sección: el de Elías (`sec-<sección>`) o, mientras llega, uno del HUB o del lobby. */
 const ICONO_SECCION: Record<string, string | undefined> = {
@@ -177,7 +193,7 @@ function ArteJuego({ id, className = "" }: { id: string; className?: string }) {
 export function mismaPartida(a: PartidaConfigurada, b: PartidaConfigurada | null | undefined): boolean {
   if (!b) return false;
   const o = (c: PartidaConfigurada) => JSON.stringify([c.juego, c.rondas, c.ejes.temperatura, c.ejes.voltaje, c.ejes.drunk, c.opciones.modalidad ?? "individual",
-    c.opciones.escenario ?? null, c.opciones.temporizador ?? null, !!c.opciones.explicar, c.opciones.herramienta ?? null, c.opciones.impostor ?? null]);
+    c.opciones.escenario ?? null, c.opciones.temporizador ?? null, !!c.opciones.explicar, c.opciones.herramienta ?? null, c.opciones.impostor ?? null, !!c.opciones.votoSecreto]);
   return o(a) === o(b);
 }
 
@@ -237,6 +253,10 @@ export function ConfigurarPartida({ miembros, alIniciar, alCancelar, iniciando, 
   const [pistaNave, setPistaNave] = useState(impInicial?.pista === true);
   const [castigoNave, setCastigoNave] = useState(impInicial?.castigo !== false);
   const [escenario, setEscenario] = useState<EscenarioId | undefined>(inicial?.opciones.escenario);
+  // ¿Quién es más probable?: votos a la vista o secretos (Elías, 27 nov). Sin repetir entre noches: solo cartas nuevas.
+  const [votoSecreto, setVotoSecreto] = useState(inicial?.opciones.votoSecreto === true);
+  const [soloNuevas, setSoloNuevas] = useState(leerSoloNuevas);
+  const [deCero, setDeCero] = useState(0);
   // Categoría abierta en «Elige el juego» (null: las tarjetas de categoría). En Físico abre directo la de competencias.
   const cats = useMemo(() => categoriasDe(id => id in MODALIDADES_JUEGO), []);
   const catDe = (id: string) => cats.find(c => c.juegos.includes(id))?.id ?? null;
@@ -281,10 +301,14 @@ export function ConfigurarPartida({ miembros, alIniciar, alCancelar, iniciando, 
     ...(esImpostor(j) ? { impostor: { cantidad: Math.min(impostores, maxImp), tema, nave: true, papeles: true, votos: votosNave, revelar: revelarNave, pista: pistaNave, castigo: castigoNave } } : {}),
     ...(explicarFinal ? { explicar: true } : {}),
     ...(temporizador && conTemporizador ? { temporizador } : {}),
+    ...(votoSecreto && j?.motor === "senalar" ? { votoSecreto: true } : {}),
     ejes,
   };
   const config: PartidaConfigurada = { juego, rondas, ejes, opciones };
   const cuenta = useMemo(() => cuentaCartas(miembros, juego, rondas, opciones), [miembros, juego, rondas, JSON.stringify(opciones)]); // eslint-disable-line react-hooks/exhaustive-deps
+  const mazosJuego = (j?.mazo ?? "").split("+").filter(Boolean);
+  const nuevas = useMemo(() => cuentaNuevas(miembros, juego, rondas, opciones, salieronDe(mazosJuego)), [miembros, juego, rondas, JSON.stringify(opciones), deCero]); // eslint-disable-line react-hooks/exhaustive-deps
+  const conMazo = !!nuevas && nuevas.total > 0 && !esImpostor(j);
   const motivo = motivoConfig(config, miembros);
   const gruposOk = !!armarGrupos(conParejas(miembros), opciones);
 
@@ -336,6 +360,7 @@ export function ConfigurarPartida({ miembros, alIniciar, alCancelar, iniciando, 
     setTema(typeof imp?.tema === "string" && CONTENIDO.temas.some(t => t.id === imp.tema && t.soloNave) ? imp.tema : null);
     setVotosNave(imp?.votos === "secretos" ? "secretos" : "visibles"); setRevelarNave(imp?.revelar !== false);
     setPistaNave(imp?.pista === true); setCastigoNave(imp?.castigo !== false);
+    setVotoSecreto(o.votoSecreto === true);
   };
   const editar = (s: Seccion) => { juegoAlEditar.current = juego; if (s === "juego") setFiltro(catDe(juego)); setDesdeResumen(true); setSec(s); };
   // Elegir y seguir (Elías, 24 nov): en pasos de una sola elección, tocar la tarjeta avanza sola tras una pausa corta.
@@ -425,6 +450,22 @@ export function ConfigurarPartida({ miembros, alIniciar, alCancelar, iniciando, 
               ))}</div>
               <p className="a-nota">{temporizador ? `Cada turno dura ${temporizador} s; si se acaba, el turno pasa al siguiente.` : "Sin tiempo por turno: si alguien tarda, el anfitrión decide esperar o seguir."}</p>
             </section>}
+            {j?.motor === "senalar" && <section className="a-pila"><span className="cfg-sub dsp ol">Votos</span>
+              <div className="a-fila a-envuelve">{([[false, "A la vista"], [true, "Secretos"]] as const).map(([x, t]) => (
+                <button key={t} type="button" className={"cfg-tiempo" + (votoSecreto === x ? " on" : "")} aria-pressed={votoSecreto === x} onClick={() => setVotoSecreto(x)}>{t}</button>
+              ))}</div>
+              <p className="a-nota">{votoSecreto ? "Al revelar solo se ve cuántos votos tuvo cada quien. Nadie sabe por quién votaste." : "Al revelar se ve quién votó por quién."}</p>
+            </section>}
+            {conMazo && <section className="a-pila"><span className="cfg-sub dsp ol">Cartas</span>
+              <div className="a-fila a-envuelve">{([[true, "Solo cartas nuevas"], [false, "Todas"]] as const).map(([x, t]) => (
+                <button key={t} type="button" className={"cfg-tiempo" + (soloNuevas === x ? " on" : "")} aria-pressed={soloNuevas === x} onClick={() => { setSoloNuevas(x); guardarSoloNuevas(x); }}>{t}</button>
+              ))}</div>
+              <p className="a-nota">{nuevas!.nuevas} de {nuevas!.total} cartas no han salido en este aparato{soloNuevas ? ". Salen primero; cuando se acaben, vuelven las demás." : "."}</p>
+              {nuevas!.nuevas < nuevas!.total && <button type="button" className="cfg-tiempo" onClick={() => void (async () => {
+                if (!(await confirmar({ titulo: "¿Empezar el mazo de cero?", texto: `Las cartas de ${j?.nombre ?? "este juego"} vuelven a contar como nuevas en este aparato.`, si: "Empezar de cero" }))) return;
+                olvidarMazos(nuevas!.mazos); setDeCero(x => x + 1);
+              })()}>Empezar el mazo de cero</button>}
+            </section>}
             <section className="a-pila"><span className="cfg-sub dsp ol">Rondas</span><div className="a-fila a-envuelve">{[5, 8, 12].map(x => (
               <button key={x} type="button" className={"cp-num dsp ol" + (rondas === x ? " on" : "")} aria-pressed={rondas === x} onClick={() => setRondas(x)}>{x}</button>
             ))}</div></section>
@@ -457,7 +498,7 @@ export function ConfigurarPartida({ miembros, alIniciar, alCancelar, iniciando, 
           : <ArteCfg nombre={usa[0] === "voltaje" ? `voltimetro-${ejes.voltaje}` : `termometro-${ejes.temperatura}`} alterno={arteHub("xp")} />}
         alTocar={() => editar("intensidad")} />,
       <Casilla key="opc" titulo={esImpostor(j) ? "Opciones" : "Herramienta"} valor={esImpostor(j) ? `${Math.min(impostores, maxImp)} ${Math.min(impostores, maxImp) === 1 ? "impostor" : "impostores"}` : inst?.nombre ?? "—"}
-        detalle={esImpostor(j) ? `${nombreCategoria(tema)} · votos ${votosNave === "visibles" ? "a la vista" : "secretos"}${revelarNave ? "" : " · sin revelar"}${pistaNave ? " · con pista" : ""}${castigoNave ? " · con castigo" : ""}` : `${rondas} rondas${temporizador && conTemporizador ? ` · ⏱ ${temporizador} s` : ""}`}
+        detalle={esImpostor(j) ? `${nombreCategoria(tema)} · votos ${votosNave === "visibles" ? "a la vista" : "secretos"}${revelarNave ? "" : " · sin revelar"}${pistaNave ? " · con pista" : ""}${castigoNave ? " · con castigo" : ""}` : `${rondas} rondas${temporizador && conTemporizador ? ` · ⏱ ${temporizador} s` : ""}${votoSecreto && j?.motor === "senalar" ? " · votos secretos" : ""}${conMazo && soloNuevas ? " · cartas nuevas" : ""}`}
         ico={<ArteCfg nombre={esImpostor(j) ? "sec-herramienta" : `herr-${inst?.id ?? "cartas"}`} alterno={arteHub("ajustes")} />} alTocar={() => editar(esImpostor(j) ? "tipo" : "opciones")} />,
       // Herramientas de El impostor (Elías, 25 nov): se ve aunque no se use el temporizador.
       ...(esImpostor(j) && conTemporizador ? [
@@ -534,7 +575,7 @@ export function ConfigurarPartida({ miembros, alIniciar, alCancelar, iniciando, 
           </div>
         )}
         {sec === "resumen"
-          ? <BotonPie principal texto={iniciando ? "Iniciando…" : "¡Comenzar!"} sub={motivo ?? `${j?.nombre ?? ""} · ${n} jugadores`} desactivado={!!motivo || !!iniciando} onClick={() => { marcarJugado(juego); alIniciar(config); }} />
+          ? <BotonPie principal texto={iniciando ? "Iniciando…" : "¡Comenzar!"} sub={motivo ?? `${j?.nombre ?? ""} · ${n} jugadores`} desactivado={!!motivo || !!iniciando} onClick={() => { marcarJugado(juego); alIniciar(conMazo && soloNuevas ? { ...config, opciones: { ...opciones, ...(mascaraSalieron() ? { yaSalieron: mascaraSalieron() } : {}) } } : config); }} />
           : soloTocar ? null // tocar la tarjeta ya elige y sigue
           : <BotonPie listo={desdeResumen} texto={desdeResumen ? "Listo" : "Siguiente"} sub={falta(sec) ?? undefined} desactivado={!!falta(sec)} onClick={siguiente} />}
       </footer>

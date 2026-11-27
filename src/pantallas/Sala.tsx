@@ -16,6 +16,7 @@ import { FondoEscenario } from "./Fondos";
 import { ComoJugar, tocaExplicar } from "../juegos/general/ComoJugar";
 import type { PresenciaPantalla } from "../servicios/tiempoReal";
 import { HerramientaCelular, type MiVista } from "../juegos/general/celular";
+import { EmotesVolando } from "../juegos/general/Emotes";
 import { esPublico, marcador, nombreJuego, quedan, type Publico } from "../juegos/general/texto";
 import { control, entregarCopas, jugada, useMotor } from "../roles/pantalla/motor";
 import { AnuncioDiscusion, PapelNave, useAnuncioDiscusion } from "../juegos/impostor/papelNave";
@@ -29,6 +30,7 @@ import { useColoresSala } from "./lobby/colores";
 import { BotonCast } from "./lobby/Cast";
 import { MesaJuego } from "./MesaJuego";
 import { useGestosSala } from "../servicios/gestosSala";
+import { anotarCarta } from "../app/cartasSalieron";
 
 /** Mantiene la pantalla encendida mientras `activo` (la Pantalla y el celular que hace de Pantalla). */
 export function useDespierta(activo: boolean) {
@@ -112,6 +114,9 @@ export function Sala({ codigo }: { codigo: string }) {
   // «Ya la vi» nunca va al motor; se guarda en la sesión del navegador para que una recarga no repita la ronda.
   const [vistos, setVistos] = useState<{ pid: string; ids: string[] }>({ pid: "", ids: [] });
   const v = s.partida && !s.partida.terminada && esPublico(s.partida.estado) ? s.partida.estado : null;
+  // Sin repetir entre noches: el aparato del anfitrión (donde se configura) anota cada carta que sale en la mesa.
+  const cartaMesa = soyAnfitrion ? v?.carta?.id : undefined;
+  useEffect(() => { anotarCarta(cartaMesa); }, [cartaMesa]);
   const final = s.partida?.terminada && esPublico(s.partida.estado) ? s.partida.estado : null;
   // El impostor en la nave, papeles en la mesa (Elías, 24 nov): «Ya lo vi» se marca al instante y «¡A discutir!» se anuncia.
   const [vistoYo, setVistoYo] = useState("");
@@ -284,6 +289,8 @@ export function Sala({ codigo }: { codigo: string }) {
             // El impostor con papeles en la mesa ya muestra a todos en su tablero: sin la mesa de los lados (Elías, 24 nov).
             return !copas && !conPantalla && !v.impostor?.palabras ? <MesaJuego v={v} miembros={s.miembros} yo={yo} modo="celular">{juego}</MesaJuego> : juego;
           })()}
+          {/* Sin TV, las reacciones de los demás vuelan en cada celular. */}
+          {!conPantalla && !copas && <EmotesVolando v={v} />}
           {/* Con pantalla externa, el marcador y la tarjeta grande se ven en la TV: aquí solo lo tuyo. */}
           {conPantalla && !copas && <p className="pt-mira" role="status"><span aria-hidden="true">📺</span> Mira la pantalla: aquí solo va lo tuyo.</p>}
           {/* En la partida, terminar y salir van en la barra del anfitrión; solo la ceremonia de copas cierra aquí. */}

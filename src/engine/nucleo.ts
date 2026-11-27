@@ -7,6 +7,7 @@ import { CONTENIDO } from "../content";
 import { ESCENARIOS, JUEGOS } from "../content/catalogo";
 import { aplicar, conEliminacion, conVerdadReto, crearPartida, enCarga, etapaImpostor, etapaVR, HERRAMIENTAS_VR, maxImpostores, type Accion, type EstadoPartida, type HerramientaVR } from "./partida";
 import { adultoPorEjes } from "./filtros";
+import { limpiarSalieron } from "./yaSalieron";
 import type { Configuracion, EjesPartida, Jugador, NivelEje, OpcionesPartida } from "./types";
 import { vistaJugador, vistaPublica } from "./vistas";
 
@@ -108,6 +109,7 @@ export function armarArranque(miembros: { id: string; nombre: string }[], juego:
   // y lo adulto se abre con Extremo o Sobrecarga. Sin ejes, todo como antes (partidas guardadas iguales).
   const ejes = ejesDe(op);
   const viejo = ejes ? intensidadVieja(ejes) : intensidad;
+  const salieron = limpiarSalieron(op.yaSalieron);
   const cfg: Configuracion = {
     jugadores: grupos.jugadores, lugar: escenario?.lugar ?? "cualquiera", intensidad: Math.max(def.intensidadMin, Math.min(def.intensidadMax, viejo)) as 1 | 2 | 3 | 4,
     dificultad: 2, adulto: ejes ? adultoPorEjes(ejes) || !!def.adulto : intensidad >= 3 || !!def.adulto, drunk: ejes ? ejes.drunk : intensidad >= 2, turno: op.turno === "ruleta" ? "ruleta" : "orden",
@@ -117,6 +119,9 @@ export function armarArranque(miembros: { id: string; nombre: string }[], juego:
     ...(op.explicar ? { explicar: true } : {}),
     // Temporizador por turno: solo en los juegos que tienen turnos con tiempo (6A.11 C6), entre 10 y 180 s.
     ...(op.temporizador && JUEGOS_CON_TEMPORIZADOR.includes(juego) ? { temporizador: Math.round(Math.min(180, Math.max(10, op.temporizador))) } : {}),
+    // Sin repetir entre noches y voto secreto (Elías, 27 nov): solo si el configurador los manda; sin ellos, todo igual.
+    ...(salieron ? { yaSalieron: salieron } : {}),
+    ...(op.votoSecreto === true && def.motor === "senalar" ? { votoSecreto: true } : {}),
   };
   if (juego === "verdad-reto") {
     // Verdad o reto siempre arranca con elección y herramienta (Maestro 6A.6 B); el modo anterior queda para partidas guardadas.

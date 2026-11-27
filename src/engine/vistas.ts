@@ -59,6 +59,8 @@ export interface VistaPublica {
   explicar?: boolean;
   /** Segundos por turno, si el anfitrión eligió temporizador. */
   temporizador?: number;
+  /** ¿Quién es más probable? con voto secreto: al revelar no sale quién votó a quién. */
+  votoSecreto?: boolean;
   /** Verdad o reto nuevo: quién pregunta y quién responde, en qué etapa va, qué se eligió y quién ya usó su Verdad.
    * Lo que sacó cada quien con los dados o las cartas de póker va en `seleccion` (es público). */
   verdadReto?: {
@@ -97,6 +99,8 @@ export function vistaPublica(e: EstadoPartida): VistaPublica {
     // Nave con votos secretos: al revelar solo sale el conteo, nunca quién votó a quién.
     votosDe: e.fase !== "contestando" && (e.motor === "rol-secreto" || e.motor === "senalar") && !(e.revelado as { saltada?: boolean } | undefined)?.saltada
       && !(enNave(e) && e.cfg.impostor?.votos === "secretos")
+      // ¿Quién es más probable? con voto secreto (Elías, 27 nov): igual, solo el conteo.
+      && !(e.motor === "senalar" && e.cfg.votoSecreto)
       ? Object.fromEntries(Object.entries(e.respuestas).map(([j, v]) => [j, String(v)])) : undefined,
     ...(e.cfg.escenario ? { escenario: e.cfg.escenario } : {}),
     ...(e.cfg.modalidad ? { modalidad: e.cfg.modalidad } : {}),
@@ -104,6 +108,7 @@ export function vistaPublica(e: EstadoPartida): VistaPublica {
     ...(e.cfg.explicar && !e.comenzada ? { explicar: true } : {}),
     // Temporizador por turno: solo en partidas que lo eligieron (las guardadas antes salen igual).
     ...(e.cfg.temporizador ? { temporizador: e.cfg.temporizador } : {}),
+    ...(e.cfg.votoSecreto ? { votoSecreto: true } : {}),
     ...(conVerdadReto(e) ? { verdadReto: {
       herramienta: seleccionVR(e).herramienta, pregunta: seleccionVR(e).pregunta, responde: seleccionVR(e).responde, etapa: etapaVR(e),
       ...(e.vr?.eleccion ? { eleccion: e.vr.eleccion } : {}), ...(e.vr?.fuente ? { fuente: e.vr.fuente } : {}), verdadUsada: [...(e.verdadUsada ?? [])],
