@@ -173,7 +173,7 @@ export const SIGLAS: { sigla: string; significado: string; uso: string }[] = [
 export const CARTAS_PODER = [
   { id: "escudo", nombre: "Escudo", sigla: "SOS", efecto: "Sáltate un reto, pregunta o castigo." },
   { id: "salvavidas", nombre: "Salvavidas", efecto: "Salva a alguien de su castigo o de ser mesero." },
-  { id: "relevo", nombre: "Relevo", efecto: "Elige a alguien para que cumpla tu castigo; puede pasar sin castigo." },
+  { id: "relevo", nombre: "Relevo", efecto: "Elige a otra persona para que cumpla tu castigo." },
   { id: "doble-castigo", nombre: "Doble castigo", efecto: "El siguiente castigo de alguien se cumple dos veces." },
   { id: "cambio", nombre: "Cambio de pregunta", efecto: "Cambia la carta que te tocó por otra." },
   { id: "turno", nombre: "Pasa turno", efecto: "Tu turno pasa al siguiente jugador." },

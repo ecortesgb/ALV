@@ -9,7 +9,7 @@ import { movimientoReducido, vibrar } from "../app/preferencias";
 import { sonar } from "../app/sonido";
 import { RaizDS } from "../ds";
 import { NOMBRE_RAREZA } from "../content/rarezas";
-import { comodinPorId, type Sobre } from "../content/tienda";
+import { comodinPorId, DORSO_SOBRE, type Sobre } from "../content/tienda";
 import type { Apertura as Resultado, Carta } from "../engine/sobresTienda";
 import { ponermelo } from "../servicios/tienda";
 import { aviso } from "./comun";
@@ -21,12 +21,10 @@ import { arteHub } from "./azotea/Cabecera";
 type Fase = "rasgar" | "extraer" | "cartas" | "resumen";
 const quieto = movimientoReducido;
 const REVERSO = `${import.meta.env.BASE_URL}arte/tienda/carta-reverso-alv.webp`;
-const DORSO_SOBRE = `${import.meta.env.BASE_URL}arte/tienda/sobre-dorso-alv.webp`;
-
-export function Apertura({ sobre, apertura, fondo, alOtro, alColeccion }: { sobre: Sobre; apertura: Resultado; fondo: string; alOtro: () => void; alColeccion: () => void }) {
+export function Apertura({ sobre, apertura, fondo, deEspaldas = false, alOtro, alColeccion }: { sobre: Sobre; apertura: Resultado; fondo: string; deEspaldas?: boolean; alOtro: () => void; alColeccion: () => void }) {
   const [fase, setFase] = useState<Fase>("rasgar");
   const [revelada, setRevelada] = useState(false);
-  const [sobreDeEspaldas, setSobreDeEspaldas] = useState(false);
+  const [sobreDeEspaldas, setSobreDeEspaldas] = useState(deEspaldas);
   const [vistas, setVistas] = useState(0);
   const [corte, setCorte] = useState(0);
   const arrastre = useRef<number | null>(null);
@@ -89,7 +87,7 @@ export function Apertura({ sobre, apertura, fondo, alOtro, alColeccion }: { sobr
             }}
             onLostPointerCapture={e => { arrastre.current = null; e.currentTarget.style.removeProperty("--t-inclinacion"); }}>
             <span className={"t-sobre-caras" + (sobreDeEspaldas ? " de-espaldas" : "")}>
-              {[frenteSobre, DORSO_SOBRE].map((arte, i) => (
+              {[frenteSobre, srcArte("tienda/" + DORSO_SOBRE)].map((arte, i) => (
                 <span className={"t-sobre-cara" + (i ? " t-sobre-dorso" : "")} key={arte}>
                   <img className="t-ap-cuerpo" src={arte} alt="" draggable={false} />
                   <img className="t-ap-tira" src={arte} alt="" draggable={false} />
@@ -160,11 +158,11 @@ export function CartaFrente({ c }: { c: Carta }) {
     if (x?.arte) return (
       <span className="t-carta t-carta-comodin ilustrada" data-comodin={c.id}>
         <span className="t-comodin-cab">
-          <span className="t-comodin-sello">{c.especial ? "Especial" : "Comodín"}</span>
+          <span className="t-comodin-sello">{x.trampa ? "Trampa" : c.especial ? "Especial" : "Comodín"}</span>
           <span className="t-carta-nombre">{x.nombre}</span>
           <span className="t-comodin-glifo"><ComodinIcono id={c.id} alterno={x.icono} /></span>
         </span>
-        <span className="t-carta-arte"><img src={srcArte("tienda/" + x.arte)} alt="" draggable={false} /></span>
+        <span className="t-carta-arte"><img src={srcArte("tienda/" + x.arte)} alt="" loading="lazy" draggable={false} /></span>
         <span className="t-carta-efecto">{x.efecto}</span>
       </span>
     );

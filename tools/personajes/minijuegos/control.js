@@ -176,6 +176,8 @@ function estado(d) {
   $("chip").textContent = `P${j.n + 1} ${j.nombre}`; $("chip").classList.remove("oculto");
   $("titulo").textContent = d.juego === "paracaidas" ? "Paracaídas" : d.juego === "alto" ? "Alto total" : d.juego === "martillazo" ? "Martillazo" : d.juego === "desenfunda" ? "¡Desenfunda!" : d.juego === "bala" ? "Esquiva la bala" : "El cuarto";
   document.title = $("titulo").textContent + " · control";
+  const letra = d.juego === "martillazo" ? "B" : d.juego === "desenfunda" ? "RT" : "A";
+  if ($("salto-letra").textContent !== letra) { $("salto-letra").textContent = letra; $("salto-letra").className = "letra " + letra.toLowerCase(); }
   $("salto-accion").textContent = d.juego === "paracaidas" ? "¡ABRE!" : d.juego === "alto" ? "¡CORRE!" : d.juego === "martillazo" ? "¡GOLPEA!" : d.juego === "desenfunda" ? "¡DISPARA!" : "SALTA";
   $("salto").classList.toggle("duelo", d.juego === "paracaidas" || d.juego === "alto" || d.juego === "desenfunda" || d.juego === "martillazo");
   // El anfitrión lo asigna el servidor de sala y la TV lo repite en el estado.
@@ -393,6 +395,47 @@ document.querySelectorAll(".botones button").forEach(b => b.addEventListener("po
   vibrar(10);
   b.classList.add("toca"); setTimeout(() => b.classList.remove("toca"), 110);
 }));
+
+// ---------- Rueda de animaciones del mando (Elías, 27 nov) ----------
+// Al centro y siempre visible. Mismos gajos, colores e íconos que la rueda del HUB: izquierda Saludar, arriba Ganar,
+// derecha Especial, abajo Perder. Cada gajo manda «gesto» y la TV del cuarto pone la animación.
+(function armarRueda() {
+  const NS = "http://www.w3.org/2000/svg", ICONOS = "../../../arte/ui/gestos/";
+  const R0 = 34, R1 = 96, HUECO = 3;
+  const GESTOS = [
+    { g: "saludo", txt: "Saludar", c1: "#9be04a", img: "gesto-saludar.webp", a: 180 },
+    { g: "festejo", txt: "Ganar", c1: "#ffd84a", img: "gesto-victoria.webp", a: 270 },
+    { g: "especial", txt: "Especial", c1: "#ff9a3a", img: "gesto-especial.webp", a: 0 },
+    { g: "derrota", txt: "Perder", c1: "#4f86e8", img: "gesto-derrota.webp", a: 90 },
+  ];
+  const el = (tag, at) => { const n = document.createElementNS(NS, tag); for (const k in at) n.setAttribute(k, at[k]); return n; };
+  const p = (a, r) => { const t = (a * Math.PI) / 180; return `${(r * Math.cos(t)).toFixed(2)} ${(r * Math.sin(t)).toFixed(2)}`; };
+  const gajo = (a0, a1) => `M ${p(a0, R1)} A ${R1} ${R1} 0 0 1 ${p(a1, R1)} L ${p(a1, R0)} A ${R0} ${R0} 0 0 0 ${p(a0, R0)} Z`;
+  const svg = el("svg", { viewBox: "-100 -100 200 200" });
+  const logo = el("image", { href: ICONOS + "centro-logo-alv.webp", x: -40, y: -29, width: 80, height: 59, class: "logo" });
+  const nombre = el("text", { y: 6, class: "nombre" });
+  let quitar = 0;
+  for (const x of GESTOS) {
+    const t = (x.a * Math.PI) / 180, cx = 66 * Math.cos(t), cy = 66 * Math.sin(t);
+    const g = el("g", { class: "gajo", role: "menuitem", "aria-label": x.txt,
+      style: `--c1:${x.c1};--dx:${(Math.cos(t) * 6).toFixed(1)}px;--dy:${(Math.sin(t) * 6).toFixed(1)}px` });
+    g.append(el("path", { d: gajo(x.a - 45 + HUECO / 2, x.a + 45 - HUECO / 2), class: "forma" }),
+      el("image", { href: ICONOS + x.img, x: cx - 29, y: cy - 29, width: 58, height: 58 }));
+    g.addEventListener("pointerdown", e => {
+      e.preventDefault();
+      canal.enviar("gesto", { g: x.g });
+      vibrar(10);
+      svg.querySelectorAll(".gajo.on").forEach(o => o.classList.remove("on"));
+      g.classList.add("on");
+      nombre.textContent = x.txt; logo.style.display = "none";
+      clearTimeout(quitar);
+      quitar = setTimeout(() => { g.classList.remove("on"); nombre.textContent = ""; logo.style.display = ""; }, 700);
+    });
+    svg.append(g);
+  }
+  svg.append(el("circle", { r: R0 - 3, class: "centro" }), logo, nombre);
+  $("rueda").append(svg);
+})();
 
 // ---------- Sala de Físico ----------
 // Todos: gestos para animar a su personaje y el aviso para aceptar (o no) un castigo o reto de contacto.

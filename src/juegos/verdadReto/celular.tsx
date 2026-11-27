@@ -9,6 +9,7 @@ import { NombreJugador } from "../../pantallas/comun";
 import { Burbuja } from "../../pantallas/Identidad";
 import type { Miembro } from "../../servicios/enlace";
 import type { MiVista } from "../general/celular";
+import { SelectorComodines } from "../general/SelectorComodines";
 import { desenlace, nombreDe, type Publico } from "../general/texto";
 import { Herramienta } from "./herramienta";
 import { RelojTurno } from "../general/RelojTurno";
@@ -32,15 +33,14 @@ export function CelularVerdadReto({ v, mi, miembros, mandar }: { v: Publico; mi:
   const contestar = (valor: unknown) => void mandar("contestar", { valor });
 
   // Comodines de quien responde: pasar (Escudo o Pasa turno) y cambiar la carta (solo si la dio la app).
-  const comodines = soyResponde && v.fase === "contestando" && vr.etapa !== "listo" ? mi.miMano.filter(c => c === "escudo" || c === "turno" || (c === "cambio" && vr.etapa === "calificar" && vr.fuente === "app")) : [];
+  const comodines = soyResponde && !v.pausada && v.fase === "contestando" && vr.etapa !== "listo" ? mi.miMano.filter(c => c === "escudo" || c === "turno" || (c === "cambio" && vr.etapa === "calificar" && vr.fuente === "app")) : [];
   const barraComodines = comodines.length > 0 && (
-    <div className="vr-comodines" aria-label="Tus comodines">
-      <span className="a-kick">Comodín</span>
+    <SelectorComodines key={v.ronda} cantidad={comodines.length}>
       {comodines.map((c, i) => {
         const d = CARTAS_PODER.find(x => x.id === c);
         return <button key={c + i} type="button" className="vr-comodin" title={d?.efecto} onClick={() => void mandar("carta", { carta: c })}>{c === "cambio" ? "🔄" : "🛡️"} {d?.nombre ?? c}</button>;
       })}
-    </div>
+    </SelectorComodines>
   );
 
   let cuerpo: JSX.Element;

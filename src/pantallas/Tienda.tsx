@@ -3,16 +3,19 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { Icono } from "../ds";
 import { sonar } from "../app/sonido";
+import { movimientoReducido } from "../app/preferencias";
 import { ir } from "../app/rutas";
-import { COMODINES, MONEDAS_SI_TOPE, NOMBRE_SECCION, ORDEN_SECCIONES, PIEZAS_COLECCION, SOBRES, TOPE_COMODIN, piezasDeSobre, type Sobre } from "../content/tienda";
+import { COMODINES, COMODINES_EN_PREPARACION, DORSO_SOBRE, MONEDAS_SI_TOPE, NOMBRE_SECCION, ORDEN_SECCIONES, PIEZAS_COLECCION, SOBRES, TOPE_COMODIN, piezasDeSobre, type Sobre } from "../content/tienda";
 import { NOMBRE_RAREZA } from "../content/rarezas";
+import { SAGAS, VERSIONES_INICIALES } from "../content/sagas";
 import { ORDEN, faltanParaGarantia, probabilidadComodines, probabilidadPiezas, sobreDisponible, type Apertura } from "../engine/sobresTienda";
 import { usePiezas } from "../servicios/piezas";
-import { abrir, cargarTienda, marcarVistas, useTienda } from "../servicios/tienda";
+import { abrir, cargarTienda, marcarVistas, reponerComodin, useTienda } from "../servicios/tienda";
 import { Apertura as VistaApertura, CartaFrente } from "./Apertura";
 import { aviso, confirmar, Marco, urlArte } from "./comun";
 import { infoPieza } from "./Desbloqueo";
 import { miniatura } from "./Libro";
+import { useTrajes } from "./Originales";
 import { useRecursos } from "./Recursos";
 import { arteHub, RecursosAzotea } from "./azotea/Cabecera";
 import { useMomentoAzotea } from "./azotea/HubAzotea";
@@ -32,7 +35,7 @@ export function Tienda() {
   const fondo = urlArte("tienda/tienda-" + momento + ".webp");
   const t = useTienda();
   const [pestana, setPestana] = useState<Pestana>("sobres");
-  const [abierto, setAbierto] = useState<{ sobre: Sobre; apertura: Apertura } | null>(null);
+  const [abierto, setAbierto] = useState<{ sobre: Sobre; apertura: Apertura; deEspaldas: boolean } | null>(null);
   const contenido = useRef<HTMLDivElement>(null);
   useEffect(() => { void cargarTienda(); }, []);
   useEffect(() => {
@@ -58,61 +61,82 @@ export function Tienda() {
         </nav>
 
         <section className="t-panel">
-          {pestana === "sobres" && <Sobres alAbrir={(sobre, apertura) => setAbierto({ sobre, apertura })} />}
+          {pestana === "sobres" && <Sobres alAbrir={(sobre, apertura, deEspaldas) => setAbierto({ sobre, apertura, deEspaldas })} />}
           {pestana === "coleccion" && <Coleccion />}
         </section>
         {t.demo && <p className="t-demo">Prueba local con monedas de demostración.</p>}
       </div>
-      {abierto && <VistaApertura sobre={abierto.sobre} apertura={abierto.apertura} fondo={fondo}
+      {abierto && <VistaApertura sobre={abierto.sobre} apertura={abierto.apertura} fondo={fondo} deEspaldas={abierto.deEspaldas}
         alOtro={() => setAbierto(null)} alColeccion={() => { setAbierto(null); setPestana("coleccion"); }} />}
     </Marco>
   );
 }
 
 // ---------- Sobres ----------
-function Sobres({ alAbrir }: { alAbrir: (s: Sobre, a: Apertura) => void }) {
+const CATEGORIAS = ["Normales", "Especiales", "Accesorios"] as const;
+const COMODINES_NORMAL = SOBRES.find(x => x.id === "comodines")!;
+
+function Sobres({ alAbrir }: { alAbrir: (s: Sobre, a: Apertura, deEspaldas: boolean) => void }) {
   const t = useTienda(), p = usePiezas();
-  // Con las piezas libres (037, Maestro v1.50) los sobres de piezas no tienen qué dar: solo se venden los de comodines.
-  const lista = p.activo ? SOBRES : SOBRES.filter(x => x.piezas === 0);
-  const [i0, setI] = useState(4);
-  const i = Math.min(i0, lista.length - 1);
+  const [categoria, setCategoria] = useState<(typeof CATEGORIAS)[number]>("Normales");
+  const [i0, setI] = useState(0);
   const [ocupado, setOcupado] = useState(false);
+  const lista = {
+    Normales: [COMODINES_NORMAL, ...SOBRES.filter(x => p.activo && (x.id === "basico" || x.id === "mixto"))],
+    Especiales: SOBRES.filter(x => x.id === "comodines" || x.id === "epico"),
+    Accesorios: SOBRES.filter(x => x.id === "accesorios"),
+  }[categoria];
+  const i = Math.min(i0, lista.length - 1);
   const s = lista[i]!;
-  const [especial, setEspecial] = useState(false);
-  const conPortadas = s.id === "comodines";
-  const portada = conPortadas && especial ? "sobre-comodines-especial.webp" : s.arte;
+  const ilusionista = categoria === "Especiales" && s.id === "comodines";
+  const portada = ilusionista ? "sobre-comodines-especial.webp" : s.arte;
+  const nombre = ilusionista ? "Comodines · Ilusionista" : s.nombre;
+  const prototipo = s.piezas > 0 && !p.activo;
+  const [giro, setGiro] = useState(0);
+  const deEspaldas = giro % 360 !== 0;
+  const caras = useRef<HTMLSpanElement>(null);
+  const toque = useRef<{ id: number; x: number } | null>(null);
   const omitirClic = useRef(false);
   const disponible = sobreDisponible(s, p.tengo);
   const alcanza = t.monedas >= s.precio;
   const falta = faltanParaGarantia(t.racha);
-  const mover = (d: number) => {
-    if (lista.length === 1 && conPortadas) setEspecial(v => !v);
-    else { setEspecial(false); setI(x => (Math.min(x, lista.length - 1) + d + lista.length) % lista.length); }
+  const elegir = (siguiente: typeof categoria, indice: number) => {
     sonar("tic");
+    setCategoria(siguiente);
+    setI(indice);
+    setGiro(0);
+  };
+  const mover = (d: number) => elegir(categoria, (i + d + lista.length) % lista.length);
+  const voltear = (d = 1) => {
+    sonar("voltear");
+    setGiro(v => v + d * 180);
+  };
+  const soltar = () => {
+    toque.current = null;
+    caras.current?.removeAttribute("data-arrastre");
+    caras.current?.style.removeProperty("--arrastre-sobre");
   };
 
-  // Deslizar el sobre para cambiar.
-  const toque = useRef<number | null>(null);
-
   const piezasPosibles = useMemo(() => {
+    if (prototipo || !s.piezas) return [];
     const tasas = probabilidadPiezas(s, p.tengo, t.racha);
-    return (s.piezas > 0 ? piezasDeSobre(s) : [])
+    return piezasDeSobre(s)
       .filter(x => !p.tengo.has(x.id) && tasas[x.rareza] > 0)
       .sort((a, b) => ORDEN.indexOf(a.rareza) - ORDEN.indexOf(b.rareza))
       .map(x => ({ ...x, ...infoPieza(x.id), chance: tasas[x.rareza] }));
-  }, [s, p.tengo, t.racha]);
+  }, [s, p.tengo, t.racha, prototipo]);
   const comodinesPosibles = probabilidadComodines(s, t.comodines, t.demo);
 
   const comprar = async () => {
-    if (!disponible || ocupado) return;
+    if (prototipo || !disponible || ocupado) return;
     if (!alcanza) { sonar("error"); aviso(`Te faltan ${s.precio - t.monedas} monedas. Gánalas jugando.`); return; }
     setOcupado(true);
     try {
-      const ok = await confirmar({ titulo: "¿Abrir " + s.nombre.toLowerCase() + "?", texto: "Cuesta " + s.precio + " monedas. Te quedan " + (t.monedas - s.precio) + ".", si: "¡Comprar!", no: "Ahora no" });
+      const ok = await confirmar({ titulo: "¿Comprar " + nombre + "?", texto: "Cuesta " + s.precio + " monedas. Te quedan " + (t.monedas - s.precio) + ".", si: "¡Comprar!", no: "Ahora no" });
       if (!ok) return;
       const r = await abrir(s.id);
       if (typeof r === "string") { sonar("error"); aviso(r); return; }
-      alAbrir({ ...s, arte: portada }, r);
+      alAbrir({ ...s, nombre, arte: portada }, r, deEspaldas);
     } catch {
       sonar("error");
       aviso("No se pudo abrir el sobre. Revisa tu conexión.");
@@ -122,36 +146,75 @@ function Sobres({ alAbrir }: { alAbrir: (s: Sobre, a: Apertura) => void }) {
   };
 
   return (
+    <>
+    <nav className="t-categorias" aria-label="Tipos de sobres">
+      {CATEGORIAS.map(c => <button key={c} type="button" disabled={ocupado} aria-pressed={c === categoria}
+        onClick={() => elegir(c, 0)}>{c}</button>)}
+    </nav>
     <div className="t-sobres" style={{ ["--c" as string]: s.color }}>
       <div className="t-escaparate">
-        {lista.length > 1 && <button type="button" className="t-flecha t-izq" onClick={() => mover(-1)} aria-label="Sobre anterior">‹</button>}
-        <button type="button" className="t-sobre-zona t-sobre-elige" disabled={ocupado || !disponible}
-          aria-label={(conPortadas ? (especial ? "Portada especial" : "Portada normal") + ". " : "") + "Comprar " + s.nombre + " por " + s.precio + " monedas"}
-          onClick={e => { if (e.detail === 0 || !omitirClic.current) void comprar(); omitirClic.current = false; }}
-          onKeyDown={e => { if (e.key === "ArrowLeft" || e.key === "ArrowRight") { e.preventDefault(); mover(e.key === "ArrowLeft" ? -1 : 1); } }}
-          onPointerDown={e => { toque.current = e.clientX; omitirClic.current = false; e.currentTarget.setPointerCapture(e.pointerId); }}
-          onPointerCancel={() => { toque.current = null; }}
-          onPointerUp={e => { if (toque.current == null) return; const dx = e.clientX - toque.current; toque.current = null; if (Math.abs(dx) > 40) { omitirClic.current = true; mover(dx < 0 ? 1 : -1); } }}>
-          <img key={portada} className="t-sobre-img" src={srcArte("tienda/" + portada)} alt="" draggable={false} />
-          {!disponible && <span className="t-sello">¡Completo!</span>}
-        </button>
-        {conPortadas && <button type="button" className="t-portada-lateral" disabled={ocupado} aria-label={especial ? "Elegir portada normal" : "Elegir portada especial"} onClick={() => { sonar("tic"); setEspecial(v => !v); }}>
-          <img src={srcArte("tienda/" + (especial ? s.arte : "sobre-comodines-especial.webp"))} alt="" draggable={false} />
-        </button>}
-        {lista.length > 1 && <button type="button" className="t-flecha t-der" onClick={() => mover(1)} aria-label="Sobre siguiente">›</button>}
+        <div className="t-sobre-zona">
+          <p className="t-precio">{prototipo ? "Vista previa" : <>{MONEDA} {s.precio}<span className="t-solo-lector"> monedas</span></>}</p>
+          <button type="button" className="t-sobre-elige" disabled={ocupado}
+            aria-label={prototipo || !disponible ? "Girar " + nombre : "Comprar " + nombre + " por " + s.precio + " monedas"}
+            onClick={e => {
+              if (e.detail !== 0 && omitirClic.current) return;
+              if (prototipo || !disponible) voltear();
+              else void comprar();
+            }}
+            onPointerDown={e => {
+              if (!e.isPrimary || e.button !== 0) return;
+              omitirClic.current = false;
+              toque.current = { id: e.pointerId, x: e.clientX };
+              e.currentTarget.setPointerCapture(e.pointerId);
+            }}
+            onPointerMove={e => {
+              if (toque.current?.id !== e.pointerId) return;
+              const dx = e.clientX - toque.current.x;
+              omitirClic.current ||= Math.abs(dx) > 8;
+              if (!omitirClic.current || movimientoReducido()) return;
+              caras.current?.setAttribute("data-arrastre", "");
+              caras.current?.style.setProperty("--arrastre-sobre", Math.max(-155, Math.min(155, dx * 2)) + "deg");
+            }}
+            onPointerUp={e => {
+              if (toque.current?.id !== e.pointerId) return;
+              const dx = e.clientX - toque.current.x;
+              omitirClic.current ||= Math.abs(dx) > 8;
+              if (Math.abs(dx) >= 44) voltear(Math.sign(dx));
+              soltar();
+            }}
+            onLostPointerCapture={e => { if (toque.current?.id === e.pointerId) soltar(); }}>
+            <span key={portada} className="t-portada">
+              <span ref={caras} className="t-sobre-caras t-giro-exhibidor" style={{ "--giro-sobre": giro + "deg" } as CSSProperties}>
+                <img className="t-sobre-img t-sobre-cara" src={srcArte("tienda/" + portada)} alt="" draggable={false} />
+                <img className="t-sobre-img t-sobre-cara t-sobre-dorso" src={srcArte("tienda/" + DORSO_SOBRE)} alt="" draggable={false} />
+              </span>
+            </span>
+          </button>
+          <button type="button" className="t-girar" disabled={ocupado} aria-label={deEspaldas ? "Mostrar el frente del sobre" : "Mostrar el reverso del sobre"}
+            onClick={() => voltear()}><span aria-hidden="true">↻</span></button>
+          {lista.length > 1 && <>
+            <button type="button" className="t-flecha t-izq" disabled={ocupado} onClick={() => mover(-1)} aria-label="Sobre anterior">‹</button>
+            <button type="button" className="t-flecha t-der" disabled={ocupado} onClick={() => mover(1)} aria-label="Sobre siguiente">›</button>
+          </>}
+        </div>
       </div>
 
       <div className="t-lado">
         <div className="t-contenido">
-          <h2>{s.nombre}</h2>
+          <h2>{nombre}</h2>
           <p className="t-frase">{s.frase}</p>
-          {conPortadas && <p className="t-edicion">{especial ? "Portada especial · Ilusionista" : "Portada normal"} · Desliza para cambiar</p>}
-          <h3 className="t-contenido-titulo">Contenido posible</h3>
+          {ilusionista && <p className="t-edicion">Mismas cartas y probabilidades que el sobre normal.</p>}
+        </div>
+        <p className="t-edicion">Arrastra el sobre para girarlo{lista.length > 1 && ` · ${i + 1} de ${lista.length}`}</p>
+        <p className="t-precio-toque">{prototipo ? "Próximamente" : ocupado ? "Un momento…" : !disponible ? "Ya lo tienes todo" : !alcanza ? `Te faltan ${s.precio - t.monedas} monedas` : "Toca el sobre para comprar"}</p>
+        {!prototipo && <details key={categoria + s.id} className="t-contenido-posible">
+          <summary>Contenido posible y probabilidades</summary>
           <p className="t-tasas-nota">Probabilidad de obtener cada carta al menos una vez en este sobre.</p>
           <ul className="t-tasas" aria-label="Cartas y probabilidades">
             {comodinesPosibles.map(c => (
               <li key={c.id}>
-                {c.arte ? <img src={srcArte("tienda/" + c.arte)} alt="" /> : <ComodinIcono id={c.id} alterno={c.icono} />}
+                {c.arte ? <img src={srcArte("tienda/" + c.arte)} alt="" loading="lazy" /> : <ComodinIcono id={c.id} alterno={c.icono} />}
                 <span><b>{c.nombre}</b><small>{c.alTope
                   ? porcentaje(c.enSobre) + " de que se sortee y se convierta en monedas"
                   : porcentaje(c.porCarta) + " en cada extracción"}</small></span>
@@ -173,22 +236,10 @@ function Sobres({ alAbrir }: { alAbrir: (s: Sobre, a: Apertura) => void }) {
               {falta.legendaria <= 3 ? <>Legendaria asegurada {cuando(falta.legendaria)}</> : <>Épica asegurada {cuando(falta.epica)}</>}
             </p>
           )}
-        </div>
-        <p className="t-precio-toque">{ocupado ? "Un momento…" : disponible ? <>Toca el sobre para comprar · {s.precio} {MONEDA}<span className="t-solo-lector"> monedas</span></> : "Ya lo tienes todo"}</p>
-        {disponible && !alcanza && <p className="t-faltan">Te faltan {s.precio - t.monedas} monedas.</p>}
+        </details>}
       </div>
-
-      {!p.activo && <p className="t-aviso-libres">Por ahora todas las piezas son libres: úsalas en el personalizador. Los sobres de piezas regresan después.</p>}
-      {lista.length > 1 && <div className="t-tira" role="group" aria-label="Sobres">
-        {lista.map((x, k) => (
-          <button key={x.id} type="button" aria-label={x.nombre + ", " + x.precio + " monedas"} aria-pressed={k === i} className={"t-tira-s" + (k === i ? " t-on" : "")}
-            style={{ ["--c" as string]: x.color }} onClick={() => { sonar("tic"); setI(k); }}>
-            <img src={srcArte("tienda/" + x.arte)} alt="" draggable={false} />
-            <span>{MONEDA}{x.precio}</span>
-          </button>
-        ))}
-      </div>}
     </div>
+    </>
   );
 }
 /** Paquete de momentos (no tiene miniatura). */
@@ -200,14 +251,61 @@ const porcentaje = (p: number) => p > 0 && p < 0.0001 ? "< 0.01 %" : formatoTasa
 const cuando = (n: number) => (n <= 1 ? "en el siguiente sobre" : `en ${n} sobres`);
 
 // ---------- Colección ----------
+function ColeccionPersonajes() {
+  const [abrir, setAbrir] = useState(false);
+  return <details className="t-contenido-posible t-album-personajes" onToggle={e => setAbrir(e.currentTarget.open)}>
+    <summary>Personajes y trajes · Vista previa</summary>
+    {abrir && <PersonajesPorSaga />}
+  </details>;
+}
+
+function PersonajesPorSaga() {
+  const trajes = useTrajes();
+  return <>
+    <p className="t-tasas-nota">Selección inicial para la futura colección de personajes.</p>
+    {SAGAS.map(saga => <section key={saga.id} className="t-seccion">
+      <h3>{saga.nombre}</h3>
+      <ul className="t-personajes-rejilla">
+        {saga.grupos.flatMap(g => g.personajes.flatMap(p => p.versiones.map(v => {
+          const bloqueado = !VERSIONES_INICIALES.has(v.id);
+          const mini = v.traje ? trajes?.get(v.traje)?.mini : undefined;
+          return <li key={v.id} data-bloqueado={bloqueado}>
+            {mini && <img src={miniatura(mini)} alt="" loading="lazy" />}
+            <b>{p.versiones.length > 1 ? `${p.nombre} · ${v.nombre}` : p.nombre}</b>
+            <small>{bloqueado ? <><Icono id="lock" /> En colección</> : "Inicial"}</small>
+          </li>;
+        })))}
+      </ul>
+    </section>)}
+  </>;
+}
+
 function Coleccion() {
   const p = usePiezas(), t = useTienda();
   const [seleccion, setSeleccion] = useState<(typeof COMODINES)[number] | null>(null);
   const detalle = useRef<HTMLDialogElement>(null);
+  const esAvance = seleccion != null && COMODINES_EN_PREPARACION.includes(seleccion);
+  const [reponiendo, setReponiendo] = useState(false);
+  const precioReposicion = seleccion && t.comodines[seleccion.id] === 0 ? t.preciosReposicion[seleccion.id] : undefined;
+  const reponer = async (carta: (typeof COMODINES)[number], precio: number) => {
+    if (reponiendo) return;
+    detalle.current?.close();
+    setReponiendo(true);
+    try {
+      if (!await confirmar({ titulo: "¿Reponer " + carta.nombre + "?", texto: `Una copia cuesta ${precio} monedas.`, si: "Reponer", no: "Ahora no" })) return;
+      const error = await reponerComodin(carta.id);
+      if (error) aviso(error);
+      else setSeleccion(carta);
+    } catch {
+      aviso("No se pudo reponer la carta. Revisa tu conexión.");
+    } finally {
+      setReponiendo(false);
+    }
+  };
   useEffect(() => {
     if (seleccion && !detalle.current?.open) detalle.current?.showModal();
   }, [seleccion]);
-  const distintos = COMODINES.filter(c => (t.comodines[c.id] ?? 0) > 0).length;
+  const distintos = COMODINES.filter(c => t.comodines[c.id] !== undefined).length;
   const tengo = PIEZAS_COLECCION.filter(x => p.tengo.has(x.id)).length;
   return (
     <div className="t-coleccion">
@@ -229,10 +327,10 @@ function Coleccion() {
         </div>
         <ul className="t-album-rejilla">
           {COMODINES.map(c => {
-            const copias = t.comodines[c.id] ?? 0;
+            const copias = t.comodines[c.id];
             return (
               <li key={c.id} className="t-album-ranura">
-                {copias ? (
+                {copias !== undefined ? (
                   <button type="button" className="t-album-carta" onClick={() => setSeleccion(c)}
                     aria-label={c.nombre + ", " + copias + (copias === 1 ? " copia" : " copias") + ". Ver carta"}>
                     <CartaFrente c={{ tipo: "comodin", id: c.id, especial: c.especial }} />
@@ -248,15 +346,32 @@ function Coleccion() {
           })}
         </ul>
       </section>
+      <section className="t-album" aria-labelledby="titulo-album-avance">
+        <div className="t-album-cab">
+          <h3 id="titulo-album-avance">Próximas cartas</h3>
+          <p>Vista previa</p>
+        </div>
+        <ul className="t-album-rejilla">
+          {COMODINES_EN_PREPARACION.map(c => (
+            <li key={c.id} className="t-album-ranura">
+              <button type="button" className="t-album-carta" onClick={() => setSeleccion(c)} aria-label={c.nombre + ". Ver vista previa"}>
+                <CartaFrente c={{ tipo: "comodin", id: c.id, especial: c.especial }} />
+              </button>
+            </li>
+          ))}
+        </ul>
+      </section>
       {seleccion && <dialog ref={detalle} className="t-album-detalle" aria-label={seleccion.nombre}
         onClose={() => setSeleccion(null)} onClick={e => { if (e.target === e.currentTarget) e.currentTarget.close(); }}>
         <div className="t-album-carta">
           <CartaFrente c={{ tipo: "comodin", id: seleccion.id, especial: seleccion.especial }} />
-          <span className="t-album-copias" aria-label={(t.comodines[seleccion.id] ?? 0) + " copias"}>×{t.comodines[seleccion.id] ?? 0}</span>
+          {!esAvance && <span className="t-album-copias" aria-label={(t.comodines[seleccion.id] ?? 0) + " copias"}>×{t.comodines[seleccion.id] ?? 0}</span>}
         </div>
+        {precioReposicion && <button type="button" className="t-ap-todas" disabled={reponiendo} onClick={() => void reponer(seleccion, precioReposicion)}>Reponer · {precioReposicion} {MONEDA}<span className="t-solo-lector"> monedas</span></button>}
         <button type="button" className="t-ap-todas" onClick={() => detalle.current?.close()}>Cerrar carta</button>
       </dialog>}
 
+      <ColeccionPersonajes />
       {!p.activo && <p className="t-frase">Las piezas están disponibles en el personalizador.</p>}
       {p.activo && ORDEN_SECCIONES.map(sec => {
         const lista = PIEZAS_COLECCION.filter(x => x.seccion === sec).sort((a, b) => ORDEN.indexOf(a.rareza) - ORDEN.indexOf(b.rareza));

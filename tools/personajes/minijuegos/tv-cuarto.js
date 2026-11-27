@@ -23,7 +23,7 @@ const tv = crearTV({
       if (j.figura) j.figura.anim("saludo");
     }
     visto.delete(j.id);
-    $("sub").textContent = `${tv.jugadores.size} en el cuarto · palanca para moverte, Salta, Golpe y ¡Eh!`;
+    $("sub").textContent = `${tv.jugadores.size} en el cuarto · palanca para moverte · A salta · B golpe · RT poder · rueda: gestos`;
   },
   alSalir: j => { salir(cuarto, j.id); visto.delete(j.id); },
   alMensaje: (j, m) => {
@@ -31,7 +31,10 @@ const tv = crearTV({
     else if (m.tipo === "boton") {
       const c = cuarto.cuerpos.get(j.id); if (!c) return;
       const b = String(m.d.b);
-      mandar(cuarto, j.id, { x: c.mando.x, z: c.mando.z, saltar: b === "saltar", golpe: b === "golpe", festejo: b === "festejo" });
+      mandar(cuarto, j.id, { x: c.mando.x, z: c.mando.z, saltar: b === "saltar", golpe: b === "golpe", festejo: b === "festejo", poder: b === "poder" });
+    } else if (m.tipo === "gesto") { // rueda de animaciones del mando (canal.ts ya revisó que sea uno de los 4)
+      const c = cuarto.cuerpos.get(j.id); if (!c) return;
+      mandar(cuarto, j.id, { x: c.mando.x, z: c.mando.z, gesto: m.d.g });
     }
   },
 });
@@ -61,6 +64,10 @@ function animar(j, cu) {
     case "herido": f.anim("herido", { mezcla: 0.04 }); break;
     case "ko": f.anim("ko", { mezcla: 0.04 }); break;
     case "festejo": f.anim("festejo"); break;
+    case "saludo": f.anim("saludo"); break;
+    case "derrota": f.anim("derrota"); break;
+    case "especial": f.anim("especial", { mezcla: 0.08 }); break;
+    case "poder": f.anim("especial", { mezcla: 0.08 }); break;
     case "caminar": f.anim("caminar"); break;
     case "correr": f.anim("correr"); break;
     default: f.anim("reposo");
@@ -93,6 +100,7 @@ setInterval(() => {
     resto -= 1000 / 60;
     for (const ev of pasoCuarto(cuarto, 1000 / 60)) {
       if (ev.tipo === "golpe") tv.pop(tv.jugadores.get(ev.a), "¡Pum!", "#ff8a1f");
+      if (ev.tipo === "poder") tv.pop(tv.jugadores.get(ev.id), "¡Poder!", "#b46cff");
       if (ev.tipo === "ko") tv.pop(tv.jugadores.get(ev.id), "¡K.O.!", "#e8343a");
       if (ev.tipo === "cae") { const j = tv.jugadores.get(ev.id); if (j) { j.vieneDeLejos = true; tv.pop(j, "¡Aaah!", "#7cc0ff"); } }
     }

@@ -13,6 +13,7 @@ import { CelularVerdadReto } from "../verdadReto/celular";
 import { CelularFisico } from "../fisico/celular";
 import { ComoJugar, tocaExplicar } from "./ComoJugar";
 import { CeremoniaCopas, PodioJuego, esFinalDeJuego } from "./Copas";
+import { SelectorComodines } from "./SelectorComodines";
 
 export interface MiVista { yo: string; mio: unknown; miRespuesta: unknown; miMano: string[] }
 type Mandar = (tipo: "contestar" | "carta" | "pista", datos: Record<string, unknown>) => Promise<boolean>;
@@ -59,15 +60,15 @@ function HerramientaGeneral({ v, mi, miembros, mandar }: { v: Publico; mi: MiVis
   }
   if (v.pausada) return <Panel className="a-herr"><span className="dsp ol a-t1">En pausa</span><p className="a-suave">El anfitrión detuvo la partida un momento.</p></Panel>;
 
-  const cartas = mano.length > 0 && (
-    <div className="a-mano" aria-label="Tus comodines">
+  const cartas = mano.length > 0 && v.fase === "contestando" && (
+    <SelectorComodines key={clave} cantidad={mano.length}>
       {mano.map((c, i) => {
         const def = CARTAS_PODER.find(x => x.id === c);
         const deTurno = c === "escudo" || c === "turno" || c === "cambio";
         const puede = !deTurno || (soyTurno && !recibido && ["turnos-cartas", "botella", "ruleta", "dados"].includes(v.motor));
         return <button key={c + i} type="button" className="d-chip a-comodin" disabled={!puede} title={def?.efecto} onClick={() => void mandar("carta", { carta: c })}>{def?.nombre ?? c}</button>;
       })}
-    </div>
+    </SelectorComodines>
   );
   const espera = <p className="a-estado" role="status">{recibido ? "La TV ya lo recibió" : "Enviado…"}</p>;
 

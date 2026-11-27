@@ -37,6 +37,10 @@ input{font:800 18px Nunito,sans-serif;padding:10px 12px;border-radius:12px;borde
 /* «¡DISPARA!», «¡GOLPEA!», «¡CORRE!» y «¡ABRE!»: texto más chico para celulares angostos. */
 #salto.duelo #salto-accion{font-size:clamp(30px,11vw,80px)}
 #salto.toca{transform:translateY(8px);box-shadow:0 2px 0 var(--borde)}
+/* Letra estilo Xbox del botón del minijuego (A salta, B golpea, RT dispara). */
+.letra{display:block;width:clamp(72px,22vw,110px);height:clamp(72px,22vw,110px);background:url(../../../arte/ui/mando/x-a.webp) center/contain no-repeat;
+  font-size:0;color:transparent;filter:drop-shadow(0 5px 0 rgba(5,8,26,.8))}
+.letra.b{background-image:url(../../../arte/ui/mando/x-b.webp)}.letra.rt{background-image:url(../../../arte/ui/mando/x-rt.webp);height:clamp(86px,26vw,128px)}
 #salto small{font:800 16px Nunito,sans-serif;text-shadow:none;opacity:.85}
 #salto.fuera{filter:grayscale(1) brightness(.6)}
 #salto.espera{filter:saturate(.3) brightness(.75)}
@@ -47,13 +51,35 @@ input{font:800 18px Nunito,sans-serif;padding:10px 12px;border-radius:12px;borde
 #mando{flex:1;position:relative;margin-top:10px}
 .zona-palanca{position:absolute;left:0;top:0;bottom:0;width:58%}
 .palanca{position:absolute;width:140px;height:140px;margin:-70px 0 0 -70px;border-radius:50%;border:4px solid rgba(255,255,255,.5);background:rgba(10,16,48,.45)}
-.palanca i{position:absolute;left:50%;top:50%;width:62px;height:62px;margin:-31px 0 0 -31px;border-radius:50%;background:var(--yo);border:4px solid var(--borde);box-shadow:0 4px 0 var(--borde)}
-.botones{position:absolute;right:4px;bottom:20px;width:min(48vw,240px);height:min(48vw,240px)}
-.botones button{position:absolute;border-radius:50%;border:4px solid var(--borde);box-shadow:0 6px 0 var(--borde);font:400 18px/1 "Lilita One",sans-serif;color:var(--noche)}
-.botones button:active,.botones button.toca{transform:translateY(5px);box-shadow:0 1px 0 var(--borde)}
-.b-saltar{background:var(--amarillo);width:50%;height:50%;right:0;bottom:0;font-size:22px!important}
-.b-golpe{background:#ff8a1f;width:40%;height:40%;left:0;bottom:4%}
-.b-festejo{background:#8cf09a;width:34%;height:34%;right:8%;top:0}
+.palanca i{position:absolute;left:50%;top:50%;width:84px;height:84px;margin:-42px 0 0 -42px;border-radius:50%;background:url(../../../arte/ui/mando/x-stick.webp) center/contain no-repeat;filter:drop-shadow(0 4px 0 rgba(5,8,26,.8))}
+/* Mando estilo Xbox (Elías, 27 nov): solo los botones que hacen algo. A salta, B golpe, RT poder (movimiento especial);
+   los gestos van en la rueda del centro. X (patada) y Y (transformación) se agregan cuando existan sus movimientos. */
+.botones{position:absolute;right:4px;bottom:16px;width:min(50vw,250px);height:min(50vw,250px)}
+.botones button{position:absolute;border-radius:50%;border:4px solid #05081a;box-shadow:0 6px 0 #05081a,inset 0 -6px 10px rgba(0,0,0,.45);
+  background:radial-gradient(circle at 50% 30%,#3a3f4d,#14161d 70%);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:0}
+.botones button b{font:900 clamp(26px,9vw,44px)/1 Nunito,system-ui,sans-serif;text-shadow:0 2px 0 rgba(0,0,0,.6)}
+.botones button small{position:absolute;bottom:-18px;left:-20%;right:-20%;font:800 11px/1 Nunito,sans-serif;color:#dfe4ff;letter-spacing:.04em;text-transform:uppercase;text-align:center}
+.botones button:active,.botones button.toca{transform:translateY(4px) scale(.96);filter:brightness(.85)}
+/* Botones con el arte de Elías (recortado de su hoja, sin fondo): public/arte/ui/mando/x-*.webp */
+.botones .img{background-color:transparent!important;background-position:center!important;background-size:contain!important;background-repeat:no-repeat!important;border:0!important;box-shadow:none!important;filter:drop-shadow(0 5px 0 rgba(5,8,26,.8))}
+.botones .img b{display:none}
+.botones .x-a{width:38%;height:38%;left:31%;bottom:0;background-image:url(../../../arte/ui/mando/x-a.webp)!important}
+.botones .x-b{width:38%;height:38%;right:0;top:31%;background-image:url(../../../arte/ui/mando/x-b.webp)!important}
+.botones .x-rt{width:34%!important;height:38%!important;right:6%;top:-14%;border-radius:0!important;background-image:url(../../../arte/ui/mando/x-rt.webp)!important}
+/* Rueda de animaciones (Elías, 27 nov: en lugar de ¡Eh!, «nuestro círculo de animaciones» al centro, siempre visible).
+   Mismo vidrio, colores e íconos que la rueda del HUB (src/pantallas/gestos): Saludar, Ganar, Especial y Perder. */
+.rueda{position:absolute;z-index:3;left:50%;top:50%;width:min(44vh,36vw,190px);aspect-ratio:1;translate:-50% -50%;touch-action:none}
+.rueda .vidrio{position:absolute;inset:2%;border-radius:50%;background:rgba(235,240,250,.1);backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px)}
+.rueda svg{position:relative;width:100%;height:100%;overflow:visible}
+.rueda .gajo{cursor:pointer;transform-box:view-box;transform-origin:0 0;transition:transform .16s cubic-bezier(.34,1.56,.64,1)}
+.rueda .forma{fill:rgba(225,232,245,.26);stroke:rgba(255,255,255,.55);stroke-width:1.5;transition:fill .16s}
+.rueda .gajo image{pointer-events:none;filter:drop-shadow(0 1px 2px rgba(10,16,48,.45))}
+.rueda .gajo.on{transform:translate(var(--dx),var(--dy)) scale(1.06)}
+.rueda .gajo.on .forma{fill:var(--c1);fill-opacity:.8;stroke:#fff}
+.rueda .centro{fill:rgba(20,26,52,.42);stroke:rgba(255,255,255,.55);stroke-width:1.5}
+.rueda .nombre{font:400 15px "Lilita One",sans-serif;text-anchor:middle;fill:#fff;text-transform:uppercase;pointer-events:none}
+.rueda .logo{pointer-events:none}
+@media (orientation:portrait){.rueda{top:24%;width:min(46vw,190px)}}
 /* Sala de Físico */
 #fisico{flex:1;display:flex;flex-direction:column;gap:8px;min-height:0;margin-top:8px}
 .mis-pts{font:400 20px/1 "Lilita One",sans-serif;text-align:center}
@@ -103,14 +129,15 @@ input{font:800 18px Nunito,sans-serif;padding:10px 12px;border-radius:12px;borde
     <button class="grande oculto" id="empezar">¡Empezar!</button>
     <button class="grande oculto" id="otra">Otra vez</button>
   </section>
-  <button id="salto" class="oculto"><span id="salto-accion">SALTA</span><small id="salto-txt">Toca cuando llegue la bala</small></button>
+  <button id="salto" class="oculto"><span id="salto-letra" class="letra">A</span><span id="salto-accion">SALTA</span><small id="salto-txt">Toca cuando llegue la bala</small></button>
   <div id="mando" class="oculto">
     <div class="girar oculto" id="girar">Gira tu celular para jugar más cómodo ⟳</div>
     <div class="zona-palanca" id="zona"><div class="palanca" id="palanca"><i id="bolita"></i></div></div>
+    <div class="rueda" id="rueda" role="menu" aria-label="Animaciones de tu personaje"><span class="vidrio"></span></div>
     <div class="botones">
-      <button class="b-festejo" data-b="festejo">¡Eh!</button>
-      <button class="b-golpe" data-b="golpe">Golpe</button>
-      <button class="b-saltar" data-b="saltar">Salta</button>
+      <button class="x-rt img" data-b="poder" aria-label="RT: poder"><b>RT</b><small>Poder</small></button>
+      <button class="x-b img" data-b="golpe" aria-label="B: golpe"><b>B</b><small>Golpe</small></button>
+      <button class="x-a img" data-b="saltar" aria-label="A: salta"><b>A</b><small>Salta</small></button>
     </div>
   </div>
   <section id="fisico" class="oculto">

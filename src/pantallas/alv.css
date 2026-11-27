@@ -180,6 +180,9 @@ body { overscroll-behavior: none; -webkit-tap-highlight-color: transparent; }
 .D .a-mano { display: flex; flex-wrap: wrap; gap: 8px; padding-top: 12px; border-top: 2px dashed color-mix(in srgb, var(--borde-luz) 50%, transparent); }
 .D .a-comodin { min-height: 40px; padding: 8px 16px; background: var(--morado); border-color: var(--tinta); }
 .D .a-comodin:disabled { opacity: .45; cursor: not-allowed; }
+.D .a-selector-comodines { margin-top: 8px; color: #fff1c8; }
+.D .a-selector-comodines summary { min-height: 44px; padding: 10px 12px; border: 1px solid var(--borde-luz); border-radius: 10px; background: var(--morado); font-weight: 800; cursor: pointer; }
+.D .a-selector-comodines .a-mano { border-top: 0; padding-top: 8px; }
 .D .a-palabras { margin: 0; padding: 0 0 0 1.4em; display: flex; flex-direction: column; gap: 8px; font: var(--cuerpo); }
 .D .a-palabras li.hecha { opacity: .4; text-decoration: line-through; }
 .D .a-palabras small { display: block; font: var(--chip); color: var(--rojo-claro); }

@@ -4,6 +4,8 @@
 import { useCallback, useEffect, useImperativeHandle, useRef, useState, forwardRef } from "react";
 import { pedirGesto, type Gesto } from "../../app/animaciones";
 import { sonar } from "../../app/sonido";
+import { tocarVoz } from "../../app/musica";
+import { prepararVoz, urlObjeto, vozDe } from "../../app/temas";
 import type { FiguraV2 } from "../../content/personaje";
 import { GAJO_PODERES, GAJO_TRANSFORMAR, RUEDA, RuedaGestos, gajosPoder } from "./RuedaGestos";
 import { conForma, seTransforma, transformar, useVersionFormas } from "../../app/formas";
@@ -43,6 +45,8 @@ export const RuedaFigura = forwardRef<MandoRueda, { jugador: string; figura?: Fi
     addEventListener("resize", medir);
     return () => { clearTimeout(t0); clearInterval(t1); removeEventListener("resize", medir); };
   }, [pistaSobre]);
+  // Voz del personaje al hacer «Especial» (temas.ts, Elías 27 nov): se baja antes para que suene al instante.
+  useEffect(() => { prepararVoz(figura, "especial"); }, [figura]);
   // El toque que cierra la rueda por fuera también suelta sobre la figura: sin esto se volvería a abrir.
   const cerro = useRef(0);
 
@@ -73,7 +77,12 @@ export const RuedaFigura = forwardRef<MandoRueda, { jugador: string; figura?: Fi
     if (cual.startsWith("poder:")) { setTimeout(() => sonar(pedirPoder(jugador, cual.slice(6)) ? "poder" : "tic"), 220); return; }
     const g = cual as Gesto;
     // Igual que los botones: el gesto empieza cuando la rueda ya se cerró (late 100 ms y cierra en 120 ms).
-    setTimeout(() => { const ok = pedirGesto(jugador, g, figura); sonar(ok ? (g === "especial" ? "poder" : "clic") : "tic"); }, 220);
+    const voz = vozDe(figura, g);
+    setTimeout(() => {
+      const ok = pedirGesto(jugador, g, figura);
+      if (ok && voz) { void urlObjeto(voz).then(u => { if (!u || !tocarVoz(u)) sonar("poder"); }); return; }
+      sonar(ok ? (g === "especial" ? "poder" : "clic") : "tic");
+    }, 220);
   };
   const ultimaPos = useRef<{ x: number; y: number } | null>(null);
   if (pos) ultimaPos.current = pos;
