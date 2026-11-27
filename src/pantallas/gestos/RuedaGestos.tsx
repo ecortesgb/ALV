@@ -18,12 +18,15 @@ function gajo(a0: number, a1: number, r0: number, r1: number): string {
 const R0 = 34, R1 = 96, HUECO = 3;
 /** Centro de cada gajo en grados: izquierda, arriba, derecha, abajo (como la referencia). */
 const ANGULOS = [180, 270, 0, 90];
+/** Con «Transformar» (5 gajos): los 4 de siempre corridos hacia arriba y el quinto abajo. */
+const ANGULOS_5 = [198, 270, 342, 54, 126];
+const angulos = (n: number) => (n >= 5 ? ANGULOS_5 : ANGULOS);
 /** Íconos ilustrados que no cargaron (se usa el dibujo de respaldo). */
 const sinImg = new Set<string>();
 const ICONOS = `${import.meta.env.BASE_URL}arte/ui/gestos/`;
 
 export function RuedaGestos({ gestos, x, y, centro, onElegir, onCerrar }: {
-  /** 4 gestos en orden: izquierda, arriba, derecha, abajo. */
+  /** 4 gestos en orden: izquierda, arriba, derecha, abajo (o 5: el quinto, «Transformar», abajo). */
   gestos: GestoRueda[]; x: number; y: number; centro?: string | null;
   onElegir: (cual: string) => void;
   /** «elegir» o «tecla» (Esc): quien la abrió devuelve el foco al personaje; «fuera»: el foco se queda donde fue. */
@@ -49,7 +52,9 @@ export function RuedaGestos({ gestos, x, y, centro, onElegir, onCerrar }: {
   // Si el foco sale de la rueda (Tab, Mayús+Tab), se cierra sin moverlo (Codex, cierre-r1).
   const salioFoco = (e: React.FocusEvent) => { if (!sale && !caja.current?.contains(e.relatedTarget as Node | null) && e.relatedTarget) onCerrar("fuera"); };
   const mover = (e: KeyboardEvent, i: number) => {
-    const sig = { ArrowLeft: 0, ArrowUp: 1, ArrowRight: 2, ArrowDown: 3 }[e.key as "ArrowLeft"];
+    const n = Math.min(5, gestos.length);
+    const sig = n === 4 ? { ArrowLeft: 0, ArrowUp: 1, ArrowRight: 2, ArrowDown: 3 }[e.key as "ArrowLeft"]
+      : e.key === "ArrowRight" || e.key === "ArrowDown" ? (i + 1) % n : e.key === "ArrowLeft" || e.key === "ArrowUp" ? (i + n - 1) % n : undefined;
     if (sig !== undefined) { e.preventDefault(); setFoco(sig); setSenal(gestos[sig]?.cual ?? null); botones.current[sig]?.focus(); }
     if (e.key === "Enter" || e.key === " ") { e.preventDefault(); elegir(gestos[i]!.cual); }
   };
@@ -58,8 +63,9 @@ export function RuedaGestos({ gestos, x, y, centro, onElegir, onCerrar }: {
     <div ref={caja} className={"rg" + (sale ? " rg-sale" : "")} style={{ left: x, top: y }} role="menu" aria-label="Animaciones de tu personaje" onBlur={salioFoco}>
       <span className="rg-vidrio" aria-hidden="true" />
       <svg viewBox="-100 -100 200 200" className="rg-svg">
-        {gestos.slice(0, 4).map((g, i) => {
-          const a = ANGULOS[i]!, d = gajo(a - 45 + HUECO / 2, a + 45 - HUECO / 2, R0, R1);
+        {gestos.slice(0, 5).map((g, i, todos) => {
+          const ang = angulos(todos.length), medio = 180 / ang.length;
+          const a = ang[i]!, d = gajo(a - medio + HUECO / 2, a + medio - HUECO / 2, R0, R1);
           const t = (a * Math.PI) / 180, cx = 66 * Math.cos(t), cy = 66 * Math.sin(t);
           return (
             <g key={g.cual} ref={el => { botones.current[i] = el; }} className={"rg-gajo" + (sale === g.cual ? " on" : "")} role="menuitem" tabIndex={foco === i ? 0 : -1}
@@ -120,6 +126,8 @@ export function TrazosGesto({ cual }: { cual: string }) {
   if (cual === "victoria") return <Minifig bi={148} bd={-148} pi={8} pd={-8} extra={<><path {...trazo} d="M2.2 4.2l1.3.8M1.6 7.4h1.5M21.8 4.2l-1.3.8M22.4 7.4h-1.5" /></>} />;
   // Perder: cabeza abajo, brazos colgados y una gota de sudor.
   if (cual === "derrota") return <Minifig bi={4} bd={-4} cabeza={14} baja={0.9} extra={<path fill="#fff" stroke={TINTA} strokeWidth={0.7} d="M18.4 2.2c.9 1.3 1.4 2.1 1.4 2.8a1.4 1.4 0 0 1-2.8 0c0-.7.5-1.5 1.4-2.8Z" />} />;
+  // Transformar: la figura entre dos flechas que dan la vuelta (cambia de forma).
+  if (cual === "transformar") return <Minifig bi={20} bd={-20} extra={<><path {...trazo} d="M3.4 9.2a8.6 8.6 0 0 1 4-6.4M2.4 5.4l1 3.9 3.6-1.6" /><path {...trazo} d="M20.6 14.8a8.6 8.6 0 0 1-4 6.4M21.6 18.6l-1-3.9-3.6 1.6" /></>} />;
   // Especial: golpe al frente con un rayo saliendo del puño.
   return <Minifig bi={58} bd={-96} cabeza={-4} pi={6} pd={-4} extra={<path fill="#fff" stroke={TINTA} strokeWidth={0.7} strokeLinejoin="round" d="M21.2 5.2l2.4.2-1.6 2.3 1.6.1-3.2 3.6.9-2.6-1.5-.1Z" />} />;
 }
@@ -131,3 +139,5 @@ export const RUEDA: GestoRueda[] = [
   { cual: "especial", txt: "Especial", c1: "#ff9a3a", c2: "#e8560f", dibujo: <TrazosGesto cual="especial" />, img: `${ICONOS}gesto-especial.webp` },
   { cual: "derrota", txt: "Perder", c1: "#4f86e8", c2: "#1f4fb0", dibujo: <TrazosGesto cual="derrota" />, img: `${ICONOS}gesto-derrota.webp` },
 ];
+/** Quinto gajo, solo en personajes que se transforman (Banner ↔ Hulk, Tony / Iron Man, Peter ↔ Spider-Man; Elías, 27 nov). */
+export const GAJO_TRANSFORMAR: GestoRueda = { cual: "transformar", txt: "Transformar", c1: "#c77dff", c2: "#7b2cbf", dibujo: <TrazosGesto cual="transformar" /> };

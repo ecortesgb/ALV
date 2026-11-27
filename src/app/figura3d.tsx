@@ -6,6 +6,7 @@ import { paramsEscena } from "./preferencias";
 import { alPedirGesto, animacionDe, esGesto, terminarGesto } from "./animaciones";
 import { PRIORIDAD_VIDA, animPerfil, perfilDe, soloApariencia, type Contexto } from "./perfiles";
 import { alVida, nombreVida, useVidaPerfil } from "./vidaPerfil";
+import { conForma, useVersionFormas } from "./formas";
 import { catalogoParaEscena, modoCorteV3, paraEscena, useCatalogoV3, useEscenaV3, type CatalogoV3 } from "../personajes/integracion";
 
 const BASE = `${import.meta.env.BASE_URL}minifig/`;
@@ -287,7 +288,7 @@ export function Escena3D({ figuras, momentos, className, alto, modo, columnas, s
   // Animaciones de la biblioteca que tiene ESTA escena (las avisa biblioteca-anim.js).
   const bib = useRef(new Set<string>());
   const hay = (n: string) => bib.current.has(n);
-  const mandarFiguras = () => { const u = ultimas.current; enviar({ tipo: "figuras", lista: conAnim(u.figuras, u.vida, hay).map(x => paraEscena(x, u.v3)), columnas: u.columnas, asientos: u.asientos }); };
+  const mandarFiguras = () => { const u = ultimas.current; enviar({ tipo: "figuras", lista: conAnim(u.figuras.map(x => conForma(x, u.v3)), u.vida, hay).map(x => paraEscena(x, u.v3)), columnas: u.columnas, asientos: u.asientos }); };
   useEffect(() => { if (v3 && listoRef.current) mandarFiguras(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [v3]);
   useEffect(() => {
     const f = (e: MessageEvent) => {
@@ -310,7 +311,9 @@ export function Escena3D({ figuras, momentos, className, alto, modo, columnas, s
     return () => { removeEventListener("message", f); fuera(); fueraVida(); };
   }, []);
   const firma = figuras.map(x => `${x.id}:${x.figura ? huella(x.figura) : "s" + x.semilla}:${x.foco ? 1 : 0}:${x.color ?? ""}:${x.columna ?? ""}`).join("|") + "#" + (columnas ?? "") + "#" + (asientos ?? []).join(",");
-  useEffect(() => { if (listo) mandarFiguras(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [listo, firma, vida]);
+  // Transformaciones (formas.ts): al cambiar la forma de alguien se vuelven a mandar las figuras.
+  const formas = useVersionFormas();
+  useEffect(() => { if (listo) mandarFiguras(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [listo, firma, vida, formas]);
   useEffect(() => { if (listo && modo === "nave") enviar({ tipo: "nave", boton: boton ?? "quieto" }); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [listo, boton]);
   useEffect(() => { if (listo && modo === "nave" && expulsar) enviar({ tipo: "expulsar", id: expulsar }); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [listo, expulsar]);
   const vistos = useRef(new Map<string, number>());

@@ -840,8 +840,14 @@
       // Fase 5: con `plano3` (figura del sistema nuevo, ya resuelta por ALV) la huella incluye el plano: si cambia, se
       // arma de nuevo la v2 de respaldo y se vuelve a cargar la nueva.
       const p3 = planoV3(x.plano3);
-      const h = huellaDe(fx) + (p3 ? "|" + huellaDe(p3) : "");
+      let h = huellaDe(fx) + (p3 ? "|" + huellaDe(p3) : "");
       let e = figuras.get(id);
+      // Transformación (formas.ts de ALV: Banner ↔ Hulk, Tony / Iron Man, Peter ↔ Spider-Man): la figura de ahora se queda
+      // mientras baja la otra; luego nube de humo y cambio. Si la de antes tiene que hacer su especial (Banner), primero esa.
+      const tr = Number.isFinite(x.transforma) ? x.transforma : null;
+      if (e && e.huella !== h && e.trHuella === h) h = e.huella; // ya está en camino: nada que hacer
+      else if (e && e.huella !== h && tr != null && tr !== e.transforma && e.v3 && p3 && !NAVE && transformarV3(e, p3, h, !!x.conEspecial)) { e.transforma = tr; h = e.huella; }
+      if (e && tr != null) e.transforma = tr;
       if (!e || e.huella !== h) {
         if (e) quitar(id);
         const t = reloj.getElapsedTime(), habia = !!e;
@@ -1344,10 +1350,80 @@
   function moverPolvo(t, dt) {
     for (let i = polvos.length - 1; i >= 0; i--) {
       const x = polvos[i], e = t - x.t0, pos = x.p.geometry.attributes.position;
-      if (e > 0.55) { scene.remove(x.p); x.p.geometry.dispose(); x.p.material.dispose(); polvos.splice(i, 1); continue; }
+      const vida = x.vida || 0.55;
+      if (e > vida) { scene.remove(x.p); x.p.geometry.dispose(); x.p.material.dispose(); polvos.splice(i, 1); continue; }
       for (let k = 0; k < x.vel.length; k++) { pos.array[k * 3] += x.vel[k][0] * dt; pos.array[k * 3 + 1] += x.vel[k][1] * dt; pos.array[k * 3 + 2] += x.vel[k][2] * dt; }
-      pos.needsUpdate = true; x.p.material.opacity = 1 - e / 0.55; x.p.material.size = 0.16 + e * 0.25;
+      pos.needsUpdate = true; x.p.material.opacity = (x.opacidad || 1) * (1 - e / vida); x.p.material.size = (x.tam || 0.16) + e * (x.crece || 0.25);
     }
+  }
+
+  /** Nube de humo de la transformación: más grande y lenta que el polvo, gris claro con chispas verdes o doradas. */
+  function nube(t, ox, oz, alto, chispa) {
+    if (MENOS_MOVIMIENTO) return;
+    const n = 46, pos = new Float32Array(n * 3), col = new Float32Array(n * 3), vel = [];
+    for (let i = 0; i < n; i++) {
+      const a = Math.random() * Math.PI * 2, r = 0.2 + Math.random() * 0.5, y = Math.random() * alto;
+      pos.set([ox + Math.cos(a) * r, y, oz + Math.sin(a) * r * 0.7 + 0.25], i * 3);
+      vel.push([Math.cos(a) * (0.5 + Math.random() * 0.7), 0.25 + Math.random() * 0.6, Math.sin(a) * 0.4]);
+      const g = 0.82 + Math.random() * 0.18, c = Math.random() < 0.18 ? chispa : [g, g, g * 1.02];
+      col.set(c, i * 3);
+    }
+    const geo = new THREE.BufferGeometry(); geo.setAttribute("position", new THREE.BufferAttribute(pos, 3)); geo.setAttribute("color", new THREE.BufferAttribute(col, 3));
+    const mat = new THREE.PointsMaterial({ size: 0.5, map: texPolvo, vertexColors: true, transparent: true, depthWrite: false, alphaTest: 0.02 });
+    const p = new THREE.Points(geo, mat); scene.add(p); polvos.push({ p, vel, t0: t, vida: 0.95, tam: 0.5, crece: 0.9, opacidad: 0.95 });
+  }
+  /**
+   * Cambia la figura nueva de `e` por la de `p3` sin pasar por la de respaldo: la otra se arma aparte y, cuando está lista
+   * (y terminó la especial si `conEspecial`), nube de humo y cambio. false si no hay motor nuevo (se arma como siempre).
+   */
+  function transformarV3(e, p3, h, conEspecial) {
+    const gen = (e.gen3 = ++V3.gen);
+    // Antes del cambio la figura tiembla y crece un poco (Banner más largo: se está transformando). La animación del juego
+    // TRANSFORM_TO_BIGFIG de Banner no sirve aquí: esconde sus piezas esperando las de Hulk y se ve rota (prueba 27 nov).
+    const t0 = reloj.getElapsedTime(), dur = conEspecial ? 1.3 : 0.6, hasta = t0 + dur;
+    const cuerpo = e.v3.obj, esc0 = cuerpo.scale.x, x0 = cuerpo.position.x;
+    e.prio = 9; e.cual = "transformar"; e.hasta = hasta + 0.5; // nadie la interrumpe
+    if (conEspecial) e.v3.tocar("victoria");
+    { const pos = e.obj.position; nube(t0, pos.x, pos.z, 1.2, conEspecial ? [0.55, 0.95, 0.35] : [1, 0.85, 0.3]); }
+    e.trHuella = h;
+    const temblar = () => {
+      if (figuras.get(e.id) !== e || e.gen3 !== gen || e.v3.obj !== cuerpo) return;
+      const k = Math.min(1, (reloj.getElapsedTime() - t0) / dur);
+      cuerpo.scale.setScalar(esc0 * (1 + 0.14 * k));
+      cuerpo.position.x = x0 + Math.sin(reloj.getElapsedTime() * 55) * 0.035 * k;
+      if (k < 1) setTimeout(temblar, 30);
+    };
+    temblar();
+    motorV3().then(M => M.crear(p3)).then(inst => new Promise(ok => {
+      const espera = () => (reloj.getElapsedTime() >= hasta ? ok(inst) : setTimeout(espera, 50));
+      espera();
+    })).then(inst => {
+      if (figuras.get(e.id) !== e || e.gen3 !== gen) { inst.quitar(); return; } // llegó otra cosa mientras
+      cuerpo.scale.setScalar(esc0); cuerpo.position.x = x0;
+      const t = reloj.getElapsedTime(), viejo = e.obj, alto0 = e.v3.alto();
+      const grupo = new THREE.Group();
+      grupo.add(inst.obj);
+      const alto = inst.alto(), TOPE = 3.4;
+      if ((SALA || NAVE || AZOTEA) && !/[?&]bigfig=real/.test(location.search) && alto > TOPE) inst.obj.scale.multiplyScalar(TOPE / alto);
+      inst.obj.traverse(o => { if (o.isMesh) o.receiveShadow = false; });
+      const sombra = new THREE.Mesh(sombraGeo, sombraMat); sombra.rotation.x = -Math.PI / 2; sombra.position.y = 0.003; grupo.add(sombra);
+      grupo.position.copy(viejo.position); grupo.rotation.copy(viejo.rotation); grupo.scale.copy(viejo.scale); grupo.visible = viejo.visible;
+      scene.remove(viejo); e.v3.quitar();
+      e.obj = grupo; e.v3 = inst; e.huella = h; e.trHuella = null;
+      scene.add(grupo);
+      inst.tocar("reposo", { mezcla: 0 });
+      e.prio = 0; e.cual = null; e.hasta = 0; e.accion = null;
+      const esGrande = p3.familia === "bigfig";
+      nube(t, grupo.position.x, grupo.position.z, Math.max(alto0, Math.min(TOPE, alto)) * grupo.scale.y, esGrande ? [0.55, 0.95, 0.35] : [1, 0.85, 0.3]);
+      acomodar();
+      enviar({ tipo: "transformo", id: e.id, ok: true });
+    }).catch(err => {
+      console.warn("escena: no se pudo transformar", e.id, err);
+      cuerpo.scale.setScalar(esc0); cuerpo.position.x = x0;
+      if (figuras.get(e.id) === e) { e.trHuella = null; e.huella = "x"; } // la próxima lista la arma como siempre
+      enviar({ tipo: "transformo", id: e.id, ok: false });
+    });
+    return true;
   }
 
   let antes = 0;

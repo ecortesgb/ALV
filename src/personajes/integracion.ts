@@ -13,6 +13,7 @@ import { BASE_CREAR, piezasDeCatalogo, planoConstructor, type PiezaCons, type Pi
 import { piezasGenericas } from "./genericas";
 import { baseGenerica, conMovimientos, type BaseGenerica } from "./movimientos";
 import { leerFigura } from "./figura";
+import { conEspecialAlSalir, cuantasFormas, figuraEnForma } from "./formas";
 import { cargarIndice, type Indice } from "./indice";
 import { resolver, type Catalogo } from "./plano";
 import type { FiguraV3, Plano } from "./tipos";
@@ -244,3 +245,19 @@ export function paraEscena<T extends { id: string; figura?: unknown }>(x: T, cat
   const plano = v3 ? resolverFigura(x.id, v3, cat.catalogo, cat.piezas, cat.base ?? null) : null;
   return { ...x, figura: sinV3(x.figura as FiguraV2Puente), ...(plano ? { plano3: plano } : {}) };
 }
+
+// ---------- Transformaciones (Elías, 27 nov: Banner ↔ Hulk, Tony / Iron Man / casco, Peter ↔ Spider-Man) ----------
+
+/** Cuántas formas tiene la figura (0 = no se transforma). No necesita el catálogo. */
+export function formasDe(f: unknown): number { return cuantasFormas(leerV3(f)); }
+
+/** La figura (v2 con su v3 en el puente) en el paso `paso` de su ciclo; sin ciclo, paso 0 o sin catálogo, la misma. */
+export function enForma(f: FiguraV2Puente, paso: number, cat: CatalogoV3 | null): FiguraV2Puente {
+  const v3 = paso ? leerV3(f) : null;
+  if (!v3 || !cat) return f;
+  const otra = figuraEnForma(v3, paso, cat.catalogo, cat.piezas);
+  return otra === v3 ? f : empaquetarV3(otra, sinV3(f)) ?? f;
+}
+
+/** ¿Al dejar la forma de `paso` se hace antes la animación especial (Banner se transforma)? */
+export function especialAlSalir(f: unknown, paso: number): boolean { const v3 = leerV3(f); return !!v3 && conEspecialAlSalir(v3, paso); }

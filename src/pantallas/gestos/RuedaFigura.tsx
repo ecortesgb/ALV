@@ -5,7 +5,8 @@ import { useCallback, useEffect, useImperativeHandle, useRef, useState, forwardR
 import { pedirGesto, type Gesto } from "../../app/animaciones";
 import { sonar } from "../../app/sonido";
 import type { FiguraV2 } from "../../content/personaje";
-import { RUEDA, RuedaGestos } from "./RuedaGestos";
+import { GAJO_TRANSFORMAR, RUEDA, RuedaGestos } from "./RuedaGestos";
+import { seTransforma, transformar } from "../../app/formas";
 
 /** Aviso de primera vez: se queda hasta que abras la rueda una vez en este aparato (Elías, 26 nov). */
 const VISTA = "alv-pista-rueda-juego";
@@ -25,6 +26,8 @@ export const RuedaFigura = forwardRef<MandoRueda, { jugador: string; figura?: Fi
   useEffect(() => {
     if (!pistaSobre || pistaVista()) return;
     const medir = () => {
+      // Ya abrió la rueda: el aviso no vuelve (antes la siguiente medida lo volvía a poner).
+      if (pistaVista()) { setPista(null); return; }
       const r = document.querySelector(pistaSobre)?.getBoundingClientRect();
       setPista(r && r.width > 20 && r.height > 20 ? { x: Math.max(130, Math.min(innerWidth - 130, r.left + r.width / 2)), y: r.top + r.height * 0.72 } : null);
     };
@@ -52,6 +55,8 @@ export const RuedaFigura = forwardRef<MandoRueda, { jugador: string; figura?: Fi
   }), []);
 
   const elegir = (cual: string) => {
+    // Transformar (Elías, 27 nov): cambia de forma y se queda así hasta volver a tocar.
+    if (cual === "transformar") { setTimeout(() => sonar(transformar(jugador, figura) ? "poder" : "tic"), 220); return; }
     const g = cual as Gesto;
     // Igual que los botones: el gesto empieza cuando la rueda ya se cerró (late 100 ms y cierra en 120 ms).
     setTimeout(() => { const ok = pedirGesto(jugador, g, figura); sonar(ok ? (g === "especial" ? "poder" : "clic") : "tic"); }, 220);
@@ -61,7 +66,7 @@ export const RuedaFigura = forwardRef<MandoRueda, { jugador: string; figura?: Fi
   if (!pos && !pista) return null;
   return (
     <div className="rg-capa">
-      {pos && <RuedaGestos gestos={RUEDA} x={pos.x} y={pos.y} onElegir={elegir} onCerrar={cerrar} />}
+      {pos && <RuedaGestos gestos={figura && seTransforma(figura) ? [...RUEDA, GAJO_TRANSFORMAR] : RUEDA} x={pos.x} y={pos.y} onElegir={elegir} onCerrar={cerrar} />}
       {!pos && pista && <p className="rg-pista" style={{ left: pista.x, top: pista.y }} aria-hidden="true">Toca a tu personaje para animarlo</p>}
     </div>
   );

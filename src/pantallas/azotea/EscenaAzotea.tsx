@@ -7,6 +7,7 @@ import { calidadAzotea, movimientoReducido, paramBiblioteca } from "../../app/pr
 import type { FiguraV2 } from "../../content/personaje";
 import { PRIORIDAD_VIDA, animPerfil, soloApariencia, type Contexto } from "../../app/perfiles";
 import { alVida, nombreVida } from "../../app/vidaPerfil";
+import { conForma, useVersionFormas } from "../../app/formas";
 import type { Ambiente, Anclaje, ColoresPlataforma } from "./paquetes";
 import { modoCorteV3, paraEscena, useEscenaV3 } from "../../personajes/integracion";
 
@@ -61,7 +62,10 @@ export const EscenaAzotea = forwardRef<MandoAzotea, { id: string; figura: Figura
       enviar({ tipo: "plataforma", colores: d.plataforma });
       enviar({ tipo: "ambiente", brillo: d.ambiente.brillo, ranura: d.plataforma.ranura, ...d.ambiente.luz });
       // Con vida: al motor va solo la apariencia y la personalidad viaja como perillas (reposo, velocidad, intensidad).
-      enviar({ tipo: "figuras", lista: [d.figura ? paraEscena({ id: d.id, figura: d.vida ? soloApariencia(d.figura) : d.figura, anim: d.vida ? { ...animacionDe(d.figura), ...animPerfil(d.figura, hay) } : animacionDe(d.figura) }, catV3.current) : { id: d.id, semilla: semillaDe(d.id) }] });
+      // Transformaciones (formas.ts): la figura va en su forma de ahora.
+      const fz = d.figura ? conForma({ id: d.id, figura: d.figura }, catV3.current) : null;
+      const fg = (fz?.figura ?? null) as typeof d.figura;
+      enviar({ tipo: "figuras", lista: [fz && fg ? paraEscena({ id: d.id, figura: d.vida ? soloApariencia(fg) : fg, anim: d.vida ? { ...animacionDe(fg), ...animPerfil(fg, hay) } : animacionDe(fg), ...(fz.transforma ? { transforma: fz.transforma, conEspecial: fz.conEspecial } : {}) }, catV3.current) : { id: d.id, semilla: semillaDe(d.id) }] });
     };
     useEffect(() => {
       const f = (e: MessageEvent) => {
@@ -121,7 +125,8 @@ export const EscenaAzotea = forwardRef<MandoAzotea, { id: string; figura: Figura
     };
 
     const firma = figura ? huella(figura) : "s";
-    useEffect(() => { if (listo) mandarTodo(); }, [listo, firma, ambiente, plataforma]); // eslint-disable-line react-hooks/exhaustive-deps
+    const formas = useVersionFormas();
+    useEffect(() => { if (listo) mandarTodo(); }, [listo, firma, ambiente, plataforma, formas]); // eslint-disable-line react-hooks/exhaustive-deps
 
     useImperativeHandle(mando, () => ({
       mirarA(p) {
