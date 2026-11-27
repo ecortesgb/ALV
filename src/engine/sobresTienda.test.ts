@@ -1,21 +1,19 @@
 import { describe, expect, it } from "vitest";
 import { crearAzar } from "./azar";
 import { RACHA_CERO, abrirSobre, faltanParaGarantia, probabilidadComodines, probabilidadPiezas, sobreDisponible, tirarRareza, type Racha } from "./sobresTienda";
-import { GARANTIA, PIEZAS_COLECCION, SOBRES, TOPE_COMODIN, piezasDeSobre, sobrePorId } from "../content/tienda";
+import { COMODINES, GARANTIA, PIEZAS_COLECCION, SOBRES, TOPE_COMODIN, piezasDeSobre, sobrePorId } from "../content/tienda";
 import { RAREZA } from "../content/rarezas";
 
 const S = (id: string) => sobrePorId(id)!;
 const nada = new Set<string>();
 
 describe("sobres de la tienda", () => {
-  it("distingue el 50 % por extracción del 87.5 % por sobre y respeta el tope", () => {
-    for (const demo of [true, false]) {
-      const tasas = probabilidadComodines(S("comodines"), { turno: TOPE_COMODIN }, demo);
-      expect(tasas).toHaveLength(2);
-      expect(tasas.every(c => c.porCarta === 0.5 && c.enSobre === 0.875)).toBe(true);
-      expect(tasas.find(c => c.id === "turno")?.alTope).toBe(true);
-      expect(tasas.find(c => c.id === "cambio")?.alTope).toBe(false);
-    }
+  it("los 18 comodines salen con la misma probabilidad (como el servidor) y respeta el tope", () => {
+    const tasas = probabilidadComodines(S("comodines"), { turno: TOPE_COMODIN });
+    expect(tasas).toHaveLength(18);
+    expect(tasas.every(c => c.porCarta === 1 / 18 && Math.abs(c.enSobre - (1 - (17 / 18) ** 3)) < 1e-12)).toBe(true);
+    expect(tasas.find(c => c.id === "turno")?.alTope).toBe(true);
+    expect(tasas.find(c => c.id === "cambio")?.alTope).toBe(false);
   });
 
   it("calcula la garantía por pieza y el reparto sin repetidas", () => {
@@ -107,7 +105,7 @@ describe("sobres de la tienda", () => {
   });
 
   it("comodines con tope: el que ya tienes 9 veces se cambia por monedas", () => {
-    const llenos = { turno: TOPE_COMODIN, cambio: TOPE_COMODIN, escudo: TOPE_COMODIN };
+    const llenos = Object.fromEntries(COMODINES.map(c => [c.id, TOPE_COMODIN]));
     const a = abrirSobre(S("comodines"), nada, llenos, RACHA_CERO, crearAzar(2))!;
     expect(a.cartas.every(c => c.tipo === "monedas")).toBe(true);
   });

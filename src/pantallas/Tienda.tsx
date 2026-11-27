@@ -5,7 +5,7 @@ import { Icono } from "../ds";
 import { sonar } from "../app/sonido";
 import { movimientoReducido } from "../app/preferencias";
 import { ir } from "../app/rutas";
-import { COMODINES, COMODINES_EN_PREPARACION, DORSO_SOBRE, MONEDAS_SI_TOPE, NOMBRE_SECCION, ORDEN_SECCIONES, PIEZAS_COLECCION, SOBRES, SOBRES_PERSONAJES, TOPE_COMODIN, piezasDeSobre, type SobreVisual } from "../content/tienda";
+import { COMODINES, DORSO_SOBRE, MONEDAS_SI_TOPE, NOMBRE_SECCION, ORDEN_SECCIONES, PIEZAS_COLECCION, SOBRES, SOBRES_PERSONAJES, TOPE_COMODIN, piezasDeSobre, type SobreVisual } from "../content/tienda";
 import { CARTAS_POR_SOBRE_PERSONAJES, PESO_PERSONAJE, ofertasPersonajes, precioSobrePersonajes, type PersonajeEnVenta } from "../content/personajesTienda";
 import { tarjetas, useCatalogoV3, type Tarjeta } from "../personajes/integracion";
 import { NOMBRE_RAREZA } from "../content/rarezas";
@@ -140,7 +140,7 @@ function Sobres({ mercado, personajes, alAbrir }: { mercado: readonly PersonajeE
       .sort((a, b) => ORDEN.indexOf(a.rareza) - ORDEN.indexOf(b.rareza))
       .map(x => ({ ...x, ...infoPieza(x.id), chance: tasas[x.rareza] }));
   }, [venta, p.tengo, t.racha, prototipo]);
-  const comodinesPosibles = venta ? probabilidadComodines(venta, t.comodines, t.demo) : [];
+  const comodinesPosibles = venta ? probabilidadComodines(venta, t.comodines) : [];
 
   const comprar = async () => {
     if (prototipo || !disponible || ocupado || !t.activa) return;
@@ -312,7 +312,6 @@ function AlbumCartas() {
   const p = usePiezas(), t = useTienda();
   const [seleccion, setSeleccion] = useState<(typeof COMODINES)[number] | null>(null);
   const detalle = useRef<HTMLDialogElement>(null);
-  const esAvance = seleccion != null && COMODINES_EN_PREPARACION.includes(seleccion);
   const [reponiendo, setReponiendo] = useState(false);
   const precioReposicion = seleccion && t.comodines[seleccion.id] === 0 ? t.preciosReposicion[seleccion.id] : undefined;
   const reponer = async (carta: (typeof COMODINES)[number], precio: number) => {
@@ -374,26 +373,11 @@ function AlbumCartas() {
           })}
         </ul>
       </section>
-      <section className="t-album" aria-labelledby="titulo-album-avance">
-        <div className="t-album-cab">
-          <h3 id="titulo-album-avance">Próximas cartas</h3>
-          <p>Vista previa</p>
-        </div>
-        <ul className="t-album-rejilla">
-          {COMODINES_EN_PREPARACION.map(c => (
-            <li key={c.id} className="t-album-ranura">
-              <button type="button" className="t-album-carta" onClick={() => setSeleccion(c)} aria-label={c.nombre + ". Ver vista previa"}>
-                <CartaFrente c={{ tipo: "comodin", id: c.id, especial: c.especial }} />
-              </button>
-            </li>
-          ))}
-        </ul>
-      </section>
       {seleccion && <dialog ref={detalle} className="t-album-detalle" aria-label={seleccion.nombre}
         onClose={() => setSeleccion(null)} onClick={e => { if (e.target === e.currentTarget) e.currentTarget.close(); }}>
         <div className="t-album-carta">
           <CartaFrente c={{ tipo: "comodin", id: seleccion.id, especial: seleccion.especial }} />
-          {!esAvance && <span className="t-album-copias" aria-label={(t.comodines[seleccion.id] ?? 0) + " copias"}>×{t.comodines[seleccion.id] ?? 0}</span>}
+          {<span className="t-album-copias" aria-label={(t.comodines[seleccion.id] ?? 0) + " copias"}>×{t.comodines[seleccion.id] ?? 0}</span>}
         </div>
         {precioReposicion && <button type="button" className="t-ap-todas" disabled={reponiendo} onClick={() => void reponer(seleccion, precioReposicion)}>Reponer · {precioReposicion} {MONEDA}<span className="t-solo-lector"> monedas</span></button>}
         <button type="button" className="t-ap-todas" onClick={() => detalle.current?.close()}>Cerrar carta</button>

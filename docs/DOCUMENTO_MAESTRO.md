@@ -1,6 +1,6 @@
 # ALV — Amigos Legendarios Verdaderos
 ## Documento Maestro del Producto
-**Versión:** 1.66  
+**Versión:** 1.67  
 **Última actualización:** 27 de noviembre de 2026  
 **Estado:** Documento vivo de producto; decisiones y propuestas identificadas por separado.
 
@@ -961,6 +961,8 @@ Ningún sobre da ventaja dentro de una partida. Las rarezas (común, épica, leg
 ## 13.1 Tienda e inventario
 
 **DECISIÓN (v1.48, Elías, 18 de noviembre) — tienda nueva, enfoque A:** se levanta D-001 y se construye la tienda con monedas que guarda y cobra el servidor, sobres que se tiran en el servidor y dan piezas bloqueadas de la 033 (lo común ya es libre), personajes (trajes), compra directa, colección con contador, ofertas diarias y comodines con inventario por cuenta. Los tres archivos congelados (`Tienda.tsx`, `servicios/tienda.ts`, `engine/inventario.ts`, tienda 2D que cobraba XP) se reemplazan. Se construye en 5 etapas; la 1 es solo visual en la demostración sin nube. Sin dinero real. Plan completo: `ALV_PLAN_TIENDA.md` (fuera del repo).
+**DECISIÓN (v1.67, Elías, 27 de noviembre) — tienda completa:** (1) los **18 comodines** se venden y salen en el sobre de comodines, todos con la misma probabilidad; reponer una carta que ya descubriste y gastaste cuesta de 65 a 130 monedas según la carta (Pasa turno 65, Cambio 75; migraciones 050 y 052). Sustituye lo de v1.49 «solo Pasa turno y Cambio de pregunta». Comprados aún no entran a la mano de la partida: sigue **PENDIENTE** (C3). (2) **Personajes en venta:** 18 iniciales libres; los demás se consiguen en sobres por saga (Marvel, DC, Star Wars, Harry Potter) a 80 monedas por carta, hasta 3 por sobre y sin repetidas, o comprados directo desde su carta: rara 260, épica 360, legendaria 520, +40 si es Bigfig (migración 051). En el personalizador los no conseguidos salen con candado. Quien ya tenía guardada una figura con un personaje en venta lo conserva. (3) **Premios por nivel:** cada nivel desde el 2 regala un personaje al azar que no tengas; 7 de cada 10 salen del grupo que más usas (X-Men, Avengers, Guardianes, Villanos, DC, Star Wars…), con lo raro menos probable (migración 052). Sustituye la PROPUESTA de piezas por nivel de 6A.11 C1 (035, que ya no se aplica). **PROPUESTA:** desbloquear personajes de una saga al cumplir retos relacionados con ella (por ejemplo, «usa este traje»).
+
 **DECISIÓN (v1.49, Elías, 19 de noviembre):** aprobó tal cual la propuesta de abajo (decisiones 2 a 6 del plan). Comodines a la venta: solo **Pasa turno** y **Cambio de pregunta**; Escudo no se vende hasta confirmarlo (6A.4). Sobres de piezas sin repetidas. El desbloqueo directo de piezas pasa de XP a monedas (rara 80, épica 200, legendaria 400), y los retos ya cumplidos dan +15 monedas en lugar de +40 XP (etapa 3). El bono de monedas por lugar sigue la misma regla de podio que la XP (1 lugar con 2 o 3 jugadores, 2 con 4 o 5, 3 con 6 o más).
 ~~**PROPUESTA (v1.48)**~~ **Aprobada en v1.49:** monedas 10 por jugar + 8/5/3 por lugar, tope 300 al día y regalo de bienvenida de 150; sobres Básico 50 (2 piezas), Accesorios 120 (3), Comodines 150 (3 comodines), Mixto 180 (2 piezas + 2 comodines) y Épico 200 (3 piezas, al menos 1 épica), con probabilidades a la vista; garantía de épica al 8.º sobre sin épica y de legendaria al 25.º; piezas sin repetidas (v1.20) y comodines repetibles hasta 9 por tipo; compra directa rara 80, épica 200, legendaria 400 monedas (sustituiría el desbloqueo con XP de la 033); ofertas: 3 al día. La tienda vieja de la 004 y 005 (`comprar_sobre`, cobra XP) se apaga quitando el permiso, sin borrar tablas.
 **Hecho en v1.48 y v1.49 (publicado el 19 de noviembre): etapas 1 y 2**: pestañas Sobres y Colección (Personajes, Accesorios y Ofertas dicen «¡Pronto!»), los 5 sobres con contenido posible, probabilidades y garantía a la vista, y la apertura (sacudir 3 veces, rasgar deslizando, luz del color de la mejor carta, cartas que se voltean una a una, «¡Nuevo!», «Ponérmelo» que pone la pieza en la figura en juego), con sonido y vibración. Con nube compra con la migración 036 (monedas y tirada en el servidor). Comodines a la venta: Pasa turno y Cambio de pregunta (Escudo se quitó en v1.49).
@@ -1782,6 +1784,9 @@ Decisiones del usuario del 12 de noviembre de 2026:
 
 ## v1.6
 - Primeros logros (14.2), con ámbito de sesión o histórico (ver DECISIÓN v1.6 en 14.2).
+
+## v1.67
+- 27 nov 2026. Tienda completa (13.1, DECISIÓN v1.67): 18 comodines a la venta y en sobres, reposición de cartas, personajes en venta por saga y directo, premios por nivel con personajes del grupo que más usas. Migraciones 050, 051 y 052; la 035 queda sin aplicar. Decisiones de Elías.
 
 ## v1.66
 - 27 nov 2026. Mini-Juegos publicados en Modo libre (6A.6 H) y con XP desde la sala de ALV (6A.6 F punto 6, migración 049). Decisiones de Elías. Cambia lo que 6A.6 H decía de «sin puntos».

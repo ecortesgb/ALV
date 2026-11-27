@@ -60,9 +60,7 @@ export const GARANTIA = { epica: 8, legendaria: 25 } as const;
 
 // ---------- Comodines ----------
 export interface ComodinTienda { id: string; nombre: string; efecto: string; especial: boolean; icono: string; arte?: string; trampa?: boolean; reposicion: number }
-/** Comodines a la venta (Maestro v1.49: solo los de efecto definido en 6A.4). Ids iguales a CARTAS_PODER de catalogo.ts.
- *  Escudo y los especiales entran cuando Elías los confirme; mientras, el sobre de comodines trae solo básicos. */
-export const COMODINES: ComodinTienda[] = [
+const BASICOS: ComodinTienda[] = [
   { id: "turno", nombre: "Pasa turno", efecto: "Tu turno pasa al siguiente jugador.", especial: false, icono: "⏭️", arte: "carta-pasa-turno.webp", reposicion: 65 },
   { id: "cambio", nombre: "Cambio de pregunta", efecto: "Cambia la carta que te tocó por otra.", especial: false, icono: "🔄", arte: "carta-cambio-pregunta.webp", reposicion: 75 },
 ];
@@ -70,8 +68,7 @@ export const COMODINES: ComodinTienda[] = [
 const cartaEnPreparacion = (id: string, nombre: string, efecto: string, icono: string, reposicion: number, familia: "normal" | "especial" | "trampa" = "normal"): ComodinTienda =>
   ({ id, nombre, efecto, icono, reposicion, especial: familia !== "normal", trampa: familia === "trampa", arte: "carta-" + id + ".webp" });
 
-/** Visibles en la colección. El sorteo usa únicamente el catálogo activo. */
-export const COMODINES_EN_PREPARACION = [
+const NUEVOS = [
   cartaEnPreparacion("escudo", "Escudo", "Cancela un castigo que ya te asignaron.", "🛡️", 85),
   cartaEnPreparacion("salvavidas", "Salvavidas", "Cancela el castigo de otra persona o líbrala de ser mesero.", "◉", 95, "especial"),
   cartaEnPreparacion("relevo", "Relevo", "Elige a otra persona para que cumpla tu castigo.", "⇢", 100, "especial"),
@@ -89,9 +86,10 @@ export const COMODINES_EN_PREPARACION = [
   cartaEnPreparacion("pista-extra", "Pista extra", "Revela una pista de tu pregunta si hay una disponible.", "⌕", 65),
   cartaEnPreparacion("duelo-dados", "Duelo de dados", "Reta a otra persona a tirar los dados. Quien pierda cumple el reto que mostró la app.", "⚄", 110, "especial"),
 ];
-export const comodinPorId = (id: string) => COMODINES.find(c => c.id === id) ?? COMODINES_EN_PREPARACION.find(c => c.id === id) ?? null;
-/** Probabilidad de que un comodín salga especial (0 mientras no haya especiales a la venta). */
-export const PESO_ESPECIAL = 0;
+/** Comodines a la venta y en sobres: los 18 (Elías, 27 nov, Maestro v1.67). Igual que las migraciones 036 y 052.
+ *  En el sobre todos salen con la misma probabilidad, como en el servidor. */
+export const COMODINES: ComodinTienda[] = [...BASICOS, ...NUEVOS];
+export const comodinPorId = (id: string) => COMODINES.find(c => c.id === id) ?? null;
 /** Máximo por tipo; si ya lo tienes, esa carta se cambia por monedas. */
 export const TOPE_COMODIN = 9;
 export const MONEDAS_SI_TOPE = 10;
