@@ -391,6 +391,27 @@
   .D .pl-trajes { max-height: 220px; }
 }
 @media (prefers-reduced-motion: reduce) { .D .pl-velo, .D .pl-modal, .D .pl-cabina img { animation: none; } }
+/* 053 · Jugar varios en un mismo aparato: elegir cómo entra, entrar con cuenta y datos de acceso (una sola vez). */
+.D .pl-chico { width: min(460px, 100%); overflow-y: auto; }
+.D .pl-pila { display: flex; flex-direction: column; gap: 12px; }
+.D .pl-fila { display: flex; gap: 8px; align-items: center; }
+.D .pl-fila input { flex: 1; min-width: 0; }
+.D .pl-opcion { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; min-height: 64px; padding: 12px 16px; border-radius: 16px; cursor: pointer; text-align: left; color: #fff;
+  border: 1px solid rgba(160, 255, 245, .45); background: linear-gradient(180deg, rgba(79, 243, 228, .18), rgba(18, 181, 168, .08)); }
+.D .pl-opcion b { font: 400 22px/1 var(--f-titulo); text-transform: uppercase; }
+.D .pl-opcion small { font: 700 14px/1.3 var(--f-texto); color: rgba(255, 255, 255, .78); }
+.D .pl-opcion-suave { border-color: rgba(255, 255, 255, .2); background: rgba(255, 255, 255, .05); }
+.D .pl-opcion:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+.D .pl-nota { margin: 0; font: 700 14px/1.35 var(--f-texto); color: rgba(255, 255, 255, .78); }
+.D .pl-nota.fuerte { color: #ffe680; font-size: 16px; }
+.D .pl-error { margin: 0; font: 800 14px/1.35 var(--f-texto); color: #ff9a9a; }
+.D .pl-check { display: flex; gap: 10px; align-items: flex-start; font: 700 14px/1.35 var(--f-texto); color: rgba(255, 255, 255, .88); cursor: pointer; }
+.D .pl-check input { width: 20px; height: 20px; margin: 0; flex: none; accent-color: #12b5a8; }
+.D .pl-acceso { display: flex; flex-direction: column; gap: 8px; margin: 0; }
+.D .pl-acceso div { padding: 10px 14px; border-radius: 12px; background: rgba(255, 255, 255, .08); border: 1px solid rgba(255, 255, 255, .16); }
+.D .pl-acceso dt { font: 800 12px/1 var(--f-texto); letter-spacing: .08em; text-transform: uppercase; color: #6ff3e6; }
+.D .pl-acceso dd { margin: 6px 0 0; font: 800 24px/1.1 ui-monospace, "Cascadia Mono", Menlo, monospace; letter-spacing: .04em; user-select: all; word-break: break-all; }
+.D .lb-aparato { min-height: 40px; padding: 0 14px; border-radius: 999px; cursor: pointer; color: #fff; font: 800 14px/1 var(--f-texto); border: 1px solid rgba(255, 255, 255, .3); background: rgba(9, 13, 40, .6); }
 /* =====================================================================
    PRUEBA ?lobby=2 (Elías, 25 nov): estilo LEGO Party con el arte «Nueva Version».
    Cuarto 1536×1024 (cover centrado): zoclo metálico del 46.8 % (--zt) al 63.5 % (--piso) → 50dvh + (y − 512) × escala.

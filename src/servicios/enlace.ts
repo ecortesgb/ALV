@@ -6,6 +6,7 @@ import { desdeBase } from "../personajes/integracion";
 import { cliente, hayNube, uidActual } from "./cliente";
 import { anunciarLobby, buscarLobby, escucharSala, vigilarPantalla, type EstadoRed, type PresenciaPantalla } from "./tiempoReal";
 import { vigilarPantallaSinNube } from "./difusion";
+import { NOMBRE_ESPEJO, type Espejo } from "./aparato";
 
 export type ModoSala = "tv" | "mesa";
 export interface SalaV { id: string; codigo: string; modo: ModoSala; anfitrionId: string }
@@ -100,7 +101,8 @@ const nube: Enlace = {
   },
   async miSala() {
     try {
-      const { data, error } = await cliente!.from("eventos").select("id, codigo, nombre, anfitrion").eq("cerrado", false).order("inicia", { ascending: false }).limit(1);
+      // La sala espejo de un aparato (053) no es un lobby al que se entre desde otro celular.
+      const { data, error } = await cliente!.from("eventos").select("id, codigo, nombre, anfitrion").eq("cerrado", false).neq("nombre", NOMBRE_ESPEJO).order("inicia", { ascending: false }).limit(1);
       const e = data?.[0];
       return error || !e ? null : { id: e.id, codigo: e.codigo, modo: MODOS[e.nombre as string] ?? "mesa", anfitrionId: e.anfitrion };
     } catch (e) { log("miSala", e); return null; }
@@ -235,8 +237,11 @@ const nube: Enlace = {
 // Dos usos con el mismo código: la DEMOSTRACIÓN (sin Supabase; se comparte entre pestañas) y el MODO LOCAL
 // (Elías, 22 nov: un solo teléfono, personajes sin cuenta, nada se guarda en la nube; dura hasta «Terminar sesión»).
 interface PartidaLocal extends PartidaPub { privados: Record<string, Record<string, unknown>>; acciones: FilaAccion[] }
-export interface MiembroLocal { id: string; nombre: string; listo: boolean; gesto?: string | null; gestoN?: number; figura?: FiguraV2 | null; genero?: "mujer" | "hombre" | "otro" }
-interface SalaLocal { sala: SalaV; cerrada: boolean; miembros: MiembroLocal[]; partidas: PartidaLocal[] }
+export interface MiembroLocal { id: string; nombre: string; listo: boolean; gesto?: string | null; gestoN?: number; figura?: FiguraV2 | null; genero?: "mujer" | "hombre" | "otro";
+  /** 053: cuenta real que juega en este aparato (su id es el de la cuenta y gana sus puntos). */
+  cuenta?: "registrada" | "rapida" }
+/** `nube`: la sala espejo de la nube (053) donde están las cuentas, para que el servidor les dé sus puntos. */
+interface SalaLocal { sala: SalaV; cerrada: boolean; miembros: MiembroLocal[]; partidas: PartidaLocal[]; nube?: Espejo | null }
 /** Quién soy en el respaldo local: lo fija la sesión de demostración. */
 export const yoLocal = { id: "", nombre: "" };
 const azarCodigo = () => Array.from({ length: 6 }, () => "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"[Math.floor(Math.random() * 32)]).join("");
@@ -370,6 +375,25 @@ const quienLocal = () => {
 };
 const localApp = crearRespaldo("alv.local.v1", null, quienLocal, PREFIJO_LOCAL);
 export const esLocal = (id: string | null | undefined) => !!id && id.startsWith(PREFIJO_LOCAL);
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+/** La sala espejo como sala de la nube (para crear la partida y reportar el podio). */
+const salaEspejo = (s: SalaLocal): SalaV | null => (s.nube ? { id: s.nube.id, codigo: s.nube.codigo, modo: "mesa", anfitrionId: s.sala.anfitrionId } : null);
+const salaLocalDePartida = (partida: string) => Object.values(localApp.leer()).find(s => s.partidas.some(p => p.id === partida)) ?? null;
+
+/**
+ * 053: al terminar una partida local, el podio de las cuentas va a la nube. El anfitrión crea la partida en la sala espejo y
+ * la termina con terminar_partida_sala: el servidor calcula la XP y las monedas y solo se las da a quien es miembro.
+ * Los personajes sin cuenta no cuentan para XP, pero sí para el número de jugadores (los lugares no cambian).
+ */
+async function terminarEnNube(partida: string, juego: string, jugadores: number, resultados: ResultadoFinal[]) {
+  if (!hayNube) return;
+  const s = salaLocalDePartida(partida), espejo = s && salaEspejo(s);
+  if (!espejo || juego === "copas") return;
+  const deCuentas = resultados.filter(r => UUID.test(r.jugador));
+  if (!deCuentas.length) return;
+  const id = await nube.crearPartida(espejo, juego);
+  if (id) await nube.terminar(id, juego, jugadores, deCuentas);
+}
 
 export const modoLocal = {
   /** El lobby local abierto de este teléfono (o null). */
@@ -391,6 +415,17 @@ export const modoLocal = {
     localApp.cambiar(t => { const s = t[sala.codigo]; if (!s || s.miembros.length >= 8) return; s.miembros.push({ id, nombre, listo: true, figura: p.figura, genero: p.genero }); ok = true; });
     return ok ? id : null;
   },
+  /** 053: agrega una cuenta real (registrada o personaje rápido) que ya entró a la sala espejo. */
+  agregarCuenta(sala: SalaV, c: { id: string; nombre: string; figura: FiguraV2 | null; cuenta: "registrada" | "rapida"; genero?: MiembroLocal["genero"] }): boolean {
+    let ok = false;
+    localApp.cambiar(t => { const s = t[sala.codigo]; if (!s || s.miembros.length >= 8 || s.miembros.some(m => m.id === c.id)) return; s.miembros.push({ id: c.id, nombre: c.nombre.slice(0, 20), listo: true, figura: c.figura, cuenta: c.cuenta, ...(c.genero ? { genero: c.genero } : {}) }); ok = true; });
+    return ok;
+  },
+  /** 053: la sala espejo de la nube de este lobby local (o null si no hay). */
+  espejo(sala: SalaV): Espejo | null { return localApp.leer()[sala.codigo]?.nube ?? null; },
+  fijarEspejo(sala: SalaV, e: Espejo) { localApp.cambiar(t => { const s = t[sala.codigo]; if (s) s.nube = e; }); },
+  /** 053: ¿este miembro es una cuenta real? (el anfitrión con sesión también lo es). */
+  esCuenta(id: string): boolean { return UUID.test(id); },
   /** Cambia la figura de un personaje (o la del anfitrión en esta sesión local). */
   figura(sala: SalaV, jugador: string, figura: FiguraV2 | null) { localApp.cambiar(t => { const m = t[sala.codigo]?.miembros.find(x => x.id === jugador); if (m) m.figura = figura; }); },
   generos(sala: SalaV): Record<string, "mujer" | "hombre" | "otro"> {
@@ -422,7 +457,13 @@ export const enlace: Enlace = {
   marcarListo: (sala, l) => porSala(sala).marcarListo(sala, l),
   gesto: (sala, g) => porSala(sala).gesto(sala, g),
   salir: sala => porSala(sala).salir(sala),
-  cerrar: async sala => { await porSala(sala).cerrar(sala); if (esLocal(sala.id)) modoLocal.terminar(); },
+  cerrar: async sala => {
+    // 053: al terminar la sesión local también se cierra su sala espejo: las cuentas del aparato quedan fuera.
+    const espejo = esLocal(sala.id) && hayNube ? modoLocal.espejo(sala) : null;
+    await porSala(sala).cerrar(sala);
+    if (espejo) await nube.cerrar({ id: espejo.id, codigo: espejo.codigo, modo: "mesa", anfitrionId: sala.anfitrionId });
+    if (esLocal(sala.id)) modoLocal.terminar();
+  },
   partida: sala => porSala(sala).partida(sala),
   historial: sala => porSala(sala).historial(sala),
   secreto: partida => porPartida(partida).secreto(partida),
@@ -430,16 +471,30 @@ export const enlace: Enlace = {
   enviar: (partida, id, tipo, datos) => porPartida(partida).enviar(partida, id, tipo, datos),
   acciones: partida => porPartida(partida).acciones(partida),
   publicar: (partida, v, e, p) => porPartida(partida).publicar(partida, v, e, p),
-  terminar: (partida, j, n, r) => porPartida(partida).terminar(partida, j, n, r),
+  terminar: async (partida, j, n, r) => {
+    await porPartida(partida).terminar(partida, j, n, r);
+    if (esLocal(partida)) await terminarEnNube(partida, j, n, r);
+  },
   guardarCopas: (partida, c) => porPartida(partida).guardarCopas(partida, c),
-  darXp: (sala, j, x) => porSala(sala).darXp(sala, j, x),
+  darXp: async (sala, j, x) => {
+    // 053: en la sala local, la XP por reto en vivo de una cuenta va a la nube por su sala espejo.
+    const espejo = esLocal(sala.id) && hayNube && UUID.test(j) ? modoLocal.espejo(sala) : null;
+    if (espejo) return nube.darXp({ id: espejo.id, codigo: espejo.codigo, modo: "mesa", anfitrionId: sala.anfitrionId }, j, x);
+    return porSala(sala).darXp(sala, j, x);
+  },
   activarCapsula: n => base.activarCapsula(n),
   escuchar: (sala, f, e) => porSala(sala).escuchar(sala, f, e),
   vigilarPantalla: (sala, yo, f) => porSala(sala).vigilarPantalla(sala, yo, f),
   anunciarLobby: sala => porSala(sala).anunciarLobby(sala),
   buscarLobby: f => base.buscarLobby(f),
   lobbyAbierto: () => base.lobbyAbierto(),
-  expulsar: (sala, j) => porSala(sala).expulsar(sala, j),
+  expulsar: async (sala, j) => {
+    const ok = await porSala(sala).expulsar(sala, j);
+    // 053: quitar a una cuenta del lobby local también la saca de la sala espejo (deja de ganar puntos aquí).
+    const espejo = ok && esLocal(sala.id) && hayNube && UUID.test(j) ? modoLocal.espejo(sala) : null;
+    if (espejo) await nube.expulsar({ id: espejo.id, codigo: espejo.codigo, modo: "mesa", anfitrionId: sala.anfitrionId }, j);
+    return ok;
+  },
   listoDe: (sala, j, l) => porSala(sala).listoDe(sala, j, l),
 };
 /** Dirección que el QR abre: deja a la persona dentro de la sala. */

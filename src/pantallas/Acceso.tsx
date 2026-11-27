@@ -3,6 +3,7 @@ import { useEffect, useState, type CSSProperties, type FormEvent, type InputHTML
 import { Boton, Icono } from "../ds";
 import { cargarCapsulasNube, entrar, entrarInvitado, esNickInvitado, guardarRegistro, nickValido, passValida, registrar, salir, type Genero } from "../servicios/cuenta";
 import { hayNube } from "../servicios/cliente";
+import { recuperarCuenta } from "../servicios/aparato";
 import { entrarDemo, refrescarSesion, useSesion, type Fase } from "../app/sesion";
 import { ir } from "../app/rutas";
 import { pantallaDeCarga } from "../app/musica";
@@ -242,10 +243,46 @@ function Invitado({ volver }: { volver: () => void }) {
   );
 }
 
+/** 053: personaje rápido que olvidó su contraseña: usuario + código de recuperación + contraseña nueva. */
+function Recuperar({ volver }: { volver: () => void }) {
+  const [usuario, setUsuario] = useState(""), [codigo, setCodigo] = useState(""), [clave, setClave] = useState("");
+  const [error, setError] = useState<string | null>(null), [ocupado, setOcupado] = useState(false), [hecho, setHecho] = useState(false);
+  const enviar = async (e?: FormEvent) => {
+    e?.preventDefault();
+    if (ocupado) return;
+    setOcupado(true); setError(null);
+    const fallo = await recuperarCuenta(usuario, codigo, clave);
+    if (fallo) { setOcupado(false); setError(fallo); return; }
+    const f2 = await entrar(usuario, clave);
+    setOcupado(false);
+    if (f2) { setHecho(true); return; }
+    await refrescarSesion();
+  };
+  return (
+    <MarcoAcceso alVolver={volver}>
+      <Tarjeta pestanas={[{ id: "recuperar", texto: "Recuperar acceso" }]} activa="recuperar">
+        {hecho ? <div className="a-pila">
+          <p className="a-suave">Listo: tu contraseña cambió. Entra con tu usuario y la contraseña nueva.</p>
+          <Boton color="amarillo" texto="Ir a iniciar sesión" icono="play" onClick={volver} />
+        </div> : <form onSubmit={e => void enviar(e)} className="a-pila">
+          <p className="a-suave">Para personajes creados en el lobby: usa el código de recuperación que se mostró al crearlo.</p>
+          <CampoIcono etiqueta="Usuario" icono="usuario" value={usuario} onChange={e => setUsuario(e.target.value)} autoComplete="username" autoCapitalize="none" spellCheck={false} maxLength={20} required autoFocus />
+          <CampoIcono etiqueta="Código de recuperación" icono="candado" ver value={codigo} onChange={e => setCodigo(e.target.value.toUpperCase())} autoComplete="off" autoCapitalize="characters" spellCheck={false} maxLength={14} placeholder="XXXX-XXXX-XXXX" required />
+          <CampoClave nueva value={clave} onChange={e => setClave(e.target.value)} maxLength={72} required />
+          {error && <p className="a-error" role="alert">{error}</p>}
+          <Boton color="amarillo" texto="Poner contraseña nueva" icono="play" cargando={ocupado} onClick={() => void enviar()} />
+          <button type="submit" hidden />
+          <button type="button" className="a-tarjeta-pie" onClick={volver}>Volver a iniciar sesión</button>
+        </form>}
+      </Tarjeta>
+    </MarcoAcceso>
+  );
+}
+
 /** Entrar o crear cuenta. `alVolver`: regresa a la pantalla de inicio (si se llegó desde ahí). */
 export function Acceso({ alVolver }: { alVolver?: () => void } = {}) {
   const [tab, setTab] = useState<"entrar" | "crear">("entrar");
-  const [invitado, setInvitado] = useState(false), [terminos, setTerminos] = useState(false);
+  const [invitado, setInvitado] = useState(false), [terminos, setTerminos] = useState(false), [recuperar, setRecuperar] = useState(false);
   const [nick, setNick] = useState(""), [pass, setPass] = useState(""), [nac, setNac] = useState(""), [genero, setGenero] = useState<GeneroUI | "">("");
   const [acepto, setAcepto] = useState(false), [mayor, setMayor] = useState(false), [error, setError] = useState<string | null>(null), [ocupado, setOcupado] = useState(false);
 
@@ -264,6 +301,7 @@ export function Acceso({ alVolver }: { alVolver?: () => void } = {}) {
   }
 
   if (invitado) return <Invitado volver={() => setInvitado(false)} />;
+  if (recuperar) return <Recuperar volver={() => setRecuperar(false)} />;
   // Los términos se ven encima del formulario: al volver sigue lo que ya se había llenado.
   if (terminos) return <Terminos alVolver={() => setTerminos(false)} />;
   const verTerminos = (e: { preventDefault: () => void }) => { e.preventDefault(); setTerminos(true); };
@@ -304,7 +342,7 @@ export function Acceso({ alVolver }: { alVolver?: () => void } = {}) {
           {error && <p className="a-error" role="alert">{error}</p>}
           <Boton color="amarillo" className={"a-tarjeta-boton" + (tab === "crear" ? " a-boton-registro" : "")} texto={tab === "crear" ? "Registrarme" : "Entrar"} icono="play" cargando={ocupado} onClick={() => void enviar()} />
           <button type="submit" hidden />
-          {tab === "entrar" && <p className="a-nota">¿Olvidaste tu contraseña? Pídele a Elías que te ponga una nueva.</p>}
+          {tab === "entrar" && <p className="a-nota">¿Olvidaste tu contraseña? <button type="button" className="a-enlace" onClick={() => setRecuperar(true)}>Tengo código de recuperación</button> o pídele a Elías que te ponga una nueva.</p>}
           <button type="button" className="a-tarjeta-pie" onClick={() => cambiar(tab === "crear" ? "entrar" : "crear")}>
             {tab === "crear" ? <>¿Ya tienes cuenta? <b>Inicia sesión</b></> : <>¿No tienes cuenta? <b>Regístrate</b></>}
           </button>

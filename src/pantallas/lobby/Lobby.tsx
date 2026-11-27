@@ -7,6 +7,9 @@ import { escribirCapsulas, leerCapsulas, apodoDe, useCapsulas, useFoto, N_CAPSUL
 import { ir } from "../../app/rutas";
 import { enlace, esLocal, modoLocal, type Miembro, type SalaV } from "../../servicios/enlace";
 import { PersonajeLocal, type DatosPersonaje } from "./PersonajeLocal";
+import { DatosAcceso, ElegirComoAgregar, EntrarCuenta } from "./AgregarEnAparato";
+import { abrirEspejo, crearPersonajeRapido, entrarCuentaEnAparato, type Espejo, type PersonajeRapido } from "../../servicios/aparato";
+import { hayNube } from "../../servicios/cliente";
 import { colorDe, varsColor } from "../../app/colorJugador";
 import { BotonCast } from "./Cast";
 import { ConfigEnVivo, useConfigEnVivo } from "../ConfigEnVivo";
@@ -24,6 +27,27 @@ import { claseLobby, LOBBY_NUEVO } from "./version";
 import { RuedaFigura, type MandoRueda } from "../gestos/RuedaFigura";
 import { useVidaPropia } from "../../app/vidaPerfil";
 import { Confeti, NumeroLetrero, useCelebracion } from "../LetreroVivo";
+
+/** 053: la sala espejo de la nube de un lobby local (una sola vez aunque se pida dos veces). Null si no se pudo. */
+const pidiendoEspejo = new Map<string, Promise<Espejo | null>>();
+export function asegurarEspejo(sala: SalaV): Promise<Espejo | null> {
+  const ya = modoLocal.espejo(sala);
+  if (ya) return Promise.resolve(ya);
+  if (!hayNube || !modoLocal.esCuenta(sala.anfitrionId)) return Promise.resolve(null);
+  let p = pidiendoEspejo.get(sala.codigo);
+  if (!p) {
+    p = abrirEspejo().then(e => { if (e) modoLocal.fijarEspejo(sala, e); else pidiendoEspejo.delete(sala.codigo); return e; });
+    pidiendoEspejo.set(sala.codigo, p);
+  }
+  return p;
+}
+
+/** 053: pasar del lobby en línea (o de la espera) al lobby de un solo aparato, con tu cuenta como P1. */
+export function jugarEnEsteAparato(yo: { id: string; nombre: string; figura: Miembro["figura"] }) {
+  const sl = modoLocal.abrir(yo);
+  void asegurarEspejo(sl);
+  ir("sala", sl.codigo);
+}
 
 /** Cabinas por color con pedestal (Elías aprobó el 22 nov; las cápsulas viejas se quitaron el 23 nov). */
 const PRUEBA_ESCENARIOS = true;
@@ -47,7 +71,12 @@ export function Lobby({ sala, miembros, yo, soyAnfitrion, final, red, refrescar,
   const hayAdmin = miembros.some(m => m.anfitrion);
   // Modo Local: un solo teléfono; el anfitrión agrega personajes sin cuenta y les cambia la figura.
   const local = esLocal(sala.id);
-  const [editar, setEditar] = useState<{ tipo: "nuevo" } | { tipo: "figura"; m: Miembro } | null>(null);
+  const [editar, setEditar] = useState<{ tipo: "elegir" } | { tipo: "nuevo" } | { tipo: "rapido" } | { tipo: "cuenta" } | { tipo: "figura"; m: Miembro } | null>(null);
+  // 053: personaje rápido recién creado (sus datos de acceso se ven una sola vez) y su estado mientras se crea.
+  const [acceso, setAcceso] = useState<PersonajeRapido | null>(null);
+  const [creando, setCreando] = useState(false), [errorRapido, setErrorRapido] = useState<string | null>(null);
+  // La sala espejo se abre en cuanto el anfitrión entra a su lobby local, así también él gana sus puntos.
+  useEffect(() => { if (local && soyAnfitrion) void asegurarEspejo(sala); }, [local, soyAnfitrion, sala]);
   const [verResultados, setVerResultados] = useState(true);
   // En línea: «Cambiar figura» abre tus figuras guardadas en un aviso de caja de bloques (igual que en Local, Elías 26 nov).
   const [verFiguras, setVerFiguras] = useState(false);
@@ -102,11 +131,30 @@ export function Lobby({ sala, miembros, yo, soyAnfitrion, final, red, refrescar,
 
   // Local: «Agregar jugador» en el primer lugar libre (hasta 8).
   const libreLocal = local && soyAnfitrion ? (i: number) => (i === miembros.length && miembros.length < CUPO_LOBBY
-    ? <button type="button" className="lb-agregar" onClick={() => setEditar({ tipo: "nuevo" })}><b><span>＋</span>Agregar jugador</b></button> : null) : undefined;
+    ? <button type="button" className="lb-agregar" onClick={() => setEditar(hayNube ? { tipo: "elegir" } : { tipo: "nuevo" })}><b><span>＋</span>Agregar jugador</b></button> : null) : undefined;
   const guardarPersonaje = (d: DatosPersonaje) => {
     if (editar?.tipo === "nuevo") { if (!modoLocal.agregar(sala, d)) aviso("No se pudo agregar (máximo 8)."); }
     else if (editar?.tipo === "figura") modoLocal.figura(sala, editar.m.id, d.figura);
     setEditar(null); refrescar();
+  };
+  const crearRapido = async (d: DatosPersonaje) => {
+    if (creando) return;
+    setCreando(true); setErrorRapido(null);
+    const espejo = await asegurarEspejo(sala);
+    const r = espejo ? await crearPersonajeRapido(d.nombre, d.figura, espejo) : "No se pudo conectar con el servidor. Intenta otra vez o agrégalo sin cuenta.";
+    setCreando(false);
+    if (typeof r === "string") { setErrorRapido(r); return; }
+    if (!modoLocal.agregarCuenta(sala, { id: r.id, nombre: d.nombre, figura: r.figura, cuenta: "rapida", genero: d.genero })) aviso("No se pudo agregar (máximo 8).");
+    setEditar(null); setAcceso(r); refrescar();
+  };
+  const entrarConCuenta = async (usuario: string, clave: string): Promise<string | null> => {
+    const espejo = await asegurarEspejo(sala);
+    if (!espejo) return "No se pudo conectar con el servidor. Intenta otra vez.";
+    const r = await entrarCuentaEnAparato(usuario, clave, espejo, miembros.map(m => m.id));
+    if (typeof r === "string") return r;
+    if (!modoLocal.agregarCuenta(sala, { ...r, cuenta: "registrada" })) return "El lobby está lleno (8).";
+    setEditar(null); refrescar(); aviso(`${r.nombre} entró con su cuenta.`);
+    return null;
   };
 
   return (
@@ -124,6 +172,8 @@ export function Lobby({ sala, miembros, yo, soyAnfitrion, final, red, refrescar,
           {fiesta && <Confeti />}
           <span className="lb-red">{red === "vivo" ? "" : red === "respaldo" ? "Reconectando…" : "Conectando…"}</span>
           {soyAnfitrion && !local && <BotonCast sala={sala} pantalla={pantalla} className="lb-cast" />}
+          {!local && <button type="button" className="lb-aparato" title="Todos juegan en este aparato y cada cuenta gana sus puntos"
+            onClick={() => { const m = miembros.find(x => x.id === yo); jugarEnEsteAparato({ id: yo, nombre: m?.nombre ?? "Jugador", figura: m?.figura ?? null }); }}>Jugar en este aparato</button>}
         </header>
 
         {final && verResultados && (
@@ -157,7 +207,11 @@ export function Lobby({ sala, miembros, yo, soyAnfitrion, final, red, refrescar,
           </div>
         </div>
       )}
-      {editar && <PersonajeLocal titulo={editar.tipo === "nuevo" ? "Nuevo jugador" : `Figura de ${editar.m.nombre}`} soloFigura={editar.tipo === "figura"}
+      {editar?.tipo === "elegir" && <ElegirComoAgregar conNube={hayNube && modoLocal.esCuenta(sala.anfitrionId)} alCerrar={() => setEditar(null)} alElegir={t => { setErrorRapido(null); setEditar(t === "sin-cuenta" ? { tipo: "nuevo" } : t === "rapido" ? { tipo: "rapido" } : { tipo: "cuenta" }); }} />}
+      {editar?.tipo === "cuenta" && <EntrarCuenta alEntrar={entrarConCuenta} alCerrar={() => setEditar(null)} />}
+      {editar?.tipo === "rapido" && <PersonajeLocal titulo="Personaje nuevo" rapido ocupado={creando} error={errorRapido} alListo={d => void crearRapido(d)} alCerrar={() => { if (!creando) setEditar(null); }} />}
+      {acceso && <DatosAcceso p={acceso} alListo={() => setAcceso(null)} />}
+      {editar && (editar.tipo === "nuevo" || editar.tipo === "figura") && <PersonajeLocal titulo={editar.tipo === "nuevo" ? "Nuevo jugador" : `Figura de ${editar.m.nombre}`} soloFigura={editar.tipo === "figura"}
         inicial={editar.tipo === "figura" ? { figura: editar.m.figura, nombre: editar.m.nombre } : undefined}
         color={editar.tipo === "figura" ? colorDe(editar.m.id, miembros.map(x => x.id)) : undefined} alListo={guardarPersonaje} alCerrar={() => setEditar(null)} />}
     </Marco>
