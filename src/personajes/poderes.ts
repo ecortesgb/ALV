@@ -118,12 +118,16 @@ const FUERZA = (color: string) => hechizo("La Fuerza", color);
 const BLASTER = p("iron-man", "repulsor", { nombre: "Bláster", efecto: { color: "#ff8a3a" } });
 const JETPACK = p("iron-man", "volar", { nombre: "Jetpack", efecto: { color: FUEGO, color2: AMARILLO } });
 
+const SUPERMAN: Readonly<Record<string, Prestado>> = {
+  volar: p("iron-man", "volar", { efecto: { color: "#ffffff", color2: "#9fd0ff" } }),
+  golpe: GOLPE,
+  rayo: p("ciclope", "rayo", { nombre: "Visión de calor", efecto: { color: "#ff2a1a" } }),
+};
+
 export const PRESTADOS: Readonly<Record<Id, Readonly<Record<string, Prestado>>>> = {
-  superman: {
-    volar: p("iron-man", "volar", { efecto: { color: "#ffffff", color2: "#9fd0ff" } }),
-    golpe: GOLPE,
-    rayo: p("ciclope", "rayo", { nombre: "Visión de calor", efecto: { color: "#ff2a1a" } }),
-  },
+  superman: SUPERMAN,
+  "omni-man": SUPERMAN,     // Elías, 27 nov 2026: «que tengan los poderes de Superman»
+  homelander: SUPERMAN,
   flash: {
     correr: p("capitan-america", "correr", { nombre: "Supervelocidad", bucle: 2.2,
       efecto: { tipo: "velocidad", color: AMARILLO, color2: ROJO, retraso: 0, dura: 2.2 } }),
