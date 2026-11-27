@@ -13,7 +13,7 @@ import { BASE_CREAR, piezasDeCatalogo, planoConstructor, type PiezaCons, type Pi
 import { piezasGenericas } from "./genericas";
 import { baseGenerica, conMovimientos, type BaseGenerica } from "./movimientos";
 import { leerFigura } from "./figura";
-import { conEspecialAlSalir, cuantasFormas, figuraEnForma } from "./formas";
+import { caretaEn, conEspecialAlSalir, cuantasFormas, figuraEnForma, type Careta } from "./formas";
 import { cargarIndice, type Indice } from "./indice";
 import { resolver, type Catalogo } from "./plano";
 import type { FiguraV3, Plano } from "./tipos";
@@ -261,3 +261,6 @@ export function enForma(f: FiguraV2Puente, paso: number, cat: CatalogoV3 | null)
 
 /** ¿Al dejar la forma de `paso` se hace antes la animación especial (Banner se transforma)? */
 export function especialAlSalir(f: unknown, paso: number): boolean { const v3 = leerV3(f); return !!v3 && conEspecialAlSalir(v3, paso); }
+
+/** Careta levantada en ese paso (Iron Man), para la escena. null = cerrada. */
+export function caretaDe(f: unknown, paso: number): Careta | null { const v3 = paso ? leerV3(f) : null; return v3 ? caretaEn(v3, paso) : null; }

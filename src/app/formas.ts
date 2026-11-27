@@ -3,7 +3,7 @@
 // Igual que los gestos: este aparato decide la de su jugador y la avisa a la sala (gestosSala.ts); las de los demás llegan
 // por la red. Solo es dibujo: nunca cambia la figura guardada ni decide nada del juego.
 import { useSyncExternalStore } from "react";
-import { enForma, especialAlSalir, formasDe, type CatalogoV3, type FiguraV2Puente } from "../personajes/integracion";
+import { caretaDe, enForma, especialAlSalir, formasDe, type CatalogoV3, type FiguraV2Puente } from "../personajes/integracion";
 
 export interface EstadoForma {
   paso: number;
@@ -86,12 +86,13 @@ export function useVersionFormas(): number {
  * Una figura de escena en su forma de ahora. `transforma` (el orden del último cambio) le dice a la escena que el cambio es
  * una transformación (nube de humo, y la especial antes si `conEspecial`), no una figura nueva.
  */
-export function conForma<T extends { id: string; figura?: unknown }>(x: T, cat: CatalogoV3 | null): T & { transforma?: number; conEspecial?: boolean } {
+export function conForma<T extends { id: string; figura?: unknown }>(x: T, cat: CatalogoV3 | null): T & { transforma?: number; conEspecial?: boolean; careta?: unknown } {
   if (!x.figura || typeof x.figura !== "object" || !seTransforma(x.figura)) return x;
   const e = estadoForma(x.id);
   if (!e.n) return x;
   const paso = pasoDe(x.id, x.figura);
-  return { ...x, figura: paso ? enForma(x.figura as FiguraV2Puente, paso, cat) : x.figura, transforma: e.n, conEspecial: e.conEspecial };
+  const careta = caretaDe(x.figura, paso);
+  return { ...x, figura: paso ? enForma(x.figura as FiguraV2Puente, paso, cat) : x.figura, transforma: e.n, conEspecial: e.conEspecial, ...(careta ? { careta } : {}) };
 }
 
 /** Solo para pruebas. */

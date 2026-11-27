@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { PiezaCons, Piezas } from "./constructorDatos";
 import { deCatalogo } from "./figura";
-import { conEspecialAlSalir, cuantasFormas, figuraEnForma, formaEn } from "./formas";
+import { caretaEn, conEspecialAlSalir, cuantasFormas, figuraEnForma } from "./formas";
 import type { Catalogo } from "./plano";
 import type { Ficha, FiguraV3 } from "./tipos";
 
@@ -39,20 +39,19 @@ describe("transformaciones", () => {
     expect(quien(h)).toBe("spider-man");
     expect(h.extensiones.alv?.apodo).toBe("Yo");
   });
-  it("Iron Man: casco arriba con la cara de Tony, luego Tony, luego Iron Man otra vez", () => {
+  it("Iron Man: careta arriba (misma figura), luego Tony, luego Iron Man otra vez", () => {
     const im = de("iron-man");
-    const casco = figuraEnForma(im, 1, catalogo, piezas);
-    expect(quien(casco)).toBe("iron-man");
-    expect(casco.piezas.sombrero?.id).toBe("sin-sombrero");
-    expect(casco.piezas.cara?.id).toBe("tony-stark--cara");
-    expect(casco.piezas.cabeza?.id).toBe("tony-stark--cabeza");
+    expect(figuraEnForma(im, 1, catalogo, piezas)).toBe(im);
+    expect(caretaEn(im, 1)?.mallas.length).toBe(4);
+    expect(caretaEn(im, 0)).toBeNull();
     expect(quien(figuraEnForma(im, 2, catalogo, piezas))).toBe("tony-stark");
     expect(figuraEnForma(im, 3, catalogo, piezas)).toBe(im);
-    expect(formaEn(de("tony-stark"), 1)?.p).toBe("iron-man");
+    const tony = de("tony-stark");
+    expect(quien(figuraEnForma(tony, 1, catalogo, piezas))).toBe("iron-man");
+    expect(quien(figuraEnForma(tony, 2, catalogo, piezas))).toBe("iron-man");
+    expect(caretaEn(tony, 2)).not.toBeNull();
   });
-  it("si falta la pieza o el personaje, se queda la misma figura", () => {
-    const im = de("iron-man");
-    expect(figuraEnForma(im, 1, catalogo, new Map())).toBe(im);
+  it("si falta el personaje, se queda la misma figura", () => {
     const sinHulk: Catalogo = new Map([...catalogo].filter(([k]) => k !== "hulk"));
     const b = de("bruce-banner");
     expect(figuraEnForma(b, 1, sinHulk, piezas)).toBe(b);

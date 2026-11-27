@@ -882,6 +882,8 @@
       }
       // Piel de la persona bajo la máscara (la cara del especial se pinta con ella, no con el color de la careta).
       e.pielReal = fx.identidad && /^#[0-9a-f]{6}$/i.test(fx.identidad.piel || "") ? fx.identidad.piel : null;
+      // Careta levantada (Iron Man, formas.ts de ALV): gira esas mallas sobre su bisagra; la figura no se vuelve a armar.
+      e.caretaDef = caretaValida(x.careta); aplicarCareta(e);
       e.foco = !!x.foco; orden.push(id);
       if (SALA || NAVE) { e.columna = Number.isInteger(x.columna) && x.columna >= 0 ? x.columna : orden.length - 1; e.color = colorValido(x.color); }
     });
@@ -1413,6 +1415,7 @@
       scene.add(grupo);
       inst.tocar("reposo", { mezcla: 0 });
       e.prio = 0; e.cual = null; e.hasta = 0; e.accion = null;
+      aplicarCareta(e);
       const esGrande = p3.familia === "bigfig";
       nube(t, grupo.position.x, grupo.position.z, Math.max(alto0, Math.min(TOPE, alto)) * grupo.scale.y, esGrande ? [0.55, 0.95, 0.35] : [1, 0.85, 0.3]);
       acomodar();
@@ -1478,6 +1481,7 @@
       e.obj = grupo; e.v3 = inst;
       scene.add(grupo);
       inst.tocar("reposo", { mezcla: 0 });
+      aplicarCareta(e);
       // Nave: hasta dónde llegan los pies sentados a la altura del tablero (todo el bucle); acomodarNave() aleja la silla y la
       // figura lo justo para que no toquen la mesa (decidió Codex, sentado-r2: Big Fig, opción 2).
       // Además, el punto más bajo del cuerpo sobre la huella del asiento (cojín si queda en el aire) y el más alto (encuadre).
@@ -1500,7 +1504,34 @@
       enviar({ tipo: "v3", id: e.id, ok: false });
     });
   }
+  /** La careta que manda ALV, revisada: nombres de malla, bisagra cerca del hueso y ángulo. null = cerrada. */
+  function caretaValida(c) {
+    if (!c || typeof c !== "object" || !Array.isArray(c.mallas) || !Array.isArray(c.bisagra) || c.bisagra.length !== 3) return null;
+    const mallas = c.mallas.filter(n => typeof n === "string" && /^[\w.-]{1,64}$/.test(n)).slice(0, 8);
+    const b = c.bisagra.map(Number);
+    if (!mallas.length || !b.every(v => Number.isFinite(v) && Math.abs(v) < 1) || !Number.isFinite(c.angulo) || Math.abs(c.angulo) > 180) return null;
+    return { mallas, bisagra: b, angulo: c.angulo };
+  }
+  /** Prepara (una vez por figura nueva) la bisagra de la careta y fija hacia dónde va: abierta si hay definición. */
+  function aplicarCareta(e) {
+    if (!e.v3) return;
+    const def = e.caretaDef, inst = e.v3;
+    if (!inst._careta && def) {
+      const mallas = def.mallas.map(n => inst.obj.getObjectByName(n)).filter(Boolean), padre = mallas[0] && mallas[0].parent;
+      if (!padre) return;
+      const piv = new THREE.Object3D(); piv.position.set(def.bisagra[0], def.bisagra[1], def.bisagra[2]); padre.add(piv);
+      mallas.forEach(m => { if (m.parent !== padre) return; m.position.sub(piv.position); piv.add(m); });
+      inst._careta = { piv, ang: (def.angulo * Math.PI) / 180, k: 0, meta: 0 };
+    }
+    if (inst._careta) inst._careta.meta = def ? 1 : 0;
+  }
   function animarV3(e, t, dt) {
+    const ct = e.v3._careta;
+    if (ct && ct.k !== ct.meta) {
+      ct.k = ct.meta > ct.k ? Math.min(ct.meta, ct.k + dt / 0.5) : Math.max(ct.meta, ct.k - dt / 0.5);
+      const u = ct.k * ct.k * (3 - 2 * ct.k); // suave al salir y al llegar
+      ct.piv.rotation.x = ct.ang * u;
+    }
     // La mirada se SUMA a la cabeza: antes de avanzar la animación se quita lo sumado en el cuadro anterior (si el clip
     // no mueve la cabeza, sumar cada cuadro la haría girar sin parar).
     const cab = e.v3.hueso("cabeza");
