@@ -951,6 +951,24 @@ describe("cuarto de Físico", () => {
     expect(validarDeCelular({ de: "c1", tipo: "boton", d: { n: 1, b: "poder" } })).toEqual({ n: 1, b: "poder" });
   });
 
+  it("la rueda del mando pone los 4 gestos, se queda quieto mientras duran e ignora gestos raros", () => {
+    const e = crearCuarto({ forma: "caja", ancho: 10, fondo: 6 });
+    const c = entrar(e, "a");
+    for (let i = 0; i < 120; i++) pasoCuarto(e, 16);
+    for (const g of ["saludo", "festejo", "especial", "derrota"] as const) {
+      mandar(e, "a", { x: 0, z: 0, gesto: g }); pasoCuarto(e, 16);
+      expect(c.anim).toBe(g);
+      const x = c.x;
+      mandar(e, "a", { x: 1, z: 0 }); pasoCuarto(e, 100);
+      expect(c.x).toBe(x);
+      for (let i = 0; i < 160; i++) { mandar(e, "a", { x: 0, z: 0 }); pasoCuarto(e, 16); } // termina el gesto
+      expect(c.anim).toBe("reposo");
+    }
+    mandar(e, "a", { x: 0, z: 0, gesto: "toString" as never }); pasoCuarto(e, 16);
+    expect(c.anim).toBe("reposo");
+    expect(validarDeCelular({ de: "c1", tipo: "gesto", d: { n: 1, g: "derrota" } })).toEqual({ n: 1, g: "derrota" });
+  });
+
   it("si el celular deja de mandar, a los 500 ms la palanca vuelve al centro", () => {
     const e = crearCuarto();
     const c = entrar(e, "a");
