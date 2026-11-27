@@ -23,7 +23,8 @@ describe("Sin repetir entre noches: la máscara", () => {
   });
   it("todo el contenido cabe en poco espacio", () => {
     const s = codificarSalieron(CONTENIDO.cartas.map(c => c.id))!;
-    expect(JSON.stringify(s).length).toBeLessThan(600);
+    // Con los 747 textos de los juegos de risa (27 nov) sube a ~800; el arranque admite 4000 bytes.
+    expect(JSON.stringify(s).length).toBeLessThan(1000);
     expect(CONTENIDO.cartas.every(c => yaSalio(s, c.id))).toBe(true);
   });
   it("ignora lo que no es id de carta y lo que llega mal del navegador", () => {

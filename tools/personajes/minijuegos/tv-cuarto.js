@@ -271,6 +271,7 @@ setInterval(() => {
 let resto = 0, antes = performance.now();
 setInterval(() => {
   const ya = performance.now();
+  if (tv.pausada) { antes = ya; return; } // en pausa ALVacío no avanza (ni la plataforma se encoge)
   resto = Math.min(250, resto + ya - antes); antes = ya;
   while (resto >= 1000 / 60) {
     resto -= 1000 / 60;

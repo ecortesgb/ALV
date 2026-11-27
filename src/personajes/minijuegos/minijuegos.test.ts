@@ -1232,6 +1232,8 @@ describe("sala de Físico: Palabra prohibida", () => {
     expect(m("gesto", { n: 1, g: "festejo" })).toEqual({ n: 1, g: "festejo" });
     expect(m("gesto", { n: 1, g: "bailar" })).toBeNull();
     expect(m("acepta", { n: 1, si: true })).toEqual({ n: 1, si: true });
+    expect(m("pausa", { n: 2, si: false })).toEqual({ n: 2, si: false });
+    expect(m("pausa", { n: 2, si: "sí" })).toBeNull();
     expect(m("acepta", { n: 1, si: "sí" })).toBeNull();
   });
 });

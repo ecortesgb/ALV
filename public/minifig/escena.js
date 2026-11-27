@@ -1607,6 +1607,9 @@
     // Termina el gesto: el motor vuelve solo a reposo; aquí se avisa como siempre.
     if (e.prio > 0 && t >= e.hasta) { enviar({ tipo: "termino", id: e.id, cual: e.cual }); e.prio = 0; e.cual = null; }
     if (AZOTEA) { giroAzoteaV3(e, dt); caidaAzotea(e, t); } // giro con inercia y caída de la llegada, en el grupo exterior
+    // Vuelo (expulsión de El impostor): la figura nueva también cruza la pantalla; sin esto se quedaba quieta a la
+    // izquierda (Elías, 27 nov).
+    if (VUELO) volar(e, t);
     // Azotea: voltea solo la cabeza de lado hacia donde mira ALV, con límite (Codex D4).
     // Misma mirada suavizada que la figura vieja (AZ.mira.ax con su peso w), con límite ±0.6 rad.
     if (AZOTEA && cab) { const m = AZ.mira, y = Math.max(-0.6, Math.min(0.6, m.ax * 0.55 * m.w)); if (Math.abs(y) > 1e-4) { cab.rotation.y += y; e.mirada = y; } }

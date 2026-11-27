@@ -26,6 +26,22 @@ const SIN_SENAL_MS = 15000;
 // Solo para pruebas: ?fallar=hulk,thor hace que esos personajes «no carguen» en la TV (prueba de Codex O7).
 const FALLAR = new Set((q.get("fallar") || "").split(",").filter(Boolean));
 
+// ---------- Pausa (Elías, 27 nov: «menú o botón de pausa en las partidas, sobre todo cuando hay tiempo») ----------
+// El reloj del juego se detiene mientras dura la pausa; el de los celulares (pings) sigue igual. Los toques llegan con
+// la hora de la TV sin pausa, así que cada juego los pasa por aJuego() antes de compararlos con ahoraJuego().
+let pausaDesde = null, enPausa = 0;
+/** Hora de la TV para el juego: no avanza en pausa. */
+export const ahoraJuego = () => (pausaDesde ?? ahora()) - enPausa;
+/** Hora de un toque (hora de la TV sin pausa) en el reloj del juego. */
+export const aJuego = s => (typeof s === "number" ? s - enPausa : s);
+/** A dónde vuelve «Salir»: a la página anterior de ALV si de ahí vino (ALV PARTY, Modos), si no al inicio. */
+export function salirAAlv() {
+  const raiz = new URL("../../../", location.href);
+  let mismo = false;
+  try { mismo = !!document.referrer && new URL(document.referrer).origin === location.origin && history.length > 1; } catch { mismo = false; }
+  if (mismo) history.back(); else location.assign(new URL("#/inicio", raiz).href);
+}
+
 /** Franjas de Física (O4): texto arriba, cabezas + 62 px de etiqueta abajo; pies a 24 px del borde. */
 export function crearEncuadreFranjas(escena) {
   const ETIQUETA = 62, v3 = new THREE.Vector3();
@@ -123,6 +139,8 @@ export function crearTV({ juego, escena, alUnirse, alMensaje, alSalir, alDescone
     if (m.tipo === "ping") { canal.enviar("pong", { para: m.de, t0: d.t0, t: ahora() }); return; }
     if (m.tipo === "hola") return unir(m.de, d);
     if (m.tipo === "adios") return quitar(m.de);
+    if (m.tipo === "pausa") { if (j && j.id === anfitrionId()) pausar(d.si); return; }
+    if (pausaDesde !== null) return; // en pausa no cuenta ningún toque
     if (j && !j.desconectado && alMensaje) alMensaje(j, m);
   };
   const estadoConexion = document.getElementById("como");
@@ -240,6 +258,40 @@ export function crearTV({ juego, escena, alUnirse, alMensaje, alSalir, alDescone
     anfitrionVisto = a;
     if (alAnfitrion) alAnfitrion(a);
   }
+  /** Pausa o reanuda (anfitrión desde su celular, o la TV con su botón o Esc/P). En el lobby no hay pausa. */
+  function pausar(si) {
+    si = !!si && enJuego();
+    if (si === (pausaDesde !== null)) return;
+    if (si) pausaDesde = ahora(); else { enPausa += ahora() - pausaDesde; pausaDesde = null; }
+    escena.pausa = si;
+    pintarPausa();
+    difundir();
+  }
+  // Botones de la TV: «Salir» siempre (abajo a la izquierda) y «Pausa» durante la partida; el letrero de pausa encima.
+  const barra = document.createElement("div");
+  barra.className = "barra-tv";
+  barra.innerHTML = `<button type="button" class="b-salir">‹ Salir</button><button type="button" class="b-pausa oculto">⏸ Pausa</button>`;
+  document.body.appendChild(barra);
+  const velo = document.createElement("div");
+  velo.className = "pausa-tv oculto";
+  velo.innerHTML = `<div><b>Pausa</b><small>El anfitrión reanuda desde su celular</small>
+    <button type="button" class="b-seguir">▶ Reanudar</button><button type="button" class="b-salir2">Salir al menú</button></div>`;
+  document.body.appendChild(velo);
+  // Salir a media partida pausa primero: desde el letrero se confirma con «Salir al menú».
+  barra.querySelector(".b-salir").onclick = () => { if (enJuego()) pausar(true); else salirAAlv(); };
+  barra.querySelector(".b-pausa").onclick = () => pausar(true);
+  velo.querySelector(".b-seguir").onclick = () => pausar(false);
+  velo.querySelector(".b-salir2").onclick = () => salirAAlv();
+  addEventListener("keydown", e => {
+    if (e.target && /^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName)) return;
+    if (e.key === "Escape" || e.key === "p" || e.key === "P") pausar(pausaDesde === null);
+  });
+  function enJuego() { return fase !== "lobby" && fase !== "fin"; }
+  function pintarPausa() {
+    velo.classList.toggle("oculto", pausaDesde === null);
+    barra.querySelector(".b-pausa").classList.toggle("oculto", !enJuego() || pausaDesde !== null);
+  }
+
   /** Al volver al lobby: se van los que se desconectaron durante la partida. */
   function limpiarDesconectados() { [...jugadores.values()].filter(j => j.desconectado).forEach(borrar); }
 
@@ -249,7 +301,7 @@ export function crearTV({ juego, escena, alUnirse, alMensaje, alSalir, alDescone
       jugadores: [...jugadores.values()].map(j => ({ id: j.id, cuenta: j.cuenta || null, nombre: j.nombre, personaje: j.personaje, n: j.n, color: j.color.base, bot: j.bot, estado: j.estado, desconectado: j.desconectado,
         poderes: j.figura && j.figura.poderes ? j.figura.poderes.map(x => x.nombre).slice(0, 2) : [],
         ...(juego === "cuarto" ? { movs: deRueda(j) } : {}) })),
-      anfitrionId: anfitrionId(),
+      anfitrionId: anfitrionId(), pausa: pausaDesde !== null,
     }, extra()));
   }
   setInterval(difundir, 2000);
@@ -295,7 +347,8 @@ export function crearTV({ juego, escena, alUnirse, alMensaje, alSalir, alDescone
     esAnfitrion: j => !!j && j.id === anfitrionId(), difundir, etiquetas, pop, disponibles, limpiarDesconectados, control: control.href,
     /** Todos cargaron su personaje (para dejar empezar; Codex O7). */
     todosListos: () => jugadores.size > 0 && [...jugadores.values()].every(j => j.estado === "listo" && !j.desconectado),
-    get fase() { return fase; }, set fase(f) { fase = f; difundir(); },
+    get fase() { return fase; }, set fase(f) { fase = f; if (!enJuego()) pausar(false); pintarPausa(); difundir(); },
+    get pausada() { return pausaDesde !== null; }, pausar,
     set extra(f) { extra = f; },
     catalogo: () => catalogo,
   };

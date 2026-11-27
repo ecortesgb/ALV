@@ -1,8 +1,7 @@
 // La TV conserva las fases de las barras y calcula el puntaje; el celular solo manda la hora del toque.
-import { ahora } from "/src/personajes/minijuegos/canal.ts";
 import { acotarToque, MAX_INCERTIDUMBRE } from "/src/personajes/minijuegos/reloj.ts";
 import { avanzar, crearPartida, empezar, posicion, ranking, tocar } from "/src/personajes/minijuegos/martillazo.ts";
-import { crearEncuadreFranjas, crearTV } from "./tv-comun.js";
+import { crearEncuadreFranjas, crearTV, ahoraJuego as ahora, aJuego } from "./tv-comun.js";
 
 const q = new URLSearchParams(location.search);
 const $ = id => document.getElementById(id);
@@ -38,7 +37,7 @@ function recibirToque(j, d) {
   const no = motivo => tv.canal.enviar("eco", { para: j.id, ok: false, motivo });
   if (!partida || tv.fase !== "juego" || partida.fase !== "intento" || d.pid !== pid) return no("otro intento");
   if (!Number.isFinite(d.inc) || d.inc < 0 || d.inc > MAX_INCERTIDUMBRE) return no("reloj");
-  const s = acotarToque(d.s, llego);
+  const s = acotarToque(aJuego(d.s), llego);
   if (s === null) return no("hora");
   const repetido = partida.toques.has(j.id);
   eventos(tocar(partida, j.id, s, llego));

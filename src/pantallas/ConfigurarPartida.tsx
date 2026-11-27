@@ -9,6 +9,7 @@ import { CONTENIDO } from "../content";
 import { EJE_DE_MAZO, ESCENARIOS, JUEGOS, NIVELES_EJE } from "../content/catalogo";
 import { ARTE_ESCENARIOS, ARTE_JUEGOS, ARTE_TIPOS } from "../content/arteJuegos";
 import { INSTRUMENTOS, JUEGOS_FISICO, MODALIDADES, MODALIDADES_JUEGO, admite } from "../content/configurar";
+import { RISA, esRisa } from "../content/risa";
 import { GRUPOS_EQUIPOS, JUEGOS_CON_TEMPORIZADOR, armarArranque, armarGrupos, conParejas, intensidadVieja } from "../engine/nucleo";
 import { adultoPorEjes, cartasPermitidas } from "../engine/filtros";
 import { maxImpostores } from "../engine/partida";
@@ -195,7 +196,7 @@ function ArteJuego({ id, className = "" }: { id: string; className?: string }) {
 export function mismaPartida(a: PartidaConfigurada, b: PartidaConfigurada | null | undefined): boolean {
   if (!b) return false;
   const o = (c: PartidaConfigurada) => JSON.stringify([c.juego, c.rondas, c.ejes.temperatura, c.ejes.voltaje, c.ejes.drunk, c.opciones.modalidad ?? "individual",
-    c.opciones.escenario ?? null, c.opciones.temporizador ?? null, !!c.opciones.explicar, c.opciones.herramienta ?? null, c.opciones.impostor ?? null, !!c.opciones.votoSecreto]);
+    c.opciones.escenario ?? null, c.opciones.temporizador ?? null, !!c.opciones.explicar, c.opciones.herramienta ?? null, c.opciones.impostor ?? null, !!c.opciones.votoSecreto, !!c.opciones.minoriaBebe]);
   return o(a) === o(b);
 }
 
@@ -257,13 +258,16 @@ export function ConfigurarPartida({ miembros, alIniciar, alCancelar, iniciando, 
   const [escenario, setEscenario] = useState<EscenarioId | undefined>(inicial?.opciones.escenario);
   // ¿Quién es más probable?: votos a la vista o secretos (Elías, 27 nov). Sin repetir entre noches: solo cartas nuevas.
   const [votoSecreto, setVotoSecreto] = useState(inicial?.opciones.votoSecreto === true);
+  // ¿Qué prefieres?: la minoría bebe algo (Elías, 27 nov, 1B). Apagado de inicio.
+  const [minoriaBebe, setMinoriaBebe] = useState(inicial?.opciones.minoriaBebe === true);
   const [soloNuevas, setSoloNuevas] = useState(leerSoloNuevas);
   const [deCero, setDeCero] = useState(0);
   // Categoría abierta en «Elige el juego» (null: las tarjetas de categoría). En Físico abre directo la de competencias.
   // ALV FÍSICO (Elías, 27 nov): en ese modo solo salen los juegos físicos (herramientas de complemento).
-  const cats = useMemo(() => categoriasDe(id => id in MODALIDADES_JUEGO && (!modoFisico || JUEGOS_FISICO.includes(id))), [modoFisico]);
+  // Los juegos de risa (content/risa.ts) solo salen en ALV FÍSICO; ahí se abre la lista de categorías (competir y las dos de risa).
+  const cats = useMemo(() => categoriasDe(id => id in MODALIDADES_JUEGO && (modoFisico ? JUEGOS_FISICO.includes(id) : !esRisa(id))), [modoFisico]);
   const catDe = (id: string) => cats.find(c => c.juegos.includes(id))?.id ?? null;
-  const [filtro, setFiltro] = useState<string | null>(() => (modoFisico ? catDe(JUEGOS_FISICO[0]!) : null));
+  const [filtro, setFiltro] = useState<string | null>(null);
 
   // Temporizador por turno (herramienta opcional, 6A.11 C6). null: sin tiempo.
   const [temporizador, setTemporizador] = useState<number | null>(inicial?.opciones.temporizador ?? null);
@@ -305,6 +309,7 @@ export function ConfigurarPartida({ miembros, alIniciar, alCancelar, iniciando, 
     ...(explicarFinal ? { explicar: true } : {}),
     ...(temporizador && conTemporizador ? { temporizador } : {}),
     ...(votoSecreto && j?.motor === "senalar" ? { votoSecreto: true } : {}),
+    ...(minoriaBebe && j?.motor === "votacion" ? { minoriaBebe: true } : {}),
     ejes,
   };
   const config: PartidaConfigurada = { juego, rondas, ejes, opciones };
@@ -364,6 +369,7 @@ export function ConfigurarPartida({ miembros, alIniciar, alCancelar, iniciando, 
     setVotosNave(imp?.votos === "secretos" ? "secretos" : "visibles"); setRevelarNave(imp?.revelar !== false);
     setPistaNave(imp?.pista === true); setCastigoNave(imp?.castigo !== false);
     setVotoSecreto(o.votoSecreto === true);
+    setMinoriaBebe(o.minoriaBebe === true);
   };
   const editar = (s: Seccion) => { juegoAlEditar.current = juego; if (s === "juego") setFiltro(catDe(juego)); setDesdeResumen(true); setSec(s); };
   // Elegir y seguir (Elías, 24 nov): en pasos de una sola elección, tocar la tarjeta avanza sola tras una pausa corta.
@@ -427,7 +433,10 @@ export function ConfigurarPartida({ miembros, alIniciar, alCancelar, iniciando, 
               <p className="a-nota">{temporizador ? `Cada turno dura ${temporizador} s; si se acaba, el turno pasa al siguiente.` : "Sin tiempo por turno: si alguien tarda, el anfitrión decide esperar o seguir."}</p>
             </section>}
           </> : <>
-            {j?.motor === "fisico" ? <section className="a-pila"><span className="cfg-sub dsp ol">Herramientas en tu celular</span>
+            {j?.motor === "fisico" && RISA[j.id] ? <section className="a-pila"><span className="cfg-sub dsp ol">Lo que necesitan</span>
+              <ul className="a-nota">{RISA[j.id]!.material.map(m => <li key={m}>{m}</li>)}</ul>
+              <p className="a-nota">El cronómetro ({RISA[j.id]!.segundos} s), {RISA[j.id]!.etiqueta.toLowerCase()} y castigo salen en la pantalla. Tú das los puntos.</p>
+            </section> : j?.motor === "fisico" ? <section className="a-pila"><span className="cfg-sub dsp ol">Herramientas en tu celular</span>
               <div className="cfg-temas grandes">
                 {HERRAMIENTAS_FISICO_CFG.map(x => (
                   <div key={x.id} className="cfg-tema">
@@ -458,6 +467,12 @@ export function ConfigurarPartida({ miembros, alIniciar, alCancelar, iniciando, 
                 <button key={t} type="button" className={"cfg-tiempo" + (votoSecreto === x ? " on" : "")} aria-pressed={votoSecreto === x} onClick={() => setVotoSecreto(x)}>{t}</button>
               ))}</div>
               <p className="a-nota">{votoSecreto ? "Al revelar solo se ve cuántos votos tuvo cada quien. Nadie sabe por quién votaste." : "Al revelar se ve quién votó por quién."}</p>
+            </section>}
+            {j?.motor === "votacion" && <section className="a-pila"><span className="cfg-sub dsp ol">La minoría</span>
+              <div className="a-fila a-envuelve">{([[false, "Sin castigo"], [true, "Bebe algo"]] as const).map(([x, t]) => (
+                <button key={t} type="button" className={"cfg-tiempo" + (minoriaBebe === x ? " on" : "")} aria-pressed={minoriaBebe === x} onClick={() => setMinoriaBebe(x)}>{t}</button>
+              ))}</div>
+              <p className="a-nota">{minoriaBebe ? "Quien quede en la minoría bebe algo: lo que quiera, agua vale. No da puntos." : "La minoría no tiene castigo."}</p>
             </section>}
             {conMazo && <section className="a-pila"><span className="cfg-sub dsp ol">Cartas</span>
               <div className="a-fila a-envuelve">{([[true, "Solo cartas nuevas"], [false, "Todas"]] as const).map(([x, t]) => (
@@ -501,7 +516,7 @@ export function ConfigurarPartida({ miembros, alIniciar, alCancelar, iniciando, 
           : <ArteCfg nombre={usa[0] === "voltaje" ? `voltimetro-${ejes.voltaje}` : `termometro-${ejes.temperatura}`} alterno={arteHub("xp")} />}
         alTocar={() => editar("intensidad")} />,
       <Casilla key="opc" titulo={esImpostor(j) ? "Opciones" : "Herramienta"} valor={esImpostor(j) ? `${Math.min(impostores, maxImp)} ${Math.min(impostores, maxImp) === 1 ? "impostor" : "impostores"}` : inst?.nombre ?? "—"}
-        detalle={esImpostor(j) ? `${nombreCategoria(tema)} · votos ${votosNave === "visibles" ? "a la vista" : "secretos"}${revelarNave ? "" : " · sin revelar"}${pistaNave ? " · con pista" : ""}${castigoNave ? " · con castigo" : ""}` : `${rondas} rondas${temporizador && conTemporizador ? ` · ⏱ ${temporizador} s` : ""}${votoSecreto && j?.motor === "senalar" ? " · votos secretos" : ""}${conMazo && soloNuevas ? " · cartas nuevas" : ""}`}
+        detalle={esImpostor(j) ? `${nombreCategoria(tema)} · votos ${votosNave === "visibles" ? "a la vista" : "secretos"}${revelarNave ? "" : " · sin revelar"}${pistaNave ? " · con pista" : ""}${castigoNave ? " · con castigo" : ""}` : `${rondas} rondas${temporizador && conTemporizador ? ` · ⏱ ${temporizador} s` : ""}${votoSecreto && j?.motor === "senalar" ? " · votos secretos" : ""}${minoriaBebe && j?.motor === "votacion" ? " · la minoría bebe" : ""}${conMazo && soloNuevas ? " · cartas nuevas" : ""}`}
         ico={<ArteCfg nombre={esImpostor(j) ? "sec-herramienta" : `herr-${inst?.id ?? "cartas"}`} alterno={arteHub("ajustes")} />} alTocar={() => editar(esImpostor(j) ? "tipo" : "opciones")} />,
       // Herramientas de El impostor (Elías, 25 nov): se ve aunque no se use el temporizador.
       ...(esImpostor(j) && conTemporizador ? [

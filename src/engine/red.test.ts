@@ -29,7 +29,7 @@ function respuesta(e: EstadoPartida, j: string): unknown {
     case "turnos-cartas": case "botella": case "ruleta": case "dados": return "cumplio";
     case "votacion": return j === "j3" ? "b" : "a";
     case "rol-secreto": return j === "j0" ? "j1" : "j0";
-    case "pareja": return "Tacos";
+    case "pareja": return e.seleccion?.textos ? "si" : "Tacos"; // escriben y luego marcan «¿Coinciden?»
     case "conteo": return 3;
     case "confesion": return j === "j1" ? "no" : "si";
     case "senalar": return "j2";
@@ -62,8 +62,8 @@ function jugar(juego: DefinicionJuego, semilla: number) {
 }
 
 describe("Los 15 juegos completos", () => {
-  it("hay 15 juegos que corren en el motor", () => {
-    expect(JUGABLES).toHaveLength(15);
+  it("hay 15 juegos que corren en el motor, más los 16 de risa de ALV FÍSICO", () => {
+    expect(JUGABLES).toHaveLength(31);
   });
   for (const juego of JUGABLES) {
     it(`${juego.nombre}: de crear a terminar, con puntos y XP`, () => {
@@ -72,7 +72,8 @@ describe("Los 15 juegos completos", () => {
       expect(final.bitacora.filter(b => b.tipo === "revelada")).toHaveLength(RONDAS);
       // Cada ronda tuvo algo que mostrar en la TV.
       for (const s of estados) if (s.fase === "contestando") expect(s.carta?.texto, `ronda ${s.ronda} sin carta`).toBeTruthy();
-      expect(Object.values(final.puntos).reduce((a, b) => a + b, 0)).toBeGreaterThan(0);
+      // Yo nunca no da puntos (Elías, 27 nov).
+      if (juego.motor !== "confesion") expect(Object.values(final.puntos).reduce((a, b) => a + b, 0)).toBeGreaterThan(0);
       const r = resultados(final);
       expect(r).toHaveLength(4);
       expect(r.every(x => x.xp > 0)).toBe(true);

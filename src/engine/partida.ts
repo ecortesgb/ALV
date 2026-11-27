@@ -5,6 +5,7 @@ import { cartasPermitidas } from "./filtros";
 import { yaSalio } from "./yaSalieron";
 import { xpDePartida } from "./economia";
 import { CARTAS_PODER, DADOS } from "../content/catalogo";
+import { RISA, type JuegoRisa } from "../content/risa";
 import type { Carta, Configuracion, DefinicionJuego, Jugador, Motor, TemaImpostor } from "./types";
 
 export type Fase = "contestando" | "revelada" | "terminada";
@@ -320,7 +321,9 @@ const votacion: Mecanica = {
     for (const j of js) if (j in e.respuestas) cuenta[e.respuestas[j] as "a" | "b"]++;
     const mayoria = cuenta.a === cuenta.b ? null : cuenta.a > cuenta.b ? "a" : "b";
     for (const j of js) puntos[j] = mayoria && e.respuestas[j] === mayoria ? 1 : 0;
-    return { puntos, revelado: { cuenta, mayoria, respuestas: e.respuestas } };
+    // La minoría bebe algo (Elías, 27 nov, 1B): opción apagada de inicio. Lo que quiera, agua vale; no da puntos.
+    const beben = e.cfg.minoriaBebe && mayoria ? js.filter(j => j in e.respuestas && e.respuestas[j] !== mayoria) : undefined;
+    return { puntos, revelado: { cuenta, mayoria, respuestas: e.respuestas, ...(beben ? { beben } : {}) } };
   },
 };
 
@@ -501,7 +504,9 @@ const rolSecretoClasico: Mecanica = {
   },
 };
 
-/** ¿Cuánto conoces a tu pareja?: en cada pareja, uno contesta sobre sí y el otro adivina. Si coinciden, +2 a cada uno. */
+/** ¿Cuánto conoces a tu pareja?: en cada pareja, uno contesta sobre sí y el otro adivina. Luego los dos ven ambas
+ * respuestas y marcan «¿Coinciden?». Si los dos dicen que sí, +2 a cada uno; si no se ponen de acuerdo, decide el
+ * anfitrión (Elías, 27 nov). Lo escrito pasa a `seleccion.textos` (público) al empezar la etapa de calificar. */
 function parejasDe(e: EstadoPartida): [string, string][] {
   const vistos = new Set<string>(), res: [string, string][] = [];
   for (const j of e.cfg.jugadores) {
@@ -511,6 +516,21 @@ function parejasDe(e: EstadoPartida): [string, string][] {
   }
   return res;
 }
+export const etapaPareja = (e: Pick<EstadoPartida, "seleccion">): "escribir" | "calificar" => (e.seleccion?.textos ? "calificar" : "escribir");
+const textosPareja = (e: EstadoPartida) => (e.seleccion?.textos ?? {}) as Record<string, string>;
+const decisionesPareja = (e: EstadoPartida) => (e.seleccion?.decide ?? {}) as Record<string, boolean>;
+/** Parejas que escribieron las dos respuestas (solo esas califican). */
+export const parejasCompletas = (e: EstadoPartida): [string, string][] => parejasDe(e).filter(([a, b]) => typeof textosPareja(e)[a] === "string" && typeof textosPareja(e)[b] === "string");
+/** Parejas que ya marcaron y no se pusieron de acuerdo, sin decisión del anfitrión (se nombran por su primer integrante). */
+export function parejasPorDecidir(e: EstadoPartida): string[] {
+  if (e.motor !== "pareja" || etapaPareja(e) !== "calificar") return [];
+  return parejasCompletas(e).filter(([a, b]) => (a in e.respuestas) && (b in e.respuestas) && e.respuestas[a] !== e.respuestas[b] && !(a in decisionesPareja(e))).map(([a]) => a);
+}
+/** Quien decide los desacuerdos: el que tiene el control o, si no hay, el primero de la lista. */
+export const anfitrionDe = (e: EstadoPartida) => e.control ?? e.cfg.jugadores[0]?.id ?? "";
+/** Pasa a calificar: lo escrito queda público y se vuelve a contestar (Sí o No). */
+const aCalificar = (e: EstadoPartida): EstadoPartida => ({ ...e, seleccion: { ...(e.seleccion ?? {}), textos: { ...e.respuestas } }, respuestas: {}, bitacora: registrar(e, "calificar") });
+
 const pareja: Mecanica = {
   preparar(e, c) {
     const carta = sacarCarta(e, c, ["conoces"]);
@@ -518,23 +538,34 @@ const pareja: Mecanica = {
     for (const [a, b] of parejasDe(e)) {
       const sujeto = e.ronda % 2 === 1 ? a : b, adivina = sujeto === a ? b : a;
       const pregunta = (carta?.texto ?? "").replaceAll("{pareja}", nombre(e, sujeto));
-      privado[sujeto] = { papel: "contesta", pregunta: pregunta.replace(nombre(e, sujeto), "ti") };
-      privado[adivina] = { papel: "adivina", pregunta };
+      // Quien contesta ve la pregunta con su propio nombre: cambiarlo por «ti» dejaba frases rotas («según ti», «le gusta a ti»).
+      privado[sujeto] = { papel: "contesta", pregunta, pareja: adivina };
+      privado[adivina] = { papel: "adivina", pregunta, pareja: sujeto };
     }
     return { privado, carta: carta && { id: carta.id, texto: "Cada pareja contesta en secreto" } };
   },
-  quienes: e => parejasDe(e).flat(),
-  valida: (_e, _j, v) => typeof v === "string" && v.trim().length > 0 && v.length <= 120,
+  quienes: e => (etapaPareja(e) === "calificar" ? parejasCompletas(e).flat() : parejasDe(e).flat()),
+  valida: (e, _j, v) => (etapaPareja(e) === "calificar" ? v === "si" || v === "no" : typeof v === "string" && v.trim().length > 0 && v.length <= 120),
   puntuar(e) {
     const puntos: Record<string, number> = {};
-    const resultados: { pareja: [string, string]; coinciden: boolean }[] = [];
+    const resultados: { pareja: [string, string]; coinciden: boolean; decidio?: boolean }[] = [];
+    const textos = textosPareja(e), decide = decisionesPareja(e), calificada = etapaPareja(e) === "calificar";
     for (const [a, b] of parejasDe(e)) {
-      const ra = e.respuestas[a], rb = e.respuestas[b];
-      const coinciden = typeof ra === "string" && typeof rb === "string" && normalizar(ra) === normalizar(rb);
+      let coinciden: boolean, decidio = false;
+      if (!calificada) {
+        // Partidas guardadas antes de la etapa de calificar: se comparan los textos.
+        const ra = e.respuestas[a], rb = e.respuestas[b];
+        coinciden = typeof ra === "string" && typeof rb === "string" && normalizar(ra) === normalizar(rb);
+      } else if (typeof textos[a] !== "string" || typeof textos[b] !== "string") coinciden = false;
+      else {
+        const va = e.respuestas[a], vb = e.respuestas[b];
+        if (va !== undefined && vb !== undefined && va !== vb) { coinciden = decide[a] === true; decidio = a in decide; }
+        else coinciden = (va ?? vb) === "si";
+      }
       puntos[a] = puntos[b] = coinciden ? 2 : 0;
-      resultados.push({ pareja: [a, b], coinciden });
+      resultados.push({ pareja: [a, b], coinciden, ...(decidio ? { decidio: true } : {}) });
     }
-    return { puntos, revelado: { resultados, respuestas: e.respuestas } };
+    return { puntos, revelado: { resultados, respuestas: calificada ? textos : e.respuestas } };
   },
 };
 
@@ -601,6 +632,14 @@ const dados: Mecanica = {
 };
 
 /** Contra reloj: lista relámpago, bienvenida, mímica y palabra prohibida. Se cuenta cuántas logró. */
+/** Mímica y Descríbelo: quién adivinó cada palabra lograda (en orden) y cuántas se perdieron por decir una tachada. */
+export interface Aciertos { adivinos: string[]; tachadas?: number }
+function esAciertos(e: EstadoPartida, actor: string, v: object, tope: number): boolean {
+  const { adivinos, tachadas = 0 } = v as { adivinos?: unknown; tachadas?: unknown };
+  if (!Array.isArray(adivinos) || !Number.isInteger(tachadas) || (tachadas as number) < 0) return false;
+  if (adivinos.length + (tachadas as number) > tope) return false;
+  return adivinos.every(a => typeof a === "string" && a !== actor && ids(e).includes(a));
+}
 const MAX_CONTEO = 40, PALABRAS_POR_TURNO = 8;
 const conteo: Mecanica = {
   preparar(e, c) {
@@ -616,17 +655,28 @@ const conteo: Mecanica = {
   },
   quienes: e => (e.turnoDe ? [e.turnoDe] : []),
   valida(e, j, v) {
-    if (typeof v !== "number" || !Number.isInteger(v) || v < 0) return false;
     const tope = e.mazo === "palabra" ? ((e.privado[j] as { palabras?: unknown[] })?.palabras?.length ?? 0) : MAX_CONTEO;
+    // Mímica y Descríbelo (Elías, 27 nov, 3A): quien actúa manda quién adivinó cada palabra y cuántas tachadas dijo.
+    if (e.mazo === "palabra" && v && typeof v === "object") return esAciertos(e, j, v, tope);
+    if (typeof v !== "number" || !Number.isInteger(v) || v < 0) return false;
     return v <= tope;
   },
   puntuar(e) {
-    const j = e.turnoDe!, n = e.respuestas[j] as number;
+    const j = e.turnoDe!, r = e.respuestas[j];
+    if (r && typeof r === "object") {
+      // +1 a quien actúa y +1 a quien adivinó, por palabra.
+      const { adivinos, tachadas = 0 } = r as Aciertos;
+      const puntos: Record<string, number> = { [j]: adivinos.length };
+      for (const a of adivinos) puntos[a] = (puntos[a] ?? 0) + 1;
+      return { puntos, revelado: { jugador: j, logro: adivinos.length, adivinos, tachadas } };
+    }
+    const n = r as number;
     return { puntos: { [j]: n }, revelado: { jugador: j, logro: n } };
   },
 };
 
-/** Yo nunca: cada quien dice si sí lo ha hecho. Confesar suma 1. */
+/** Yo nunca: cada quien dice si sí lo ha hecho, y quien sí, bebe algo (lo que quiera). Sin puntos ni podio (Elías, 27 nov):
+ * así a nadie le conviene mentir. La XP y las monedas salen de las rondas jugadas. */
 const confesion: Mecanica = {
   preparar(e, c) {
     const carta = sacarCarta(e, c, [e.mazo ?? "yo-nunca"]);
@@ -637,7 +687,7 @@ const confesion: Mecanica = {
   puntuar(e) {
     const puntos: Record<string, number> = {};
     const confesaron = ids(e).filter(j => e.respuestas[j] === "si");
-    for (const j of ids(e)) puntos[j] = e.respuestas[j] === "si" ? 1 : 0;
+    for (const j of ids(e)) puntos[j] = 0;
     return { puntos, revelado: { confesaron } };
   },
 };
@@ -661,7 +711,7 @@ const senalar: Mecanica = {
   },
 };
 
-/** Reto del lugar: una competencia real; el anfitrión marca quién ganó (+3). */
+/** Reto del lugar: una competencia real; el anfitrión marca quién ganó (+3), un empate (+1 a cada quien empató) o «Nadie». */
 const competencia: Mecanica = {
   preparar(e, c) {
     const carta = sacarCarta(e, c, ["competencia"]);
@@ -669,9 +719,13 @@ const competencia: Mecanica = {
   },
   // Lo captura el dispositivo del anfitrión (el primer jugador del grupo).
   quienes: e => (e.cfg.jugadores[0] ? [e.cfg.jugadores[0].id] : []),
-  valida: (e, _j, v) => typeof v === "string" && ids(e).includes(v),
+  valida: (e, _j, v) => v === "nadie" || (typeof v === "string" && ids(e).includes(v))
+    || (Array.isArray(v) && v.length >= 2 && new Set(v).size === v.length && v.every(x => typeof x === "string" && ids(e).includes(x))),
   puntuar(e) {
-    const ganador = e.respuestas[e.cfg.jugadores[0]!.id] as string;
+    const r = e.respuestas[e.cfg.jugadores[0]!.id];
+    if (r === "nadie") return { puntos: {}, revelado: { nadie: true } };
+    if (Array.isArray(r)) return { puntos: Object.fromEntries((r as string[]).map(j => [j, 1])), revelado: { empate: r } };
+    const ganador = r as string;
     return { puntos: { [ganador]: 3 }, revelado: { ganador } };
   },
 };
@@ -696,32 +750,99 @@ export interface SeleccionFisico {
     /** Palabra o pregunta que salió (id de la carta, texto ya personalizado y, en la palabra, sus prohibidas). */
     texto?: { id: string; texto: string; prohibidas?: string[] };
   };
+  /** Juegos de risa: la respuesta o el texto secreto, ya destapado por el administrador o quien tiene el turno. */
+  mostrar?: string;
+  /** Para el reloj: milisegundos en que cada quien paró su cronómetro a ciegas. */
+  reloj?: Record<string, number>;
+  /** Cuántas cartas van en la ronda (sube con «Siguiente»). */
+  vuelta?: number;
 }
+/** Tope del cronómetro a ciegas de «Para el reloj». */
+export const MAX_RELOJ_MS = 120_000;
 export const MAX_DELTA_FISICO = 5;
 export const conFisico = (e: Pick<EstadoPartida, "motor">) => e.motor === "fisico";
 export const seleccionFisico = (e: Pick<EstadoPartida, "seleccion">) => (e.seleccion ?? { deltas: {} }) as unknown as SeleccionFisico;
 /** Quien da los puntos: el que tiene el control (el anfitrión) o, si no hay, el primero de la lista. */
 export const adminFisico = (e: EstadoPartida) => e.control ?? e.cfg.jugadores[0]?.id ?? "";
 
+// Juegos de risa (content/risa.ts): corren aquí mismo. Cada ronda le toca a alguien (rota en orden) y la carta sale según el
+// juego: tapada (solo la ve quien tiene el turno; va en su privado), pública, al revés o a la mitad (la respuesta va en el
+// privado del administrador hasta que la destapa). Quien tiene el turno puede pedir la siguiente carta y arrancar el
+// cronómetro; en «Para el reloj» cada quien manda su tiempo a ciegas una vez por ronda.
+export const risaDe = (e: Pick<EstadoPartida, "juegoId">): JuegoRisa | undefined => RISA[e.juegoId];
+/** Quien acompaña a quien tiene el turno (dibuja, maneja…): la persona que sigue. */
+export const segundoDe = (e: Pick<EstadoPartida, "cfg" | "turnoDe">) => {
+  const js = e.cfg.jugadores, i = js.findIndex(j => j.id === e.turnoDe);
+  return i < 0 || js.length < 2 ? undefined : js[(i + 1) % js.length]!.id;
+};
+/** Id con que se guarda la partida en el servidor: los juegos de risa cuentan como «fisico» (la 054 solo acepta esos ids;
+ *  agregarlos pide una migración que no se ha hecho). */
+export const juegoParaGuardar = (e: Pick<EstadoPartida, "juegoId">) => (RISA[e.juegoId] ? "fisico" : e.juegoId);
+const turnoRisa = (e: EstadoPartida) => (risaDe(e)?.turno ? e.cfg.jugadores[(e.ronda - 1) % e.cfg.jugadores.length]?.id : undefined);
+/** Lo que se pone en la mesa para un juego de risa: la carta pública y lo privado (texto tapado o respuesta). */
+function mesaRisa(e: EstadoPartida, r: JuegoRisa, carta: Carta | undefined, turnoDe: string | undefined): Pick<Preparacion, "carta" | "privado"> {
+  if (!carta) return { privado: {}, carta: undefined };
+  if (r.muestra === "tapada") {
+    const quien = turnoDe ?? adminFisico(e);
+    return { privado: { [quien]: { secreto: carta.texto } }, carta: { id: carta.id, texto: `${r.etiqueta} secreta`, tipo: "tapada" } };
+  }
+  const respuesta = r.muestra === "mitad" ? carta.opcionB : r.muestra === "reves" ? carta.texto : undefined;
+  return {
+    privado: respuesta ? { [adminFisico(e)]: { respuesta } } : {},
+    carta: { id: carta.id, texto: carta.texto, tipo: carta.descripcion ?? (carta.prohibidas?.length ? carta.prohibidas.join("|") : "") },
+  };
+}
+/** Lo que se destapa con «Mostrar respuesta»: el texto secreto o la respuesta. */
+const ocultoRisa = (e: EstadoPartida) => {
+  for (const p of Object.values(e.privado ?? {})) {
+    const x = p as { secreto?: string; respuesta?: string };
+    if (x?.secreto || x?.respuesta) return x.secreto ?? x.respuesta;
+  }
+  return undefined;
+};
+
 const fisico: Mecanica = {
   preparar(e, c) {
-    const carta = sacarCarta(e, c, ["competencia"]);
-    return { privado: {}, seleccion: { deltas: {} }, carta: carta && { id: carta.id, texto: carta.texto, tipo: carta.descripcion ?? "" } };
+    const r = risaDe(e);
+    const carta = sacarCarta(e, c, [e.mazo ?? "competencia"]);
+    if (!r) return { privado: {}, seleccion: { deltas: {} }, carta: carta && { id: carta.id, texto: carta.texto, tipo: carta.descripcion ?? "" } };
+    const turnoDe = turnoRisa(e);
+    return { ...mesaRisa(e, r, carta, turnoDe), turnoDe, seleccion: { deltas: {}, vuelta: 1 } };
   },
   quienes: e => [adminFisico(e)],
   valida: (_e, _j, v) => v === "listo",
   puntuar(e) {
     const d = seleccionFisico(e).deltas;
     // Los puntos ya se sumaron al darlos. Quien terminó la ronda arriba cuenta como reto cumplido.
-    return { puntos: {}, retos: Object.fromEntries(Object.entries(d).map(([j, x]) => [j, x > 0 ? 1 : 0])), revelado: { deltas: { ...d } } };
+    const oculto = risaDe(e) ? ocultoRisa(e) : undefined;
+    return { puntos: {}, retos: Object.fromEntries(Object.entries(d).map(([j, x]) => [j, x > 0 ? 1 : 0])), revelado: { deltas: { ...d }, ...(oculto ? { oculto } : {}) } };
   },
 };
 
 /** Aplica lo que manda el administrador en el juego físico. Devuelve null si no es una jugada física. */
 function jugadaFisico(e: EstadoPartida, jugador: string, valor: unknown, c: Contenido): EstadoPartida | null {
-  if (!conFisico(e) || e.fase !== "contestando" || e.pausada || jugador !== adminFisico(e) || typeof valor !== "object" || !valor) return null;
-  const v = valor as { puntos?: { jugador?: unknown; delta?: unknown }; herramienta?: unknown; segundos?: unknown; otro?: unknown };
+  if (!conFisico(e) || e.fase !== "contestando" || e.pausada || typeof valor !== "object" || !valor) return null;
+  let v = valor as { puntos?: { jugador?: unknown; delta?: unknown }; herramienta?: unknown; segundos?: unknown; otro?: unknown; mostrar?: unknown; reloj?: unknown };
   const s = seleccionFisico(e);
+  const r = risaDe(e);
+  // Para el reloj: cada quien (el administrador también) manda su tiempo a ciegas, una sola vez por ronda.
+  if (r && v.reloj !== undefined) {
+    if (r.muestra !== "reloj" || !ids(e).includes(jugador) || !Number.isInteger(v.reloj) || (v.reloj as number) < 0 || (v.reloj as number) > MAX_RELOJ_MS
+      || s.reloj?.[jugador] !== undefined) return e;
+    return { ...e, seleccion: { ...s, reloj: { ...(s.reloj ?? {}), [jugador]: v.reloj as number } } as unknown as Record<string, unknown>,
+      bitacora: registrar(e, "reloj", jugador, { ms: v.reloj }) };
+  }
+  const esAdmin = jugador === adminFisico(e);
+  // Quien tiene el turno en un juego de risa solo pide la siguiente carta, arranca el cronómetro o destapa la respuesta.
+  const esTurno = !!r?.turno && jugador === e.turnoDe;
+  if (!esAdmin && !(esTurno && (v.otro === true || v.herramienta === "cronometro" || v.mostrar === true))) return null;
+  // Sin puntos ni otras herramientas para quien no es el administrador.
+  if (!esAdmin) v = v.mostrar === true ? { mostrar: true } : v.otro === true ? { otro: true } : { herramienta: "cronometro", segundos: v.segundos };
+  if (r && v.mostrar === true) {
+    const oculto = ocultoRisa(e);
+    if (!oculto || s.mostrar === oculto) return e;
+    return { ...e, seleccion: { ...s, mostrar: oculto } as unknown as Record<string, unknown>, bitacora: registrar(e, "mostrar", jugador) };
+  }
   if (v.puntos) {
     const j = v.puntos.jugador, d = v.puntos.delta;
     if (typeof j !== "string" || !ids(e).includes(j) || !Number.isInteger(d) || d === 0 || Math.abs(d as number) > MAX_DELTA_FISICO) return e;
@@ -763,9 +884,17 @@ function jugadaFisico(e: EstadoPartida, jugador: string, valor: unknown, c: Cont
   if (v.otro === true) {
     // Otro reto sugerido: se vuelve a sacar con otra semilla; los puntos y la herramienta de la ronda se quedan.
     // Se intenta hasta 6 veces que salga una distinta a la de la mesa (si el mazo del lugar es chico, puede repetirse).
-    let cambios = e.cambios + 1, carta = sacarCarta({ ...e, cambios }, c, ["competencia"]);
-    for (let t = 0; t < 5 && carta && carta.id === e.carta?.id; t++) carta = sacarCarta({ ...e, cambios: ++cambios }, c, ["competencia"]);
-    return { ...e, cambios, carta: carta && { id: carta.id, texto: carta.texto, tipo: carta.descripcion ?? "" }, bitacora: registrar(e, "otro-reto", jugador) };
+    const mazo = [e.mazo ?? "competencia"];
+    let cambios = e.cambios + 1, carta = sacarCarta({ ...e, cambios }, c, mazo);
+    for (let t = 0; t < 5 && carta && carta.id === e.carta?.id; t++) carta = sacarCarta({ ...e, cambios: ++cambios }, c, mazo);
+    if (!r) return { ...e, cambios, carta: carta && { id: carta.id, texto: carta.texto, tipo: carta.descripcion ?? "" }, bitacora: registrar(e, "otro-reto", jugador) };
+    // Juego de risa: la siguiente carta (y su parte privada); se tapa otra vez lo destapado. Con cronómetro de turno corto
+    // (Dame tres, Rima o paga) el cronómetro vuelve a empezar solo.
+    const mesa = mesaRisa(e, r, carta, e.turnoDe);
+    const n = (s.herr?.n ?? 0) + 1;
+    const herr = r.segundos <= 10 && r.turno ? { tipo: "cronometro" as const, n, segundos: Math.max(5, r.segundos) } : s.herr;
+    const { mostrar: _m, ...resto } = s;
+    return { ...e, cambios, ...mesa, seleccion: { ...resto, herr, vuelta: (s.vuelta ?? 1) + 1 } as unknown as Record<string, unknown>, bitacora: registrar(e, "otro-reto", jugador) };
   }
   return e;
 }
@@ -861,18 +990,29 @@ export function aplicar(e: EstadoPartida, a: Accion, contenido: Contenido): Esta
         return !n || n === e ? e : sube(n);
       }
       if (e.pausada) return e;
+      // ¿Cuánto conoces a tu pareja?: el anfitrión decide cuando una pareja no se pone de acuerdo.
+      const dec = a.valor as { decide?: unknown; coinciden?: unknown } | null;
+      if (e.motor === "pareja" && e.fase === "contestando" && dec && typeof dec === "object" && "decide" in dec) {
+        if (a.jugador !== anfitrionDe(e) || typeof dec.coinciden !== "boolean" || !parejasPorDecidir(e).includes(dec.decide as string)) return e;
+        return sube({ ...e, seleccion: { ...(e.seleccion ?? {}), decide: { ...decisionesPareja(e), [dec.decide as string]: dec.coinciden } }, bitacora: registrar(e, "decide", a.jugador, { pareja: dec.decide }) });
+      }
       if (e.fase !== "contestando" || !m.quienes(e).includes(a.jugador) || a.jugador in e.respuestas) return e;
       if (!m.valida(e, a.jugador, a.valor)) return e;
-      return sube({ ...e, respuestas: { ...e.respuestas, [a.jugador]: a.valor }, bitacora: registrar(e, "contesto", a.jugador) });
+      const n = { ...e, respuestas: { ...e.respuestas, [a.jugador]: a.valor }, bitacora: registrar(e, "contesto", a.jugador) };
+      // Ya escribieron todos: pasan a marcar si coinciden.
+      if (e.motor === "pareja" && etapaPareja(e) === "escribir" && m.quienes(n).every(j => j in n.respuestas)) return sube(aCalificar(n));
+      return sube(n);
     }
     case "revelar": {
-      if (e.fase !== "contestando" || !m.quienes(e).every(j => j in e.respuestas)) return e;
+      if (e.fase !== "contestando" || !m.quienes(e).every(j => j in e.respuestas) || parejasPorDecidir(e).length) return e;
       return sube(revelarRonda(e, [], contenido));
     }
     case "seguir-sin": {
       const quienes = m.quienes(e), faltan = quienes.filter(j => !(j in e.respuestas));
       // Solo con al menos una respuesta y al menos una falta. Si nadie contestó, la salida es «saltar».
       if (e.fase !== "contestando" || faltan.length === 0 || faltan.length === quienes.length) return e;
+      // Pareja: si falta alguien al escribir, se pasa a calificar con las parejas completas.
+      if (e.motor === "pareja" && etapaPareja(e) === "escribir") return sube(aCalificar(e));
       return sube(revelarRonda(e, faltan, contenido));
     }
     case "esperar": {
@@ -988,7 +1128,12 @@ export function aplicar(e: EstadoPartida, a: Accion, contenido: Contenido): Esta
 }
 
 /** Ranking final y XP por jugador (la XP real la confirma el servidor con la misma regla). */
-/** Puntos por equipo (suma de sus integrantes), de mayor a menor. Vacío si nadie tiene equipo. */
+/** Juegos donde todos contestan cada ronda: ahí el grupo suma el promedio de sus integrantes (Elías, 27 nov, 6A),
+ * para que un equipo de 4 no le gane a uno de 2 solo por ser más. En los juegos por turno se suma el total. */
+export const MOTORES_PROMEDIO: Motor[] = ["votacion", "senalar", "confesion", "rol-secreto"];
+export const conPromedio = (e: Pick<EstadoPartida, "motor">) => MOTORES_PROMEDIO.includes(e.motor);
+
+/** Puntos por equipo (suma o promedio de sus integrantes, con un decimal), de mayor a menor. Vacío si nadie tiene equipo. */
 export function puntosPorEquipo(e: EstadoPartida): { equipo: string; puntos: number; jugadores: string[] }[] {
   const mapa = new Map<string, { puntos: number; jugadores: string[] }>();
   for (const j of e.cfg.jugadores) {
@@ -998,7 +1143,9 @@ export function puntosPorEquipo(e: EstadoPartida): { equipo: string; puntos: num
     t.jugadores.push(j.id);
     mapa.set(j.equipo, t);
   }
-  return [...mapa].map(([equipo, t]) => ({ equipo, ...t })).sort((a, b) => b.puntos - a.puntos || a.equipo.localeCompare(b.equipo));
+  const prom = conPromedio(e);
+  return [...mapa].map(([equipo, t]) => ({ equipo, ...t, puntos: prom ? Math.round((t.puntos / t.jugadores.length) * 10) / 10 : t.puntos }))
+    .sort((a, b) => b.puntos - a.puntos || a.equipo.localeCompare(b.equipo));
 }
 
 /** ¿La partida se gana por grupo (parejas, equipos o guerra de sexos)? */
@@ -1011,10 +1158,13 @@ export function resultados(e: EstadoPartida) {
   const valor = (id: string) => delGrupo?.get(id) ?? e.puntos[id] ?? 0;
   const orden = [...e.cfg.jugadores].sort((x, y) => valor(y.id) - valor(x.id));
   let lugar = 0, previo: number | null = null;
+  // Yo nunca no tiene podio (Elías, 27 nov): todos quedan en el último lugar, así nadie recibe el extra de 1.º a 3.º.
+  const sinPodio = e.motor === "confesion";
   return orden.map((j, i) => {
     const p = e.puntos[j.id] ?? 0;
     const v = valor(j.id);
-    if (v !== previo) { lugar = i + 1; previo = v; }
+    if (sinPodio) lugar = e.cfg.jugadores.length;
+    else if (v !== previo) { lugar = i + 1; previo = v; }
     const xp = xpDePartida({ rondas: rondasJugadas, retosCumplidos: e.retos[j.id] ?? 0, lugar }, e.cfg.jugadores.length);
     // rondas y retos van al servidor, que vuelve a calcular la XP con la misma fórmula.
     return { jugador: j.id, nombre: j.nombre, puntos: p, lugar, xp, rondas: rondasJugadas, retos: e.retos[j.id] ?? 0 };

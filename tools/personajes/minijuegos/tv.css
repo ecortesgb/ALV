@@ -40,3 +40,16 @@ canvas{position:fixed;inset:0;width:100%;height:100%;display:block}
 .podio:not(.oculto) ~ .boton-tv{bottom:118px}
 @media (max-aspect-ratio:1/1){.sub{display:none}.titulo{top:64px}.centro{font-size:12vw}}
 .sub{max-width:min(52vw,640px);text-align:center}
+/* Salir y pausa (todas las TV de minijuegos y el cuarto). */
+.barra-tv{position:fixed;left:18px;bottom:22px;display:flex;gap:8px;z-index:20;pointer-events:auto}
+.barra-tv button{font:400 18px/1 "Lilita One",sans-serif;color:var(--noche);background:#fff;border:3px solid var(--borde);border-radius:12px;
+  padding:8px 12px;box-shadow:0 3px 0 var(--borde);cursor:pointer}
+.barra-tv .b-pausa{background:var(--amarillo)}
+.pausa-tv{position:fixed;inset:0;z-index:30;display:grid;place-items:center;background:rgba(10,12,40,.62);pointer-events:auto}
+.pausa-tv>div{display:flex;flex-direction:column;align-items:center;gap:12px;background:var(--panel);border:4px solid var(--borde);border-radius:22px;
+  padding:26px 34px;box-shadow:0 7px 0 var(--borde)}
+.pausa-tv b{font:400 clamp(44px,7vw,84px)/1 "Lilita One",sans-serif;color:var(--amarillo);-webkit-text-stroke:2px var(--borde)}
+.pausa-tv small{font-weight:800;color:var(--suave)}
+.pausa-tv button{font:400 24px/1 "Lilita One",sans-serif;color:var(--noche);background:var(--amarillo);border:4px solid var(--borde);border-radius:16px;
+  padding:12px 26px;box-shadow:0 5px 0 var(--borde);cursor:pointer;min-width:240px}
+.pausa-tv .b-salir2{background:#fff}

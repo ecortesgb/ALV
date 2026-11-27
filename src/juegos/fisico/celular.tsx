@@ -10,6 +10,7 @@ import { desenlace, instruccion, nombreDe, resumenDeltas, type Publico } from ".
 import type { MiVista } from "../general/celular";
 import { HERR_FISICO, ResultadoHerramienta, selFisico } from "./herramientas";
 import type { HerramientaFisico } from "../../engine/partida";
+import { RisaCelular, risaDeVista } from "./risa";
 import "./fisico.css";
 
 type Mandar = (tipo: "contestar" | "carta" | "pista", datos: Record<string, unknown>) => Promise<boolean>;
@@ -25,7 +26,9 @@ export function CelularFisico({ v, mi, miembros, mandar }: { v: Publico; mi: MiV
   const enviar = (valor: unknown) => mandar("contestar", { valor });
   const figura = (id: string) => miembros.find(m => m.id === id)?.figura;
 
-  const reto = (
+  const r = risaDeVista(v);
+  const tiempos = r ? [...new Set([Math.max(5, r.segundos), 30, 60])] : TIEMPOS;
+  const reto = r ? <RisaCelular v={v} r={r} yo={yo} mio={mi.mio as { secreto?: string; respuesta?: string } | undefined} soyAdmin={soyAdmin} mandar={mandar} /> : (
     <div className="fi-reto">
       <span className="fi-kick">Reto sugerido</span>
       <b className="fi-reto-t">{v.carta?.texto ?? "Inventen el reto de esta ronda"}</b>
@@ -87,7 +90,7 @@ export function CelularFisico({ v, mi, miembros, mandar }: { v: Publico; mi: MiV
         {(["dados", "ruleta", "carta", "orden", "palabra", "pregunta"] as const).map(t => (
           <button key={t} type="button" className="fi-herr" onClick={() => herramienta(t)}><ArteCfg nombre={HERR_FISICO[t].icono} className="fi-herr-ico" /><span>{HERR_FISICO[t].nombre}</span></button>
         ))}
-        <div className="fi-herr fi-herr-crono"><ArteCfg nombre="herr-tiempo" className="fi-herr-ico" /><span className="fi-crono-ops">{TIEMPOS.map(t => (
+        <div className="fi-herr fi-herr-crono"><ArteCfg nombre="herr-tiempo" className="fi-herr-ico" /><span className="fi-crono-ops">{tiempos.map(t => (
           <button key={t} type="button" onClick={() => herramienta("cronometro", t)} aria-label={`Cronómetro de ${t} segundos`}>{t < 60 ? `${t} s` : `${t / 60} min`}</button>
         ))}</span></div>
       </div>

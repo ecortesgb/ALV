@@ -194,8 +194,13 @@ export function Sala({ codigo }: { codigo: string }) {
     const idPartida = s.partida?.id ?? "";
     const yaVieron = vistos.pid === idPartida ? vistos.ids : leerVistos(idPartida);
     const naveSala = !!v.impostor?.palabras;
+    // Menú de la partida en las pantallas sin barra del anfitrión (pasar el teléfono, papeles) y para quien no es
+    // anfitrión: así nadie se queda atorado sin poder pausar o salir (Elías, 27 nov).
+    const menu = v.juegoId === "copas" ? undefined : soyAnfitrion
+      ? <MenuPartida pausada={!!v.pausada} alPausar={() => void control(pid, v.pausada ? "reanudar" : "pausar")} alTerminar={() => void terminarPartida()} alSalir={() => void salir()} salirTxt={local ? "Terminar sesión" : "Cerrar sala"} />
+      : <MenuPartida alSalir={() => void salir()} salirTxt="Salir de la sala" />;
     // Local: «¡A discutir!» se ve antes de pasar el teléfono al primer turno.
-    if (compartido && naveSala && anuncioNave) return <Marco clase="az pt ns-marco" fondo={<FondoCuarto oscuro />}><AnuncioDiscusion modo="celular" /></Marco>;
+    if (compartido && naveSala && anuncioNave) return <Marco clase="az pt ns-marco" fondo={<FondoCuarto oscuro />} fijo={menu}><AnuncioDiscusion modo="celular" /></Marco>;
     const etapaNave = naveSala ? v.impostor!.etapa : null;
     const verPalabra = compartido && !!v.impostor?.nave && !naveSala && v.ronda === 1 && v.fase === "contestando" && v.impostor.etapa === "pistas" && Object.keys(v.pistas).length === 0;
     const faltaVer = verPalabra ? v.jugadores.map(j => j.id).find(id => enAparato(id) && !yaVieron.includes(id)) : undefined;
@@ -208,7 +213,7 @@ export function Sala({ codigo }: { codigo: string }) {
     }
     if (compartido && mano !== sigue && v.juegoId !== "copas") {
       const m = s.miembros.find(x => x.id === sigue);
-      return <PasaTelefono nombre={m?.nombre ?? "el siguiente"} id={sigue} figura={m?.figura ?? null} color={colorDe(sigue, v.jugadores.map(j => j.id))}
+      return <PasaTelefono menu={menu} nombre={m?.nombre ?? "el siguiente"} id={sigue} figura={m?.figura ?? null} color={colorDe(sigue, v.jugadores.map(j => j.id))}
         alListo={() => { pasarA(sigue === anf ? "" : sigue); setEnMano(sigue === anf ? "" : sigue); s.refrescar(); }} />;
     }
     // Papeles de la nave: cada quien ve el suyo (en Local, por turnos); luego el anfitrión abre la discusión.
@@ -217,7 +222,7 @@ export function Sala({ codigo }: { codigo: string }) {
       const sec = (s.secreto ?? {}) as { mio?: { rol?: string; tema?: string; palabra?: string; companeros?: string[]; pista?: string } | null };
       const vi = (v.impostor!.vistos ?? []).includes(quien) || vistoYo === `${idPartida}:${quien}`;
       return (
-        <Marco clase="az pt ns-marco" fondo={<FondoCuarto oscuro />}>
+        <Marco clase="az pt ns-marco" fondo={<FondoCuarto oscuro />} fijo={menu}>
           <div className="pt-caja">
             <PapelNave v={v} mio={sec.mio ?? null} miembros={s.miembros} yo={quien} vi={vi} local={compartido}
               alVisto={() => { setVistoYo(`${idPartida}:${quien}`); void jugada(idPartida, "carta", { que: "visto" }); }}
@@ -233,7 +238,7 @@ export function Sala({ codigo }: { codigo: string }) {
       const imp = mio?.rol === "impostor";
       const listo = () => { const ids = [...yaVieron, mano]; guardarVistos(idPartida, ids); setVistos({ pid: idPartida, ids }); };
       return (
-        <Marco clase="az lb pt-aviso" fondo={v.escenario ? <FondoEscenario escenario={v.escenario} /> : <FondoCuarto oscuro />}>
+        <Marco clase="az lb pt-aviso" fondo={v.escenario ? <FondoEscenario escenario={v.escenario} /> : <FondoCuarto oscuro />} fijo={menu}>
           <div className="a-pasa-caja nv-ver" style={{ "--pj": colorDe(mano, v.jugadores.map(j => j.id))?.base ?? "#ffc21a" } as React.CSSProperties}>
             <span className="nv-ver-t dsp ol">{m?.nombre ?? "Tu turno"}: tu palabra secreta</span>
             {mio ? <Escaner secreto={imp ? "Eres el impostor" : mio.palabra ?? "…"} encabezado={imp ? "TU PAPEL" : "PALABRA CLASIFICADA"} detalle={`Tema: ${mio.tema ?? v.carta?.texto ?? ""}`} />
@@ -270,7 +275,7 @@ export function Sala({ codigo }: { codigo: string }) {
             <button type="button" className="pt-hb peligro" onClick={() => void salir()}><b className="pt-hb-txt">✕</b><small>{local ? "Cerrar" : "Cerrar sala"}</small></button>
           </div>
         </nav>
-      ) : undefined}>
+      ) : menu}>
         <div className={"pt-caja" + (soyAnfitrion && !copas ? " con-barra" : "")}>
           <header className="pt-top">
             <div className="lb-banner pt-banner">
@@ -335,9 +340,9 @@ export function Sala({ codigo }: { codigo: string }) {
 }
 
 /** Local: tapa la pantalla entre turnos para que nadie vea lo de otro. */
-function PasaTelefono({ nombre, id, figura, color, alListo }: { nombre: string; id: string; figura: FiguraV2 | null; color: ColorJugador | null; alListo: () => void }) {
+function PasaTelefono({ nombre, id, figura, color, alListo, menu }: { nombre: string; id: string; figura: FiguraV2 | null; color: ColorJugador | null; alListo: () => void; menu?: React.ReactNode }) {
   return (
-    <Marco clase="az lb pt-aviso" fondo={<FondoCuarto oscuro />}>
+    <Marco clase="az lb pt-aviso" fondo={<FondoCuarto oscuro />} fijo={menu}>
       {/* Caja de bloques del lobby del color del jugador, con el medallón del HUB (Elías, 25 nov). */}
       <div className="a-pasa-caja pasa-n" style={varsColor(color)}>
         <span className="pasa-t">Pásale el teléfono a</span>
@@ -355,3 +360,21 @@ function leerVistos(pid: string): string[] {
   try { const x = JSON.parse(sessionStorage.getItem(claveVistos(pid)) ?? "[]"); return Array.isArray(x) ? x.filter((i): i is string => typeof i === "string") : []; } catch { return []; }
 }
 function guardarVistos(pid: string, ids: string[]) { try { sessionStorage.setItem(claveVistos(pid), JSON.stringify(ids)); } catch { /* sin almacenamiento: se recuerda mientras siga abierta */ } }
+
+/** Menú de la partida (botón ☰ arriba a la izquierda): pausar y terminar (anfitrión) y salir. Cada opción confirma lo suyo. */
+function MenuPartida({ pausada, alPausar, alTerminar, alSalir, salirTxt }: { pausada?: boolean; alPausar?: () => void; alTerminar?: () => void; alSalir: () => void; salirTxt: string }) {
+  const [abierto, setAbierto] = useState(false);
+  const elegir = (f: () => void) => () => { setAbierto(false); f(); };
+  return (
+    <div className="pt-menu">
+      <button type="button" className="pt-menu-btn" aria-label="Menú de la partida" aria-expanded={abierto} onClick={() => setAbierto(a => !a)}>{abierto ? "✕" : "☰"}</button>
+      {abierto && (
+        <div className="pt-menu-caja" role="menu">
+          {alPausar && <button type="button" role="menuitem" onClick={elegir(alPausar)}>{pausada ? "▶ Seguir" : "❚❚ Pausar"}</button>}
+          {alTerminar && <button type="button" role="menuitem" onClick={elegir(alTerminar)}>⏹ Terminar partida</button>}
+          <button type="button" role="menuitem" className="peligro" onClick={elegir(alSalir)}>✕ {salirTxt}</button>
+        </div>
+      )}
+    </div>
+  );
+}
