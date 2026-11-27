@@ -7,7 +7,7 @@ import codigoParacaidasTv from "../../../tools/personajes/minijuegos/tv-paracaid
 import * as alto from "./altoTotal";
 import { acotarToque, estimar, muestra, relojListo } from "./reloj";
 import { aireDe, avanzar, crearPartida, empezar, enElAire, llegada, posBala, ranking, saltar, CONFIG_BALA, type Bala, type EstadoBala, type Evento } from "./bala";
-import { crearCuarto, entrar, mandar, pasoCuarto } from "./cuarto";
+import { alargar, crearCuarto, entrar, mandar, pasoCuarto } from "./cuarto";
 import { abrirCanalNube, crearSecuencias, deLaTv, idDeLlave, leer, validarDeCelular, SERVIDOR, TV, type Mensaje } from "./canal";
 import { JUEGO_XP, RONDAS_XP, resultadosXp } from "./xpSala";
 
@@ -949,6 +949,26 @@ describe("cuarto de Físico", () => {
     mandar(e, "a", { x: 1, z: 0 }); pasoCuarto(e, 100);
     expect(c.x).toBe(x);
     expect(validarDeCelular({ de: "c1", tipo: "boton", d: { n: 1, b: "poder" } })).toEqual({ n: 1, b: "poder" });
+  });
+
+  it("X (poder2) hace el segundo poder y la TV alarga el poder al largo de su clip (entre 0.4 y 6 s)", () => {
+    const e = crearCuarto({ forma: "caja", ancho: 10, fondo: 6 });
+    const c = entrar(e, "a");
+    for (let i = 0; i < 120; i++) pasoCuarto(e, 16);
+    mandar(e, "a", { x: 0, z: 0, poder2: true });
+    expect(pasoCuarto(e, 16)).toContainEqual({ tipo: "poder", id: "a", n: 2 });
+    expect(c.anim).toBe("poder2");
+    alargar(e, "a", 3500);
+    for (let i = 0; i < 180; i++) { mandar(e, "a", { x: 0, z: 0 }); pasoCuarto(e, 16); } // 2.9 s: sigue
+    expect(c.anim).toBe("poder2");
+    for (let i = 0; i < 60; i++) { mandar(e, "a", { x: 0, z: 0 }); pasoCuarto(e, 16); }
+    expect(c.anim).toBe("reposo");
+    alargar(e, "a", 99999); // ya no está en un poder: nada
+    expect(c.hasta).toBe(0);
+    mandar(e, "a", { x: 0, z: 0, poder: true }); pasoCuarto(e, 16);
+    alargar(e, "a", 99999);
+    expect(c.hasta - c.animDesde).toBe(6000);
+    expect(validarDeCelular({ de: "c1", tipo: "boton", d: { n: 1, b: "poder2" } })).toEqual({ n: 1, b: "poder2" });
   });
 
   it("la rueda del mando pone los 4 gestos, se queda quieto mientras duran e ignora gestos raros", () => {

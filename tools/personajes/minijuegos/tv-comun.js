@@ -7,6 +7,7 @@ import { colorJugador } from "/src/app/colorJugador.ts";
 import qrcode from "qrcode-generator";
 import { cliente } from "/src/servicios/cliente.ts";
 import { fuentePrivada } from "/src/servicios/personajesPrivados.ts";
+import { poderesDeFicha } from "/src/personajes/plano.ts";
 
 const q = new URLSearchParams(location.search);
 /** ?canal=pestanas: modo de prueba sin servidor (BroadcastChannel). Por omisión, WebSocket al servidor de sala (D8). */
@@ -153,7 +154,8 @@ export function crearTV({ juego, escena, alUnirse, alMensaje, alSalir, alDescone
       const mio = (j.carga = (j.carga || 0) + 1);
       try {
         if (FALLAR.has(personaje)) throw new Error("carga fallida a propósito (?fallar)");
-        const f = await FigurasMJ.crear(ficha, { base: catalogo.get(personaje).base, idFigura: id });
+        const base = catalogo.get(personaje).base;
+        const f = await FigurasMJ.crear(ficha, { base, idFigura: id, poderes: ficha.id ? poderesDeFicha(ficha, base) : [] });
         if (mio !== j.carga || !jugadores.has(id)) { f.quitar(); return; }
         if (j.figura) j.figura.quitar();
         j.figura = f; j.alto = 0; j.estado = "listo";
@@ -204,7 +206,8 @@ export function crearTV({ juego, escena, alUnirse, alMensaje, alSalir, alDescone
   function difundir() {
     canal.enviar("estado", Object.assign({
       juego, fase, sala, personajes: disponibles(),
-      jugadores: [...jugadores.values()].map(j => ({ id: j.id, cuenta: j.cuenta || null, nombre: j.nombre, personaje: j.personaje, n: j.n, color: j.color.base, bot: j.bot, estado: j.estado, desconectado: j.desconectado })),
+      jugadores: [...jugadores.values()].map(j => ({ id: j.id, cuenta: j.cuenta || null, nombre: j.nombre, personaje: j.personaje, n: j.n, color: j.color.base, bot: j.bot, estado: j.estado, desconectado: j.desconectado,
+        poderes: j.figura && j.figura.poderes ? j.figura.poderes.map(x => x.nombre).slice(0, 2) : [] })),
       anfitrionId: anfitrionId(),
     }, extra()));
   }

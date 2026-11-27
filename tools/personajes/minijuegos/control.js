@@ -186,7 +186,14 @@ function estado(d) {
   if (j.estado === "error") return pedirOtro(j.personaje);
   if ($("unirse").dataset.reintento) { delete $("unirse").dataset.reintento; $("unirse").classList.add("oculto"); }
   const vivo = !Array.isArray(d.vivos) || d.vivos.includes(yo);
-  if (d.juego === "cuarto") return verMando();
+  if (d.juego === "cuarto") {
+    // Nombre de sus poderes en RT y X (la TV los manda); sin segundo poder no sale X.
+    const pod = Array.isArray(j.poderes) ? j.poderes.filter(x => typeof x === "string").map(x => x.slice(0, 22)) : [];
+    $("rt-txt").textContent = pod[0] || "Poder";
+    $("x-txt").textContent = pod[1] || "";
+    $("boton-x").classList.toggle("oculto", !pod[1]);
+    return verMando();
+  }
   if (d.juego === "fisico") return verFisico(d, j);
   // Esquiva la bala, Desenfunda y Martillazo comparten botón y reloj. Solo la TV juzga.
   const enJuego = d.fase === "cuenta" || d.fase === "juego";

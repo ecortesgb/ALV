@@ -41,7 +41,7 @@ export function leer(crudo: unknown): Mensaje | null {
 const num = (v: unknown) => (typeof v === "number" && Number.isFinite(v) ? v : null);
 const ent = (v: unknown) => (typeof v === "number" && Number.isInteger(v) && v >= 0 && v < 1e9 ? v : null);
 const txt = (v: unknown, max: number) => (typeof v === "string" && v.length <= max ? v : null);
-const BOTONES = new Set(["saltar", "golpe", "festejo", "poder"]);
+const BOTONES = new Set(["saltar", "golpe", "festejo", "poder", "poder2"]);
 const ACCIONES = new Set(["ronda", "revelar", "ocultar", "perdio", "puntos", "castigo", "reto", "escenario"]);
 const GESTOS = new Set(["saludo", "festejo", "derrota", "especial"]);
 const id40 = (v: unknown) => (typeof v === "string" && /^[A-Za-z0-9_-]{1,40}$/.test(v) ? v : null);

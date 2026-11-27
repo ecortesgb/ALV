@@ -138,6 +138,36 @@
     anim("reposo", { mezcla: 0 });
     p.mixer.update(0);
 
+    // Poderes (contrato del hilo de acciones, 27 nov): o.poderes = poderesDeFicha(ficha, base) → [{ id, nombre, glb, clip,
+    // efectos, hasta? }], en orden (el 1º va a RT, el 2º a X). El clip sale del GLB «poderes» y lo toca este mismo
+    // controlador (no el del motor, que ya no manda en este mezclador). Los efectos los dibuja quien tiene la escena.
+    const poderes = Array.isArray(o.poderes) ? o.poderes.filter(x => x && typeof x.glb === "string" && typeof x.clip === "string") : [];
+    const clipsPoder = new Map(); // id → Promise<AnimationClip|null>
+    function clipPoder(pd) {
+      if (!clipsPoder.has(pd.id)) clipsPoder.set(pd.id, M.bajar(pd.glb, plano.carga).then(g2 => {
+        const c0 = g2.animations.find(a => a.name === pd.clip);
+        if (!c0) return null;
+        const c = new T.AnimationClip("poder:" + pd.id, c0.duration,
+          c0.tracks.filter(t => p.obj.getObjectByName(T.PropertyBinding.parseTrackName(t.name).nodeName)));
+        return c.tracks.length ? limpio(pd.glb, c, raizNombre) : null;
+      }).catch(e => { console.warn("poder sin clip", pd.id, e); return null; }));
+      return clipsPoder.get(pd.id);
+    }
+    poderes.forEach(clipPoder); // se bajan de una vez, para que el primer RT no espere
+    let corte = 0;
+    /** Toca el poder i (0 = RT, 1 = X). → { dur (s), efectos } o null si no lo tiene o no bajó. */
+    async function poder(i) {
+      const pd = poderes[i];
+      if (!pd) return null;
+      const clip = await clipPoder(pd);
+      if (!clip) return null;
+      elegido["poder:" + pd.id] = clip;
+      anim("poder:" + pd.id, { mezcla: 0.08 });
+      const hasta = Number(pd.hasta) > 0 && Number(pd.hasta) < clip.duration ? Number(pd.hasta) : 0;
+      corte = hasta;
+      return { dur: hasta || clip.duration, efectos: Array.isArray(pd.efectos) ? pd.efectos : [] };
+    }
+
     return {
       obj: p.obj, ficha, anim,
       tiene: nombre => !!elegido[nombre],
@@ -145,7 +175,13 @@
       duracion: nombre => (elegido[nombre] ? elegido[nombre].duration : 0),
       actual: () => nombreActual,
       fuente: "juego",
-      update: dt => { p.mixer.update(dt); if (pararEn && actual && actual.time >= pararEn) { actual.time = pararEn; actual.paused = true; } },
+      update: dt => {
+        p.mixer.update(dt);
+        if (pararEn && actual && actual.time >= pararEn) { actual.time = pararEn; actual.paused = true; }
+        // Poder con corte (su final se ve mal): al llegar, de vuelta a reposo.
+        if (corte && String(nombreActual).startsWith("poder:") && actual && actual.time >= corte) { corte = 0; anim("reposo"); }
+      },
+      poderes: poderes.map(x => ({ id: x.id, nombre: x.nombre })), poder, hueso: p.hueso,
       alto: p.alto, ancho: p.ancho,
       quitar: () => p.quitar(),
     };
