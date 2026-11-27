@@ -8,7 +8,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type PointerEvent as PE } from "react";
 import { caraDeMascara, esMascara, PALETAS, paletaDePieza, piezasDe, planoConstructor, ponerPiel, ponerPieza, quitarTinte, teñir, type Color, type PiezaCons, type Piezas } from "./constructorDatos";
 import { DONANTES_FUERA, VERSION_MINIFIG } from "./cabezas";
-import { caben, paginas, tarjetas, type Tarjeta } from "./galeriaDatos";
+import { caben, nombreSaga, paginas, tarjetas, type Tarjeta } from "./galeriaDatos";
 import { GRUPOS_GENERICAS } from "./genericas";
 import { esOtros, grupoMostrado, juntarVersiones, nombreBase } from "./agrupar";
 import { conMovimientos, elegirMovimiento, GESTOS, movimientosElegidos, NOMBRE_GESTO, opcionesMovimiento, type BaseGenerica, type Gesto, type OpcionMov } from "./movimientos";
@@ -52,11 +52,15 @@ const esGesto = (x: Sub): x is Gesto => (GESTOS as readonly string[]).includes(x
  *  con su id legible al final (Elías, 2026-11-26: «Marvel y dentro Avengers, X-Men…; habrá Harry Potter, Star Wars»). */
 const SAGAS: { id: Id; nombre: string }[] = [
   { id: "marvel", nombre: "Marvel" }, { id: "dc", nombre: "DC" }, { id: "star-wars", nombre: "Star Wars" }, { id: "harry-potter", nombre: "Harry Potter" },
+  { id: "disney", nombre: "Disney" }, { id: "simpsons", nombre: "Los Simpson" }, { id: "looney-tunes", nombre: "Looney Tunes" },
+  { id: "muppets", nombre: "Los Muppets" }, { id: "plaza-sesamo", nombre: "Plaza Sésamo" }, { id: "hora-de-aventura", nombre: "Hora de Aventura" },
+  { id: "chicas-superpoderosas", nombre: "Las Chicas Superpoderosas" },
 ];
 const GRUPOS: { id: Id; nombre: string }[] = [
   { id: "avengers", nombre: "Avengers" }, { id: "x-men", nombre: "X-Men" }, { id: "guardianes", nombre: "Guardianes" },
   { id: "villanos-marvel", nombre: "Villanos" }, { id: "cuatro-fantasticos", nombre: "Los 4 Fantásticos" }, { id: "otros-marvel", nombre: "Otros" },
   { id: "batman", nombre: "Batman" }, { id: "liga-justicia", nombre: "Liga de la Justicia" },
+  { id: "increibles", nombre: "Los Increíbles" },
 ];
 /** Secciones que el Álbum separa aparte de `ficha.grupo` (Los 4 Fantásticos; en DC, Batman y la Liga de la Justicia). */
 const SECCIONES_ALBUM = new Set(["cuatro-fantasticos", "batman", "liga-justicia"]);
@@ -66,11 +70,10 @@ function NombreSeccion({ id, nombre }: { id: Id; nombre: string }) {
   const archivo = id === "guardianes" ? "guardianes-plata" : id === "villanos-marvel" ? "villanos" : id;
   return LOGOS[id] ? <img src={logo(archivo)} alt={nombre} draggable={false} /> : <>{nombre}</>;
 }
-const legible = (id: Id) => id.split("-").map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
 /** Ordena los ids según una lista conocida (los desconocidos al final, por nombre). */
 function ordenar(ids: Iterable<Id>, conocidos: { id: Id; nombre: string }[]): { id: Id; nombre: string }[] {
   const pos = (id: Id) => { const i = conocidos.findIndex(c => c.id === id); return esOtros(id) ? 1000 : i < 0 ? 999 : i; };
-  return [...new Set(ids)].filter(Boolean).map(id => ({ id, nombre: conocidos.find(c => c.id === id)?.nombre ?? (esOtros(id) ? "Otros" : legible(id)) }))
+  return [...new Set(ids)].filter(Boolean).map(id => ({ id, nombre: conocidos.find(c => c.id === id)?.nombre ?? (esOtros(id) ? "Otros" : nombreSaga(id)) }))
     .sort((a, b) => pos(a.id) - pos(b.id) || a.nombre.localeCompare(b.nombre, "es"));
 }
 /** Gesto del menú de la rueda para cada gesto de la figura (para probarlo al elegirlo). */
@@ -212,18 +215,19 @@ export function Constructor({ catalogo, piezas, inicial, seccion, escenaUrl, onG
   }, [sub, vistaTrajes, piezas, parte, familiaPiezas, movs, bloqueada]);
   const origenDe = (it: Item) => (it.tipo === "traje" || it.tipo === "volver" ? "original" : it.tipo === "pieza" ? it.pz.origen ?? "original" : it.tipo === "mov" ? it.op?.origen ?? "ninguna" : "ninguna");
   const grupoCrudo = (it: Item) => {
-    const g = it.tipo === "traje" ? it.grupo : it.tipo === "pieza" ? it.pz.grupo ?? "" : it.tipo === "mov" ? it.op?.grupo ?? "" : "";
-    if (origenDe(it) !== "original") return g;
+    const g0 = it.tipo === "traje" ? it.grupo : it.tipo === "pieza" ? it.pz.grupo ?? "" : it.tipo === "mov" ? it.op?.grupo ?? "" : "";
+    if (origenDe(it) !== "original") return g0;
     // Mismas secciones que el Álbum de la tienda (Elías, 2026-11-27: «te faltan 4 fantásticos…»).
     const id = it.tipo === "traje" ? it.id : it.tipo === "pieza" ? it.pz.donante : it.tipo === "mov" ? /^p:([^:]+):/.exec(it.op?.id ?? "")?.[1] : undefined;
     const t = id ? cartas.get(id) : undefined;
+    if (t?.saga === "otros") return t.grupo; // saga chica: su nombre es el grupo dentro de «Otros»
     const tema = t ? temaDe(t) : "";
-    return SECCIONES_ALBUM.has(tema) ? tema : g;
+    return SECCIONES_ALBUM.has(tema) ? tema : g0;
   };
   /** Saga del personaje de donde sale el elemento (traje, pieza original o movimiento original). */
   const sagaDe = (it: Item): Id => {
     const id = it.tipo === "traje" ? it.id : it.tipo === "pieza" ? it.pz.donante : it.tipo === "mov" && it.op?.origen === "original" ? /^p:([^:]+):/.exec(it.op.id)?.[1] : undefined;
-    return (id && catalogo.get(id)?.ficha.saga) || "";
+    return (id && (cartas.get(id)?.saga ?? catalogo.get(id)?.ficha.saga)) || "";
   };
   /** Grupos de 3 o menos se juntan en «Otros» de su saga (Elías, 2026-11-27); las comunes conservan su tipo. */
   const grupoDe = useMemo(() => {

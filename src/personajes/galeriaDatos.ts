@@ -13,10 +13,21 @@ export interface Tarjeta {
 
 export const NOMBRE_SAGA: Record<string, string> = {
   marvel: "Marvel", dc: "DC", "star-wars": "Star Wars", "harry-potter": "Harry Potter", piratas: "Piratas",
-  "senor-de-los-anillos": "El Señor de los Anillos", otros: "Otros",
+  "senor-de-los-anillos": "El Señor de los Anillos", disney: "Disney", "looney-tunes": "Looney Tunes", simpsons: "Los Simpson",
+  "plaza-sesamo": "Plaza Sésamo", muppets: "Los Muppets", "hora-de-aventura": "Hora de Aventura",
+  "chicas-superpoderosas": "Las Chicas Superpoderosas", increibles: "Los Increíbles", otros: "Otros",
 };
-const ORDEN_SAGA = ["marvel", "dc", "star-wars", "harry-potter", "senor-de-los-anillos", "piratas", "otros"];
-export const nombreSaga = (s: string) => NOMBRE_SAGA[s] ?? s.replace(/-/g, " ").replace(/^./, c => c.toUpperCase());
+const ORDEN_SAGA = ["marvel", "dc", "star-wars", "harry-potter", "disney", "simpsons", "looney-tunes", "muppets", "plaza-sesamo",
+  "hora-de-aventura", "chicas-superpoderosas", "senor-de-los-anillos", "piratas", "otros"];
+/** Sagas chicas (van a «Otros» y su nombre se ve como grupo): solo el nombre bien escrito. */
+const NOMBRE_SAGA_CHICA: Record<string, string> = {
+  "volver-al-futuro": "Volver al Futuro", et: "E.T.", gremlins: "Gremlins", sonic: "Sonic", "scooby-doo": "Scooby-Doo",
+  "mago-de-oz": "El Mago de Oz", monstruos: "Monstruos",
+};
+export const nombreSaga = (s: string) => NOMBRE_SAGA[s] ?? NOMBRE_SAGA_CHICA[s] ?? s.replace(/-/g, " ").replace(/^./, c => c.toUpperCase());
+
+/** Personajes que necesita una saga para tener su propio botón; con menos va a «Otros». */
+export const SAGA_MINIMA = 3;
 
 /** Qué estados de calidad salen en la galería (los «borrador» solo en pruebas). */
 const VISIBLES = new Set(["jugable", "revision", "aprobado"]);
@@ -29,6 +40,11 @@ export function tarjetas(catalogo: Catalogo, opciones: { conBorradores?: boolean
     fuera.push({ id: f.id, nombre: f.nombre, saga: f.saga, grupo: f.grupo, bando: f.bando, familia: f.familia,
       tamano: f.familia === "bigfig" ? "grande" : "normal", foto, prueba: !!opciones.pruebas?.has(f.id) });
   }
+  // Una saga sin botón propio (fuera de NOMBRE_SAGA) con 3 personajes o menos va a «Otros», con su nombre como grupo
+  // (Elías, 2026-11-27: «como son menos de 3 que salgan en otros de la saga»): Volver al Futuro, E.T., Gremlins, Sonic…
+  const cuantos = new Map<string, number>();
+  for (const t of fuera) cuantos.set(t.saga, (cuantos.get(t.saga) ?? 0) + 1);
+  for (const t of fuera) if (!(t.saga in NOMBRE_SAGA) && (cuantos.get(t.saga) ?? 0) <= SAGA_MINIMA) { t.grupo = t.saga; t.saga = "otros"; }
   const orden = (s: string) => { const i = ORDEN_SAGA.indexOf(s); return i < 0 ? ORDEN_SAGA.length : i; };
   return fuera.sort((a, b) => orden(a.saga) - orden(b.saga) || a.saga.localeCompare(b.saga) || a.nombre.localeCompare(b.nombre, "es"));
 }
