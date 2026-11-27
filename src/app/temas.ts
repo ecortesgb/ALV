@@ -118,6 +118,8 @@ export function urlObjeto(nombre: string): Promise<string | null> {
 }
 
 // ---------- Hooks ----------
+/** Elías (27 nov): sin fondos por personaje; todos ven los de la ciudad por horario. Canciones y voces siguen. */
+const FONDOS_TEMA = false;
 const esAncho = () => typeof matchMedia !== "undefined" && matchMedia("(min-width: 900px)").matches;
 
 export interface EstadoFondo {
@@ -132,6 +134,7 @@ export function useFondosTema(figuras: readonly unknown[], tamano: "c" | "g" | "
   const clave = ids.join("|") + tamano;
   const [estado, setEstado] = useState<{ clave: string; v: EstadoFondo[] }>(() => ({ clave: "", v: ids.map(() => ({ listo: false, css: null })) }));
   useEffect(() => {
+    if (!FONDOS_TEMA) return;
     let vivo = true;
     const t = setTimeout(() => { if (vivo) setEstado(e => e.clave === clave ? e : { clave, v: ids.map(() => ({ listo: true, css: null })) }); }, espera);
     void cargarManifiesto().then(async m => {
@@ -148,6 +151,7 @@ export function useFondosTema(figuras: readonly unknown[], tamano: "c" | "g" | "
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [clave]);
   // Mientras carga una lista nueva (alguien entró al lobby) cada lugar conserva lo que ya tenía.
+  if (!FONDOS_TEMA) return ids.map(() => ({ listo: true, css: null }));
   return estado.clave === clave ? estado.v : ids.map((_, i) => estado.v[i] ?? { listo: false, css: null });
 }
 
