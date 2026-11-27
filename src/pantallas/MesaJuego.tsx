@@ -2,13 +2,13 @@
 // Por equipos, parejas o bandos, cada grupo va de un lado con su nombre y sus puntos. Las fichas reaccionan con lo que
 // pasa en la ronda (solo con la vista pública): brillan cuando es su turno, piensan mientras faltan, saltan al contestar,
 // festejan si sumaron al revelar y se lamentan si no. La usan el celular (modo celulares) y la TV.
-import type { CSSProperties, ReactNode } from "react";
+import { useRef, type CSSProperties, type ReactNode } from "react";
 import { colorDe } from "../app/colorJugador";
 import type { FiguraV2 } from "../content/personaje";
 import type { Publico } from "../juegos/general/texto";
 import { FichaJugador } from "./lobby/Ficha";
 import { useGesto, type Gesto } from "../app/animaciones";
-import { MenuGestos } from "./gestos/MenuGestos";
+import { RuedaFigura, type MandoRueda } from "./gestos/RuedaFigura";
 import "./mesa.css";
 
 type Reaccion = "festeja" | "lamenta";
@@ -34,6 +34,7 @@ export function lados(v: Publico): { izq: { titulo?: string; puntos?: number; id
 }
 
 export function MesaJuego({ v, miembros, yo, modo, children }: { v: Publico; miembros: MiembroMesa[]; yo?: string; modo: "tv" | "celular"; children: ReactNode }) {
+  const rueda = useRef<MandoRueda>(null);
   const ids = v.jugadores.map(j => j.id);
   const turno = turnoDe(v);
   // Reacciones al revelar: puntos de cuando empezó la ronda contra los de después. Se guardan fuera del componente
@@ -68,6 +69,7 @@ export function MesaJuego({ v, miembros, yo, modo, children }: { v: Publico; mie
     return (
       <li key={id} className={"ms-ficha" + (estado ? " " + estado : "") + (id === yo ? " yo" : "")} style={{ "--ms-t": `${t}px` } as CSSProperties} aria-label={`${nombre}: ${v.puntos[id] ?? 0} puntos`}>
         <span className="ms-cuerpo" key={`${id}-${estado}-${v.ronda}`}>
+          {modo === "celular" && id === yo && <button type="button" className="ms-toca" aria-label="Gestos de tu figura" onClick={e => rueda.current?.abrir(e.clientX, e.clientY)} />}
           <FichaJugador id={id} figura={miembros.find(m => m.id === id)?.figura} nombre={nombre} color={colorDe(id, ids)} tamano={t} soloCara />
           {insignia && <span className="ms-insignia" aria-hidden="true">{insignia}</span>}
           <GestoFicha id={id} />
@@ -93,14 +95,14 @@ export function MesaJuego({ v, miembros, yo, modo, children }: { v: Publico; mie
     <div className={`ms ms-${modo}`}>
       {lado(l.izq, "izq")}
       <div className="ms-centro" key={`c${v.ronda}`}>{children}</div>
-      {modo === "celular" && yo && miembros.some(m => m.id === yo) && <MenuGestos jugador={yo} figura={miembros.find(m => m.id === yo)?.figura} plegable className="ms-gestos" />}
+      {modo === "celular" && yo && miembros.some(m => m.id === yo) && <RuedaFigura ref={rueda} jugador={yo} figura={miembros.find(m => m.id === yo)?.figura} />}
       {lado(l.der, "der")}
     </div>
   );
 }
 
 const SIMBOLO: Record<Gesto, string> = { saludar: "👋", victoria: "🏆", derrota: "💀", especial: "✨" };
-/** Gesto que lanzó este jugador (MenuGestos, aquí o en otro aparato): la ficha reacciona y sale su símbolo. */
+/** Gesto que lanzó este jugador (rueda de gestos, aquí o en otro aparato): la ficha reacciona y sale su símbolo. */
 function GestoFicha({ id }: { id: string }) {
   const { gesto, n } = useGesto(id);
   return gesto ? <span key={n} className={"ms-gesto g-" + gesto} aria-hidden="true">{SIMBOLO[gesto]}</span> : null;

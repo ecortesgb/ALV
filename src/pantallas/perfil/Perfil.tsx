@@ -2,7 +2,7 @@
 // La figura 3D en vivo sobre la plataforma giratoria (la misma escena del HUB, sin pedestal pintado), identidad a la
 // izquierda y paneles de vidrio a la derecha. Solo datos que ya existen; facción, tarjeta compartible y amigos son
 // espacios reservados («Próximamente»), sin lógica. Contraseña y cerrar sesión viven en Ajustes.
-import { useState, type ReactNode } from "react";
+import { useRef, useState, type ReactNode } from "react";
 import { escribirCapsulas, figuraActiva, leerCapsulas, apodoDe, semillaDe, useCapsulas, useFoto, N_CAPSULAS, type Capsula } from "../../app/figura3d";
 import { atras, ir } from "../../app/rutas";
 import { useSesion } from "../../app/sesion";
@@ -14,7 +14,7 @@ import { useRecursos } from "../Recursos";
 import { logrosDeCuenta, useMovimientos } from "../Social";
 import { BarraXPAzotea, RecursosAzotea, arteHub } from "../azotea/Cabecera";
 import { EscenaAzotea } from "../azotea/EscenaAzotea";
-import { MenuGestos } from "../gestos/MenuGestos";
+import { RuedaFigura, type MandoRueda } from "../gestos/RuedaFigura";
 import { AZOTEA, type Ambiente } from "../azotea/paquetes";
 import "../azotea/azotea.css";
 import "./perfil.css";
@@ -40,6 +40,7 @@ export function Perfil() {
   const ancho = useAncho();
   const caps = useCapsulas(s.uid);
   const f = figuraActiva(caps);
+  const rueda = useRef<MandoRueda>(null);
   const movs = useMovimientos();
   const apodo = apodoDe(f);
   const titulo = tituloPorNivel(r.nivel);
@@ -61,9 +62,9 @@ export function Perfil() {
           <h1 className="pf-tit"><span>Tu personaje</span></h1>
           <div className="pf-escena">
             <span className="pf-foco" aria-hidden="true" />
-            <EscenaAzotea id={s.uid} figura={f} ambiente={SALA} plataforma={AZOTEA.plataforma} llegada={false} className="pf-figura" />
+            <EscenaAzotea id={s.uid} figura={f} ambiente={SALA} plataforma={AZOTEA.plataforma} llegada={false} className="pf-figura" onToque={(x, y) => rueda.current?.abrir(x, y)} />
+            <RuedaFigura ref={rueda} jugador={s.uid} figura={f} pistaSobre=".pf-figura" />
             <span className="pf-pista" aria-hidden="true">↺ Arrastra para girar</span>
-            <MenuGestos jugador={s.uid} figura={f} className="pf-gestos" />
           </div>
           <div className="pf-placa">
             <span className="pf-nivel" aria-label={`Nivel ${r.nivel}`}><img src={arteHub("insignia-nivel")} alt="" draggable={false} /><b>{r.nivel}</b></span>

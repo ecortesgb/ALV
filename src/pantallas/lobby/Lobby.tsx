@@ -21,7 +21,7 @@ import "../perfil/perfil.css";
 import "./lobby.css";
 import { FondoCuarto } from "./Cuarto";
 import { claseLobby, LOBBY_NUEVO } from "./version";
-import { MenuGestos } from "../gestos/MenuGestos";
+import { RuedaFigura, type MandoRueda } from "../gestos/RuedaFigura";
 import { useVidaPropia } from "../../app/vidaPerfil";
 import { Confeti, NumeroLetrero, useCelebracion } from "../LetreroVivo";
 
@@ -41,6 +41,9 @@ export function Lobby({ sala, miembros, yo, soyAnfitrion, final, red, refrescar,
   const fiesta = useCelebracion(miembros.length ? p.todos : null);
   // Vida automática de TU figura (etapa 3): solo este aparato la decide y la manda a la sala; las demás llegan por la red.
   useVidaPropia({ activo: true, jugador: yo, figura: miembros.find(m => m.id === yo)?.figura ?? null, contexto: "lobby" });
+  // Tocar tu figura abre la rueda de gestos (reemplaza al botón «Gestos»; Elías, 26 nov).
+  const rueda = useRef<MandoRueda>(null);
+  const tocarFigura = (_m: Miembro, x: number, y: number) => rueda.current?.abrir(x, y);
   const hayAdmin = miembros.some(m => m.anfitrion);
   // Modo Local: un solo teléfono; el anfitrión agrega personajes sin cuenta y les cambia la figura.
   const local = esLocal(sala.id);
@@ -94,7 +97,6 @@ export function Lobby({ sala, miembros, yo, soyAnfitrion, final, red, refrescar,
         </button>
       </>)}
       {soyAnfitrion && <OpcionesAdmin copando={copando} alCopas={alCopas} alCerrar={alSalir} />}
-      <MenuGestos jugador={m.id} figura={m.figura} plegable className="lb-gestos" />
     </div>
   );
 
@@ -133,14 +135,15 @@ export function Lobby({ sala, miembros, yo, soyAnfitrion, final, red, refrescar,
 
         {ancho ? (
           <section className="lb-escenario" style={{ "--lugares": lugaresSala(miembros.length, local) } as CSSProperties}>
-            <Pedestales miembros={miembros} yo={yo} className="lb-pedestales" fiesta={{ arriba: botonesAdmin, abajo: miPanel, escenarios: PRUEBA_ESCENARIOS, libre: libreLocal }} vida="lobby" />
+            <Pedestales miembros={miembros} yo={yo} className="lb-pedestales" fiesta={{ arriba: botonesAdmin, abajo: miPanel, escenarios: PRUEBA_ESCENARIOS, libre: libreLocal, tocar: tocarFigura }} vida="lobby" />
           </section>
         ) : (
           <Carrusel lugares={lugaresSala(miembros.length, local)} ids={miembros.map(m => m.id)} yo={yo}>
-            <Pedestales miembros={miembros} yo={yo} className="lb-pedestales" fiesta={{ arriba: botonesAdmin, abajo: miPanel, escenarios: PRUEBA_ESCENARIOS, libre: libreLocal }} vida="lobby" />
+            <Pedestales miembros={miembros} yo={yo} className="lb-pedestales" fiesta={{ arriba: botonesAdmin, abajo: miPanel, escenarios: PRUEBA_ESCENARIOS, libre: libreLocal, tocar: tocarFigura }} vida="lobby" />
           </Carrusel>
         )}
       </div>
+      <RuedaFigura ref={rueda} jugador={yo} figura={miembros.find(m => m.id === yo)?.figura} pistaSobre=".lb-rot.yo .lb-toca" />
       {vivo && <div className={"cv-lobby" + (vivoMin ? " min" : "")} role="button" tabIndex={0} aria-expanded={!vivoMin} onClick={() => setVivoMin(x => !x)} onKeyDown={e => { if (e.key === "Enter" || e.key === " ") setVivoMin(x => !x); }}><ConfigEnVivo e={vivo} /></div>}
       {verFiguras && (
         <div className="a-velo" onClick={() => setVerFiguras(false)}>
