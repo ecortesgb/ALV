@@ -53,7 +53,8 @@ describe("Temperatura + Voltaje", () => {
     const pool = cartasPermitidas(todo, cartas, MAZOS);
     expect(pool.some(c => c.soloEjes)).toBe(false);
     // Los castigos de la nave (mazo propio, Elías 24 nov) no los ve ningún juego de antes.
-    expect(cartas.filter(c => !c.soloEjes && c.mazo !== "castigo-nave")).toHaveLength(283);
+    // Los juegos de risa (mazos «risa-», 27 nov) tampoco: solo los sacan sus propios juegos.
+    expect(cartas.filter(c => !c.soloEjes && c.mazo !== "castigo-nave" && !c.mazo.startsWith("risa-"))).toHaveLength(283);
   });
 
   it("ids únicos", () => {

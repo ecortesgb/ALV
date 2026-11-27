@@ -4,9 +4,12 @@ import { Cartel } from "../../ds";
 import type { Miembro } from "../../servicios/enlace";
 import { desenlace, instruccion, nombreJuego, resumenDeltas, type Publico } from "../general/texto";
 import { ResultadoHerramienta, selFisico } from "./herramientas";
+import { TvRisa, risaDeVista } from "./risa";
 import "./fisico.css";
 
 export function TvFisico({ v, miembros }: { v: Publico; miembros: Miembro[] }) {
+  const r = risaDeVista(v);
+  if (r) return <TvRisa v={v} r={r} miembros={miembros} />;
   const revelada = v.fase === "revelada";
   const d = revelada ? desenlace(v) : null;
   const ronda = resumenDeltas(v, selFisico(v).deltas);

@@ -87,6 +87,9 @@ describe("P-03 · seguir sin el ausente", () => {
     let c = crearPartida(juego("conoces"), cfg(4), 7, CONTENIDO, 3);
     for (const j of ["j0", "j1", "j2"]) c = juega(c, { tipo: "contestar", jugador: j, valor: "Tacos" });
     c = juega(c, { tipo: "seguir-sin" });
+    // Pasa a marcar «¿Coinciden?» solo la pareja completa.
+    for (const j of ["j0", "j1"]) c = juega(c, { tipo: "contestar", jugador: j, valor: "si" });
+    c = juega(c, { tipo: "revelar" });
     expect(c.fase).toBe("revelada");
     expect(c.puntos.j3).toBe(0);
   });

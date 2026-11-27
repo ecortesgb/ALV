@@ -1,6 +1,7 @@
 // Datos del configurador de partida (Maestro v1.44): tipos de partida e instrumentos por juego.
 // Solo datos. Un instrumento aparece solo si el motor ya lo corre con ese juego.
 import type { Modalidad } from "../engine/types";
+import { IDS_RISA } from "./risa";
 
 export const MODALIDADES: { id: Modalidad; nombre: string; gana: string; minimo: number; par?: boolean }[] = [
   { id: "individual", nombre: "Individual", gana: "Cada quien suma para sí. Gana una persona.", minimo: 2 },
@@ -64,10 +65,12 @@ export const MODALIDADES_JUEGO: Record<string, Modalidad[]> = {
   "reto-lugar": TODAS,
   // Modo Físico (D6): puntos por jugador, pareja, equipo o bando según el modo de juego.
   fisico: TODAS,
+  // Juegos de risa de ALV FÍSICO: los puntos los da el administrador, así que sirven con cualquier tipo de partida.
+  ...Object.fromEntries(IDS_RISA.map(id => [id, TODAS])),
 };
 
 /** Juegos que se sugieren primero al entrar por el modo Físico (Modos de juego). */
-export const JUEGOS_FISICO = ["fisico", "reto-lugar"];
+export const JUEGOS_FISICO = ["fisico", "reto-lugar", ...IDS_RISA];
 
 /** ¿Se puede jugar este juego con esta modalidad? */
 export const admite = (juego: string, modalidad: Modalidad) => (MODALIDADES_JUEGO[juego] ?? []).includes(modalidad);

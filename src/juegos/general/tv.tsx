@@ -78,6 +78,11 @@ function Escena({ v, miembros }: { v: Publico; miembros: Miembro[] }) {
             <span className="dsp ol a-tv-t1">{d.titular}</span>{d.detalle && <span className="a-tv-sub">{d.detalle}</span>}
           </> : v.motor === "votacion" ? (
             <div className="a-tv-ab"><span className="dsp ol a-tv-t2">{v.carta?.texto}</span><span className="d-lbl">o</span><span className="dsp ol a-tv-t2">{v.carta?.opcionB}</span></div>
+          ) : v.pareja ? (
+            // Calificar: lo que escribió cada pareja; ellas marcan en su celular si coinciden.
+            <div className="a-pila"><span className="dsp ol a-tv-t2">¿Coinciden?</span>
+              {v.pareja.parejas.map(([a, b]) => <span key={a} className="a-tv-sub">{nombreDe(v, a)}: «{String((v.seleccion?.textos as Record<string, string> | undefined)?.[a] ?? "")}» · {nombreDe(v, b)}: «{String((v.seleccion?.textos as Record<string, string> | undefined)?.[b] ?? "")}»</span>)}
+            </div>
           ) : <span className="dsp ol a-tv-t1">{v.motor === "pareja" ? "¿Cuánto conoces a tu pareja?" : v.carta?.texto ?? "Sin carta para este nivel"}</span>}
         </div>
       </div>

@@ -1,6 +1,6 @@
 # ALV — Amigos Legendarios Verdaderos
 ## Documento Maestro del Producto
-**Versión:** 1.69  
+**Versión:** 1.71  
 **Última actualización:** 27 de noviembre de 2026  
 **Estado:** Documento vivo de producto; decisiones y propuestas identificadas por separado.
 
@@ -557,6 +557,30 @@ El 26 de noviembre se revisaron repositorios abiertos de juegos de fiesta y sali
 **PROPUESTA (v1.68) — Quizá, como opción o logro:** el impostor adivina la palabra si lo atrapan (opción), rol Bufón (gana si lo votan; opción o logro), pulgar a cada carta (pide tabla nueva), revisar el mazo antes de jugar (opción), segundo al mando (pide permisos en la base), invitar por WhatsApp y Duelo de respuestas. Ninguna se construye sin aprobación de Elías.
 
 **DESCARTADO (v1.68, Elías, 27 de noviembre):** aviso de equilibrio de impostores (el configurador ya limita cuántos caben), relevo del anfitrión, palabra clave por equipos y revoto en empate: se queda la regla de v1.57, con empate nadie sale.
+
+## 6A.14 Reglas de los juegos revisadas — DECISIÓN (v1.70)
+
+Revisión de las reglas de los 13 juegos que se pueden elegir contra lo que calcula el motor. Documento: «ALV — Reglas de los juegos» (https://claude.ai/artifact/M6JnPhUxUuDRT51spmtG1r).
+
+**DECISIÓN (v1.70, Elías, 27 de noviembre):**
+1. **¿Qué prefieres? (1B).** Opción apagada de inicio «La minoría bebe algo». Cada quien elige qué tomar, agua vale; no da puntos ni XP. Con empate entre A y B nadie suma ni bebe. Se quita de la ficha el «castigo leve» que el juego no tenía.
+2. **Yo nunca (2).** Sin puntos: quien sí lo ha hecho bebe algo. No hay podio: todos quedan en el mismo lugar, sin el extra de 1.º a 3.º, y ganan la XP de terminar y de rondas. Las monedas quedan en las 10 fijas por partida; que suban con las rondas pide cambio en la base (PENDIENTE).
+3. **Mímica y Descríbelo sin decirlo (3A).** Quien actúa toca en su celular quién adivinó cada palabra: +1 a quien actúa y +1 a quien adivinó. En Descríbelo, «Dijo una tachada» pierde esa palabra. Se quita la frase «cooperativo» de la ficha.
+4. **Ronda de bienvenida (4).** Se convierte en la Misión secreta: cada quien recibe un papel que cumple al iniciar y, si lo descubren, se vuelve el mesero. Reglas en PROPUESTA en el documento de reglas; no se construye sin aprobación.
+5. **Dados HOT (5B).** Pasar sigue siendo gratis.
+6. **Equipos de distinto tamaño (6A).** En ¿Quién es más probable?, ¿Qué prefieres?, Yo nunca y El impostor el grupo cuenta con el promedio de sus integrantes (con un decimal). En los juegos por turno se sigue sumando. El ranking del servidor (040) todavía suma: alinearlo pide migración (PENDIENTE).
+7. **¿Cuánto conoces a tu pareja?** Después de escribir, la pareja ve las dos respuestas y marca «¿Coinciden?». Si los dos dicen que sí, +2 a cada uno; si no se ponen de acuerdo, decide el anfitrión.
+8. **Reto del lugar.** Además del ganador (+3), el anfitrión puede marcar «Empate» (+1 a cada quien empató) o «Nadie ganó».
+9. **Textos.** La ficha del impostor dice las reglas con eliminación (empate: nadie sale); la de Verdad o reto, «pasar solo con comodín» y tomar +1, y su carga muestra sus 5 láminas; Más probable explica el empate y que puedes votarte. El reloj y Ruleta de castigos salen del catálogo (ya no se podían elegir).
+
+## 6A.15 Juegos de risa en ALV FÍSICO — DECISIÓN (v1.71)
+Elías, 27 nov 2026: adaptar a ALV FÍSICO las dinámicas de programas de comedia en vivo, como juegos a elegir, con instrucciones, cronómetro, categorías y palabras en pantalla, pensados para exterior.
+1. Dieciséis juegos con nombre propio (sin la marca del programa): Pinzas, Sin decirla, Ni sí ni no, Para el reloj, Dame tres, Al revés, Termina el dicho, Al contrario, Chisme descompuesto, Rima o paga, Retrato hablado, El taxi, Sombras, Sopla y tira, Pásala sin tirarla y El mantel. Solo salen en ALV FÍSICO, en dos categorías: «Risa con palabras» y «Risa en acción».
+2. Corren en el motor físico: el administrador da los puntos. Cada ronda le toca a alguien (rota en orden) y la app pone en la TV y en los celulares el turno, la carta, el cronómetro del juego, cómo se juega, los puntos y el castigo. La palabra secreta solo llega al celular de quien tiene el turno; la respuesta de Termina el dicho solo al administrador, hasta «Mostrar respuesta».
+3. Castigos con agua, harina, espuma o slime solo en alberca, bosque, campo o terraza. En interior y junto al fuego (fogata, asador) sale el castigo de interior: post-it o beber algo (lo que cada quien quiera). Nada de toques, golpes, comida asquerosa ni caídas.
+4. Fuera por ahora: Canción distinta y Apaga la vela (necesitan música con licencia).
+5. En el servidor se guardan como «fisico»: la 054 solo acepta esos ids. Contar cada juego por separado pide una migración (PENDIENTE de Elías).
+6. Contenido inicial: 747 textos (content/packs/risa.json), PROPUESTA de Claude para que Elías tache lo que no quiera.
 
 ---
 
@@ -1818,6 +1842,12 @@ Decisiones del usuario del 12 de noviembre de 2026:
 ## v1.6
 - Primeros logros (14.2), con ámbito de sesión o histórico (ver DECISIÓN v1.6 en 14.2).
 
+## v1.71
+- 27 nov 2026. Juegos de risa en ALV FÍSICO (6A.15): 16 juegos con turno, carta, cronómetro, reglas y castigo por lugar en pantalla; se guardan como «fisico» en el servidor. Decisión de Elías.
+
+## v1.70
+- 27 nov 2026. Reglas de los juegos revisadas (6A.14): la minoría bebe algo en ¿Qué prefieres? (opción), Yo nunca sin puntos ni podio, Mímica y Descríbelo con quién adivinó, «¿Coinciden?» en ¿Cuánto conoces a tu pareja?, empate y «Nadie» en Reto del lugar, promedio por equipo donde todos contestan y fichas corregidas. La Ronda de bienvenida pasa a Misión secreta (PROPUESTA).
+
 ## v1.69
 - 27 nov 2026. Flujo de modos con el lobby primero (21.5): «¡Jugar!» entra al lobby y después se elige ALV FÍSICO, ALV PARTY (Competitivo, los Mini-Juegos) o ALV DESMADRE (En línea); Modo libre vuelve a ser sala de pruebas sin puntos (6A.6 H); un solo aparato con cuentas propias o cuentas rápidas con contraseña aleatoria por cuenta. Decisión de Elías.
 
@@ -2040,5 +2070,5 @@ Decisiones del usuario del 12 de noviembre de 2026:
 
 ---
 
-**Fin del Documento Maestro ALV v1.65**  
+**Fin del Documento Maestro ALV v1.70**  
 Este documento debe actualizarse de forma incremental y conservar la distinción entre decisiones aprobadas, propuestas, pendientes y descartadas.

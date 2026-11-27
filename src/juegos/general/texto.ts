@@ -1,4 +1,5 @@
 // Lo que cualquier aparato puede decir de la partida usando solo la vista pública.
+import { RISA } from "../../content/risa";
 import { JUEGOS } from "../../content/catalogo";
 import type { VistaPublica } from "../../engine/vistas";
 import type { Copas } from "../../engine/copas";
@@ -34,12 +35,18 @@ export function instruccion(v: Publico): string {
     case "rol-secreto":
       if (v.impostor) return v.impostor.etapa === "votar" ? "¡A votar! ¿Quién es el impostor?" : `Le toca a ${turno}: dila y escríbela`;
       return "Digan una pista por turno y voten al impostor";
-    case "pareja": return "Cada pareja contesta en secreto";
+    case "pareja":
+      if (v.pareja?.porDecidir.length) return "Una pareja no se puso de acuerdo: decide el anfitrión";
+      return v.pareja ? "¿Coinciden? Cada pareja lo marca en su celular" : "Cada pareja contesta en secreto";
     case "conteo": return `Turno de ${turno}`;
     case "confesion": return "Yo nunca… ¿o sí? Contesten en su celular";
     case "senalar": return "Señalen a alguien en su celular";
     case "competencia": return "Compitan. El anfitrión marca quién ganó";
-    case "fisico": return "Hagan el reto en persona. El administrador da los puntos";
+    case "fisico": {
+      const r = RISA[v.juegoId];
+      if (!r) return "Hagan el reto en persona. El administrador da los puntos";
+      return r.turno && v.turnoDe ? `${r.turno.rol}: ${nombreDe(v, v.turnoDe)}` : "Juegan todos. El administrador da los puntos";
+    }
   }
 }
 
@@ -66,7 +73,9 @@ export function desenlace(v: Publico): { titular: string; detalle?: string } {
     case "votacion": {
       const c = r.cuenta as { a: number; b: number } | undefined;
       if (!c) return { titular: "¡Se revelan las elecciones!" };
-      return r.mayoria ? { titular: `Gana ${r.mayoria === "a" ? v.carta?.texto : v.carta?.opcionB}`, detalle: `${c.a} contra ${c.b}` } : { titular: "Empate", detalle: `${c.a} contra ${c.b}. Nadie suma.` };
+      if (!r.mayoria) return { titular: "Empate", detalle: `${c.a} contra ${c.b}. Nadie suma.` };
+      const beben = ((r.beben ?? []) as string[]).map(j => nombreDe(v, j));
+      return { titular: `Gana ${r.mayoria === "a" ? v.carta?.texto : v.carta?.opcionB}`, detalle: `${c.a} contra ${c.b}${beben.length ? `. Bebe algo: ${lista(beben)}` : ""}` };
     }
     case "rol-secreto":
       if (v.impostor) return desenlaceImpostor(v);
@@ -76,16 +85,31 @@ export function desenlace(v: Publico): { titular: string; detalle?: string } {
       const ok = res.filter(x => x.coinciden).map(x => `${nombreDe(v, x.pareja[0])} y ${nombreDe(v, x.pareja[1])}`);
       return ok.length ? { titular: "¡Coincidieron!", detalle: lista(ok) } : { titular: "Nadie coincidió" };
     }
-    case "conteo": return { titular: `${nombreDe(v, r.jugador as string)} logró ${String(r.logro ?? 0)}` };
+    case "conteo": {
+      const titular = `${nombreDe(v, r.jugador as string)} logró ${String(r.logro ?? 0)}`;
+      if (!Array.isArray(r.adivinos)) return { titular };
+      // Mímica y Descríbelo: quién adivinó cuántas (+1 cada una) y las que se perdieron por una tachada.
+      const cuenta = new Map<string, number>();
+      for (const a of r.adivinos as string[]) cuenta.set(a, (cuenta.get(a) ?? 0) + 1);
+      const quienes = [...cuenta].map(([a, n]) => `${nombreDe(v, a)} +${n}`);
+      const tach = Number(r.tachadas ?? 0);
+      const partes = [quienes.length ? `Adivinaron: ${quienes.join(", ")}` : "Nadie adivinó", tach ? `${tach} ${tach === 1 ? "perdida" : "perdidas"} por decir una tachada` : ""].filter(Boolean);
+      return { titular, detalle: partes.join(". ") };
+    }
     case "confesion": {
       const c = ((r.confesaron ?? []) as string[]).map(j => nombreDe(v, j));
-      return c.length ? { titular: "Confesaron", detalle: lista(c) } : { titular: "Nadie lo ha hecho" };
+      return c.length ? { titular: "Confesaron", detalle: `${lista(c)}: ${c.length === 1 ? "bebe" : "beben"} algo (lo que quieran)` } : { titular: "Nadie lo ha hecho", detalle: "Nadie bebe esta vez." };
     }
     case "senalar": return { titular: lista(((r.elegidos ?? []) as string[]).map(j => nombreDe(v, j))), detalle: "La mesa los señaló" };
-    case "competencia": return { titular: `¡Ganó ${nombreDe(v, r.ganador as string)}!`, detalle: "+3 puntos" };
+    case "competencia":
+      if (r.nadie) return { titular: "Nadie ganó", detalle: "Sin puntos esta vez." };
+      if (Array.isArray(r.empate)) return { titular: "¡Empate!", detalle: `${lista((r.empate as string[]).map(j => nombreDe(v, j)))}: +1 a cada quien` };
+      return { titular: `¡Ganó ${nombreDe(v, r.ganador as string)}!`, detalle: "+3 puntos" };
     case "fisico": {
       const txt = resumenDeltas(v, r.deltas as Record<string, number> | undefined);
-      return txt ? { titular: "¡Ronda terminada!", detalle: txt } : { titular: "Ronda terminada", detalle: "Nadie sumó ni perdió puntos." };
+      // Juegos de risa: lo que estaba tapado (o la respuesta) sale al terminar la ronda.
+      const era = typeof r.oculto === "string" ? ` · Era: «${r.oculto}»` : "";
+      return txt ? { titular: "¡Ronda terminada!", detalle: txt + era } : { titular: "Ronda terminada", detalle: "Nadie sumó ni perdió puntos." + era };
     }
   }
 }

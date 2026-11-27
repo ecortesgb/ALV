@@ -187,15 +187,15 @@ describe("tipos de partida", () => {
     expect(g.jugadores.map(j => j.equipo)).toEqual(["ellas", "ellos", "ellas", "ellos"]);
     expect(g.equipos).toEqual([{ id: "ellas", nombre: "Ellas" }, { id: "ellos", nombre: "Ellos" }]);
   });
-  it("gana el grupo: el lugar sale de la suma del grupo", () => {
+  it("gana el grupo: el lugar sale de los puntos del grupo (promedio en Más probable)", () => {
     const a = armarArranque(js, "mas-probable", 5, 2, 1, { modalidad: "equipos", grupos: { j0: "a", j1: "b", j2: "a", j3: "b" } })!;
     const e = { ...crearPartida(JUEGOS.find(j => j.id === "mas-probable")!, a.cfg, 1, CONTENIDO), puntos: { j0: 5, j1: 3, j2: 0, j3: 3 } };
     const lugares = Object.fromEntries(resultados(e).map(r => [r.jugador, r.lugar]));
-    // Equipo B (3+3=6) gana al A (5+0=5) aunque J0 tenga más puntos que nadie.
+    // Equipo B (promedio 3) gana al A (promedio 2.5) aunque J0 tenga más puntos que nadie.
     expect(lugares).toEqual({ j1: 1, j3: 1, j0: 3, j2: 3 });
     expect(vistaPublica(e).grupos).toEqual([
-      { id: "b", nombre: "Equipo B", jugadores: ["j1", "j3"], puntos: 6 },
-      { id: "a", nombre: "Equipo A", jugadores: ["j0", "j2"], puntos: 5 },
+      { id: "b", nombre: "Equipo B", jugadores: ["j1", "j3"], puntos: 3 },
+      { id: "a", nombre: "Equipo A", jugadores: ["j0", "j2"], puntos: 2.5 },
     ]);
   });
   it("individual no cambia nada", () => {

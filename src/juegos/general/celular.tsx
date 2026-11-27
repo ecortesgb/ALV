@@ -16,6 +16,8 @@ import { CeremoniaCopas, PodioJuego, esFinalDeJuego } from "./Copas";
 import { SelectorComodines } from "./SelectorComodines";
 import { BarraEmotes } from "./Emotes";
 
+const lista2 = (ns: string[]) => (ns.length <= 1 ? ns.join("") : ns.slice(0, -1).join(", ") + " y " + ns.at(-1));
+
 export interface MiVista { yo: string; mio: unknown; miRespuesta: unknown; miMano: string[] }
 type Mandar = (tipo: "contestar" | "carta" | "pista", datos: Record<string, unknown>) => Promise<boolean>;
 
@@ -48,10 +50,15 @@ function HerramientaGeneral({ v, mi, miembros, mandar }: { v: Publico; mi: MiVis
   const yo = mi.yo;
   const meToca = v.esperados.includes(yo);
   const recibido = v.contestaron.includes(yo);
-  const clave = `${v.ronda}-${v.carta?.id ?? ""}`;
+  // En ¿Cuánto conoces a tu pareja? la etapa de calificar es otra respuesta: cambia la clave.
+  const clave = `${v.ronda}-${v.carta?.id ?? ""}${v.pareja ? "-calificar" : ""}`;
   const [enviado, setEnviado] = useState<string | null>(null);
   const [texto, setTexto] = useState(""), [pista, setPista] = useState(""), [cuenta, setCuenta] = useState(0), [eleccion, setEleccion] = useState<"a" | "b" | null>(null);
-  useEffect(() => { setTexto(""); setPista(""); setCuenta(0); setEleccion(null); }, [clave]);
+  // Mímica y Descríbelo: qué pasó con cada palabra, en orden (id de quien adivinó, «x» tachada o «p» pasó).
+  const [marcas, setMarcas] = useState<string[]>([]);
+  // Reto del lugar: quiénes empataron (null: no se está marcando empate).
+  const [empate, setEmpate] = useState<string[] | null>(null);
+  useEffect(() => { setTexto(""); setPista(""); setCuenta(0); setEleccion(null); setMarcas([]); setEmpate(null); }, [clave]);
   const yaEnvie = enviado === clave || recibido;
   const contestar = async (valor: unknown) => { setEnviado(clave); if (!(await mandar("contestar", { valor }))) setEnviado(null); };
   const soyTurno = v.turnoDe === yo;
@@ -120,6 +127,34 @@ function HerramientaGeneral({ v, mi, miembros, mandar }: { v: Publico; mi: MiVis
     }
     case "pareja": {
       const m = (mi.mio ?? {}) as { papel?: string; pregunta?: string };
+      if (v.pareja) {
+        // Calificar (Elías, 27 nov): cada quien ve las dos respuestas de su pareja y marca si coinciden.
+        const textos = (v.seleccion?.textos ?? {}) as Record<string, string>;
+        const mia = v.pareja.parejas.find(x => x.includes(yo));
+        const decidir = yo === (v.control ?? v.jugadores[0]?.id) ? v.pareja.porDecidir : [];
+        const respuestas = (ps: string[]) => <ul className="a-lista">{ps.map(id => <li key={id}><b>{id === yo ? "Tú" : nombreDe(v, id)}:</b> {textos[id] ?? "…"}</li>)}</ul>;
+        cuerpo = <>
+          {mia ? (yaEnvie ? <><span className="a-kick">¿Coinciden?</span>{espera}</> : <>
+            <span className="a-kick">¿Coinciden?</span>
+            {m.pregunta && <p className="a-carta">{m.pregunta}</p>}
+            {respuestas(mia)}
+            <div className="a-pila">
+              <Boton color="verde" texto="Sí coinciden" sub="+2 a cada uno si los dos dicen que sí" onClick={() => void contestar("si")} />
+              <Boton color="rojo" texto="No coinciden" onClick={() => void contestar("no")} />
+            </div>
+          </>) : <p className="a-suave">Las parejas marcan si coinciden. Mira la pantalla.</p>}
+          {decidir.map(a => {
+            const par = v.pareja!.parejas.find(x => x[0] === a) ?? [a];
+            return <div key={a} className="a-pila">
+              <span className="a-kick">{lista2(par.map(id => nombreDe(v, id)))} no se ponen de acuerdo. Decides tú</span>
+              {respuestas(par)}
+              <Boton color="verde" texto="Sí coinciden" onClick={() => void mandar("contestar", { valor: { decide: a, coinciden: true } })} />
+              <Boton color="rojo" texto="No coinciden" onClick={() => void mandar("contestar", { valor: { decide: a, coinciden: false } })} />
+            </div>;
+          })}
+        </>;
+        break;
+      }
       cuerpo = !meToca ? <p className="a-suave">Esta ronda la juegan las parejas. Mira la pantalla.</p> : yaEnvie ? <><span className="a-kick">Tu respuesta</span>{espera}</> : (
         <><span className="a-kick">{m.papel === "adivina" ? "Adivina lo que contestó tu pareja" : "Contesta sobre ti: tu pareja va a adivinar"}</span>
           <p className="a-carta">{m.pregunta}</p>
@@ -133,6 +168,33 @@ function HerramientaGeneral({ v, mi, miembros, mandar }: { v: Publico; mi: MiVis
     case "conteo": {
       const palabras = ((mi.mio ?? {}) as { palabras?: { palabra: string; prohibidas: string[] }[] }).palabras;
       const tope = palabras ? palabras.length : 40;
+      if (palabras && soyTurno && !yaEnvie) {
+        // Mímica y Descríbelo (Elías, 27 nov, 3A): quien actúa toca quién adivinó cada palabra en el momento.
+        const actual = palabras[marcas.length];
+        const marcar = (x: string) => setMarcas(ms => (ms.length < palabras.length ? [...ms, x] : ms));
+        const conTachadas = palabras.some(x => x.prohibidas.length > 0);
+        const enviar = () => void contestar({ adivinos: marcas.filter(x => x !== "x" && x !== "p"), tachadas: marcas.filter(x => x === "x").length });
+        cuerpo = <>
+          <span className="a-kick">Te toca · {v.carta?.texto}</span>
+          <ol className="a-palabras">{palabras.map((x, i) => {
+            const mk = marcas[i];
+            const estado = mk === undefined ? (i === marcas.length ? "actual" : "") : mk === "x" ? "tachada" : mk === "p" ? "pasada" : "hecha";
+            return <li key={i} className={estado}><b>{x.palabra}</b>{x.prohibidas.length > 0 && <small>Sin decir: {x.prohibidas.join(", ")}</small>}
+              {mk && mk !== "x" && mk !== "p" && <small>Adivinó {nombreDe(v, mk)}</small>}</li>;
+          })}</ol>
+          {actual ? <>
+            <span className="a-kick">¿Quién adivinó «{actual.palabra}»?</span>
+            <div className="a-fila a-envuelve">{v.jugadores.filter(j => j.id !== yo).map(j => <button key={j.id} type="button" className="d-chip" onClick={() => marcar(j.id)}>{j.nombre}</button>)}</div>
+            <div className="a-fila a-envuelve">
+              <button type="button" className="d-chip" onClick={() => marcar("p")}>Pasar</button>
+              {conTachadas && <button type="button" className="d-chip" onClick={() => marcar("x")}>Dijo una tachada</button>}
+            </div>
+          </> : <p className="a-suave">¡Se acabaron las palabras!</p>}
+          {marcas.length > 0 && <button type="button" className="d-chip" onClick={() => setMarcas(ms => ms.slice(0, -1))}>Deshacer la última</button>}
+          <Boton color="amarillo" texto="Terminé" sub="+1 a ti y +1 a quien adivinó, por palabra" icono="play" onClick={enviar} />
+        </>;
+        break;
+      }
       cuerpo = !soyTurno ? <><span className="a-kick">{instruccion(v)}</span><p className="a-carta">{v.carta?.texto}</p></> : yaEnvie ? <><span className="a-kick">Tu cuenta</span>{espera}</> : (
         <><span className="a-kick">Te toca · {v.carta?.texto}</span>
           {palabras && <ol className="a-palabras">{palabras.map((p, i) => <li key={i} className={i < cuenta ? "hecha" : ""}><b>{p.palabra}</b>{p.prohibidas.length > 0 && <small>Sin decir: {p.prohibidas.join(", ")}</small>}</li>)}</ol>}
@@ -151,7 +213,23 @@ function HerramientaGeneral({ v, mi, miembros, mandar }: { v: Publico; mi: MiVis
       cuerpo = yaEnvie ? <><span className="a-kick">Tu voto</span>{espera}</> : <><span className="a-kick">¿Quién es más probable que…?</span><p className="a-carta">{v.carta?.texto}</p><Elegir gente={v.jugadores} miembros={miembros} clave={clave} titulo="¿Quién?" alElegir={id => void contestar(id)} /></>;
       break;
     case "competencia":
-      cuerpo = meToca && !yaEnvie ? <><span className="a-kick">{v.carta?.tipo || "Reto del lugar"}</span><p className="a-carta">{v.carta?.texto}</p><span className="a-kick">Marca quién ganó</span><Elegir gente={v.jugadores} miembros={miembros} clave={clave} titulo="¿Quién ganó?" confirmar="Ganó" alElegir={id => void contestar(id)} /></>
+      cuerpo = meToca && !yaEnvie ? <><span className="a-kick">{v.carta?.tipo || "Reto del lugar"}</span><p className="a-carta">{v.carta?.texto}</p>
+        {empate ? <>
+          {/* Empate (Elías, 27 nov): +1 a cada quien empató. */}
+          <span className="a-kick">¿Quiénes empataron?</span>
+          <div className="a-fila a-envuelve">{v.jugadores.map(j => {
+            const on = empate.includes(j.id);
+            return <button key={j.id} type="button" className={"d-chip" + (on ? " on" : "")} aria-pressed={on} onClick={() => setEmpate(xs => xs && (on ? xs.filter(x => x !== j.id) : [...xs, j.id]))}>{j.nombre}</button>;
+          })}</div>
+          <Boton color="amarillo" texto="Empataron" sub="+1 a cada quien" desactivado={empate.length < 2} onClick={() => void contestar(empate)} />
+          <button type="button" className="d-chip" onClick={() => setEmpate(null)}>Volver</button>
+        </> : <>
+          <span className="a-kick">Marca quién ganó</span><Elegir gente={v.jugadores} miembros={miembros} clave={clave} titulo="¿Quién ganó?" confirmar="Ganó" alElegir={id => void contestar(id)} />
+          <div className="a-fila a-envuelve">
+            <button type="button" className="d-chip" onClick={() => setEmpate([])}>Empate</button>
+            <button type="button" className="d-chip" onClick={() => void contestar("nadie")}>Nadie ganó</button>
+          </div>
+        </>}</>
         : <><span className="a-kick">{v.carta?.tipo || "Reto del lugar"}</span><p className="a-carta">{v.carta?.texto}</p>{meToca ? espera : <p className="a-suave">El anfitrión marca quién ganó.</p>}</>;
       break;
     case "fisico": // tiene su propia pantalla (CelularFisico)

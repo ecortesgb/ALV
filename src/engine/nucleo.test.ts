@@ -1,6 +1,7 @@
 // El núcleo del motor (nucleo.ts): da lo mismo que el motor anterior y no depende de React ni del navegador.
 // La referencia `nucleo.golden.json` se generó con roles/pantalla/motor.ts ANTES de extraer el núcleo (16 nov 2026),
 // incluida una copia exacta de la lógica de reloj, espera y revelación automática que estaba en línea en useMotor.
+import { IDS_RISA } from "../content/risa";
 import { describe, expect, it } from "vitest";
 import { existsSync, readFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
@@ -55,7 +56,7 @@ describe("equivalencia con el motor anterior: El impostor, 4 jugadores, semilla 
 describe("equivalencia del arranque en cada juego con motor (semilla 4242, 4 jugadores, 5 rondas)", () => {
   const cfg4 = { ...CFG, jugadores: [A, B, C, D].map((id, i) => ({ id, nombre: `J${i}` })) };
   // Juegos agregados después de la referencia: no existían en el motor anterior, así que no tienen con qué compararse.
-  const NUEVOS = ["fisico"];
+  const NUEVOS = ["fisico", ...IDS_RISA];
   const conMotor = JUEGOS.filter(j => j.motor && !NUEVOS.includes(j.id));
   it("son los mismos juegos que en la referencia (más los nuevos declarados)", () => {
     expect(conMotor.map(j => j.id).sort()).toEqual(Object.keys(golden.juegos).sort());

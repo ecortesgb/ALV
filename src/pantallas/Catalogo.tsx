@@ -1,6 +1,6 @@
 // Catálogo por intención (Maestro §21.3): filas por lo que se antoja, y candado con su razón.
 import { JUEGOS } from "../content/catalogo";
-import { REGLAS } from "../content/reglas";
+import { reglasDe } from "../content/reglas";
 import type { DefinicionJuego } from "../engine/types";
 import { Boton, Chip, Icono, Panel, TarjetaJuego } from "../ds";
 import { ir } from "../app/rutas";
@@ -9,10 +9,15 @@ import { Cabecera, Marco } from "./comun";
 export const FILAS: { id: string; nombre: string; color: string; juegos: string[] }[] = [
   { id: "empezar", nombre: "Para empezar", color: "var(--fila-empezar)", juegos: ["bienvenida", "lista", "que-prefieres"] },
   { id: "miente", nombre: "¿Quién miente?", color: "var(--fila-miente)", juegos: ["impostor", "mas-probable"] },
-  { id: "secretos", nombre: "Para soltar secretos", color: "var(--fila-secretos)", juegos: ["verdad-reto", "yo-nunca", "reloj"] },
-  { id: "reir", nombre: "Para reír", color: "var(--fila-reir)", juegos: ["mimica", "prohibida", "ruleta"] },
+  { id: "secretos", nombre: "Para soltar secretos", color: "var(--fila-secretos)", juegos: ["verdad-reto", "yo-nunca"] },
+  { id: "reir", nombre: "Para reír", color: "var(--fila-reir)", juegos: ["mimica", "prohibida"] },
   { id: "competir", nombre: "A competir", color: "var(--fila-competir)", juegos: ["reto-lugar", "fisico"] },
   { id: "pareja", nombre: "En pareja", color: "var(--fila-pareja)", juegos: ["conoces", "dados-hot"] },
+  // Juegos de risa de ALV FÍSICO (content/risa.ts).
+  { id: "risa-palabras", nombre: "Risa con palabras", color: "var(--fila-reir)",
+    juegos: ["pinzas", "sin-decirla", "ni-si-ni-no", "dame-tres", "rima-o-paga", "al-reves", "termina-frase", "chisme"] },
+  { id: "risa-accion", nombre: "Risa en acción", color: "var(--fila-competir)",
+    juegos: ["para-el-reloj", "al-contrario", "retrato-hablado", "el-taxi", "sombras", "sopla-y-tira", "pasala", "el-mantel"] },
 ];
 export const NIVELES = ["", "Tranquilo", "Picante", "Sin filtro", "Salvaje"] as const;
 export const colorDe = (id: string) => FILAS.find(f => f.juegos.includes(id))?.color ?? "var(--fila-empezar)";
@@ -57,7 +62,7 @@ export function Catalogo() {
 export function Reglas({ id }: { id: string }) {
   const j = JUEGOS.find(x => x.id === id);
   if (!j?.motor) return null;
-  const r = REGLAS[j.motor];
+  const r = reglasDe({ id: j.id, motor: j.motor });
   return (
     <div className="a-pila">
       <p className="a-carta">{j.descripcion}</p>

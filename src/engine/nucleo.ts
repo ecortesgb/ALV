@@ -5,7 +5,7 @@
 // acciones, reconstruye la partida, arma lo que se publica y calcula las señales del reloj lógico.
 import { CONTENIDO } from "../content";
 import { ESCENARIOS, JUEGOS } from "../content/catalogo";
-import { aplicar, conEliminacion, conVerdadReto, crearPartida, enCarga, etapaImpostor, etapaVR, HERRAMIENTAS_VR, maxImpostores, type Accion, type EstadoPartida, type HerramientaVR } from "./partida";
+import { aplicar, conEliminacion, conVerdadReto, crearPartida, enCarga, etapaImpostor, etapaVR, HERRAMIENTAS_VR, maxImpostores, parejasPorDecidir, type Accion, type EstadoPartida, type HerramientaVR } from "./partida";
 import { adultoPorEjes } from "./filtros";
 import { limpiarSalieron } from "./yaSalieron";
 import type { Configuracion, EjesPartida, Jugador, NivelEje, OpcionesPartida } from "./types";
@@ -122,6 +122,7 @@ export function armarArranque(miembros: { id: string; nombre: string }[], juego:
     // Sin repetir entre noches y voto secreto (Elías, 27 nov): solo si el configurador los manda; sin ellos, todo igual.
     ...(salieron ? { yaSalieron: salieron } : {}),
     ...(op.votoSecreto === true && def.motor === "senalar" ? { votoSecreto: true } : {}),
+    ...(op.minoriaBebe === true && def.motor === "votacion" ? { minoriaBebe: true } : {}),
   };
   if (juego === "verdad-reto") {
     // Verdad o reto siempre arranca con elección y herramienta (Maestro 6A.6 B); el modo anterior queda para partidas guardadas.
@@ -203,7 +204,8 @@ export function paraPublicar(e: EstadoPartida, relojFin: number | null, esperaFi
  */
 export function relojLogico(e: EstadoPartida) {
   const vp = vistaPublica(e);
-  const listos = e.fase === "contestando" && !e.pausada && !e.naveEtapa && vp.esperados.every(j => vp.contestaron.includes(j));
+  // Pareja: si alguna no se puso de acuerdo, se espera la decisión del anfitrión antes de revelar.
+  const listos = e.fase === "contestando" && !e.pausada && !e.naveEtapa && vp.esperados.every(j => vp.contestaron.includes(j)) && parejasPorDecidir(e).length === 0;
   const hayEspera = e.fase === "contestando" && !e.pausada && !listos && vp.contestaron.length > 0;
   return {
     claveReloj: `${e.ronda}-${e.cambios}`,

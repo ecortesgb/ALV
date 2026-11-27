@@ -9,7 +9,8 @@ export type YaSalieron = Record<string, string>;
 const ID = /^([a-z][a-z-]{0,23})-(\d{1,4})$/;
 const MAZO = /^[a-z][a-z-]{0,23}$/;
 const HEX = /^[0-9a-f]{1,256}$/;
-const MAX_MAZOS = 24;
+// 32: los 13 mazos de antes más los 16 de los juegos de risa (27 nov), con lugar para crecer. Todo sigue bajo 4000 bytes.
+const MAX_MAZOS = 32;
 
 /** Arma la máscara con los ids de cartas («verdad-012»). Ignora lo que no tiene forma de id de carta. */
 export function codificarSalieron(ids: Iterable<string>): YaSalieron | undefined {
