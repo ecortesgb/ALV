@@ -23,13 +23,16 @@ import { refrescarSesion, useSesion } from "./sesion";
 import { instalarClics } from "./sonido";
 import { useRuta } from "./rutas";
 import { TemaMusical } from "./TemaMusical";
+import { precargarHub } from "./precarga";
 
 /** Página interna del Design System (sin enlace en la app): se carga aparte. */
 const PaginaDS = lazy(() => import("../pantallas/ds"));
 
 export function App() {
   const { ruta, arg } = useRuta();
-  const { fase, invitado } = useSesion();
+  const { fase, invitado, uid } = useSesion();
+  // Con sesión, la figura del HUB empieza a bajar desde la pantalla de inicio (no en la TV: ahí no hay HUB).
+  useEffect(() => { if (fase === "dentro" && ruta !== "tv") precargarHub(uid); }, [fase, uid, ruta]);
   useEffect(() => { void refrescarSesion(); }, []);
   useEffect(instalarClics, []);
   // Pantalla de inicio en cada carga o recarga, salvo al entrar por el QR de una sala o de la Pantalla.

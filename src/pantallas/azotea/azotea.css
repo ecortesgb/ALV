@@ -538,9 +538,12 @@
    del marco y la mitad de arriba se dibuja otra vez encima del marco (la cabeza tapa el aro). */
 .D .azc-dentro, .D .azc-asoma { position: absolute; inset: 0; pointer-events: none; }
 .D .azc-dentro { clip-path: circle(33% at 50% 50%); }
-.D .azc-asoma { z-index: 1; -webkit-mask: linear-gradient(#000 0, #000 46%, transparent 54%); mask: linear-gradient(#000 0, #000 46%, transparent 54%); }
+/* La capa de encima sube 40 % sobre el medallón: la máscara recorta lo que sale de su caja y cortaba en plano la punta
+   de la cabeza, peinados altos y accesorios (y más al pasar el mouse; Elías, 27 nov). Mismo corte a media figura. */
+.D .azc-asoma { z-index: 1; top: -40%; height: 140%; -webkit-mask: linear-gradient(#000 0, #000 61.4%, transparent 67.1%); mask: linear-gradient(#000 0, #000 61.4%, transparent 67.1%); }
 .D .azc-dentro .azc-foto, .D .azc-asoma .azc-foto { position: absolute; inset: auto; left: -4%; top: -12%; width: 108%; height: 108%; border-radius: 0; object-fit: contain; object-position: 50% 0;
   filter: drop-shadow(0 3px 3px rgba(4, 8, 30, .45)); }
+.D .azc-asoma .azc-foto { top: 20%; height: 77.143%; }
 .D .azc-marco { z-index: 0; }
 .D .azc-nivel, .D .azc-punto { z-index: 2; }
 @media (hover: hover) and (pointer: fine) { .D .azc:hover .azc-foto { transform: translateY(-3px) scale(1.03); } }
