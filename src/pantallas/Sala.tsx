@@ -1,7 +1,7 @@
 // La sala en el celular (#/sala/código): espera, partida y resultados, en un solo lugar.
 // El papel es del aparato: aquí siempre se juega. A quien tiene el control le sale además la barra del anfitrión.
 // Sin pantalla (modo mesa), el celular del anfitrión también corre el motor y se queda encendido.
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Chip, Escaner, Panel, Reloj } from "../ds";
 import { ir } from "../app/rutas";
 import { refrescarSesion, useSesion } from "../app/sesion";
@@ -64,8 +64,12 @@ const inerte = (si: boolean): Record<string, string> => (si ? { inert: "" } : {}
 export function useQuedan(v: Publico | null): number {
   const [, set] = useState(0);
   const hay = !!v?.reloj && v.fase === "contestando" && !v.pausada;
+  // En pausa se queda el último valor (antes marcaba 0 mientras estaba en pausa).
+  const ultimo = useRef(0);
   useEffect(() => { if (!hay) return; const t = setInterval(() => set(x => x + 1), 250); return () => clearInterval(t); }, [hay]);
-  return v && hay ? quedan(v) : 0;
+  if (v && hay) ultimo.current = quedan(v);
+  else if (!v?.pausada) ultimo.current = 0;
+  return ultimo.current;
 }
 
 /** P-03: true cuando ya pasó `fin` (marca de tiempo). Un solo temporizador, sin intervalos. */
@@ -209,7 +213,7 @@ export function Sala({ codigo }: { codigo: string }) {
     const sigue = faltaPapel ?? faltaVer ?? pendientes[0] ?? anf;
     // Pantalla de carga: en Local siempre aquí; con la sala de espera de la nave también en línea (antes de la sala).
     if ((compartido || (naveSala && !(conPantalla && !soyAnfitrion))) && tocaExplicar(v) && cargaVista !== idPartida) {
-      return <Marco clase="az pt" fondo={v.escenario ? <FondoEscenario escenario={v.escenario} /> : <FondoCuarto oscuro />}><ComoJugar v={v} modo="celular" alCerrar={() => { setCargaVista(idPartida); if (soyAnfitrion) void control(idPartida, "comenzar"); }} /></Marco>;
+      return <Marco clase="az pt" fondo={v.escenario ? <FondoEscenario escenario={v.escenario} /> : <FondoCuarto oscuro />}><ComoJugar v={v} modo="celular" menu={menu} alCerrar={() => { setCargaVista(idPartida); if (soyAnfitrion) void control(idPartida, "comenzar"); }} /></Marco>;
     }
     if (compartido && mano !== sigue && v.juegoId !== "copas") {
       const m = s.miembros.find(x => x.id === sigue);

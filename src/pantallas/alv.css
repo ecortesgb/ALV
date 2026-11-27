@@ -279,7 +279,8 @@ body { overscroll-behavior: none; -webkit-tap-highlight-color: transparent; }
 }
 
 /* Etiqueta fija de la entrada de prueba (invitado). */
-.a-prueba { position: fixed; z-index: 75; left: 0; bottom: max(8px, env(safe-area-inset-bottom)); padding: 4px 16px 4px 12px; font: italic 800 13px/1 "Barlow Condensed", "Arial Narrow", sans-serif; letter-spacing: .1em; text-transform: uppercase; color: #0a1030; background: #ffd23f; border: 2px solid #0a1030; border-left: 0; border-radius: 0 999px 999px 0; pointer-events: none; }
+/* Pestaña vertical a media orilla izquierda: abajo tapaba «Pausar» de la barra del anfitrión (auditoría 27 nov). */
+.a-prueba { position: fixed; z-index: 75; left: 0; top: 50%; writing-mode: vertical-rl; transform: translateY(-50%) rotate(180deg); padding: 12px 3px 10px; font: italic 800 13px/1 "Barlow Condensed", "Arial Narrow", sans-serif; letter-spacing: .1em; text-transform: uppercase; color: #0a1030; background: #ffd23f; border: 2px solid #0a1030; border-right: 0; border-radius: 999px 0 0 999px; pointer-events: none; }
 
 /* P-02: la Pantalla no está. Aviso arriba; lo que ya se envió se sigue viendo, pero nada se puede tocar. */
 .D .a-aviso-tv { display: grid; gap: 4px; padding: 12px 14px; border: 2px solid var(--tinta); border-radius: var(--radio-pildora, 16px); background: var(--amarillo); color: var(--tinta); }

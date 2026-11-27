@@ -3,7 +3,7 @@
 // temporizador y escenario. Pasan solas cada pocos segundos y vuelven a empezar hasta que cada quien toca «¡Iniciar!».
 // Solo usa la vista pública (TV y celular). Celular: tocar a la derecha o izquierda cambia de tarjeta, deslizar también,
 // «Omitir» entra ya. TV: pasan solas y se quita en cuanto la partida arranca.
-import { useEffect, useRef, useState, type CSSProperties } from "react";
+import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { tarjetasCarga, type GrupoTarjeta } from "../../content/comoJugar";
 import { ARTE_JUEGOS } from "../../content/arteJuegos";
@@ -21,7 +21,8 @@ const SEG = 6;
 const CARGA_MS = 2600;
 const ETIQUETA: Record<GrupoTarjeta, string> = { juego: "Cómo se juega", herramienta: "Herramienta", escenario: "Escenario" };
 
-export function ComoJugar({ v, modo, alCerrar }: { v: Publico; modo: "tv" | "celular"; alCerrar?: () => void }) {
+/** `menu`: el ☰ de la partida (salir o terminar), para que la pantalla de carga no deje a nadie sin salida. */
+export function ComoJugar({ v, modo, alCerrar, menu }: { v: Publico; modo: "tv" | "celular"; alCerrar?: () => void; menu?: ReactNode }) {
   const tarjetas = tarjetasCarga({ juegoId: v.juegoId, modalidad: v.modalidad, herramienta: v.verdadReto?.herramienta, temporizador: v.temporizador, escenario: v.escenario, nave: v.impostor?.nave });
   const total = tarjetas.length;
   const [i, setI] = useState(0);
@@ -70,6 +71,7 @@ export function ComoJugar({ v, modo, alCerrar }: { v: Publico; modo: "tv" | "cel
       </div>
 
       <header className="cg-cab">
+        {modo === "celular" && menu}
         <span className="cg-juego"><b>{nombreJuego(v.juegoId)}</b><small>{cargado ? "Partida lista" : "Cargando partida…"}</small></span>
         {modo === "celular" && <button type="button" className="cg-omitir" onClick={alCerrar}>Omitir <span aria-hidden="true">▶▶</span></button>}
       </header>

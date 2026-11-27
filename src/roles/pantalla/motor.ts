@@ -32,7 +32,7 @@ export async function iniciarPartida(sala: SalaV, miembros: Miembro[], juego: st
  * `alTerminar` avisa una vez por partida (para refrescar la XP).
  */
 export function useMotor(sala: SalaV | null, partida: PartidaPub | null, activo: boolean, tic: number, alTerminar?: () => void) {
-  const ref = useRef<{ id: string; publicada: number; reloj: { clave: string; fin: number } | null; espera: { clave: string; fin: number } | null; turno?: { clave: string; fin: number } | null; cerrada: boolean; suspenso?: ReturnType<typeof setTimeout>; tiempo?: ReturnType<typeof setTimeout> }>({ id: "", publicada: 0, reloj: null, espera: null, cerrada: false });
+  const ref = useRef<{ id: string; publicada: number; reloj: { clave: string; fin: number } | null; espera: { clave: string; fin: number } | null; turno?: { clave: string; fin: number } | null; pausaDesde?: number; cerrada: boolean; suspenso?: ReturnType<typeof setTimeout>; tiempo?: ReturnType<typeof setTimeout> }>({ id: "", publicada: 0, reloj: null, espera: null, cerrada: false });
   const ocupado = useRef(false), repetir = useRef(false);
   useEffect(() => {
     if (!activo || !sala || !partida || partida.terminada) return;
@@ -47,11 +47,19 @@ export function useMotor(sala: SalaV | null, partida: PartidaPub | null, activo:
         const e = reconstruir(filas, sala.anfitrionId);
         if (!e || yo.cerrada) return;
         const { claveReloj, conReloj, listos, hayEspera, claveEspera, claveTurno } = relojLogico(e);
+        // Pausa: los relojes se congelan. Al reanudar, su fin se recorre lo que duró la pausa (antes el turno empezaba de cero
+        // y el reloj de la ronda seguía corriendo; auditoría 27 nov).
+        if (e.pausada) yo.pausaDesde ??= Date.now();
+        else if (yo.pausaDesde !== undefined) {
+          const d = Date.now() - yo.pausaDesde;
+          yo.pausaDesde = undefined;
+          for (const r of [yo.reloj, yo.turno, yo.espera]) if (r) r.fin += d;
+        }
         // Temporizador por turno: cuando cambia el turno se rearma; al vencer se manda «tiempo» (el mismo id en cada aparato).
-        if (!claveTurno) yo.turno = null;
+        if (!claveTurno) { if (!e.pausada) yo.turno = null; }
         else if (yo.turno?.clave !== claveTurno) { yo.turno = { clave: claveTurno, fin: Date.now() + (e.cfg.temporizador ?? 0) * 1000 }; yo.publicada = 0; }
         clearTimeout(yo.tiempo);
-        if (yo.turno) { const t = yo.turno; yo.tiempo = setTimeout(() => { void enlace.enviar(partida.id, idTiempo(partida.id, t.clave), "control", { que: "tiempo" }); }, Math.max(0, t.fin - Date.now())); }
+        if (yo.turno && !e.pausada) { const t = yo.turno; yo.tiempo = setTimeout(() => { void enlace.enviar(partida.id, idTiempo(partida.id, t.clave), "control", { que: "tiempo" }); }, Math.max(0, t.fin - Date.now())); }
         if (conReloj && yo.reloj?.clave !== claveReloj) { yo.reloj = { clave: claveReloj, fin: Date.now() + e.segundos! * 1000 }; yo.publicada = 0; }
         // P-03: ya contestó alguien pero no todos. Desde ese momento corren 20 s; pasados, el celular del anfitrión ofrece esperar o seguir sin el ausente.
         if (!hayEspera) yo.espera = null;
