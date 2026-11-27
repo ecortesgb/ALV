@@ -82,3 +82,5 @@
 .D .mp-estrella.on { background: var(--yel); cursor: default; }
 .D .mp-estrella:not(.on):hover { transform: translateY(-2px); }
 .D .mp-estrella:focus-visible { outline: 3px solid var(--yel); outline-offset: 2px; }
+/* Foto de tarjeta (figuras LDraw): a la escala de una minifigura del estudio, con los pies abajo. */
+.D .mp-nicho-toca img.mp-foto-tarjeta { height: 66%; bottom: 5%; }

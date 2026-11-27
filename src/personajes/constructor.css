@@ -268,3 +268,8 @@
 .D .pz-pieza.pz-carta .pz-mov-sub { position: absolute; left: 50%; bottom: 30%; font-size: 10px; transform: translateX(-50%); z-index: 2; padding: 1px 6px; border-radius: 99px; background: #000b; color: #fff; white-space: nowrap; }
 .D .pz-pieza.pz-carta .t-carta { display: grid; text-align: start; }
 .D .pz-pieza.pz-carta .t-personaje-nombre { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; align-self: center; }
+/* Sagas y grupos con su logo, como los botones del Álbum: fondo oscuro para que se lean los logos claros. */
+.D .pz-chip.pz-chip-logo { display: inline-grid; place-items: center; min-height: 34px; padding: 3px 10px; border-radius: 9px; border-color: #3b3156; background: #1d1830; }
+.D .pz-chip.pz-chip-logo img { display: block; width: auto; height: 22px; max-width: 86px; object-fit: contain; pointer-events: none; }
+.D .pz-chip.pz-chip-logo.on { background: #35294b; border-color: #ffd23f; box-shadow: 0 0 0 2px #ffd23f66; }
+.D .pz-chip.pz-chip-logo:not(.on) img { opacity: .82; }

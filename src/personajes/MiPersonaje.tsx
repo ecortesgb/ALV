@@ -100,9 +100,11 @@ export function MiPersonaje({ catalogo, estadoCatalogo = catalogo ? "listo" : "c
   const mini = useMiniaturas(vista.cual === "inicio" && catalogo ? ESTUDIO : null, catalogo?.catalogo ?? new Map());
   const planos = useMemo(() => espacios.map((e, i) => (catalogo && e.figura ? resolverFigura("nicho" + i, e.figura, catalogo.catalogo, catalogo.piezas, catalogo.base ?? null) : null)), [espacios, catalogo]);
   const claves = planos.map(p => (p ? "fig:" + JSON.stringify(p) : null));
-  // Las figuras LDraw no traen movimiento especial propio y su capa va en el torso: en esa pose se tapan; van de pie.
-  const poseDe = (f: FiguraV3 | null | undefined) => (f?.origen.tipo === "catalogo" && catalogo?.catalogo.get(f.origen.personaje)?.ficha.origen.fuente === "ldraw" ? "reposo" : "especial");
-  useEffect(() => { planos.forEach((p, i) => { if (p) mini.pedirFigura(claves[i]!, p, poseDe(espacios[i]?.figura)); }); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [mini.listo, claves.join("|")]);
+  // Figuras LDraw sin cambios: su foto de tarjeta (el estudio todavía no las arma bien: la capa las tapa). Las demás, el
+  // estudio en su movimiento especial.
+  const tarjetaLdraw = (f: FiguraV3 | null | undefined) => f?.origen.tipo === "catalogo" && !Object.keys(f.piezas).length
+    && catalogo?.catalogo.get(f.origen.personaje)?.ficha.origen.fuente === "ldraw";
+  useEffect(() => { planos.forEach((p, i) => { if (p && !tarjetaLdraw(espacios[i]?.figura)) mini.pedirFigura(claves[i]!, p); }); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [mini.listo, claves.join("|")]);
   const fotoNicho = (i: number, respaldo: string | null) => { const c = claves[i]; return (c && mini.fotoDe(c)) || respaldo; };
 
   return (
@@ -132,7 +134,7 @@ export function MiPersonaje({ catalogo, estadoCatalogo = catalogo ? "listo" : "c
                   <button type="button" className="mp-nicho-toca" aria-pressed={en || aqui}
                     onClick={() => abrir(i)} disabled={!catalogo}
                     aria-label={vacio ? `Espacio ${i + 1}: vacío. Tócalo para crear tu personaje aquí` : `Espacio ${i + 1}: ${titulo}${en ? ", en juego" : ""}. Tócalo para editarlo`}>
-                    {foto ? <img src={foto} alt="" draggable={false} /> : !vacio ? <span className="dsp mp-mas" aria-hidden="true">?</span> : null}
+                    {foto ? <img className={tarjetaLdraw(e.figura) ? "mp-foto-tarjeta" : undefined} src={foto} alt="" draggable={false} /> : !vacio ? <span className="dsp mp-mas" aria-hidden="true">?</span> : null}
                   </button>
                   {!vacio && <span className="mp-placa">{titulo}</span>}
                   {en && <span className="mp-en-juego">En juego</span>}

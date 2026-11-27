@@ -73,9 +73,7 @@ export function piezasDeCatalogo(catalogo: Catalogo, ranuras: ReadonlyMap<Id, re
     const foto = /\.(webp|png|jpg)$/i.test(f.fotos.busto) && !/no-hay/.test(f.fotos.busto) ? new URL(f.fotos.busto, base).href : null;
     for (const [parte, ranura] of Object.entries(RANURA) as [Parte, string][]) {
       if (!tiene.has(ranura)) continue;
-      // LDraw trae la capa dentro del torso: ese torso no se ofrece hasta que la capa venga en su propia ranura
-      // (Elías, 2026-11-27: «en torso no debe haber capas, esas van en accesorios»).
-      // Su cabeza tampoco arma sobre otra figura todavía (la foto y la pieza fallan en el motor).
+      // Torso y cabeza LDraw todavía no arman sobre otra figura (el motor no los pinta): fuera hasta revisarlos.
       if ((parte === "torso" || parte === "cabeza") && f.origen.fuente === "ldraw") continue;
       const id = `${f.id}--${parte}`;
       fuera.set(id, { id, nombre: f.nombre, parte, glb, ranuras: [ranura], foto: parte === "cabeza" || parte === "cara" || parte === "cabello" || parte === "sombrero" ? foto

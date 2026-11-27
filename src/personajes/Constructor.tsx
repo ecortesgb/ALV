@@ -17,7 +17,7 @@ import type { FiguraV3, Id, Parte } from "./tipos";
 import { RUEDA, RuedaGestos, TrazosGesto } from "../pantallas/gestos/RuedaGestos";
 import { useMiniaturas } from "./useMiniaturas";
 import { Vista3D } from "./Vista3D";
-import { CartaPersonaje } from "../pantallas/CartaPersonaje";
+import { CartaPersonaje, LOGOS, logo } from "../pantallas/CartaPersonaje";
 import "../pantallas/azotea/azotea.css";
 import "../pantallas/perfil/perfil.css";
 import "../pantallas/lobby/lobby.css";
@@ -57,6 +57,12 @@ const GRUPOS: { id: Id; nombre: string }[] = [
   { id: "avengers", nombre: "Avengers" }, { id: "x-men", nombre: "X-Men" }, { id: "guardianes", nombre: "Guardianes" },
   { id: "villanos-marvel", nombre: "Villanos" }, { id: "otros-marvel", nombre: "Otros" },
 ];
+/** Botón de saga o grupo con su logo (los mismos del Álbum de la tienda; Elías, 2026-11-27). Sin logo, el nombre. */
+const conLogo = (id: Id) => !!LOGOS[id];
+function NombreSeccion({ id, nombre }: { id: Id; nombre: string }) {
+  const archivo = id === "guardianes" ? "guardianes-plata" : id === "villanos-marvel" ? "villanos" : id;
+  return LOGOS[id] ? <img src={logo(archivo)} alt={nombre} draggable={false} /> : <>{nombre}</>;
+}
 const legible = (id: Id) => id.split("-").map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
 /** Ordena los ids según una lista conocida (los desconocidos al final, por nombre). */
 function ordenar(ids: Iterable<Id>, conocidos: { id: Id; nombre: string }[]): { id: Id; nombre: string }[] {
@@ -467,14 +473,14 @@ export function Constructor({ catalogo, piezas, inicial, seccion, escenaUrl, onG
             {sagas.length > 0 && (
               <div className="pz-chips pz-sagas" role="group" aria-label="Sagas">
                 {[{ id: "todas", nombre: "Todas" }, ...sagas].map(x => (
-                  <button key={x.id} type="button" className={"pz-chip" + (sg === x.id ? " on" : "")} aria-pressed={sg === x.id} onClick={() => elegirSaga(x.id)}>{x.nombre}</button>
+                  <button key={x.id} type="button" className={"pz-chip" + (conLogo(x.id) ? " pz-chip-logo" : "") + (sg === x.id ? " on" : "")} aria-pressed={sg === x.id} onClick={() => elegirSaga(x.id)}><NombreSeccion id={x.id} nombre={x.nombre} /></button>
                 ))}
               </div>
             )}
             {grupos.length > 1 && (
               <div className="pz-chips" role="group" aria-label={originales ? "Grupos" : "Tipos"}>
                 {[{ id: "todas", nombre: "Todos" }, ...grupos].map(x => (
-                  <button key={x.id} type="button" className={"pz-chip" + (g === x.id ? " on" : "")} aria-pressed={g === x.id} onClick={() => elegirGrupo(x.id)}>{x.nombre}</button>
+                  <button key={x.id} type="button" className={"pz-chip" + (originales && conLogo(x.id) ? " pz-chip-logo" : "") + (g === x.id ? " on" : "")} aria-pressed={g === x.id} onClick={() => elegirGrupo(x.id)}>{originales ? <NombreSeccion id={x.id} nombre={x.nombre} /> : x.nombre}</button>
                 ))}
               </div>
             )}
