@@ -239,7 +239,7 @@ export function Constructor({ catalogo, piezas, inicial, seccion, escenaUrl, onG
     const e = escena.current, v = e?.querySelector<HTMLElement>(".pz-vista");
     if (!e || !v) return;
     const re = e.getBoundingClientRect(), rv = v.getBoundingClientRect();
-    const radio = Math.min(230, Math.max(176, innerWidth * 0.22)) / 2, borde = radio + 16;
+    const radio = Math.min(168, Math.max(136, innerWidth * 0.15)) / 2, borde = radio + 16;
     let x: number, y: number;
     if (innerWidth >= 860) {
       x = rv.left - re.left + nx * rv.width + (nx < 0.5 ? 1 : -1) * radio * 1.15;

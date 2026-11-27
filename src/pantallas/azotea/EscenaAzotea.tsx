@@ -78,7 +78,7 @@ export const EscenaAzotea = forwardRef<MandoAzotea, { id: string; figura: Figura
         }
       };
       addEventListener("message", f);
-      // Gestos de la tienda global (MenuGestos, la sala): solo los de esta figura.
+      // Gestos de la tienda global (rueda de gestos, la sala): solo los de esta figura.
       const fuera = alPedirGesto(g => { if (listoRef.current && g.jugador === datos.current.id) enviar({ tipo: "momento", id: g.jugador, cual: g.gesto, prio: g.prioridad }); });
       // Vida automática de esta figura (la decide useVidaPropia en este aparato; aquí solo se dibuja).
       const fueraVida = alVida(v => {

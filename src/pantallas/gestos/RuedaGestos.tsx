@@ -1,5 +1,6 @@
-// Rueda de gestos: aparece al tocar al personaje (referencia de Elías: menú radial de 4 gajos con la cabeza al centro).
-// Semitransparente para no tapar la figura; abre con rebote y cada gajo entra uno tras otro. Se cierra al elegir, al
+// Rueda de gestos: aparece al tocar al personaje (referencia de Elías: menú radial de 4 gajos con la cabeza al centro;
+// 2ª referencia, 26 nov: anillo de vidrio gris casi transparente, íconos blancos y el nombre del gesto al centro).
+// Chica y semitransparente para no tapar la figura; el gajo señalado toma su color. Abre con rebote. Se cierra al elegir, al
 // tocar fuera o con Esc. Con teclado: flechas para moverse, Enter para elegir.
 import React, { useEffect, useRef, useState, type CSSProperties, type KeyboardEvent } from "react";
 import "./rueda-gestos.css";
@@ -12,7 +13,7 @@ function gajo(a0: number, a1: number, r0: number, r1: number): string {
   const g = a1 - a0 > 180 ? 1 : 0;
   return `M ${p(a0, r1)} A ${r1} ${r1} 0 ${g} 1 ${p(a1, r1)} L ${p(a1, r0)} A ${r0} ${r0} 0 ${g} 0 ${p(a0, r0)} Z`;
 }
-const R0 = 36, R1 = 96, HUECO = 4;
+const R0 = 34, R1 = 96, HUECO = 3;
 /** Centro de cada gajo en grados: izquierda, arriba, derecha, abajo (como la referencia). */
 const ANGULOS = [180, 270, 0, 90];
 
@@ -25,6 +26,8 @@ export function RuedaGestos({ gestos, x, y, centro, onElegir, onCerrar }: {
 }) {
   const [sale, setSale] = useState<string | null>(null); // gesto elegido: animación de salida antes de cerrar
   const [foco, setFoco] = useState(0);
+  // Gesto señalado (cursor, foco o elegido): su nombre sale al centro, como la referencia.
+  const [senal, setSenal] = useState<string | null>(null);
   const caja = useRef<HTMLDivElement>(null);
   const botones = useRef<(SVGGElement | null)[]>([]);
   useEffect(() => { botones.current[0]?.focus({ preventScroll: true }); }, []);
@@ -41,9 +44,10 @@ export function RuedaGestos({ gestos, x, y, centro, onElegir, onCerrar }: {
   const salioFoco = (e: React.FocusEvent) => { if (!sale && !caja.current?.contains(e.relatedTarget as Node | null) && e.relatedTarget) onCerrar("fuera"); };
   const mover = (e: KeyboardEvent, i: number) => {
     const sig = { ArrowLeft: 0, ArrowUp: 1, ArrowRight: 2, ArrowDown: 3 }[e.key as "ArrowLeft"];
-    if (sig !== undefined) { e.preventDefault(); setFoco(sig); botones.current[sig]?.focus(); }
+    if (sig !== undefined) { e.preventDefault(); setFoco(sig); setSenal(gestos[sig]?.cual ?? null); botones.current[sig]?.focus(); }
     if (e.key === "Enter" || e.key === " ") { e.preventDefault(); elegir(gestos[i]!.cual); }
   };
+  const nombre = gestos.find(g => g.cual === (sale ?? senal))?.txt;
   return (
     <div ref={caja} className={"rg" + (sale ? " rg-sale" : "")} style={{ left: x, top: y }} role="menu" aria-label="Animaciones de tu personaje" onBlur={salioFoco}>
       <span className="rg-vidrio" aria-hidden="true" />
@@ -54,21 +58,22 @@ export function RuedaGestos({ gestos, x, y, centro, onElegir, onCerrar }: {
           return (
             <g key={g.cual} ref={el => { botones.current[i] = el; }} className={"rg-gajo" + (sale === g.cual ? " on" : "")} role="menuitem" tabIndex={foco === i ? 0 : -1}
               aria-label={g.txt} onClick={() => elegir(g.cual)} onKeyDown={e => mover(e, i)}
+              onPointerEnter={() => setSenal(g.cual)} onPointerLeave={() => setSenal(x => (x === g.cual ? null : x))}
               style={{ "--c1": g.c1, "--c2": g.c2, "--i": i, "--dx": `${(Math.cos(t) * 6).toFixed(1)}px`, "--dy": `${(Math.sin(t) * 6).toFixed(1)}px` } as CSSProperties}>
               <path d={d} className="rg-forma" />
-              <svg x={cx - 15} y={cy - 24} width="30" height="30" viewBox="0 0 24 24" className="rg-ico" aria-hidden="true">{g.dibujo}</svg>
-              <text x={cx} y={cy + 19} className="rg-txt">{g.txt}</text>
+              <svg x={cx - 16} y={cy - 16} width="32" height="32" viewBox="0 0 24 24" className="rg-ico" aria-hidden="true">{g.dibujo}</svg>
             </g>
           );
         })}
-        <circle r={R0 - 4} className="rg-centro" />
-        {centro && <image href={centro} x={-24} y={-24} width={48} height={48} className="rg-cara" />}
+        <circle r={R0 - 3} className="rg-centro" />
+        {nombre ? <text y={6} className="rg-nombre">{nombre}</text>
+          : centro && <image href={centro} x={-20} y={-20} width={40} height={40} className="rg-cara" />}
       </svg>
     </div>
   );
 }
 
-// Mismos trazos que el menú de gestos del HUB (pantallas/gestos/MenuGestos.tsx).
+// Trazos de los íconos de gestos (antes también en los botones de gestos del HUB).
 export function TrazosGesto({ cual }: { cual: string }) {
   const c = { fill: "#fff", stroke: "#1a1440", strokeWidth: 1.6, strokeLinejoin: "round" as const };
   if (cual === "saludar") return <path {...c} d="M8 21c-2.6-1.6-4-4.2-4-7.2V8.4a1.4 1.4 0 0 1 2.8 0V12h.6V4.8a1.4 1.4 0 0 1 2.8 0V11h.6V3.6a1.4 1.4 0 0 1 2.8 0V11h.6V5a1.4 1.4 0 0 1 2.8 0v8.4c0 4.3-2.7 8.1-7 8.1-.7 0-1.4-.2-2-.5Z" />;

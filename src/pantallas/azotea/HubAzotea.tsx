@@ -20,7 +20,6 @@ import { CabeceraJugador, RecursosAzotea } from "./Cabecera";
 import { EscenarioFondo } from "./Escenario";
 import { EscenaAzotea, type AccionFigura, type MandoAzotea } from "./EscenaAzotea";
 import { useVidaPropia } from "../../app/vidaPerfil";
-import { MenuGestos } from "../gestos/MenuGestos";
 import { RuedaFigura, type MandoRueda } from "../gestos/RuedaFigura";
 import { IconoIlustrado, type IconoHub } from "./Iconos";
 import { escenarioActual, type MomentoAzotea } from "./paquetes";
@@ -128,7 +127,6 @@ export function HubAzotea() {
           <span className="az-reflector" aria-hidden="true" /><span className="az-reflector dos" aria-hidden="true" />
           <EscenaAzotea ref={mando} id={s.uid} figura={f} ambiente={amb} plataforma={esc.plataforma} vida="hub" onToque={(x, y) => rueda.current?.abrir(x, y)} />
           <RuedaFigura ref={rueda} jugador={s.uid} figura={f} />
-          <MenuGestos jugador={s.uid} figura={f} />
           {!ancho && <BotonChat mando={mando} />}
         </section>
 

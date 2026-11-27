@@ -79,7 +79,9 @@ export interface Fiesta { arriba?: (m: Miembro) => ReactNode; abajo?: (m: Miembr
   /** Algo para tocar en un lugar libre (modo Local: «Agregar jugador»). */
   libre?: (i: number) => ReactNode;
   /** PRUEBA (Elías, 22 nov): cápsulas con el pedestal pintado; la escena no dibuja el suyo. */
-  escenarios?: boolean }
+  escenarios?: boolean;
+  /** Toque sobre TU figura (coordenadas de la ventana): abre la rueda de gestos. */
+  tocar?: (m: Miembro, x: number, y: number) => void }
 /** PRUEBA ?lobby=2 y ?lobby=a: la cabina va por piezas (pared, figura hundida y, en la A, base de color) para que
  *  la pared coincida con el zoclo del cuarto y la figura quede a la altura de la cabeza. */
 const piezasCabina = (k: string | null) => VARIANTE_LOBBY === "2" || VARIANTE_LOBBY === "a" ? {
@@ -125,6 +127,7 @@ export function Pedestales({ miembros, yo, className = "", fiesta, vida }: { mie
           <li key={i} className={"a-sala-rot lb-rot" + (m ? "" : " vacia") + (m?.listo ? " listo" : "") + (m && m.id === yo ? " yo" : "")} style={varsColor(m || LOBBY_NUEVO ? c : null)}>
             <span className="lb-etq"><b>{c.etiqueta}</b>{m?.anfitrion && <img src={arteLobby("ico-corona")} alt="Administrador" className="lb-corona" />}<span className="lb-etq-nom">{m ? <NombreJugador nombre={m.nombre} figura={m.figura} /> : "Libre"}</span></span>
             {m && LOBBY_NUEVO && <span className="lb-barra">{m.anfitrion && <img src={arteLobby("ico-corona")} alt="Administrador" />}<i /><b>{c.etiqueta.replace("P", "J")}</b><span className="lb-barra-sep">·</span><span className="lb-barra-nom"><NombreJugador nombre={m.nombre} figura={m.figura} /></span></span>}
+            {m && fiesta.tocar && m.id === yo && <button type="button" className="lb-toca" aria-label="Gestos de tu figura" onClick={e => fiesta.tocar!(m, e.clientX, e.clientY)} />}
             {m && fiesta.arriba && <span className="lb-arriba">{fiesta.arriba(m)}</span>}
             {m?.listo && <span className="lb-sello"><img src={arteLobby("ico-listo")} alt="" /><span>{LOBBY_NUEVO ? "¡Todo listo!" : "¡Listo!"}</span></span>}
             {!m && !fiesta.escenarios && <img className="lb-libre" src={arteLobby("lugar-libre")} alt="" />}

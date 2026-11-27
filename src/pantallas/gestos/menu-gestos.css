@@ -64,5 +64,3 @@
 /* Abierto, flota encima de tu panel (sobre la cabina) para no hacerlo crecer ni salirse de la pantalla. */
 .D .mg.lb-gestos { position: absolute; z-index: 20; left: 0; bottom: calc(100% + 8px); margin: 0; transform-origin: left bottom; }
 .D .ms-gestos { position: fixed; z-index: 40; left: max(10px, env(safe-area-inset-left)); bottom: max(40px, calc(env(safe-area-inset-bottom) + 30px)); }
-/* Capa de la rueda de gestos del HUB y el Perfil (RuedaFigura.tsx): fija, solo la rueda recibe toques. */
-.D .rg-capa { position: fixed; inset: 0; z-index: 40; pointer-events: none; }

@@ -22,7 +22,7 @@ export const RuedaFigura = forwardRef<MandoRueda, { jugador: string; figura?: Fi
   useImperativeHandle(mando, () => ({
     abrir(x, y) {
       if (performance.now() - cerro.current < 350) return;
-      const radio = Math.min(230, Math.max(176, innerWidth * 0.22)) / 2, borde = radio + 16;
+      const radio = Math.min(168, Math.max(136, innerWidth * 0.15)) / 2, borde = radio + 16;
       // Computadora: a un lado de la figura, hacia donde hay más espacio, sin taparla. Celular: no cabe al lado; se pega
       // al borde derecho (o izquierdo si tocaste a la derecha) a la altura del toque y tapa solo media figura.
       const ancho = innerWidth >= 860, haciaDerecha = x < innerWidth / 2;

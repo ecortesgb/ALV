@@ -14,7 +14,6 @@ import { useRecursos } from "../Recursos";
 import { logrosDeCuenta, useMovimientos } from "../Social";
 import { BarraXPAzotea, RecursosAzotea, arteHub } from "../azotea/Cabecera";
 import { EscenaAzotea } from "../azotea/EscenaAzotea";
-import { MenuGestos } from "../gestos/MenuGestos";
 import { RuedaFigura, type MandoRueda } from "../gestos/RuedaFigura";
 import { AZOTEA, type Ambiente } from "../azotea/paquetes";
 import "../azotea/azotea.css";
@@ -66,7 +65,6 @@ export function Perfil() {
             <EscenaAzotea id={s.uid} figura={f} ambiente={SALA} plataforma={AZOTEA.plataforma} llegada={false} className="pf-figura" onToque={(x, y) => rueda.current?.abrir(x, y)} />
             <RuedaFigura ref={rueda} jugador={s.uid} figura={f} />
             <span className="pf-pista" aria-hidden="true">↺ Arrastra para girar</span>
-            <MenuGestos jugador={s.uid} figura={f} className="pf-gestos" />
           </div>
           <div className="pf-placa">
             <span className="pf-nivel" aria-label={`Nivel ${r.nivel}`}><img src={arteHub("insignia-nivel")} alt="" draggable={false} /><b>{r.nivel}</b></span>
