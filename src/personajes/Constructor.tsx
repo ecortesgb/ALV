@@ -25,6 +25,9 @@ import "./constructor.css";
 type Pestana = "trajes" | "cabeza" | "torso" | "brazos" | "piernas" | "accesorios" | "movimientos";
 type Sub = Parte | Gesto | "traje";
 const ARTE = `${import.meta.env.BASE_URL}arte/`;
+/** Una url() dentro de una variable CSS se resuelve contra la hoja de estilos (assets/), no contra la página: con la base
+ *  "./" de lo publicado se rompía. Se pasa ya absoluta. */
+const absoluta = (ruta: string) => new URL(ruta, document.baseURI).href;
 const LOSAS: { id: Pestana; titulo: string; cartela: string; c1: string; c2: string; lab: string; ico: string }[] = [
   { id: "trajes", titulo: "Trajes", cartela: "Trajes completos", c1: "#ff8a6b", c2: "#e0392b", lab: "#8f1d14", ico: "ico-armaduras" },
   { id: "cabeza", titulo: "Cabeza", cartela: "Capítulo 1: una cara nueva", c1: "#6fb6ff", c2: "#1f5fd6", lab: "#123e9c", ico: "ico-cabeza" },
@@ -82,6 +85,8 @@ export interface ConstructorProps {
   catalogo: Catalogo;
   piezas: Piezas;
   inicial: FiguraV3;
+  /** Sección con la que abre («Elegir personaje» abre en Trajes). */
+  seccion?: "trajes";
   escenaUrl: string;
   onGuardar: (figura: FiguraV3) => void;
   onSalir?: () => void;
@@ -99,14 +104,14 @@ export interface ConstructorProps {
 const sinMovimiento = () => typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches;
 const fotoValida = (u: string | null | undefined) => !!u;
 
-export function Constructor({ catalogo, piezas, inicial, escenaUrl, onGuardar, onSalir, base = null, paginaAnterior = `${ARTE}azotea-pedestal-noche-1920.webp`,
+export function Constructor({ catalogo, piezas, inicial, seccion, escenaUrl, onGuardar, onSalir, base = null, paginaAnterior = `${ARTE}azotea-pedestal-noche-1920.webp`,
   estudioUrl = escenaUrl.replace(/escena\.html.*$/, "estudio.html"), frente = 10 }: ConstructorProps) {
   const mini = useMiniaturas(estudioUrl, catalogo);
   const [figura, setFigura] = useState(inicial);
   const [historia, setHistoria] = useState<FiguraV3[]>([]);
   const [futuro, setFuturo] = useState<FiguraV3[]>([]);
-  const [pestana, setPestana] = useState<Pestana>("cabeza");
-  const [sub, setSub] = useState<Sub>("cara");
+  const [pestana, setPestana] = useState<Pestana>(seccion ?? "cabeza");
+  const [sub, setSub] = useState<Sub>(seccion ? "traje" : "cara");
   /** Switch Originales / Genéricas, recordado por sub-parte. */
   /** Switch Originales / Común: uno para todo el taller (Elías, 2026-11-26). Cambia las piezas que se ofrecen y el fondo:
    *  cómic con las originales, clóset con las comunes. */
@@ -339,7 +344,7 @@ export function Constructor({ catalogo, piezas, inicial, escenaUrl, onGuardar, o
       </nav>
 
       <div className="pz-escena" ref={escena}>
-        <div className="pz-escena-fondo comic" aria-hidden="true" style={{ "--arte-h": `url(${ARTE}personalizar/comic-accion-horizontal.webp)`, "--arte-v": `url(${ARTE}personalizar/comic-accion-vertical.webp)` } as CSSProperties} />
+        <div className="pz-escena-fondo comic" aria-hidden="true" style={{ "--arte-h": `url(${absoluta(ARTE + "personalizar/comic-accion-horizontal.webp")})`, "--arte-v": `url(${absoluta(ARTE + "personalizar/comic-accion-vertical.webp")})` } as CSSProperties} />
         <div className="pz-escena-fondo closet" aria-hidden="true" style={{ backgroundImage: `url(${ARTE}personalizar/closet.webp)` }} />
         <p className="pz-etiqueta" aria-hidden="true">{comun ? "En el clóset…" : "Mientras tanto, en el vestidor…"}</p>
         <div className="pz-toca" ref={toca} tabIndex={0} role="button" aria-label="Tu personaje: toca una parte para editarla; Enter para los gestos; flechas para girarlo" onKeyDown={teclaFigura}>

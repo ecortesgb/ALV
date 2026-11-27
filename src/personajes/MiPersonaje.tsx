@@ -8,9 +8,8 @@
 import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import { Boton, FondoCiudad, RaizDS } from "../ds";
 import { Constructor } from "./Constructor";
-import { figuraInicial, sePuedePersonalizar } from "./constructorDatos";
+import { figuraInicial } from "./constructorDatos";
 import { destinoGuardado } from "./espacios";
-import { Galeria } from "./Galeria";
 import { tarjetas } from "./galeriaDatos";
 import { resolverFigura, type CatalogoV3 } from "./integracion";
 import { useMiniaturas } from "./useMiniaturas";
@@ -43,14 +42,14 @@ const ESCENA = `${BASE}personajes/escena.html?fondo=no`;
 const ESTUDIO = `${BASE}personajes/estudio.html`;
 /** Centro de cada nicho en el arte del mueble (arte/mi-coleccion/mueble.webp), en % del ancho. */
 const NICHOS = ["18.3%", "50.1%", "82%"];
-type Vista = { cual: "inicio" } | { cual: "galeria" } | { cual: "crear"; figura: FiguraV3 };
+type Vista = { cual: "inicio" } | { cual: "crear"; figura: FiguraV3; trajes?: boolean };
 const TEXTO: Record<ResultadoGuardar, (n: string) => string> = {
   sincronizado: n => `${n}: guardado`,
   local: n => `${n}: guardado en este aparato (se sube al conectarte)`,
   error: () => "No se pudo guardar. Intenta otra vez.",
 };
 
-export function MiPersonaje({ jugador, catalogo, estadoCatalogo = catalogo ? "listo" : "cargando", onReintentar, espacios, activa, onGuardar, onActivar, onSalir }: MiPersonajeProps) {
+export function MiPersonaje({ catalogo, estadoCatalogo = catalogo ? "listo" : "cargando", onReintentar, espacios, activa, onGuardar, onActivar, onSalir }: MiPersonajeProps) {
   const [ancho, setAncho] = useState(() => innerWidth >= 860);
   const [vista, setVista] = useState<Vista>({ cual: "inicio" });
   const [aviso, setAviso] = useState<string | null>(null);
@@ -74,14 +73,17 @@ export function MiPersonaje({ jugador, catalogo, estadoCatalogo = catalogo ? "li
     setAviso(TEXTO[r](nombre));
     if (r !== "error") { setElegido(null); setVista({ cual: "inicio" }); }
   };
-  const conservar = (f: FiguraV3): FiguraV3 => (activaV3 ? { ...f, momentos: activaV3.momentos, extensiones: activaV3.extensiones } : f);
   /** Crear desde cero: en el nicho tocado o, si no, en el primer espacio vacío (así no se reemplaza la figura en juego). */
-  const crear = (en?: number) => {
+  const crear = (en?: number, trajes = false) => {
     const f = catalogo && figuraInicial(catalogo.catalogo, activaV3);
     if (!f) return;
     setElegido(en ?? nuevoEn);
-    setVista({ cual: "crear", figura: f });
+    setVista({ cual: "crear", figura: f, trajes });
   };
+  /** Elegir un personaje = el taller abierto en Trajes (Elías, 2026-11-26: nada del personalizador anterior). */
+  const elegir = (en?: number) => crear(en, true);
+  /** Nombre al guardar: un traje sin cambios se llama como su personaje. */
+  const nombreDe = (f: FiguraV3) => (f.origen.tipo === "catalogo" && !Object.keys(f.piezas).length && fotos.get(f.origen.personaje)?.nombre) || "Mi personaje";
   // Foto de cuerpo entero de cada figura para su nicho: la saca el estudio con el motor real (así sale con sus piezas);
   // mientras llega, la foto de tarjeta del personaje del catálogo.
   const mini = useMiniaturas(vista.cual === "inicio" && catalogo ? ESTUDIO : null, catalogo?.catalogo ?? new Map());
@@ -106,7 +108,7 @@ export function MiPersonaje({ jugador, catalogo, estadoCatalogo = catalogo ? "li
               {onReintentar && <Boton color="amarillo" texto="Reintentar" icono="wheel" onClick={onReintentar} />}
             </div>
           )}
-          <section className="mp-mueble" aria-label="Mi colección" style={{ "--mueble": `url(${BASE}arte/mi-coleccion/mueble.webp)` } as CSSProperties}>
+          <section className="mp-mueble" aria-label="Mi colección" style={{ "--mueble": `url(${new URL(BASE + "arte/mi-coleccion/mueble.webp", document.baseURI).href})` } as CSSProperties}>
             {espacios.map((e, i) => {
               const o = e.figura?.origen, t = o?.tipo === "catalogo" ? fotos.get(o.personaje) : null, en = activa === i;
               const vacio = !e.figura && !e.antes, aqui = elegido === i;
@@ -124,7 +126,7 @@ export function MiPersonaje({ jugador, catalogo, estadoCatalogo = catalogo ? "li
                   {vacio && aqui && (
                     <div className="mp-nicho-menu">
                       <Boton color="azul" compacto texto="Crear" icono="shirt" desactivado={!catalogo} onClick={() => crear(i)} />
-                      <Boton color="amarillo" compacto texto="Elegir" icono="users" desactivado={!catalogo} onClick={() => setVista({ cual: "galeria" })} />
+                      <Boton color="amarillo" compacto texto="Elegir" icono="users" desactivado={!catalogo} onClick={() => elegir(i)} />
                     </div>
                   )}
                 </div>
@@ -133,24 +135,15 @@ export function MiPersonaje({ jugador, catalogo, estadoCatalogo = catalogo ? "li
           </section>
           <div className="mp-acciones">
             <Boton color="verde" principal={ancho} texto="Crear figura" icono="shirt" cargando={!catalogo && estadoCatalogo === "cargando"} desactivado={!catalogo && estadoCatalogo === "sin-acceso"} onClick={() => crear()} />
-            <Boton color="amarillo" texto="Elegir personaje" icono="users" cargando={!catalogo && estadoCatalogo === "cargando"} desactivado={!catalogo && estadoCatalogo === "sin-acceso"} onClick={() => { setElegido(nuevoEn); setVista({ cual: "galeria" }); }} />
+            <Boton color="amarillo" texto="Elegir personaje" icono="users" cargando={!catalogo && estadoCatalogo === "cargando"} desactivado={!catalogo && estadoCatalogo === "sin-acceso"} onClick={() => elegir()} />
           </div>
           <p className="mp-nota">{nuevoEn === null ? `Tu colección está llena: lo nuevo reemplaza la figura en juego (espacio ${destino + 1}).` : `Lo nuevo se guarda en el espacio ${nuevoEn + 1}. Toca una figura para ponerla en juego; tócala otra vez para editarla.`}</p>
           {mini.marco}
         </div>
       )}
-      {catalogo && vista.cual === "galeria" && (
-        <Galeria catalogo={catalogo.catalogo} jugador={jugador} escenaUrl={ESCENA + "&frente=25" /* Codex r5: 25° en la galería */}
-          actual={activaV3?.origen.tipo === "catalogo" && !Object.keys(activaV3.piezas).length ? activaV3.origen.personaje : null}
-          // Cambia la apariencia y conserva los momentos y extensiones (personalidad, apodo) de la figura en juego (Codex, ajuste 6).
-          onUsar={(f, t) => void guardar(conservar(f), t.nombre)}
-          onPersonalizar={f => setVista({ cual: "crear", figura: conservar(f) })}
-          personalizable={fam => sePuedePersonalizar(catalogo.piezas, fam)}
-          onSalir={() => setVista({ cual: "inicio" })} />
-      )}
       {catalogo && vista.cual === "crear" && (
-        <Constructor catalogo={catalogo.catalogo} piezas={catalogo.piezas} base={catalogo.base ?? null} inicial={vista.figura} escenaUrl={ESCENA}
-          onGuardar={f => void guardar(f, "Mi personaje")} onSalir={() => setVista({ cual: "inicio" })} />
+        <Constructor catalogo={catalogo.catalogo} piezas={catalogo.piezas} base={catalogo.base ?? null} inicial={vista.figura} escenaUrl={ESCENA} seccion={vista.trajes ? "trajes" : undefined}
+          onGuardar={f => void guardar(f, nombreDe(f))} onSalir={() => setVista({ cual: "inicio" })} />
       )}
       {aviso && <div role="status" className="mp-aviso">{aviso}</div>}
     </RaizDS>
