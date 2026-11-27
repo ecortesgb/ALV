@@ -14,6 +14,7 @@ import { CelularFisico } from "../fisico/celular";
 import { ComoJugar, tocaExplicar } from "./ComoJugar";
 import { CeremoniaCopas, PodioJuego, esFinalDeJuego } from "./Copas";
 import { SelectorComodines } from "./SelectorComodines";
+import { BarraEmotes } from "./Emotes";
 
 export interface MiVista { yo: string; mio: unknown; miRespuesta: unknown; miMano: string[] }
 type Mandar = (tipo: "contestar" | "carta" | "pista", datos: Record<string, unknown>) => Promise<boolean>;
@@ -33,12 +34,14 @@ export function HerramientaCelular(p: { v: Publico; mi: MiVista; miembros: Miemb
   if (p.v.juegoId === "copas") return <CeremoniaCopas v={p.v} miembros={p.miembros} modo="celular" />;
   // Al final del juego, su podio abajo del resultado.
   const podio = esFinalDeJuego(p.v) && <PodioJuego v={p.v} miembros={p.miembros} modo="celular" />;
+  // Emotes al revelar (Elías, 27 nov): mientras se ve el resultado, reacciones que vuelan en la TV.
+  const emotes = p.v.fase === "revelada" && !esFinalDeJuego(p.v) && <BarraEmotes yo={p.mi.yo} />;
   // El impostor con eliminación (Maestro v1.44) tiene su propia pantalla.
   // Con papeles en la mesa, las posiciones van en una página de su final (Elías, 24 nov).
-  if (p.v.motor === "rol-secreto" && p.v.impostor) return <>{reglas}<CelularImpostor {...p} />{!p.v.impostor.palabras && podio}</>;
-  if (p.v.motor === "turnos-cartas" && p.v.verdadReto) return <>{reglas}<CelularVerdadReto {...p} />{podio}</>;
-  if (p.v.motor === "fisico") return <>{reglas}<CelularFisico {...p} />{podio}</>;
-  return <>{reglas}<HerramientaGeneral {...p} />{podio}</>;
+  if (p.v.motor === "rol-secreto" && p.v.impostor) return <>{reglas}<CelularImpostor {...p} />{emotes}{!p.v.impostor.palabras && podio}</>;
+  if (p.v.motor === "turnos-cartas" && p.v.verdadReto) return <>{reglas}<CelularVerdadReto {...p} />{emotes}{podio}</>;
+  if (p.v.motor === "fisico") return <>{reglas}<CelularFisico {...p} />{emotes}{podio}</>;
+  return <>{reglas}<HerramientaGeneral {...p} />{emotes}{podio}</>;
 }
 
 function HerramientaGeneral({ v, mi, miembros, mandar }: { v: Publico; mi: MiVista; miembros: Miembro[]; mandar: Mandar }) {
