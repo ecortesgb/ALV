@@ -15,14 +15,15 @@ export const NOMBRE_SAGA: Record<string, string> = {
   marvel: "Marvel", dc: "DC", "star-wars": "Star Wars", "harry-potter": "Harry Potter", piratas: "Piratas",
   "senor-de-los-anillos": "El Señor de los Anillos", disney: "Disney", "looney-tunes": "Looney Tunes", simpsons: "Los Simpson",
   "plaza-sesamo": "Plaza Sésamo", muppets: "Los Muppets", "hora-de-aventura": "Hora de Aventura",
-  "chicas-superpoderosas": "Las Chicas Superpoderosas", increibles: "Los Increíbles", otros: "Otros",
+  "chicas-superpoderosas": "Las Chicas Superpoderosas", increibles: "Los Increíbles", futbol: "Fútbol", otros: "Otros",
 };
 const ORDEN_SAGA = ["marvel", "dc", "star-wars", "harry-potter", "disney", "simpsons", "looney-tunes", "muppets", "plaza-sesamo",
-  "hora-de-aventura", "chicas-superpoderosas", "senor-de-los-anillos", "piratas", "otros"];
+  "hora-de-aventura", "chicas-superpoderosas", "futbol", "senor-de-los-anillos", "piratas", "otros"];
 /** Sagas chicas (van a «Otros» y su nombre se ve como grupo): solo el nombre bien escrito. */
 const NOMBRE_SAGA_CHICA: Record<string, string> = {
   "volver-al-futuro": "Volver al Futuro", et: "E.T.", gremlins: "Gremlins", sonic: "Sonic", "scooby-doo": "Scooby-Doo",
-  "mago-de-oz": "El Mago de Oz", monstruos: "Monstruos",
+  "mago-de-oz": "El Mago de Oz", monstruos: "Monstruos", invincible: "Invincible", "the-boys": "The Boys",
+  picapiedra: "Los Picapiedra", "big-bang-theory": "The Big Bang Theory",
 };
 export const nombreSaga = (s: string) => NOMBRE_SAGA[s] ?? NOMBRE_SAGA_CHICA[s] ?? s.replace(/-/g, " ").replace(/^./, c => c.toUpperCase());
 

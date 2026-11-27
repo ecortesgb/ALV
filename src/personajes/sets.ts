@@ -107,6 +107,27 @@ export const SETS_DE: Readonly<Record<Id, readonly string[]>> = (() => {
     ...usan("tecno", `tony-stark iron-man iron-man-clasico iron-man-mk42 iron-patriot war-machine rescue batman batman-returns
       bruce-wayne black-widow maria-hill pepper-potts coulson nick-fury rocket star-lord robin robin-lego-batman
       ant-man avispa mr-fantastico doctor-octopus arnim-zola mandaloriano`),
+    // Tanda 2 y figuras LDraw que no tenían set (Elías, 27 nov 2026: «que todos tengan movimientos que puedan ir con ellos
+    // y sonidos»). Van al final para no cambiar el set que manda en andar de los que ya estaban.
+    ...usan("espada", `mace-windu darth-vader-minifig emperador-palpatine jack-sparrow finn`),
+    ...usan("magia", `harry-potter-quidditch harry-potter-chamarra-abierta harry-potter-chamarra-azul harry-potter-dimensions
+      hermione-chamarra voldemort-dimensions bellatrix-lestrange loki-minifig emperador-palpatine elsa bruja-malvada raven
+      marceline tormenta-minifig`),
+    ...usan("pistola", `han-solo jack-sparrow harley-quinn marvin-marciano`),
+    ...usan("rifle", `soldado-del-invierno-minifig`),
+    ...usan("garras", `wolverine-mascara`),
+    ...usan("vuelo", `iron-man-mk42-minifig iron-man-mk6 thor-minifig tormenta-minifig superman-ojos-rojos omni-man homelander
+      starfire raven bombon burbuja bellota baymax marceline`),
+    ...usan("fuerza", `omni-man homelander superman-ojos-rojos thor-minifig mujer-maravilla-clasica mr-increible baymax cyborg
+      starfire bombon burbuja bellota jake`),
+    ...usan("mente", `harry-potter-quidditch harry-potter-chamarra-abierta harry-potter-chamarra-azul harry-potter-dimensions
+      hermione-chamarra voldemort-dimensions bellatrix-lestrange mace-windu emperador-palpatine darth-vader-minifig raven et
+      miles-morales spider-gwen spider-man-minifig spider-man-simbionte`),
+    ...usan("acrobacia", `miles-morales spider-gwen spider-man-minifig spider-man-simbionte batman-excalibur batman-logo-dorado
+      batman-gris-oscuro batman-gris-claro batman-logo-amarillo batgirl robin-dimensions mace-windu jack-sparrow harley-quinn
+      chico-bestia sonic finn mujer-maravilla-clasica bugs-bunny`),
+    ...usan("tecno", `iron-man-mk42-minifig iron-man-mk6 batman-excalibur batman-logo-dorado batman-gris-oscuro batman-gris-claro
+      batman-logo-amarillo batgirl cyborg doc-brown marty-mcfly sheldon-cooper edna-moda baymax c-3po`),
   ] as [string, string][]) (m[id] ??= []).push(s);
   return m;
 })();
@@ -152,6 +173,10 @@ export const SONIDO_PROPIO: Readonly<Record<Id, Readonly<Record<string, string>>
   ...cambia("darth-vader darth-maul luke-skywalker anakin-skywalker yoda", { espada: "sable", desenvainar: "sable-encender" }),
   ...cambia("jango-fett mandaloriano", { disparo: "blaster", rifle: "blaster" }),
   ...cambia("harry-potter hermione-granger ron-weasley voldemort", { hechizo: "varita", conjuro: "varita" }),
+  ...cambia("mace-windu darth-vader-minifig emperador-palpatine", { espada: "sable", desenvainar: "sable-encender" }),
+  ...cambia("han-solo", { disparo: "blaster" }),
+  ...cambia(`harry-potter-quidditch harry-potter-chamarra-abierta harry-potter-chamarra-azul harry-potter-dimensions
+    hermione-chamarra voldemort-dimensions bellatrix-lestrange`, { hechizo: "varita", conjuro: "varita" }),
 ]);
 
 /** Sonidos de un movimiento («<set>-<mov>») para un personaje, ya con sus cambios. */
