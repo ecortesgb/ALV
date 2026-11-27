@@ -2,6 +2,7 @@
 // Nada aquí toca pantallas ni red. Cada acción trae un id único: si llega repetida (mala señal), se ignora.
 import { crearAzar } from "./azar";
 import { cartasPermitidas } from "./filtros";
+import { yaSalio } from "./yaSalieron";
 import { xpDePartida } from "./economia";
 import { CARTAS_PODER, DADOS } from "../content/catalogo";
 import type { Carta, Configuracion, DefinicionJuego, Jugador, Motor, TemaImpostor } from "./types";
@@ -151,6 +152,11 @@ function sacarCarta(e: EstadoPartida, c: Contenido, mazos: string[]): Carta | un
   // Temperatura + Voltaje: sin repetir carta en la partida. Si ya salieron todas, se vuelve a usar el mazo completo.
   if (e.cfg.ejes && e.usadas?.length) {
     const nuevas = pool.filter(x => !e.usadas!.includes(x.id));
+    if (nuevas.length) pool = nuevas;
+  }
+  // Sin repetir entre noches: primero las que no han salido en este aparato. Si ya salieron todas, el mazo completo.
+  if (e.cfg.yaSalieron) {
+    const nuevas = pool.filter(x => !yaSalio(e.cfg.yaSalieron, x.id));
     if (nuevas.length) pool = nuevas;
   }
   return azarDeRonda(e).elegir(pool);

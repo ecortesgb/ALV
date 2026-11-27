@@ -1,6 +1,6 @@
 # ALV — Amigos Legendarios Verdaderos
 ## Documento Maestro del Producto
-**Versión:** 1.67  
+**Versión:** 1.68  
 **Última actualización:** 27 de noviembre de 2026  
 **Estado:** Documento vivo de producto; decisiones y propuestas identificadas por separado.
 
@@ -539,6 +539,23 @@ Lo definido por Elías es **DECISIÓN**. Lo marcado **PROPUESTA** es el valor co
 | Reto del lugar | Individual, Parejas, Equipos, ALVersus | PROPUESTA |
 | El reloj | Ya no es juego (C9) | DECISIÓN: sale del configurador |
 | Ruleta de castigos | Herramienta (v1.12) | DECISIÓN: sale del configurador |
+
+## 6A.13 Ideas revisadas de otros juegos de fiesta (Rea-games) — DECISIÓN (v1.68)
+
+El 26 de noviembre se revisaron repositorios abiertos de juegos de fiesta y salieron 22 ideas (maqueta `maquetas-ideas\ALV_IDEAS.html` en la carpeta de Elías). De los repositorios con licencia AGPL o sin licencia solo se toma la idea; no se copia código ni textos. Elías marcó cada una el 27 de noviembre. Regla de Elías: **Sí** se aplica directo; **Quizá** queda como opción de configuración apagada por defecto o como logro que da XP o monedas, y se propone una por una antes de construirla; **No** queda descartada.
+
+**DECISIÓN (v1.68, Elías, 27 de noviembre) — Sí:**
+1. **Sin repetir entre noches.** El aparato del anfitrión recuerda qué cartas ya salieron y el motor saca primero las nuevas; cuando se acaban, vuelve el mazo completo. En «Herramientas» el anfitrión ve cuántas quedan nuevas, elige «Solo cartas nuevas» (encendido por defecto) o «Todas» y puede «Empezar el mazo de cero» para ese juego. Vive solo en el navegador, sin base. **Hecho en v1.68 (sin publicar).**
+2. **Gráfica de votos en la TV.** Al revelar ¿Quién es más probable?, una barra por jugador con su figura que crece con animación; con votos a la vista, abajo dice quién votó por quién. **Hecho en v1.68 (sin publicar).**
+3. **Voto secreto (opción).** En ¿Quién es más probable?, el anfitrión elige votos «A la vista» (como siempre) o «Secretos»: al revelar solo sale cuántos votos tuvo cada quien. Lo oculta el motor en la vista pública, no solo la pantalla. **Hecho en v1.68 (sin publicar).**
+4. **Emotes al revelar.** Mientras se ve el resultado, cada celular tiene 6 reacciones que vuelan en la TV con el nombre y color de quien la mandó (sin TV, en los celulares de los demás). Usa el canal de gestos de la sala; no da puntos ni XP. **Hecho en v1.68 (sin publicar).**
+5. **Base despierta.** Una tarea de GitHub lee una fila de la biblioteca pública cada 6 horas para que Supabase gratis no pause la base. Usa las variables que ya tiene el repo (URL y llave publicable). Elías la pasó de Quizá a Sí el 27 de noviembre. **Hecho en v1.68 (sin publicar); empieza a correr cuando entra a main.**
+6. **Jugadores falsos de prueba** y **prueba con varios celulares**: solo pruebas antes de publicar; los jugadores no ven nada.
+7. **Juegos nuevos:** Trivia ALV (ya era DECISIÓN v1.12; reglas siguen **PENDIENTE**), ¿Cierto o inventado? (dato con hueco, cada quien inventa una respuesta y todos buscan la verdadera; puntos por acertar y por engañar), Dibujo en cadena (uno escribe, el siguiente dibuja, el siguiente describe) y Título falso (alguien dibuja, los demás inventan títulos y todos adivinan el original). Dibujo en cadena y Título falso comparten el pizarrón de Dibuja y Adivina. **PENDIENTE:** reglas y puntos de cada uno, que Elías aprueba antes de construirlos.
+
+**PROPUESTA (v1.68) — Quizá, como opción o logro:** el impostor adivina la palabra si lo atrapan (opción), rol Bufón (gana si lo votan; opción o logro), pulgar a cada carta (pide tabla nueva), revisar el mazo antes de jugar (opción), segundo al mando (pide permisos en la base), invitar por WhatsApp y Duelo de respuestas. Ninguna se construye sin aprobación de Elías.
+
+**DESCARTADO (v1.68, Elías, 27 de noviembre):** aviso de equilibrio de impostores (el configurador ya limita cuántos caben), relevo del anfitrión, palabra clave por equipos y revoto en empate: se queda la regla de v1.57, con empate nadie sale.
 
 ---
 
@@ -1784,6 +1801,9 @@ Decisiones del usuario del 12 de noviembre de 2026:
 
 ## v1.6
 - Primeros logros (14.2), con ámbito de sesión o histórico (ver DECISIÓN v1.6 en 14.2).
+
+## v1.68
+- 27 nov 2026. Ideas revisadas de otros juegos de fiesta (6A.13): Elías marcó 22 ideas. Hechas sin publicar: sin repetir cartas entre noches, gráfica de votos en la TV, voto secreto en ¿Quién es más probable?, emotes al revelar y base despierta. Juegos nuevos con reglas pendientes; siete en PROPUESTA; cuatro descartadas, entre ellas el revoto en empate (sigue v1.57).
 
 ## v1.67
 - 27 nov 2026. Tienda completa (13.1, DECISIÓN v1.67): 18 comodines a la venta y en sobres, reposición de cartas, personajes en venta por saga y directo, premios por nivel con personajes del grupo que más usas. Migraciones 050, 051 y 052; la 035 queda sin aplicar. Decisiones de Elías.

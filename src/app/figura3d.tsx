@@ -6,7 +6,7 @@ import type { FiguraV2 } from "../content/personaje";
 import { paramsEscena } from "./preferencias";
 import { alPedirGesto, animacionDe, esGesto, terminarGesto } from "./animaciones";
 import { alPedirPoder } from "./poderes";
-import { PRIORIDAD_VIDA, animPerfil, perfilDe, soloApariencia, type Contexto } from "./perfiles";
+import { PRIORIDAD_VIDA, animPerfil, perfilEfectivo, soloApariencia, type Contexto } from "./perfiles";
 import { alVida, nombreVida, useVidaPerfil } from "./vidaPerfil";
 import { conForma, useVersionFormas } from "./formas";
 import { catalogoParaEscena, modoCorteV3, paraEscena, useCatalogoV3, useEscenaV3, type CatalogoV3 } from "../personajes/integracion";
@@ -399,7 +399,7 @@ export function FiguraViva({ figura, semilla, zona = "completa", mando, classNam
     return () => removeEventListener("message", f);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-  const perfil = vida ? perfilDe(figura) : null;
+  const perfil = vida ? perfilEfectivo(figura) : null;
   const firma = (figura ? huella(figura) : "s" + semilla) + (vida ?? "");
   useEffect(() => { if (listo) mandar(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [listo, firma]);
   useVidaPerfil({ activo: listo && !!vida, perfil, contexto: vida ?? "partida", id: "yo", enviar, hay: n => bib.current.has(n), ocupadoHasta: ocupado });

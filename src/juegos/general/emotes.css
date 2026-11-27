@@ -1,0 +1,13 @@
+/* Emotes al revelar (em-). Color de quien lo mandó en --em. */
+.D .em-barra { display: flex; flex-wrap: wrap; justify-content: center; gap: .4em; margin-top: .6em; }
+.D .em-btn { width: 2.6em; height: 2.6em; font-size: 1.3em; line-height: 1; display: grid; place-items: center; background: color-mix(in srgb, var(--tinta) 70%, transparent);
+  border: 2px solid var(--borde-luz); border-radius: 50%; cursor: pointer; transition: transform .12s; }
+.D .em-btn:active { transform: scale(.88); }
+.D .em-btn.salio { animation: emBrinca .35s ease-out; }
+@keyframes emBrinca { 50% { transform: scale(1.3) rotate(-8deg); } }
+.D .em-capa { position: fixed; inset: 0; z-index: 40; pointer-events: none; overflow: hidden; }
+.D .em-vuela { position: absolute; bottom: 6%; display: flex; flex-direction: column; align-items: center; gap: .1em; translate: -50% 0; animation: emSube 2.6s ease-out forwards; }
+.D .em-vuela b { font-size: 4.2em; line-height: 1; filter: drop-shadow(0 4px 0 rgba(10, 16, 48, .5)); }
+.D .em-vuela small { padding: .1em .6em; font: 800 .9em/1.2 var(--letra-cuerpo); color: #fff; background: var(--em); border: 2px solid var(--tinta); border-radius: var(--radio-pildora); }
+@keyframes emSube { 0% { opacity: 0; transform: translateY(30px) scale(.6); } 15% { opacity: 1; transform: translateY(0) scale(1.1); } 100% { opacity: 0; transform: translateY(-55vh) scale(1); } }
+@media (prefers-reduced-motion: reduce) { .D .em-vuela { animation: emFunde 2.6s linear forwards; } @keyframes emFunde { 80% { opacity: 1; } 100% { opacity: 0; } } }

@@ -15,7 +15,9 @@ import { baseGenerica, conMovimientos, type BaseGenerica } from "./movimientos";
 import { leerFigura } from "./figura";
 import { caretaEn, conEspecialAlSalir, cuantasFormas, figuraEnForma, type Careta } from "./formas";
 import { cargarIndice, type Indice } from "./indice";
-import { poderesDeFicha, resolver, type Catalogo } from "./plano";
+import { movimientosDeFicha, poderesDeFicha, resolver, type Catalogo } from "./plano";
+import { SETS } from "./sets";
+import { PERFIL_PERSONAJE, type PerfilPersonaje } from "./caracter";
 import type { FiguraV3, Plano } from "./tipos";
 export type { FiguraV3 } from "./tipos";
 
@@ -273,6 +275,35 @@ export function poderesDe(f: unknown, cat: CatalogoV3 | null): { id: string; nom
   if (!v3 || !cat || v3.origen.tipo !== "catalogo") return [];
   const en = cat.catalogo.get(v3.origen.personaje);
   return en ? poderesDeFicha(en.ficha, en.base, cat.catalogo).map(p => ({ id: p.id, nombre: p.nombre })) : [];
+}
+
+// ---------- Personalidad por defecto (Elías, 27 nov: «personalidad a todos los personajes, a los que sean similares») ----------
+
+/** El perfil de conducta que trae el personaje de la figura (src/personajes/caracter.ts). null si no tiene. */
+export function perfilDelPersonaje(f: unknown): PerfilPersonaje | null {
+  const v3 = leerV3(f);
+  return v3 && v3.origen.tipo === "catalogo" ? PERFIL_PERSONAJE[v3.origen.personaje] ?? null : null;
+}
+
+// ---------- Sets de movimientos (Elías, 27 nov: «que todos los personajes tengan su set de movimientos generales») ----------
+
+/** Los movimientos de la rueda, por set (a lo más 8 sets y 8 movimientos en cada uno): primero sus sets propios, luego
+ *  los de todos (bailes y burlas, pelea, festejos, reacciones). */
+export interface SetRueda { set: string; nombre: string; movs: { id: string; nombre: string }[] }
+export function movimientosDe(f: unknown, cat: CatalogoV3 | null): SetRueda[] {
+  const v3 = leerV3(f);
+  if (!v3 || !cat || v3.origen.tipo !== "catalogo") return [];
+  const en = cat.catalogo.get(v3.origen.personaje);
+  if (!en) return [];
+  const fuera: SetRueda[] = [];
+  for (const m of movimientosDeFicha(en.ficha, cat.catalogo)) {
+    const i = m.id.indexOf("-"), sid = m.id.slice(0, i), def = SETS[sid];
+    if (!def?.movs[m.id.slice(i + 1)]?.rueda) continue;
+    let g = fuera.find(x => x.set === sid);
+    if (!g) { if (fuera.length >= 8) continue; fuera.push(g = { set: sid, nombre: def.nombre, movs: [] }); }
+    if (g.movs.length < 8) g.movs.push({ id: m.id, nombre: m.nombre });
+  }
+  return fuera;
 }
 
 // Tienda y álbum de personajes (fuera de la zona): entran por aquí, igual que el resto de la app.

@@ -142,6 +142,8 @@ export function TrazosGesto({ cual }: { cual: string }) {
   if (cual === "transformar") return <Minifig bi={20} bd={-20} extra={<><path {...trazo} d="M3.4 9.2a8.6 8.6 0 0 1 4-6.4M2.4 5.4l1 3.9 3.6-1.6" /><path {...trazo} d="M20.6 14.8a8.6 8.6 0 0 1-4 6.4M21.6 18.6l-1-3.9-3.6 1.6" /></>} />;
   // Poderes: brazos al frente y una estrella de energía.
   if (cual === "poderes" || cual.startsWith("poder:")) return <Minifig bi={70} bd={-70} cabeza={-4} extra={<path fill="#fff" stroke={TINTA} strokeWidth={0.7} strokeLinejoin="round" d="M12 .3l1 2.2 2.4.2-1.8 1.6.6 2.3L12 5.4 9.8 6.6l.6-2.3L8.6 2.7l2.4-.2Z" />} />;
+  // Movimientos: una pierna arriba y los brazos abiertos (baile), con dos notas.
+  if (cual === "movimientos" || cual.startsWith("mov:")) return <Minifig bi={110} bd={-40} pi={30} pd={-4} extra={<><path {...trazo} d="M2.4 3.2v3.4M2.4 3.2l2.2-.6v3" /><circle cx={1.8} cy={6.8} r={0.7} fill="#fff" stroke={TINTA} strokeWidth={0.6} /></>} />;
   // Especial: golpe al frente con un rayo saliendo del puño.
   return <Minifig bi={58} bd={-96} cabeza={-4} pi={6} pd={-4} extra={<path fill="#fff" stroke={TINTA} strokeWidth={0.7} strokeLinejoin="round" d="M21.2 5.2l2.4.2-1.6 2.3 1.6.1-3.2 3.6.9-2.6-1.5-.1Z" />} />;
 }
@@ -160,5 +162,17 @@ const COLORES_PODER: [string, string][] = [["#4fd8ff", "#1479c9"], ["#ff7a59", "
 export const gajosPoder = (lista: { id: string; nombre: string }[]): GestoRueda[] => lista.slice(0, 8).map((p, i) => {
   const [c1, c2] = COLORES_PODER[i % COLORES_PODER.length]!;
   return { cual: "poder:" + p.id, txt: p.nombre, c1, c2, dibujo: <TrazosGesto cual="poder:" /> };
+});
+export const GAJO_MOVIMIENTOS: GestoRueda = { cual: "movimientos", txt: "Movimientos", c1: "#ffb347", c2: "#e06a00", dibujo: <TrazosGesto cual="movimientos" /> };
+const COLORES_MOV: [string, string][] = [["#ffb347", "#e06a00"], ["#ff8fd8", "#c2368f"], ["#7fe0c8", "#1f9e80"], ["#c8b6ff", "#6f4fd6"]];
+/** Un gajo por set de movimientos (segunda rueda de «Movimientos»). */
+export const gajosSet = (lista: { set: string; nombre: string }[]): GestoRueda[] => lista.slice(0, 8).map((g, i) => {
+  const [c1, c2] = COLORES_MOV[i % COLORES_MOV.length]!;
+  return { cual: "set:" + g.set, txt: g.nombre, c1, c2, dibujo: <TrazosGesto cual="movimientos" /> };
+});
+/** Un gajo por movimiento de un set (tercera rueda). */
+export const gajosMovimiento = (lista: { id: string; nombre: string }[]): GestoRueda[] => lista.slice(0, 8).map((m, i) => {
+  const [c1, c2] = COLORES_MOV[i % COLORES_MOV.length]!;
+  return { cual: "mov:" + m.id, txt: m.nombre, c1, c2, dibujo: <TrazosGesto cual="mov:" /> };
 });
 export const GAJO_TRANSFORMAR: GestoRueda = { cual: "transformar", txt: "Transformar", c1: "#c77dff", c2: "#7b2cbf", dibujo: <TrazosGesto cual="transformar" /> };

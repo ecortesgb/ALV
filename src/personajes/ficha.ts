@@ -98,6 +98,25 @@ export function leerFicha(x: unknown, opciones: { rutasLibres?: boolean } = {}):
     poderes = { glb: p.glb as string, clips };
   }
 
+  // Bloque opcional `sets` (Elías, 27 nov 2026): sets de movimientos que aloja este personaje (a lo más 12, de 16 clips).
+  let sets: Ficha["sets"];
+  if (f.sets != null) {
+    sets = {};
+    const lista = typeof f.sets === "object" ? Object.entries(f.sets as Record<string, unknown>) : [];
+    if (!lista.length || lista.length > 12) e.push("sets");
+    for (const [k, v] of lista.slice(0, 12)) {
+      const s = (v ?? {}) as Record<string, unknown>, clips: Record<string, string> = {};
+      if (!/^[a-z][a-z0-9]{0,15}$/.test(k) || !okRuta(s.glb) || String(s.glb) !== `${String(f.id)}-set-${k}.glb`) { e.push("sets." + k.slice(0, 16)); continue; }
+      const movs = Object.entries((s.clips ?? {}) as Record<string, unknown>);
+      if (!movs.length || movs.length > 16) e.push(`sets.${k}.clips`);
+      for (const [m, c] of movs.slice(0, 16)) {
+        if (!/^[a-z][a-z0-9-]{0,15}$/.test(m) || !clip(c)) { e.push(`sets.${k}.clips.${m.slice(0, 16)}`); continue; }
+        clips[m] = c;
+      }
+      sets[k] = { glb: s.glb as string, clips };
+    }
+  }
+
   if (e.length) return { ok: false, errores: e };
   return {
     ok: true,
@@ -114,6 +133,7 @@ export function leerFicha(x: unknown, opciones: { rutasLibres?: boolean } = {}):
       calidad: { estado: cal.estado as Ficha["calidad"]["estado"], notas: typeof cal.notas === "string" ? cal.notas.slice(0, 300) : undefined },
       ...(juego ? { juego } : {}),
       ...(poderes ? { poderes } : {}),
+      ...(sets ? { sets } : {}),
     },
   };
 }
