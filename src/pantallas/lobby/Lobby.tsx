@@ -130,7 +130,8 @@ export function Lobby({ sala, miembros, yo, soyAnfitrion, final, red, refrescar,
   );
 
   // «Agregar jugador» en el primer lugar libre (hasta 8). En Local: con cuenta, cuenta existente o sin cuenta.
-  // En línea (Elías, 27 nov): crea un personaje rápido que entra a esta sala; esa persona juega desde su celular con su UsuarioN.
+  // En línea (Elías, 27 nov): crea un personaje rápido que entra a esta sala. Si entra con su UsuarioN en su celular juega ahí;
+  // si no, juega en el celular del anfitrión (se le pasa el turno).
   const agregaEnLinea = !local && soyAnfitrion && hayNube;
   const libreLocal = (local || agregaEnLinea) && soyAnfitrion ? (i: number) => (i === miembros.length && miembros.length < CUPO_LOBBY
     ? <button type="button" className="lb-agregar" onClick={() => setEditar(agregaEnLinea ? { tipo: "rapido" } : hayNube ? { tipo: "elegir" } : { tipo: "nuevo" })}><b><span>＋</span>Agregar jugador</b></button> : null) : undefined;
@@ -144,7 +145,7 @@ export function Lobby({ sala, miembros, yo, soyAnfitrion, final, red, refrescar,
     setCreando(true); setErrorRapido(null);
     // En línea la cuenta nueva entra directo a esta sala; en Local, a su sala espejo.
     const espejo = local ? await asegurarEspejo(sala) : { id: sala.id, codigo: sala.codigo };
-    const r = espejo ? await crearPersonajeRapido(d.nombre, d.figura, espejo) : "No se pudo conectar con el servidor. Intenta otra vez o agrégalo sin cuenta.";
+    const r = espejo ? await crearPersonajeRapido(d.nombre, d.figura, espejo, !local) : "No se pudo conectar con el servidor. Intenta otra vez o agrégalo sin cuenta.";
     setCreando(false);
     if (typeof r === "string") { setErrorRapido(r); return; }
     if (local && !modoLocal.agregarCuenta(sala, { id: r.id, nombre: d.nombre, figura: r.figura, cuenta: "rapida", genero: d.genero })) aviso("No se pudo agregar (máximo 8).");

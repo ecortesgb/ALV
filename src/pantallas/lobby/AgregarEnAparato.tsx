@@ -84,7 +84,7 @@ export function DatosAcceso({ p, alListo, enLinea }: { p: PersonajeRapido; alLis
         <div><dt>Contraseña</dt><dd>{p.clave}</dd></div>
         <div><dt>Código de recuperación</dt><dd>{codigoLegible(p.codigo)}</dd></div>
       </dl>
-      {enLinea && <p className="pl-nota fuerte">Ya está en el lobby. Para jugar, entra con estos datos en su celular y abre ¡Jugar!</p>}
+      {enLinea && <p className="pl-nota fuerte">Ya está en el lobby. Si entra con estos datos en su celular, juega ahí. Si no, juega en el tuyo: te pide pasarle el celular en su turno.</p>}
       <p className="pl-nota">Con usuario y contraseña entra desde su celular a ver lo que ganó y a cambiar su contraseña. Si la olvida, el código le deja poner una nueva.</p>
       <label className="pl-check"><input type="checkbox" checked={guardado} onChange={e => setGuardado(e.target.checked)} /><span>Ya lo guardé</span></label>
       <button type="button" className="pl-listo" disabled={!guardado} onClick={alListo}>Listo</button>
