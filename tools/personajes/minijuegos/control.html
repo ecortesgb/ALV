@@ -38,10 +38,9 @@ input{font:800 18px Nunito,sans-serif;padding:10px 12px;border-radius:12px;borde
 #salto.duelo #salto-accion{font-size:clamp(30px,11vw,80px)}
 #salto.toca{transform:translateY(8px);box-shadow:0 2px 0 var(--borde)}
 /* Letra estilo Xbox del botón del minijuego (A salta, B golpea, RT dispara). */
-.letra{display:flex;align-items:center;justify-content:center;width:clamp(64px,20vw,96px);height:clamp(64px,20vw,96px);border-radius:50%;
-  background:radial-gradient(circle at 50% 30%,#3a3f4d,#14161d 70%);border:4px solid #05081a;box-shadow:0 4px 0 #05081a;
-  font:900 clamp(34px,11vw,54px)/1 Nunito,system-ui,sans-serif;color:#5fd34b;text-shadow:none}
-.letra.b{color:#e8343a}.letra.rt{border-radius:22px 22px 14px 14px;width:clamp(84px,26vw,120px);color:#fff;font-size:clamp(28px,9vw,44px)}
+.letra{display:block;width:clamp(72px,22vw,110px);height:clamp(72px,22vw,110px);background:url(../../../arte/ui/mando/x-a.webp) center/contain no-repeat;
+  font-size:0;color:transparent;filter:drop-shadow(0 5px 0 rgba(5,8,26,.8))}
+.letra.b{background-image:url(../../../arte/ui/mando/x-b.webp)}.letra.rt{background-image:url(../../../arte/ui/mando/x-rt.webp);height:clamp(86px,26vw,128px)}
 #salto small{font:800 16px Nunito,sans-serif;text-shadow:none;opacity:.85}
 #salto.fuera{filter:grayscale(1) brightness(.6)}
 #salto.espera{filter:saturate(.3) brightness(.75)}
@@ -52,19 +51,21 @@ input{font:800 18px Nunito,sans-serif;padding:10px 12px;border-radius:12px;borde
 #mando{flex:1;position:relative;margin-top:10px}
 .zona-palanca{position:absolute;left:0;top:0;bottom:0;width:58%}
 .palanca{position:absolute;width:140px;height:140px;margin:-70px 0 0 -70px;border-radius:50%;border:4px solid rgba(255,255,255,.5);background:rgba(10,16,48,.45)}
-.palanca i{position:absolute;left:50%;top:50%;width:62px;height:62px;margin:-31px 0 0 -31px;border-radius:50%;background:var(--yo);border:4px solid var(--borde);box-shadow:0 4px 0 var(--borde)}
+.palanca i{position:absolute;left:50%;top:50%;width:84px;height:84px;margin:-42px 0 0 -42px;border-radius:50%;background:url(../../../arte/ui/mando/x-stick.webp) center/contain no-repeat;filter:drop-shadow(0 4px 0 rgba(5,8,26,.8))}
 /* Mando estilo Xbox (Elías, 27 nov): solo los botones que hacen algo. A salta, B golpe, RT poder (movimiento especial),
    y ¡Eh! (festejo) chico. X (patada) y Y (transformación) se agregan cuando existan sus movimientos. */
 .botones{position:absolute;right:4px;bottom:16px;width:min(50vw,250px);height:min(50vw,250px)}
 .botones button{position:absolute;border-radius:50%;border:4px solid #05081a;box-shadow:0 6px 0 #05081a,inset 0 -6px 10px rgba(0,0,0,.45);
   background:radial-gradient(circle at 50% 30%,#3a3f4d,#14161d 70%);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:0}
 .botones button b{font:900 clamp(26px,9vw,44px)/1 Nunito,system-ui,sans-serif;text-shadow:0 2px 0 rgba(0,0,0,.6)}
-.botones button small{font:800 11px/1 Nunito,sans-serif;color:#dfe4ff;letter-spacing:.04em;text-transform:uppercase}
-.botones button:active,.botones button.toca{transform:translateY(5px);box-shadow:0 1px 0 #05081a,inset 0 -3px 8px rgba(0,0,0,.45)}
-.x-a{width:38%;height:38%;left:31%;bottom:0}.x-a b{color:#5fd34b}
-.x-b{width:38%;height:38%;right:0;top:31%}.x-b b{color:#e8343a}
-.x-rt{width:42%!important;height:24%!important;right:2%;top:-6%;border-radius:22px 22px 14px 14px!important;background:linear-gradient(#4a4f5e,#1d2029)!important}
-.x-rt b{font-size:clamp(20px,6vw,28px)!important;color:#fff}
+.botones button small{position:absolute;bottom:-18px;left:-20%;right:-20%;font:800 11px/1 Nunito,sans-serif;color:#dfe4ff;letter-spacing:.04em;text-transform:uppercase;text-align:center}
+.botones button:active,.botones button.toca{transform:translateY(4px) scale(.96);filter:brightness(.85)}
+/* Botones con el arte de Elías (recortado de su hoja, sin fondo): public/arte/ui/mando/x-*.webp */
+.botones .img{background-color:transparent!important;background-position:center!important;background-size:contain!important;background-repeat:no-repeat!important;border:0!important;box-shadow:none!important;filter:drop-shadow(0 5px 0 rgba(5,8,26,.8))}
+.botones .img b{display:none}
+.botones .x-a{width:38%;height:38%;left:31%;bottom:0;background-image:url(../../../arte/ui/mando/x-a.webp)!important}
+.botones .x-b{width:38%;height:38%;right:0;top:31%;background-image:url(../../../arte/ui/mando/x-b.webp)!important}
+.botones .x-rt{width:34%!important;height:38%!important;right:6%;top:-14%;border-radius:0!important;background-image:url(../../../arte/ui/mando/x-rt.webp)!important}
 .x-eh{width:24%;height:24%;left:4%;top:8%}.x-eh b{font-size:clamp(14px,4.5vw,20px)!important;color:#ffcf2e}
 /* Sala de Físico */
 #fisico{flex:1;display:flex;flex-direction:column;gap:8px;min-height:0;margin-top:8px}
@@ -120,10 +121,10 @@ input{font:800 18px Nunito,sans-serif;padding:10px 12px;border-radius:12px;borde
     <div class="girar oculto" id="girar">Gira tu celular para jugar más cómodo ⟳</div>
     <div class="zona-palanca" id="zona"><div class="palanca" id="palanca"><i id="bolita"></i></div></div>
     <div class="botones">
-      <button class="x-rt" data-b="poder" aria-label="RT: poder"><b>RT</b><small>Poder</small></button>
+      <button class="x-rt img" data-b="poder" aria-label="RT: poder"><b>RT</b><small>Poder</small></button>
       <button class="x-eh" data-b="festejo" aria-label="Festejo"><b>¡Eh!</b></button>
-      <button class="x-b" data-b="golpe" aria-label="B: golpe"><b>B</b><small>Golpe</small></button>
-      <button class="x-a" data-b="saltar" aria-label="A: salta"><b>A</b><small>Salta</small></button>
+      <button class="x-b img" data-b="golpe" aria-label="B: golpe"><b>B</b><small>Golpe</small></button>
+      <button class="x-a img" data-b="saltar" aria-label="A: salta"><b>A</b><small>Salta</small></button>
     </div>
   </div>
   <section id="fisico" class="oculto">
