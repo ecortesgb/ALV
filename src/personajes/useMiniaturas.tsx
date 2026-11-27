@@ -47,11 +47,11 @@ export function useMiniaturas(url: string | null, catalogo: Catalogo) {
     ref.current?.contentWindow?.postMessage({ origen: "alv", tipo: "foto", clave: pz.id, plano, ver: ranurasFoto(pz), tam: 192, pose: "union" }, location.origin);
   };
   /** Foto de la figura completa (los nichos de «Mi colección»): todas las ranuras, del mismo tamaño y en un cuadro de su movimiento especial. */
-  const pedirFigura = (clave: string, plano: Plano) => {
+  const pedirFigura = (clave: string, plano: Plano, pose: "especial" | "reposo" = "especial") => {
     if (!url || !listo || fotos.has(clave) || pedidas.current.has(clave)) return;
     pedidas.current.add(clave);
     setTimeout(() => { if (!fotos.has(clave)) { fotos.set(clave, null); setVersion(v => v + 1); } }, 12000);
-    ref.current?.contentWindow?.postMessage({ origen: "alv", tipo: "foto", clave, plano, ver: RANURAS_FIGURA, tam: 384, pose: "especial" }, location.origin);
+    ref.current?.contentWindow?.postMessage({ origen: "alv", tipo: "foto", clave, plano, ver: RANURAS_FIGURA, tam: 384, pose }, location.origin);
   };
   const fotoDe = (clave: string): string | null | undefined => (!url || (caido && !listo) ? fotos.get(clave) ?? null : fotos.get(clave));
   /** url lista, null si falló (usar la foto del donante) o undefined si aún no llega. */

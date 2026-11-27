@@ -3,6 +3,7 @@
 // catálogo: cada ranura de cada personaje (su cabeza, su torso, su pelo…) es una pieza. Funciones puras.
 import { deCatalogo } from "./figura";
 import { resolver, type Catalogo } from "./plano";
+import { CABEZAS_CON_CARA, DONANTES_FUERA } from "./cabezas";
 import type { Carga, FiguraV3, Id, Parte, PiezaPlano, Plano } from "./tipos";
 
 /** Ranura del GLB (extras.slot) que cambia cada parte. */
@@ -64,7 +65,7 @@ export const BASE_CREAR = "peter-parker";
 /** Piezas sacadas del catálogo: una por cada parte que el personaje trae (según `ranuras` del índice). */
 export function piezasDeCatalogo(catalogo: Catalogo, ranuras: ReadonlyMap<Id, readonly string[]>): Map<Id, PiezaCons> {
   const fuera = new Map<Id, PiezaCons>();
-  for (const p of OPCIONALES) fuera.set(sinId(p), { id: sinId(p), nombre: "Sin " + p, parte: p, glb: "", ranuras: [RANURA[p]!], foto: null, donante: null, familia: null, origen: "ninguna", grupo: "" });
+  for (const p of [...OPCIONALES, "cara" as Parte]) fuera.set(sinId(p), { id: sinId(p), nombre: "Sin " + p, parte: p, glb: "", ranuras: [RANURA[p]!], foto: null, donante: null, familia: null, origen: "ninguna", grupo: "" });
   for (const { ficha: f, base } of catalogo.values()) {
     if (f.familia !== "minifig") continue;
     const tiene = new Set(ranuras.get(f.id) ?? []);
@@ -72,6 +73,10 @@ export function piezasDeCatalogo(catalogo: Catalogo, ranuras: ReadonlyMap<Id, re
     const foto = /\.(webp|png|jpg)$/i.test(f.fotos.busto) && !/no-hay/.test(f.fotos.busto) ? new URL(f.fotos.busto, base).href : null;
     for (const [parte, ranura] of Object.entries(RANURA) as [Parte, string][]) {
       if (!tiene.has(ranura)) continue;
+      // LDraw trae la capa dentro del torso: ese torso no se ofrece hasta que la capa venga en su propia ranura
+      // (Elías, 2026-11-27: «en torso no debe haber capas, esas van en accesorios»).
+      // Su cabeza tampoco arma sobre otra figura todavía (la foto y la pieza fallan en el motor).
+      if ((parte === "torso" || parte === "cabeza") && f.origen.fuente === "ldraw") continue;
       const id = `${f.id}--${parte}`;
       fuera.set(id, { id, nombre: f.nombre, parte, glb, ranuras: [ranura], foto: parte === "cabeza" || parte === "cara" || parte === "cabello" || parte === "sombrero" ? foto
         : (/\.(webp|png|jpg)$/i.test(f.fotos.tarjeta) && !/no-hay/.test(f.fotos.tarjeta) ? new URL(f.fotos.tarjeta, base).href : null), donante: f.id, familia: f.familia, origen: "original", grupo: f.grupo });
@@ -93,8 +98,28 @@ export const PIEZAS_FUERA: ReadonlyMap<Id, string> = new Map([
 
 /** Piezas de una parte para esa familia, ordenadas por nombre, con «Sin …» primero si la parte es opcional. */
 export function piezasDe(piezas: Piezas, parte: Parte, familia: Id = "minifig"): PiezaCons[] {
-  const l = [...piezas.values()].filter(p => p.parte === parte && deFamilia(p, familia) && !PIEZAS_FUERA.has(p.id));
+  const l = [...piezas.values()].filter(p => p.parte === parte && deFamilia(p, familia) && !PIEZAS_FUERA.has(p.id) && !(p.donante && DONANTES_FUERA.has(p.donante))
+    && !(parte === "cara" && p.origen === "ninguna")); // «Sin cara» solo lo pone una máscara, no se elige
   return l.sort((a, b) => (a.donante ? 1 : 0) - (b.donante ? 1 : 0) || a.nombre.localeCompare(b.nombre, "es"));
+}
+
+/** ¿Es una cabeza con la cara o una máscara impresa? (van en «Máscaras», no en Piel). */
+export const esMascara = (pz: PiezaCons | undefined) => !!pz && pz.parte === "cabeza" && !!pz.donante && CABEZAS_CON_CARA.has(pz.donante);
+
+/** Piel: una cabeza lisa del color elegido (Elías, 2026-11-27: «en piel solo debe salir la cabeza y elegir el color»).
+ *  Si la cabeza puesta es lisa se tiñe esa; si es una máscara, se cambia por la lisa del civil base, y la cara vuelve. */
+export function ponerPiel(f: FiguraV3, color: Id | null, todas: Piezas): FiguraV3 {
+  const base = f.origen.tipo === "catalogo" ? f.origen.personaje : BASE_CREAR;
+  const piezas = { ...f.piezas };
+  let id = piezas.cabeza?.id ?? `${base}--cabeza`;
+  const pz = todas.get(id);
+  if (!pz || esMascara(pz)) id = `${BASE_CREAR}--cabeza`;
+  if (color) piezas.cabeza = { id, tintes: { piel: color } };
+  else if (id === `${base}--cabeza`) delete piezas.cabeza;
+  else piezas.cabeza = { id };
+  const cara = piezas.cara?.id;
+  if (cara === sinId("cara") || (!cara && !todas.has(`${base}--cara`))) piezas.cara = { id: `${BASE_CREAR}--cara` };
+  return { ...f, piezas };
 }
 
 /** Figura de partida de «Crear mi personaje»: el civil base tal cual, sin piezas cambiadas. */
@@ -114,6 +139,12 @@ export function ponerPieza(f: FiguraV3, pz: PiezaCons, todas?: Piezas): FiguraV3
   piezas[pz.parte] = antes?.tintes && pz.origen !== "original" ? { id: pz.id, tintes: { ...antes.tintes } } : { id: pz.id };
   const otra = ESTORBA[pz.parte];
   if (otra && pz.glb) piezas[otra] = { id: sinId(otra) };
+  // Una máscara (cabeza con la cara impresa) se pone con la cara de su personaje, o sin cara: no se enciman.
+  if (esMascara(pz) && todas) {
+    piezas.cara = { id: todas.has(`${pz.donante}--cara`) ? `${pz.donante}--cara` : sinId("cara") };
+    // Y con su pelo, o sin pelo si su personaje no trae (Spider-Man): el pelo no se encima sobre la máscara.
+    if (!piezas.sombrero || piezas.sombrero.id === sinId("sombrero")) piezas.cabello = { id: todas.has(`${pz.donante}--cabello`) ? `${pz.donante}--cabello` : sinId("cabello") };
+  }
   if (pz.parte === "cara" && pz.origen === "original" && pz.donante && todas) {
     const piel = piezas.cabeza, generica = piel && todas.get(piel.id)?.origen === "generica";
     const base = f.origen.tipo === "catalogo" ? f.origen.personaje : BASE_CREAR;

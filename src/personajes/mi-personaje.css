@@ -74,3 +74,11 @@
   .D .mp-mueble { width: 100%; }
   .D .mp-nicho-menu .d-btn { font-size: 12px; }
 }
+
+/* Estrella: elegir el personaje principal sin entrar al taller (Elías, 2026-11-27). */
+.D .mp-estrella { position: absolute; right: 4%; top: 3%; z-index: 2; width: clamp(30px, 3.4vw, 44px); height: clamp(30px, 3.4vw, 44px); padding: 0;
+  border-radius: 50%; border: 2.5px solid var(--ink); background: rgba(255, 250, 235, .92); color: var(--ink); font-size: clamp(18px, 2.2vw, 28px);
+  line-height: 1; cursor: pointer; box-shadow: 0 3px 0 var(--ink); }
+.D .mp-estrella.on { background: var(--yel); cursor: default; }
+.D .mp-estrella:not(.on):hover { transform: translateY(-2px); }
+.D .mp-estrella:focus-visible { outline: 3px solid var(--yel); outline-offset: 2px; }

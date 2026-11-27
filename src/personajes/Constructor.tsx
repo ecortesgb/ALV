@@ -6,7 +6,8 @@
 // Torso, Brazos, Piernas, Accesorios y Movimientos (saludar, ganar, perder, especial; de un personaje o genéricos).
 // Va dentro de <RaizDS className="az">. Entrada: la página del HUB se voltea; «Atrás»: se voltea de regreso y luego sale.
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type PointerEvent as PE } from "react";
-import { PALETAS, paletaDePieza, piezasDe, planoConstructor, ponerPieza, quitarTinte, teñir, type PiezaCons, type Piezas } from "./constructorDatos";
+import { esMascara, PALETAS, paletaDePieza, piezasDe, planoConstructor, ponerPiel, ponerPieza, quitarTinte, teñir, type Color, type PiezaCons, type Piezas } from "./constructorDatos";
+import { VERSION_MINIFIG } from "./cabezas";
 import { caben, paginas } from "./galeriaDatos";
 import { GRUPOS_GENERICAS } from "./genericas";
 import { esOtros, grupoMostrado, juntarVersiones, nombreBase } from "./agrupar";
@@ -24,7 +25,7 @@ import "./constructor.css";
 
 /** Secciones del editor (pedido de Elías, 2026-11-26: orden del «Armario» del Centro de Mando GB, en viñetas de cómic). */
 type Pestana = "trajes" | "cabeza" | "torso" | "brazos" | "piernas" | "accesorios" | "movimientos";
-type Sub = Parte | Gesto | "traje";
+type Sub = Parte | Gesto | "traje" | "mascara";
 const ARTE = `${import.meta.env.BASE_URL}arte/`;
 /** Una url() dentro de una variable CSS se resuelve contra la hoja de estilos (assets/), no contra la página: con la base
  *  "./" de lo publicado se rompía. Se pasa ya absoluta. */
@@ -38,11 +39,11 @@ const LOSAS: { id: Pestana; titulo: string; cartela: string; c1: string; c2: str
   { id: "accesorios", titulo: "Accesorios", cartela: "Capítulo 5: el equipo", c1: "#ff8fb3", c2: "#d6246a", lab: "#8c1242", ico: "ico-accesorios" },
   { id: "movimientos", titulo: "Movimientos", cartela: "Capítulo 6: movimientos especiales", c1: "#ffe066", c2: "#e0a400", lab: "#8a6200", ico: "ico-efectos" },
 ];
-const NOMBRE_SUB: Record<string, string> = { traje: "Traje completo", cabeza: "Piel", cara: "Cara", cabello: "Pelo", torso: "Torso", brazos: "Brazos", manos: "Manos", cadera: "Cadera", piernas: "Piernas",
+const NOMBRE_SUB: Record<string, string> = { traje: "Traje completo", cabeza: "Piel", cara: "Cara", mascara: "Máscaras", cabello: "Pelo", torso: "Torso", brazos: "Brazos", manos: "Manos", cadera: "Cadera", piernas: "Piernas",
   accesorio: "Capas y objetos", sombrero: "Cascos", ...NOMBRE_GESTO };
 const NOMBRE_PALETA = { piel: "Piel", pelo: "Pelo", ropa: "Color" } as const;
-/** Sub-partes de cada sección, en el orden en que salen (la cabeza: piel, cara y pelo). */
-const SUBPARTES: Record<Pestana, Sub[]> = { trajes: ["traje"], cabeza: ["cabeza", "cara", "cabello"], torso: ["torso"], brazos: ["brazos", "manos"], piernas: ["piernas", "cadera"],
+/** Sub-partes de cada sección, en el orden en que salen (la cabeza: piel, cara, máscaras y pelo). */
+const SUBPARTES: Record<Pestana, Sub[]> = { trajes: ["traje"], cabeza: ["cabeza", "cara", "mascara", "cabello"], torso: ["torso"], brazos: ["brazos", "manos"], piernas: ["piernas", "cadera"],
   accesorios: ["accesorio", "sombrero"], movimientos: [...GESTOS] };
 const esGesto = (x: Sub): x is Gesto => (GESTOS as readonly string[]).includes(x);
 /** Sagas de las piezas originales (ficha.grupo), en el orden de los chips. */
@@ -68,7 +69,7 @@ type Fuente = "original" | "generica";
 /** Elemento de la rejilla: pieza o movimiento. */
 /** Elemento de la rejilla: pieza, movimiento o traje completo (un personaje del catálogo tal cual). */
 /** Un traje con varias versiones del mismo personaje sale una vez; al tocarlo se abren sus versiones (Elías, 2026-11-27). */
-type Item = { tipo: "pieza"; pz: PiezaCons } | { tipo: "mov"; op: OpcionMov | null } | { tipo: "volver" }
+type Item = { tipo: "pieza"; pz: PiezaCons } | { tipo: "mov"; op: OpcionMov | null } | { tipo: "volver" } | { tipo: "color"; c: Color | null }
   | { tipo: "traje"; id: Id; nombre: string; grupo: Id; foto: string | null; base?: string; versiones?: Id[] };
 
 /** Ícono ilustrado de Elías (arte/ui/personalizar/<id>.webp); mientras no exista, su lugar queda vacío. */
@@ -101,6 +102,12 @@ export interface ConstructorProps {
 }
 
 const sinMovimiento = () => typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches;
+/** Quita los movimientos elegidos cuando la figura cambia de familia (los de una grande no le sirven a una minifigura). */
+function sinMovimientosSi(si: boolean, f: FiguraV3): FiguraV3 {
+  const alv = f.extensiones.alv;
+  if (!si || !alv?.animaciones?.propias) return f;
+  return { ...f, extensiones: { ...f.extensiones, alv: { ...alv, animaciones: { ...alv.animaciones, propias: {} } } } };
+}
 const fotoValida = (u: string | null | undefined) => !!u;
 
 export function Constructor({ catalogo, piezas, inicial, seccion, escenaUrl, onGuardar, onSalir, base = null, paginaAnterior = `${ARTE}azotea-pedestal-noche-1920.webp`,
@@ -135,7 +142,11 @@ export function Constructor({ catalogo, piezas, inicial, seccion, escenaUrl, onG
   /** La primera figura entra con su saltito; las demás no hacen nada al cambiar una pieza. */
   const [llego, setLlego] = useState(false);
   const salio = useRef(false);
-  const salir = () => { if (!onSalir || volteo === "sale") return; if (!paginaAnterior || sinMovimiento()) onSalir(); else setVolteo("sale"); };
+  const salirYa = () => { if (!onSalir || volteo === "sale") return; if (!paginaAnterior || sinMovimiento()) onSalir(); else setVolteo("sale"); };
+  /** Salir con cambios sin guardar pide confirmación (Elías, 2026-11-27). */
+  const [ultimaGuardada, setUltimaGuardada] = useState(inicial);
+  const [confirmarSalir, setConfirmarSalir] = useState(false);
+  const salir = () => { if (JSON.stringify(figura) !== JSON.stringify(ultimaGuardada)) setConfirmarSalir(true); else salirYa(); };
   const finVolteo = () => {
     if (volteo === "sale") { if (!salio.current) { salio.current = true; onSalir?.(); } } else setVolteo(null);
   };
@@ -156,22 +167,35 @@ export function Constructor({ catalogo, piezas, inicial, seccion, escenaUrl, onG
   const firma = plano ? JSON.stringify(plano) : "";
   const sePuedeGuardar = !!plano && firma === confirmada;
   const gesto = esGesto(sub) ? sub : null;
-  const parte = gesto || sub === "traje" ? null : (sub as Parte);
+  const parte = gesto || sub === "traje" ? null : sub === "mascara" ? "cabeza" : (sub as Parte);
+  /** Figura grande: se usa tal cual. Si tiene versión minifigura (Hulk → Bruce Banner), sus piezas son las de esa versión
+   *  y al elegir una la figura pasa a ser esa (Elías, 2026-11-27). */
+  const idBase = figura.origen.tipo === "catalogo" ? figura.origen.personaje : null;
+  const grande = figura.familia !== "minifig";
+  const pareja = grande && idBase ? VERSION_MINIFIG[idBase] ?? null : null;
+  const familiaPiezas = grande && pareja ? "minifig" : figura.familia;
+  const bloqueada = grande && !pareja && sub !== "traje";
   const movs = useMemo(() => (gesto ? opcionesMovimiento(catalogo, base, gesto, figura.familia) : []), [catalogo, base, gesto, figura.familia]);
   /** Trajes completos originales: cada personaje de la familia, con su foto de tarjeta (pedido de Elías, 2026-11-26). */
-  const trajes = useMemo<Item[]>(() => [...catalogo.values()].filter(e => e.ficha.familia === figura.familia)
+  const trajes = useMemo<Item[]>(() => [...catalogo.values()].filter(e => e.ficha.familia === "minifig" || e.ficha.familia === "bigfig")
     .sort((a, b) => a.ficha.nombre.localeCompare(b.ficha.nombre, "es"))
     .map(({ ficha: f, base: carpeta }) => ({ tipo: "traje" as const, id: f.id, nombre: f.nombre, grupo: f.grupo,
-      foto: /\.(webp|png|jpg)$/i.test(f.fotos.tarjeta) && !/no-hay/.test(f.fotos.tarjeta) ? new URL(f.fotos.tarjeta, carpeta).href : null })), [catalogo, figura.familia]);
+      foto: /\.(webp|png|jpg)$/i.test(f.fotos.tarjeta) && !/no-hay/.test(f.fotos.tarjeta) ? new URL(f.fotos.tarjeta, carpeta).href : null })), [catalogo]);
   /** Trajes a mostrar: uno por personaje (con sus versiones) o, con uno abierto, sus versiones y «Volver». */
   const vistaTrajes = useMemo<Item[]>(() => {
     const solo = trajes as Extract<Item, { tipo: "traje" }>[];
     if (abierto) { const vs = solo.filter(t => nombreBase(t.nombre) === abierto); if (vs.length > 1) return [{ tipo: "volver" }, ...vs.map(v => ({ ...v, nombre: /\(([^)]*)\)\s*$/.exec(v.nombre)?.[1] ?? v.nombre }))]; }
     return juntarVersiones(solo, t => t.nombre).map(j => (j.versiones.length > 1 ? { ...j.rep, nombre: j.base, base: j.base, versiones: j.versiones.map(v => v.id) } : j.rep));
   }, [trajes, abierto]);
-  const todas = useMemo<Item[]>(() => (sub === "traje" ? vistaTrajes : parte ? piezasDe(piezas, parte, figura.familia).map(pz => ({ tipo: "pieza" as const, pz })) : movs.map(op => ({ tipo: "mov" as const, op }))),
-    [sub, vistaTrajes, piezas, parte, figura.familia, movs]);
-  const origenDe = (it: Item) => (it.tipo === "traje" || it.tipo === "volver" ? "original" : it.tipo === "pieza" ? it.pz.origen ?? "original" : it.op?.origen ?? "ninguna");
+  const todas = useMemo<Item[]>(() => {
+    if (sub === "traje") return vistaTrajes;
+    if (bloqueada) return [];
+    // Piel: solo el color de una cabeza lisa (Elías, 2026-11-27); las máscaras van en su propia pestaña.
+    if (sub === "cabeza") return [{ tipo: "color" as const, c: null }, ...PALETAS.piel.map(c => ({ tipo: "color" as const, c }))];
+    if (parte) return piezasDe(piezas, parte, familiaPiezas).filter(pz => (sub === "mascara" ? esMascara(pz) : true)).map(pz => ({ tipo: "pieza" as const, pz }));
+    return movs.map(op => ({ tipo: "mov" as const, op }));
+  }, [sub, vistaTrajes, piezas, parte, familiaPiezas, movs, bloqueada]);
+  const origenDe = (it: Item) => (it.tipo === "traje" || it.tipo === "volver" ? "original" : it.tipo === "pieza" ? it.pz.origen ?? "original" : it.tipo === "mov" ? it.op?.origen ?? "ninguna" : "ninguna");
   const grupoCrudo = (it: Item) => (it.tipo === "traje" ? it.grupo : it.tipo === "pieza" ? it.pz.grupo ?? "" : it.tipo === "mov" ? it.op?.grupo ?? "" : "");
   /** Saga del personaje de donde sale el elemento (traje, pieza original o movimiento original). */
   const sagaDe = (it: Item): Id => {
@@ -201,7 +225,7 @@ export function Constructor({ catalogo, piezas, inicial, seccion, escenaUrl, onG
   const g = grupos.some(x => x.id === grupo) ? grupo : "todas";
   const ninguno: Item | null = gesto ? { tipo: "mov", op: null } : todas.find(it => origenDe(it) === "ninguna") ?? null;
   const lista = useMemo<Item[]>(() => {
-    if (todas[0]?.tipo === "volver") return todas; // versiones de un personaje: todas, sin filtros
+    if (todas[0]?.tipo === "volver" || todas[0]?.tipo === "color") return todas; // versiones de un personaje o colores de piel: sin filtros
     const l = todas.filter(it => origenDe(it) === fuente && (!originales || sg === "todas" || sagaDe(it) === sg) && (g === "todas" || grupoDe(it) === g));
     return ninguno ? [ninguno, ...l] : l;
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -211,10 +235,11 @@ export function Constructor({ catalogo, piezas, inicial, seccion, escenaUrl, onG
   const elegidos = movimientosElegidos(figura);
   const puesta = parte ? figura.piezas[parte]?.id ?? null : null;
   const pzPuesta = puesta ? piezas.get(puesta) : undefined;
-  const paleta = parte && pzPuesta?.origen === "generica" ? paletaDePieza(pzPuesta, parte) : undefined; // las originales ya traen su color
+  const paleta = parte && sub !== "cabeza" && pzPuesta?.origen === "generica" ? paletaDePieza(pzPuesta, parte) : undefined; // las originales ya traen su color
   const tinte = parte && paleta ? figura.piezas[parte]?.tintes?.[paleta] ?? null : null;
   const baseId = figura.origen.tipo === "catalogo" ? figura.origen.personaje : null;
-  const visible = (it: Item) => it.tipo === "volver" ? false : it.tipo === "traje" ? (it.versiones ? !!baseId && it.versiones.includes(baseId) : it.id === baseId) : it.tipo === "pieza" ? it.pz.id === puesta || (!puesta && it.pz.donante === baseId) : (it.op?.id ?? null) === (gesto ? elegidos[gesto] ?? null : null);
+  const piel = figura.piezas.cabeza?.tintes?.piel ?? null;
+  const visible = (it: Item) => it.tipo === "volver" ? false : it.tipo === "color" ? (it.c?.id ?? null) === piel && !esMascara(piezas.get(figura.piezas.cabeza?.id ?? "")) : it.tipo === "traje" ? (it.versiones ? !!baseId && it.versiones.includes(baseId) : it.id === baseId) : it.tipo === "pieza" ? it.pz.id === puesta || (!puesta && it.pz.donante === baseId) : (it.op?.id ?? null) === (gesto ? elegidos[gesto] ?? null : null);
   const losa = LOSAS.find(l => l.id === pestana)!;
   /** Palomita de cada sección: algo cambió respecto al personaje base. */
   const hecha = (t: Pestana) => t === "trajes" ? baseId !== (inicial.origen.tipo === "catalogo" ? inicial.origen.personaje : null) : t === "movimientos" ? Object.keys(elegidos).length > 0 : SUBPARTES[t].some(x => !!figura.piezas[x as Parte]);
@@ -226,12 +251,13 @@ export function Constructor({ catalogo, piezas, inicial, seccion, escenaUrl, onG
     if (!mini.listo) return;
     const n = Math.max(8, caja.columnas * caja.filas);
     const cola = (Object.values(SUBPARTES).flat().filter(x => !esGesto(x) && x !== "traje") as Parte[])
-      .flatMap(pt => piezasDe(piezas, pt, figura.familia).filter(pz => pz.origen !== "generica" && pz.glb).slice(0, n));
+      .filter(pt => pt !== "mascara" && pt !== "cabeza")
+      .flatMap(pt => piezasDe(piezas, pt, familiaPiezas).filter(pz => pz.origen !== "generica" && pz.glb).slice(0, n));
     let i = 0;
     const t = setInterval(() => { const pz = cola[i++]; if (!pz) { clearInterval(t); return; } mini.pedir(pz); }, 180);
     return () => clearInterval(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mini.listo, piezas, figura.familia]);
+  }, [mini.listo, piezas, familiaPiezas]);
 
   const cambiar = (nueva: FiguraV3) => { setHistoria(h => [...h.slice(-29), figura]); setFuturo([]); setFigura(nueva); setGuardado(false); };
   // Respuesta de la escena al plano de la figura actual (las viejas ya las descartó Vista3D). Si una pieza no encaja,
@@ -268,9 +294,21 @@ export function Constructor({ catalogo, piezas, inicial, seccion, escenaUrl, onG
   const tocarItem = (it: Item) => {
     // Traje completo: el personaje tal cual (sin piezas cambiadas); conserva movimientos y extensiones.
     if (it.tipo === "volver") { setAbierto(null); setPagina(0); setPasa(null); return; }
+    // Figura grande con versión minifigura: al cambiar una pieza o la piel pasa a ser esa versión.
+    const comoMini = () => (pareja ? sinMovimientosSi(true, { ...figura, familia: "minifig", origen: { tipo: "catalogo" as const, personaje: pareja, version: "base", revision: 1 }, piezas: {} }) : figura);
+    if (it.tipo === "color") { cambiar(ponerPiel(comoMini(), it.c?.id ?? null, piezas)); return; }
     if (it.tipo === "traje" && it.versiones && it.base) { setAbierto(it.base); setPagina(0); setPasa(null); return; }
-    if (it.tipo === "traje") { if (it.id !== baseId || Object.keys(figura.piezas).length) cambiar({ ...figura, origen: { tipo: "catalogo", personaje: it.id, version: "base", revision: 1 }, piezas: {} }); return; }
-    if (it.tipo === "pieza") { cambiar(ponerPieza(figura, it.pz, piezas)); return; }
+    if (it.tipo === "traje") {
+      if (it.id === baseId && !Object.keys(figura.piezas).length) return;
+      // La familia la pone el traje (Hulkbuster → minifigura ya no deja la figura como grande). Si cambia de familia,
+      // los movimientos elegidos dejan de servir y se vuelve a los de siempre.
+      const familia = catalogo.get(it.id)?.ficha.familia ?? figura.familia;
+      cambiar(sinMovimientosSi(familia !== figura.familia, { ...figura, familia, origen: { tipo: "catalogo", personaje: it.id, version: "base", revision: 1 }, piezas: {} }));
+      return;
+    }
+    if (it.tipo === "pieza") {
+      cambiar(ponerPieza(comoMini(), it.pz, piezas)); return;
+    }
     if (!gesto) return;
     const nueva = elegirMovimiento(figura, gesto, it.op?.id ?? null);
     if (nueva.extensiones.alv?.animaciones?.propias?.[gesto] === elegidos[gesto]) { setMomento(m => ({ cual: RUEDA_DE[gesto], n: (m?.n ?? 0) + 1 })); return; }
@@ -346,7 +384,7 @@ export function Constructor({ catalogo, piezas, inicial, seccion, escenaUrl, onG
   };
   function irA(n: number) { const m = Math.max(0, Math.min(pags.length - 1, n)); if (m === p) return; setPasa(m > p ? "sig" : "ant"); setPagina(m); }
 
-  const pocas = lista.filter(it => (it.tipo === "traje" || (it.tipo === "pieza" ? !!it.pz.glb : it.tipo === "mov" && !!it.op))).length;
+  const pocas = lista.filter(it => (it.tipo === "traje" || it.tipo === "color" || (it.tipo === "pieza" ? !!it.pz.glb : it.tipo === "mov" && !!it.op))).length;
   const indiceSel = lista.filter(it => (it.tipo === "traje" || (it.tipo === "pieza" ? !!it.pz.glb : it.tipo === "mov" && !!it.op))).findIndex(visible);
   const comun = modo === "generica";
 
@@ -394,7 +432,6 @@ export function Constructor({ catalogo, piezas, inicial, seccion, escenaUrl, onG
             <button type="button" onClick={() => enfocar(false)} disabled={!cerca} aria-label="Ver cuerpo entero" title="Alejar">−</button>
             <button type="button" onClick={() => enfocar(true)} disabled={cerca} aria-label="Acercar a la cara" title="Acercar">+</button>
           </div>
-          <button type="button" className="pz-gestos" onClick={() => tocar(0.62, 0.6)} aria-label="Probar gestos">★ Gestos</button>
         </div>
         {rueda && <RuedaGestos gestos={RUEDA} x={rueda.x} y={rueda.y} onElegir={elegirGesto} onCerrar={cerrarRueda} />}
         {aviso && <div className="pz-aviso" role="status">{aviso}</div>}
@@ -405,7 +442,7 @@ export function Constructor({ catalogo, piezas, inicial, seccion, escenaUrl, onG
           <IconoLosa id={losa.ico} />
           <div>
             <h2>{losa.titulo}</h2>
-            <p>{NOMBRE_SUB[sub]} · {pocas ? (indiceSel >= 0 ? `${indiceSel + 1} de ${pocas}` : `${pocas} ${gesto ? "movimientos" : "piezas"}`) : "nada por ahora"}{comun ? " comunes" : " originales"}</p>
+            <p>{NOMBRE_SUB[sub]} · {pocas ? (indiceSel >= 0 ? `${indiceSel + 1} de ${pocas}` : `${pocas} ${gesto ? "movimientos" : sub === "cabeza" ? "colores" : "piezas"}`) : "nada por ahora"}{comun ? " comunes" : " originales"}</p>
           </div>
         </header>
         {SUBPARTES[pestana].length > 1 && (
@@ -413,7 +450,7 @@ export function Constructor({ catalogo, piezas, inicial, seccion, escenaUrl, onG
             {SUBPARTES[pestana].map(x => <button key={x} type="button" role="tab" className={"pz-sub" + (sub === x ? " on" : "")} aria-selected={sub === x} onClick={() => elegirSub(x)}>{NOMBRE_SUB[x]}</button>)}
           </div>
         )}
-        {todas[0]?.tipo !== "volver" && (sagas.length > 0 || grupos.length > 1 || paleta) && (
+        {todas[0]?.tipo !== "volver" && todas[0]?.tipo !== "color" && (sagas.length > 0 || grupos.length > 1 || paleta) && (
           <div className="pz-filtros">
             {sagas.length > 0 && (
               <div className="pz-chips pz-sagas" role="group" aria-label="Sagas">
@@ -444,8 +481,8 @@ export function Constructor({ catalogo, piezas, inicial, seccion, escenaUrl, onG
         <div className={"pz-rejilla" + (pasa ? " pasa-" + pasa : "")} ref={rejilla} onPointerDown={bajar} onPointerUp={subir}
           style={{ gridTemplateColumns: `repeat(${caja.columnas}, minmax(0, 1fr))`, gridTemplateRows: `repeat(${caja.filas}, minmax(0, 1fr))` }}>
           {(pags[p] ?? []).map(it => {
-            const clave = it.tipo === "volver" ? "volver" : it.tipo === "traje" ? "traje-" + it.id + (it.versiones ? "-v" : "") : it.tipo === "pieza" ? it.pz.id : it.op?.id ?? "de-siempre";
-            const nombre = it.tipo === "volver" ? "Volver" : it.tipo === "traje" ? it.nombre : it.tipo === "pieza" ? (it.pz.glb ? it.pz.nombre : "Ninguno") : it.op ? it.op.nombre : "De siempre";
+            const clave = it.tipo === "volver" ? "volver" : it.tipo === "traje" ? "traje-" + it.id + (it.versiones ? "-v" : "") : it.tipo === "pieza" ? it.pz.id : it.tipo === "color" ? "color-" + (it.c?.id ?? "original") : it.op?.id ?? "de-siempre";
+            const nombre = it.tipo === "volver" ? "Volver" : it.tipo === "traje" ? it.nombre : it.tipo === "pieza" ? (it.pz.glb ? it.pz.nombre : "Ninguno") : it.tipo === "color" ? it.c?.nombre ?? "Original" : it.op ? it.op.nombre : "De siempre";
             const on = visible(it);
             return (
               <button key={clave} type="button" className={"pz-pieza" + (on ? " on" : "")} aria-pressed={on} onClick={() => tocarItem(it)}
@@ -457,14 +494,15 @@ export function Constructor({ catalogo, piezas, inicial, seccion, escenaUrl, onG
                     if (it.op?.foto) return <img src={it.op.foto} alt="" draggable={false} loading="lazy" />;
                     return <svg className="pz-mov-ico" viewBox="0 0 24 24" aria-hidden="true"><TrazosGesto cual={gesto ? RUEDA_DE[gesto] : "especial"} /></svg>;
                   }
+                  if (it.tipo === "color") return <span className={"pz-color-muestra" + (it.c ? "" : " original")} style={{ "--c": it.c?.hex } as CSSProperties} aria-hidden="true" />;
                   const pz = it.pz;
                   if (!pz.glb) return <span className="pz-sin" aria-hidden="true">—</span>;
                   if (pz.origen === "generica") return fotoValida(pz.foto) ? <img src={pz.foto!} alt="" draggable={false} loading="lazy" /> : <span className="pz-sin" aria-hidden="true">—</span>;
                   const m = mini.foto(pz);
                   if (m) return <img src={m} alt="" draggable={false} />;
-                  // Mientras llega su foto, la del personaje del que sale (no un círculo girando): la rejilla se ve de inmediato.
-                  if (m === undefined) return pz.foto ? <img className="provisional" src={pz.foto} alt="" draggable={false} /> : <span className="pz-espera" aria-hidden="true" />;
-                  return pz.foto ? <img src={pz.foto} alt="" draggable={false} loading="lazy" /> : <span className="pz-sin" aria-hidden="true">—</span>;
+                  // Solo la pieza, nunca la foto del personaje completo (Elías, 2026-11-27).
+                  if (m === undefined) return <span className="pz-espera" aria-hidden="true" />;
+                  return <span className="pz-sin" aria-hidden="true">—</span>;
                 })()}
                 <span>{nombre}</span>
                 {it.tipo === "mov" && it.op && <small className="pz-mov-sub">{it.op.sub}</small>}
@@ -474,7 +512,7 @@ export function Constructor({ catalogo, piezas, inicial, seccion, escenaUrl, onG
             );
           })}
           {!pocas && (
-            <p className="pz-vacio">{comun ? "Pronto: aún no hay piezas comunes de este tipo. Prueba con las originales." : "Todavía no hay piezas de este tipo."}</p>
+            <p className="pz-vacio">{bloqueada ? "Las figuras grandes se usan tal cual: para cambiar piezas elige un traje de minifigura." : comun ? "Pronto: aún no hay piezas comunes de este tipo. Prueba con las originales." : "Todavía no hay piezas de este tipo."}</p>
           )}
         </div>
         {pags.length > 1 && (
@@ -491,10 +529,23 @@ export function Constructor({ catalogo, piezas, inicial, seccion, escenaUrl, onG
         <button type="button" className="pz-redondo" onClick={rehacer} disabled={!futuro.length} aria-label="Rehacer" title="Rehacer">↷</button>
         <button type="button" className="pz-restablecer" onClick={restablecer} disabled={figura === inicial}>Restablecer</button>
         <button type="button" className={"pz-guardar" + (guarda ? " guarda" : "")} disabled={!sePuedeGuardar} onAnimationEnd={() => setGuarda(false)}
-          onClick={() => { if (sePuedeGuardar) { onGuardar(figura); setGuardado(true); setGuarda(true); } }}>
+          onClick={() => { if (sePuedeGuardar) { onGuardar(figura); setUltimaGuardada(figura); setGuardado(true); setGuarda(true); } }}>
           <span aria-hidden="true">✓</span> {guardado ? "¡Guardado!" : <>Guardar<span className="pz-largo"> personaje</span></>}
         </button>
       </footer>
+      {confirmarSalir && (
+        <div className="pz-confirma" role="dialog" aria-modal="true" aria-labelledby="pz-confirma-t" onClick={e => { if (e.target === e.currentTarget) setConfirmarSalir(false); }}>
+          <div className="pz-confirma-caja">
+            <h3 id="pz-confirma-t">¿Salir sin guardar?</h3>
+            <p>Tus cambios a este personaje no se han guardado.</p>
+            <div className="pz-confirma-botones">
+              {sePuedeGuardar && <button type="button" className="pz-guardar" onClick={() => { onGuardar(figura); setUltimaGuardada(figura); setConfirmarSalir(false); salirYa(); }}>Guardar y salir</button>}
+              <button type="button" className="pz-restablecer" onClick={() => { setConfirmarSalir(false); salirYa(); }}>Salir sin guardar</button>
+              <button type="button" className="pz-restablecer" onClick={() => setConfirmarSalir(false)} autoFocus>Seguir editando</button>
+            </div>
+          </div>
+        </div>
+      )}
       {mini.marco}
       {volteo && paginaAnterior && (
         <div className={"pz-volteo " + volteo} aria-hidden="true" onAnimationEnd={finVolteo}>
