@@ -2,7 +2,7 @@
 // Lógica pura que corre en la TV; los celulares mandan el mando (palanca y botones). La escena 3D solo lee `anim`.
 // Unidades de la escena de ALV (una minifigura mide ~2.7). Sin DOM ni 3D: lo prueba minijuegos.test.ts.
 
-export type Anim = "reposo" | "caminar" | "correr" | "saltar" | "caer" | "aterrizar" | "golpe" | "herido" | "ko" | "festejo";
+export type Anim = "reposo" | "caminar" | "correr" | "saltar" | "caer" | "aterrizar" | "golpe" | "herido" | "ko" | "festejo" | "poder";
 export type Forma = "caja" | "plataforma";
 
 export interface ConfigCuarto {
@@ -25,7 +25,7 @@ export const CONFIG_CUARTO: ConfigCuarto = {
   aterrizarMs: 260, reaparecerMs: 1400, caducaMandoMs: 500,
 };
 
-export interface Mando { x: number; z: number; saltar?: boolean; golpe?: boolean; festejo?: boolean }
+export interface Mando { x: number; z: number; saltar?: boolean; golpe?: boolean; festejo?: boolean; poder?: boolean }
 
 export interface Cuerpo {
   id: string; x: number; z: number; y: number; vy: number; rot: number;
@@ -40,7 +40,8 @@ export type EventoCuarto =
   | { tipo: "golpe"; de: string; a: string }
   | { tipo: "ko"; id: string }
   | { tipo: "cae"; id: string }
-  | { tipo: "salto"; id: string };
+  | { tipo: "salto"; id: string }
+  | { tipo: "poder"; id: string };
 
 export function crearCuarto(cfg: Partial<ConfigCuarto> = {}): EstadoCuarto {
   return { cfg: { ...CONFIG_CUARTO, ...cfg }, cuerpos: new Map(), t: 0 };
@@ -68,11 +69,11 @@ export function mandar(e: EstadoCuarto, id: string, m: Mando) {
   let x = Number.isFinite(m.x) ? m.x : 0, z = Number.isFinite(m.z) ? m.z : 0;
   const l = Math.hypot(x, z);
   if (l > 1) { x /= l; z /= l; }
-  c.mando = { x, z, saltar: c.mando.saltar || !!m.saltar, golpe: c.mando.golpe || !!m.golpe, festejo: c.mando.festejo || !!m.festejo };
+  c.mando = { x, z, saltar: c.mando.saltar || !!m.saltar, golpe: c.mando.golpe || !!m.golpe, festejo: c.mando.festejo || !!m.festejo, poder: c.mando.poder || !!m.poder };
   c.mandoT = e.t;
 }
 
-const ocupado = (c: Cuerpo) => c.anim === "golpe" || c.anim === "herido" || c.anim === "ko" || c.anim === "festejo" || c.anim === "aterrizar";
+const ocupado = (c: Cuerpo) => c.anim === "golpe" || c.anim === "herido" || c.anim === "ko" || c.anim === "festejo" || c.anim === "poder" || c.anim === "aterrizar";
 const angulo = (a: number) => Math.atan2(Math.sin(a), Math.cos(a));
 function poner(e: EstadoCuarto, c: Cuerpo, a: Anim, ms = 0) {
   if (c.anim !== a) c.animDesde = e.t;
@@ -108,6 +109,8 @@ export function pasoCuarto(e: EstadoCuarto, dt: number): EventoCuarto[] {
     // Golpe: arranca el ataque; el impacto se revisa a mitad del clip.
     if (m.golpe && libre && c.enPiso) { poner(e, c, "golpe", cfg.golpeMs); c.golpeo = false; }
     if (m.festejo && libre && c.enPiso && fuerza < 0.1) poner(e, c, "festejo", 2300);
+    // Poder (gatillo RT): el movimiento especial del personaje (rayos de Cíclope, pecho de Iron Man...). Solo animación.
+    if (m.poder && libre && c.enPiso) { poner(e, c, "poder", 2000); ev.push({ tipo: "poder", id: c.id }); }
     if (m.saltar && libre && c.enPiso) { c.vy = cfg.salto; c.enPiso = false; poner(e, c, "saltar"); ev.push({ tipo: "salto", id: c.id }); }
     // Moverse (también en el aire; no mientras golpea, está herido o tirado).
     let vx = 0, vz = 0;

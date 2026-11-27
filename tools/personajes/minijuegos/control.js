@@ -176,6 +176,8 @@ function estado(d) {
   $("chip").textContent = `P${j.n + 1} ${j.nombre}`; $("chip").classList.remove("oculto");
   $("titulo").textContent = d.juego === "paracaidas" ? "Paracaídas" : d.juego === "alto" ? "Alto total" : d.juego === "martillazo" ? "Martillazo" : d.juego === "desenfunda" ? "¡Desenfunda!" : d.juego === "bala" ? "Esquiva la bala" : "El cuarto";
   document.title = $("titulo").textContent + " · control";
+  const letra = d.juego === "martillazo" ? "B" : d.juego === "desenfunda" ? "RT" : "A";
+  if ($("salto-letra").textContent !== letra) { $("salto-letra").textContent = letra; $("salto-letra").className = "letra " + letra.toLowerCase(); }
   $("salto-accion").textContent = d.juego === "paracaidas" ? "¡ABRE!" : d.juego === "alto" ? "¡CORRE!" : d.juego === "martillazo" ? "¡GOLPEA!" : d.juego === "desenfunda" ? "¡DISPARA!" : "SALTA";
   $("salto").classList.toggle("duelo", d.juego === "paracaidas" || d.juego === "alto" || d.juego === "desenfunda" || d.juego === "martillazo");
   // El anfitrión lo asigna el servidor de sala y la TV lo repite en el estado.
