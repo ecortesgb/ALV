@@ -1,6 +1,9 @@
 // Fondos pintados de ALV (18 nov): la ciudad cambia con la hora (día, atardecer, noche) y en partida va el escenario.
 // Las imágenes viven en public/arte con dos tamaños: -1920 (computadora y TV) y -1100 (celular).
-import { useEffect, useState, type CSSProperties } from "react";
+import { useEffect, useState, type CSSProperties, type ReactNode } from "react";
+import { figuraActiva, useCapsulas } from "../app/figura3d";
+import { useSesion } from "../app/sesion";
+import { useFondoTema } from "../app/temas";
 import { FONDO_ESCENARIO } from "../content/arteJuegos";
 import { useMomentoDia, type MomentoDia } from "../app/horaDelDia";
 
@@ -37,4 +40,12 @@ export function FondoEscenario({ escenario }: { escenario?: string | null }) {
   const base = escenario ? FONDO_ESCENARIO[escenario] : undefined;
   if (!base) return <FondoALV />;
   return <div className={`d-bg a-fondo-alv a-fondo-esc esc-${escenario}`} aria-hidden="true" data-escenario={escenario}><div className="a-fa-capa" style={arte(base)} /></div>;
+}
+
+/** Fondo del tema de TU personaje activo (temas.ts) en el taller y la colección; sin tema, el fondo de siempre. */
+export function FondoMiTema({ children }: { children: ReactNode }) {
+  const s = useSesion();
+  const t = useFondoTema(figuraActiva(useCapsulas(s.uid)));
+  if (!t.css) return <>{children}</>;
+  return <div className="d-bg a-fondo-alv a-fondo-tema" aria-hidden="true"><div className="a-fa-capa" style={{ "--arte-g": t.css, "--arte-c": t.css } as CSSProperties} /></div>;
 }

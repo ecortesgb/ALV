@@ -1,6 +1,6 @@
 // Personalizar: tus 3 cápsulas (trajes guardados) y el editor completo de la figura 3D (Minifig Studio).
 // Tocar una cápsula la pone EN JUEGO al momento: se avisa al servidor sin esperar, y la sala la ve por tiempo real.
-import { Suspense, lazy, useEffect, useRef } from "react";
+import { Suspense, lazy, useEffect, useRef, useState } from "react";
 import type { FiguraV2 } from "../content/personaje";
 import { FotoFigura, N_CAPSULAS, escribirCapsulas, huella, leerCapsulas, useCapsulas, type EstadoCapsulas } from "../app/figura3d";
 import { atras, ir } from "../app/rutas";
@@ -151,3 +151,21 @@ export function Personalizar() { return banderaV3() ? <MiPersonajeApp /> : <Pers
 
 /** #/editor: igual que #/personalizar. */
 export function Editor() { return banderaV3() ? <MiPersonajeApp /> : <Personalizador />; }
+
+/** Cuenta sin figura (Elías, 2026-11-26): no pasa al HUB hasta crear o elegir su personaje. Solo con la bandera v3, con
+ *  nube y para cuentas registradas (las invitadas no bajan personajes). Mira primero este aparato y, si aquí no hay nada,
+ *  la nube (una vez por cuenta): mientras no se sabe, no se bloquea. */
+export function useDebeCrearFigura(): boolean {
+  const { uid, fase, invitado } = useSesion();
+  const caps = useCapsulas(uid || "nadie");
+  const tieneAqui = caps.slots.some(Boolean);
+  const aplica = fase === "dentro" && !invitado && !!uid && hayNube && banderaV3();
+  const [nube, setNube] = useState<{ uid: string; vacia: boolean } | null>(null);
+  useEffect(() => {
+    if (!aplica || tieneAqui || nube?.uid === uid) return;
+    let vivo = true;
+    void cargarCapsulasNube().then(n => { if (vivo && n) setNube({ uid, vacia: !n.slots.some(Boolean) }); });
+    return () => { vivo = false; };
+  }, [aplica, tieneAqui, uid, nube?.uid]);
+  return aplica && !tieneAqui && nube?.uid === uid && nube.vacia;
+}

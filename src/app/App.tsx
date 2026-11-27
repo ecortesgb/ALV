@@ -10,7 +10,7 @@ import { AvisoLogro } from "../pantallas/AvisoLogro";
 import { EsperaLobby } from "../pantallas/lobby/EsperaLobby";
 import { ModosJuego } from "../pantallas/modos/ModosJuego";
 import { HubAzotea } from "../pantallas/azotea/HubAzotea";
-import { Editor, Personalizar, SincroCapsulas } from "../pantallas/Personalizar";
+import { Editor, Personalizar, SincroCapsulas, useDebeCrearFigura } from "../pantallas/Personalizar";
 import { Sala } from "../pantallas/Sala";
 import { Logros } from "../pantallas/logros/Logros";
 import { Ranking } from "../pantallas/ranking/Ranking";
@@ -21,6 +21,7 @@ import { PantallaTv } from "../roles/pantalla/Pantalla";
 import { refrescarSesion, useSesion } from "./sesion";
 import { instalarClics } from "./sonido";
 import { useRuta } from "./rutas";
+import { TemaMusical } from "./TemaMusical";
 
 /** Página interna del Design System (sin enlace en la app): se carga aparte. */
 const PaginaDS = lazy(() => import("../pantallas/ds"));
@@ -33,6 +34,8 @@ export function App() {
   // Pantalla de inicio en cada carga o recarga, salvo al entrar por el QR de una sala o de la Pantalla.
   const [inicio, setInicio] = useState(() => ruta !== "sala" && ruta !== "tv" && ruta !== "configurar");
   const terminarInicio = useCallback(() => setInicio(false), []);
+  // Cuenta sin figura: primero su personaje. Se deja pasar a una sala o Pantalla por QR (la jornada) y a Ajustes (salir).
+  const sinFigura = useDebeCrearFigura() && !["personalizar", "editor", "sala", "tv", "configurar", "ajustes"].includes(ruta);
 
   if (ruta === "ds") return <Suspense fallback={null}><PaginaDS /></Suspense>;
   // Sin sesión se entra o se crea cuenta aquí mismo: la dirección (por ejemplo la del QR) no cambia y al entrar se sigue a la sala.
@@ -41,6 +44,7 @@ export function App() {
     : fase === "fuera" ? <Acceso />
     : fase === "registro" ? <CompletarRegistro />
     : fase === "menor" ? <SoloMayores />
+    : sinFigura ? <Personalizar />
     : ruta === "modos" ? <ModosJuego />
     : ruta === "jugar" ? <EsperaLobby />
     : ruta === "catalogo" ? <Catalogo />
@@ -58,5 +62,5 @@ export function App() {
     : ruta === "admin" ? <Admin />
     // HUB «La Azotea» (antes Hub.tsx; de ahí solo queda Jugar).
     : <HubAzotea />;
-  return <>{pantalla}{fase === "dentro" && <SincroCapsulas />}{fase === "dentro" && <Recompensas />}{fase === "dentro" && ruta !== "tv" && <AvisoLogro />}{!inicio && fase === "dentro" && invitado && ruta !== "tv" && ruta !== "editor" && <span className="a-prueba" aria-label="Estás en una entrada de prueba">Prueba</span>}<Avisos /></>;
+  return <>{pantalla}{fase === "dentro" && <SincroCapsulas />}{fase === "dentro" && ruta !== "tv" && <TemaMusical />}{fase === "dentro" && <Recompensas />}{fase === "dentro" && ruta !== "tv" && <AvisoLogro />}{!inicio && fase === "dentro" && invitado && ruta !== "tv" && ruta !== "editor" && <span className="a-prueba" aria-label="Estás en una entrada de prueba">Prueba</span>}<Avisos /></>;
 }

@@ -83,25 +83,29 @@ export function BarraXPAzotea({ xp, costo, nivel }: { xp: number; costo: number;
 }
 
 /** Monedas (con «+» a la tienda), puntos (al ranking) y ajustes. La moneda gira cuando sube el saldo o al tocarla. */
-export function RecursosAzotea({ monedas, puntos }: { monedas: number; puntos: number }) {
+export function RecursosAzotea({ monedas, puntos, enTienda = false }: { monedas: number; puntos: number; enTienda?: boolean }) {
   const [gira, setGira] = useState(0);
   const antes = useRef(monedas);
   useEffect(() => { if (monedas > antes.current) setGira(g => g + 1); antes.current = monedas; }, [monedas]);
+  const saldo = <>
+    <span key={gira} className={"azr-ico azr-moneda" + (gira ? " gira" : "")} style={{ "--sprite": `url("${new URL(arteHub("moneda-giro"), document.baseURI).href}")` } as CSSProperties} aria-hidden="true" />
+    <b>{num(monedas)}</b>
+  </>;
   return (
     <div className="azr">
       <span className="azr-pildora azr-monedas">
+        {enTienda ? <span className="azr-cuerpo">{saldo}<span className="t-solo-lector"> monedas</span></span> : <>
         <button type="button" className="azr-cuerpo" onClick={() => ir("tienda")} aria-label={`${num(monedas)} monedas. Abrir la tienda`}
           onPointerEnter={e => { if (e.pointerType === "mouse") setGira(g => g + 1); }}>
-          <span key={gira} className={"azr-ico azr-moneda" + (gira ? " gira" : "")} style={{ "--sprite": `url("${new URL(arteHub("moneda-giro"), document.baseURI).href}")` } as CSSProperties} aria-hidden="true" />
-          <b>{num(monedas)}</b>
+          {saldo}
         </button>
-        <button type="button" className="azr-mas" onClick={() => ir("tienda")} aria-label="Conseguir monedas en la tienda"><span aria-hidden="true">+</span></button>
+        <button type="button" className="azr-mas" onClick={() => ir("tienda")} aria-label="Conseguir monedas en la tienda"><span aria-hidden="true">+</span></button></>}
       </span>
       <button type="button" className="azr-pildora azr-puntos azr-cuerpo" onClick={() => ir("ranking")} aria-label={`${num(puntos)} puntos. Ver el ranking`}>
         <img className="azr-ico" src={arteHub("puntos")} alt="" draggable={false} />
         <b>{num(puntos)}</b><small>PTS</small>
       </button>
-      <button type="button" className="azr-ajustes" onClick={() => ir("ajustes")} aria-label="Ajustes"><img src={arteHub("ajustes")} alt="" draggable={false} /></button>
+      {!enTienda && <button type="button" className="azr-ajustes" onClick={() => ir("ajustes")} aria-label="Ajustes"><img src={arteHub("ajustes")} alt="" draggable={false} /></button>}
     </div>
   );
 }

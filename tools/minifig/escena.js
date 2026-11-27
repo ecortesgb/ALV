@@ -699,6 +699,9 @@
     plat.halo.material.opacity = Math.min(0.85, 0.08 + AZ.brillo * 0.32 * pulso + flare * 0.5);
     plat.plato.material.opacity = Math.min(0.9, 0.3 + AZ.brillo * 0.35 * pulso + flare * 0.4);
     plat.cono.material.opacity = QUIETO_AZ ? 0.08 : (0.05 + AZ.brillo * 0.1) * pulso + flare * 0.15;
+    // Mientras la figura nueva carga, la columna late más fuerte (la plataforma «está trayendo» a la figura).
+    let espera = false; figuras.forEach(x => { if (x.esperaV3 != null) espera = true; });
+    if (espera) { const w = 0.5 + 0.5 * Math.sin(t * 5); plat.cono.material.opacity += 0.1 + 0.12 * w; plat.plato.material.opacity = Math.min(0.95, plat.plato.material.opacity + 0.25 * w); }
     plat.haz.visible = d > 0.15 && d < 0.85;
     if (plat.haz.visible) plat.haz.material.opacity = Math.sin((d - 0.15) / 0.7 * Math.PI) * 0.55;
     plat.aro.visible = d > 0.6 && d < 1.2;
@@ -711,8 +714,17 @@
     } else if (AZ.studsSucios) { for (let i = 0; i < plat.nS; i++) plat.studs.setColorAt(i, plat.ORO); plat.studs.instanceColor.needsUpdate = true; AZ.studsSucios = false; }
     if (L && d > 1.4) AZ.llegada = null;
   }
+  // Figura nueva lista (o se acabó la espera): sale con la llegada que le tocaba al armarse.
+  const ESPERA_V3 = 8;
+  function revelarAzotea(e, t) {
+    if (e.esperaV3 == null) return;
+    e.esperaV3 = null;
+    if (e.llega === "completa") iniciarLlegada(t, true); else if (e.llega) iniciarLlegada(t, false);
+    e.llega = null; AZ.saludo = t + 6;
+  }
   // Caída de la figura en la llegada: invisible, cae desde arriba y se aplasta un poco al tocar la placa.
   function caidaAzotea(e, t) {
+    if (e.esperaV3 != null) { if (t < e.esperaV3) { e.obj.visible = false; return; } revelarAzotea(e, t); }
     const L = AZ.llegada; if (!L || !L.completa) { e.obj.visible = true; return; }
     const d = t - L.t0, o = e.obj;
     o.visible = d >= 0.35;
@@ -839,7 +851,11 @@
         if (p3 && !(NAVE && !p3.sentado)) iniciarV3(e, p3);
         // Sala: la figura llega «teletransportada»: crece desde los pies sobre su pedestal.
         if (SALA) { e.tele = t; e.obj.visible = false; }
-        if (AZOTEA) { if (AZ.pendiente) { AZ.pendiente = false; iniciarLlegada(t, true); } else if (habia) iniciarLlegada(t, false); AZ.saludo = t + 6; }
+        // Azotea con figura nueva: el respaldo no se enseña; espera escondida (columna de luz encendida) a que cargue la
+        // nueva y entonces llega. Si tarda más de ESPERA_V3 o falla, llega el respaldo (Elías, 2026-11-26: «sale un random»).
+        const llega = AZ.pendiente ? "completa" : habia ? "escaneo" : null;
+        if (AZOTEA && p3 && !QUIETO_AZ) { AZ.pendiente = false; e.esperaV3 = t + ESPERA_V3; e.llega = llega; e.obj.visible = false; }
+        else if (AZOTEA) { if (llega === "completa") { AZ.pendiente = false; iniciarLlegada(t, true); } else if (llega) iniciarLlegada(t, false); AZ.saludo = t + 6; }
         if (EDITOR && habia) polvo(reloj.getElapsedTime());
       }
       // Talla y especial que manda ALV (`anim`, aparte de la figura): cambian sin volver a armarla.
@@ -1358,6 +1374,8 @@
     }
     return V3.cargando;
   }
+  // Azotea con el corte (&v3=1): el motor nuevo se pide desde el arranque, en paralelo, sin esperar a la figura.
+  if (AZOTEA && Q.get("v3") === "1") motorV3().catch(() => {});
   function iniciarV3(e, p3) {
     const gen = (e.gen3 = ++V3.gen);
     motorV3().then(M => M.crear(p3)).then(inst => {
@@ -1371,6 +1389,9 @@
       const alto = inst.alto(), TOPE = 3.4;
       // Decidió Codex (fase5-paso2-verif, b): tope 3.4 con escala uniforme, solo en sala, nave y azotea.
       if ((SALA || NAVE || AZOTEA) && !/[?&]bigfig=real/.test(location.search) && alto > TOPE) inst.obj.scale.multiplyScalar(TOPE / alto);
+      // La figura nueva proyecta sombra pero no la recibe: a la escala de ALV, piezas escondidas dentro del GLB (la
+      // entrepierna) dejaban rayas oscuras encima del torso (Elías, 2026-11-26).
+      inst.obj.traverse(o => { if (o.isMesh) o.receiveShadow = false; });
       const sombra = new THREE.Mesh(sombraGeo, sombraMat); sombra.rotation.x = -Math.PI / 2; sombra.position.y = 0.003; grupo.add(sombra);
       grupo.position.copy(e.obj.position); grupo.rotation.copy(e.obj.rotation); grupo.scale.copy(e.obj.scale); grupo.visible = e.obj.visible;
       if (e.cara) { e.cara.malla.material.map = e.cara.base; [e.cara.parpadeo, e.cara.sonrisa, e.cara.especial].forEach(x => x && x.dispose()); e.cara = null; }
@@ -1392,8 +1413,13 @@
       else { e.prio = 0; e.cual = null; e.hasta = 0; }
       acomodar();
       window.__figurasV3 = figuras; // para revisar desde la consola (solo existe si llegó una figura nueva)
+      if (AZOTEA) revelarAzotea(e, reloj.getElapsedTime());
       enviar({ tipo: "v3", id: e.id, ok: true });
-    }).catch(err => { console.warn("escena: figura nueva sin cargar, se queda la de respaldo", e.id, err); enviar({ tipo: "v3", id: e.id, ok: false }); });
+    }).catch(err => {
+      console.warn("escena: figura nueva sin cargar, se queda la de respaldo", e.id, err);
+      if (AZOTEA && figuras.get(e.id) === e) revelarAzotea(e, reloj.getElapsedTime());
+      enviar({ tipo: "v3", id: e.id, ok: false });
+    });
   }
   function animarV3(e, t, dt) {
     // La mirada se SUMA a la cabeza: antes de avanzar la animación se quita lo sumado en el cuadro anterior (si el clip
