@@ -5,7 +5,8 @@
 import React, { useEffect, useRef, useState, type CSSProperties, type KeyboardEvent } from "react";
 import "./rueda-gestos.css";
 
-export interface GestoRueda { cual: string; txt: string; c1: string; c2: string; dibujo: JSX.Element }
+export interface GestoRueda { cual: string; txt: string; c1: string; c2: string; dibujo: JSX.Element;
+  /** Ícono ilustrado (PNG/WebP con fondo transparente); si no carga o no hay, se dibuja `dibujo`. */ img?: string }
 
 /** Gajo de anillo de a0 a a1 grados (0 = derecha, sentido del reloj en pantalla), radios r0 y r1. */
 function gajo(a0: number, a1: number, r0: number, r1: number): string {
@@ -16,6 +17,9 @@ function gajo(a0: number, a1: number, r0: number, r1: number): string {
 const R0 = 34, R1 = 96, HUECO = 3;
 /** Centro de cada gajo en grados: izquierda, arriba, derecha, abajo (como la referencia). */
 const ANGULOS = [180, 270, 0, 90];
+/** Íconos ilustrados que no cargaron (se usa el dibujo de respaldo). */
+const sinImg = new Set<string>();
+const ICONOS = `${import.meta.env.BASE_URL}arte/ui/gestos/`;
 
 export function RuedaGestos({ gestos, x, y, centro, onElegir, onCerrar }: {
   /** 4 gestos en orden: izquierda, arriba, derecha, abajo. */
@@ -28,6 +32,7 @@ export function RuedaGestos({ gestos, x, y, centro, onElegir, onCerrar }: {
   const [foco, setFoco] = useState(0);
   // Gesto señalado (cursor, foco o elegido): su nombre sale al centro, como la referencia.
   const [senal, setSenal] = useState<string | null>(null);
+  const [, forzar] = useState(0);
   const caja = useRef<HTMLDivElement>(null);
   const botones = useRef<(SVGGElement | null)[]>([]);
   useEffect(() => { botones.current[0]?.focus({ preventScroll: true }); }, []);
@@ -61,7 +66,9 @@ export function RuedaGestos({ gestos, x, y, centro, onElegir, onCerrar }: {
               onPointerEnter={() => setSenal(g.cual)} onPointerLeave={() => setSenal(x => (x === g.cual ? null : x))}
               style={{ "--c1": g.c1, "--c2": g.c2, "--i": i, "--dx": `${(Math.cos(t) * 6).toFixed(1)}px`, "--dy": `${(Math.sin(t) * 6).toFixed(1)}px` } as CSSProperties}>
               <path d={d} className="rg-forma" />
-              <svg x={cx - 16} y={cy - 16} width="32" height="32" viewBox="0 0 24 24" className="rg-ico" aria-hidden="true">{g.dibujo}</svg>
+              {g.img && !sinImg.has(g.img)
+                ? <image href={g.img} x={cx - 29} y={cy - 29} width={58} height={58} className="rg-img" onError={() => { sinImg.add(g.img!); forzar(n => n + 1); }} />
+                : <svg x={cx - 20} y={cy - 20} width="40" height="40" viewBox="0 0 24 24" className="rg-ico" aria-hidden="true">{g.dibujo}</svg>}
             </g>
           );
         })}
@@ -73,19 +80,51 @@ export function RuedaGestos({ gestos, x, y, centro, onElegir, onCerrar }: {
   );
 }
 
-// Trazos de los íconos de gestos (antes también en los botones de gestos del HUB).
+// Íconos propios de ALV (Elías, 26 nov: «más originales, no genéricos»): la silueta de una minifigura haciendo cada
+// gesto, como la referencia del menú radial (una persona saludando). Se arma con piezas: perno, cabeza, torso, brazos
+// con mano de pinza, cadera y piernas; cada pose solo gira brazos, cabeza y piernas. Viewbox 24 × 24.
+interface Pose { bi: number; bd: number; cabeza?: number; baja?: number; pi?: number; pd?: number; extra?: JSX.Element }
+const TINTA = "#1a1440";
+function Minifig({ bi, bd, cabeza = 0, baja = 0, pi = 0, pd = 0, extra }: Pose) {
+  const c = { fill: "#fff", stroke: TINTA, strokeWidth: 0.9, strokeLinejoin: "round" as const, paintOrder: "stroke" as const };
+  // Brazo con su mano de pinza: nace en el hombro y apunta hacia abajo; `a` lo gira (sentido del reloj, en grados).
+  const brazo = (x: number, a: number) => (
+    <g transform={`translate(${x} 8.3) rotate(${a})`}>
+      <rect {...c} x={-1.05} y={-0.6} width={2.1} height={5} rx={1} />
+      <path {...c} d="M-1.3 4.6a1.3 1.3 0 1 0 2.6 0" fill="none" strokeWidth={1.7} stroke="#fff" />
+    </g>
+  );
+  const pierna = (x: number, a: number) => <rect {...c} x={x} y={15.2} width={4.6} height={6.6} rx={0.6} transform={`rotate(${a} ${x + 2.3} 15.2)`} />;
+  return (
+    <g>
+      {pierna(7.1, pi)}{pierna(12.3, pd)}
+      {brazo(7.6, bi)}{brazo(16.4, bd)}
+      <path {...c} d="M8 7.3h8l.9 6.5H7.1Z" />
+      <rect {...c} x={7} y={13.6} width={10} height={1.9} rx={0.4} />
+      <g transform={`translate(0 ${baja}) rotate(${cabeza} 12 6.6)`}>
+        <rect {...c} x={10.9} y={0.9} width={2.2} height={1.3} rx={0.3} />
+        <rect {...c} x={9.1} y={1.9} width={5.8} height={4.9} rx={1.7} />
+      </g>
+      {extra}
+    </g>
+  );
+}
+const trazo = { fill: "none", stroke: "#fff", strokeWidth: 1.1, strokeLinecap: "round" as const };
 export function TrazosGesto({ cual }: { cual: string }) {
-  const c = { fill: "#fff", stroke: "#1a1440", strokeWidth: 1.6, strokeLinejoin: "round" as const };
-  if (cual === "saludar") return <path {...c} d="M8 21c-2.6-1.6-4-4.2-4-7.2V8.4a1.4 1.4 0 0 1 2.8 0V12h.6V4.8a1.4 1.4 0 0 1 2.8 0V11h.6V3.6a1.4 1.4 0 0 1 2.8 0V11h.6V5a1.4 1.4 0 0 1 2.8 0v8.4c0 4.3-2.7 8.1-7 8.1-.7 0-1.4-.2-2-.5Z" />;
-  if (cual === "victoria") return <path {...c} d="M7 3h10v3h3.5c0 3.6-1.9 5.8-4.6 6.2A5 5 0 0 1 13 15v2.5h3V21H8v-3.5h3V15a5 5 0 0 1-2.9-2.8C5.4 11.8 3.5 9.6 3.5 6H7Z" />;
-  if (cual === "derrota") return <><path {...c} d="M12 2.5c4.7 0 8 3.2 8 7.6 0 2.6-1.2 4.4-3 5.4V19a1.5 1.5 0 0 1-1.5 1.5h-7A1.5 1.5 0 0 1 7 19v-3.5c-1.8-1-3-2.8-3-5.4 0-4.4 3.3-7.6 8-7.6Z" /><circle cx="9" cy="11" r="1.9" fill="#1a1440" /><circle cx="15" cy="11" r="1.9" fill="#1a1440" /><path d="M10 20.4v-2.6M14 20.4v-2.6" stroke="#1a1440" strokeWidth="1.4" /></>;
-  return <><path {...c} d="M12 1.8 14.3 9.7 22.2 12 14.3 14.3 12 22.2 9.7 14.3 1.8 12 9.7 9.7Z" /><path {...c} d="M19 2.5l.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8Z" /></>;
+  // Saludar: un brazo arriba con dos rayitas de movimiento junto a la mano.
+  if (cual === "saludar") return <Minifig bi={12} bd={-152} cabeza={-6} extra={<><path {...trazo} d="M20.6 1.4l1.4-.6M21.3 3.6l1.6.1" /></>} />;
+  // Ganar: los dos brazos arriba, de brinco (piernas abiertas) y chispas.
+  if (cual === "victoria") return <Minifig bi={148} bd={-148} pi={8} pd={-8} extra={<><path {...trazo} d="M2.2 4.2l1.3.8M1.6 7.4h1.5M21.8 4.2l-1.3.8M22.4 7.4h-1.5" /></>} />;
+  // Perder: cabeza abajo, brazos colgados y una gota de sudor.
+  if (cual === "derrota") return <Minifig bi={4} bd={-4} cabeza={14} baja={0.9} extra={<path fill="#fff" stroke={TINTA} strokeWidth={0.7} d="M18.4 2.2c.9 1.3 1.4 2.1 1.4 2.8a1.4 1.4 0 0 1-2.8 0c0-.7.5-1.5 1.4-2.8Z" />} />;
+  // Especial: golpe al frente con un rayo saliendo del puño.
+  return <Minifig bi={58} bd={-96} cabeza={-4} pi={6} pd={-4} extra={<path fill="#fff" stroke={TINTA} strokeWidth={0.7} strokeLinejoin="round" d="M21.2 5.2l2.4.2-1.6 2.3 1.6.1-3.2 3.6.9-2.6-1.5-.1Z" />} />;
 }
 /** Rueda que sale al tocar al personaje (referencia de Elías: distribución y colores): izquierda, arriba, derecha, abajo.
  *  Nombres como en el HUB (decidió Codex, encargo 2026-11-26-rueda-gestos-r1, E3). */
 export const RUEDA: GestoRueda[] = [
-  { cual: "saludar", txt: "Saludar", c1: "#9be04a", c2: "#4fa81f", dibujo: <TrazosGesto cual="saludar" /> },
-  { cual: "victoria", txt: "Ganar", c1: "#ffd84a", c2: "#e0a400", dibujo: <TrazosGesto cual="victoria" /> },
-  { cual: "especial", txt: "Especial", c1: "#ff9a3a", c2: "#e8560f", dibujo: <TrazosGesto cual="especial" /> },
-  { cual: "derrota", txt: "Perder", c1: "#4f86e8", c2: "#1f4fb0", dibujo: <TrazosGesto cual="derrota" /> },
+  { cual: "saludar", txt: "Saludar", c1: "#9be04a", c2: "#4fa81f", dibujo: <TrazosGesto cual="saludar" />, img: `${ICONOS}gesto-saludar.webp` },
+  { cual: "victoria", txt: "Ganar", c1: "#ffd84a", c2: "#e0a400", dibujo: <TrazosGesto cual="victoria" />, img: `${ICONOS}gesto-victoria.webp` },
+  { cual: "especial", txt: "Especial", c1: "#ff9a3a", c2: "#e8560f", dibujo: <TrazosGesto cual="especial" />, img: `${ICONOS}gesto-especial.webp` },
+  { cual: "derrota", txt: "Perder", c1: "#4f86e8", c2: "#1f4fb0", dibujo: <TrazosGesto cual="derrota" />, img: `${ICONOS}gesto-derrota.webp` },
 ];

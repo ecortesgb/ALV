@@ -143,7 +143,7 @@ export function Lobby({ sala, miembros, yo, soyAnfitrion, final, red, refrescar,
           </Carrusel>
         )}
       </div>
-      <RuedaFigura ref={rueda} jugador={yo} figura={miembros.find(m => m.id === yo)?.figura} />
+      <RuedaFigura ref={rueda} jugador={yo} figura={miembros.find(m => m.id === yo)?.figura} pistaSobre=".lb-rot.yo .lb-toca" />
       {vivo && <div className={"cv-lobby" + (vivoMin ? " min" : "")} role="button" tabIndex={0} aria-expanded={!vivoMin} onClick={() => setVivoMin(x => !x)} onKeyDown={e => { if (e.key === "Enter" || e.key === " ") setVivoMin(x => !x); }}><ConfigEnVivo e={vivo} /></div>}
       {verFiguras && (
         <div className="a-velo" onClick={() => setVerFiguras(false)}>

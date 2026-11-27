@@ -126,7 +126,7 @@ export function HubAzotea() {
           </div>
           <span className="az-reflector" aria-hidden="true" /><span className="az-reflector dos" aria-hidden="true" />
           <EscenaAzotea ref={mando} id={s.uid} figura={f} ambiente={amb} plataforma={esc.plataforma} vida="hub" onToque={(x, y) => rueda.current?.abrir(x, y)} />
-          <RuedaFigura ref={rueda} jugador={s.uid} figura={f} />
+          <RuedaFigura ref={rueda} jugador={s.uid} figura={f} pistaSobre=".az-figura" />
           {!ancho && <BotonChat mando={mando} />}
         </section>
 

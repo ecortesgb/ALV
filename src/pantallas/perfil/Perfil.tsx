@@ -63,7 +63,7 @@ export function Perfil() {
           <div className="pf-escena">
             <span className="pf-foco" aria-hidden="true" />
             <EscenaAzotea id={s.uid} figura={f} ambiente={SALA} plataforma={AZOTEA.plataforma} llegada={false} className="pf-figura" onToque={(x, y) => rueda.current?.abrir(x, y)} />
-            <RuedaFigura ref={rueda} jugador={s.uid} figura={f} />
+            <RuedaFigura ref={rueda} jugador={s.uid} figura={f} pistaSobre=".pf-figura" />
             <span className="pf-pista" aria-hidden="true">↺ Arrastra para girar</span>
           </div>
           <div className="pf-placa">
