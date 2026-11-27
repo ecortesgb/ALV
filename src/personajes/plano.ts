@@ -51,5 +51,5 @@ export function poderesDeFicha(f: Ficha, base: string): PoderPlano[] {
   const defs = PODERES[f.id], clips = f.poderes?.clips;
   if (!defs || !clips || !f.poderes) return [];
   const glb = unir(base, f.poderes.glb);
-  return Object.entries(defs).filter(([k]) => clips[k]).map(([id, d]) => ({ id, nombre: d.nombre, glb, clip: clips[id]!, efectos: [d.efecto, ...(d.efectos ?? [])] }));
+  return Object.entries(defs).filter(([k]) => clips[k]).map(([id, d]) => ({ id, nombre: d.nombre, glb, clip: clips[id]!, efectos: [d.efecto, ...(d.efectos ?? [])], ...(d.hasta ? { hasta: d.hasta } : {}) }));
 }

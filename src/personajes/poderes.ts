@@ -23,7 +23,9 @@ export interface Efecto {
   /** encoger: tamaño al que llega; volar: altura en altos de figura. */
   a?: number;
 }
-export interface PoderDef { nombre: string; efecto: Efecto; efectos?: Efecto[] }
+export interface PoderDef { nombre: string; efecto: Efecto; efectos?: Efecto[];
+  /** Corta el clip del juego en este segundo (cuando su final se ve mal) y vuelve a reposo. */
+  hasta?: number }
 
 const AZUL = "#7fd8ff", ROJO = "#ff3b30", FUEGO = "#ff6a1a", AMARILLO = "#ffd23a", ELECTRICO = "#bfe3ff", VERDE = "#62ff6e";
 
@@ -33,7 +35,8 @@ export const PODERES: Readonly<Record<Id, Readonly<Record<string, PoderDef>>>> =
     escudo: { nombre: "Lanzar escudo", efecto: { tipo: "escudo", desde: "mano_der", color: "#ffffff", retraso: 0.35, dura: 1.4 } },
   },
   "mr-fantastico": {
-    estirar: { nombre: "Estirarse", efecto: { tipo: "estirar", retraso: 0.1, dura: 1.6 } },
+    // El final de ARMZIP_STRETCH despega la cabeza (espera mallas del juego): se corta antes.
+    estirar: { nombre: "Estirarse", hasta: 1.8, efecto: { tipo: "estirar", retraso: 0.1, dura: 1.6 } },
     forma: { nombre: "Cambiar de forma", efecto: { tipo: "estirar", retraso: 0, dura: 1.2 } },
   },
   "mujer-invisible": {
@@ -69,7 +72,7 @@ export const PODERES: Readonly<Record<Id, Readonly<Record<string, PoderDef>>>> =
     volar: { nombre: "Volar", efecto: { tipo: "volar", color: "#ffffff", color2: "#cfe8ff", dura: 3 } },
   },
   iceman: {
-    hielo: { nombre: "Rayo de hielo", efecto: { tipo: "hielo", desde: "mano_der", color: "#a8e6ff", retraso: 0.2, dura: 1.6 } },
+    hielo: { nombre: "Rayo de hielo", efecto: { tipo: "hielo", desde: "mano_der", color: "#4fc3ff", retraso: 0.2, dura: 1.6 } },
   },
   "spider-man": {
     telarana: { nombre: "Telaraña", efecto: { tipo: "telarana", desde: "mano_der", retraso: 0.15, dura: 1.6 } },
@@ -96,4 +99,4 @@ export const PODERES: Readonly<Record<Id, Readonly<Record<string, PoderDef>>>> =
 };
 
 /** Un poder listo para la escena: el GLB y el clip (null si se dibuja solo el efecto), y sus efectos. */
-export interface PoderPlano { id: string; nombre: string; glb: string; clip: string; efectos: Efecto[] }
+export interface PoderPlano { id: string; nombre: string; glb: string; clip: string; efectos: Efecto[]; hasta?: number }

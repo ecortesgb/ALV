@@ -65,12 +65,20 @@
   const ROJO_FUEGO = new T.Color(0xd8320c);
   const aditivo = (col, op = 1, map) => new T.MeshBasicMaterial({ color: col, map: map || null, transparent: true, opacity: op, blending: T.AdditiveBlending, depthWrite: false, side: T.DoubleSide });
 
+  // Barra gruesa entre dos puntos (las líneas de WebGL miden 1 px: no se ven).
+  const GEO_PALO = (() => { const g = new T.CylinderGeometry(1, 1, 1, 8, 1, true); g.translate(0, 0.5, 0); g.rotateX(Math.PI / 2); return g; })();
+  function palo(scene, mat) {
+    const m = new T.Mesh(GEO_PALO, mat); scene.add(m);
+    const d = new T.Vector3();
+    return { m, poner(a, b, w) { d.subVectors(b, a); const L = d.length(); m.position.copy(a); if (L > 1e-6) m.lookAt(b); m.scale.set(w, w, Math.max(L, 1e-4)); } };
+  }
+
   // ---------- Partículas (sprites aditivos) ----------
   function particulas(scene) {
     const lista = [];
     return {
       echar(pos, vel, col, tam, vida, op = {}) {
-        const m = new T.SpriteMaterial({ map: op.solido ? null : brillo(), color: col, transparent: true, blending: op.solido || op.normal ? T.NormalBlending : T.AdditiveBlending, depthWrite: false });
+        const m = new T.SpriteMaterial({ map: brillo(), color: col, transparent: true, blending: op.solido || op.normal ? T.NormalBlending : T.AdditiveBlending, depthWrite: false });
         const s = new T.Sprite(m); s.position.copy(pos); s.scale.setScalar(tam); scene.add(s);
         lista.push({ s, vel: vel.clone(), vida, t: 0, tam, crece: op.crece == null ? 1.5 : op.crece, sube: op.sube || 0, freno: op.freno || 0 });
       },
@@ -97,7 +105,8 @@
     fig.obj.getWorldPosition(out);
     return out;
   }
-  function frente(fig, out) { fig.obj.getWorldDirection(out); out.y = 0; if (out.lengthSq() < 1e-6) out.set(0, 0, 1); return out.normalize(); }
+  function frente(fig, out, giro) { fig.obj.getWorldDirection(out); out.y = 0; if (out.lengthSq() < 1e-6) out.set(0, 0, 1); out.normalize(); if (giro) out.applyAxisAngle(new T.Vector3(0, 1, 0), giro); return out; }
+  const LADO = -0.5; // ~30° hacia un lado de la figura
   function altoDe(fig) {
     fig.obj.updateMatrixWorld(true);
     const b = new T.Box3().setFromObject(fig.obj); const a = b.max.y - b.min.y;
@@ -135,13 +144,12 @@
       };
     },
     electrico(c) {
-      const N = 14, pos = new Float32Array(N * 3);
-      const g = new T.BufferGeometry(); g.setAttribute("position", new T.BufferAttribute(pos, 3));
-      const mats = [new T.LineBasicMaterial({ color: c.col, transparent: true, blending: T.AdditiveBlending, depthWrite: false }),
-        new T.LineBasicMaterial({ color: 0xffffff, transparent: true, blending: T.AdditiveBlending, depthWrite: false })];
-      const lineas = mats.map(m => new T.Line(g, m));
+      const N = 12, pts = Array.from({ length: N }, () => V());
+      const mats = [aditivo(c.col, 1), aditivo(0xffffff, 1)];
+      const ext = [], alma = [];
+      for (let i = 0; i < N - 1; i++) { ext.push(palo(c.scene, mats[0])); alma.push(palo(c.scene, mats[1])); }
       const luz = new T.Sprite(new T.SpriteMaterial({ map: brillo(), color: c.col, transparent: true, blending: T.AdditiveBlending, depthWrite: false }));
-      c.scene.add(...lineas, luz);
+      c.scene.add(luz);
       const a = V(), b = V(), f = V(), p = V();
       let cambio = 0;
       return {
@@ -153,19 +161,18 @@
           if ((cambio -= dt) <= 0) {
             cambio = 0.05;
             for (let i = 0; i < N; i++) {
-              const s = i / (N - 1); p.copy(a).lerp(b, s);
-              const j = (i && i < N - 1 ? 0.35 : 0) * c.u;
-              pos[i * 3] = p.x + (Math.random() - 0.5) * j; pos[i * 3 + 1] = p.y + (Math.random() - 0.5) * j; pos[i * 3 + 2] = p.z + (Math.random() - 0.5) * j;
+              const j = (i && i < N - 1 ? 0.45 : 0) * c.u;
+              pts[i].copy(a).lerp(b, i / (N - 1)).add(V().set((Math.random() - 0.5) * j, (Math.random() - 0.5) * j * 0.3, (Math.random() - 0.5) * j));
             }
-            g.attributes.position.needsUpdate = true;
-            if (Math.random() < 0.5) c.P.echar(b, V().set(Math.random() - 0.5, Math.random() * 1.5, Math.random() - 0.5).multiplyScalar(c.u), c.col, 0.25 * c.u, 0.35);
+            if (Math.random() < 0.6) c.P.echar(b, V().set(Math.random() - 0.5, Math.random() * 1.5, Math.random() - 0.5).multiplyScalar(c.u), c.col, 0.35 * c.u, 0.35);
           }
-          const parpadeo = Math.random() < 0.85 ? 1 : 0.2;
-          mats[0].opacity = k * parpadeo; mats[1].opacity = 0.8 * k * parpadeo;
-          luz.position.copy(c.ef.cielo ? b : a); luz.scale.setScalar(1.2 * c.u * k * parpadeo + 1e-4);
+          const parpadeo = Math.random() < 0.85 ? 1 : 0.25, w = 0.022 * c.u * k * parpadeo + 1e-5;
+          for (let i = 0; i < N - 1; i++) { ext[i].poner(pts[i], pts[i + 1], w); alma[i].poner(pts[i], pts[i + 1], w * 0.4); }
+          mats[0].opacity = 0.9 * k; mats[1].opacity = k;
+          luz.position.copy(c.ef.cielo ? b : a); luz.scale.setScalar(1.4 * c.u * k * parpadeo + 1e-4);
           return t < c.d;
         },
-        quitar() { c.scene.remove(...lineas, luz); g.dispose(); mats.forEach(m => m.dispose()); luz.material.dispose(); },
+        quitar() { ext.concat(alma).forEach(x => c.scene.remove(x.m)); mats.forEach(m => m.dispose()); c.scene.remove(luz); luz.material.dispose(); },
       };
     },
     fuego(c) {
@@ -199,48 +206,46 @@
       };
     },
     telarana(c) {
-      const pos = new Float32Array(6), g = new T.BufferGeometry(); g.setAttribute("position", new T.BufferAttribute(pos, 3));
-      const linea = new T.Line(g, new T.LineBasicMaterial({ color: 0xffffff, transparent: true }));
+      const mat = new T.MeshBasicMaterial({ color: 0xffffff, transparent: true }), hilo = palo(c.scene, mat);
       const red = new T.Mesh(new T.PlaneGeometry(1, 1), new T.MeshBasicMaterial({ map: telarana(), transparent: true, depthWrite: false, side: T.DoubleSide }));
-      c.scene.add(linea, red);
+      c.scene.add(red);
       const o = V(), f = V(), meta = V(), punta = V();
       let fija = false;
       return {
         paso(t, dt) {
           origen(c.fig, c.ef.desde, o); frente(c.fig, f);
           if (!fija) { meta.copy(o).addScaledVector(f, c.ef.modo === "arriba" ? 1.2 * c.u : 3.5 * c.u); meta.y += c.ef.modo === "arriba" ? 4 * c.u : 0.3 * c.u; fija = true; }
-          const k = Math.min(1, t / 0.18), op = sobre(t, c.d, 0.01, 0.3);
+          const k = Math.min(1, Math.max(0, t) / 0.18), op = sobre(t, c.d, 0.01, 0.3);
           punta.copy(o).lerp(meta, k);
-          pos.set([o.x, o.y, o.z, punta.x, punta.y, punta.z]); g.attributes.position.needsUpdate = true;
-          linea.material.opacity = op;
-          red.position.copy(punta); red.lookAt(o); red.scale.setScalar(k >= 1 ? 0.9 * c.u * Math.min(1, (t - 0.18) / 0.12 + 0.2) : 1e-4);
+          hilo.poner(o, punta, 0.018 * c.u * (t >= 0 ? 1 : 0) + 1e-5); mat.opacity = op;
+          red.position.copy(punta); red.lookAt(o); red.scale.setScalar(k >= 1 ? 1.1 * c.u * Math.min(1, (t - 0.18) / 0.12 + 0.2) : 1e-4);
           red.material.opacity = op;
           return t < c.d;
         },
-        quitar() { c.scene.remove(linea, red); g.dispose(); linea.material.dispose(); red.geometry.dispose(); red.material.dispose(); },
+        quitar() { c.scene.remove(hilo.m, red); mat.dispose(); red.geometry.dispose(); red.material.dispose(); },
       };
     },
     escudo(c) {
-      // Sale de la mano, vuela hacia el frente girando y regresa a la mano (como búmeran).
-      const disco = new T.Mesh(new T.CircleGeometry(0.5, 32), new T.MeshBasicMaterial({ map: escudoTex(), side: T.DoubleSide }));
+      // Sale de la mano, vuela hacia el frente girando y regresa a la mano (como búmeran). Sprite: siempre se ve de frente.
+      const disco = new T.Sprite(new T.SpriteMaterial({ map: escudoTex(), transparent: true }));
       disco.visible = false; c.scene.add(disco);
       const o = V(), f = V(), lejos = V();
       let fija = false;
       return {
         paso(t, dt) {
-          origen(c.fig, c.ef.desde, o); frente(c.fig, f);
-          if (!fija && t >= 0) { lejos.copy(o).addScaledVector(f, 4.5 * c.u); fija = true; }
+          origen(c.fig, c.ef.desde, o); frente(c.fig, f, LADO);
+          if (!fija && t >= 0) { lejos.copy(o).addScaledVector(f, 3 * c.u); fija = true; }
           if (t < 0) return true;
           const k = Math.min(1, t / c.d), ida = Math.sin(k * Math.PI); // 0 → 1 → 0
           disco.visible = k < 1;
           disco.position.copy(o).lerp(lejos, ida);
           disco.position.y += Math.sin(k * Math.PI) * 0.3 * c.u;
           disco.scale.setScalar(0.6 * c.u);
-          disco.lookAt(V().copy(disco.position).add(f)); disco.rotateY(Math.PI / 2 - 0.5); disco.rotateZ(t * 25);
-          if (Math.random() < 0.5) c.P.echar(disco.position, V(), c.col, 0.3 * c.u, 0.25);
+          disco.material.rotation = t * 20;
+          if (Math.random() < 0.5) c.P.echar(disco.position, V(), new T.Color(0xffffff), 0.35 * c.u, 0.25);
           return k < 1;
         },
-        quitar() { c.scene.remove(disco); disco.geometry.dispose(); disco.material.dispose(); },
+        quitar() { c.scene.remove(disco); disco.material.dispose(); },
       };
     },
     invisible(c) {
@@ -287,7 +292,7 @@
           if (t < 0) return true;
           if (!salio) {
             salio = true; c.fig.obj.getWorldPosition(o); frente(c.fig, f); o.addScaledVector(f, 0.6 * c.u); o.y += 0.02 * c.u; aro.position.copy(o); aro.visible = true;
-            for (let i = 0; i < 26; i++) { const a = Math.random() * Math.PI * 2; c.P.echar(o, V().set(Math.cos(a), 0.4 + Math.random() * 0.6, Math.sin(a)).multiplyScalar(1.6 * c.u), c.col2 || new T.Color(0xb9a58a), 0.35 * c.u, 0.7, { solido: true, crece: 2, freno: 2.5 }); }
+            for (let i = 0; i < 16; i++) { const a = Math.random() * Math.PI * 2; c.P.echar(o, V().set(Math.cos(a), 0.3 + Math.random() * 0.4, Math.sin(a)).multiplyScalar(1.4 * c.u), c.col2 || new T.Color(0xb9a58a), 0.16 * c.u, 0.6, { solido: true, crece: 1.8, freno: 2.5 }); }
           }
           const k = Math.min(1, t / c.d);
           aro.scale.setScalar((0.2 + 3 * k) * c.u); aro.material.opacity = 0.9 * (1 - k);

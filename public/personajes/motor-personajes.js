@@ -282,6 +282,7 @@
     let pesos = new Map(), cruce = null, mezclaCruce = MEZCLA;
     // Clip de reposo: el de la ficha, o el que pida la escena con reposoEn() (la nave: «sentado», si el personaje lo trae).
     let reposoClip = clips.reposo;
+    let corte = null;
 
     function iniciar(a, bucle, mezcla, vel) {
       const inicial = pesos.get(a) || 0;
@@ -393,9 +394,17 @@
         if (!a) return 0;
         iniciar(a, false, (op && op.mezcla) == null ? MEZCLA : op.mezcla, 1);
         logica = "poder"; clipActual = k;
-        return porNombre.get(k).duration;
+        const d = porNombre.get(k).duration, hasta = op && Number(op.hasta) > 0 && Number(op.hasta) < d ? Number(op.hasta) : 0;
+        corte = hasta ? { a, hasta } : null;
+        return hasta || d;
       },
-      update: dt => { aplicarCruce(dt); return mixer.update(dt); },
+      update: dt => {
+        aplicarCruce(dt);
+        const r = mixer.update(dt);
+        // Poder con corte (el final del clip del juego se ve mal): al llegar, de vuelta a reposo.
+        if (corte && (corte.a !== actual || corte.a.time >= corte.hasta)) { const c = corte; corte = null; if (c.a === actual) tocar("reposo"); }
+        return r;
+      },
       estado: () => ({ logica, clip: clipActual, tiempo: actual ? actual.time : 0, clips: [...porNombre.keys()].length }),
       /** Nombres de todos los clips del GLB (para verificar fichas). */
       nombresClips: () => [...porNombre.keys()],
