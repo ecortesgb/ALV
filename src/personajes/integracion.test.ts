@@ -98,7 +98,7 @@ describe("fase 5: copias para la escena vieja", () => {
     // Sin contar el salto de línea: con core.autocrlf=true la copia de trabajo puede tener CRLF en una y LF en otra
     // aunque en el repo sean idénticas.
     const leer = (p: string) => readFileSync(p, "utf8").replace(/\r\n/g, "\n");
-    for (const f of ["motor-personajes.js", "logicas.js", "escena.html", "estudio.html", "escena-personajes.js", "estudio-personajes.js",
+    for (const f of ["motor-personajes.js", "logicas.js", "efectos.js", "escena.html", "estudio.html", "escena-personajes.js", "estudio-personajes.js",
       "minijuegos/figuras-mj.js", "minijuegos/escena-mj.js"]) expect(leer(`public/personajes/${f}`), f).toBe(leer(`tools/personajes/${f}`));
   });
 });
