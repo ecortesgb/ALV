@@ -143,6 +143,7 @@ export function crearTV({ juego, escena, alUnirse, alMensaje, alSalir, alDescone
       capa.appendChild(j.etiqueta);
     }
     j.nombre = nombre;
+    j.cuenta = typeof d.cuenta === "string" ? d.cuenta : null;
     const placa = j.etiqueta.querySelector(".placa");
     placa.textContent = `${j.color.etiqueta} ${nombre}`;
     placa.style.background = j.color.base; placa.style.color = j.color.texto;
@@ -203,7 +204,7 @@ export function crearTV({ juego, escena, alUnirse, alMensaje, alSalir, alDescone
   function difundir() {
     canal.enviar("estado", Object.assign({
       juego, fase, sala, personajes: disponibles(),
-      jugadores: [...jugadores.values()].map(j => ({ id: j.id, nombre: j.nombre, personaje: j.personaje, n: j.n, color: j.color.base, bot: j.bot, estado: j.estado, desconectado: j.desconectado })),
+      jugadores: [...jugadores.values()].map(j => ({ id: j.id, cuenta: j.cuenta || null, nombre: j.nombre, personaje: j.personaje, n: j.n, color: j.color.base, bot: j.bot, estado: j.estado, desconectado: j.desconectado })),
       anfitrionId: anfitrionId(),
     }, extra()));
   }
