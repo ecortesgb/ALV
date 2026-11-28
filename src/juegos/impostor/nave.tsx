@@ -14,7 +14,7 @@ import "./nave.css";
 
 export interface RevNave {
   votos?: Record<string, number>; saltos?: number; eliminado?: string | null; eraImpostor?: boolean; secreto?: boolean; empate?: boolean;
-  quedan?: number; fin?: "civiles" | "impostores" | null; palabra?: string; impostores?: string[]; castigos?: Record<string, { texto: string; trago: boolean }>;
+  quedan?: number; fin?: "civiles" | "impostores" | null; palabra?: string; impostores?: string[]; castigos?: Record<string, { texto: string; trago: boolean; doble?: boolean; anulado?: boolean; de?: string }>;
 }
 export const revNave = (v: Publico) => (v.revelado ?? {}) as RevNave;
 export const esNave = (v: Publico) => !!v.impostor?.nave;
@@ -179,12 +179,14 @@ export function CastigosNave({ v, miembros, modo, yo }: { v: Publico; miembros: 
         <div className="nv-castigos">
           <span className="nv-castigos-t dsp">Castigo para {r.fin === "impostores" ? "los civiles" : imps.length > 1 ? "los impostores" : "el impostor"}</span>
           <ul>
-            {castigos.map(([id, { texto, trago }]) => {
+            {castigos.map(([id, { texto, trago, doble, anulado, de }]) => {
               const p = persona(v, miembros, id);
               return (
                 <li key={id} className={id === yo ? "yo" : ""} style={varsColor(p.color)}>
                   <Burbuja p={p} tamano={modo === "tv" ? "3.4em" : "2.6em"} />
-                  <span><b className="dsp">{p.nombre}</b><small>{texto}</small></span>
+                  {/* Comodines (Maestro v1.74): cancelado, pasado con Relevo o doble. */}
+                  <span><b className="dsp">{p.nombre}</b><small style={anulado ? { textDecoration: "line-through", opacity: .6 } : undefined}>{texto}</small>
+                    {(anulado || doble || de) && <small>{anulado ? "◉ Cancelado con un comodín" : [de && `⇢ Era de ${nombreDe(v, de)}`, doble && "×2 Va dos veces"].filter(Boolean).join(" · ")}</small>}</span>
                   <span className="nv-castigo-ico" style={{ "--arte": arteNave(trago ? "castigo-trago" : "castigo-leve") } as CSSProperties} aria-hidden="true" />
                 </li>
               );

@@ -160,6 +160,8 @@ export function aAccion(f: FilaAccion, controlan: string[]): Accion | null {
   if (f.tipo === "contestar") return { id, tipo: "contestar", jugador: f.jugador, valor: d.valor };
   // Papeles en la mesa: «Ya lo vi» viaja como fila `carta` (tipo que la base ya acepta, sin migración).
   if (f.tipo === "carta" && d.que === "visto") return { id, tipo: "visto", jugador: f.jugador };
+  // Comodín dirigido (Maestro v1.74): a quién va, justo antes de pagarlo (fila `carta`, no cuesta nada).
+  if (f.tipo === "carta" && d.que === "apunta" && typeof d.a === "string") return { id, tipo: "apuntar", jugador: f.jugador, a: d.a };
   // Dos caminos: quien lo usó elige una de las dos cartas (fila `carta`, no cuesta nada).
   if (f.tipo === "carta" && d.que === "camino" && (d.i === 0 || d.i === 1)) return { id, tipo: "camino", jugador: f.jugador, i: d.i };
   if (f.tipo === "carta" && typeof d.carta === "string") return { id, tipo: "usar-carta", jugador: f.jugador, carta: d.carta };
@@ -198,7 +200,7 @@ export function paraPublicar(e: EstadoPartida, relojFin: number | null, esperaFi
     ...(turnoFin && e.cfg.temporizador ? { turnoReloj: { fin: turnoFin, total: turnoTotal ?? e.cfg.temporizador } } : {}),
   };
   const privados: Record<string, unknown> = {};
-  for (const j of e.cfg.jugadores) { const v = vistaJugador(e, j.id); privados[j.id] = { mio: v.mio ?? null, miRespuesta: v.miRespuesta ?? null, miMano: v.miMano, ...(v.misComodines.length ? { misComodines: v.misComodines } : {}) }; }
+  for (const j of e.cfg.jugadores) { const v = vistaJugador(e, j.id); privados[j.id] = { mio: v.mio ?? null, miRespuesta: v.miRespuesta ?? null, miMano: v.miMano, ...(v.misComodines.length ? { misComodines: v.misComodines } : {}), ...(Object.keys(v.misObjetivos).length ? { misObjetivos: v.misObjetivos } : {}) }; }
   return { publico, privados };
 }
 

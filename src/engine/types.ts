@@ -34,6 +34,9 @@ export interface Carta {
   nivel: NivelEje;
   /** Tiene contacto físico con otra persona (consentimiento en los Términos; siempre se puede decir que no). */
   contacto?: boolean;
+  /** Reto que admite pareja: con Mano amiga, otra persona lo puede hacer contigo (Maestro v1.74). Sin el campo se deduce:
+   * retos sin contacto que no piden pareja ni nombran a otra persona. `false` lo cierra a una sola persona. */
+  admitePareja?: boolean;
   /** Carta nueva de Temperatura + Voltaje: el filtro de 4 niveles la ignora, así las partidas guardadas salen igual. */
   soloEjes?: boolean;
   opcionB?: string;

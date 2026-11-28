@@ -107,7 +107,7 @@ export function CelularVerdadReto({ v, mi, miembros, mandar }: { v: Publico; mi:
       {cuerpo}
       <EfectosComodines v={v} yo={yo} alElegir={i => void mandar("carta", { que: "camino", i })} />
       {barraComodines}
-      <SelectorComodines v={v} mi={mi} />
+      <SelectorComodines v={v} mi={mi} mandar={mandar} />
     </section>
   );
 }

@@ -1,7 +1,7 @@
 # ALV — Amigos Legendarios Verdaderos
 ## Documento Maestro del Producto
-**Versión:** 1.72  
-**Última actualización:** 27 de noviembre de 2026  
+**Versión:** 1.74  
+**Última actualización:** 28 de noviembre de 2026  
 **Estado:** Documento vivo de producto; decisiones y propuestas identificadas por separado.
 
 ---
@@ -362,6 +362,17 @@ La lista de 6.2 incluía Botella, Micrófono, Votaciones y Tablero. La botella q
 7. **Animación especial:** al usar un comodín, la figura de quien lo usó hace su movimiento especial en la TV y sale la carta con su nombre. Es de adorno: no cambia puntos ni turnos.
 
 8. **Un solo aparato** (Elías, mismo día): también se usan en la pantalla del turno de cada quien. Todo jugador tiene cuenta (usuario aleatorio o el suyo); su sesión queda abierta en esa pestaña mientras dura el lobby (como en el lobby en línea) y el pago se hace en la sala espejo de la nube.
+
+**DECISIÓN (v1.74, Elías, 28 de noviembre) — los 18 comodines en la partida:** Elías pidió que sirvan todos ya (por ejemplo, el mesero sirve bebidas a todos durante ese juego, hasta que termine). Sustituye en el punto 3 de arriba «los de castigo, mesero y trampa esperan». Sin migración nueva: el pago sigue en `usar_comodin` (056).
+**Reglas de los 10 nuevos** (las propuso Claude; Elías las aprobó tal cual el mismo día al pedir publicar):
+1. **Dónde:** en todos los juegos (el anfitrión los apaga en el configurador). Los de turno siguen solo para quien hace el reto; los de castigo, mesero y trampa los usa cualquiera que siga en juego, también al ver el resultado. Uno por persona y por ronda.
+2. **Castigos que cuentan:** la ruleta del anfitrión (solo el de la ronda en que salió) y el castigo final de la Nave del impostor. **Escudo** además cancela tu propio castigo fuera de tu turno. **Salvavidas** cancela el castigo de otra persona o le quita el delantal. **Relevo** pasa tu castigo a otra persona sin castigo; nunca uno de contacto. **Doble castigo** deja al siguiente castigo de esa persona para cumplirse dos veces.
+3. **Cambio de mesero:** quien eliges sirve de beber a todos hasta que acabe ese juego (lo que cada quien pida, agua vale; nunca exige alcohol). Si ya había mesero, el delantal pasa. La TV lo muestra todo el juego.
+4. **Contrarreloj:** el siguiente turno de esa persona corre con la mitad del temporizador (solo con temporizador). **Rebote:** te regresa a quien lo lanzó el último Doble castigo, Contrarreloj o delantal que te tocó. **Candado:** en esa ronda, el siguiente comodín que te lancen no hace nada (Salvavidas y Mano amiga sí pasan).
+5. **Mano amiga:** en tu reto, otra persona lo hace contigo; los puntos son tuyos. Solo retos que admiten pareja: nueva marca `admitePareja` en las cartas; sin marca, valen los retos sin contacto que no piden pareja ni nombran a otra persona.
+6. **Duelo de dados:** en tu turno, con la carta de la app a la vista, retas a alguien; cada quien tira un dado (empate, otra vez) y quien saque menos cumple la carta y se lleva sus puntos. Nunca en retos de contacto ni en Dados HOT.
+7. **Pista extra:** en El impostor, mientras se dicen las palabras. El impostor ve la pista de la palabra o, si ya la tenía, con qué letra empieza. A un civil no le da nada; en la TV sale como «comodín secreto», así sirve para despistar.
+8. **Un solo aparato:** cada quien usa los suyos cuando tiene el teléfono.
 
 ## 6A.5 Recompensas: tres sistemas independientes
 
@@ -1852,6 +1863,9 @@ Decisiones del usuario del 12 de noviembre de 2026:
 
 ## v1.6
 - Primeros logros (14.2), con ámbito de sesión o histórico (ver DECISIÓN v1.6 en 14.2).
+
+## v1.74
+- 28 nov 2026. Los 18 comodines en la partida (6A.4): Elías pidió que sirvan todos. Reglas de los 10 nuevos aprobadas por Elías tal cual (castigos de la ruleta y de la nave, mesero hasta que acaba el juego, trampas, candado, rebote, Mano amiga con la marca `admitePareja`, Duelo de dados y Pista extra secreta). Sin migración nueva. (v1.73 la usan otros cambios sin publicar.)
 
 ## v1.72
 - 27 nov 2026. Comodines de la colección en la partida (6A.4): solo salen de sobres o de la colección, ¿Voy a tener suerte? es comodín con sorteo, 8 comodines en Verdad o reto, Dados HOT y juegos por turno, botón en el celular con compra en vivo al precio de reposición (aunque la carta no se haya descubierto), también en un solo aparato, interruptor en el configurador y animación especial en la TV. En Dados HOT pasar ya no es gratis (sustituye 6A.14 5B). Migración 056. Decisiones de Elías.

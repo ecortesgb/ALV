@@ -14,15 +14,15 @@ import { CelularVerdadReto } from "../verdadReto/celular";
 import { CelularFisico } from "../fisico/celular";
 import { ComoJugar, tocaExplicar } from "./ComoJugar";
 import { CeremoniaCopas, PodioJuego, esFinalDeJuego } from "./Copas";
-import { EfectosComodines, SelectorComodines, SelectorComodinesMano } from "./SelectorComodines";
+import { BloqueComodines, EfectosComodines, SelectorComodines, SelectorComodinesMano } from "./SelectorComodines";
 import { comodinPorId } from "../../content/tienda";
-import { MOTORES_CON_COMODINES } from "../../content/comodinesPartida";
 import { BarraEmotes } from "./Emotes";
 
 const lista2 = (ns: string[]) => (ns.length <= 1 ? ns.join("") : ns.slice(0, -1).join(", ") + " y " + ns.at(-1));
 
 export interface MiVista { yo: string; mio: unknown; miRespuesta: unknown; miMano: string[];
   /** Comodines que sirven ahora mismo (los decide el motor). */ misComodines?: string[];
+  /** Comodines dirigidos: a quién puede ir cada uno (lo decide el motor). */ misObjetivos?: Record<string, string[]>;
   /** La partida en curso y si quien tiene el teléfono puede usar la colección de su cuenta. */ partida?: string; cuenta?: boolean;
   /** Otra cuenta que juega en este aparato: su sesión. Sin esto, la sesión del aparato. */ cliente?: SupabaseClient | null;
   /** Lobby de un solo aparato: la sala espejo de la nube. */ espejo?: string | null }
@@ -47,9 +47,11 @@ export function HerramientaCelular(p: { v: Publico; mi: MiVista; miembros: Miemb
   const emotes = p.v.fase === "revelada" && !esFinalDeJuego(p.v) && <BarraEmotes yo={p.mi.yo} />;
   // El impostor con eliminación (Maestro v1.44) tiene su propia pantalla.
   // Con papeles en la mesa, las posiciones van en una página de su final (Elías, 24 nov).
-  if (p.v.motor === "rol-secreto" && p.v.impostor) return <>{reglas}<CelularImpostor {...p} />{emotes}{!p.v.impostor.palabras && podio}</>;
+  // Comodines (Maestro v1.74): en El impostor y ALV FÍSICO van abajo de su pantalla.
+  const cm = <BloqueComodines v={p.v} mi={p.mi} mandar={p.mandar} />;
+  if (p.v.motor === "rol-secreto" && p.v.impostor) return <>{reglas}<CelularImpostor {...p} />{cm}{emotes}{!p.v.impostor.palabras && podio}</>;
   if (p.v.motor === "turnos-cartas" && p.v.verdadReto) return <>{reglas}<CelularVerdadReto {...p} />{emotes}{podio}</>;
-  if (p.v.motor === "fisico") return <>{reglas}<CelularFisico {...p} />{emotes}{podio}</>;
+  if (p.v.motor === "fisico") return <>{reglas}<CelularFisico {...p} />{cm}{emotes}{podio}</>;
   return <>{reglas}<HerramientaGeneral {...p} />{emotes}{podio}</>;
 }
 
@@ -71,9 +73,14 @@ function HerramientaGeneral({ v, mi, miembros, mandar }: { v: Publico; mi: MiVis
   const soyTurno = v.turnoDe === yo;
   const mano = mi.miMano;
 
+  // Comodines (v1.74): en todos los juegos; mesero, castigos y trampas también al ver el resultado.
+  const comodines = <>
+    <EfectosComodines v={v} yo={yo} alElegir={i => void mandar("carta", { que: "camino", i })} />
+    <SelectorComodines v={v} mi={mi} mandar={mandar} />
+  </>;
   if (v.fase === "revelada") {
     const d = desenlace(v);
-    return <Panel className="a-herr a-entra"><span className="a-kick">Resultado</span><span className="dsp ol a-t1">{d.titular}</span>{d.detalle && <p className="a-suave">{d.detalle}</p>}<p className="a-nota">Llevas {v.puntos[yo] ?? 0} {(v.puntos[yo] ?? 0) === 1 ? "punto" : "puntos"}</p></Panel>;
+    return <Panel className="a-herr a-entra"><span className="a-kick">Resultado</span><span className="dsp ol a-t1">{d.titular}</span>{d.detalle && <p className="a-suave">{d.detalle}</p>}<p className="a-nota">Llevas {v.puntos[yo] ?? 0} {(v.puntos[yo] ?? 0) === 1 ? "punto" : "puntos"}</p>{comodines}</Panel>;
   }
   if (v.pausada) return <Panel className="a-herr"><span className="dsp ol a-t1">En pausa</span><p className="a-suave">El anfitrión detuvo la partida un momento.</p></Panel>;
 
@@ -87,10 +94,6 @@ function HerramientaGeneral({ v, mi, miembros, mandar }: { v: Publico; mi: MiVis
       })}
     </SelectorComodinesMano>
   );
-  const comodines = MOTORES_CON_COMODINES.includes(v.motor) && <>
-    <EfectosComodines v={v} yo={yo} alElegir={i => void mandar("carta", { que: "camino", i })} />
-    <SelectorComodines v={v} mi={mi} />
-  </>;
   const espera = <p className="a-estado" role="status">{recibido ? "La TV ya lo recibió" : "Enviado…"}</p>;
 
   let cuerpo: JSX.Element;
