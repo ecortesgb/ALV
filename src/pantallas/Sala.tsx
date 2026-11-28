@@ -34,6 +34,7 @@ import { BotonCast } from "./lobby/Cast";
 import { MesaJuego } from "./MesaJuego";
 import { useGestosSala } from "../servicios/gestosSala";
 import { anotarCarta } from "../app/cartasSalieron";
+import { AccionesALaVista } from "./lobby/AccionesALaVista";
 
 /** Mantiene la pantalla encendida mientras `activo` (la Pantalla y el celular que hace de Pantalla). */
 export function useDespierta(activo: boolean) {
@@ -300,6 +301,7 @@ export function Sala({ codigo }: { codigo: string }) {
         </nav>
       ) : menu}>
         <div className={"pt-caja" + (soyAnfitrion && !copas ? " con-barra" : "")}>
+          <AccionesALaVista clave={`${v.ronda}-${v.fase}-${v.carta?.id ?? ""}`} />
           <header className="pt-top">
             <div className="lb-banner pt-banner">
               {!copas && <span className="lb-banner-n">{v.impostor ? `Vuelta ${v.ronda}` : `${v.ronda}/${v.totalRondas}`}</span>}

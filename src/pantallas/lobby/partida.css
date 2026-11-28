@@ -15,7 +15,7 @@
 
 /* ---------- Pantalla de partida ---------- */
 .D .pt-caja { position: relative; display: flex; flex-direction: column; gap: 12px; width: min(720px, 100%); margin: 0 auto; padding-bottom: 12px; }
-.D .pt-caja.con-barra { padding-bottom: 84px; }
+.D .pt-caja.con-barra, body:has(.cm-flotante) .D .pt-caja { padding-bottom: 84px; }
 .D .pt-top { display: flex; align-items: flex-start; justify-content: center; gap: 12px; }
 .D .pt-banner { margin-top: calc(var(--az-pad) * -1); }
 .D .pt-mia { align-self: flex-start; padding: 8px 18px 8px 8px; border-radius: 16px; background: rgba(10, 14, 40, .72); border: 1px solid rgba(255, 255, 255, .16);

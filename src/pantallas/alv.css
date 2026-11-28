@@ -4,7 +4,7 @@
 html, body, #root { height: 100%; margin: 0; background: #0d1a45; }
 /* Auditoría 28 nov: fuentes de títulos y texto para toda la app (la TV y las partidas no cargan azotea.css y caían en serif). */
 .D { --f-titulo: "Lilita One", "Bangers", system-ui, sans-serif; --f-texto: "Nunito", "Barlow", system-ui, sans-serif; }
-body { overscroll-behavior: none; -webkit-tap-highlight-color: transparent; }
+body { overscroll-behavior: none; -webkit-tap-highlight-color: transparent; font-family: "Nunito", "Barlow", system-ui, sans-serif; }
 
 .D.alv {
   --sale: cubic-bezier(.23, 1, .32, 1);
