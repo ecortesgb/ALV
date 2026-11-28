@@ -78,7 +78,7 @@ describe("armarArranque da la misma configuración que antes daba iniciarPartida
     const def = JUEGOS.find(j => j.id === "mas-probable")!;
     expect(a).toEqual({
       semilla: 5, juego: "mas-probable", rondas: 20,
-      cfg: { jugadores: nucleo.conParejas(m), lugar: "cualquiera", intensidad: Math.max(def.intensidadMin, Math.min(def.intensidadMax, 3)), dificultad: 2, adulto: true, drunk: true, turno: "orden" },
+      cfg: { jugadores: nucleo.conParejas(m), lugar: "cualquiera", intensidad: Math.max(def.intensidadMin, Math.min(def.intensidadMax, 3)), dificultad: 2, adulto: true, drunk: true, turno: "orden", comodines: true },
     });
     expect(nucleo.armarArranque(m, "mas-probable", 1, 1, 5)!.rondas).toBe(3);
     expect(nucleo.armarArranque(m, "no-existe", 5, 1, 5)).toBeNull();

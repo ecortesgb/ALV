@@ -19,6 +19,12 @@
 .cm-pie { margin: 0; font-size: .78rem; color: #cbb8f0; }
 .cm-efectos { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0 0; padding: 0; list-style: none; }
 .cm-efectos li { padding: 4px 10px; border-radius: 999px; background: #2a1a48; border: 1px solid #ffe3a780; color: #fff1c8; font-size: .85rem; font-weight: 700; }
+.cm-gente { display: flex; flex-wrap: wrap; gap: 8px; }
+.cm-persona { min-height: 44px; padding: 8px 14px; border: 2px solid #ffe3a7; border-radius: 999px; background: #2a1a48; color: #fff; font-weight: 800; cursor: pointer; }
+.cm-persona:disabled, .cm-volver:disabled { opacity: .5; cursor: not-allowed; }
+.cm-volver { justify-self: start; min-height: 40px; padding: 6px 12px; border: 1px solid #ffe3a780; border-radius: 10px; background: transparent; color: #e9dcff; cursor: pointer; }
+.cm-bloque { margin: 8px 12px 0; }
+.cm-tv-mesero { position: fixed; right: 1em; bottom: 1em; z-index: 30; max-width: 22em; padding: .4em .8em; border: .12em solid #ffe3a7; border-radius: .8em; background: #1a0f2ee6; color: #fff1c8; font-size: 1.1em; pointer-events: none; }
 .cm-caminos { display: grid; gap: 8px; margin-top: 10px; }
 .cm-camino { min-height: 56px; padding: 10px 12px; border: 2px solid #ffe3a7; border-radius: 12px; background: #2a1a48; color: #fff; text-align: left; font-size: 1rem; cursor: pointer; }
 

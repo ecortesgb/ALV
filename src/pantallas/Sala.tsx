@@ -258,14 +258,15 @@ export function Sala({ codigo }: { codigo: string }) {
     const yo = compartido ? mano : ses.uid;
     const yoNombre = s.miembros.find(x => x.id === yo)?.nombre ?? ses.nombre;
     const estoy = v.jugadores.some(j => j.id === yo);
-    const sec = (s.secreto ?? {}) as { mio?: unknown; miRespuesta?: unknown; miMano?: string[]; misComodines?: string[] };
+    const sec = (s.secreto ?? {}) as { mio?: unknown; miRespuesta?: unknown; miMano?: string[]; misComodines?: string[]; misObjetivos?: Record<string, string[]> };
     // Comodines de la colección (Maestro v1.72): los usa la cuenta que tiene el teléfono en su turno, con SU sesión.
     // En un solo aparato se pagan en la sala espejo de la nube; quien juega sin cuenta no tiene colección.
     const clienteTurno = yo === ses.uid ? null : sostenidos.cliente(yo);
     const espejoLocal = local && s.sala && hayNube ? modoLocal.espejo(s.sala)?.id ?? null : null;
     const conCuenta = yo === ses.uid || !!clienteTurno;
     const mi: MiVista = { yo, mio: sec.mio ?? null, miRespuesta: sec.miRespuesta ?? null, miMano: sec.miMano ?? [],
-      misComodines: Array.isArray(sec.misComodines) ? sec.misComodines : [], partida: pid, cliente: clienteTurno, espejo: espejoLocal,
+      misComodines: Array.isArray(sec.misComodines) ? sec.misComodines : [],
+      misObjetivos: sec.misObjetivos && typeof sec.misObjetivos === "object" ? sec.misObjetivos : {}, partida: pid, cliente: clienteTurno, espejo: espejoLocal,
       cuenta: conCuenta && (!local || !!espejoLocal) };
     const ultima = esFinalDeJuego(v);
     // Ceremonia de copas de la noche: sin ronda, sin barra del anfitrión ni marcador; al final se cierra la sala.
