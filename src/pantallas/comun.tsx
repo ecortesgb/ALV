@@ -95,7 +95,6 @@ export function Avisos() {
 }
 
 // ---------- Figuras ----------
-/** Retrato circular de un jugador: cabeza y hombros de su figura 3D (sin figura, una fija al azar por su id). */
 /** Nombre del jugador con el apodo de su figura encima (si lo tiene). */
 export function NombreJugador({ nombre, figura, clase = "dsp" }: { nombre: string; figura?: FiguraV2 | null; clase?: string }) {
   const apodo = apodoDe(figura);
@@ -103,8 +102,9 @@ export function NombreJugador({ nombre, figura, clase = "dsp" }: { nombre: strin
   return <span className="a-nom"><small className="a-apodo">{apodo}</small><span className={clase}>{nombre}</span></span>;
 }
 
+/** Retrato circular de un jugador: la misma foto de busto del medallón del HUB (sin figura, una fija al azar por su id). */
 export function Retrato({ id, figura, nombre, size = 44 }: { id: string; figura?: FiguraV2 | null; nombre?: string; size?: number }) {
-  return <FotoFigura figura={figura ?? undefined} semilla={figura ? undefined : semillaDe(id)} size={size} nombre={nombre} redondo />;
+  return <FotoFigura figura={figura ?? undefined} semilla={figura ? undefined : semillaDe(id)} size={size} nombre={nombre} redondo encuadre="busto" />;
 }
 /** Escena 3D con varios jugadores de pie. */
 export function Elenco({ gente, foco, momentos, alto, modo }: { gente: { id: string; figura?: FiguraV2 | null }[]; foco?: string; momentos?: { id: string; cual: Momento; n: number }[]; alto?: number | string; modo?: "hub" }) {

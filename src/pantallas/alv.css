@@ -112,6 +112,9 @@ body { overscroll-behavior: none; -webkit-tap-highlight-color: transparent; }
 .D .av.av-redondo { border-radius: 50%; overflow: hidden; background: radial-gradient(circle at 50% 38%, color-mix(in srgb, var(--amarillo) 34%, transparent), color-mix(in srgb, var(--tinta) 85%, transparent) 72%); box-shadow: inset 0 0 0 3px var(--tinta), 0 0 0 2px var(--amarillo); }
 .D .av.av-redondo img { inset: auto; left: -50%; top: -50%; width: 200%; height: auto; max-width: none; object-fit: fill; }
 .D .d-ret .av.av-redondo { width: 100% !important; height: 100% !important; }
+/* Retrato con la foto de busto del medallón del HUB (320×320): mismo encuadre que el círculo interior del medallón
+   (azotea.css, .azc-dentro .azc-foto), pasado a medidas del círculo. */
+.D .av.av-redondo.av-busto img { left: -31.8%; top: -43.9%; width: 163.6%; height: 163.6%; object-fit: contain; object-position: 50% 0; }
 .D .d-ret { border-radius: 50%; }
 .D .av-3d-cargando { position: absolute; left: 28%; right: 28%; bottom: 4%; height: 62%; border-radius: 40% 40% 12% 12%; background: color-mix(in srgb, var(--borde-luz) 30%, transparent); animation: aPulso 1.2s ease-in-out infinite; }
 .D .escena3d { position: relative; width: 100%; height: 100%; min-height: 200px; }
