@@ -31,6 +31,10 @@ const Perfil = lazy(() => import("../pantallas/perfil/Perfil").then(m => ({ defa
 const Tienda = lazy(() => import("../pantallas/Tienda").then(m => ({ default: m.Tienda })));
 const PantallaTv = lazy(() => import("../roles/pantalla/Pantalla").then(m => ({ default: m.PantallaTv })));
 
+/** Pantallas del menú detrás de las cuales el HUB se queda montado (escondido y en pausa): al volver no se arma de nuevo
+ *  la escena 3D (velocidad, 28 nov). Salas, Pantalla y partidas no: ahí se libera para dejar memoria al juego. */
+const MENU_CON_HUB = new Set(["personalizar", "editor", "ranking", "logros", "tienda", "perfil", "ajustes", "modos", "jugar", "catalogo", "juego"]);
+
 export function App() {
   const { ruta, arg } = useRuta();
   const { fase, invitado, uid } = useSesion();
@@ -69,6 +73,17 @@ export function App() {
     : ruta === "ajustes" ? <Ajustes />
     : ruta === "admin" ? <Admin />
     // HUB «La Azotea» (antes Hub.tsx; de ahí solo queda Jugar).
-    : <HubAzotea />;
-  return <><Suspense fallback={null}>{pantalla}</Suspense>{fase === "dentro" && <SincroCapsulas />}{fase === "dentro" && ruta !== "tv" && <TemaMusical />}{fase === "dentro" && <Recompensas />}{fase === "dentro" && ruta !== "tv" && <AvisoLogro />}{!inicio && fase === "dentro" && invitado && ruta !== "tv" && ruta !== "editor" && <span className="a-prueba" aria-label="Estás en una entrada de prueba">Prueba</span>}<Avisos /></>;
+    : null;
+  const enHub = pantalla === null;
+  // El HUB se monta la primera vez que se ve y se queda (escondido) mientras se navega por el menú.
+  const [hubVivo, setHubVivo] = useState(false);
+  const conservarHub = enHub || (hubVivo && fase === "dentro" && !inicio && !sinFigura && MENU_CON_HUB.has(ruta));
+  useEffect(() => { if (enHub) setHubVivo(true); else if (!conservarHub) setHubVivo(false); }, [enHub, conservarHub]);
+  // Mismo árbol visible o escondido (si cambiara de forma, React lo volvería a montar).
+  const hub = conservarHub ? (
+    <div style={enHub ? { display: "contents" } : { position: "fixed", inset: 0, visibility: "hidden", pointerEvents: "none", zIndex: -1, overflow: "hidden" }} aria-hidden={enHub ? undefined : true}>
+      <HubAzotea oculto={!enHub} />
+    </div>
+  ) : null;
+  return <>{hub}<Suspense fallback={null}>{pantalla}</Suspense>{fase === "dentro" && <SincroCapsulas />}{fase === "dentro" && ruta !== "tv" && <TemaMusical />}{fase === "dentro" && <Recompensas />}{fase === "dentro" && ruta !== "tv" && <AvisoLogro />}{!inicio && fase === "dentro" && invitado && ruta !== "tv" && ruta !== "editor" && <span className="a-prueba" aria-label="Estás en una entrada de prueba">Prueba</span>}<Avisos /></>;
 }
