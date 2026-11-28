@@ -43,6 +43,8 @@
 /* Centro: la tarjeta con más presencia */
 .D .ms-centro { display: flex; flex-direction: column; gap: 12px; min-width: 0; animation: msCentro .45s cubic-bezier(.2, .8, .2, 1) both; }
 @keyframes msCentro { from { opacity: 0; transform: translateY(14px) scale(.98); } }
+/* Con la carta del turno (CartaTurno), ella misma se reparte: el centro no se mueve encima (Elías, 28 nov). */
+.D .ms-centro:has(.cr-escena) { animation: none; }
 .D .ms-centro .a-carta { margin: 0; padding: 18px 16px; border-radius: 18px; text-align: center; font: 800 clamp(19px, 4.4vw, 28px)/1.28 var(--ms-texto); text-wrap: balance;
   background: radial-gradient(90% 80% at 50% 0%, rgba(255, 225, 74, .16), transparent 70%), linear-gradient(180deg, rgba(255, 255, 255, .1), rgba(10, 16, 48, .55));
   border: 1px solid rgba(255, 225, 74, .45); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .2), 0 12px 30px rgba(0, 0, 0, .4), 0 0 26px rgba(255, 225, 74, .15);
@@ -58,6 +60,16 @@
   .D .ms-grupo.titulado { padding: 6px 3px; }
   .D .ms-grupo-cab b { font-size: 11px; max-width: 5.5em; }
   .D .ms-insignia { width: 20px; height: 20px; font-size: 11px; right: -6px; }
+}
+/* Celular angosto (Elías, 28 nov: «la carta es la protagonista»): las fichas van en una franja arriba, cada lado en su
+   mitad, y la carta con los botones usa todo el ancho. A los lados quedaba una columna de ~190 px para la carta. */
+@media (max-width: 520px) {
+  .D .ms-celular { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-areas: "izq der" "centro centro"; gap: 10px 8px; }
+  .D .ms-celular > .ms-lado.izq { grid-area: izq; }
+  .D .ms-celular > .ms-lado.der { grid-area: der; }
+  .D .ms-celular > .ms-centro { grid-area: centro; }
+  .D .ms-celular .ms-lado { flex-direction: row; flex-wrap: wrap; justify-content: center; align-items: flex-start; gap: 6px; }
+  .D .ms-celular .ms-lado ul { flex-direction: row; flex-wrap: wrap; justify-content: center; align-items: flex-start; }
 }
 /* TV: más aire, la mesa ocupa el ancho */
 .D .ms-tv { gap: 3vw; align-items: center; }
