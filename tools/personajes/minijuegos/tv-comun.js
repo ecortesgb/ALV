@@ -6,6 +6,7 @@ import { abrirCanal, abrirCanalNube, abrirCanalWs, ahora, crearSecuencias, redDe
 import { colorJugador } from "/src/app/colorJugador.ts";
 import qrcode from "qrcode-generator";
 import { cliente } from "/src/servicios/cliente.ts";
+import { crearMandosLocales } from "./mandos-locales.js";
 import { fuentePrivada } from "/src/servicios/personajesPrivados.ts";
 import { movimientosDeFicha, poderesDeFicha } from "/src/personajes/plano.ts";
 import { SETS } from "/src/personajes/sets.ts";
@@ -310,6 +311,15 @@ export function crearTV({ juego, escena, alUnirse, alMensaje, alSalir, alDescone
     }, extra()));
   }
   setInterval(difundir, 2000);
+
+  // Controles de Xbox y teclado de esta computadora (mandos-locales.js): entran como un celular más.
+  const locales = juego === "fisico" ? null : crearMandosLocales({
+    juego, jugadores, ahora,
+    entregar: (id, tipo, d) => alLlegar({ de: id, tipo, d }),
+    estado: () => Object.assign({ fase }, extra()),
+    alEmpezar: () => { const b = document.getElementById("empezar"); if (b && !b.disabled && !b.classList.contains("oculto")) b.click(); },
+  });
+  { const caja = document.getElementById("sala"); if (caja && locales) { const a = document.createElement("small"); a.className = "locales"; a.textContent = locales.ayuda; caja.appendChild(a); } }
   // Un celular que no da señales en 15 s se va (en pestañas no hay quien avise; con WebSocket avisa el servidor).
   setInterval(() => { const t = Date.now(); jugadores.forEach(j => { if (!j.bot && !j.desconectado && t - j.visto > SIN_SENAL_MS) quitar(j.id); }); }, 3000);
 
