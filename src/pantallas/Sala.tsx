@@ -6,6 +6,7 @@ import { Chip, Escaner, Panel, Reloj } from "../ds";
 import { ir } from "../app/rutas";
 import { refrescarSesion, useSesion } from "../app/sesion";
 import { sonar } from "../app/sonido";
+import { EscuchaParty } from "./party/CargaParty";
 import { enlace, esLocal, modoLocal, type SalaV } from "../servicios/enlace";
 import type { FiguraV2 } from "../content/personaje";
 import type { ColorJugador } from "../app/colorJugador";
@@ -347,8 +348,12 @@ export function Sala({ codigo }: { codigo: string }) {
     setCopando(false);
     if (!ok) aviso("No se pudieron entregar las copas. Intenta otra vez."); else { sonar("exito"); s.refrescar(); }
   };
-  return <Lobby sala={sala} miembros={ordenados} yo={ses.uid} soyAnfitrion={soyAnfitrion} final={final} red={s.red} refrescar={s.refrescar}
-    alSalir={() => void salir()} alCopas={() => void copasNoche()} copando={copando} pantalla={pantalla} />;
+  return <>
+    <Lobby sala={sala} miembros={ordenados} yo={ses.uid} soyAnfitrion={soyAnfitrion} final={final} red={s.red} refrescar={s.refrescar}
+      alSalir={() => void salir()} alCopas={() => void copasNoche()} copando={copando} pantalla={pantalla} />
+    {/* ALV PARTY: si el anfitrión empieza un minijuego, aquí sale el tutorial y este celular se vuelve mando. */}
+    {!local && !soyAnfitrion && <EscuchaParty salaId={sala.id} rol="mando" />}
+  </>;
 }
 
 /** Local: tapa la pantalla entre turnos para que nadie vea lo de otro. */
