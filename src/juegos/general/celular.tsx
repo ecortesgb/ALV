@@ -62,7 +62,8 @@ function HerramientaGeneral({ v, mi, miembros, mandar }: { v: Publico; mi: MiVis
   const meToca = v.esperados.includes(yo);
   const recibido = v.contestaron.includes(yo);
   // En ¿Cuánto conoces a tu pareja? la etapa de calificar es otra respuesta: cambia la clave.
-  const clave = `${v.ronda}-${v.carta?.id ?? ""}${v.pareja ? "-calificar" : ""}`;
+  // Segundo intento (comodín): el primer «no» no cuenta y la clave cambia para poder contestar otra vez (auditoría 28 nov).
+  const clave = `${v.ronda}-${v.carta?.id ?? ""}${v.pareja ? "-calificar" : ""}-${v.efectos?.segundo ?? ""}`;
   const [enviado, setEnviado] = useState<string | null>(null);
   const [texto, setTexto] = useState(""), [pista, setPista] = useState(""), [cuenta, setCuenta] = useState(0), [eleccion, setEleccion] = useState<"a" | "b" | null>(null);
   // Mímica y Descríbelo: qué pasó con cada palabra, en orden (id de quien adivinó, «x» tachada o «p» pasó).
