@@ -32,54 +32,227 @@
 .D .fi-crono-ops button { min-height: 36px; padding: 0 12px; border-radius: 999px; cursor: pointer; color: #3a2200; font: 800 13px/1 var(--f-texto);
   border: 1px solid rgba(255, 240, 180, .85); background: linear-gradient(180deg, #ffe680, #ffb000); }
 
-/* Resultado de la herramienta */
-.D .fi-res { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 12px; border-radius: 16px; text-align: center;
+/* Letras de las herramientas con respaldo: no todas las pantallas definen --f-titulo y --f-texto. */
+.D .fi-res, .D .vr-herr3d, .D .vr-tapados { --fi-t: var(--f-titulo, "Lilita One", "Bangers", system-ui, sans-serif); --fi-x: var(--f-texto, "Nunito", "Barlow", system-ui, sans-serif); }
+/* Resultado de la herramienta. Las animaciones solo mueven transform y opacity, duran 2 s o menos y solo corren
+   cuando el componente lleva la clase `anima` (un uso nuevo visto por primera vez en este aparato). */
+.D .fi-res { display: flex; flex-direction: column; align-items: center; gap: 10px; min-width: 0; padding: 12px; border-radius: 16px; text-align: center;
   background: radial-gradient(70% 80% at 50% 40%, rgba(46, 230, 214, .18), transparent 75%), rgba(255, 255, 255, .04); border: 1px solid rgba(46, 230, 214, .35);
   animation: fiEntra .35s cubic-bezier(.2, .8, .2, 1) backwards; }
-@keyframes fiEntra { from { opacity: 0; scale: .9; } }
-.D .fi-res-t { display: inline-flex; align-items: center; gap: 6px; font: 800 12.5px/1 var(--f-texto); letter-spacing: .08em; text-transform: uppercase; color: #6ff3e6; }
+.D .fi-res.visto { animation: none; }
+@keyframes fiEntra { from { opacity: 0; transform: scale(.94); } }
+.D .fi-res-t { display: inline-flex; align-items: center; gap: 6px; font: 800 12.5px/1 var(--fi-x); letter-spacing: .08em; text-transform: uppercase; color: #6ff3e6; }
 .D .fi-res-ico { width: 24px; height: 24px; object-fit: contain; }
-.D .fi-dados { display: flex; align-items: center; gap: .2em; font-size: 56px; line-height: 1; }
-.D .fi-dados span { filter: drop-shadow(0 4px 6px rgba(0, 0, 0, .5)); }
-.D .fi-suma { margin-left: .2em; font: 400 .6em/1 var(--f-titulo); color: #ffe14a; }
-.D .fi-ruleta { display: flex; flex-direction: column; align-items: center; gap: 6px; }
-.D .fi-ruleta b { font: 400 22px/1 var(--f-titulo); color: var(--pj-claro, #fff); }
-.D .fi-naipe { display: grid; place-items: center; width: 72px; height: 100px; border-radius: 10px; color: #14182e; background: #fff;
-  box-shadow: 0 8px 18px rgba(0, 0, 0, .4); font: 400 34px/1 var(--f-titulo); }
-.D .fi-naipe span { font-size: 28px; }
-.D .fi-naipe.rojo { color: #d6213a; }
-.D .fi-orden { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; margin: 0; padding: 0; list-style: none; }
-.D .fi-orden li { display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px 5px 5px; border-radius: 999px; font: 800 14px/1 var(--f-texto);
-  background: rgba(255, 255, 255, .08); border: 1px solid var(--pj, rgba(255, 255, 255, .3)); }
-.D .fi-orden i { display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; font-style: normal; color: var(--pj-texto, #fff); background: var(--pj, #444); }
-.D .fi-crono { display: flex; flex-direction: column; align-items: center; gap: 8px; width: min(100%, 260px); }
-.D .fi-crono b { font: 400 48px/1 var(--f-titulo); color: #fff; font-variant-numeric: tabular-nums; }
-.D .fi-crono.ya b { color: #ffb000; }
-.D .fi-crono.fin b { color: #ff6b5f; animation: fiLatido .6s ease-in-out 3; }
-@keyframes fiLatido { 50% { scale: 1.12; } }
-.D .fi-crono-barra { width: 100%; height: 8px; border-radius: 999px; background: linear-gradient(90deg, #4ff3e4 var(--p), rgba(255, 255, 255, .12) var(--p)); }
+
+/* Dado 3D: cubo de seis caras con perspectiva. La vista lo ladea para que se vean tres caras; el salto lo deja caer
+   y rebotar; el cubo gira varias vueltas y frena exactamente en la cara del resultado. */
+.D .fi-dado { --d: var(--dado, 64px); position: relative; display: inline-block; flex: none; width: var(--d); height: var(--d); perspective: calc(var(--d) * 7); }
+.D .fi-dado-vista, .D .fi-dado-salto, .D .fi-cubo { position: absolute; inset: 0; transform-style: preserve-3d; }
+.D .fi-dado-vista { transform: rotateX(-22deg) rotateY(-28deg); }
+.D .fi-cubo { transform: rotateZ(var(--z)) rotateX(var(--x)) rotateY(var(--y)); }
+/* Dos planos internos tapan los huecos de las esquinas redondeadas. */
+.D .fi-cubo::before, .D .fi-cubo::after { content: ""; position: absolute; inset: 3%; background: #e6dcc6; }
+.D .fi-cubo::before { transform: rotateX(90deg); }
+.D .fi-cubo::after { transform: rotateY(90deg); }
+.D .fi-cara { position: absolute; inset: 0; display: grid; grid-template: repeat(3, 1fr) / repeat(3, 1fr); gap: 3%; padding: 14%; border-radius: 17%; backface-visibility: hidden;
+  background: radial-gradient(120% 120% at 28% 22%, #fff 0, #f6f1e6 50%, #dcd1bb 100%); box-shadow: inset 0 0 0 1px rgba(10, 16, 48, .16), inset 0 calc(var(--d) * -.06) calc(var(--d) * .12) rgba(120, 92, 50, .28); }
+.D .fi-cara.frente { transform: translateZ(calc(var(--d) / 2)); }
+.D .fi-cara.atras { transform: rotateY(180deg) translateZ(calc(var(--d) / 2)); }
+.D .fi-cara.der { transform: rotateY(90deg) translateZ(calc(var(--d) / 2)); }
+.D .fi-cara.izq { transform: rotateY(-90deg) translateZ(calc(var(--d) / 2)); }
+.D .fi-cara.arriba { transform: rotateX(90deg) translateZ(calc(var(--d) / 2)); }
+.D .fi-cara.abajo { transform: rotateX(-90deg) translateZ(calc(var(--d) / 2)); }
+.D .fi-cara i { place-self: center; width: 92%; aspect-ratio: 1; border-radius: 50%;
+  background: radial-gradient(circle at 42% 38%, #3b4478, #0a1030 72%); box-shadow: inset 0 calc(var(--d) * .02) calc(var(--d) * .025) rgba(0, 0, 0, .55), 0 1px 0 rgba(255, 255, 255, .9); }
+.D .fi-cara i.uno { width: 150%; background: radial-gradient(circle at 42% 38%, #ff6b5f, #b3121f 72%); }
+.D .fi-dado-sombra { position: absolute; left: -12%; right: -12%; bottom: -22%; height: 30%; border-radius: 50%; background: radial-gradient(closest-side, rgba(0, 0, 0, .6), rgba(0, 0, 0, 0)); }
+.D .fi-dado.anima .fi-cubo { animation: fiDadoGira 1.25s cubic-bezier(.18, .6, .26, 1) var(--retraso, 0ms) both; }
+.D .fi-dado.anima .fi-dado-salto { animation: fiDadoSalto 1.25s linear var(--retraso, 0ms) both; }
+.D .fi-dado.anima .fi-dado-sombra { animation: fiDadoSombra 1.25s linear var(--retraso, 0ms) both; }
+@keyframes fiDadoGira { from { transform: rotateZ(var(--z0)) rotateX(var(--x0)) rotateY(var(--y0)); } }
+/* Cae acelerando, rebota dos veces cada vez más bajo y se asienta (como un dado de verdad sobre la mesa). */
+@keyframes fiDadoSalto {
+  0% { transform: translate3d(var(--dx), -150%, 0); animation-timing-function: cubic-bezier(.55, 0, .9, .55); }
+  42% { transform: translate3d(calc(var(--dx) * .3), 0, 0); animation-timing-function: cubic-bezier(.15, .55, .4, 1); }
+  60% { transform: translate3d(calc(var(--dx) * .12), -26%, 0); animation-timing-function: cubic-bezier(.6, 0, .9, .5); }
+  76% { transform: translate3d(calc(var(--dx) * .04), 0, 0); animation-timing-function: cubic-bezier(.2, .6, .4, 1); }
+  86% { transform: translate3d(0, -7%, 0); animation-timing-function: cubic-bezier(.6, 0, .9, .5); }
+  94%, 100% { transform: translate3d(0, 0, 0); }
+}
+@keyframes fiDadoSombra {
+  0% { opacity: .15; transform: translateX(var(--dx)) scale(.45); animation-timing-function: cubic-bezier(.55, 0, .9, .55); }
+  42% { opacity: 1; transform: translateX(calc(var(--dx) * .3)) scale(1); }
+  60% { opacity: .65; transform: translateX(calc(var(--dx) * .12)) scale(.8); }
+  76% { opacity: 1; transform: translateX(calc(var(--dx) * .04)) scale(1); }
+  86% { opacity: .9; transform: translateX(0) scale(.94); }
+  94%, 100% { opacity: 1; transform: translateX(0) scale(1); }
+}
+.D .fi-dados { --dado: 66px; display: flex; flex-direction: column; align-items: center; gap: 6px; padding-top: calc(var(--dado) * .55); }
+.D .fi-dados-par { display: flex; gap: calc(var(--dado) * .6); padding: 0 0 calc(var(--dado) * .3); }
+.D .fi-suma { display: flex; flex-direction: column; align-items: center; gap: 2px; font: 400 calc(var(--dado) * .95)/1 var(--fi-t); color: #ffe14a; text-shadow: 0 3px 0 rgba(0, 0, 0, .45);
+  font-variant-numeric: tabular-nums; opacity: 0; transform: translateY(10px) scale(.7); transition: opacity .25s ease-out, transform .4s cubic-bezier(.2, 1.5, .4, 1); }
+.D .fi-suma small { font: 800 12.5px/1 var(--fi-x); letter-spacing: .1em; text-transform: uppercase; color: rgba(255, 255, 255, .75); text-shadow: none; }
+.D .fi-dados.listo .fi-suma { opacity: 1; transform: none; }
+
+/* Naipe: el tamaño de todo sale del ancho de la carta (1em = ancho). Dorso ALV → cara con un giro en Y. */
+.D .fi-naipe3d { position: relative; display: inline-block; flex: none; isolation: isolate; width: 1em; height: 1.4em; font-size: var(--carta, 132px); line-height: 1; perspective: 6em; }
+.D .fi-naipe-vuelo, .D .fi-naipe-giro { position: absolute; inset: 0; transform-style: preserve-3d; }
+.D .fi-naipe-frente, .D .fi-naipe-dorso { position: absolute; inset: 0; overflow: hidden; border-radius: .08em; backface-visibility: hidden; }
+.D .fi-naipe-frente { color: #14182e; background: linear-gradient(165deg, #fff 0, #fbf8f1 60%, #efe8d8 100%);
+  box-shadow: 0 .05em .12em rgba(0, 0, 0, .45), inset 0 0 0 .008em rgba(10, 16, 48, .3); }
+.D .fi-naipe3d.rojo .fi-naipe-frente { color: #d6213a; }
+.D .fi-naipe-dorso { transform: rotateY(180deg); }
+.D .fi-ind { position: absolute; display: flex; flex-direction: column; align-items: center; gap: .01em; min-width: .16em; }
+.D .fi-ind b { font: 400 .19em/.9 var(--fi-t); letter-spacing: -.02em; }
+.D .fi-ind span { font-size: .14em; line-height: 1; }
+.D .fi-ind.arr { top: .06em; left: .06em; }
+.D .fi-ind.abj { right: .06em; bottom: .06em; transform: rotate(180deg); }
+.D .fi-centro { position: absolute; inset: .24em .2em; display: grid; place-items: center; }
+.D .fi-palo-grande { font-size: .56em; line-height: 1; filter: drop-shadow(0 .02em 0 rgba(0, 0, 0, .15)); }
+/* Figuras: marco de oro con la letra grande y el palo. */
+.D .fi-fig-marco { position: relative; display: grid; place-content: center; justify-items: center; gap: .02em; width: 100%; height: 100%; border-radius: .05em;
+  border: .012em solid currentColor; box-shadow: inset 0 0 0 .02em #fff, inset 0 0 0 .032em #e0a800;
+  background: radial-gradient(80% 60% at 50% 45%, rgba(255, 225, 74, .35), transparent 70%), repeating-linear-gradient(45deg, rgba(224, 168, 0, .13) 0 .03em, transparent .03em .06em); }
+.D .fi-fig-marco b { font: 400 .5em/.9 var(--fi-t); text-shadow: 0 .03em 0 #ffc21a, 0 .05em 0 rgba(10, 16, 48, .35); }
+.D .fi-fig-marco span { font-size: .2em; line-height: 1; }
+/* As: palo enorme dentro de un aro de oro con rayos. */
+.D .fi-as-aro { position: absolute; width: .78em; aspect-ratio: 1; border-radius: 50%; border: .014em solid #e0a800; box-shadow: inset 0 0 0 .022em #fff, inset 0 0 0 .032em rgba(224, 168, 0, .6);
+  background: repeating-conic-gradient(rgba(255, 194, 26, .26) 0 7deg, transparent 7deg 15deg); }
+.D .fi-as-palo { position: relative; font-size: .62em; line-height: 1; filter: drop-shadow(0 .02em 0 rgba(0, 0, 0, .2)); }
+.D .fi-naipe3d.mini .fi-centro { inset: 0; display: flex; flex-direction: column; justify-content: center; gap: .03em; }
+.D .fi-naipe3d.mini .fi-centro b { font: 400 .42em/.9 var(--fi-t); }
+.D .fi-naipe3d.mini .fi-centro span { font-size: .36em; line-height: 1; }
+.D .fi-naipe3d.mini.figura .fi-naipe-frente, .D .fi-naipe3d.mini.as .fi-naipe-frente { box-shadow: 0 .05em .12em rgba(0, 0, 0, .45), inset 0 0 0 .04em #e0a800; }
+/* Dorso ALV: azul de la noche, rombos de oro y el sello al centro. */
+.D .fi-dorso { position: absolute; inset: 0; display: grid; place-items: center; border-radius: .08em;
+  background: repeating-linear-gradient(45deg, rgba(255, 210, 63, .2) 0 .012em, transparent .012em .07em), repeating-linear-gradient(-45deg, rgba(255, 210, 63, .2) 0 .012em, transparent .012em .07em),
+    radial-gradient(70% 55% at 50% 50%, #2a3fa8, #0b1240 80%);
+  box-shadow: inset 0 0 0 .035em #0b1240, inset 0 0 0 .048em #ffd23f, 0 .04em .1em rgba(0, 0, 0, .4); }
+.D .fi-dorso-sello { padding: .05em .1em .04em; border-radius: 50% / 45%; font: 400 .2em/1 var(--fi-t); letter-spacing: .04em; color: #ffe14a; background: #0b1240;
+  border: .05em solid #ffd23f; transform: rotate(-8deg); text-shadow: 0 .06em 0 #000; }
+.D .fi-naipe3d.mini .fi-dorso-sello { font-size: .28em; border-width: .04em; }
+.D .fi-mazo { position: absolute; inset: 0; z-index: -1; }
+.D .fi-mazo .fi-dorso:nth-child(1) { transform: translate(-.08em, .05em) rotate(-8deg); }
+.D .fi-mazo .fi-dorso:nth-child(2) { transform: translate(-.05em, .03em) rotate(-4deg); }
+.D .fi-mazo .fi-dorso:nth-child(3) { transform: translate(-.02em, .015em) rotate(-1.5deg); }
+.D .fi-brillo { position: absolute; inset: -30% -60%; opacity: 0; pointer-events: none;
+  background: linear-gradient(105deg, transparent 42%, rgba(255, 255, 255, .85) 50%, transparent 58%); }
+.D .fi-aura { position: absolute; inset: -22% -40%; z-index: -2; border-radius: 50%; opacity: .3; pointer-events: none;
+  background: radial-gradient(closest-side, rgba(255, 225, 74, .7), rgba(255, 176, 0, .25) 55%, rgba(255, 176, 0, 0)); }
+.D .fi-naipe3d.m1 .fi-aura { opacity: .18; }
+/* Sale del mazo, sube, se voltea en el aire y cae encima. */
+.D .fi-naipe3d.anima .fi-naipe-vuelo { animation: fiNaipeVuelo .8s cubic-bezier(.3, .7, .3, 1) var(--retraso, 0ms) both; }
+.D .fi-naipe3d.anima .fi-naipe-giro { animation: fiNaipeGiro .8s cubic-bezier(.5, .05, .25, 1) var(--retraso, 0ms) both; }
+.D .fi-naipe3d.mini.anima .fi-naipe-vuelo { animation-name: fiNaipeSube; }
+@keyframes fiNaipeVuelo { 0% { transform: translate3d(-.02em, .015em, 0) scale(1) rotate(-1.5deg); } 45% { transform: translate3d(.02em, -.2em, 0) scale(1.1) rotate(4deg); } 100% { transform: translate3d(0, 0, 0) scale(1) rotate(0); } }
+@keyframes fiNaipeSube { 0% { transform: translate3d(0, 0, 0) scale(1); } 45% { transform: translate3d(0, -.18em, 0) scale(1.08); } 100% { transform: translate3d(0, 0, 0) scale(1); } }
+@keyframes fiNaipeGiro { from { transform: rotateY(-180deg); } }
+/* Momento: el 5 de corazones rebota poquito y brilla; el As y las figuras rebotan más y se encienden. */
+.D .fi-naipe3d.m1.anima .fi-naipe-vuelo { animation: fiNaipeVuelo .8s cubic-bezier(.3, .7, .3, 1) var(--retraso, 0ms) both, fiPop1 .38s ease-out calc(var(--retraso, 0ms) + .8s); }
+.D .fi-naipe3d.m2.anima .fi-naipe-vuelo { animation: fiNaipeVuelo .8s cubic-bezier(.3, .7, .3, 1) var(--retraso, 0ms) both, fiPop2 .55s cubic-bezier(.2, 1.4, .4, 1) calc(var(--retraso, 0ms) + .8s); }
+.D .fi-naipe3d.mini.m1.anima .fi-naipe-vuelo, .D .fi-naipe3d.mini.m2.anima .fi-naipe-vuelo { animation-name: fiNaipeSube, fiPop1; }
+.D .fi-naipe3d.anima .fi-brillo { animation: fiBrillo .65s ease-in-out calc(var(--retraso, 0ms) + .82s); }
+.D .fi-naipe3d.m2.anima .fi-aura { animation: fiAura 1s ease-out calc(var(--retraso, 0ms) + .75s) backwards; }
+.D .fi-naipe3d.m1.anima .fi-aura { animation: fiAura1 .9s ease-out calc(var(--retraso, 0ms) + .75s) backwards; }
+@keyframes fiPop1 { 40% { transform: scale(1.06); } }
+@keyframes fiPop2 { 0% { transform: scale(1) rotate(0); } 35% { transform: scale(1.16) rotate(-2deg); } 100% { transform: scale(1) rotate(0); } }
+@keyframes fiBrillo { from { opacity: 1; transform: translateX(-60%); } to { opacity: 1; transform: translateX(60%); } }
+@keyframes fiAura { 0% { opacity: 0; transform: scale(.5); } 40% { opacity: 1; transform: scale(1.12); } 100% { opacity: .3; transform: scale(1); } }
+@keyframes fiAura1 { 0% { opacity: 0; transform: scale(.6); } 40% { opacity: .5; transform: scale(1.05); } 100% { opacity: .18; transform: scale(1); } }
+.D .fi-carta-sale { padding: 12px 22px 16px; }
+
+/* Botella: los jugadores en círculo y la botella al centro, que gira y frena apuntando al elegido. */
+.D .fi-ruleta { display: flex; flex-direction: column; align-items: center; gap: 10px; width: 100%; }
+.D .fi-rueda { --rueda: min(80vw, 300px); position: relative; flex: none; width: var(--rueda); height: var(--rueda); }
+.D .fi-rueda-piso { position: absolute; inset: 15%; border-radius: 50%;
+  background: radial-gradient(circle, rgba(46, 230, 214, .14), rgba(6, 10, 32, .55) 72%); box-shadow: inset 0 0 0 2px rgba(111, 243, 230, .3), inset 0 0 calc(var(--rueda) * .1) rgba(0, 0, 0, .55); }
+.D .fi-rueda-piso::before { content: ""; position: absolute; inset: 7%; border-radius: 50%; border: 2px dashed rgba(255, 255, 255, .14); }
+.D .fi-silla { position: absolute; z-index: 1; display: flex; flex-direction: column; align-items: center; width: var(--bb); transform: translate(-50%, -50%); transition: opacity .3s ease-out; }
+.D .fi-silla.elegido { z-index: 2; }
+.D .fi-silla .ide-burbuja.sel, .D .fi-orden .ide-burbuja, .D .fi-para .ide-burbuja { margin: 0; }
+.D .fi-rueda.listo .fi-silla:not(.elegido):not(.marcada) { opacity: .5; }
+.D .fi-silla-tag { position: absolute; z-index: 3; top: 112%; padding: 2px 7px; border-radius: 6px; font: 400 12px/1.1 var(--fi-t); font-style: normal; white-space: nowrap; color: #0a1030; background: #ffe14a; }
+.D .fi-botella { position: absolute; left: 42%; top: 26%; width: 16%; height: 48%; transform: rotate(var(--fin)); }
+.D .fi-botella-svg { position: relative; display: block; width: 100%; height: 100%; overflow: visible; }
+.D .fi-botella-sombra { position: absolute; inset: 6% -18% -2%; border-radius: 50%; transform: translate(8%, 5%); background: radial-gradient(closest-side, rgba(0, 0, 0, .55), rgba(0, 0, 0, 0)); }
+.D .fi-botella-alv { font: 400 10px/1 var(--fi-t); fill: #3a2200; letter-spacing: .02em; }
+.D .fi-rueda.anima .fi-botella { will-change: transform; animation: fiBotella 1.7s cubic-bezier(.12, .78, .22, 1.02) both; }
+@keyframes fiBotella { from { transform: rotate(var(--inicio)); } }
+.D .fi-ruleta-nom { font: 400 22px/1.1 var(--fi-t); color: rgba(255, 255, 255, .6); overflow-wrap: anywhere; }
+.D .fi-ruleta-nom.listo { color: #fff; animation: fiNombre .4s cubic-bezier(.2, 1.5, .4, 1); }
+.D .fi-ruleta-nom span { color: var(--pj-claro, #ffe14a); }
+@keyframes fiNombre { from { opacity: 0; transform: scale(.7); } }
+
+/* Cronómetro: anillo grande que se vacía; los últimos 5 s se ponen rojos y el número late cada segundo. */
+.D .fi-crono { --cr: 196px; position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; width: var(--cr); height: var(--cr); margin: 4px 0; }
+.D .fi-crono svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; transform: rotate(-90deg); }
+.D .fi-crono-pista { fill: rgba(6, 10, 32, .6); stroke: rgba(255, 255, 255, .12); stroke-width: 9; }
+.D .fi-crono-avance { fill: none; stroke: #4ff3e4; stroke-width: 9; stroke-linecap: round; }
+.D .fi-crono.ya .fi-crono-avance, .D .fi-crono.fin .fi-crono-avance { stroke: #ff5a4f; }
+.D .fi-crono-halo { position: absolute; inset: -14%; border-radius: 50%; opacity: 0; pointer-events: none; background: radial-gradient(closest-side, rgba(255, 90, 79, .6), rgba(255, 90, 79, 0)); }
+.D .fi-crono.ya .fi-crono-halo { animation: fiHalo .9s ease-out; }
+.D .fi-crono.fin .fi-crono-halo { opacity: .55; }
+@keyframes fiHalo { from { opacity: 1; transform: scale(.85); } to { opacity: 0; transform: scale(1.08); } }
+.D .fi-crono b { position: relative; font: 400 calc(var(--cr) * .34)/1 var(--fi-t); color: #fff; font-variant-numeric: tabular-nums; text-shadow: 0 3px 0 rgba(0, 0, 0, .45); }
+.D .fi-crono small { position: relative; margin-top: 2px; font: 800 calc(var(--cr) * .065)/1 var(--fi-x); letter-spacing: .1em; text-transform: uppercase; color: rgba(255, 255, 255, .7); }
+.D .fi-crono.ya b { color: #ff8a80; }
+.D .fi-crono b.late { animation: fiLate .5s cubic-bezier(.2, 1.4, .4, 1); }
+@keyframes fiLate { from { transform: scale(1.4); } }
+.D .fi-crono.fin b { font-size: calc(var(--cr) * .19); color: #ff6b5f; animation: fiLatido .6s ease-in-out 3; }
+@keyframes fiLatido { 50% { transform: scale(1.12); } }
+
+/* Orden: una fila grande por jugador, con su número, su burbuja y su nombre. */
+.D .fi-orden { --ob: 40px; display: flex; flex-direction: column; gap: 8px; width: min(100%, 380px); margin: 0; padding: 0; list-style: none; text-align: left; }
+.D .fi-orden li { display: grid; grid-template-columns: auto auto minmax(0, 1fr) auto; align-items: center; gap: 10px; padding: 6px 12px 6px 6px; border-radius: 16px;
+  background: linear-gradient(90deg, color-mix(in srgb, var(--pj, #444) 30%, transparent), rgba(255, 255, 255, .04)); border: 1px solid color-mix(in srgb, var(--pj, #888) 65%, transparent); }
+.D .fi-orden li:first-child { border-width: 2px; box-shadow: 0 0 18px color-mix(in srgb, var(--pj, #ffe14a) 45%, transparent); }
+.D .fi-orden li > i { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; font: 400 20px/1 var(--fi-t); font-style: normal;
+  color: var(--pj-texto, #fff); background: var(--pj, #444); box-shadow: inset 0 -3px 0 rgba(0, 0, 0, .25); }
+.D .fi-orden-nom { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 400 22px/1.1 var(--fi-t); color: #fff; }
+.D .fi-orden-tag { padding: 4px 8px; border-radius: 999px; font: 800 11px/1 var(--fi-x); font-style: normal; letter-spacing: .06em; text-transform: uppercase; color: #3a2200; background: #ffe14a; }
+.D .fi-orden.anima li { animation: fiFila .38s cubic-bezier(.2, .9, .3, 1.15) calc(var(--i) * 70ms) backwards; }
+@keyframes fiFila { from { opacity: 0; transform: translateY(14px) scale(.96); } }
+
 /* Palabra (tapada por omisión en cada aparato) y pregunta */
 .D .fi-tapada { display: flex; flex-direction: column; align-items: center; gap: 4px; min-height: 72px; width: min(100%, 300px); padding: 12px 16px; border-radius: 14px; cursor: pointer; color: #fff;
   border: 1px dashed rgba(160, 255, 245, .7); background: repeating-linear-gradient(135deg, rgba(255, 255, 255, .07) 0 10px, rgba(255, 255, 255, .02) 10px 20px); }
-.D .fi-tapada b { font: 400 22px/1 var(--f-titulo); color: #ffe14a; }
-.D .fi-tapada small { font: 700 13px/1.3 var(--f-texto); color: rgba(255, 255, 255, .8); }
+.D .fi-tapada b { font: 400 22px/1 var(--fi-t); color: #ffe14a; }
+.D .fi-tapada small { font: 700 13px/1.3 var(--fi-x); color: rgba(255, 255, 255, .8); }
 .D .fi-palabra { display: flex; flex-direction: column; align-items: center; gap: 6px; }
-.D .fi-palabra b { font: 400 36px/1.05 var(--f-titulo); color: #ffe14a; text-shadow: 0 2px 0 rgba(0, 0, 0, .45); overflow-wrap: anywhere; }
-.D .fi-palabra p { margin: 0; font: 700 14px/1.35 var(--f-texto); color: #ff8a80; }
-.D .fi-pregunta { display: flex; flex-direction: column; align-items: center; gap: 6px; max-width: 32em; }
-.D .fi-para { padding: 4px 12px; border-radius: 999px; font: 800 13px/1.1 var(--f-texto); color: var(--pj-texto, #fff); background: var(--pj, #444); }
-.D .fi-pregunta b { font: 700 18px/1.35 var(--f-texto); color: #fff; overflow-wrap: anywhere; }
-.D .fi-res.grande { padding: 1em 1.4em; border-radius: 1.2em; }
+.D .fi-palabra b { font: 400 36px/1.05 var(--fi-t); color: #ffe14a; text-shadow: 0 2px 0 rgba(0, 0, 0, .45); overflow-wrap: anywhere; }
+.D .fi-palabra p { margin: 0; font: 700 14px/1.35 var(--fi-x); color: #ff8a80; }
+.D .fi-pregunta { display: flex; flex-direction: column; align-items: center; gap: 12px; width: 100%; max-width: 30em; padding: 4px 2px 6px; }
+.D .fi-para { display: inline-flex; align-items: center; gap: 8px; max-width: 100%; padding: 3px 14px 3px 3px; border-radius: 999px; font: 800 15px/1.1 var(--fi-x);
+  color: var(--pj-texto, #fff); background: var(--pj, #444); box-shadow: 0 4px 12px rgba(0, 0, 0, .3); }
+.D .fi-pregunta b { font: 800 24px/1.3 var(--fi-x); color: #fff; text-wrap: balance; overflow-wrap: anywhere; }
+.D .fi-pregunta.larga b { font-size: 20px; }
+
+/* TV */
+.D .fi-res.grande { gap: .7em; padding: 1em 1.4em; border-radius: 1.2em; }
+.D .fi-res.grande .fi-res-t { font-size: clamp(14px, 1.2vw, 20px); }
+.D .fi-res.grande .fi-res-ico { width: 1.8em; height: 1.8em; }
 .D .fi-res.grande .fi-palabra b { font-size: clamp(40px, 4.5vw, 80px); }
 .D .fi-res.grande .fi-palabra p, .D .fi-res.grande .fi-tapada small { font-size: clamp(16px, 1.5vw, 24px); }
 .D .fi-res.grande .fi-tapada { width: auto; padding: .8em 1.4em; }
 .D .fi-res.grande .fi-tapada b { font-size: clamp(28px, 2.6vw, 44px); }
-.D .fi-res.grande .fi-pregunta b { font-size: clamp(22px, 2.2vw, 38px); }
-.D .fi-res.grande .fi-para { font-size: clamp(15px, 1.4vw, 22px); }
-.D .fi-res.grande .fi-dados { font-size: clamp(64px, 7vw, 120px); }
-.D .fi-res.grande .fi-naipe { width: 1.9em; height: 2.6em; font-size: clamp(40px, 4vw, 64px); }
-.D .fi-res.grande .fi-crono b { font-size: clamp(56px, 6vw, 110px); }
-.D .fi-res.grande .fi-orden li { font-size: clamp(16px, 1.5vw, 24px); }
+.D .fi-res.grande .fi-pregunta { max-width: 26em; font-size: clamp(16px, 1.4vw, 26px); }
+.D .fi-res.grande .fi-pregunta b { font-size: clamp(30px, 3vw, 56px); }
+.D .fi-res.grande .fi-pregunta.larga b { font-size: clamp(24px, 2.4vw, 44px); }
+.D .fi-res.grande .fi-para { font-size: clamp(18px, 1.6vw, 28px); }
+.D .fi-res.grande .fi-dados { --dado: clamp(96px, 11vh, 150px); }
+.D .fi-res.grande .fi-suma small { font-size: clamp(14px, 1.2vw, 20px); }
+.D .fi-res.grande .fi-naipe3d { --carta: clamp(170px, 22vh, 280px); }
+.D .fi-res.grande .fi-carta-sale { padding: 1em 2em 1.4em; }
+.D .fi-res.grande .fi-rueda { --rueda: clamp(320px, 46vh, 560px); }
+.D .fi-res.grande .fi-ruleta-nom { font-size: clamp(30px, 3vw, 54px); }
+.D .fi-res.grande .fi-silla-tag { font-size: clamp(14px, 1.2vw, 22px); }
+.D .fi-res.grande .fi-crono { --cr: clamp(260px, 40vh, 460px); }
+.D .fi-res.grande .fi-orden { --ob: clamp(48px, 5.6vh, 72px); gap: .6em; width: min(100%, 560px); }
+.D .fi-res.grande .fi-orden:has(li:nth-child(6)) { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); width: min(100%, 920px); }
+.D .fi-res.grande .fi-orden li { gap: .6em; padding: .4em 1em .4em .4em; border-radius: 1em; }
+.D .fi-res.grande .fi-orden li > i { width: 1.6em; height: 1.6em; font-size: clamp(22px, 2.4vh, 34px); }
+.D .fi-res.grande .fi-orden-nom { font-size: clamp(26px, 3.2vh, 44px); }
+.D .fi-res.grande .fi-orden-tag { font-size: clamp(12px, 1.4vh, 18px); }
 
 /* Puntos por jugador */
 .D .fi-lista { display: flex; flex-direction: column; gap: 6px; margin: 0; padding: 0; list-style: none; }
@@ -120,14 +293,12 @@
   .D .fi-herrs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .D .fi-paso { min-width: 34px; height: 36px; font-size: 15px; }
 }
-@media (prefers-reduced-motion: reduce) { .D .fi-res, .D .fi-crono.fin b { animation: none; } }
-
-/* Dados rodando (DadosRuedan). */
-.D .fi-dados.rodando span { animation: fiRueda .22s linear infinite; }
-.D .fi-dados.listo span { animation: fiCae .4s cubic-bezier(.2, 1.6, .4, 1) both; }
-@keyframes fiRueda { to { transform: rotate(360deg) translateY(-6px); } }
-@keyframes fiCae { from { transform: translateY(-18px) scale(1.2); } }
-@media (prefers-reduced-motion: reduce) { .D .fi-dados span { animation: none !important; } }
+/* Movimiento reducido: el resultado sale directo, sin giros ni rebotes (el JS tampoco pone `anima`). */
+@media (prefers-reduced-motion: reduce) {
+  .D .fi-res, .D .fi-crono b, .D .fi-crono-halo, .D .fi-ruleta-nom, .D .fi-orden li,
+  .D .fi-dado *, .D .fi-naipe3d *, .D .fi-botella { animation: none !important; }
+  .D .fi-suma, .D .fi-silla { transition: none; }
+}
 
 /* Juegos de risa (risa.tsx): turno, carta, reloj a ciegas y reglas en pantalla. */
 .D .ri-carta .ri-oculta { font-size: 20px; color: #fff; }
