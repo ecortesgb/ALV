@@ -2,15 +2,15 @@
    con la cabina de cada jugador, barra del anfitrión con el arte nuevo y los componentes de cada juego en vidrio. */
 .D .lb-fondo.oscuro::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(5, 8, 24, .55), rgba(5, 8, 24, .35) 40%, rgba(5, 8, 24, .65)); }
 
-/* ---------- Ficha de jugador: cabina de su color + busto ---------- */
+/* ---------- Ficha de jugador: círculo con la cabina de su color + busto (Elías, 28 nov: en los juegos también círculo) ---------- */
 .D .fj { display: inline-flex; align-items: center; gap: 10px; min-width: 0; }
-.D .fj-cab { position: relative; flex: none; width: var(--fj-t, 64px); height: calc(var(--fj-t, 64px) * 1.18); border-radius: 12px; overflow: hidden;
+.D .fj-cab { position: relative; flex: none; width: var(--fj-t, 64px); height: var(--fj-t, 64px); border-radius: 50%;
   background: var(--fj-cab) center 38% / 160% auto no-repeat, #0b0d18; border: 2px solid color-mix(in srgb, var(--pj, #888) 70%, #000);
   box-shadow: 0 6px 12px rgba(0, 0, 0, .45), inset 0 0 0 1px rgba(255, 255, 255, .08); }
-.D .fj-cab img { position: absolute; left: 50%; bottom: 0; width: 96%; translate: -50% 0; filter: drop-shadow(0 4px 4px rgba(0, 0, 0, .5)); }
+.D .fj-cab img { position: absolute; inset: 0; width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
 .D .fj-cargando { position: absolute; inset: 20%; border-radius: 50%; background: rgba(255, 255, 255, .15); }
 .D .fj.yo .fj-cab { border-color: #ffe14a; box-shadow: 0 0 0 3px rgba(255, 225, 74, .35), 0 6px 12px rgba(0, 0, 0, .45); }
-.D .fj-pn { position: absolute; left: 3px; top: 3px; z-index: 1; display: grid; place-items: center; min-width: 26px; height: 20px; padding: 0 5px;
+.D .fj-pn { position: absolute; left: -6px; top: -4px; z-index: 1; display: grid; place-items: center; min-width: 26px; height: 20px; padding: 0 5px;
   border-radius: 999px; font: 400 13px/1 var(--f-titulo); color: var(--pj-texto, #fff); background: var(--pj, #444); border: 2px solid rgba(0, 0, 0, .55); }
 .D .fj-txt { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
 .D .fj-nom { font: 400 clamp(17px, 1.4vw, 22px)/1.05 var(--f-titulo); color: #fff; text-shadow: 0 2px 0 rgba(0, 0, 0, .5); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

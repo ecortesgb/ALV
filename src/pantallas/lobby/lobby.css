@@ -357,9 +357,10 @@
 .D .pl-cerrar { width: 40px; height: 40px; border-radius: 12px; cursor: pointer; color: #fff; font-size: 18px; border: 1px solid rgba(255, 255, 255, .25); background: rgba(255, 255, 255, .08); }
 .D .pl-cuerpo { display: grid; grid-template-columns: 200px minmax(0, 1fr); gap: 18px; min-height: 0; overflow: hidden; }
 .D .pl-vista { display: flex; flex-direction: column; align-items: center; gap: 10px; }
-.D .pl-cabina { position: relative; display: block; width: 180px; height: 220px; border-radius: 16px; overflow: hidden; background: var(--fj-cab) center / cover no-repeat, #141a46;
+/* Círculo como los demás retratos (Elías, 28 nov: aquí salía un cuadro). */
+.D .pl-cabina { position: relative; display: block; width: 180px; height: 180px; border-radius: 50%; overflow: hidden; background: var(--fj-cab) center / cover no-repeat, #141a46;
   border: 2px solid var(--pj, rgba(255, 255, 255, .3)); box-shadow: 0 10px 24px rgba(0, 0, 0, .45), 0 0 22px color-mix(in srgb, var(--pj, #fff) 35%, transparent); }
-.D .pl-cabina img { position: absolute; left: 50%; bottom: 0; width: 94%; height: auto; translate: -50% 0; filter: drop-shadow(0 6px 6px rgba(0, 0, 0, .5)); animation: plFig .35s cubic-bezier(.2, .8, .2, 1) both; }
+.D .pl-cabina img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; filter: drop-shadow(0 6px 6px rgba(0, 0, 0, .5)); animation: plFig .35s cubic-bezier(.2, .8, .2, 1) both; }
 @keyframes plFig { from { opacity: 0; transform: translateY(12px) scale(.94); } }
 .D .pl-nombre { max-width: 100%; font: 400 22px/1.05 var(--f-titulo); text-align: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--pj-claro, #fff); }
 .D .pl-azar { min-height: 42px; padding: 0 16px; border-radius: 999px; cursor: pointer; color: #3a2200; font: 800 14px/1 var(--f-texto); border: 1px solid rgba(255, 240, 180, .85); background: linear-gradient(180deg, #ffe680, #ffb000); }
@@ -386,7 +387,7 @@
   .D .pl-modal { padding: 14px; gap: 10px; }
   .D .pl-cuerpo { grid-template-columns: 1fr; overflow-y: auto; }
   .D .pl-vista { flex-direction: row; justify-content: center; gap: 12px; }
-  .D .pl-cabina { width: 110px; height: 134px; }
+  .D .pl-cabina { width: 110px; height: 110px; }
   .D .pl-nombre { font-size: 18px; }
   .D .pl-trajes { max-height: 220px; }
 }

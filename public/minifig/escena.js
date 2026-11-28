@@ -1764,33 +1764,37 @@
   function encuadreBusto(inst, o, tv, th) {
     const cab = inst.hueso("cabeza"); if (!cab) return null;
     cab.getWorldPosition(vH);
+    // Tronco (cabeza → cadera): la medida que no cambia con la ropa. Cadera: la de la ficha, si no, el hueso que se llame así.
+    let cad = inst.hueso("cadera");
+    if (!cad) o.traverse(x => { if (!cad && x.isBone && CADERA.test(x.name)) cad = x; });
+    const tronco = Math.max(cad ? vH.y - cad.getWorldPosition(vC).y : 0, vH.y * 0.35, 1e-3);
     // Huesos de la cabeza y sus hijos (pelo, mandíbula, accesorios de la cabeza).
     const deCab = new Set(); cab.traverse(x => deCab.add(x));
-    const cc = new THREE.Box3();
+    // cc: lo que mueve la cabeza. techo: lo más alto de la figura en una columna sobre la cabeza (orejas, capucha o una
+    // cabeza que mueven otros huesos, como MODOK), sin contar lo que sale a los lados (capas, alas, zarcillos).
+    const cc = new THREE.Box3(), R2 = (tronco * 0.7) ** 2;
+    let techo = -Infinity;
     o.traverse(m => {
       if (!m.isMesh || !m.visible || m.userData.alvOclusor) return;
       if (m.isSkinnedMesh) {
         const pos = m.geometry.attributes.position, si = m.geometry.attributes.skinIndex, sw = m.geometry.attributes.skinWeight;
         if (!pos || !si || !sw) return;
         const hs = m.skeleton.bones.map(x => deCab.has(x));
-        if (!hs.some(Boolean)) return;
         for (let i = 0; i < pos.count; i++) {
           let k = 0, w = sw.getX(i);
           if (sw.getY(i) > w) { k = 1; w = sw.getY(i); } if (sw.getZ(i) > w) { k = 2; w = sw.getZ(i); } if (sw.getW(i) > w) k = 3;
-          if (!hs[k === 0 ? si.getX(i) : k === 1 ? si.getY(i) : k === 2 ? si.getZ(i) : si.getW(i)]) continue;
-          vB.fromBufferAttribute(pos, i); m.boneTransform(i, vB); vB.applyMatrix4(m.matrixWorld); cc.expandByPoint(vB);
+          vB.fromBufferAttribute(pos, i); m.boneTransform(i, vB); vB.applyMatrix4(m.matrixWorld);
+          if (hs[k === 0 ? si.getX(i) : k === 1 ? si.getY(i) : k === 2 ? si.getZ(i) : si.getW(i)]) cc.expandByPoint(vB);
+          if (vB.y > techo && (vB.x - vH.x) ** 2 + (vB.z - vH.z) ** 2 < R2) techo = vB.y;
         }
       } else { let p = m.parent; while (p && !deCab.has(p)) p = p.parent; if (p) cc.expandByObject(m); }
     });
-    if (cc.isEmpty()) cc.expandByPoint(vH);
-    // Cadera: la de la ficha, si no, el hueso que se llame así.
-    let cad = inst.hueso("cadera");
-    if (!cad) o.traverse(x => { if (!cad && x.isBone && CADERA.test(x.name)) cad = x; });
-    const altoCab = Math.max(cc.max.y - vH.y, 1e-3);
-    const tronco = cad ? Math.max(vH.y - cad.getWorldPosition(vC).y, altoCab * 0.5) : altoCab * 1.6;
+    // Sin vértices de cabeza (MODOK: su cabeza la mueven otros huesos), el hueso no dice dónde está la cara: encuadre de antes.
+    if (cc.isEmpty()) return null;
     // De lo más alto de la cabeza hasta la mitad del pecho, con un poco de aire arriba.
-    const arriba = cc.max.y, abajo = vH.y - tronco * BUSTO_PECHO;
-    const altoZ = (arriba - abajo) * 1.06;
+    const arriba = Math.max(cc.max.y, techo, vH.y + tronco * 0.6), abajo = vH.y - tronco * BUSTO_PECHO;
+    // 10 % de aire: lo que está más cerca de la cámara (orejas, casco) se ve un poco más arriba por la perspectiva.
+    const altoZ = (arriba - abajo) * 1.1;
     // Ancho: lo que mida la cabeza a cada lado del hueso, para que una cabeza ancha (casco, pelo) quepa completa.
     const lado = Math.max(vH.x - cc.min.x, cc.max.x - vH.x) * 2 * 1.08;
     const d = Math.max((altoZ / 2) / tv, (lado / 2) / th);
