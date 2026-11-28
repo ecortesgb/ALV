@@ -100,7 +100,7 @@ export const SETS_DE: Readonly<Record<Id, readonly string[]>> = (() => {
     ...usan("mente", `profesor-x jean-grey fenix fenix-oscura emma-frost psylocke magneto polaris doctor-strange loki mysterio
       yoda luke-skywalker anakin-skywalker darth-vader darth-maul harry-potter hermione-granger ron-weasley voldemort
       spider-man iron-spider superior-spider-man spider-woman spider-man-negro peter-parker stan-lee`),
-    ...usan("acrobacia", `spider-man iron-spider superior-spider-man spider-woman spider-man-negro peter-parker gwen-stacy
+    ...usan("acrobacia", `ciclope spider-man iron-spider superior-spider-man spider-woman spider-man-negro peter-parker gwen-stacy
       black-widow black-panther daredevil batman batman-returns robin robin-lego-batman elektra gamora deadpool
       capitan-america capitan-america-clasico gata-negra moon-knight iron-fist psylocke mistica taskmaster bullseye
       luke-skywalker anakin-skywalker darth-maul yoda ms-marvel chica-ardilla avispa ant-man gambito soldado-del-invierno

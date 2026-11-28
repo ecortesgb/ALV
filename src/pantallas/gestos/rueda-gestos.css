@@ -39,3 +39,10 @@
 /* Logo ALV completo al centro (estallido y cinta), un poco más grande que el círculo del centro. */
 .D .rg-logo { position: absolute; left: 50%; top: 50%; translate: -50% -50%; pointer-events: none; line-height: 0; }
 .D .rg-logo .a-logo { --logo: calc(var(--tam) * .34 / 2.4); }
+/* Círculo por categorías (Elías, 27 nov): más grande, con 6 categorías o hasta 8 movimientos; el centro es botón
+   (Transformar o Volver). Fija: siempre abierta en el personalizador, arriba a la derecha de la cabeza. */
+.D .rg.rg-grande { --tam: clamp(184px, 19vw, 216px); }
+.D .rg-boton { cursor: pointer; }
+.D .rg-boton:hover .rg-centro, .D .rg-boton.on .rg-centro { fill: var(--c2); fill-opacity: .75; }
+.D .rg-fija { animation: none; }
+.D .rg-fija .rg-vidrio { background: rgba(20, 26, 52, .38); }

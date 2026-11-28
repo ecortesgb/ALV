@@ -14,7 +14,8 @@ import { esOtros, grupoMostrado, juntarVersiones, nombreBase } from "./agrupar";
 import { conMovimientos, elegirMovimiento, GESTOS, movimientosElegidos, NOMBRE_GESTO, opcionesMovimiento, type BaseGenerica, type Gesto, type OpcionMov } from "./movimientos";
 import type { Catalogo } from "./plano";
 import type { FiguraV3, Id, Parte } from "./tipos";
-import { RUEDA, RuedaGestos, TrazosGesto } from "../pantallas/gestos/RuedaGestos";
+import { TrazosGesto } from "../pantallas/gestos/RuedaGestos";
+import { RuedaAnimaciones, type Accion } from "../pantallas/gestos/RuedaFigura";
 import { useMiniaturas } from "./useMiniaturas";
 import { Vista3D } from "./Vista3D";
 import { CartaPersonaje, LOGOS, logo, temaDe } from "../pantallas/CartaPersonaje";
@@ -371,19 +372,6 @@ export function Constructor({ catalogo, piezas, inicial, seccion, escenaUrl, onG
   const escena = useRef<HTMLDivElement>(null);
   const [rueda, setRueda] = useState<{ x: number; y: number } | null>(null);
   const [pista, setPista] = useState(() => { try { return localStorage.getItem("alv-pista-rueda") !== "vista"; } catch { return true; } });
-  const tocar = (nx: number, ny: number) => {
-    const e = escena.current, v = e?.querySelector<HTMLElement>(".pz-vista");
-    if (!e || !v) return;
-    const re = e.getBoundingClientRect(), rv = v.getBoundingClientRect();
-    const radio = Math.min(168, Math.max(136, innerWidth * 0.15)) / 2, borde = radio + 16;
-    let x: number, y: number;
-    if (innerWidth >= 860) {
-      x = rv.left - re.left + nx * rv.width + (nx < 0.5 ? 1 : -1) * radio * 1.15;
-      y = Math.max(rv.top - re.top + ny * rv.height, rv.top - re.top + rv.height * 0.5); // de la cintura para abajo: libre la cara
-    } else { x = re.width - borde; y = rv.bottom - re.top - borde; setCorrer({ x: 0.24, ms: 220 }); } // celular: la figura se hace a la izquierda (Codex r2, C)
-    setRueda({ x: Math.max(borde, Math.min(re.width - borde, x)), y: Math.max(borde, Math.min(re.height - borde, y)) });
-    if (pista) { setPista(false); try { localStorage.setItem("alv-pista-rueda", "vista"); } catch { /* sin almacenamiento */ } }
-  };
   /** Tocar la figura abre la parte tocada (Elías: «seleccionar partes directamente tocando el personaje»). La vista
    *  encuadra la figura de cuerpo entero: arriba la cabeza, al centro el torso (los lados, los brazos), abajo las piernas. */
   const [marca, setMarca] = useState<{ t: Pestana; n: number } | null>(null);
@@ -413,12 +401,33 @@ export function Constructor({ catalogo, piezas, inicial, seccion, escenaUrl, onG
   }, []);
   // Girar con el teclado: con el personaje enfocado y la rueda cerrada, ← y → (Codex, cierre-r1).
   const [giro, setGiro] = useState<{ n: number; cuanto: number } | null>(null);
-  const elegirGesto = (cual: string) => {
-    if (corrida.current) { setTimeout(() => setCorrer({ x: 0, ms: 180 }), 100); setTimeout(() => gestoRueda(cual), 280); }
-    else setTimeout(() => gestoRueda(cual), 220);
+  // Círculo fijo: se mide contra la vista (arriba a la derecha de la cabeza) al cargar y al cambiar el tamaño.
+  const [fijo, setFijo] = useState<{ x: number; y: number } | null>(null);
+  useEffect(() => {
+    const medir = () => {
+      const e = escena.current, v = e?.querySelector<HTMLElement>(".pz-vista");
+      if (!e || !v) return;
+      const re = e.getBoundingClientRect(), rv = v.getBoundingClientRect();
+      const radio = Math.min(168, Math.max(136, innerWidth * 0.15)) / 2, borde = radio + 10;
+      // Esquina de arriba a la derecha de la viñeta, debajo de su rótulo; la cámara corre la figura un poco a la izquierda
+      // para que el círculo no le tape la cara.
+      const x = Math.min(re.width, rv.right - re.left) - borde;
+      const y = Math.max(rv.top - re.top, 0) + borde + 30;
+      setFijo({ x: Math.max(borde, x), y: Math.min(re.height - borde, y) });
+    };
+    medir(); const t = setTimeout(medir, 600);
+    setCorrer({ x: 0.16, ms: 0 });
+    addEventListener("resize", medir);
+    return () => { clearTimeout(t); removeEventListener("resize", medir); };
+  }, []);
+  const puente = useMemo(() => ({ extensiones: { alv: { v3: figura } } }), [figura]);
+  const accionRueda = (a: Accion) => {
+    if (a.tipo === "gesto") gestoRueda(a.cual);
+    else if (a.tipo === "poder" && plano) setOrden(o => ({ n: (o?.n ?? 0) + 1, msg: { tipo: "poder", id: plano.id, poder: a.id } }));
   };
+  const nada = useCallback(() => {}, []);
   const teclaFigura = (ev: { key: string; preventDefault: () => void }) => {
-    if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); tocar(0.5, 0.45); }
+    if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); tocarParte(0.5, 0.5); }
     if (!rueda && (ev.key === "ArrowLeft" || ev.key === "ArrowRight")) { ev.preventDefault(); setGiro(g => ({ n: (g?.n ?? 0) + 1, cuanto: ev.key === "ArrowLeft" ? -0.35 : 0.35 })); }
   };
 
@@ -482,7 +491,9 @@ export function Constructor({ catalogo, piezas, inicial, seccion, escenaUrl, onG
             <button type="button" onClick={() => enfocar(true)} disabled={cerca} aria-label="Acercar a la cara" title="Acercar">+</button>
           </div>
         </div>
-        {rueda && <RuedaGestos gestos={RUEDA} x={rueda.x} y={rueda.y} onElegir={elegirGesto} onCerrar={cerrarRueda} />}
+        {/* Círculo de animaciones fijo arriba a la derecha, a la altura de la cabeza (Elías, 27 nov: tocar la figura ya
+            abre la parte para editarla). */}
+        {fijo && <RuedaAnimaciones figura={puente} jugador="yo" x={fijo.x} y={fijo.y} fija sinTransformar onAccion={accionRueda} onCerrar={nada} />}
         {aviso && <div className="pz-aviso" role="status">{aviso}</div>}
       </div>
 
