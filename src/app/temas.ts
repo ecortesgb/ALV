@@ -20,7 +20,10 @@ const CACHE = "alv-temas-v1";
 const OBJETO = /^[0-9a-f]{64}\.(webp|mp3)$/;
 const CLAVE = /^[a-z0-9][a-z0-9_-]{0,40}$/;
 /** Solo en desarrollo: `?temas=<carpeta servida aparte>` lee manifiesto y objetos de ahí, sin nube (pruebas). */
-const PRUEBA = import.meta.env.DEV && typeof location !== "undefined" ? new URLSearchParams(location.search).get("temas") : null;
+// Modo Fiesta (laptop sin internet): la laptop sirve su carpeta audio-personajes\_web en /temas-fiesta/ (tools/fiesta/servidor.mjs).
+const PRUEBA = typeof location === "undefined" ? null
+  : import.meta.env.VITE_ALV_FIESTA === "1" ? location.origin + "/temas-fiesta/"
+  : import.meta.env.DEV ? new URLSearchParams(location.search).get("temas") : null;
 
 /** Valida el manifiesto (viene de la nube: no es confiable). null si no sirve. */
 export function leerManifiesto(x: unknown): Manifiesto | null {

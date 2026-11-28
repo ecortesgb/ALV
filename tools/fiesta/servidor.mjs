@@ -20,8 +20,13 @@ const SITIO = join(RAIZ, "dist-fiesta");
 const DATOS = join(RAIZ, "fiesta-datos.json");
 const argumentos = process.argv.slice(2);
 const iP = argumentos.indexOf("--personajes");
-const PUERTO = Number(argumentos.find((a, i) => /^\d+$/.test(a) && i !== iP + 1)) || 8080;
+const valorDe = i => i >= 0 && i + 1 < argumentos.length ? i + 1 : -1;
+const PUERTO = Number(argumentos.find((a, i) => /^\d+$/.test(a) && i !== valorDe(iP) && i !== valorDe(argumentos.indexOf("--temas")))) || 8080;
 const PRIVADOS = iP >= 0 && argumentos[iP + 1] ? argumentos[iP + 1] : join(RAIZ, "..", "personajes-privado");
+const iT = argumentos.indexOf("--temas");
+// Canciones y voces de los personajes: la carpeta que arma audio-personajes\preparar-temas.py (manifiesto.json + objetos/).
+const TEMAS = iT >= 0 && argumentos[iT + 1] ? argumentos[iT + 1] : join(RAIZ, "..", "audio-personajes", "_web");
+const OBJETO_TEMA = /^objetos\/[0-9a-f]{64}\.(webp|mp3)$/;
 let RAICES = [];
 try { RAICES = ["catalogo", "piezas"].map(d => join(PRIVADOS, d)).filter(existsSync).map(d => realpathSync(d)); } catch { /* sin personajes */ }
 const MAX_CUERPO = 8 * 1024 * 1024;
@@ -136,6 +141,15 @@ const servidor = createServer(async (req, res) => {
       return json(res, 200, { ok: true });
     }
     if (req.method !== "GET" && req.method !== "HEAD") return json(res, 405, { ok: false });
+    if (url.pathname.startsWith("/temas-fiesta/")) {
+      const ruta = url.pathname.slice("/temas-fiesta/".length);
+      if (ruta !== "manifiesto.json" && !OBJETO_TEMA.test(ruta)) return json(res, 404, { ok: false });
+      const archivo = join(TEMAS, ruta);
+      if (!existsSync(archivo)) return json(res, 404, { ok: false });
+      res.writeHead(200, { "content-type": TIPOS[extname(archivo).toLowerCase()] ?? "application/octet-stream", "cache-control": ruta === "manifiesto.json" ? "no-store" : "public, max-age=86400" });
+      if (req.method === "HEAD") return res.end();
+      return res.end(readFileSync(archivo));
+    }
     if (url.pathname === "/privados-fiesta/indice.json") return json(res, 200, indice());
     if (url.pathname.startsWith("/privados-fiesta/")) {
       let real;
@@ -179,6 +193,7 @@ servidor.listen(PUERTO, "0.0.0.0", () => {
   console.log("\n  ALV · Modo Fiesta (sin internet)\n");
   const n = indice().personajes.length;
   console.log(n ? `  Personajes: ${n} (de ${PRIVADOS})` : `  Sin personajes: no encontré ${join(PRIVADOS, "catalogo")}. Usa --personajes "ruta".`);
+  console.log(existsSync(join(TEMAS, "manifiesto.json")) ? `  Canciones y voces: sí (de ${TEMAS})` : `  Canciones y voces: no encontré ${join(TEMAS, "manifiesto.json")}. Usa --temas "ruta" o corre preparar-temas.py.`);
   const sb = connect(SUPABASE.port, SUPABASE.host);
   sb.on("connect", () => { console.log("  Supabase local: encendido (cuentas, XP y tienda)."); sb.destroy(); });
   sb.on("error", () => console.log("  Supabase local: apagado. Sin él no entran las cuentas (npm run fiesta:supabase)."));
