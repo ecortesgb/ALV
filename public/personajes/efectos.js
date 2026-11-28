@@ -15,7 +15,7 @@
   if (!T) return;
   const V = () => new T.Vector3();
   const TIPOS = ["rayo", "electrico", "fuego", "telarana", "escudo", "invisible", "encoger", "golpe", "onda", "campo", "hechizo",
-    "volar", "estirar", "hielo", "hormigas", "velocidad", "disparo"];
+    "volar", "estirar", "hielo", "hormigas", "velocidad", "disparo", "puf"];
   const color = (c, d) => new T.Color(typeof c === "string" && /^#[0-9a-f]{6}$/i.test(c) ? c : d);
   const num = (x, a, b, d) => (typeof x === "number" && isFinite(x) ? Math.max(a, Math.min(b, x)) : d);
 
@@ -114,6 +114,7 @@
     fuego: [0xffe27a, 0xffa424, 0xff6a1a, 0xd8320c, 0x9a2208, 0x3a2a24].map(x => new T.Color(x)),
     humo: [0x9a948c, 0x6d6862, 0x4a4744].map(x => new T.Color(x)),
     polvo: [0xd8c7a8, 0xb9a58a, 0x8c7c68].map(x => new T.Color(x)),
+    nube: [0xffffff, 0xeef0f4, 0xc9ccd4, 0x9a9ea8].map(x => new T.Color(x)),
   };
   // Colores de ladrillo LEGO para los escombros.
   const LEGO = [0xc91a09, 0xf2cd37, 0x0055bf, 0x9ba19d, 0x6c6e68, 0xffffff, 0x237841, 0xa0a5a9].map(x => new T.Color(x));
@@ -645,6 +646,31 @@
           balas.forEach(b => { if (b.g) { c.scene.remove(b.g); b.g.children.forEach(m => m.geometry.dispose()); } else c.scene.remove(b.h.m, b.a.m); });
           [mat, alma, madera, punta].forEach(m => m.dispose());
         },
+      };
+    },
+    puf(c) {
+      // Nube de transformación (Elías, 28 nov: «debemos poner humo o algo»): la figura queda tapada por una nube espesa
+      // con chispas y ladrillos mientras la escena la cambia por la nueva. Sale de la figura entera, no de un hueso.
+      const o = V(), caja = new T.Box3();
+      let salio = false;
+      return {
+        paso(t, dt) {
+          if (t < 0) return true;
+          if (!salio) {
+            salio = true; caja.setFromObject(c.fig.obj); caja.getCenter(o);
+            const alto = Math.max(c.u, caja.max.y - caja.min.y), ancho = Math.max(0.5 * c.u, caja.max.x - caja.min.x);
+            destello(c, o, c.col, 1.2 * alto / c.u, 0.25);
+            for (let i = 0; i < 22; i++) {
+              const p = V().set(o.x + azar(ancho * 0.45), caja.min.y + Math.random() * alto, o.z + azar(ancho * 0.3));
+              c.P.echar(p, V().set(azar(0.6), 0.15 + Math.random() * 0.45, azar(0.6)).multiplyScalar(c.u), null, (0.45 + Math.random() * 0.35) * alto, 0.9 + Math.random() * 0.5,
+                { tex: "humo", rampa: "nube", normal: true, alfa: 0.92, crece: 1.7, freno: 2.2, entra: 0.06, gira: azar(1) });
+            }
+            chispas(c, o, null, 14, c.col, 2.6);
+            ladrillos(c, o, 10, 1.6);
+          }
+          return c.P.vivas() > 0;
+        },
+        quitar() {},
       };
     },
   };

@@ -1389,38 +1389,39 @@
    * Cambia la figura nueva de `e` por la de `p3` sin pasar por la de respaldo: la otra se arma aparte y, cuando está lista
    * (y terminó la especial si `conEspecial`), nube de humo y cambio. false si no hay motor nuevo (se arma como siempre).
    */
+  /** Nube de transformación: efecto «puf» si cargó efectos.js (si no, la nube de siempre) y la figura se encoge debajo. */
+  function puf(e, cuerpo, color, desde, dura) {
+    if (figuras.get(e.id) !== e || e.v3.obj !== cuerpo) return;
+    const fx = window.EfectosALV;
+    if (fx && !MENOS_MOVIMIENTO) fx.lanzar(scene, { obj: cuerpo, hueso: e.v3.hueso }, { tipo: "puf", color });
+    else nube(reloj.getElapsedTime(), e.obj.position.x, e.obj.position.z, 1.2, [1, 0.85, 0.3]);
+    const esc0 = cuerpo.scale.x;
+    const encoger = () => {
+      if (figuras.get(e.id) !== e || e.v3.obj !== cuerpo) return;
+      const k = Math.min(1, Math.max(0, reloj.getElapsedTime() - desde) / dura);
+      cuerpo.scale.setScalar(esc0 * Math.max(0.02, 1 - k * k));
+      if (k < 1) setTimeout(encoger, 16);
+    };
+    encoger();
+  }
   function transformarV3(e, p3, h, conEspecial) {
     const gen = (e.gen3 = ++V3.gen);
-    // Antes del cambio la figura tiembla y crece un poco (Banner más largo: se está transformando). La animación del juego
-    // TRANSFORM_TO_BIGFIG de Banner no sirve aquí: esconde sus piezas esperando las de Hulk y se ve rota (prueba 27 nov).
-    // Con clip del juego (set «transformar» de la ficha, 27 nov): la forma de ahora hace su animación de salida completa
-    // (Banner se vuelve Hulk, Spider-Man se quita la máscara, el Hulkbuster se apaga) y la nueva llega con la suya.
-    const t0 = reloj.getElapsedTime(), inst0 = e.v3, tr0 = (inst0.obj.userData.plano || {}).transformar;
+    // Los clips de salida del juego (Banner TRANSFORM_TO_BIGFIG, Peter) giran la figura y esconden piezas: se ve rota
+    // (Elías, 28 nov). Siempre va la nube «puf» que tapa la figura mientras se encoge; la nueva llega con su clip propio
+    // si lo tiene (Hulk flexionando) o crece con un rebote.
+    const t0 = reloj.getElapsedTime(), inst0 = e.v3;
     const cuerpo = inst0.obj, esc0 = cuerpo.scale.x, x0 = cuerpo.position.x;
     let hasta = t0 + (conEspecial ? 1.3 : 0.6);
     e.prio = 9; e.cual = "transformar"; e.hasta = hasta + 7; // nadie la interrumpe
     e.trHuella = h;
-    const temblar = dur => {
-      if (figuras.get(e.id) !== e || e.gen3 !== gen || e.v3.obj !== cuerpo) return;
-      const k = Math.min(1, (reloj.getElapsedTime() - t0) / dur);
-      cuerpo.scale.setScalar(esc0 * (1 + 0.14 * k));
-      cuerpo.position.x = x0 + Math.sin(reloj.getElapsedTime() * 55) * 0.035 * k;
-      if (k < 1) setTimeout(() => temblar(dur), 30);
-    };
-    const sal = tr0 && (p3.familia === "bigfig" ? tr0.salirGrande || tr0.salir : tr0.salir || tr0.salirGrande);
-    const salida = sal
-      ? inst0.tocarExt(sal.glb, sal.clip, { fijo: true, mezcla: 0.15 }).then(d => Number(d) > 0 ? Math.min(7, d) : 0).catch(() => 0) : Promise.resolve(0);
     const nueva = motorV3().then(M => M.crear(p3));
-    salida.then(d => {
-      const t = reloj.getElapsedTime();
-      if (d > 0) { hasta = t + d - 0.15; e.hasta = hasta + 0.5; nube(hasta, e.obj.position.x, e.obj.position.z, 1.2, conEspecial ? [0.55, 0.95, 0.35] : [1, 0.85, 0.3]); return; }
-      // Sin clip: como antes, temblor (y festejo si es la especial) con humo desde el principio.
-      hasta = t + (conEspecial ? 1.3 : 0.6); e.hasta = hasta + 0.5;
+    { // festejo si es la especial y luego la nube «puf» (efectos.js)
+      const previo = conEspecial ? 0.9 : 0;
+      hasta = t0 + previo + 0.42; e.hasta = hasta + 0.5;
       if (conEspecial) inst0.tocar("victoria");
-      nube(t, e.obj.position.x, e.obj.position.z, 1.2, conEspecial ? [0.55, 0.95, 0.35] : [1, 0.85, 0.3]);
-      temblar(hasta - t);
-    });
-    Promise.all([nueva, salida]).then(([inst]) => new Promise(ok => {
+      setTimeout(() => puf(e, cuerpo, conEspecial ? "#9be04a" : "#ffd84a", t0 + previo + 0.12, 0.3), previo * 1000);
+    }
+    nueva.then(inst => new Promise(ok => {
       const espera = () => (reloj.getElapsedTime() >= hasta ? ok(inst) : setTimeout(espera, 50));
       espera();
     })).then(inst => {
@@ -1438,6 +1439,12 @@
       e.obj = grupo; e.v3 = inst; e.huella = h; e.trHuella = null;
       scene.add(grupo);
       inst.tocar("reposo", { mezcla: 0 });
+      // La nueva sale de la nube creciendo con un rebote chico.
+      if (!MENOS_MOVIMIENTO) { const s1 = grupo.scale.x, t1 = reloj.getElapsedTime(); const crecer = () => {
+        if (e.obj !== grupo) return;
+        const k = Math.min(1, (reloj.getElapsedTime() - t1) / 0.32), b = 1 + Math.sin(k * Math.PI) * 0.12;
+        grupo.scale.setScalar(s1 * Math.max(0.05, k) * b); if (k < 1) setTimeout(crecer, 16); else grupo.scale.setScalar(s1); };
+        grupo.scale.setScalar(s1 * 0.05); crecer(); }
       e.prio = 0; e.cual = null; e.hasta = 0; e.accion = null;
       aplicarCareta(e);
       // Llegada de la nueva forma (Hulk aplaude, el Hulkbuster se enciende, Iron Man despega): mientras, nadie la interrumpe.
