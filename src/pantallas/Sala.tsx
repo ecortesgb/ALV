@@ -354,8 +354,8 @@ export function Sala({ codigo }: { codigo: string }) {
   const copasNoche = async () => {
     if (!(await confirmar({ titulo: "¿Entregar las copas?", texto: "Se suman los puntos de todos los juegos de la noche y se anuncian los ganadores.", si: "Entregar copas" }))) return;
     setCopando(true);
-    const ok = await entregarCopas(sala, s.miembros);
-    setCopando(false);
+    let ok = false;
+    try { ok = await entregarCopas(sala, s.miembros); } catch { ok = false; } finally { setCopando(false); }
     if (!ok) aviso("No se pudieron entregar las copas. Intenta otra vez."); else { sonar("exito"); s.refrescar(); }
   };
   return <>
