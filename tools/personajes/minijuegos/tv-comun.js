@@ -116,6 +116,11 @@ export function crearTV({ juego, escena, alUnirse, alMensaje, alSalir, alDescone
     })
     : Promise.resolve(FUENTE);
   const listo = fuente.then(f => FigurasMJ.indice(f)).then(m => { catalogo = m; return m; });
+  // Sin personajes nadie puede entrar (los celulares se quedan en «Entrando…»): que la TV lo diga en vez de quedarse callada.
+  listo.catch(e => {
+    const el = document.getElementById("como");
+    if (el && !String(e && e.message).includes("sin fuente privada")) el.textContent = "No cargaron los personajes. Revisa la conexión y recarga esta pantalla.";
+  });
   const capa = document.getElementById("capa");
   const seq = crearSecuencias();
   let fase = "lobby", extra = () => ({}), anfitrionServidor = null;
