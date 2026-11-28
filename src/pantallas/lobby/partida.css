@@ -2,16 +2,11 @@
    con la cabina de cada jugador, barra del anfitrión con el arte nuevo y los componentes de cada juego en vidrio. */
 .D .lb-fondo.oscuro::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(5, 8, 24, .55), rgba(5, 8, 24, .35) 40%, rgba(5, 8, 24, .65)); }
 
-/* ---------- Ficha de jugador: cabina de su color + busto ---------- */
+/* ---------- Ficha de jugador: medallón del HUB con el color del lobby (Ficha.tsx) ---------- */
 .D .fj { display: inline-flex; align-items: center; gap: 10px; min-width: 0; }
-.D .fj-cab { position: relative; flex: none; width: var(--fj-t, 64px); height: calc(var(--fj-t, 64px) * 1.18); border-radius: 12px; overflow: hidden;
-  background: var(--fj-cab) center 38% / 160% auto no-repeat, #0b0d18; border: 2px solid color-mix(in srgb, var(--pj, #888) 70%, #000);
-  box-shadow: 0 6px 12px rgba(0, 0, 0, .45), inset 0 0 0 1px rgba(255, 255, 255, .08); }
-.D .fj-cab img { position: absolute; left: 50%; bottom: 0; width: 96%; translate: -50% 0; filter: drop-shadow(0 4px 4px rgba(0, 0, 0, .5)); }
-.D .fj-cargando { position: absolute; inset: 20%; border-radius: 50%; background: rgba(255, 255, 255, .15); }
-.D .fj.yo .fj-cab { border-color: #ffe14a; box-shadow: 0 0 0 3px rgba(255, 225, 74, .35), 0 6px 12px rgba(0, 0, 0, .45); }
-.D .fj-pn { position: absolute; left: 3px; top: 3px; z-index: 1; display: grid; place-items: center; min-width: 26px; height: 20px; padding: 0 5px;
-  border-radius: 999px; font: 400 13px/1 var(--f-titulo); color: var(--pj-texto, #fff); background: var(--pj, #444); border: 2px solid rgba(0, 0, 0, .55); }
+.D .fj-cab { position: relative; flex: none; width: var(--fj-t, 64px); height: var(--fj-t, 64px); border-radius: 50%; }
+.D .fj-cab .azm { display: block; }
+.D .fj.yo .fj-cab { box-shadow: 0 0 0 3px rgba(255, 225, 74, .55); }
 .D .fj-txt { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
 .D .fj-nom { font: 400 clamp(17px, 1.4vw, 22px)/1.05 var(--f-titulo); color: #fff; text-shadow: 0 2px 0 rgba(0, 0, 0, .5); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .D .fj-datos { display: flex; gap: 10px; font: 800 14px/1 var(--f-texto); color: rgba(255, 255, 255, .85); }
@@ -20,7 +15,7 @@
 
 /* ---------- Pantalla de partida ---------- */
 .D .pt-caja { position: relative; display: flex; flex-direction: column; gap: 12px; width: min(720px, 100%); margin: 0 auto; padding-bottom: 12px; }
-.D .pt-caja.con-barra { padding-bottom: 150px; }
+.D .pt-caja.con-barra, body:has(.cm-flotante) .D .pt-caja { padding-bottom: 84px; }
 .D .pt-top { display: flex; align-items: flex-start; justify-content: center; gap: 12px; }
 .D .pt-banner { margin-top: calc(var(--az-pad) * -1); }
 .D .pt-mia { align-self: flex-start; padding: 8px 18px 8px 8px; border-radius: 16px; background: rgba(10, 14, 40, .72); border: 1px solid rgba(255, 255, 255, .16);
@@ -38,9 +33,18 @@
 .D .pt-salidas .lb-listo { max-width: 320px; }
 
 /* ---------- Barra del anfitrión ---------- */
-.D .pt-host { position: fixed; left: 50%; bottom: max(10px, env(safe-area-inset-bottom)); translate: -50% 0; z-index: 20; display: flex; flex-direction: column; align-items: center; gap: 8px;
-  width: min(560px, calc(100% - 20px)); padding: 10px; border-radius: 20px; background: rgba(10, 14, 40, .9); border: 1px solid rgba(255, 255, 255, .18);
-  box-shadow: 0 -6px 24px rgba(0, 0, 0, .4); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); }
+/* El nav no tapa nada: solo ubica «Siguiente ronda» (abajo al centro) y el botón de herramientas (abajo a la izquierda). */
+.D .pt-host { position: fixed; inset: auto 0 max(10px, env(safe-area-inset-bottom)); z-index: 20; display: flex; justify-content: center; pointer-events: none; }
+.D .pt-host > * { pointer-events: auto; }
+.D .pt-host > .pt-momento { width: min(420px, calc(100% - 160px)); }
+.D .pt-herr { position: fixed; left: 10px; bottom: max(10px, env(safe-area-inset-bottom)); display: flex; flex-direction: column; align-items: flex-start; gap: 8px; }
+.D .pt-herr.abierto .pt-host-fila { width: min(560px, calc(100vw - 20px)); padding: 10px; border-radius: 20px; background: rgba(10, 14, 40, .94); border: 1px solid rgba(255, 255, 255, .18);
+  box-shadow: 0 -6px 24px rgba(0, 0, 0, .45); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); }
+.D .pt-herr-btn { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; width: 64px; height: 64px; cursor: pointer; border-radius: 18px; color: #fff;
+  border: 1px solid rgba(255, 255, 255, .25); background: rgba(10, 14, 40, .85); box-shadow: 0 4px 14px rgba(0, 0, 0, .4); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
+.D .pt-herr-btn .pt-hb-txt, .D .pt-herr-btn img { width: 30px; height: 30px; font-size: 22px; object-fit: contain; filter: drop-shadow(0 3px 3px rgba(0, 0, 0, .4)); }
+.D .pt-herr-btn small { font: 800 10px/1 var(--f-texto); white-space: nowrap; }
+.D .pt-herr-btn:focus-visible { outline: 3px solid #fff; outline-offset: 2px; }
 .D .pt-host-fila { display: grid; grid-template-columns: repeat(auto-fit, minmax(80px, 1fr)); gap: 8px; width: 100%; }
 .D .pt-hb { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; min-height: 64px; padding: 6px; cursor: pointer; border-radius: 14px;
   border: 1px solid rgba(255, 255, 255, .2); background: linear-gradient(180deg, rgba(255, 255, 255, .12), rgba(255, 255, 255, .04)); color: #fff; transition: transform .14s ease; }
@@ -103,9 +107,10 @@
 .D.a-tv.az .pos-lugar, .D.az.pt .pos-lugar { font-family: var(--f-titulo); background: var(--pj, #444); color: var(--pj-texto, #fff); border-radius: 10px; }
 .D.a-tv.az .pos-pts, .D.az.pt .pos-pts { font-family: var(--f-titulo); color: #ffe14a; }
 
-/* Burbujas de jugador en cada juego (Identidad.tsx) con la cabina de su color, no el círculo viejo */
-.D .ide-burbuja .ide-b-circ { border-radius: calc(var(--b, 64px) * .22) !important; background: var(--fj-cab) center 38% / 160% auto no-repeat, #0b0d18 !important;
-  border: 2px solid color-mix(in srgb, var(--pj, #888) 70%, #000) !important; box-shadow: 0 6px 12px rgba(0, 0, 0, .45) !important; }
+/* Burbujas de jugador en cada juego (Identidad.tsx): círculo del color que tocó en el lobby, como el fondo del medallón
+   del HUB (Elías, 28 nov: antes era la cabina en cuadro). */
+.D .ide-burbuja .ide-b-circ { border-radius: 50% !important; background: radial-gradient(circle at 50% 30%, #fff 0, color-mix(in srgb, var(--pj, #5a8de0) 35%, #fff) 35%, var(--pj, #5a8de0) 75%, var(--pj-oscuro, #1d3a8f) 100%) !important;
+  border: 3px solid color-mix(in srgb, var(--pj, #888) 70%, #000) !important; box-shadow: 0 6px 12px rgba(0, 0, 0, .45) !important; }
 .D .ide-burbuja .ide-b-circ::before, .D .ide-burbuja .ide-b-circ::after { display: none !important; }
 .D .ide-burbuja.sel .ide-b-circ { border-color: #ffe14a !important; box-shadow: 0 0 0 4px rgba(255, 225, 74, .45), 0 6px 12px rgba(0, 0, 0, .45) !important; }
 .D .ide-burbuja .ide-b-pn { border-radius: 999px; font-family: var(--f-titulo, "Lilita One"); }

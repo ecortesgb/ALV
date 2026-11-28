@@ -6,6 +6,7 @@ import { Chip, Escaner, Panel, Reloj } from "../ds";
 import { ir } from "../app/rutas";
 import { refrescarSesion, useSesion } from "../app/sesion";
 import { sonar } from "../app/sonido";
+import { EscuchaParty } from "./party/CargaParty";
 import { enlace, esLocal, modoLocal, type SalaV } from "../servicios/enlace";
 import type { FiguraV2 } from "../content/personaje";
 import type { ColorJugador } from "../app/colorJugador";
@@ -23,7 +24,7 @@ import { esPublico, marcador, nombreJuego, quedan, type Publico } from "../juego
 import { control, entregarCopas, jugada, useMotor } from "../roles/pantalla/motor";
 import { AnuncioDiscusion, PapelNave, useAnuncioDiscusion } from "../juegos/impostor/papelNave";
 import { esFinalDeJuego } from "../juegos/general/Copas";
-import { useSala } from "../roles/sala";
+import { arrancando, quitarArranque, useSala } from "../roles/sala";
 import { Marco, aviso, confirmar } from "./comun";
 import { colorDe, varsColor } from "../app/colorJugador";
 import { MedallonJugador } from "./azotea/Cabecera";
@@ -33,6 +34,7 @@ import { BotonCast } from "./lobby/Cast";
 import { MesaJuego } from "./MesaJuego";
 import { useGestosSala } from "../servicios/gestosSala";
 import { anotarCarta } from "../app/cartasSalieron";
+import { AccionesALaVista } from "./lobby/AccionesALaVista";
 
 /** Mantiene la pantalla encendida mientras `activo` (la Pantalla y el celular que hace de Pantalla). */
 export function useDespierta(activo: boolean) {
@@ -169,12 +171,20 @@ export function Sala({ codigo }: { codigo: string }) {
   // Al empezar una partida, cada quien se quita el «listo» para la siguiente espera.
   const enJuego = !!s.partida && !s.partida.terminada;
   useEffect(() => { if (enJuego && listoYo && s.sala) void enlace.marcarListo(s.sala, false).then(s.refrescar); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [enJuego, s.partida?.id, listoYo]);
+  const hayJuego = !!v;
+  useEffect(() => { if (hayJuego) quitarArranque(codigo); }, [hayJuego, codigo]);
+  // Si la partida no llega en 12 s, se vuelve a pintar (sale el lobby y nadie se queda atorado).
+  const [, setReintento] = useState(0);
+  useEffect(() => { if (hayJuego || !arrancando(codigo)) return; const t = setTimeout(() => setReintento(x => x + 1), 12_100); return () => clearTimeout(t); }, [hayJuego, codigo]);
   const nRuleta = v?.ruleta?.n ?? 0;
   useEffect(() => { if (v?.ruleta && nRuleta > 0) aviso(`Ruleta: ${v.jugadores.find(j => j.id === v.ruleta!.jugador)?.nombre ?? ""} · ${v.ruleta.texto}`); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [nRuleta]);
 
   if (s.error) return <AvisoCuarto titulo="No se pudo entrar" texto={s.error}><button type="button" className="lb-listo" onClick={() => ir("inicio")}>Volver</button></AvisoCuarto>;
   if (s.cerrada) return <AvisoCuarto titulo="La sala se cerró" texto="El anfitrión terminó la sesión."><button type="button" className="lb-listo" onClick={() => ir("inicio")}>Ir al inicio</button></AvisoCuarto>;
   if (!s.sala) return <AvisoCuarto titulo="Entrando al lobby…" />;
+  // Auditoría 28 nov: al iniciar, la sala ya no enseña el lobby unos segundos mientras llega la partida.
+  if (!v && arrancando(codigo)) return <AvisoCuarto titulo="Empezando la partida…" />;
+  if (!v && !s.listo && !s.partida && s.miembros.length === 0) return <AvisoCuarto titulo="Entrando al lobby…" />;
   const sala = s.sala, pid = s.partida?.id ?? "";
 
   const salir = async () => {
@@ -257,14 +267,15 @@ export function Sala({ codigo }: { codigo: string }) {
     const yo = compartido ? mano : ses.uid;
     const yoNombre = s.miembros.find(x => x.id === yo)?.nombre ?? ses.nombre;
     const estoy = v.jugadores.some(j => j.id === yo);
-    const sec = (s.secreto ?? {}) as { mio?: unknown; miRespuesta?: unknown; miMano?: string[]; misComodines?: string[] };
+    const sec = (s.secreto ?? {}) as { mio?: unknown; miRespuesta?: unknown; miMano?: string[]; misComodines?: string[]; misObjetivos?: Record<string, string[]> };
     // Comodines de la colección (Maestro v1.72): los usa la cuenta que tiene el teléfono en su turno, con SU sesión.
     // En un solo aparato se pagan en la sala espejo de la nube; quien juega sin cuenta no tiene colección.
     const clienteTurno = yo === ses.uid ? null : sostenidos.cliente(yo);
     const espejoLocal = local && s.sala && hayNube ? modoLocal.espejo(s.sala)?.id ?? null : null;
     const conCuenta = yo === ses.uid || !!clienteTurno;
     const mi: MiVista = { yo, mio: sec.mio ?? null, miRespuesta: sec.miRespuesta ?? null, miMano: sec.miMano ?? [],
-      misComodines: Array.isArray(sec.misComodines) ? sec.misComodines : [], partida: pid, cliente: clienteTurno, espejo: espejoLocal,
+      misComodines: Array.isArray(sec.misComodines) ? sec.misComodines : [],
+      misObjetivos: sec.misObjetivos && typeof sec.misObjetivos === "object" ? sec.misObjetivos : {}, partida: pid, cliente: clienteTurno, espejo: espejoLocal,
       cuenta: conCuenta && (!local || !!espejoLocal) };
     const ultima = esFinalDeJuego(v);
     // Ceremonia de copas de la noche: sin ronda, sin barra del anfitrión ni marcador; al final se cierra la sala.
@@ -274,10 +285,11 @@ export function Sala({ codigo }: { codigo: string }) {
     const ico = (n: string) => `${import.meta.env.BASE_URL}arte/ui/${n}.webp`;
     return (
       <Marco clase={"az pt" + (!copas && v.escenario ? " pt-esc" : "")} fondo={!copas && v.escenario ? <FondoEscenario escenario={v.escenario} /> : <FondoCuarto oscuro />} fijo={soyAnfitrion && !copas ? (
-        // Barra del anfitrión con el arte nuevo (Elías, 23 nov): sin los iconos del sistema de diseño viejo.
+        // Herramientas del anfitrión (Elías, 28 nov): ya no son una barra fija que tapa el juego; un botón abajo a la
+        // izquierda que solo ve el anfitrión las abre. «Siguiente ronda» sigue a la vista cuando toca.
         <nav className={"pt-host" + (sinPantalla ? " a-sin-pantalla" : "")} aria-label="Controles del anfitrión" {...inerte(sinPantalla)}>
           {v.fase === "revelada" && !sinPantalla && <button type="button" className="pt-momento" onClick={() => void control(pid, "siguiente")}>{ultima ? "Ver resultados" : "Siguiente ronda"}</button>}
-          <div className="pt-host-fila">
+          <HerramientasAnfitrion pausada={!!v.pausada}>
             <button type="button" className="pt-hb" onClick={() => void control(pid, v.pausada ? "reanudar" : "pausar")}><b className="pt-hb-txt">{v.pausada ? "▶" : "❚❚"}</b><small>{v.pausada ? "Seguir" : "Pausar"}</small></button>
             <button type="button" className="pt-hb" onClick={() => void (v.fase === "contestando" ? control(pid, "saltar") : control(pid, "siguiente"))}><img src={ico("configurar/omitir")} alt="" /><small>Saltar</small></button>
             <button type="button" className="pt-hb" onClick={() => void control(pid, "ruleta")}><img src={ico("configurar/herr-ruleta")} alt="" /><small>Ruleta</small></button>
@@ -285,10 +297,11 @@ export function Sala({ codigo }: { codigo: string }) {
             {/* Terminar y salir solo en el celular del anfitrión (Elías, 24 nov): ya no van abajo del juego para todos. */}
             <button type="button" className="pt-hb" onClick={() => void terminarPartida()}><b className="pt-hb-txt">⏹</b><small>Terminar</small></button>
             <button type="button" className="pt-hb peligro" onClick={() => void salir()}><b className="pt-hb-txt">✕</b><small>{local ? "Cerrar" : "Cerrar sala"}</small></button>
-          </div>
+          </HerramientasAnfitrion>
         </nav>
       ) : menu}>
         <div className={"pt-caja" + (soyAnfitrion && !copas ? " con-barra" : "")}>
+          <AccionesALaVista clave={`${v.ronda}-${v.fase}-${v.carta?.id ?? ""}`} />
           <header className="pt-top">
             <div className="lb-banner pt-banner">
               {!copas && <span className="lb-banner-n">{v.impostor ? `Vuelta ${v.ronda}` : `${v.ronda}/${v.totalRondas}`}</span>}
@@ -343,12 +356,16 @@ export function Sala({ codigo }: { codigo: string }) {
   const copasNoche = async () => {
     if (!(await confirmar({ titulo: "¿Entregar las copas?", texto: "Se suman los puntos de todos los juegos de la noche y se anuncian los ganadores.", si: "Entregar copas" }))) return;
     setCopando(true);
-    const ok = await entregarCopas(sala, s.miembros);
-    setCopando(false);
+    let ok = false;
+    try { ok = await entregarCopas(sala, s.miembros); } catch { ok = false; } finally { setCopando(false); }
     if (!ok) aviso("No se pudieron entregar las copas. Intenta otra vez."); else { sonar("exito"); s.refrescar(); }
   };
-  return <Lobby sala={sala} miembros={ordenados} yo={ses.uid} soyAnfitrion={soyAnfitrion} final={final} red={s.red} refrescar={s.refrescar}
-    alSalir={() => void salir()} alCopas={() => void copasNoche()} copando={copando} pantalla={pantalla} />;
+  return <>
+    <Lobby sala={sala} miembros={ordenados} yo={ses.uid} soyAnfitrion={soyAnfitrion} final={final} red={s.red} refrescar={s.refrescar}
+      alSalir={() => void salir()} alCopas={() => void copasNoche()} copando={copando} pantalla={pantalla} />
+    {/* ALV PARTY: si el anfitrión empieza un minijuego, aquí sale el tutorial y este celular se vuelve mando. */}
+    {!local && !soyAnfitrion && <EscuchaParty salaId={sala.id} rol="mando" figura={s.miembros.find(m => m.id === ses.uid)?.figura} />}
+  </>;
 }
 
 /** Local: tapa la pantalla entre turnos para que nadie vea lo de otro. */
@@ -372,6 +389,28 @@ function leerVistos(pid: string): string[] {
   try { const x = JSON.parse(sessionStorage.getItem(claveVistos(pid)) ?? "[]"); return Array.isArray(x) ? x.filter((i): i is string => typeof i === "string") : []; } catch { return []; }
 }
 function guardarVistos(pid: string, ids: string[]) { try { sessionStorage.setItem(claveVistos(pid), JSON.stringify(ids)); } catch { /* sin almacenamiento: se recuerda mientras siga abierta */ } }
+
+/** Botón de herramientas del anfitrión: cerrado solo ocupa un botón abajo a la izquierda; abierto muestra las
+ *  herramientas encima. Se cierra al elegir una, con Escape o tocando fuera. */
+function HerramientasAnfitrion({ pausada, children }: { pausada: boolean; children: React.ReactNode }) {
+  const [abierto, setAbierto] = useState(false);
+  const caja = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!abierto) return;
+    const tecla = (e: KeyboardEvent) => { if (e.key === "Escape") setAbierto(false); };
+    const fuera = (e: PointerEvent) => { if (!caja.current?.contains(e.target as Node)) setAbierto(false); };
+    addEventListener("keydown", tecla); addEventListener("pointerdown", fuera);
+    return () => { removeEventListener("keydown", tecla); removeEventListener("pointerdown", fuera); };
+  }, [abierto]);
+  return (
+    <div ref={caja} className={"pt-herr" + (abierto ? " abierto" : "")}>
+      {abierto && <div className="pt-host-fila" onClick={e => { if ((e.target as HTMLElement).closest("button")) setAbierto(false); }}>{children}</div>}
+      <button type="button" className="pt-herr-btn" aria-expanded={abierto} aria-label={abierto ? "Cerrar herramientas del anfitrión" : "Herramientas del anfitrión"} onClick={() => setAbierto(a => !a)}>
+        {abierto ? <b className="pt-hb-txt">✕</b> : <img src={`${import.meta.env.BASE_URL}arte/ui/configurar/sec-herramienta.webp`} alt="" />}<small>{abierto ? "Ocultar" : pausada ? "En pausa" : "Herramientas"}</small>
+      </button>
+    </div>
+  );
+}
 
 /** Menú de la partida (botón ☰ arriba a la izquierda): pausar y terminar (anfitrión) y salir. Cada opción confirma lo suyo. */
 function MenuPartida({ pausada, alPausar, alTerminar, alSalir, salirTxt }: { pausada?: boolean; alPausar?: () => void; alTerminar?: () => void; alSalir: () => void; salirTxt: string }) {

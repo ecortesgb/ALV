@@ -6,6 +6,7 @@ import { abrirCanal, abrirCanalNube, abrirCanalWs, ahora, crearSecuencias, redDe
 import { colorJugador } from "/src/app/colorJugador.ts";
 import qrcode from "qrcode-generator";
 import { cliente } from "/src/servicios/cliente.ts";
+import { crearMandosLocales } from "./mandos-locales.js";
 import { fuentePrivada } from "/src/servicios/personajesPrivados.ts";
 import { movimientosDeFicha, poderesDeFicha } from "/src/personajes/plano.ts";
 import { SETS } from "/src/personajes/sets.ts";
@@ -116,6 +117,11 @@ export function crearTV({ juego, escena, alUnirse, alMensaje, alSalir, alDescone
     })
     : Promise.resolve(FUENTE);
   const listo = fuente.then(f => FigurasMJ.indice(f)).then(m => { catalogo = m; return m; });
+  // Sin personajes nadie puede entrar (los celulares se quedan en «Entrando…»): que la TV lo diga en vez de quedarse callada.
+  listo.catch(e => {
+    const el = document.getElementById("como");
+    if (el && !String(e && e.message).includes("sin fuente privada")) el.textContent = "No cargaron los personajes. Revisa la conexión y recarga esta pantalla.";
+  });
   const capa = document.getElementById("capa");
   const seq = crearSecuencias();
   let fase = "lobby", extra = () => ({}), anfitrionServidor = null;
@@ -222,6 +228,13 @@ export function crearTV({ juego, escena, alUnirse, alMensaje, alSalir, alDescone
       } catch (e) {
         if (mio !== j.carga) return;
         j.estado = "error"; console.error("No cargó", personaje, e);
+        // Para saber por qué (Elías, 28 nov): qué personaje y qué pasó, en el panel de la sala de esta pantalla.
+        const como = document.getElementById("como");
+        if (como) como.textContent = `No cargó ${personaje}: ${String((e && e.message) || e).slice(0, 90)}`;
+        // Sin pedirle al celular que elija (Elías, 28 nov): se intenta con otro personaje, hasta 2 veces.
+        j.fallos = (j.fallos || 0) + 1;
+        const otros = disponibles().filter(x => x !== personaje && !FALLAR.has(x));
+        if (j.fallos <= 2 && otros.length) { setTimeout(() => unir(id, Object.assign({}, d, { personaje: otros[Math.floor(Math.random() * otros.length)] }), bot), 0); return; }
       }
     }
     if (alUnirse) alUnirse(j);
@@ -305,6 +318,26 @@ export function crearTV({ juego, escena, alUnirse, alMensaje, alSalir, alDescone
     }, extra()));
   }
   setInterval(difundir, 2000);
+
+  // ALV PARTY: con ?jugadores=N la TV empieza sola cuando entraron N y todos cargaron (sin que nadie toque «¡Empezar!»).
+  const esperados = Math.min(MAX_JUGADORES, Number(q.get("jugadores")) || 0);
+  let autoHecho = false;
+  if (esperados > 0) setInterval(() => {
+    if (autoHecho || fase !== "lobby") return;
+    const listos = [...jugadores.values()].filter(j => !j.desconectado && j.estado === "listo").length;
+    if (jugadores.size < esperados || listos < jugadores.size) return;
+    const b = document.getElementById("empezar");
+    if (b && !b.disabled && !b.classList.contains("oculto")) { autoHecho = true; setTimeout(() => b.click(), 1500); }
+  }, 500);
+
+  // Controles de Xbox y teclado de esta computadora (mandos-locales.js): entran como un celular más.
+  const locales = juego === "fisico" ? null : crearMandosLocales({
+    juego, jugadores, ahora,
+    entregar: (id, tipo, d) => alLlegar({ de: id, tipo, d }),
+    estado: () => Object.assign({ fase }, extra()),
+    alEmpezar: () => { const b = document.getElementById("empezar"); if (b && !b.disabled && !b.classList.contains("oculto")) b.click(); },
+  });
+  { const caja = document.getElementById("sala"); if (caja && locales) { const a = document.createElement("small"); a.className = "locales"; a.textContent = locales.ayuda; caja.appendChild(a); } }
   // Un celular que no da señales en 15 s se va (en pestañas no hay quien avise; con WebSocket avisa el servidor).
   setInterval(() => { const t = Date.now(); jugadores.forEach(j => { if (!j.bot && !j.desconectado && t - j.visto > SIN_SENAL_MS) quitar(j.id); }); }, 3000);
 

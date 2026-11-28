@@ -3,6 +3,7 @@ import { useEffect, useRef, useState, type FormEvent } from "react";
 import { Icono } from "../ds";
 import { abrirChat, enviarChat, useFigurasDe, useHubVivo } from "../app/hubVivo";
 import { useSesion } from "../app/sesion";
+import { figuraActiva, useCapsulas } from "../app/figura3d";
 import { MAX_TEXTO, type EnLinea } from "../servicios/hubVivo";
 import type { FiguraV2 } from "../content/personaje";
 import { Retrato } from "./comun";
@@ -10,6 +11,15 @@ import "./vivo.css";
 
 const MAX_CARAS = 5;
 const hora = (t: number) => new Date(t).toLocaleTimeString("es-MX", { hour: "numeric", minute: "2-digit" });
+
+/** Figuras de quienes están en línea; la tuya sale de tu figura activa en este aparato (la misma del HUB), no de la
+ *  copia leída antes de la nube, para que al cambiar de figura el chat muestre la nueva de inmediato. */
+function useFigurasConLaMia(ids: string[]): (id: string) => FiguraV2 | null {
+  const s = useSesion();
+  const mia = figuraActiva(useCapsulas(s.uid));
+  const figs = useFigurasDe(ids);
+  return id => (id === s.uid ? mia : figs.get(id) ?? null);
+}
 
 /** Cara de quien está en línea: su figura si se puede leer; si no, su inicial. Siempre con punto verde. */
 function Cara({ p, figura, size }: { p: EnLinea; figura: FiguraV2 | null; size: number }) {
@@ -24,7 +34,7 @@ function Cara({ p, figura, size }: { p: EnLinea; figura: FiguraV2 | null; size: 
 /** Franja «En línea»: caras, cuántos hay y el botón del chat con mensajes sin leer. */
 export function FranjaEnLinea({ className = "" }: { className?: string }) {
   const v = useHubVivo();
-  const figs = useFigurasDe(v.enLinea.map(p => p.id));
+  const figs = useFigurasConLaMia(v.enLinea.map(p => p.id));
   const caras = v.enLinea.slice(0, MAX_CARAS), mas = v.enLinea.length - caras.length;
   return (
     <>
@@ -32,7 +42,7 @@ export function FranjaEnLinea({ className = "" }: { className?: string }) {
         <button type="button" className="vv-gente" onClick={() => abrirChat(true)} aria-label={`${v.enLinea.length} en línea. Abrir el chat`}>
           <span className="vv-titulo dsp"><i className="vv-punto vv-punto-t" aria-hidden="true" />{v.enLinea.length} en línea</span>
           <span className="vv-caras">
-            {caras.map(p => <Cara key={p.id} p={p} figura={figs.get(p.id) ?? null} size={40} />)}
+            {caras.map(p => <Cara key={p.id} p={p} figura={figs(p.id)} size={40} />)}
             {mas > 0 && <span className="vv-mas dsp">+{mas}</span>}
           </span>
         </button>
@@ -51,7 +61,7 @@ export function FranjaEnLinea({ className = "" }: { className?: string }) {
 export function PanelChat() {
   const v = useHubVivo();
   const s = useSesion();
-  const figs = useFigurasDe(v.enLinea.map(p => p.id));
+  const figs = useFigurasConLaMia(v.enLinea.map(p => p.id));
   const [texto, setTexto] = useState(""), [aviso, setAviso] = useState<string | null>(null);
   const lista = useRef<HTMLOListElement>(null), campo = useRef<HTMLInputElement>(null);
   useEffect(() => { lista.current?.scrollTo({ top: lista.current.scrollHeight }); }, [v.mensajes.length]);
@@ -75,7 +85,7 @@ export function PanelChat() {
           <button type="button" className="vv-cerrar" onClick={() => abrirChat(false)} aria-label="Cerrar el chat"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" /></svg></button>
         </header>
         <div className="vv-conectados">
-          {v.enLinea.map(p => <span key={p.id} className="vv-conectado"><Cara p={p} figura={figs.get(p.id) ?? null} size={34} /><small>{p.id === s.uid ? "Tú" : p.nombre}</small></span>)}
+          {v.enLinea.map(p => <span key={p.id} className="vv-conectado"><Cara p={p} figura={figs(p.id)} size={34} /><small>{p.id === s.uid ? "Tú" : p.nombre}</small></span>)}
         </div>
         <ol ref={lista} className="vv-mensajes" aria-live="polite">
           {v.mensajes.length === 0 && <li className="vv-vacio">Nadie ha escrito todavía. Los mensajes solo los ven quienes están conectados y no se guardan.</li>}

@@ -2,6 +2,7 @@
 // Mide el reloj de la TV (ping/pong) y manda cada toque con su hora ya traducida al reloj de la TV.
 import { abrirCanal, abrirCanalNube, abrirCanalWs, idDeLlave, ahora as ahoraPc, deLaTv, redDeUrl, urlSala, SERVIDOR } from "/src/personajes/minijuegos/canal.ts";
 import { cliente } from "/src/servicios/cliente.ts";
+import { fuentePrivada } from "/src/servicios/personajesPrivados.ts";
 import { miCuenta, reportarXp, resultadosXp, salaDondeMando } from "/src/personajes/minijuegos/xpSala.ts";
 import { estimar, muestra, relojListo, MAX_INCERTIDUMBRE } from "/src/personajes/minijuegos/reloj.ts";
 
@@ -52,9 +53,21 @@ async function darXp(d) {
 const legible = id => String(id).split(/[-_]+/).map(p => p.charAt(0).toUpperCase() + p.slice(1)).join(" ").slice(0, 30);
 let personajes = [], elegido = q.get("personaje") || null, dentro = false, ultimo = null, miJ = null;
 // En la nube el celular no lee el índice privado: los nombres y la lista los manda la TV.
-(CANAL === "nube" && !q.get("fuente") ? Promise.resolve(null) : fetch(FUENTE + "indice.json")).then(r => (r && r.ok ? r.json() : null)).then(j => {
+// En la nube, las fotos y los nombres salen de la entrega privada, igual que en la TV y el HUB (sesión de ALV en este
+// celular). Sin sesión o sin permiso quedan solo los nombres que manda la TV.
+const EN_NUBE = CANAL === "nube" && !q.get("fuente");
+const FOTOS = {};
+const fuenteFotos = EN_NUBE
+  ? (cliente ? fuentePrivada({ cliente, base: new URL("../../../", location.href).href }).catch(() => null) : Promise.resolve(null))
+  : Promise.resolve(FUENTE);
+fuenteFotos.then(f => (f ? fetch(f + "indice.json").then(r => (r.ok ? r.json() : null)).then(j => ({ j, f })) : null)).then(x => {
+  const j = x && x.j;
   const lista = ((j && j.personajes) || []).filter(p => p && p.ficha && !p.prueba && p.ficha.juego);
-  lista.forEach(p => { NOMBRES[p.id] = String(p.ficha.nombre || p.id).slice(0, 30); });
+  lista.forEach(p => {
+    NOMBRES[p.id] = String(p.ficha.nombre || p.id).slice(0, 30);
+    const foto = p.ficha.fotos && typeof p.ficha.fotos.tarjeta === "string" ? p.ficha.fotos.tarjeta : `${p.id}-tarjeta.webp`;
+    try { FOTOS[p.id] = new URL(foto, new URL(p.ruta || `catalogo/${p.id}/`, x.f)).href; } catch { /* sin foto */ }
+  });
   if (!personajes.length) personajes = lista.map(p => p.id).sort((a, b) => NOMBRES[a].localeCompare(NOMBRES[b], "es"));
   irAElegido(); pintarGrid();
 }).catch(() => { /* sin índice: quedan los ids que mande la TV */ });
@@ -118,7 +131,7 @@ function pintarGrid() {
     const c = document.createElement("button");
     c.className = "carta" + (id === elegido ? " si" : "") + (fallidos.has(id) ? " fallo" : "");
     const img = document.createElement("img");
-    img.alt = ""; if (!(CANAL === "nube" && !q.get("fuente"))) img.src = `${FUENTE}catalogo/${id}/${id}-tarjeta.webp`;
+    img.alt = ""; const foto = FOTOS[id] || (EN_NUBE ? "" : `${FUENTE}catalogo/${id}/${id}-tarjeta.webp`); if (foto) img.src = foto;
     img.onerror = () => { img.style.visibility = "hidden"; }; // sin foto, queda el nombre
     const nombre = document.createElement("span");
     nombre.textContent = NOMBRES[id] || legible(id);
@@ -146,6 +159,7 @@ addEventListener("resize", () => { if (!dentro) { irAElegido(); pintarGrid(); } 
 pintarGrid();
 function entrar() {
   if (!sala) return;
+  if (!elegido && !personajes.length) { setTimeout(entrar, 300); return; } // todavía no llega la lista de la TV
   if (!elegido) elegido = personajes[Math.floor(Math.random() * personajes.length)];
   if (!PESTANAS && !yo) { setTimeout(entrar, 300); return; } // todavía no llega la bienvenida del servidor
   if (!cuentaLista) { setTimeout(entrar, 200); return; } // primero saber mi cuenta de ALV (XP desde la sala)

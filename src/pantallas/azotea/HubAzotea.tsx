@@ -55,14 +55,16 @@ function faltaParaManana(ahora = new Date()): string {
   return `${Math.floor(min / 60)}h ${String(min % 60).padStart(2, "0")}m`;
 }
 
-export function HubAzotea() {
+/** `oculto`: el HUB sigue montado (escondido y en pausa) mientras se ve otra pantalla del menú, para no volver a armar
+ *  la escena 3D al regresar (velocidad, 28 nov). Ver App.tsx. */
+export function HubAzotea({ oculto = false }: { oculto?: boolean } = {}) {
   const s = useSesion();
   const ancho = useAncho();
   const bajo = useBajo();
   const r = useRecursos();
   const f = figuraActiva(useCapsulas(s.uid));
   // Vida automática de tu figura según su personalidad (etapa 3): la decide este aparato.
-  useVidaPropia({ activo: true, jugador: s.uid, figura: f, contexto: "hub" });
+  useVidaPropia({ activo: !oculto, jugador: s.uid, figura: f, contexto: "hub" });
   const momento = useMomentoAzotea();
   const esc = escenarioActual();
   // Tema de tu personaje (temas.ts): su fondo reemplaza la azotea y la figura va sobre su plataforma (sin pedestal
@@ -80,17 +82,20 @@ export function HubAzotea() {
   useEffect(() => { try { sessionStorage.setItem("alv-azotea-entrada", "1"); } catch { /* sin almacenamiento */ } }, []);
 
   const [sala, setSala] = useState<SalaV | null>(null);
-  useEffect(() => { let v = true; void enlace.miSala().then(x => { if (v) setSala(x); }); return () => { v = false; }; }, [s.uid]);
+  useEffect(() => { if (oculto) return; let v = true; void enlace.miSala().then(x => { if (v) setSala(x); }); return () => { v = false; }; }, [s.uid, oculto]);
   const lobby = useLobby();
 
 
   // El chat tapa el escenario: la figura deja de dibujarse mientras está abierto.
-  useEffect(() => { mando.current?.pausa(vivo.abierto); }, [vivo.abierto]);
+  useEffect(() => { mando.current?.pausa(vivo.abierto || oculto); }, [vivo.abierto, oculto]);
+  // Al irse a otra pantalla (el HUB se queda escondido) el chat se cierra: si no, seguía «abierto», los mensajes nuevos se
+  // daban por leídos sin verse y al volver reaparecía encima del HUB (auditoría 28 nov).
+  useEffect(() => { if (oculto) abrirChat(false); }, [oculto]);
 
   // Paralaje de la ciudad con el cursor (solo computadora, solo transform).
   useEffect(() => {
     // Las variables van en la raíz de la pantalla: el escenario está fuera de la caja.
-    const el = raiz.current?.closest<HTMLElement>(".az"); if (!el || !CON_CURSOR || MENOS_MOV) return;
+    const el = raiz.current?.closest<HTMLElement>(".az"); if (!el || !CON_CURSOR || MENOS_MOV || oculto) return;
     let pend = 0, x = 0, y = 0;
     const mover = (e: PointerEvent) => {
       x = e.clientX / innerWidth * 2 - 1; y = e.clientY / innerHeight * 2 - 1;
@@ -98,7 +103,7 @@ export function HubAzotea() {
     };
     addEventListener("pointermove", mover, { passive: true });
     return () => { removeEventListener("pointermove", mover); cancelAnimationFrame(pend); };
-  }, []);
+  }, [oculto]);
 
 
   const botones: BotonHub[] = [

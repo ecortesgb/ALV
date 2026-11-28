@@ -2,23 +2,11 @@
 // El papel del aparato lo da la ruta: #/tv/código es la Pantalla, #/sala/código un celular.
 import { lazy, Suspense, useCallback, useEffect, useState } from "react";
 import { Acceso, Carga, CompletarRegistro, Inicio, SoloMayores } from "../pantallas/Acceso";
-import { Ajustes, Admin } from "../pantallas/Ajustes";
-import { Catalogo, FichaJuego } from "../pantallas/Catalogo";
-import { PaginaConfigurar } from "../pantallas/ConfigurarPartida";
-import { PaginaParty } from "../pantallas/party/ConfigurarParty";
 import { Recompensas } from "../pantallas/Recompensas";
 import { AvisoLogro } from "../pantallas/AvisoLogro";
-import { EsperaLobby } from "../pantallas/lobby/EsperaLobby";
-import { ModosJuego } from "../pantallas/modos/ModosJuego";
 import { HubAzotea } from "../pantallas/azotea/HubAzotea";
 import { Editor, Personalizar, SincroCapsulas, useDebeCrearFigura } from "../pantallas/Personalizar";
-import { Sala } from "../pantallas/Sala";
-import { Logros } from "../pantallas/logros/Logros";
-import { Ranking } from "../pantallas/ranking/Ranking";
-import { Perfil } from "../pantallas/perfil/Perfil";
-import { Tienda } from "../pantallas/Tienda";
 import { Avisos } from "../pantallas/comun";
-import { PantallaTv } from "../roles/pantalla/Pantalla";
 import { refrescarSesion, useSesion } from "./sesion";
 import { instalarClics } from "./sonido";
 import { useRuta } from "./rutas";
@@ -27,6 +15,25 @@ import { precargarHub } from "./precarga";
 
 /** Página interna del Design System (sin enlace en la app): se carga aparte. */
 const PaginaDS = lazy(() => import("../pantallas/ds"));
+// Velocidad (28 nov): cada pantalla baja su código al abrirla. El arranque solo trae entrada, HUB y personalizador.
+const Ajustes = lazy(() => import("../pantallas/Ajustes").then(m => ({ default: m.Ajustes })));
+const Admin = lazy(() => import("../pantallas/Ajustes").then(m => ({ default: m.Admin })));
+const Catalogo = lazy(() => import("../pantallas/Catalogo").then(m => ({ default: m.Catalogo })));
+const FichaJuego = lazy(() => import("../pantallas/Catalogo").then(m => ({ default: m.FichaJuego })));
+const PaginaConfigurar = lazy(() => import("../pantallas/ConfigurarPartida").then(m => ({ default: m.PaginaConfigurar })));
+const PaginaParty = lazy(() => import("../pantallas/party/ConfigurarParty").then(m => ({ default: m.PaginaParty })));
+const EsperaLobby = lazy(() => import("../pantallas/lobby/EsperaLobby").then(m => ({ default: m.EsperaLobby })));
+const ModosJuego = lazy(() => import("../pantallas/modos/ModosJuego").then(m => ({ default: m.ModosJuego })));
+const Sala = lazy(() => import("../pantallas/Sala").then(m => ({ default: m.Sala })));
+const Logros = lazy(() => import("../pantallas/logros/Logros").then(m => ({ default: m.Logros })));
+const Ranking = lazy(() => import("../pantallas/ranking/Ranking").then(m => ({ default: m.Ranking })));
+const Perfil = lazy(() => import("../pantallas/perfil/Perfil").then(m => ({ default: m.Perfil })));
+const Tienda = lazy(() => import("../pantallas/Tienda").then(m => ({ default: m.Tienda })));
+const PantallaTv = lazy(() => import("../roles/pantalla/Pantalla").then(m => ({ default: m.PantallaTv })));
+
+/** Pantallas del menú detrás de las cuales el HUB se queda montado (escondido y en pausa): al volver no se arma de nuevo
+ *  la escena 3D (velocidad, 28 nov). Salas, Pantalla y partidas no: ahí se libera para dejar memoria al juego. */
+const MENU_CON_HUB = new Set(["personalizar", "editor", "ranking", "logros", "tienda", "perfil", "ajustes", "modos", "jugar", "catalogo", "juego"]);
 
 export function App() {
   const { ruta, arg } = useRuta();
@@ -66,6 +73,17 @@ export function App() {
     : ruta === "ajustes" ? <Ajustes />
     : ruta === "admin" ? <Admin />
     // HUB «La Azotea» (antes Hub.tsx; de ahí solo queda Jugar).
-    : <HubAzotea />;
-  return <>{pantalla}{fase === "dentro" && <SincroCapsulas />}{fase === "dentro" && ruta !== "tv" && <TemaMusical />}{fase === "dentro" && <Recompensas />}{fase === "dentro" && ruta !== "tv" && <AvisoLogro />}{!inicio && fase === "dentro" && invitado && ruta !== "tv" && ruta !== "editor" && <span className="a-prueba" aria-label="Estás en una entrada de prueba">Prueba</span>}<Avisos /></>;
+    : null;
+  const enHub = pantalla === null;
+  // El HUB se monta la primera vez que se ve y se queda (escondido) mientras se navega por el menú.
+  const [hubVivo, setHubVivo] = useState(false);
+  const conservarHub = enHub || (hubVivo && fase === "dentro" && !inicio && !sinFigura && MENU_CON_HUB.has(ruta));
+  useEffect(() => { if (enHub) setHubVivo(true); else if (!conservarHub) setHubVivo(false); }, [enHub, conservarHub]);
+  // Mismo árbol visible o escondido (si cambiara de forma, React lo volvería a montar).
+  const hub = conservarHub ? (
+    <div style={enHub ? { display: "contents" } : { position: "fixed", inset: 0, visibility: "hidden", pointerEvents: "none", zIndex: -1, overflow: "hidden" }} aria-hidden={enHub ? undefined : true}>
+      <HubAzotea oculto={!enHub} />
+    </div>
+  ) : null;
+  return <>{hub}<Suspense fallback={null}>{pantalla}</Suspense>{fase === "dentro" && <SincroCapsulas />}{fase === "dentro" && ruta !== "tv" && <TemaMusical />}{fase === "dentro" && <Recompensas />}{fase === "dentro" && ruta !== "tv" && <AvisoLogro />}{!inicio && fase === "dentro" && invitado && ruta !== "tv" && ruta !== "editor" && <span className="a-prueba" aria-label="Estás en una entrada de prueba">Prueba</span>}<Avisos /></>;
 }

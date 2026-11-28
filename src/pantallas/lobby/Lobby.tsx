@@ -148,8 +148,12 @@ export function Lobby({ sala, miembros, yo, soyAnfitrion, final, red, refrescar,
     if (creando) return;
     setCreando(true); setErrorRapido(null);
     // En línea la cuenta nueva entra directo a esta sala; en Local, a su sala espejo.
-    const espejo = local ? await asegurarEspejo(sala) : { id: sala.id, codigo: sala.codigo };
-    const r = espejo ? await crearPersonajeRapido(d.nombre, d.figura, espejo, true) : "No se pudo conectar con el servidor. Intenta otra vez o agrégalo sin cuenta.";
+    let r: PersonajeRapido | string;
+    // Si algo truena, la ventana no se queda en «creando» sin poder cerrarse (auditoría 28 nov).
+    try {
+      const espejo = local ? await asegurarEspejo(sala) : { id: sala.id, codigo: sala.codigo };
+      r = espejo ? await crearPersonajeRapido(d.nombre, d.figura, espejo, true) : "No se pudo conectar con el servidor. Intenta otra vez o agrégalo sin cuenta.";
+    } catch { r = "No se pudo crear el personaje. Intenta otra vez."; }
     setCreando(false);
     if (typeof r === "string") { setErrorRapido(r); return; }
     if (local && !modoLocal.agregarCuenta(sala, { id: r.id, nombre: d.nombre, figura: r.figura, cuenta: "rapida", genero: d.genero })) aviso("No se pudo agregar (máximo 8).");
@@ -222,7 +226,7 @@ export function Lobby({ sala, miembros, yo, soyAnfitrion, final, red, refrescar,
       {acceso && <DatosAcceso p={acceso} enLinea={!local} alListo={() => setAcceso(null)} />}
       {editar && (editar.tipo === "nuevo" || editar.tipo === "figura") && <PersonajeLocal titulo={editar.tipo === "nuevo" ? "Nuevo jugador" : `Figura de ${editar.m.nombre}`} soloFigura={editar.tipo === "figura"}
         inicial={editar.tipo === "figura" ? { figura: editar.m.figura, nombre: editar.m.nombre } : undefined}
-        color={editar.tipo === "figura" ? colorDe(editar.m.id, miembros.map(x => x.id)) : undefined} alListo={guardarPersonaje} alCerrar={() => setEditar(null)} />}
+        color={editar.tipo === "figura" ? colorDe(editar.m.id, miembros.map(x => x.id)) : undefined} propio={editar.tipo === "figura" && editar.m.id === yo} alListo={guardarPersonaje} alCerrar={() => setEditar(null)} />}
     </Marco>
   );
 }

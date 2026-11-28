@@ -14,7 +14,8 @@ import { esOtros, grupoMostrado, juntarVersiones, nombreBase } from "./agrupar";
 import { conMovimientos, elegirMovimiento, GESTOS, movimientosElegidos, NOMBRE_GESTO, opcionesMovimiento, type BaseGenerica, type Gesto, type OpcionMov } from "./movimientos";
 import type { Catalogo } from "./plano";
 import type { FiguraV3, Id, Parte } from "./tipos";
-import { RUEDA, RuedaGestos, TrazosGesto } from "../pantallas/gestos/RuedaGestos";
+import { TrazosGesto } from "../pantallas/gestos/RuedaGestos";
+import { RuedaAnimaciones, type Accion } from "../pantallas/gestos/RuedaFigura";
 import { useMiniaturas } from "./useMiniaturas";
 import { Vista3D } from "./Vista3D";
 import { CartaPersonaje, LOGOS, logo, temaDe } from "../pantallas/CartaPersonaje";
@@ -115,6 +116,10 @@ export interface ConstructorProps {
    *  2026-11-25-constructor-diseno-r5). */
   frente?: number;
   puedeUsar?: (id: string) => boolean;
+  /** Pieza suelta conseguida con una carta de accesorio (tienda v2): se usa aunque su personaje esté bloqueado. */
+  piezaComprada?: (id: string) => boolean;
+  /** Comprar ahí mismo un personaje bloqueado (Elías, 28 nov). Sin esto, el candado solo avisa que se consigue en la Tienda. */
+  alComprar?: (personaje: string, nombre: string) => void;
 }
 
 const sinMovimiento = () => typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -127,7 +132,7 @@ function sinMovimientosSi(si: boolean, f: FiguraV3): FiguraV3 {
 const fotoValida = (u: string | null | undefined) => !!u;
 
 export function Constructor({ catalogo, piezas, inicial, seccion, escenaUrl, onGuardar, onSalir, base = null, paginaAnterior = `${ARTE}azotea-pedestal-noche-1920.webp`,
-  estudioUrl = escenaUrl.replace(/escena\.html.*$/, "estudio.html"), frente = 10, puedeUsar }: ConstructorProps) {
+  estudioUrl = escenaUrl.replace(/escena\.html.*$/, "estudio.html"), frente = 10, puedeUsar, piezaComprada, alComprar }: ConstructorProps) {
   const mini = useMiniaturas(estudioUrl, catalogo);
   const [figura, setFigura] = useState(inicial);
   const [historia, setHistoria] = useState<FiguraV3[]>([]);
@@ -256,7 +261,7 @@ export function Constructor({ catalogo, piezas, inicial, seccion, escenaUrl, onG
   const porConseguir = (it: Item) => {
     if (!puedeUsar || sub === "transformacion") return false; // Elías (27 nov): cualquiera del catálogo, aunque no lo tenga
     if (it.tipo === "traje") return it.versiones ? it.versiones.every(v => !puedeUsar(v)) : !puedeUsar(it.id);
-    return it.tipo === "pieza" && it.pz.origen === "original" && !!it.pz.donante && !puedeUsar(it.pz.donante);
+    return it.tipo === "pieza" && it.pz.origen === "original" && !!it.pz.donante && !puedeUsar(it.pz.donante) && !piezaComprada?.(it.pz.id);
   };
   const ninguno: Item | null = gesto ? { tipo: "mov", op: null } : todas.find(it => origenDe(it) === "ninguna") ?? null;
   const lista = useMemo<Item[]>(() => {
@@ -266,7 +271,7 @@ export function Constructor({ catalogo, piezas, inicial, seccion, escenaUrl, onG
     const orden = [...l.filter(it => !porConseguir(it)), ...l.filter(porConseguir)];
     return ninguno ? [ninguno, ...orden] : orden;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [todas, fuente, sg, g, ninguno, grupoDe, puedeUsar]);
+  }, [todas, fuente, sg, g, ninguno, grupoDe, puedeUsar, piezaComprada]);
   const caja = sub === "traje" || sub === "transformacion" ? cajas.cartas : cajas.piezas;
   const pags = useMemo(() => paginas(lista, caja.columnas * caja.filas), [lista, caja]);
   const p = Math.min(pagina, pags.length - 1);
@@ -332,7 +337,13 @@ export function Constructor({ catalogo, piezas, inicial, seccion, escenaUrl, onG
   const rehacer = () => { if (!futuro.length) return; setHistoria(h => [...h.slice(-29), figura]); setFigura(futuro[0]!); setFuturo(f => f.slice(1)); setGuardado(false); };
   const restablecer = () => { if (figura !== inicial) cambiar(inicial); };
   const tocarItem = (it: Item) => {
-    if (bloqueado(it)) { setAviso("Consigue este personaje en la tienda para usarlo."); return; }
+    if (bloqueado(it)) {
+      // Traje con varias versiones: se abre la lista para comprar la que guste. Traje o pieza de un personaje: se compra aquí.
+      if (it.tipo === "traje" && it.versiones && it.base) { setAbierto(it.base); setPagina(0); setPasa(null); return; }
+      const quien = it.tipo === "traje" ? { id: it.id, nombre: it.nombre } : it.tipo === "pieza" && it.pz.donante ? { id: it.pz.donante, nombre: catalogo.get(it.pz.donante)?.ficha.nombre ?? "este personaje" } : null;
+      if (alComprar && quien) { alComprar(quien.id, quien.nombre); return; }
+      setAviso("Consigue este personaje en la tienda para usarlo."); return;
+    }
     // Traje completo: el personaje tal cual (sin piezas cambiadas); conserva movimientos y extensiones.
     if (it.tipo === "volver") { setAbierto(null); setPagina(0); setPasa(null); return; }
     // Figura grande con versión minifigura: al cambiar una pieza o la piel pasa a ser esa versión.
@@ -371,19 +382,6 @@ export function Constructor({ catalogo, piezas, inicial, seccion, escenaUrl, onG
   const escena = useRef<HTMLDivElement>(null);
   const [rueda, setRueda] = useState<{ x: number; y: number } | null>(null);
   const [pista, setPista] = useState(() => { try { return localStorage.getItem("alv-pista-rueda") !== "vista"; } catch { return true; } });
-  const tocar = (nx: number, ny: number) => {
-    const e = escena.current, v = e?.querySelector<HTMLElement>(".pz-vista");
-    if (!e || !v) return;
-    const re = e.getBoundingClientRect(), rv = v.getBoundingClientRect();
-    const radio = Math.min(168, Math.max(136, innerWidth * 0.15)) / 2, borde = radio + 16;
-    let x: number, y: number;
-    if (innerWidth >= 860) {
-      x = rv.left - re.left + nx * rv.width + (nx < 0.5 ? 1 : -1) * radio * 1.15;
-      y = Math.max(rv.top - re.top + ny * rv.height, rv.top - re.top + rv.height * 0.5); // de la cintura para abajo: libre la cara
-    } else { x = re.width - borde; y = rv.bottom - re.top - borde; setCorrer({ x: 0.24, ms: 220 }); } // celular: la figura se hace a la izquierda (Codex r2, C)
-    setRueda({ x: Math.max(borde, Math.min(re.width - borde, x)), y: Math.max(borde, Math.min(re.height - borde, y)) });
-    if (pista) { setPista(false); try { localStorage.setItem("alv-pista-rueda", "vista"); } catch { /* sin almacenamiento */ } }
-  };
   /** Tocar la figura abre la parte tocada (Elías: «seleccionar partes directamente tocando el personaje»). La vista
    *  encuadra la figura de cuerpo entero: arriba la cabeza, al centro el torso (los lados, los brazos), abajo las piernas. */
   const [marca, setMarca] = useState<{ t: Pestana; n: number } | null>(null);
@@ -413,12 +411,33 @@ export function Constructor({ catalogo, piezas, inicial, seccion, escenaUrl, onG
   }, []);
   // Girar con el teclado: con el personaje enfocado y la rueda cerrada, ← y → (Codex, cierre-r1).
   const [giro, setGiro] = useState<{ n: number; cuanto: number } | null>(null);
-  const elegirGesto = (cual: string) => {
-    if (corrida.current) { setTimeout(() => setCorrer({ x: 0, ms: 180 }), 100); setTimeout(() => gestoRueda(cual), 280); }
-    else setTimeout(() => gestoRueda(cual), 220);
+  // Círculo fijo: se mide contra la vista (arriba a la derecha de la cabeza) al cargar y al cambiar el tamaño.
+  const [fijo, setFijo] = useState<{ x: number; y: number } | null>(null);
+  useEffect(() => {
+    const medir = () => {
+      const e = escena.current, v = e?.querySelector<HTMLElement>(".pz-vista");
+      if (!e || !v) return;
+      const re = e.getBoundingClientRect(), rv = v.getBoundingClientRect();
+      // Mismo tamaño que .pz-escena .rg-fija en constructor.css.
+      const radio = Math.min(140, Math.max(92, innerWidth * 0.13)) / 2, borde = radio + 10;
+      // Esquina de arriba a la derecha de la viñeta (el rótulo va a la izquierda). La figura se queda al centro (Elías,
+      // 2026-11-27: «que el personaje quede en medio, no se mueva hacia la izquierda»).
+      const x = Math.min(re.width, rv.right - re.left) - borde;
+      const y = Math.max(rv.top - re.top, 0) + borde;
+      setFijo({ x: Math.max(borde, x), y: Math.min(re.height - borde, y) });
+    };
+    medir(); const t = setTimeout(medir, 600);
+    addEventListener("resize", medir);
+    return () => { clearTimeout(t); removeEventListener("resize", medir); };
+  }, []);
+  const puente = useMemo(() => ({ extensiones: { alv: { v3: figura } } }), [figura]);
+  const accionRueda = (a: Accion) => {
+    if (a.tipo === "gesto") gestoRueda(a.cual);
+    else if (a.tipo === "poder" && plano) setOrden(o => ({ n: (o?.n ?? 0) + 1, msg: { tipo: "poder", id: plano.id, poder: a.id } }));
   };
+  const nada = useCallback(() => {}, []);
   const teclaFigura = (ev: { key: string; preventDefault: () => void }) => {
-    if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); tocar(0.5, 0.45); }
+    if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); tocarParte(0.5, 0.5); }
     if (!rueda && (ev.key === "ArrowLeft" || ev.key === "ArrowRight")) { ev.preventDefault(); setGiro(g => ({ n: (g?.n ?? 0) + 1, cuanto: ev.key === "ArrowLeft" ? -0.35 : 0.35 })); }
   };
 
@@ -457,7 +476,7 @@ export function Constructor({ catalogo, piezas, inicial, seccion, escenaUrl, onG
           <button key={l.id} type="button" className={"pz-sec" + (pestana === l.id ? " on" : "") + (marca?.t === l.id ? " marca" : "")} aria-pressed={pestana === l.id}
             style={{ "--c1": l.c1, "--c2": l.c2, "--lab": l.lab } as CSSProperties} onClick={() => elegirLosa(l.id)}>
             <IconoLosa id={l.ico} />
-            <span className="pz-sec-txt">{l.titulo}</span>
+            <span className="pz-sec-txt" style={{ "--n": l.titulo.length } as CSSProperties}>{l.titulo}</span>
             {hecha(l.id) && <i className="pz-palomita" aria-label="con cambios">✓</i>}
           </button>
         ))}
@@ -482,7 +501,9 @@ export function Constructor({ catalogo, piezas, inicial, seccion, escenaUrl, onG
             <button type="button" onClick={() => enfocar(true)} disabled={cerca} aria-label="Acercar a la cara" title="Acercar">+</button>
           </div>
         </div>
-        {rueda && <RuedaGestos gestos={RUEDA} x={rueda.x} y={rueda.y} onElegir={elegirGesto} onCerrar={cerrarRueda} />}
+        {/* Círculo de animaciones fijo arriba a la derecha, a la altura de la cabeza (Elías, 27 nov: tocar la figura ya
+            abre la parte para editarla). */}
+        {fijo && <RuedaAnimaciones figura={puente} jugador="yo" x={fijo.x} y={fijo.y} fija sinTransformar onAccion={accionRueda} onCerrar={nada} />}
         {aviso && <div className="pz-aviso" role="status">{aviso}</div>}
       </div>
 

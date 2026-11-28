@@ -9,14 +9,15 @@
 import { useEffect, useState } from "react";
 import { cliente } from "../servicios/cliente";
 import { fuentePrivada } from "../servicios/personajesPrivados";
-import { BASE_CREAR, piezasDeCatalogo, planoConstructor, type PiezaCons, type Piezas } from "./constructorDatos";
+import { BASE_CREAR, figuraInicial, piezasDeCatalogo, planoConstructor, type PiezaCons, type Piezas } from "./constructorDatos";
 import { piezasGenericas } from "./genericas";
 import { baseGenerica, conMovimientos, type BaseGenerica } from "./movimientos";
 import { leerFigura } from "./figura";
-import { caretaEn, conEspecialAlSalir, cuantasFormas, figuraEnForma, type Careta } from "./formas";
+import { auraEn, caretaEn, conEspecialAlSalir, cuantasFormas, figuraEnForma, transformacionDe, type Careta } from "./formas";
 import { cargarIndice, type Indice } from "./indice";
 import { movimientosDeFicha, poderesDeFicha, resolver, type Catalogo } from "./plano";
 import { SETS } from "./sets";
+import { DONANTES_FUERA } from "./cabezas";
 import { PERFIL_PERSONAJE, type PerfilPersonaje } from "./caracter";
 import type { FiguraV3, Plano } from "./tipos";
 export type { FiguraV3 } from "./tipos";
@@ -265,19 +266,28 @@ export function enForma(f: FiguraV2Puente, paso: number, cat: CatalogoV3 | null)
 }
 
 /** ¿Al dejar la forma de `paso` se hace antes la animación especial (Banner se transforma)? */
+/** De qué personaje es una transformación: personaje y transformación elegida. Si cambia, la forma vuelve a la base
+ *  (Elías, 28 nov: al cambiar de personaje no debe seguir transformado). "" si no es figura v3. */
+export function claveForma(f: unknown): string {
+  const v3 = leerV3(f);
+  if (!v3) return "";
+  return (v3.origen.tipo === "catalogo" ? v3.origen.personaje : "creado") + ">" + (transformacionDe(v3) ?? "");
+}
 export function especialAlSalir(f: unknown, paso: number): boolean { const v3 = leerV3(f); return !!v3 && conEspecialAlSalir(v3, paso); }
 
 /** Careta levantada en ese paso (Iron Man), para la escena. null = cerrada. */
+/** Poder puesto en ese paso de la forma (Johnny en llamas, Sue invisible, Reed estirado). */
+export function auraDe(f: unknown, paso: number): string | null { const v3 = paso ? leerV3(f) : null; return v3 ? auraEn(v3, paso) : null; }
 export function caretaDe(f: unknown, paso: number): Careta | null { const v3 = paso ? leerV3(f) : null; return v3 ? caretaEn(v3, paso) : null; }
 
 // ---------- Poderes (Elías, 27 nov: escudo del Capi, rayo de Cíclope, telaraña, fuego, vuelo…) ----------
 
 /** Los poderes que se le ofrecen a la figura (en orden; el primero es el principal). Vacío si su personaje no tiene. */
-export function poderesDe(f: unknown, cat: CatalogoV3 | null): { id: string; nombre: string }[] {
+export function poderesDe(f: unknown, cat: CatalogoV3 | null): { id: string; nombre: string; tipo?: string }[] {
   const v3 = leerV3(f);
   if (!v3 || !cat || v3.origen.tipo !== "catalogo") return [];
   const en = cat.catalogo.get(v3.origen.personaje);
-  return en ? poderesDeFicha(en.ficha, en.base, cat.catalogo).map(p => ({ id: p.id, nombre: p.nombre })) : [];
+  return en ? poderesDeFicha(en.ficha, en.base, cat.catalogo).map(p => ({ id: p.id, nombre: p.nombre, tipo: p.efectos[0]?.tipo })) : [];
 }
 
 // ---------- Personalidad por defecto (Elías, 27 nov: «personalidad a todos los personajes, a los que sean similares») ----------
@@ -313,3 +323,29 @@ export function movimientosDe(f: unknown, cat: CatalogoV3 | null): SetRueda[] {
 export { deCatalogo } from "./figura";
 export { categorias, nombreSaga, paginas, tarjetas, type Tarjeta } from "./galeriaDatos";
 export { useMiniaturas } from "./useMiniaturas";
+
+// ---------- Lobby: elegir la figura de un jugador en Trajes (Elías, 28 nov) ----------
+
+/** La figura del taller con la que se abre Trajes para un jugador: la suya si ya es nueva; si no, el civil base. */
+export function figuraParaTrajes(cat: CatalogoV3, antes: unknown): FiguraV3 | null {
+  return leerV3(antes) ?? figuraInicial(cat.catalogo, null);
+}
+
+/** Un personaje del catálogo al azar (de los que puede usar), tal cual viene, ya en la forma de la app (puente). */
+export function trajeAlAzar(cat: CatalogoV3, puedeUsar: (id: string) => boolean): FiguraV2Puente | null {
+  const base = figuraInicial(cat.catalogo, null);
+  if (!base) return null;
+  const lista = [...cat.catalogo.values()].filter(e => (e.ficha.familia === "minifig" || e.ficha.familia === "bigfig") && !DONANTES_FUERA.has(e.ficha.id) && puedeUsar(e.ficha.id));
+  const e = lista[Math.floor(Math.random() * lista.length)];
+  if (!e) return null;
+  return proyectar({ ...base, familia: e.ficha.familia, origen: { tipo: "catalogo", personaje: e.ficha.id, version: "base", revision: 1 }, piezas: {} });
+}
+
+/**
+ * Personaje del catálogo de la figura del jugador (ALV PARTY, Elías 28 nov: «ya se eligieron antes de entrar al lobby»).
+ * Los minijuegos dibujan personajes del catálogo: una figura «creada» en el constructor no tiene uno y da null.
+ */
+export function personajeDeFigura(f: unknown): string | null {
+  const v3 = (f as { version?: unknown } | null)?.version === 3 ? leerFigura(f) : leerV3(f);
+  return v3 && v3.origen.tipo === "catalogo" && /^[a-z0-9-]{1,40}$/.test(v3.origen.personaje) ? v3.origen.personaje : null;
+}

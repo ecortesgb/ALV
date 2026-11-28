@@ -16,6 +16,9 @@ function vr(op: Record<string, unknown> = {}, n = 4, semilla = 7) {
   return crearPartida(JUEGOS.find(j => j.id === "verdad-reto")!, a.cfg, a.semilla, CONTENIDO, a.rondas);
 }
 const sel = (e: EstadoPartida) => vistaPublica(e).verdadReto!;
+/** Solo los 8 de turno de la primera tanda (v1.72); los demás se prueban en comodines18.test.ts. */
+const TURNO8 = ["turno", "escudo", "cambio", "dos-caminos", "rebaja", "segundo-intento", "prorroga", "suerte"];
+const deTurno = (e: EstadoPartida, j: string) => comodinesUsables(e, j).filter(x => TURNO8.includes(x));
 /** Verdad o reto hasta «calificar» con la carta de la app. */
 function aCalificar(e: EstadoPartida, elige: "verdad" | "reto" = "reto") {
   const { pregunta, responde } = sel(e);
@@ -27,7 +30,8 @@ describe("configurador y arranque", () => {
   it("encendidos de inicio en los juegos que los aceptan; el anfitrión los apaga", () => {
     expect(armarArranque(gente(3), "verdad-reto", 8, 2, 1)!.cfg.comodines).toBe(true);
     expect(armarArranque(gente(3), "verdad-reto", 8, 2, 1, { comodines: false })!.cfg.comodines).toBeUndefined();
-    expect(armarArranque(gente(3), "que-prefieres", 8, 2, 1)!.cfg.comodines).toBeUndefined();
+    // Desde v1.74 sirven en todos los juegos (mesero, castigos y trampas).
+    expect(armarArranque(gente(3), "que-prefieres", 8, 2, 1)!.cfg.comodines).toBe(true);
   });
   it("con los comodines apagados nadie puede usar uno", () => {
     let e = aCalificar(vr({ comodines: false }));
@@ -43,10 +47,10 @@ describe("Verdad o reto", () => {
   it("solo quien responde, y según la etapa: al elegir pasa; con la carta de la app, también cambia o elige entre dos", () => {
     let e = vr();
     const { responde, pregunta } = sel(e);
-    expect(comodinesUsables(e, pregunta)).toEqual([]);
-    expect(comodinesUsables(e, responde)).toEqual(["turno", "escudo"]);
+    expect(deTurno(e, pregunta)).toEqual([]);
+    expect(deTurno(e, responde)).toEqual(["turno", "escudo"]);
     e = aCalificar(e, "reto");
-    expect(comodinesUsables(e, responde)).toEqual(["turno", "escudo", "cambio", "dos-caminos", "rebaja", "segundo-intento", "suerte"]);
+    expect(deTurno(e, responde)).toEqual(["turno", "escudo", "cambio", "dos-caminos", "rebaja", "segundo-intento", "suerte"]);
     expect(vistaJugador(e, responde).misComodines).toContain("suerte");
   });
   it("Pasa turno: pasa sin tomar y con 0 puntos; uno por turno", () => {
@@ -134,7 +138,7 @@ describe("juegos por turno", () => {
     const a = armarArranque(gente(4), "reloj", 8, 2, 5)!;
     let e = crearPartida(JUEGOS.find(j => j.id === "reloj")!, a.cfg, a.semilla, CONTENIDO, a.rondas);
     const t = e.turnoDe!, otro = e.cfg.jugadores.find(j => j.id !== t)!.id;
-    expect(comodinesUsables(e, otro)).toEqual([]);
+    expect(deTurno(e, otro)).toEqual([]);
     expect(comodinesUsables(e, t)).toEqual(expect.arrayContaining(["turno", "escudo", "rebaja", "segundo-intento"]));
     e = usa(e, t, "segundo-intento");
     e = juega(e, { tipo: "contestar", jugador: t, valor: "paso" });

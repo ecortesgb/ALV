@@ -11,6 +11,8 @@ export type Carta =
   | { tipo: "pieza"; id: string; rareza: RarezaSobre }
   | { tipo: "comodin"; id: string; especial: boolean }
   | { tipo: "personaje"; id: string; rareza: RarezaSobre }
+  /** Carta de accesorio (tienda v2): una pieza suelta de un traje, `${personaje}--${parte}`. */
+  | { tipo: "accesorio"; id: string; rareza: RarezaSobre }
   | { tipo: "monedas"; cantidad: number; comodin: string };
 
 /** Sobres de piezas abiertos sin sacar épica (o mejor) y sin sacar legendaria. */

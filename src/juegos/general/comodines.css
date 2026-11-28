@@ -19,6 +19,12 @@
 .cm-pie { margin: 0; font-size: .78rem; color: #cbb8f0; }
 .cm-efectos { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0 0; padding: 0; list-style: none; }
 .cm-efectos li { padding: 4px 10px; border-radius: 999px; background: #2a1a48; border: 1px solid #ffe3a780; color: #fff1c8; font-size: .85rem; font-weight: 700; }
+.cm-gente { display: flex; flex-wrap: wrap; gap: 8px; }
+.cm-persona { min-height: 44px; padding: 8px 14px; border: 2px solid #ffe3a7; border-radius: 999px; background: #2a1a48; color: #fff; font-weight: 800; cursor: pointer; }
+.cm-persona:disabled, .cm-volver:disabled { opacity: .5; cursor: not-allowed; }
+.cm-volver { justify-self: start; min-height: 40px; padding: 6px 12px; border: 1px solid #ffe3a780; border-radius: 10px; background: transparent; color: #e9dcff; cursor: pointer; }
+.cm-bloque { margin: 8px 12px 0; }
+.cm-tv-mesero { position: fixed; right: 1em; bottom: 1em; z-index: 30; max-width: 22em; padding: .4em .8em; border: .12em solid #ffe3a7; border-radius: .8em; background: #1a0f2ee6; color: #fff1c8; font-size: 1.1em; pointer-events: none; }
 .cm-caminos { display: grid; gap: 8px; margin-top: 10px; }
 .cm-camino { min-height: 56px; padding: 10px 12px; border: 2px solid #ffe3a7; border-radius: 12px; background: #2a1a48; color: #fff; text-align: left; font-size: 1rem; cursor: pointer; }
 
@@ -33,3 +39,33 @@
 @keyframes cm-tv-carta { 0% { transform: scale(.2) rotateY(180deg); opacity: 0; } 18% { transform: scale(1.08) rotateY(0); opacity: 1; } 26%, 85% { transform: scale(1); opacity: 1; } 100% { transform: scale(.9) translateY(-.5em); opacity: 0; } }
 @keyframes cm-tv-texto { 0%, 15% { transform: translateY(.6em); opacity: 0; } 28%, 85% { transform: none; opacity: 1; } 100% { opacity: 0; } }
 @media (prefers-reduced-motion: reduce) { .cm-tv, .cm-tv-carta, .cm-tv-texto, .cm-tv-suerte { animation-duration: .01s; animation-iteration-count: 1; } .cm-tv { animation: none; } }
+
+/* Botón flotante y panel (Elías, 28 nov): abajo a la izquierda, junto a Herramientas si eres anfitrión. */
+.cm-flotante { position: fixed; left: 10px; bottom: max(10px, env(safe-area-inset-bottom)); z-index: 35; display: flex; flex-direction: column; align-items: flex-start; gap: 8px; font-family: "Nunito", "Barlow", system-ui, sans-serif; }
+/* El panel vive en <body> (portal): sin esto salía con letra serif y botones del sistema (auditoría 28 nov). */
+.cm-flotante button { font-family: inherit; }
+.cm-panel-titulo { font-family: "Lilita One", "Bangers", system-ui, sans-serif; font-weight: 400; letter-spacing: .02em; }
+body:has(.pt-herr) .cm-flotante { left: 84px; }
+body:has(.pt-herr.abierto) .cm-flotante:not(.abierto) { visibility: hidden; }
+.cm-flotante-btn { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; width: 64px; height: 64px; cursor: pointer; border-radius: 18px; color: #fff;
+  border: 2px solid #ffe3a7; background: linear-gradient(180deg, #b06bff, #6b2fc0); box-shadow: 0 3px 0 #2e1259, 0 6px 14px #0007; }
+.cm-flotante-btn b { font-size: 24px; line-height: 1; }
+.cm-flotante-btn small { font: 800 10px/1 system-ui, sans-serif; white-space: nowrap; }
+.cm-flotante-btn:focus-visible { outline: 3px solid #fff; outline-offset: 2px; }
+.cm-panel { position: fixed; left: 10px; bottom: calc(max(10px, env(safe-area-inset-bottom)) + 74px); box-sizing: border-box; width: min(560px, calc(100vw - 20px)); max-height: min(68vh, 620px); overflow-y: auto; overscroll-behavior: contain; display: grid; gap: 10px;
+  padding: 12px; border-radius: 18px; border: 2px solid #ffe3a780; background: #160c29f2; box-shadow: 0 10px 30px #000a; }
+.cm-panel-titulo { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; color: #fff1c8; font-size: 1.05rem; }
+.cm-panel-titulo small { font-size: .78rem; font-weight: 600; color: #cbb8f0; }
+.cm-rejilla { display: grid; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 10px; margin: 0; padding: 0; list-style: none; }
+.cm-carta { display: grid; gap: 5px; align-content: start; min-width: 0; padding: 6px; border-radius: 12px; background: #2a1a48; border: 1px solid #ffe3a74d; }
+.cm-carta-img { position: relative; display: block; aspect-ratio: 5 / 6; border-radius: 8px; overflow: hidden; border: 2px solid #efc878; background: #1a0f2e; }
+.cm-carta-img img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.cm-carta-img .cm-ico { width: 100%; height: 100%; }
+.cm-info { position: absolute; top: 4px; right: 4px; width: 28px; height: 28px; border-radius: 50%; border: 2px solid #ffe3a7; background: #1a0f2ee6; color: #fff; font-weight: 900; cursor: pointer; }
+.cm-info[aria-expanded="true"] { background: #ffd36b; color: #3a2400; }
+.cm-copias { position: absolute; left: 4px; bottom: 4px; padding: 1px 7px; border-radius: 999px; background: #1a0f2ee6; color: #ffd36b; font-size: .8rem; font-weight: 800; }
+.cm-nombre { color: #fff1c8; font-size: .9rem; line-height: 1.15; }
+.cm-efecto { font-size: .78rem; line-height: 1.25; color: #e9dcff; }
+.cm-carta .cm-usar { width: 100%; min-width: 0; min-height: 40px; padding: 4px 6px; font-size: .85rem; }
+.cm-elige { display: grid; gap: 8px; }
+@media (max-width: 420px) { .cm-rejilla { grid-template-columns: repeat(2, minmax(0, 1fr)); } .cm-carta-img { aspect-ratio: 1; } }

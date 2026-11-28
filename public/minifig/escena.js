@@ -113,6 +113,9 @@
   // baja (además densidad de píxeles 1). Empieza en alta (1024 en pantallas táctiles) y baja sola si no alcanza 45 cuadros.
   const MODO = new URLSearchParams(location.search).get("modo") || "";
   const CINE = !!window.ESTILO_CINE, Q = new URLSearchParams(location.search), BRILLO = CINE && Q.get("acabado") === "brillo";
+  // Velocidad (28 nov): en cine las piezas biseladas (345 KB) empiezan a bajar desde el arranque, en paralelo con la
+  // geometría LDraw; cargarBiseles() después solo las toma de la caché.
+  if (CINE && Q.get("bisel") !== "no") { const l = document.createElement("link"); l.rel = "preload"; l.as = "script"; l.href = "piezas-biseladas.js"; document.head.appendChild(l); }
   const TACTIL = matchMedia("(pointer: coarse)").matches;
   const calidad = { nivel: /^(alta|media|baja)$/.test(Q.get("calidad") || "") ? Q.get("calidad") : "alta", fija: !!Q.get("calidad"), muestras: [], desde: 0 };
   if (CINE) {
@@ -820,6 +823,7 @@
   }
   function quitar(id) {
     const x = figuras.get(id); if (!x) return;
+    if (x.aura) { x.aura.fx.fin(); x.aura = null; }
     if (x.v3) { scene.remove(x.obj); x.v3.quitar(); figuras.delete(id); return; } // libera solo lo suyo (no el dispose viejo)
     if (x.cara) { x.cara.malla.material.map = x.cara.base; [x.cara.parpadeo, x.cara.sonrisa, x.cara.especial].forEach(t => t && t.dispose()); }
     scene.remove(x.obj); dispose(x.obj); figuras.delete(id);
@@ -851,7 +855,10 @@
       if (!e || e.huella !== h) {
         if (e) quitar(id);
         const t = reloj.getElapsedTime(), habia = !!e;
-        try { const a = armar(fx); e = { id, obj: a.obj, momentos: a.momentos, plano: a.plano, huella: h, mom: a.momentos.espera || "respirar", t0: t - Math.random() * 3,
+        // Velocidad (28 nov): una figura del sistema nuevo ya no arma antes la vieja (LDraw) de respaldo; queda un hueco
+        // vacío hasta que llega la nueva. Si la nueva falla, ahí se arma la vieja (respaldoV3).
+        const sinRespaldo = !!p3 && !EDITOR && !(NAVE && !p3.sentado);
+        try { const a = sinRespaldo ? { obj: new THREE.Group(), momentos: {}, plano: null } : armar(fx); e = { id, obj: a.obj, sinRespaldo, fx, momentos: a.momentos, plano: a.plano, huella: h, mom: a.momentos.espera || "respirar", t0: t - Math.random() * 3,
           pop: EDITOR && habia ? t : -9, parpadeo: t + 2 + Math.random() * 2, sonrisa: t + 7 + Math.random() * 4,
           fase: Math.random() * Math.PI * 2, mira: { y: 0, v: 0, meta: 0, inc: 0, prox: t + 1 + Math.random() * 2 }, lx: 0, lz: 0, saludoK: 0 }; }
         catch (err) { console.error("escena: no se pudo armar", id, err); return; }
@@ -884,6 +891,8 @@
       e.pielReal = fx.identidad && /^#[0-9a-f]{6}$/i.test(fx.identidad.piel || "") ? fx.identidad.piel : null;
       // Careta levantada (Iron Man, formas.ts de ALV): gira esas mallas sobre su bisagra; la figura no se vuelve a armar.
       e.caretaDef = caretaValida(x.careta); aplicarCareta(e);
+      // Poder puesto (formas.ts de ALV: Johnny en llamas, Sue invisible, Reed estirado): se queda hasta que deje de venir.
+      e.auraDef = Object.prototype.hasOwnProperty.call(AURAS, x.aura) ? x.aura : null; aplicarAura(e);
       e.foco = !!x.foco; orden.push(id);
       if (SALA || NAVE) { e.columna = Number.isInteger(x.columna) && x.columna >= 0 ? x.columna : orden.length - 1; e.color = colorValido(x.color); }
     });
@@ -966,6 +975,7 @@
     const t = reloj.getElapsedTime(), p = Number.isFinite(prio) ? prio : PRIO[cual] != null ? PRIO[cual] : 1;
     const sonando = (e.prio || 0) > 0 && t < e.hasta;
     if ((sonando && (p < e.prio || e.cual === cual)) || t - (e.ultG == null ? -9 : e.ultG) < ENFRIAR) { enviar({ tipo: "gesto", id: e.id, cual, ok: false }); return; }
+    if (e.sinRespaldo && !e.v3) { enviar({ tipo: "gesto", id: e.id, cual, ok: false }); return; } // aún sin cuerpo
     if (e.espEst) terminarEspecial(e, t);
     const fin = (dur, m) => { e.prio = p; e.cual = cual; e.ultG = t; e.hasta = t + dur; enviar({ tipo: "gesto", id: e.id, cual, ok: true, mom: m, dur }); };
     // Fase 5: la figura nueva traduce el momento a una de sus seis lógicas (logicas.js; Codex D4). Mismo contrato:
@@ -1382,38 +1392,39 @@
    * Cambia la figura nueva de `e` por la de `p3` sin pasar por la de respaldo: la otra se arma aparte y, cuando está lista
    * (y terminó la especial si `conEspecial`), nube de humo y cambio. false si no hay motor nuevo (se arma como siempre).
    */
+  /** Nube de transformación: efecto «puf» si cargó efectos.js (si no, la nube de siempre) y la figura se encoge debajo. */
+  function puf(e, cuerpo, color, desde, dura) {
+    if (figuras.get(e.id) !== e || e.v3.obj !== cuerpo) return;
+    const fx = window.EfectosALV;
+    if (fx && !MENOS_MOVIMIENTO) fx.lanzar(scene, { obj: cuerpo, hueso: e.v3.hueso }, { tipo: "puf", color });
+    else nube(reloj.getElapsedTime(), e.obj.position.x, e.obj.position.z, 1.2, [1, 0.85, 0.3]);
+    const esc0 = cuerpo.scale.x;
+    const encoger = () => {
+      if (figuras.get(e.id) !== e || e.v3.obj !== cuerpo) return;
+      const k = Math.min(1, Math.max(0, reloj.getElapsedTime() - desde) / dura);
+      cuerpo.scale.setScalar(esc0 * Math.max(0.02, 1 - k * k));
+      if (k < 1) setTimeout(encoger, 16);
+    };
+    encoger();
+  }
   function transformarV3(e, p3, h, conEspecial) {
     const gen = (e.gen3 = ++V3.gen);
-    // Antes del cambio la figura tiembla y crece un poco (Banner más largo: se está transformando). La animación del juego
-    // TRANSFORM_TO_BIGFIG de Banner no sirve aquí: esconde sus piezas esperando las de Hulk y se ve rota (prueba 27 nov).
-    // Con clip del juego (set «transformar» de la ficha, 27 nov): la forma de ahora hace su animación de salida completa
-    // (Banner se vuelve Hulk, Spider-Man se quita la máscara, el Hulkbuster se apaga) y la nueva llega con la suya.
-    const t0 = reloj.getElapsedTime(), inst0 = e.v3, tr0 = (inst0.obj.userData.plano || {}).transformar;
+    // Los clips de salida del juego (Banner TRANSFORM_TO_BIGFIG, Peter) giran la figura y esconden piezas: se ve rota
+    // (Elías, 28 nov). Siempre va la nube «puf» que tapa la figura mientras se encoge; la nueva llega con su clip propio
+    // si lo tiene (Hulk flexionando) o crece con un rebote.
+    const t0 = reloj.getElapsedTime(), inst0 = e.v3;
     const cuerpo = inst0.obj, esc0 = cuerpo.scale.x, x0 = cuerpo.position.x;
     let hasta = t0 + (conEspecial ? 1.3 : 0.6);
     e.prio = 9; e.cual = "transformar"; e.hasta = hasta + 7; // nadie la interrumpe
     e.trHuella = h;
-    const temblar = dur => {
-      if (figuras.get(e.id) !== e || e.gen3 !== gen || e.v3.obj !== cuerpo) return;
-      const k = Math.min(1, (reloj.getElapsedTime() - t0) / dur);
-      cuerpo.scale.setScalar(esc0 * (1 + 0.14 * k));
-      cuerpo.position.x = x0 + Math.sin(reloj.getElapsedTime() * 55) * 0.035 * k;
-      if (k < 1) setTimeout(() => temblar(dur), 30);
-    };
-    const sal = tr0 && (p3.familia === "bigfig" ? tr0.salirGrande || tr0.salir : tr0.salir || tr0.salirGrande);
-    const salida = sal
-      ? inst0.tocarExt(sal.glb, sal.clip, { fijo: true, mezcla: 0.15 }).then(d => Number(d) > 0 ? Math.min(7, d) : 0).catch(() => 0) : Promise.resolve(0);
     const nueva = motorV3().then(M => M.crear(p3));
-    salida.then(d => {
-      const t = reloj.getElapsedTime();
-      if (d > 0) { hasta = t + d - 0.15; e.hasta = hasta + 0.5; nube(hasta, e.obj.position.x, e.obj.position.z, 1.2, conEspecial ? [0.55, 0.95, 0.35] : [1, 0.85, 0.3]); return; }
-      // Sin clip: como antes, temblor (y festejo si es la especial) con humo desde el principio.
-      hasta = t + (conEspecial ? 1.3 : 0.6); e.hasta = hasta + 0.5;
+    { // festejo si es la especial y luego la nube «puf» (efectos.js)
+      const previo = conEspecial ? 0.9 : 0;
+      hasta = t0 + previo + 0.42; e.hasta = hasta + 0.5;
       if (conEspecial) inst0.tocar("victoria");
-      nube(t, e.obj.position.x, e.obj.position.z, 1.2, conEspecial ? [0.55, 0.95, 0.35] : [1, 0.85, 0.3]);
-      temblar(hasta - t);
-    });
-    Promise.all([nueva, salida]).then(([inst]) => new Promise(ok => {
+      setTimeout(() => puf(e, cuerpo, conEspecial ? "#9be04a" : "#ffd84a", t0 + previo + 0.12, 0.3), previo * 1000);
+    }
+    nueva.then(inst => new Promise(ok => {
       const espera = () => (reloj.getElapsedTime() >= hasta ? ok(inst) : setTimeout(espera, 50));
       espera();
     })).then(inst => {
@@ -1431,8 +1442,14 @@
       e.obj = grupo; e.v3 = inst; e.huella = h; e.trHuella = null;
       scene.add(grupo);
       inst.tocar("reposo", { mezcla: 0 });
+      // La nueva sale de la nube creciendo con un rebote chico.
+      if (!MENOS_MOVIMIENTO) { const s1 = grupo.scale.x, t1 = reloj.getElapsedTime(); const crecer = () => {
+        if (e.obj !== grupo) return;
+        const k = Math.min(1, (reloj.getElapsedTime() - t1) / 0.32), b = 1 + Math.sin(k * Math.PI) * 0.12;
+        grupo.scale.setScalar(s1 * Math.max(0.05, k) * b); if (k < 1) setTimeout(crecer, 16); else grupo.scale.setScalar(s1); };
+        grupo.scale.setScalar(s1 * 0.05); crecer(); }
       e.prio = 0; e.cual = null; e.hasta = 0; e.accion = null;
-      aplicarCareta(e);
+      aplicarCareta(e); aplicarAura(e);
       // Llegada de la nueva forma (Hulk aplaude, el Hulkbuster se enciende, Iron Man despega): mientras, nadie la interrumpe.
       const tr1 = p3.transformar;
       if (tr1 && tr1.llegar) {
@@ -1532,7 +1549,7 @@
     motorV3().then(M => M.crear(p3)).then(inst => {
       if (figuras.get(e.id) !== e || e.gen3 !== gen || e.v3) { inst.quitar(); return; } // llegó tarde
       // Nave: el clip «sentado» declarado tiene que existir en el GLB ANTES de retirar la v2; si no, se queda el respaldo.
-      if (NAVE && !inst.reposoEn(p3.sentado)) { inst.quitar(); enviar({ tipo: "v3", id: e.id, ok: false }); return; }
+      if (NAVE && !inst.reposoEn(p3.sentado)) { inst.quitar(); respaldoV3(e); enviar({ tipo: "v3", id: e.id, ok: false }); return; }
       const grupo = new THREE.Group();
       grupo.add(inst.obj);
       // Figuras grandes (Big Fig): en escenas con lugares (sala, nave, azotea) se topa su altura para que no invadan el
@@ -1550,7 +1567,7 @@
       e.obj = grupo; e.v3 = inst;
       scene.add(grupo);
       inst.tocar("reposo", { mezcla: 0 });
-      aplicarCareta(e);
+      aplicarCareta(e); aplicarAura(e);
       // Nave: hasta dónde llegan los pies sentados a la altura del tablero (todo el bucle); acomodarNave() aleja la silla y la
       // figura lo justo para que no toquen la mesa (decidió Codex, sentado-r2: Big Fig, opción 2).
       // Además, el punto más bajo del cuerpo sobre la huella del asiento (cojín si queda en el aire) y el más alto (encuadre).
@@ -1569,9 +1586,44 @@
       enviar({ tipo: "v3", id: e.id, ok: true });
     }).catch(err => {
       console.warn("escena: figura nueva sin cargar, se queda la de respaldo", e.id, err);
+      respaldoV3(e);
       if (AZOTEA && figuras.get(e.id) === e) revelarAzotea(e, reloj.getElapsedTime());
       enviar({ tipo: "v3", id: e.id, ok: false });
     });
+  }
+  /** La figura nueva no llegó y no había respaldo armado (ponerFiguras): se arma la vieja en su lugar, cuando ya
+   *  cargó la geometría LDraw. */
+  function respaldoV3(e) {
+    if (!e.sinRespaldo) return;
+    ldraw.then(() => {
+      if (figuras.get(e.id) !== e || e.v3 || !e.sinRespaldo) return;
+      let a; try { a = armar(e.fx); } catch (err) { console.error("escena: no se pudo armar el respaldo", e.id, err); return; }
+      a.obj.position.copy(e.obj.position); a.obj.rotation.copy(e.obj.rotation); a.obj.scale.copy(e.obj.scale); a.obj.visible = e.obj.visible;
+      scene.remove(e.obj); e.obj = a.obj; e.momentos = a.momentos; e.plano = a.plano; e.sinRespaldo = false;
+      if (!e.prio) { e.mom = esperaDe(e); e.t0 = reloj.getElapsedTime(); }
+      scene.add(e.obj); acomodar();
+    }).catch(() => {});
+  }
+  // Poderes que se quedan puestos (Elías, 28 nov: los 4 Fantásticos se transforman en su poder). Al ponerse toca el clip
+  // del poder (GLB «poderes» del personaje) y deja el efecto encendido (efectos.js, `fijo`) hasta que se quita.
+  const AURAS = {
+    llamas: { poder: "encender", ef: { tipo: "fuego", modo: "cuerpo", color: "#ff6a1a", color2: "#ffd23a", retraso: 0.5, fijo: true, mudo: true } },
+    invisible: { poder: "invisible", ef: { tipo: "invisible", color: "#9fd6ff", a: 0.22, retraso: 0.3, fijo: true } },
+    elastico: { poder: "forma", ef: { tipo: "estirar", modo: "alto", retraso: 0.2, fijo: true } },
+  };
+  function aplicarAura(e) {
+    const inst = e.v3, def = e.auraDef || null, a = e.aura;
+    if (!inst || (a && a.inst === inst && a.tipo === def) || (!a && !def)) return;
+    const recarga = !!a && a.tipo === def; // misma aura en una figura que se volvió a cargar: sin clip
+    if (a) { a.fx.fin(); e.aura = null; }
+    const fx = window.EfectosALV, d = def && AURAS[def];
+    if (!d || !fx) return;
+    e.aura = { tipo: def, inst, fx: fx.lanzar(scene, { obj: inst.obj, hueso: inst.hueso }, d.ef, { camara: camera, sonar: cual => enviar({ tipo: "sonido", id: e.id, cual }) }) };
+    const pl = inst.obj.userData.plano, pd = !recarga && pl && (pl.poderes || []).find(x => x.id === d.poder);
+    if (!pd || NAVE) return;
+    const t = reloj.getElapsedTime();
+    e.prio = 2; e.cual = "poder"; e.hasta = t + 1; e.accion = null;
+    inst.tocarExt(pd.glb, pd.clip, { hasta: pd.hasta, fijo: !!pd.fijo }).then(dur => { if (e.v3 === inst && dur) e.hasta = reloj.getElapsedTime() + Math.min(4, dur); });
   }
   /** La careta que manda ALV, revisada: nombres de malla, bisagra cerca del hueso y ángulo. null = cerrada. */
   function caretaValida(c) {
@@ -1648,6 +1700,9 @@
   function cuadro() {
     requestAnimationFrame(cuadro);
     if (!listo || document.hidden || AZ.pausa) return;
+    // Escena sin modo y sin figuras (el fotógrafo escondido de las fotos): no hay nada que dibujar en vivo; las fotos
+    // usan su propio dibujante.
+    if (!MODO && !figuras.size) return;
     // Azotea en pantalla táctil y en reposo: un cuadro sí y uno no (30 por segundo) para cuidar la batería.
     if (AZOTEA && TACTIL && AZ.quieto && (AZ.salto = !AZ.salto)) return;
     const t = reloj.getElapsedTime(), bruto = t - antes, dt = Math.min(0.1, bruto); antes = t;
@@ -1723,6 +1778,53 @@
   // «cuerpo» = la figura completa por su altura, «busto» = siguiendo la cabeza.
   // ?fotoms= acorta el plazo (pruebas de carga tardía); nunca más de 15 s.
   const FOTO_V3_MS = Math.min(15000, Math.max(1, Number(new URLSearchParams(location.search).get("fotoms")) || 15000));
+  // Busto de la figura nueva (Elías, 28 nov: Daisy y otros salían cortados o chuecos en los círculos). Antes se encuadraba la
+  // caja de TODA la figura: una capa, un vestido, alas o un arma levantada movían el centro y el alto, y la cabeza quedaba
+  // de lado o fuera del círculo. Ahora manda el hueso de la cabeza (huesos.cabeza de la ficha): el centro sigue a la cara y
+  // el alto se mide con el esqueleto (cabeza → cadera), que no cambia con la ropa. Lo de arriba (pelo, casco, corona) se
+  // toma de los vértices que mueve la cabeza, para que nada se corte. null si la figura no trae hueso de cabeza.
+  const vB = new THREE.Vector3(), vH = new THREE.Vector3(), vC = new THREE.Vector3();
+  const CADERA = /(hips|pelvis)$/i;
+  function encuadreBusto(inst, o, tv, th) {
+    const cab = inst.hueso("cabeza"); if (!cab) return null;
+    cab.getWorldPosition(vH);
+    // Tronco (cabeza → cadera): la medida que no cambia con la ropa. Cadera: la de la ficha, si no, el hueso que se llame así.
+    let cad = inst.hueso("cadera");
+    if (!cad) o.traverse(x => { if (!cad && x.isBone && CADERA.test(x.name)) cad = x; });
+    const tronco = Math.max(cad ? vH.y - cad.getWorldPosition(vC).y : 0, vH.y * 0.35, 1e-3);
+    // Huesos de la cabeza y sus hijos (pelo, mandíbula, accesorios de la cabeza).
+    const deCab = new Set(); cab.traverse(x => deCab.add(x));
+    // cc: lo que mueve la cabeza. techo: lo más alto de la figura en una columna sobre la cabeza (orejas, capucha o una
+    // cabeza que mueven otros huesos, como MODOK), sin contar lo que sale a los lados (capas, alas, zarcillos).
+    const cc = new THREE.Box3(), R2 = (tronco * 0.7) ** 2;
+    let techo = -Infinity;
+    o.traverse(m => {
+      if (!m.isMesh || !m.visible || m.userData.alvOclusor) return;
+      if (m.isSkinnedMesh) {
+        const pos = m.geometry.attributes.position, si = m.geometry.attributes.skinIndex, sw = m.geometry.attributes.skinWeight;
+        if (!pos || !si || !sw) return;
+        const hs = m.skeleton.bones.map(x => deCab.has(x));
+        for (let i = 0; i < pos.count; i++) {
+          let k = 0, w = sw.getX(i);
+          if (sw.getY(i) > w) { k = 1; w = sw.getY(i); } if (sw.getZ(i) > w) { k = 2; w = sw.getZ(i); } if (sw.getW(i) > w) k = 3;
+          vB.fromBufferAttribute(pos, i); m.boneTransform(i, vB); vB.applyMatrix4(m.matrixWorld);
+          if (hs[k === 0 ? si.getX(i) : k === 1 ? si.getY(i) : k === 2 ? si.getZ(i) : si.getW(i)]) cc.expandByPoint(vB);
+          if (vB.y > techo && (vB.x - vH.x) ** 2 + (vB.z - vH.z) ** 2 < R2) techo = vB.y;
+        }
+      } else { let p = m.parent; while (p && !deCab.has(p)) p = p.parent; if (p) cc.expandByObject(m); }
+    });
+    // Sin vértices de cabeza (MODOK: su cabeza la mueven otros huesos), el hueso no dice dónde está la cara: encuadre de antes.
+    if (cc.isEmpty()) return null;
+    // De lo más alto de la cabeza hasta la mitad del pecho, con un poco de aire arriba.
+    const arriba = Math.max(cc.max.y, techo, vH.y + tronco * 0.6), abajo = vH.y - tronco * BUSTO_PECHO;
+    // 10 % de aire: lo que está más cerca de la cámara (orejas, casco) se ve un poco más arriba por la perspectiva.
+    const altoZ = (arriba - abajo) * 1.1;
+    // Ancho: lo que mida la cabeza a cada lado del hueso, para que una cabeza ancha (casco, pelo) quepa completa.
+    const lado = Math.max(vH.x - cc.min.x, cc.max.x - vH.x) * 2 * 1.08;
+    const d = Math.max((altoZ / 2) / tv, (lado / 2) / th);
+    return { x: vH.x, y: abajo + altoZ / 2, z: vH.z, d };
+  }
+  const BUSTO_PECHO = 0.75;
   function fotoV3(p3, ancho, alto, zona) {
     ancho = Math.min(512, Math.max(64, ancho | 0 || 256)); alto = Math.min(640, Math.max(64, alto | 0 || 320));
     // Si vence el plazo y la figura llega después, se libera al llegar (Codex, paso3-r1).
@@ -1739,13 +1841,17 @@
         // Encuadre por la caja real de la figura posada: que quepa de alto y de ancho (un Big Fig es más ancho que alto).
         const caja = new THREE.Box3().setFromObject(o), h = caja.max.y - caja.min.y, w = caja.max.x - caja.min.x;
         const tv = Math.tan(cam.fov * Math.PI / 360), th = tv * cam.aspect;
-        // Busto: desde la punta de la cabeza hacia abajo (el 62 % de arriba en minifigura, como el «busto» de las viejas;
-        // 50 % en Big Fig, que tiene la cabeza más chica y los hombros más altos).
-        const fr = zona === "busto" ? (p3.familia === "bigfig" ? 0.5 : 0.62) : 1.16;
-        const altoZ = h * fr, cy = zona === "busto" ? caja.max.y - altoZ * 0.44 : caja.min.y + h * 0.48;
-        const anchoZ = zona === "busto" ? Math.min(w, altoZ) : w * 1.08;
-        const dd = Math.max((altoZ / 2) / tv, (anchoZ / 2) / th);
-        cam.position.set((caja.min.x + caja.max.x) / 2, cy + dd * 0.07, dd); cam.lookAt((caja.min.x + caja.max.x) / 2, cy, 0);
+        const b = zona === "busto" ? encuadreBusto(inst, o, tv, th) : null;
+        if (b) { cam.position.set(b.x, b.y + b.d * 0.07, b.z + b.d); cam.lookAt(b.x, b.y, b.z); }
+        else {
+          // Cuerpo (y busto sin hueso de cabeza): la caja de toda la figura. Busto: desde la punta de la cabeza hacia abajo
+          // (el 62 % de arriba en minifigura; 50 % en Big Fig, que tiene la cabeza más chica y los hombros más altos).
+          const fr = zona === "busto" ? (p3.familia === "bigfig" ? 0.5 : 0.62) : 1.16;
+          const altoZ = h * fr, cy = zona === "busto" ? caja.max.y - altoZ * 0.44 : caja.min.y + h * 0.48;
+          const anchoZ = zona === "busto" ? Math.min(w, altoZ) : w * 1.08;
+          const dd = Math.max((altoZ / 2) / tv, (anchoZ / 2) / th);
+          cam.position.set((caja.min.x + caja.max.x) / 2, cy + dd * 0.07, dd); cam.lookAt((caja.min.x + caja.max.x) / 2, cy, 0);
+        }
         medirContorno(r); r.render(s, cam);
         let url = r.domElement.toDataURL("image/webp", 0.85);
         if (!url.startsWith("data:image/webp")) url = r.domElement.toDataURL("image/png");
@@ -1840,20 +1946,51 @@
     else if (d.tipo === "gesto") figuras.forEach(e => gesto(e, d.cual, reloj.getElapsedTime()));
     else if (d.tipo === "probar" && Momentos.info(String(d.cual))) figuras.forEach(e => { cambio(e, reloj.getElapsedTime()); e.mom = String(d.cual); e.t0 = reloj.getElapsedTime(); e.velMom = 1; e.intMom = 1; e.durMom = 0; e.prio = 0; e.cual = null; });
   }
+  // Velocidad (28 nov): si las figuras llegan mientras la biblioteca vieja (LDraw) todavía carga, sus GLB del sistema
+  // nuevo se bajan y se leen desde ya, con la misma carga que usará crear(); al armar, el motor los toma de su caché.
+  // Geometría LDraw: promesa de carga y mensajes que la esperan (en orden: detrás de uno que espera, esperan todos).
+  let ldraw = new Promise(() => {}), ldListo = false, colaLD = null;
+  /** ¿Este mensaje arma alguna figura vieja (sin plano nuevo usable)? */
+  function pideLD(d) {
+    if (!d || typeof d !== "object") return false;
+    if (d.tipo === "figuras" && Array.isArray(d.lista)) return EDITOR || PRUEBA || d.lista.slice(0, 12).some(x => { const p = x && x.plano3 && typeof x.plano3 === "object" ? planoV3({ ...x.plano3 }) : null; return !p || (NAVE && !p.sentado); });
+    if (d.tipo === "foto") return !(d.plano3 && typeof d.plano3 === "object" && planoV3({ ...d.plano3 }));
+    return d.tipo === "miniatura" || d.tipo === "soltar" || d.tipo === "azar" || d.tipo === "probar" || d.tipo === "gesto";
+  }
+  function atenderLD(d) {
+    if (colaLD) { colaLD.push(d); return; }
+    if (ldListo || !pideLD(d)) { atender(d); return; }
+    colaLD = [d];
+    ldraw.then(() => { const c = colaLD; colaLD = null; c.forEach(atenderLD); }, () => { colaLD = null; });
+  }
+  function adelantarV3(d) {
+    if (!d || d.tipo !== "figuras" || !Array.isArray(d.lista)) return;
+    const planos = d.lista.slice(0, 12).map(x => x && x.plano3 && typeof x.plano3 === "object" && planoV3({ ...x.plano3 })).filter(p => p && !(NAVE && !p.sentado));
+    if (!planos.length) return;
+    motorV3().then(M => planos.forEach(p => {
+      M.bajar(p.glb, p.carga).catch(() => {});
+      (Array.isArray(p.piezas) ? p.piezas : []).forEach(pz => { if (pz && typeof pz.glb === "string" && URL_OK.test(pz.glb)) M.bajar(pz.glb, pz.carga || p.carga).catch(() => {}); });
+    })).catch(() => {});
+  }
   window.addEventListener("message", e => {
     if (e.origin !== location.origin || !e.data || e.data.origen !== "alv") return;
-    if (!listo) pendientes.push(e.data); else atender(e.data);
+    if (!listo) { pendientes.push(e.data); adelantarV3(e.data); } else atenderLD(e.data);
   });
   window.addEventListener("resize", () => listo && acomodar());
 
   (async function arrancar() {
-    try {
-      await cargarBiblioteca("biblioteca/");
+    try { await cargarBiblioteca("biblioteca/"); }
+    catch (e) { console.error("escena: no cargó la biblioteca", e); enviar({ tipo: "error" }); return; }
+    // Velocidad (28 nov): la geometría LDraw (1.5 MB) y los biseles se cargan aparte. La escena dice «listo» sin
+    // esperarlos; solo esperan (en orden) los mensajes que arman figuras viejas (atenderLD).
+    ldraw = (async () => {
       await new Promise((ok, mal) => { const s = document.createElement("script"); s.src = "biblioteca/geometria/ldraw_piezas.js"; s.onload = ok; s.onerror = () => mal(new Error("geometría")); document.head.appendChild(s); });
       if (window.LDRAW_COLORES) Object.assign(LDCOL, window.LDRAW_COLORES);
       integrarPiezas();
       if (CINE && Q.get("bisel") !== "no") await cargarBiseles();
-    } catch (e) { console.error("escena: no cargó la biblioteca", e); enviar({ tipo: "error" }); return; }
-    listo = true; aplicarCalidad(); acomodar(); pendientes.splice(0).forEach(atender); enviar({ tipo: "listo" }); cuadro();
+      ldListo = true;
+    })();
+    ldraw.catch(e => { console.error("escena: no cargó la geometría", e); enviar({ tipo: "error" }); });
+    listo = true; aplicarCalidad(); acomodar(); pendientes.splice(0).forEach(atenderLD); enviar({ tipo: "listo" }); cuadro();
   })();
 })();

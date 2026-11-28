@@ -57,6 +57,14 @@ const ETIQUETA: Record<Id, Id> = {
   "torso-base-09": "heroe",
   "piernas-civil-f08": "botas", "piernas-base-07": "botas", "piernas-alumno-a": "botas", "piernas-alumno-c": "botas",
   "piernas-base-02": "heroe", "piernas-base-10": "heroe",
+  // Piezas básicas LEGO armadas con LDraw (pedido de Elías, 2026-11-28: de 4 a 6 por sección, las lisas se tiñen).
+  "cara-lego-alegre": "normales", "cara-lego-triste": "normales", "cara-lego-cool": "normales", "cara-lego-enojada": "enojados",
+  "cara-lego-maquillaje": "mujer", "cara-lego-pestanas": "mujer",
+  "cabello-lego-corto": "corto", "cabello-lego-despeinado": "corto", "cabello-lego-afro": "corto",
+  "cabello-lego-bob": "largo", "cabello-lego-largo": "largo", "cabello-lego-cola": "largo",
+  "torso-lego-liso": "casual", "torso-lego-cuadros": "casual", "torso-lego-sudadera": "casual", "torso-lego-cuero": "casual",
+  "torso-lego-traje": "elegante",
+  "piernas-lego-lisas": "lisas", "piernas-lego-bolsas": "lisas",
 };
 /** Grupo de una pieza genérica (el primero de su parte si no está anotada, o «otros» si la parte no tiene grupos). */
 export function grupoGenerica(id: Id, parte: Parte): Id {

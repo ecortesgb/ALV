@@ -24,7 +24,7 @@ import { useSesion } from "../app/sesion";
 import { sonar } from "../app/sonido";
 import type { FiguraV2 } from "../content/personaje";
 import { entregarCopas, iniciarPartida } from "../roles/pantalla/motor";
-import { useSala } from "../roles/sala";
+import { marcarArranque, useSala } from "../roles/sala";
 import { usePuedeAbrir } from "../app/lobby";
 import { esLocal, modoLocal } from "../servicios/enlace";
 import { guardarPartidaPredeterminada, leerPartidaPredeterminada } from "../servicios/partidaPredeterminada";
@@ -318,6 +318,8 @@ export function ConfigurarPartida({ miembros, alIniciar, alCancelar, iniciando, 
     ejes,
   };
   const config: PartidaConfigurada = { juego, rondas, ejes, opciones };
+  // Las rondas que de verdad se juegan: en juegos por turnos en orden se redondean al número de jugadores.
+  const rondasReales = armarArranque(miembros, juego, rondas, 1, 1, opciones)?.rondas ?? rondas;
   const cuenta = useMemo(() => cuentaCartas(miembros, juego, rondas, opciones), [miembros, juego, rondas, JSON.stringify(opciones)]); // eslint-disable-line react-hooks/exhaustive-deps
   const mazosJuego = (j?.mazo ?? "").split("+").filter(Boolean);
   const nuevas = useMemo(() => cuentaNuevas(miembros, juego, rondas, opciones, salieronDe(mazosJuego)), [miembros, juego, rondas, JSON.stringify(opciones), deCero]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -528,7 +530,7 @@ export function ConfigurarPartida({ miembros, alIniciar, alCancelar, iniciando, 
           : <ArteCfg nombre={usa[0] === "voltaje" ? `voltimetro-${ejes.voltaje}` : `termometro-${ejes.temperatura}`} alterno={arteHub("xp")} />}
         alTocar={() => editar("intensidad")} />,
       <Casilla key="opc" titulo={esImpostor(j) ? "Opciones" : "Herramienta"} valor={esImpostor(j) ? `${Math.min(impostores, maxImp)} ${Math.min(impostores, maxImp) === 1 ? "impostor" : "impostores"}` : inst?.nombre ?? "—"}
-        detalle={esImpostor(j) ? `${nombreCategoria(tema)} · votos ${votosNave === "visibles" ? "a la vista" : "secretos"}${revelarNave ? "" : " · sin revelar"}${pistaNave ? " · con pista" : ""}${castigoNave ? " · con castigo" : ""}` : `${rondas} rondas${temporizador && conTemporizador ? ` · ⏱ ${temporizador} s` : ""}${votoSecreto && j?.motor === "senalar" ? " · votos secretos" : ""}${minoriaBebe && j?.motor === "votacion" ? " · la minoría bebe" : ""}${conComodines && !comodines ? " · sin comodines" : ""}${conMazo && soloNuevas ? " · cartas nuevas" : ""}`}
+        detalle={esImpostor(j) ? `${nombreCategoria(tema)} · votos ${votosNave === "visibles" ? "a la vista" : "secretos"}${revelarNave ? "" : " · sin revelar"}${pistaNave ? " · con pista" : ""}${castigoNave ? " · con castigo" : ""}` : `${rondasReales} rondas${temporizador && conTemporizador ? ` · ⏱ ${temporizador} s` : ""}${votoSecreto && j?.motor === "senalar" ? " · votos secretos" : ""}${minoriaBebe && j?.motor === "votacion" ? " · la minoría bebe" : ""}${conComodines && !comodines ? " · sin comodines" : ""}${conMazo && soloNuevas ? " · cartas nuevas" : ""}`}
         ico={<ArteCfg nombre={esImpostor(j) ? "sec-herramienta" : `herr-${inst?.id ?? "cartas"}`} alterno={arteHub("ajustes")} />} alTocar={() => editar(esImpostor(j) ? "tipo" : "opciones")} />,
       // Herramientas de El impostor (Elías, 25 nov): se ve aunque no se use el temporizador.
       ...(esImpostor(j) && conTemporizador ? [
@@ -677,7 +679,7 @@ export function PaginaConfigurar({ codigo }: { codigo: string }) {
     else void generosSala(salaId).then(setGeneros);
   }, [salaId, soyAnfitrion, cuantos]); // eslint-disable-line react-hooks/exhaustive-deps
   const enCurso = !!s.partida && !s.partida.terminada;
-  useEffect(() => { if (enCurso && !iniciando) ir("sala", codigo); }, [enCurso, iniciando, codigo]);
+  useEffect(() => { if (enCurso && !iniciando) { marcarArranque(codigo); ir("sala", codigo); } }, [enCurso, iniciando, codigo]);
   // Mientras abre, el mismo fondo de la azotea que la página (nunca la ciudad vieja del marco común).
   const fondoAz = <div className="cfg-fondo"><EscenarioFondo ambiente={az.ambientes[momento]} momento={momento} velo={az.velo} /></div>;
   if (s.error) return <Marco clase={`az pf cfg-pagina a-centro m-${momento}`} fondo={fondoAz}><Vacio titulo="No se pudo abrir" texto={s.error}><Boton color="amarillo" texto="Volver" icono="back" onClick={() => ir("jugar")} /></Vacio></Marco>;
@@ -700,6 +702,7 @@ export function PaginaConfigurar({ codigo }: { codigo: string }) {
     setIniciando(false);
     if (!ok) { aviso("No se pudo iniciar. Intenta otra vez."); return; }
     sonar("exito");
+    marcarArranque(codigo);
     ir("sala", codigo);
   };
   // Fin de la noche: se suman todos los juegos terminados y la ceremonia sale en la Pantalla y en cada celular.

@@ -1,0 +1,148 @@
+/* La carta del turno (CartaTurno.tsx) y los botones de acción del jugador. Celular (cr-celular) y TV (cr-tv).
+   Papel claro con letra oscura (máximo contraste en la alberca o con la luz apagada), banda con el color de su tipo,
+   el nivel en barritas y abajo si es de trago. Movimiento: solo transform y opacity. */
+
+/* ---------- Color por tipo ---------- */
+.D .cr-escena { --cr-a: #7d8bff; --cr-b: #3a46c9; --cr-banda-txt: #fff; --cr-papel: #fffaf0; --cr-tinta: #14183a; }
+.D .cr-t-verdad { --cr-a: #ff5fae; --cr-b: #d4187a; }
+.D .cr-t-reto { --cr-a: #ff9a2e; --cr-b: #dc4f0c; }
+.D .cr-t-castigo { --cr-a: #ff5a5f; --cr-b: #bf1a33; }
+.D .cr-t-confesion { --cr-a: #22c7b8; --cr-b: #0a7f78; }
+.D .cr-t-senalar { --cr-a: #a77bff; --cr-b: #6230e0; }
+.D .cr-t-votacion { --cr-a: #4f9bff; --cr-b: #2153d6; }
+.D .cr-t-pareja { --cr-a: #ff7a9c; --cr-b: #cf3560; }
+.D .cr-t-palabra { --cr-a: #4fb31f; --cr-b: #25700c; }
+.D .cr-t-competencia { --cr-a: #ffd04a; --cr-b: #f09a00; --cr-banda-txt: #2a1a00; }
+.D .cr-t-dados { --cr-a: #ff3d6e; --cr-b: #b3123f; }
+.D .cr-t-voz { --cr-a: #a77bff; --cr-b: #5d1fc0; }
+
+/* ---------- La carta ---------- */
+.D .cr-escena { position: relative; container-type: inline-size; width: 100%; min-width: 0; margin-bottom: 6px; isolation: isolate; }
+/* El mazo de abajo: dos cartas quietas que asoman (no se animan). */
+.D .cr-escena::before, .D .cr-escena::after { content: ""; position: absolute; z-index: -1; inset: 10px 8px -6px; border-radius: 22px; background: var(--cr-b); }
+.D .cr-escena::before { opacity: .5; transform: rotate(-2.4deg); }
+.D .cr-escena::after { opacity: .3; transform: rotate(2deg) translateY(5px); }
+.D .cr { position: relative; perspective: 1100px; }
+.D .cr-giro { position: relative; transform-style: preserve-3d; }
+.D .cr-cara { position: relative; display: flex; flex-direction: column; overflow: hidden; border-radius: 22px; background: var(--cr-papel); color: var(--cr-tinta);
+  box-shadow: 0 0 0 3px var(--cr-b), 0 18px 34px rgba(2, 4, 18, .5); -webkit-backface-visibility: hidden; backface-visibility: hidden; }
+.D .cr-dorso { position: absolute; inset: 0; display: grid; place-items: center; border-radius: 22px; transform: rotateY(180deg); -webkit-backface-visibility: hidden; backface-visibility: hidden;
+  background: repeating-linear-gradient(45deg, var(--cr-a) 0 14px, var(--cr-b) 14px 28px); box-shadow: 0 0 0 3px var(--cr-b), inset 0 0 0 8px rgba(255, 255, 255, .85); }
+.D .cr-dorso span { padding: .1em .5em; border-radius: 12px; font: 400 clamp(28px, 14cqi, 96px)/1 "Lilita One", system-ui, sans-serif; color: var(--cr-b); background: #fff; }
+
+.D .cr-banda { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 44px; padding: 8px 12px 8px 16px; color: var(--cr-banda-txt);
+  background: linear-gradient(135deg, var(--cr-a), var(--cr-b)); }
+.D .cr-sello { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 400 21px/1.05 "Lilita One", system-ui, sans-serif; text-transform: uppercase; letter-spacing: .04em;
+  text-shadow: 0 2px 0 rgba(0, 0, 0, .22); }
+.D .cr-nivel { flex: none; display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px 4px 8px; border-radius: 999px; background: rgba(8, 10, 34, .3); color: #fff;
+  font: 900 12px/1 "Nunito", system-ui, sans-serif; text-transform: uppercase; letter-spacing: .03em; }
+.D .cr-nivel::before { font-size: 13px; }
+.D .cr-nivel.temperatura::before { content: "🌡️"; }
+.D .cr-nivel.voltaje::before { content: "⚡"; }
+.D .cr-barras { display: inline-flex; align-items: flex-end; gap: 2px; height: 14px; }
+.D .cr-barras i { width: 5px; border-radius: 2px; background: rgba(255, 255, 255, .32); }
+.D .cr-barras i:nth-child(1) { height: 6px; } .D .cr-barras i:nth-child(2) { height: 10px; } .D .cr-barras i:nth-child(3) { height: 14px; }
+.D .cr-nivel.temperatura .cr-barras i.on { background: #fff; }
+.D .cr-nivel.temperatura .cr-barras i.on:nth-child(2) { background: #ffd36b; }
+.D .cr-nivel.temperatura .cr-barras i.on:nth-child(3) { background: #ff6a4d; }
+.D .cr-nivel.voltaje .cr-barras i.on { background: #fff38a; }
+.D .cr-nivel.voltaje .cr-barras i.on:nth-child(3) { background: #ffb000; }
+
+/* El texto: grande, se ajusta al ancho de la carta y a su largo (--cr-k lo pone CartaTurno). */
+.D .cr-texto { flex: 1; display: grid; place-items: center; min-height: 148px; margin: 0; padding: 16px 16px 18px; text-align: center; text-wrap: balance; overflow-wrap: anywhere;
+  font: 900 clamp(19px, calc(12.6cqi * var(--cr-k, 1)), 46px)/1.14 "Nunito", system-ui, sans-serif; letter-spacing: -.005em; }
+.D .cr-detalle { margin: -8px 0 0; padding: 0 18px 16px; text-align: center; text-wrap: pretty; font: 700 16px/1.35 "Nunito", system-ui, sans-serif; color: #3a4066; }
+.D .cr-pie { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; padding: 0 12px 14px; }
+.D .cr-chip { display: inline-flex; align-items: center; gap: 4px; padding: 5px 10px; border-radius: 999px; font: 800 12px/1.2 "Nunito", system-ui, sans-serif; }
+.D .cr-chip.trago { color: #08515a; background: #dcf7fa; box-shadow: inset 0 0 0 1px #8fdde6; }
+.D .cr-chip.contacto { color: #4a1f8f; background: #efe6ff; box-shadow: inset 0 0 0 1px #c9b2ff; }
+.D .cr-pie-txt { width: 100%; text-align: center; font: 700 13px/1.3 "Nunito", system-ui, sans-serif; color: #4a5070; }
+
+/* Palabras prohibidas (Descríbelo sin decirlo): tachadas debajo de la palabra. */
+.D .cr-tachadas { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; margin: -6px 0 0; padding: 0 12px 14px; list-style: none; }
+.D .cr-tachadas li { padding: 4px 10px; border-radius: 8px; font: 900 15px/1.1 "Nunito", system-ui, sans-serif; color: #b3123f; background: #ffe5ea; text-decoration: line-through 2px; }
+
+/* ¿Qué prefieres?: las dos opciones dentro de la carta. En el celular son los botones para elegir. */
+.D .cr-ab { display: grid; gap: 8px; padding: 14px 12px 14px; }
+.D .cr-o { justify-self: center; display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; font: 400 17px/1 "Lilita One", system-ui, sans-serif; color: var(--cr-tinta);
+  background: #fff; box-shadow: 0 0 0 2px var(--cr-tinta); text-transform: uppercase; }
+.D .cr-op { position: relative; display: flex; align-items: center; gap: 10px; min-height: 76px; padding: 12px 14px; border: 0; border-radius: 16px; text-align: left; color: #fff;
+  font: 900 clamp(17px, calc(6.6cqi * var(--cr-k, 1)), 26px)/1.15 "Nunito", system-ui, sans-serif; text-wrap: balance; overflow-wrap: anywhere;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .35), 0 4px 0 rgba(8, 10, 34, .35); }
+.D .cr-op.a { background: linear-gradient(160deg, #5aa2ff, #2453c4); }
+.D .cr-op.b { background: linear-gradient(160deg, #b08bff, #6a2fd6); }
+.D .cr-op > i { flex: none; display: grid; place-items: center; width: 32px; height: 32px; border-radius: 10px; font: 400 18px/1 "Lilita One", system-ui, sans-serif; font-style: normal;
+  background: rgba(255, 255, 255, .22); }
+.D button.cr-op { cursor: pointer; touch-action: manipulation; -webkit-user-select: none; user-select: none; transition: transform 120ms cubic-bezier(.23, 1, .32, 1), filter 120ms; }
+.D button.cr-op:active:not(:disabled) { transform: scale(.97); }
+.D button.cr-op:disabled { cursor: default; }
+.D button.cr-op:focus-visible { outline: 3px solid var(--cr-tinta); outline-offset: 2px; }
+.D .cr-op.elegida { box-shadow: inset 0 0 0 3px #fff, 0 0 0 3px var(--cr-tinta); }
+.D .cr-ab.apagada .cr-op:not(.elegida) { opacity: .45; }
+
+/* ---------- Reparto: baja del mazo y se voltea (≤ 600 ms, salida fuerte). Solo cuando la carta es nueva. ---------- */
+.D .cr-reparte .cr-giro { animation: crReparte 560ms cubic-bezier(.23, 1, .32, 1) both; }
+@keyframes crReparte {
+  0% { opacity: 0; transform: translate3d(0, -48px, 0) rotateX(10deg) rotateY(180deg) scale(.86); }
+  16% { opacity: 1; }
+  100% { opacity: 1; transform: translate3d(0, 0, 0) rotateX(0deg) rotateY(0deg) scale(1); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .D .cr-reparte .cr-giro { animation: crAparece 160ms ease-out both; }
+  .D .cr-dorso { display: none; }
+}
+@keyframes crAparece { from { opacity: 0; } }
+
+/* ---------- Botones de acción del jugador: grandes, abajo de la carta, al alcance del pulgar ---------- */
+.D .cr-zona { display: flex; flex-direction: column; gap: 16px; }
+.D .cr-acciones { display: grid; grid-template-columns: repeat(auto-fit, minmax(132px, 1fr)); gap: 10px; }
+/* Dos o más: fichas tipo Kahoot (icono arriba, texto al centro). Una sola: barra ancha con el icono al lado. */
+.D .cr-acciones:not(.uno) .cr-btn { flex-direction: column; gap: 6px; min-height: 92px; padding: 12px 10px; }
+.D .cr-acciones:not(.uno) .cr-btn-txt { align-items: center; text-align: center; }
+.D .cr-acciones.uno { grid-template-columns: 1fr; }
+.D .cr-btn { --c1: #ffe066; --c2: #ffb000; --c3: #b86d00; --txt: #2a1a00;
+  display: flex; align-items: center; justify-content: center; gap: 10px; min-height: 64px; padding: 10px 14px; border: 0; border-radius: 18px; cursor: pointer; color: var(--txt);
+  background: linear-gradient(180deg, var(--c1), var(--c2)); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .45), 0 5px 0 var(--c3), 0 10px 18px rgba(0, 0, 0, .3);
+  touch-action: manipulation; -webkit-user-select: none; user-select: none; transition: transform 120ms cubic-bezier(.23, 1, .32, 1), box-shadow 120ms cubic-bezier(.23, 1, .32, 1); }
+.D .cr-btn.si { --c1: #5fe08a; --c2: #18a24c; --c3: #0b6530; --txt: #fff; }
+.D .cr-btn.no { --c1: #ff7d84; --c2: #d6303f; --c3: #8a1321; --txt: #fff; }
+.D .cr-btn.a { --c1: #5aa2ff; --c2: #2453c4; --c3: #142f7a; --txt: #fff; }
+.D .cr-btn.b { --c1: #b08bff; --c2: #6a2fd6; --c3: #3d1585; --txt: #fff; }
+.D .cr-btn.trago { --c1: #52dceb; --c2: #158ba6; --c3: #0a5466; --txt: #fff; }
+.D .cr-btn-ico { flex: none; font-size: 26px; line-height: 1; filter: drop-shadow(0 2px 0 rgba(0, 0, 0, .25)); }
+.D .cr-btn-txt { display: flex; flex-direction: column; align-items: flex-start; gap: 3px; min-width: 0; text-align: left; }
+.D .cr-btn-txt b { font: 400 21px/1.05 "Lilita One", system-ui, sans-serif; text-transform: uppercase; letter-spacing: .02em; overflow-wrap: anywhere; }
+.D .cr-btn-txt small { font: 800 12px/1.2 "Nunito", system-ui, sans-serif; opacity: .92; }
+.D .cr-btn:active:not(:disabled) { transform: scale(.97) translateY(3px); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .45), 0 2px 0 var(--c3), 0 4px 10px rgba(0, 0, 0, .3); }
+.D .cr-btn:disabled { cursor: not-allowed; color: rgba(255, 255, 255, .6); background: #3b4163; box-shadow: inset 0 0 0 2px rgba(255, 255, 255, .14); }
+.D .cr-btn:disabled .cr-btn-ico { filter: grayscale(1); opacity: .6; }
+.D .cr-btn:focus-visible { outline: 3px solid #fff; outline-offset: 3px; }
+@media (hover: hover) and (pointer: fine) { .D .cr-btn:hover:not(:disabled) { filter: brightness(1.06); } }
+/* Chips de apoyo (quién adivinó, pasar, deshacer): más altos para el dedo. */
+.D .cr-zona button.d-chip { min-height: 48px; font-size: 15px; }
+.D .cr-estado { margin: 0; padding: 12px 16px; border-radius: 14px; text-align: center; font: 900 15px/1.2 "Nunito", system-ui, sans-serif; text-transform: uppercase; letter-spacing: .04em;
+  color: #8dffb8; background: rgba(10, 14, 40, .72); box-shadow: inset 0 0 0 1px rgba(141, 255, 184, .35); }
+
+/* ---------- TV: la carta enorme al centro, legible a 4 m ---------- */
+.D .cr-tv { width: min(100%, 46em); }
+/* La carta de la TV mide ~1100 px: con la perspectiva del celular el giro se deformaba de más. */
+.D .cr-tv .cr { perspective: 2800px; }
+.D .cr-tv .cr-cara { border-radius: .9em; box-shadow: 0 0 0 .14em var(--cr-b), 0 .7em 1.6em rgba(2, 4, 18, .55); }
+.D .cr-tv.cr-escena::before, .D .cr-tv.cr-escena::after, .D .cr-tv .cr-dorso { border-radius: .9em; }
+.D .cr-tv .cr-banda { min-height: 0; padding: .4em .7em .4em 1em; }
+.D .cr-tv .cr-sello { font-size: 1.45em; }
+.D .cr-tv .cr-nivel { gap: .3em; padding: .25em .7em .25em .5em; font-size: .78em; }
+.D .cr-tv .cr-nivel::before { font-size: 1.1em; }
+.D .cr-tv .cr-barras { gap: .14em; height: 1.1em; }
+.D .cr-tv .cr-barras i { width: .36em; border-radius: .12em; }
+.D .cr-tv .cr-barras i:nth-child(1) { height: .45em; } .D .cr-tv .cr-barras i:nth-child(2) { height: .75em; } .D .cr-tv .cr-barras i:nth-child(3) { height: 1.1em; }
+.D .cr-tv .cr-texto { min-height: 30vh; padding: .6em .9em .7em; font-size: clamp(34px, min(calc(9.4cqi * var(--cr-k, 1)), calc(12vh * var(--cr-k, 1))), 132px); line-height: 1.1; }
+.D .cr-tv .cr-detalle { margin-top: -.3em; padding: 0 1.2em .8em; font-size: 1.15em; }
+.D .cr-tv .cr-pie { gap: .4em; padding: 0 .8em .8em; }
+.D .cr-tv .cr-chip { padding: .3em .8em; font-size: .8em; }
+.D .cr-tv .cr-pie-txt { font-size: .85em; }
+.D .cr-tv .cr-tachadas li { font-size: 1em; }
+.D .cr-tv .cr-ab { grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: stretch; gap: .6em; padding: .8em; }
+.D .cr-tv .cr-o { align-self: center; width: 2em; height: 2em; font-size: 1.1em; box-shadow: 0 0 0 .1em var(--cr-tinta); }
+.D .cr-tv .cr-op { min-height: 26vh; justify-content: center; padding: .6em .8em; border-radius: .6em; text-align: center; font-size: clamp(28px, min(calc(4.6cqi * var(--cr-k, 1)), calc(7vh * var(--cr-k, 1))), 88px); }
+.D .cr-tv .cr-op > i { position: absolute; top: .4em; left: .4em; width: 1.4em; height: 1.4em; font-size: .55em; border-radius: .3em; }

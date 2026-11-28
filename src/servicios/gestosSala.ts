@@ -42,7 +42,7 @@ export function revisarVida(d: Record<string, unknown>, miembros: ReadonlySet<st
   return { jugador: j, n, a, r, vel, int, ...(dur ? { dur } : {}) };
 }
 
-export interface MensajeForma { j: string; k: number; n: number; e: boolean }
+export interface MensajeForma { j: string; k: number; n: number; e: boolean; d: string }
 /** Revisa un aviso de forma (transformaciones): de un miembro (no de este aparato), paso 0 a 9 y orden válido. El orden y los
  *  repetidos los descarta aplicarFormaRemota. */
 export function revisarForma(d: Record<string, unknown>, miembros: ReadonlySet<string>, yo: string): MensajeForma | null {
@@ -50,7 +50,7 @@ export function revisarForma(d: Record<string, unknown>, miembros: ReadonlySet<s
   if (typeof j !== "string" || j.length > 64 || !miembros.has(j) || j === yo) return null;
   if (typeof k !== "number" || !Number.isInteger(k) || k < 0 || k > 9) return null;
   if (typeof n !== "number" || !Number.isInteger(n) || n < 1 || n > 1e13) return null;
-  return { j, k, n, e: d.e === true };
+  return { j, k, n, e: d.e === true, d: typeof d.d === "string" && d.d.length <= 140 ? d.d : "" };
 }
 
 export interface MensajePoder { j: string; k: string; n: number }
@@ -81,7 +81,7 @@ export function useGestosSala(salaId: string | null | undefined, yo: string, mie
     const ultimo = new Map<string, { n: number; t: number }>();
     const canal = abrirDifusion(`gestos-${salaId}`, (evento, d) => {
       if (evento === "v") { const v = revisarVida(d, ids.current, yo); if (v) aplicarVidaRemota(v); return; }
-      if (evento === "f") { const f = revisarForma(d, ids.current, yo); if (f) aplicarFormaRemota(f.j, f.k, f.n, f.e); return; }
+      if (evento === "f") { const f = revisarForma(d, ids.current, yo); if (f) aplicarFormaRemota(f.j, f.k, f.n, f.e, f.d); return; }
       if (evento === "e") { const m = revisarEmote(d, ids.current, yo); if (m) aplicarEmoteRemoto(m.j, m.k, m.n); return; }
       if (evento === "p") { const p = revisarPoder(d, ids.current, yo); if (p) aplicarPoderRemoto(p.j, p.k, p.n); return; }
       if (evento !== "g") return;
@@ -92,8 +92,8 @@ export function useGestosSala(salaId: string | null | undefined, yo: string, mie
     // Vida automática que decidió ESTE aparato para su jugador (la TV no decide: yo vacío).
     const fueraVida = yo ? alVidaPropia(e => { if (e.jugador === yo && ids.current.has(yo)) canal.enviar("v", { j: e.jugador, n: e.n, a: e.a, r: e.r, vel: e.vel, int: e.int, ...(e.dur ? { dur: e.dur } : {}) }); }) : () => {};
     // Forma propia (transformaciones): al cambiarla, y otra vez cuando entra alguien a la sala (no la vio cambiar).
-    const mandarForma = () => { const f = estadoForma(yo); if (yo && f.n && ids.current.has(yo)) canal.enviar("f", { j: yo, k: f.paso, n: f.n, e: false }); };
-    const fueraForma = yo ? alFormaPropia(e => { if (e.jugador === yo && ids.current.has(yo)) canal.enviar("f", { j: yo, k: e.paso, n: e.n, e: e.conEspecial }); }) : () => {};
+    const mandarForma = () => { const f = estadoForma(yo); if (yo && f.n && ids.current.has(yo)) canal.enviar("f", { j: yo, k: f.paso, n: f.n, e: false, d: f.de }); };
+    const fueraForma = yo ? alFormaPropia(e => { if (e.jugador === yo && ids.current.has(yo)) canal.enviar("f", { j: yo, k: e.paso, n: e.n, e: e.conEspecial, d: e.de }); }) : () => {};
     const fueraPoder = yo ? alPoderPropio(e => { if (e.jugador === yo && ids.current.has(yo)) canal.enviar("p", { j: yo, k: e.poder, n: e.n }); }) : () => {};
     const fueraEmote = yo ? alEmotePropio(e => { if (e.jugador === yo && ids.current.has(yo)) canal.enviar("e", { j: yo, k: e.k, n: e.n }); }) : () => {};
     mandarForma();

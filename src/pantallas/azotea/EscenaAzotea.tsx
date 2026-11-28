@@ -67,7 +67,7 @@ export const EscenaAzotea = forwardRef<MandoAzotea, { id: string; figura: Figura
       // Transformaciones (formas.ts): la figura va en su forma de ahora.
       const fz = d.figura ? conForma({ id: d.id, figura: d.figura }, catV3.current) : null;
       const fg = (fz?.figura ?? null) as typeof d.figura;
-      enviar({ tipo: "figuras", lista: [fz && fg ? paraEscena({ id: d.id, figura: d.vida ? soloApariencia(fg) : fg, anim: d.vida ? { ...animacionDe(fg), ...animPerfil(fg, hay) } : animacionDe(fg), ...(fz.transforma ? { transforma: fz.transforma, conEspecial: fz.conEspecial, careta: fz.careta } : {}) }, catV3.current) : { id: d.id, semilla: semillaDe(d.id) }] });
+      enviar({ tipo: "figuras", lista: [fz && fg ? paraEscena({ id: d.id, figura: d.vida ? soloApariencia(fg) : fg, anim: d.vida ? { ...animacionDe(fg), ...animPerfil(fg, hay) } : animacionDe(fg), ...(fz.transforma ? { transforma: fz.transforma, conEspecial: fz.conEspecial, careta: fz.careta, aura: fz.aura } : {}) }, catV3.current) : { id: d.id, semilla: semillaDe(d.id) }] });
     };
     useEffect(() => {
       const f = (e: MessageEvent) => {
@@ -147,7 +147,10 @@ export const EscenaAzotea = forwardRef<MandoAzotea, { id: string; figura: Figura
 
     return (
       <div ref={caja} className={"az-figura" + (listo ? " listo" : "") + (anclaje ? " anclada" : "") + (className ? " " + className : "")} {...arrastre}>
-        {montar && <iframe key={clave} ref={ref} src={src} title="Tu figura en la azotea" tabIndex={-1} aria-hidden="true" />}
+        {montar && <iframe key={clave} ref={ref} src={src} title="Tu figura en la azotea" tabIndex={-1} aria-hidden="true"
+          // Velocidad (28 nov): la figura se manda en cuanto cargan los scripts; la escena la guarda y baja su GLB mientras
+          // termina la biblioteca vieja. Al «listo» se vuelve a mandar como siempre.
+          onLoad={() => { if (!listoRef.current) mandarTodo(); }} />}
       </div>
     );
   });

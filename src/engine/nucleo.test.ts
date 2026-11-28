@@ -78,7 +78,7 @@ describe("armarArranque da la misma configuración que antes daba iniciarPartida
     const def = JUEGOS.find(j => j.id === "mas-probable")!;
     expect(a).toEqual({
       semilla: 5, juego: "mas-probable", rondas: 20,
-      cfg: { jugadores: nucleo.conParejas(m), lugar: "cualquiera", intensidad: Math.max(def.intensidadMin, Math.min(def.intensidadMax, 3)), dificultad: 2, adulto: true, drunk: true, turno: "orden" },
+      cfg: { jugadores: nucleo.conParejas(m), lugar: "cualquiera", intensidad: Math.max(def.intensidadMin, Math.min(def.intensidadMax, 3)), dificultad: 2, adulto: true, drunk: true, turno: "orden", comodines: true },
     });
     expect(nucleo.armarArranque(m, "mas-probable", 1, 1, 5)!.rondas).toBe(3);
     expect(nucleo.armarArranque(m, "no-existe", 5, 1, 5)).toBeNull();
@@ -148,5 +148,17 @@ describe("el núcleo es puro", () => {
   });
   it("el JSON del contenido se importa con atributo (lo pide Deno)", () => {
     expect(readFileSync(join(aqui, "../content/index.ts"), "utf8")).toMatch(/from\s+"\.\/packs\/base\.json"\s+with\s+\{\s*type:\s*"json"\s*\}/);
+  });
+});
+
+describe("rondas parejas (28 nov)", () => {
+  it("redondea al múltiplo de jugadores más cercano, sin pasar de 20", async () => {
+    const { rondasParejas } = await import("./nucleo");
+    expect(rondasParejas(8, 3)).toBe(9);
+    expect(rondasParejas(8, 4)).toBe(8);
+    expect(rondasParejas(8, 5)).toBe(10);
+    expect(rondasParejas(3, 6)).toBe(6);
+    expect(rondasParejas(20, 7)).toBe(14);
+    expect(rondasParejas(8, 1)).toBe(8);
   });
 });

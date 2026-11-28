@@ -1,8 +1,9 @@
 // Qué puede ver cada interfaz. La Pantalla (TV) y el Anfitrión reciben la vista pública;
 // cada celular recibe además solo lo suyo. En producción el servidor arma estas vistas
 // y la base de datos (RLS) impide leer lo privado de otro; esto define exactamente qué sale.
-import { risaDe, conEliminacion, conPapeles, enNave, type EtapaImpostor, conVerdadReto, etapaImpostor, etapaVR, seleccionVR, etapaPareja, parejasCompletas, parejasPorDecidir, porGrupos, puntosPorEquipo, quienesContestan, comodinesUsables, type EstadoPartida } from "./partida";
+import { risaDe, conEliminacion, conPapeles, enNave, type EtapaImpostor, conVerdadReto, etapaImpostor, etapaVR, seleccionVR, etapaPareja, parejasCompletas, parejasPorDecidir, porGrupos, puntosPorEquipo, quienesContestan, comodinesUsables, objetivosComodin, type EstadoPartida } from "./partida";
 import type { EscenarioId, LugarId, Modalidad } from "./types";
+import { CON_OBJETIVO } from "../content/comodinesPartida";
 
 export interface VistaPublica {
   version: number;
@@ -29,6 +30,8 @@ export interface VistaPublica {
   /** Comodines de la colección (Maestro v1.72): si la partida los acepta y lo que dejaron en la ronda. */
   comodines?: boolean;
   efectos?: EstadoPartida["efectos"];
+  /** Comodines que duran (v1.74): mesero, trampas que esperan y candados. */
+  duraderos?: EstadoPartida["duraderos"];
   /** Dados HOT con Drunk: quien no quiere hacerlo toma algo en vez de perder el punto. */
   drunk?: boolean;
   jugadores: { id: string; nombre: string }[];
@@ -100,6 +103,7 @@ export function vistaPublica(e: EstadoPartida): VistaPublica {
     cartaUsada: e.cartaUsada,
     ...(e.cfg.comodines ? { comodines: true } : {}),
     ...(e.efectos ? { efectos: e.efectos } : {}),
+    ...(e.duraderos ? { duraderos: e.duraderos } : {}),
     ...(e.motor === "dados" && e.cfg.drunk ? { drunk: true } : {}),
     jugadores: e.cfg.jugadores.map(j => ({ id: j.id, nombre: j.nombre })),
     pausada: !!e.pausada,
@@ -154,8 +158,12 @@ export interface VistaJugador extends VistaPublica {
   miMano: string[];
   /** Comodines que este jugador puede usar ahora mismo (el celular los cruza con su colección). */
   misComodines: string[];
+  /** Comodines dirigidos que puede usar ahora: a quién puede ir cada uno. */
+  misObjetivos: Record<string, string[]>;
 }
 
 export function vistaJugador(e: EstadoPartida, jugadorId: string): VistaJugador {
-  return { ...vistaPublica(e), yo: jugadorId, mio: e.privado[jugadorId], miRespuesta: e.respuestas[jugadorId], miMano: [...(e.manos[jugadorId] ?? [])], misComodines: comodinesUsables(e, jugadorId) };
+  const misComodines = comodinesUsables(e, jugadorId);
+  const misObjetivos = Object.fromEntries(misComodines.filter(c => CON_OBJETIVO.includes(c)).map(c => [c, objetivosComodin(e, jugadorId, c)]));
+  return { ...vistaPublica(e), yo: jugadorId, mio: e.privado[jugadorId], miRespuesta: e.respuestas[jugadorId], miMano: [...(e.manos[jugadorId] ?? [])], misComodines, misObjetivos };
 }

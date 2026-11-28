@@ -76,8 +76,10 @@ function armarGruposBase(jugadores: Jugador[], op: OpcionesPartida): { jugadores
       const de = (g: string) => jugadores.filter(j => elegidas[j.id] === g);
       if (ids.some(g => de(g).length !== 2)) return null;
       const orden = ids.sort((x, y) => Number(x.slice(1)) - Number(y.slice(1)));
+      // La pareja del motor (¿Cuánto conoces?, Dados HOT, {pareja}) es la que eligió el anfitrión, no la del orden de llegada
+      // (auditoría 28 nov: antes se quedaba `parejaDe` por llegada y la pregunta y los puntos iban a parejas distintas).
       return {
-        jugadores: jugadores.map(j => ({ ...j, equipo: elegidas[j.id]! })),
+        jugadores: jugadores.map(j => ({ ...j, equipo: elegidas[j.id]!, parejaDe: de(elegidas[j.id]!).find(o => o.id !== j.id)!.id })),
         equipos: orden.map(g => ({ id: g, nombre: de(g).map(j => j.nombre).join(" y ") })),
       };
     }
@@ -151,7 +153,19 @@ export function armarArranque(miembros: { id: string; nombre: string }[], juego:
     // Se juega hasta atrapar a los impostores: una vuelta por jugador alcanza (cada vuelta sale uno, salvo empate).
     return { semilla, juego, rondas: Math.max(3, miembros.length), cfg };
   }
-  return { semilla, juego, rondas: Math.max(3, Math.min(20, rondas)), cfg };
+  const base = Math.max(3, Math.min(20, rondas));
+  // Turnos parejos (Elías, 28 nov): en los juegos donde el turno va en orden, las rondas se redondean a un múltiplo del
+  // número de jugadores para que a todos les toque lo mismo. Con ruleta o botella el turno es al azar y no se toca.
+  const enOrden = (def.motor === "conteo" || def.motor === "turnos-cartas") && cfg.turno !== "ruleta"
+    && (!cfg.verdadReto || cfg.verdadReto.herramienta === "orden");
+  return { semilla, juego, rondas: enOrden ? rondasParejas(base, grupos.jugadores.length) : base, cfg };
+}
+
+/** Múltiplo de `n` más cercano a `rondas` (al menos una vuelta), sin pasar de 20 rondas. */
+export function rondasParejas(rondas: number, n: number): number {
+  if (n < 2) return rondas;
+  const tope = Math.floor(20 / n) * n;
+  return Math.min(tope, Math.max(n, Math.round(rondas / n) * n));
 }
 
 /** Traduce una fila guardada a una acción del motor. Lo de control solo vale si lo mandó quien tiene el control. */
@@ -160,6 +174,8 @@ export function aAccion(f: FilaAccion, controlan: string[]): Accion | null {
   if (f.tipo === "contestar") return { id, tipo: "contestar", jugador: f.jugador, valor: d.valor };
   // Papeles en la mesa: «Ya lo vi» viaja como fila `carta` (tipo que la base ya acepta, sin migración).
   if (f.tipo === "carta" && d.que === "visto") return { id, tipo: "visto", jugador: f.jugador };
+  // Comodín dirigido (Maestro v1.74): a quién va, justo antes de pagarlo (fila `carta`, no cuesta nada).
+  if (f.tipo === "carta" && d.que === "apunta" && typeof d.a === "string") return { id, tipo: "apuntar", jugador: f.jugador, a: d.a };
   // Dos caminos: quien lo usó elige una de las dos cartas (fila `carta`, no cuesta nada).
   if (f.tipo === "carta" && d.que === "camino" && (d.i === 0 || d.i === 1)) return { id, tipo: "camino", jugador: f.jugador, i: d.i };
   if (f.tipo === "carta" && typeof d.carta === "string") return { id, tipo: "usar-carta", jugador: f.jugador, carta: d.carta };
@@ -198,7 +214,7 @@ export function paraPublicar(e: EstadoPartida, relojFin: number | null, esperaFi
     ...(turnoFin && e.cfg.temporizador ? { turnoReloj: { fin: turnoFin, total: turnoTotal ?? e.cfg.temporizador } } : {}),
   };
   const privados: Record<string, unknown> = {};
-  for (const j of e.cfg.jugadores) { const v = vistaJugador(e, j.id); privados[j.id] = { mio: v.mio ?? null, miRespuesta: v.miRespuesta ?? null, miMano: v.miMano, ...(v.misComodines.length ? { misComodines: v.misComodines } : {}) }; }
+  for (const j of e.cfg.jugadores) { const v = vistaJugador(e, j.id); privados[j.id] = { mio: v.mio ?? null, miRespuesta: v.miRespuesta ?? null, miMano: v.miMano, ...(v.misComodines.length ? { misComodines: v.misComodines } : {}), ...(Object.keys(v.misObjetivos).length ? { misObjetivos: v.misObjetivos } : {}) }; }
   return { publico, privados };
 }
 

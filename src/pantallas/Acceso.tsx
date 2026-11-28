@@ -6,6 +6,7 @@ import { hayNube } from "../servicios/cliente";
 import { codigoLegible, crearMiCuentaRapida, recuperarCuenta, type MiCuentaRapida } from "../servicios/aparato";
 import { entrarDemo, refrescarSesion, useSesion, type Fase } from "../app/sesion";
 import { ir } from "../app/rutas";
+import { recordarDestinoTrasCrear } from "./Personalizar";
 import { pantallaDeCarga } from "../app/musica";
 import { sonar } from "../app/sonido";
 import { Marco, urlArte } from "./comun";
@@ -93,7 +94,10 @@ function Tarjeta({ pestanas, activa, onCambio, children }: { pestanas: { id: str
   );
 }
 
-const ARTE_INICIO = { "--arte-g": urlArte("cartel-inicio-1920.webp"), "--arte-c": urlArte("cartel-inicio-1100.webp") } as CSSProperties;
+// Fondo de la pantalla de carga: la reunión en el patio (Elías, 28 nov). El cartel de antes sigue en la pantalla de acceso.
+const ARTE_INICIO = { "--arte-g": urlArte("fondo-carga-1920.webp"), "--arte-c": urlArte("fondo-carga-1100.webp"), "--arte-d": urlArte("fondo-carga-difuso.webp"),
+  // Versión vertical para celular (Elías, 28 nov).
+  "--arte-m": urlArte("fondo-carga-movil.webp"), "--arte-md": urlArte("fondo-carga-movil-difuso.webp") } as CSSProperties;
 /** Tiempo mínimo de la barra antes de «Presiona para iniciar» (la ruleta sigue girando mientras). */
 const CARGA_MS = 3000;
 
@@ -144,7 +148,7 @@ export function Inicio({ fase, alTerminar }: { fase: Fase; alTerminar: () => voi
 /** Cuenta nueva: a personalizar, salvo que ya tenga figura guardada en la nube. Si no se pudo leer, va al HUB. */
 async function irAPersonalizarSiNueva(): Promise<void> {
   const nube = await cargarCapsulasNube();
-  if (nube && !nube.slots.some(Boolean)) ir("personalizar");
+  if (nube && !nube.slots.some(Boolean)) { recordarDestinoTrasCrear(); ir("personalizar"); }
 }
 
 

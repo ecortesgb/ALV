@@ -1,24 +1,26 @@
 // ALV PARTY (Competitivo; Elías, 27 nov 2026): #/party/código. El configurador de los Mini-Juegos.
-// Pasos: juego (por categoría o directo en el selector giratorio) → escenario → opciones (dónde se ve y jugadores de
-// práctica) → resumen → ¡Comenzar!. Cada quien juega desde su aparato: la TV (o este aparato) muestra el juego y los
-// demás entran con el QR o el código. XP y monedas las da el servidor al terminar (049) cuando el anfitrión de la sala
-// tiene sesión; los logros salen de los resultados guardados.
+// Pasos (Elías, 27 nov noche): juego (por categoría o directo en el selector giratorio) → modo (solo si el juego lo pide)
+// → escenario, y empieza. Proyectar se elige en el lobby: si la sala tiene Pantalla, el juego se abre ahí y cada celular
+// queda como mando; si no, este aparato muestra el juego. Antes de empezar, todos ven el mini tutorial (CargaParty).
+// XP y monedas las da el servidor al terminar (049/054); los logros salen de los resultados guardados (055).
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { ir } from "../../app/rutas";
 import { useSesion } from "../../app/sesion";
 import { sonar } from "../../app/sonido";
 import {
-  AMBIENTES_PARTY, BOTS_PARTY, CATEGORIAS_PARTY, MAX_JUGADORES_PARTY, MINIJUEGOS, MODALIDADES_PARTY, PANTALLAS_PARTY, miniDe, motivoParty, salaParty, urlsParty,
-  type ConfigParty, type ModalidadParty, type IdAmbiente, type IdCategoria, type IdMini, type IdPantalla, type Minijuego,
+  AMBIENTES_PARTY, CATEGORIAS_PARTY, MAX_JUGADORES_PARTY, MINIJUEGOS, MODALIDADES_PARTY, miniDe, motivoParty, salaParty,
+  type AvisoParty, type ConfigParty, type ModalidadParty, type IdAmbiente, type IdCategoria, type IdMini, type Minijuego,
 } from "../../content/party";
 import { useSala } from "../../roles/sala";
-import { Qr } from "../lobby/Cast";
+import { usePantalla } from "../Sala";
+import { ArteCfg, srcArte } from "../TarjetasConfig";
 import { Marco, aviso } from "../comun";
 import { useRecursos } from "../Recursos";
 import { RecursosAzotea } from "../azotea/Cabecera";
 import { EscenarioFondo } from "../azotea/Escenario";
 import { useMomentoAzotea } from "../azotea/HubAzotea";
 import { escenarioActual } from "../azotea/paquetes";
+import { CargaParty, EscuchaParty, avisarParty } from "./CargaParty";
 import "../azotea/azotea.css";
 import "../perfil/perfil.css";
 import "../configurar.css";
@@ -26,10 +28,12 @@ import "../configurar-az.css";
 import "../vitrinas.css";
 import "./party.css";
 
-type Seccion = "juego" | "modo" | "escenario" | "opciones" | "resumen";
-/** Pasos: «Modo de juego» solo si el minijuego se puede jugar solos o por equipos. */
-const ordenDe = (m?: Minijuego): Seccion[] => ["juego", ...((m?.modalidades?.length ?? 0) > 1 ? ["modo" as const] : []), "escenario", "opciones", "resumen"];
-const TITULO: Record<Seccion, string> = { juego: "Elige el minijuego", modo: "Modo de juego", escenario: "¿Dónde juegan?", opciones: "Opciones", resumen: "¡Todo listo!" };
+type Seccion = "juego" | "modo" | "escenario";
+/** Pasos: «Modo de juego» solo si el minijuego se puede jugar solos o por equipos. Al elegir escenario, empieza. */
+const ordenDe = (m?: Minijuego): Seccion[] => ["juego", ...((m?.modalidades?.length ?? 0) > 1 ? ["modo" as const] : []), "escenario"];
+const TITULO: Record<Seccion, string> = { juego: "Elige el minijuego", modo: "Modo de juego", escenario: "¿Dónde juegan?" };
+/** Icono de cada paso: los mismos del configurador normal. */
+const ICONO: Record<Seccion, string> = { juego: "sec-juego", modo: "sec-equipos", escenario: "sec-escenario" };
 
 /** Lo último que se configuró en este aparato (para «Otra vez»). */
 const CLAVE = "alv-party-ultima";
@@ -38,9 +42,9 @@ function leerUltima(): Partial<ConfigParty> {
 }
 function guardarUltima(c: ConfigParty) { try { localStorage.setItem(CLAVE, JSON.stringify(c)); } catch { /* sin almacenamiento */ } }
 
-/** Portada de un minijuego: su emoji sobre el color del juego (hasta que haya ilustración). */
+/** Portada de un minijuego (arte de Elías). */
 function Portada({ m }: { m: Minijuego }) {
-  return <span className="pt-portada" style={{ "--pc": m.color } as CSSProperties} aria-hidden="true"><span>{m.emoji}</span></span>;
+  return <img className="vt-img pt-img" src={srcArte(m.portada)} alt="" draggable={false} loading="lazy" />;
 }
 
 /** Categorías, más «Todos» para ir directo al selector con todos. */
@@ -130,35 +134,31 @@ function Opcion({ nombre, texto, color, elegida, alTocar, children }: { nombre: 
 }
 
 /** El configurador. No habla con la base: devuelve la configuración con `alComenzar`. */
-export function ConfigurarParty({ alComenzar, alCancelar }: { alComenzar: (c: ConfigParty) => void; alCancelar: () => void }) {
+export function ConfigurarParty({ alComenzar, alCancelar, aviso: nota }: { alComenzar: (c: ConfigParty) => void; alCancelar: () => void; aviso?: string }) {
   const r = useRecursos();
   const ultima = useRef(leerUltima()).current;
   const [sec, setSec] = useState<Seccion>("juego");
-  const [desdeResumen, setDesdeResumen] = useState(false);
   const [filtro, setFiltro] = useState<IdCategoria | "todos" | null>(null);
   const [juego, setJuego] = useState<IdMini | undefined>(miniDe(ultima.juego ?? "")?.id);
   const [ambiente, setAmbiente] = useState<IdAmbiente>(AMBIENTES_PARTY.some(a => a.id === ultima.ambiente) ? ultima.ambiente! : "noche");
-  const [pantalla, setPantalla] = useState<IdPantalla>(PANTALLAS_PARTY.some(p => p.id === ultima.pantalla) ? ultima.pantalla! : "aqui");
-  const [bots, setBots] = useState<number>(BOTS_PARTY.includes(ultima.bots as 0) ? ultima.bots! : 0);
   const [modalidad, setModalidad] = useState<ModalidadParty>(ultima.modalidad === "equipos" ? "equipos" : "solos");
   const m = juego ? miniDe(juego) : undefined;
   const ORDEN = ordenDe(m);
   const k = Math.max(0, ORDEN.indexOf(sec));
   const conModo = ORDEN.includes("modo");
-  const config: Partial<ConfigParty> = { juego, ambiente, pantalla, bots, ...(conModo ? { modalidad } : {}) };
-  const motivo = motivoParty(config);
 
-  const ir2 = (s: Seccion) => { setSec(s); };
-  const siguiente = (orden = ORDEN) => {
-    if (desdeResumen && !(sec === "juego" && orden.includes("modo"))) { setDesdeResumen(false); ir2("resumen"); return; }
-    ir2(orden[Math.min(orden.length - 1, orden.indexOf(sec) + 1)]!);
+  const comenzar = (amb: IdAmbiente) => {
+    const c: ConfigParty = { juego: juego!, ambiente: amb, ...(conModo ? { modalidad } : {}) };
+    const motivo = motivoParty(c);
+    if (motivo) { aviso(motivo); return; }
+    guardarUltima(c);
+    alComenzar(c);
   };
+  const siguiente = (orden = ORDEN) => setSec(orden[Math.min(orden.length - 1, orden.indexOf(sec) + 1)]!);
   const atras = () => {
     if (sec === "juego" && filtro) { setFiltro(null); return; }
-    if (desdeResumen) { setDesdeResumen(false); ir2("resumen"); return; }
-    if (k <= 0) alCancelar(); else ir2(ORDEN[k - 1]!);
+    if (k <= 0) alCancelar(); else setSec(ORDEN[k - 1]!);
   };
-  const editar = (s: Seccion) => { if (s === "juego") setFiltro(m?.categoria ?? null); setDesdeResumen(true); ir2(s); };
   const elegirJuego = (id: IdMini) => { setJuego(id); sonar("clic"); setTimeout(() => siguiente(ordenDe(miniDe(id))), 220); };
 
   let contenido: ReactNode;
@@ -175,106 +175,38 @@ export function ConfigurarParty({ alComenzar, alCancelar }: { alComenzar: (c: Co
           alTocar={() => { setModalidad(x.id); sonar("clic"); setTimeout(() => siguiente(), 220); }} />)}
       </div>
     );
-  } else if (sec === "escenario") {
+  } else {
     contenido = (
       <div className="pt-ops" role="radiogroup" aria-label="Escenario">
         {AMBIENTES_PARTY.map(a => <Opcion key={a.id} nombre={a.nombre} texto={a.texto} color={a.color} elegida={ambiente === a.id}
-          alTocar={() => { setAmbiente(a.id); sonar("clic"); setTimeout(() => siguiente(), 220); }}><span className={"pt-cielo pt-cielo-" + a.id} aria-hidden="true" /></Opcion>)}
-      </div>
-    );
-  } else if (sec === "opciones") {
-    contenido = <>
-      <section className="pt-grupo">
-        <h3 className="cfg-sub dsp ol">Dónde se ve</h3>
-        <div className="pt-ops" role="radiogroup" aria-label="Dónde se ve">
-          {PANTALLAS_PARTY.map(p => <Opcion key={p.id} nombre={p.nombre} texto={p.texto} elegida={pantalla === p.id} alTocar={() => setPantalla(p.id)} />)}
-        </div>
-      </section>
-      <section className="pt-grupo">
-        <h3 className="cfg-sub dsp ol">Jugadores de práctica</h3>
-        <p className="pt-nota">Se mueven solos. Sirven para probar o para completar. No ganan nada.</p>
-        <div className="pt-bots" role="radiogroup" aria-label="Jugadores de práctica">
-          {BOTS_PARTY.map(b => <button key={b} type="button" className={"pt-bot" + (bots === b ? " on" : "")} aria-pressed={bots === b} onClick={() => setBots(b)}>{b === 0 ? "Ninguno" : b}</button>)}
-        </div>
-      </section>
-    </>;
-  } else {
-    const amb = AMBIENTES_PARTY.find(a => a.id === ambiente)!;
-    const pan = PANTALLAS_PARTY.find(p => p.id === pantalla)!;
-    contenido = (
-      <div className="pt-resumen">
-        <button type="button" className="cfg-casilla rz-juego" onClick={() => editar("juego")} aria-label={`Minijuego: ${m?.nombre ?? "sin elegir"}. Cambiar`}>
-          <span className="cfg-casilla-t dsp">Minijuego</span>
-          <span className="cfg-casilla-img">{m ? <Portada m={m} /> : null}</span>
-          <b className="dsp ol">{m?.nombre ?? "Elige uno"}</b>
-          {m && <small>{m.descripcion}</small>}
-          <span className="cfg-cambiar">Cambiar</span>
-        </button>
-        <button type="button" className="cfg-casilla" onClick={() => editar("escenario")} aria-label={`Escenario: ${amb.nombre}. Cambiar`}>
-          <span className="cfg-casilla-t dsp">Escenario</span>
-          <span className="cfg-casilla-img"><span className={"pt-cielo pt-cielo-" + amb.id} aria-hidden="true" /></span>
-          <b className="dsp ol">{amb.nombre}</b>
-          <span className="cfg-cambiar">Cambiar</span>
-        </button>
-        <button type="button" className="cfg-casilla" onClick={() => editar("opciones")} aria-label={`Opciones: ${pan.nombre}. Cambiar`}>
-          <span className="cfg-casilla-t dsp">Opciones</span>
-          <b className="dsp ol">{pan.nombre}</b>
-          <small>{conModo ? `${MODALIDADES_PARTY.find(x => x.id === modalidad)!.nombre} · ` : ""}{bots ? `${bots} de práctica` : "Sin jugadores de práctica"}</small>
-          <span className="cfg-cambiar">Cambiar</span>
-        </button>
-        <p className="pt-nota pt-premio">Gana XP, monedas y logros cada quien con su cuenta. El anfitrión de la sala necesita sesión iniciada.</p>
+          alTocar={() => { setAmbiente(a.id); sonar("clic"); setTimeout(() => comenzar(a.id), 220); }}>
+          <img className="pt-cielo" src={srcArte(a.arte)} alt="" draggable={false} loading="lazy" /></Opcion>)}
       </div>
     );
   }
 
-  const soloTocar = sec === "juego" || sec === "escenario" || sec === "modo";
   return (
     <div className="cfg pt">
       <header className="cfg-cab">
         <div className="cfg-cab-fila">
-          <button type="button" className="pf-atras cfg-volver" onClick={atras}><span aria-hidden="true">◀</span>{desdeResumen ? "Resumen" : "Atrás"}</button>
+          <button type="button" className="pf-atras cfg-volver" onClick={atras}><span aria-hidden="true">◀</span>Atrás</button>
           <span className="pt-marca dsp">ALV PARTY</span>
           <RecursosAzotea monedas={r.monedas} puntos={r.puntos} />
         </div>
-        <div className="cfg-cab-titulo" hidden={sec === "resumen"}>
-          <h2 className="pf-tit cfg-titulo" key={sec + (filtro ?? "")}><span><span className="cfg-tit-txt">{sec === "juego" && filtro && filtro !== "todos" ? CATEGORIAS_PARTY.find(c => c.id === filtro)!.nombre : TITULO[sec]}</span></span></h2>
-          <ol className="cfg-avance" aria-label={`Paso ${k + 1} de ${ORDEN.length}`}>{ORDEN.map((s, x) => <li key={s} className={x === k ? "on" : x < k ? "hecho" : ""} />)}</ol>
+        <div className="cfg-cab-titulo">
+          <h2 className="pf-tit cfg-titulo" key={sec + (filtro ?? "")}><span><ArteCfg nombre={ICONO[sec]} className="cfg-tit-ico" /><span className="cfg-tit-txt">{sec === "juego" && filtro && filtro !== "todos" ? CATEGORIAS_PARTY.find(c => c.id === filtro)!.nombre : TITULO[sec]}</span></span></h2>
+          <ol className="cfg-avance" aria-label={`Paso ${k + 1} de ${ORDEN.length}`}>{ORDEN.map((s2, x) => <li key={s2} className={x === k ? "on" : x < k ? "hecho" : ""} />)}</ol>
         </div>
       </header>
       <div className="cfg-cuerpo" key={sec}>{contenido}</div>
       <footer className="cfg-pie">
-        {sec === "resumen"
-          ? <button type="button" className="cfg-sig principal" disabled={!!motivo} onClick={() => { if (!motivo) { guardarUltima(config as ConfigParty); alComenzar(config as ConfigParty); } }}>
-              <span className="cfg-sig-txt"><b>¡Comenzar!</b><small>{motivo ?? m?.nombre}</small></span><span className="cfg-sig-flecha" aria-hidden="true">▶</span>
-            </button>
-          : soloTocar ? null
-          : <button type="button" className={"cfg-sig" + (desdeResumen ? " listo" : "")} onClick={() => siguiente()}>
-              <span className="cfg-sig-txt"><b>{desdeResumen ? "Listo" : "Siguiente"}</b></span><span className="cfg-sig-flecha" aria-hidden="true">▶</span>
-            </button>}
+        {sec === "escenario" && <p className="cfg-pie-info" aria-live="polite">{m?.nombre}{conModo ? ` · ${MODALIDADES_PARTY.find(x => x.id === modalidad)!.nombre}` : ""}{/[!?.]$/.test(m?.nombre ?? "") && !conModo ? "" : "."} {nota ?? "Toca el escenario y empieza."}</p>}
       </footer>
     </div>
   );
 }
 
-/** «Proyectar»: QR y enlace del juego para abrir en la TV; este aparato sigue como mando. */
-function Proyectar({ urls, sala, alMando, alVolver }: { urls: { tv: string; mando: string }; sala: string; alMando: () => void; alVolver: () => void }) {
-  const copiar = async () => { try { await navigator.clipboard.writeText(urls.tv); aviso("Enlace copiado."); } catch { aviso("No se pudo copiar. Escanea el QR."); } };
-  return (
-    <div className="pt-proy">
-      <h2 className="pf-tit"><span>Abre el juego en la otra pantalla</span></h2>
-      <p className="pt-nota">Escanea el QR o abre el enlace en la TV o laptop, con tu sesión de ALV iniciada. Luego toca «Ir a mi mando».</p>
-      <Qr texto={urls.tv} />
-      <p className="pt-codigo">Sala <b className="dsp">{sala}</b></p>
-      <div className="pt-acciones">
-        <button type="button" className="pt-op" onClick={() => void copiar()}><b className="dsp">Copiar enlace</b></button>
-        <button type="button" className="cfg-sig principal" onClick={alMando}><span className="cfg-sig-txt"><b>Ir a mi mando</b></span><span className="cfg-sig-flecha" aria-hidden="true">▶</span></button>
-      </div>
-      <button type="button" className="pf-atras" onClick={alVolver}><span aria-hidden="true">◀</span>Cambiar opciones</button>
-    </div>
-  );
-}
-
-/** Los que no son anfitrión: entran al minijuego con el código que sale en la pantalla. */
+/** Los que no son anfitrión: el anfitrión elige; cuando empiece, el tutorial sale solo. Por si acaso, entrar con código. */
 function Unirse({ nombre }: { nombre: string }) {
   const [codigo, setCodigo] = useState("");
   const limpio = codigo.toUpperCase().replace(/[^A-Z]/g, "").slice(0, 4);
@@ -287,7 +219,7 @@ function Unirse({ nombre }: { nombre: string }) {
   return (
     <div className="pt-proy">
       <h2 className="pf-tit"><span>El anfitrión está eligiendo el minijuego</span></h2>
-      <p className="pt-nota">Cuando aparezca el juego en la pantalla, escanea su QR o escribe aquí el código de 4 letras.</p>
+      <p className="pt-nota">Cuando empiece, aquí sale cómo se juega y tu celular se vuelve tu mando. Si no pasa, escribe el código de 4 letras que sale en la pantalla.</p>
       <form className="pt-unirse" onSubmit={e => { e.preventDefault(); entrar(); }}>
         <input className="pt-input dsp" value={limpio} onChange={e => setCodigo(e.target.value)} placeholder="ABCD" maxLength={4} autoCapitalize="characters" autoComplete="off" aria-label="Código del minijuego" />
         <button type="submit" className="cfg-sig principal"><span className="cfg-sig-txt"><b>Entrar</b></span><span className="cfg-sig-flecha" aria-hidden="true">▶</span></button>
@@ -296,28 +228,34 @@ function Unirse({ nombre }: { nombre: string }) {
   );
 }
 
-/** #/party/código: el anfitrión configura; los demás esperan con el campo para el código. */
+/** #/party/código: el anfitrión configura; los demás esperan y oyen el aviso de empezar. */
 export function PaginaParty({ codigo }: { codigo: string }) {
   const ses = useSesion();
   const s = useSala(codigo, ses.uid);
   const momento = useMomentoAzotea();
   const az = escenarioActual();
-  const [proy, setProy] = useState<{ urls: { tv: string; mando: string }; sala: string } | null>(null);
   const soyAnfitrion = !!s.sala && s.sala.anfitrionId === ses.uid;
+  // ¿Se proyecta? Lo decide el lobby: con Pantalla conectada, el juego va ahí y este aparato es mando.
+  const pantalla = usePantalla(s.sala, false, !!s.sala);
+  const conPantalla = pantalla === "presente";
+  const [carga, setCarga] = useState<AvisoParty | null>(null);
   const fondo = <div className="cfg-fondo"><EscenarioFondo ambiente={az.ambientes[momento]} momento={momento} velo={az.velo} /></div>;
-  const base = new URL(import.meta.env.BASE_URL, location.href).href;
   const comenzar = (c: ConfigParty) => {
-    const sala = salaParty();
-    const urls = urlsParty(c, sala, base, ses.nombre);
+    // Mandos que se esperan: cada miembro del lobby (sin Pantalla, este aparato muestra el juego y también es mando).
+    const esperados = Math.min(MAX_JUGADORES_PARTY, Math.max(1, s.miembros.length || 1));
+    const a: AvisoParty = { ...c, sala: salaParty(), jugadores: esperados };
     sonar("exito");
-    if (c.pantalla === "aqui") { location.assign(urls.tv); return; }
-    setProy({ urls, sala });
+    if (s.sala) avisarParty(s.sala.id, a);
+    setCarga(a);
   };
   let cuerpo: ReactNode;
   if (s.error) cuerpo = <div className="pt-proy"><h2 className="pf-tit"><span>No se pudo abrir</span></h2><p className="pt-nota">{s.error}</p><button type="button" className="pf-atras" onClick={() => ir("jugar")}><span aria-hidden="true">◀</span>Volver</button></div>;
   else if (!s.sala) cuerpo = <p className="a-suave a-pulso cfg-abriendo" role="status">Preparando ALV PARTY…</p>;
-  else if (!soyAnfitrion) cuerpo = <Unirse nombre={ses.nombre} />;
-  else if (proy) cuerpo = <Proyectar urls={proy.urls} sala={proy.sala} alMando={() => location.assign(proy.urls.mando)} alVolver={() => setProy(null)} />;
-  else cuerpo = <ConfigurarParty alComenzar={comenzar} alCancelar={() => ir("sala", codigo)} />;
+  else if (!soyAnfitrion) cuerpo = <><Unirse nombre={ses.nombre} /><EscuchaParty salaId={s.sala.id} rol="mando" figura={s.miembros.find(m => m.id === ses.uid)?.figura} /></>;
+  else cuerpo = <>
+    <ConfigurarParty alComenzar={comenzar} alCancelar={() => ir("sala", codigo)}
+      aviso={conPantalla ? "Se juega en la pantalla del lobby; tu celular será tu mando." : "Se juega en este aparato; los demás entran con su celular."} />
+    {carga && <CargaParty aviso={carga} rol={conPantalla ? "mando" : "tv"} nombre={ses.nombre} figura={s.miembros.find(m => m.id === ses.uid)?.figura} alCancelar={() => setCarga(null)} />}
+  </>;
   return <Marco clase={`az pf cfg-pagina m-${momento}`} fondo={fondo}>{cuerpo}</Marco>;
 }

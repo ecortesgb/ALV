@@ -4,6 +4,7 @@
 // dibujo. Cada efecto corre con su propio reloj (requestAnimationFrame) y se limpia solo al terminar.
 //
 //   EfectosALV.lanzar(scene, fig, efecto, op) → { fin() }   op: { escala?, sonar?(tipo), camara? (tope de vuelo) }
+//   efecto.fijo: dura hasta fin() (poder puesto de una forma: Johnny en llamas, Sue invisible, Reed estirado).
 //     scene  : THREE.Scene donde se dibuja.
 //     fig    : { obj: Object3D del personaje (mira a +Z), hueso(logico) → Object3D|null }. Los efectos que tocan la figura
 //              (invisible, encoger, volar, estirar) dejan obj como estaba al terminar.
@@ -15,7 +16,7 @@
   if (!T) return;
   const V = () => new T.Vector3();
   const TIPOS = ["rayo", "electrico", "fuego", "telarana", "escudo", "invisible", "encoger", "golpe", "onda", "campo", "hechizo",
-    "volar", "estirar", "hielo", "hormigas", "velocidad", "disparo"];
+    "volar", "estirar", "hielo", "hormigas", "velocidad", "disparo", "puf"];
   const color = (c, d) => new T.Color(typeof c === "string" && /^#[0-9a-f]{6}$/i.test(c) ? c : d);
   const num = (x, a, b, d) => (typeof x === "number" && isFinite(x) ? Math.max(a, Math.min(b, x)) : d);
 
@@ -114,6 +115,7 @@
     fuego: [0xffe27a, 0xffa424, 0xff6a1a, 0xd8320c, 0x9a2208, 0x3a2a24].map(x => new T.Color(x)),
     humo: [0x9a948c, 0x6d6862, 0x4a4744].map(x => new T.Color(x)),
     polvo: [0xd8c7a8, 0xb9a58a, 0x8c7c68].map(x => new T.Color(x)),
+    nube: [0xffffff, 0xeef0f4, 0xc9ccd4, 0x9a9ea8].map(x => new T.Color(x)),
   };
   // Colores de ladrillo LEGO para los escombros.
   const LEGO = [0xc91a09, 0xf2cd37, 0x0055bf, 0x9ba19d, 0x6c6e68, 0xffffff, 0x237841, 0xa0a5a9].map(x => new T.Color(x));
@@ -332,9 +334,25 @@
       const col2 = c.col2 || new T.Color(0xffd23a), propio = !!c.ef.color && c.ef.color.toLowerCase() !== "#ff6a1a";
       const llamita = (p, v, tam, vida, extra) => c.P.echar(p, v, propio ? c.col : null, tam, vida, Object.assign({ tex: "llama", rampa: propio ? null : "fuego", normal: true, alfa: 0.95, crece: 0.45, gira: azar(3) }, extra));
       let echar = 0, humea = 0;
+      // Encendido fijo (forma de Johnny, 28 nov): además de las llamas, el cuerpo brilla naranja y parpadea como brasa.
+      // Materiales propios mientras dura (los del GLB se comparten entre clones), como en «invisible».
+      const brasa = [], BRASA = new T.Color(0xff6a10);
+      if (c.ef.modo === "cuerpo" && c.ef.fijo) c.fig.obj.traverse(m => {
+        if (!m.isMesh || !m.material) return;
+        const orig = m.material, nuevo = Array.isArray(orig) ? orig.map(x => x.clone()) : orig.clone();
+        (Array.isArray(nuevo) ? nuevo : [nuevo]).forEach(x => { if (x.emissive) x.emissive.set(0xff5a00); if (x.color) x.userData.c0 = x.color.clone(); });
+        m.material = nuevo; brasa.push([m, orig, nuevo]);
+      });
       return {
         paso(t, dt) {
           const activo = t < c.d;
+          if (brasa.length) {
+            const k = Math.min(1, Math.max(0, t / 0.6)), i = k * (0.55 + 0.12 * Math.sin(t * 9) + 0.06 * Math.sin(t * 23));
+            brasa.forEach(([, , n]) => (Array.isArray(n) ? n : [n]).forEach(x => {
+              if (x.emissive) x.emissiveIntensity = i * 0.6;
+              if (x.userData.c0) x.color.copy(x.userData.c0).lerp(BRASA, 0.85 * k);
+            }));
+          }
           if (c.ef.modo === "cuerpo") {
             if (activo && t >= 0 && (echar -= dt) <= 0) {
               echar = 0.014;
@@ -359,7 +377,7 @@
           }
           return activo || bola.viva || c.P.vivas() > 0;
         },
-        quitar() {},
+        quitar() { brasa.forEach(([m, orig, n]) => { m.material = orig; (Array.isArray(n) ? n : [n]).forEach(x => x.dispose()); }); },
       };
     },
     telarana(c) {
@@ -417,9 +435,9 @@
       const o = V();
       return {
         paso(t, dt) {
-          const k = sobre(t, c.d, 0.5, 0.5), op = 1 - 0.9 * k;
+          const k = sobre(t, c.d, 0.5, 0.5), op = 1 - (1 - num(c.ef.a, 0, 1, 0.1)) * k;
           cambios.forEach(([, , n]) => (Array.isArray(n) ? n : [n]).forEach(x => { x.opacity = x.userData.op0 * op; }));
-          if (k > 0 && k < 1 && Math.random() < 0.3) { origen(c.fig, "torso", o); o.x += (Math.random() - 0.5) * 0.5 * c.u; o.y += (Math.random() - 0.5) * c.u; c.P.echar(o, V().set(0, 0.4 * c.u, 0), c.col, 0.18 * c.u, 0.6); }
+          if (k > 0 && k < 1 && Math.random() < (c.ef.fijo ? 0.06 : 0.3)) { origen(c.fig, "torso", o); o.x += (Math.random() - 0.5) * 0.5 * c.u; o.y += (Math.random() - 0.5) * c.u; c.P.echar(o, V().set(0, 0.4 * c.u, 0), c.col, 0.18 * c.u, 0.6); }
           return t < c.d;
         },
         quitar() { cambios.forEach(([m, orig, n]) => { m.material = orig; (Array.isArray(n) ? n : [n]).forEach(x => x.dispose()); }); },
@@ -535,7 +553,13 @@
       const s0 = c.fig.obj.scale.clone();
       return {
         paso(t, dt) {
-          const k = sobre(t, c.d, 0.3, 0.4), w = Math.sin(t * 7) * 0.12 * k;
+          const k = sobre(t, c.d, 0.3, 0.4);
+          if (c.ef.modo === "alto") { // forma de Reed: alto y delgado, ondulando despacio como liga
+            const w = Math.sin(t * 2.4) * 0.035 * k;
+            c.fig.obj.scale.set(s0.x * (1 - 0.14 * k - w * 0.5), s0.y * (1 + 0.2 * k + w), s0.z * (1 - 0.1 * k));
+            return t < c.d;
+          }
+          const w = Math.sin(t * 7) * 0.12 * k;
           c.fig.obj.scale.set(s0.x * (1 + 0.45 * k + w), s0.y * (1 - 0.18 * k - w * 0.5), s0.z * (1 + 0.2 * k));
           return t < c.d;
         },
@@ -647,6 +671,31 @@
         },
       };
     },
+    puf(c) {
+      // Nube de transformación (Elías, 28 nov: «debemos poner humo o algo»): la figura queda tapada por una nube espesa
+      // con chispas y ladrillos mientras la escena la cambia por la nueva. Sale de la figura entera, no de un hueso.
+      const o = V(), caja = new T.Box3();
+      let salio = false;
+      return {
+        paso(t, dt) {
+          if (t < 0) return true;
+          if (!salio) {
+            salio = true; caja.setFromObject(c.fig.obj); caja.getCenter(o);
+            const alto = Math.max(c.u, caja.max.y - caja.min.y), ancho = Math.max(0.5 * c.u, caja.max.x - caja.min.x);
+            destello(c, o, c.col, 1.2 * alto / c.u, 0.25);
+            for (let i = 0; i < 22; i++) {
+              const p = V().set(o.x + azar(ancho * 0.45), caja.min.y + Math.random() * alto, o.z + azar(ancho * 0.3));
+              c.P.echar(p, V().set(azar(0.6), 0.15 + Math.random() * 0.45, azar(0.6)).multiplyScalar(c.u), null, (0.45 + Math.random() * 0.35) * alto, 0.9 + Math.random() * 0.5,
+                { tex: "humo", rampa: "nube", normal: true, alfa: 0.92, crece: 1.7, freno: 2.2, entra: 0.06, gira: azar(1) });
+            }
+            chispas(c, o, null, 14, c.col, 2.6);
+            ladrillos(c, o, 10, 1.6);
+          }
+          return c.P.vivas() > 0;
+        },
+        quitar() {},
+      };
+    },
   };
 
   // ---------- Reloj compartido ----------
@@ -666,7 +715,7 @@
     const c = {
       scene, fig, ef: efecto, u: num(o.escala, 0.01, 1000, 0) || altoDe(fig),
       col: color(efecto.color, "#7fd8ff"), col2: efecto.color2 ? color(efecto.color2, "#ffffff") : null,
-      d: num(efecto.dura, 0.2, 12, 1.2), P: particulas(scene), cam: o.camara && o.camara.isCamera ? o.camara : null,
+      d: efecto.fijo === true ? 1e9 : num(efecto.dura, 0.2, 12, 1.2), P: particulas(scene), cam: o.camara && o.camara.isCamera ? o.camara : null,
     };
     let e;
     try { e = EFECTOS[efecto.tipo](c); } catch (_) { c.P.limpiar(); return nada; }

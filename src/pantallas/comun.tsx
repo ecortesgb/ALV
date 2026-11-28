@@ -60,15 +60,24 @@ export function aviso(texto: string) {
   avisoActual = { texto, n: mio }; avisar();
   setTimeout(() => { if (avisoActual?.n === mio) { avisoActual = null; avisar(); } }, 3200);
 }
-export interface Pregunta { titulo: string; texto?: string; si: string; no?: string; peligro?: boolean;
+export interface Pregunta { titulo: string; texto?: string; si: string; /** null: sin botón para cancelar (solo avisa). */ no?: string | null; peligro?: boolean;
   /** Lobby nuevo: caja de bloques del color de este jugador (Elías, 25 nov). */
   lobby?: ColorJugador | null }
 let pregunta: (Pregunta & { responder: (v: boolean) => void }) | null = null;
-export const confirmar = (p: Pregunta) => new Promise<boolean>(r => { pregunta = { ...p, responder: v => { pregunta = null; avisar(); r(v); } }; avisar(); });
+// Una pregunta nueva contesta «no» a la que estaba abierta: antes la tapaba y su promesa nunca terminaba (el botón que la
+// abrió se quedaba en «Un momento…» para siempre). Auditoría 28 nov.
+export const confirmar = (p: Pregunta) => new Promise<boolean>(r => { pregunta?.responder(false); pregunta = { ...p, responder: v => { pregunta = null; avisar(); r(v); } }; avisar(); });
 
 export function Avisos() {
   const a = useSyncExternalStore(f => { oyentes.add(f); return () => oyentes.delete(f); }, () => avisoActual);
   const p = useSyncExternalStore(f => { oyentes.add(f); return () => oyentes.delete(f); }, () => pregunta);
+  // Al cambiar de pantalla (botón Atrás del celular, un enlace…) la pregunta abierta se cancela: si no, seguía encima de la
+  // pantalla nueva y «Comprar» o «Salir» hacía lo de la anterior (auditoría 28 nov).
+  useEffect(() => {
+    const f = () => pregunta?.responder(false);
+    addEventListener("hashchange", f);
+    return () => removeEventListener("hashchange", f);
+  }, []);
   useEffect(() => {
     if (!p) return;
     const f = (e: KeyboardEvent) => { if (e.key === "Escape") p.responder(false); };
@@ -84,7 +93,7 @@ export function Avisos() {
             <span className="dsp ol a-t2">{p.titulo}</span>
             {p.texto && <p className="a-suave">{p.texto}</p>}
             <div className="a-fila">
-              <button type="button" className="a-plano" onClick={() => p.responder(false)}>{p.no ?? "Cancelar"}</button>
+              {p.no !== null && <button type="button" className="a-plano" onClick={() => p.responder(false)}>{p.no ?? "Cancelar"}</button>}
               <button type="button" className={"d-btn " + (p.peligro ? "k-red" : "k-yel")} autoFocus onClick={() => p.responder(true)}><span className="dsp">{p.si}</span></button>
             </div>
           </div>
@@ -95,7 +104,6 @@ export function Avisos() {
 }
 
 // ---------- Figuras ----------
-/** Retrato circular de un jugador: cabeza y hombros de su figura 3D (sin figura, una fija al azar por su id). */
 /** Nombre del jugador con el apodo de su figura encima (si lo tiene). */
 export function NombreJugador({ nombre, figura, clase = "dsp" }: { nombre: string; figura?: FiguraV2 | null; clase?: string }) {
   const apodo = apodoDe(figura);
@@ -103,8 +111,9 @@ export function NombreJugador({ nombre, figura, clase = "dsp" }: { nombre: strin
   return <span className="a-nom"><small className="a-apodo">{apodo}</small><span className={clase}>{nombre}</span></span>;
 }
 
+/** Retrato circular de un jugador: la misma foto de busto del medallón del HUB (sin figura, una fija al azar por su id). */
 export function Retrato({ id, figura, nombre, size = 44 }: { id: string; figura?: FiguraV2 | null; nombre?: string; size?: number }) {
-  return <FotoFigura figura={figura ?? undefined} semilla={figura ? undefined : semillaDe(id)} size={size} nombre={nombre} redondo />;
+  return <FotoFigura figura={figura ?? undefined} semilla={figura ? undefined : semillaDe(id)} size={size} nombre={nombre} redondo encuadre="busto" />;
 }
 /** Escena 3D con varios jugadores de pie. */
 export function Elenco({ gente, foco, momentos, alto, modo }: { gente: { id: string; figura?: FiguraV2 | null }[]; foco?: string; momentos?: { id: string; cual: Momento; n: number }[]; alto?: number | string; modo?: "hub" }) {
