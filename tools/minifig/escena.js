@@ -1754,6 +1754,49 @@
   // «cuerpo» = la figura completa por su altura, «busto» = siguiendo la cabeza.
   // ?fotoms= acorta el plazo (pruebas de carga tardía); nunca más de 15 s.
   const FOTO_V3_MS = Math.min(15000, Math.max(1, Number(new URLSearchParams(location.search).get("fotoms")) || 15000));
+  // Busto de la figura nueva (Elías, 28 nov: Daisy y otros salían cortados o chuecos en los círculos). Antes se encuadraba la
+  // caja de TODA la figura: una capa, un vestido, alas o un arma levantada movían el centro y el alto, y la cabeza quedaba
+  // de lado o fuera del círculo. Ahora manda el hueso de la cabeza (huesos.cabeza de la ficha): el centro sigue a la cara y
+  // el alto se mide con el esqueleto (cabeza → cadera), que no cambia con la ropa. Lo de arriba (pelo, casco, corona) se
+  // toma de los vértices que mueve la cabeza, para que nada se corte. null si la figura no trae hueso de cabeza.
+  const vB = new THREE.Vector3(), vH = new THREE.Vector3(), vC = new THREE.Vector3();
+  const CADERA = /(hips|pelvis)$/i;
+  function encuadreBusto(inst, o, tv, th) {
+    const cab = inst.hueso("cabeza"); if (!cab) return null;
+    cab.getWorldPosition(vH);
+    // Huesos de la cabeza y sus hijos (pelo, mandíbula, accesorios de la cabeza).
+    const deCab = new Set(); cab.traverse(x => deCab.add(x));
+    const cc = new THREE.Box3();
+    o.traverse(m => {
+      if (!m.isMesh || !m.visible || m.userData.alvOclusor) return;
+      if (m.isSkinnedMesh) {
+        const pos = m.geometry.attributes.position, si = m.geometry.attributes.skinIndex, sw = m.geometry.attributes.skinWeight;
+        if (!pos || !si || !sw) return;
+        const hs = m.skeleton.bones.map(x => deCab.has(x));
+        if (!hs.some(Boolean)) return;
+        for (let i = 0; i < pos.count; i++) {
+          let k = 0, w = sw.getX(i);
+          if (sw.getY(i) > w) { k = 1; w = sw.getY(i); } if (sw.getZ(i) > w) { k = 2; w = sw.getZ(i); } if (sw.getW(i) > w) k = 3;
+          if (!hs[k === 0 ? si.getX(i) : k === 1 ? si.getY(i) : k === 2 ? si.getZ(i) : si.getW(i)]) continue;
+          vB.fromBufferAttribute(pos, i); m.boneTransform(i, vB); vB.applyMatrix4(m.matrixWorld); cc.expandByPoint(vB);
+        }
+      } else { let p = m.parent; while (p && !deCab.has(p)) p = p.parent; if (p) cc.expandByObject(m); }
+    });
+    if (cc.isEmpty()) cc.expandByPoint(vH);
+    // Cadera: la de la ficha, si no, el hueso que se llame así.
+    let cad = inst.hueso("cadera");
+    if (!cad) o.traverse(x => { if (!cad && x.isBone && CADERA.test(x.name)) cad = x; });
+    const altoCab = Math.max(cc.max.y - vH.y, 1e-3);
+    const tronco = cad ? Math.max(vH.y - cad.getWorldPosition(vC).y, altoCab * 0.5) : altoCab * 1.6;
+    // De lo más alto de la cabeza hasta la mitad del pecho, con un poco de aire arriba.
+    const arriba = cc.max.y, abajo = vH.y - tronco * BUSTO_PECHO;
+    const altoZ = (arriba - abajo) * 1.06;
+    // Ancho: lo que mida la cabeza a cada lado del hueso, para que una cabeza ancha (casco, pelo) quepa completa.
+    const lado = Math.max(vH.x - cc.min.x, cc.max.x - vH.x) * 2 * 1.08;
+    const d = Math.max((altoZ / 2) / tv, (lado / 2) / th);
+    return { x: vH.x, y: abajo + altoZ / 2, z: vH.z, d };
+  }
+  const BUSTO_PECHO = 0.75;
   function fotoV3(p3, ancho, alto, zona) {
     ancho = Math.min(512, Math.max(64, ancho | 0 || 256)); alto = Math.min(640, Math.max(64, alto | 0 || 320));
     // Si vence el plazo y la figura llega después, se libera al llegar (Codex, paso3-r1).
@@ -1770,13 +1813,17 @@
         // Encuadre por la caja real de la figura posada: que quepa de alto y de ancho (un Big Fig es más ancho que alto).
         const caja = new THREE.Box3().setFromObject(o), h = caja.max.y - caja.min.y, w = caja.max.x - caja.min.x;
         const tv = Math.tan(cam.fov * Math.PI / 360), th = tv * cam.aspect;
-        // Busto: desde la punta de la cabeza hacia abajo (el 62 % de arriba en minifigura, como el «busto» de las viejas;
-        // 50 % en Big Fig, que tiene la cabeza más chica y los hombros más altos).
-        const fr = zona === "busto" ? (p3.familia === "bigfig" ? 0.5 : 0.62) : 1.16;
-        const altoZ = h * fr, cy = zona === "busto" ? caja.max.y - altoZ * 0.44 : caja.min.y + h * 0.48;
-        const anchoZ = zona === "busto" ? Math.min(w, altoZ) : w * 1.08;
-        const dd = Math.max((altoZ / 2) / tv, (anchoZ / 2) / th);
-        cam.position.set((caja.min.x + caja.max.x) / 2, cy + dd * 0.07, dd); cam.lookAt((caja.min.x + caja.max.x) / 2, cy, 0);
+        const b = zona === "busto" ? encuadreBusto(inst, o, tv, th) : null;
+        if (b) { cam.position.set(b.x, b.y + b.d * 0.07, b.z + b.d); cam.lookAt(b.x, b.y, b.z); }
+        else {
+          // Cuerpo (y busto sin hueso de cabeza): la caja de toda la figura. Busto: desde la punta de la cabeza hacia abajo
+          // (el 62 % de arriba en minifigura; 50 % en Big Fig, que tiene la cabeza más chica y los hombros más altos).
+          const fr = zona === "busto" ? (p3.familia === "bigfig" ? 0.5 : 0.62) : 1.16;
+          const altoZ = h * fr, cy = zona === "busto" ? caja.max.y - altoZ * 0.44 : caja.min.y + h * 0.48;
+          const anchoZ = zona === "busto" ? Math.min(w, altoZ) : w * 1.08;
+          const dd = Math.max((altoZ / 2) / tv, (anchoZ / 2) / th);
+          cam.position.set((caja.min.x + caja.max.x) / 2, cy + dd * 0.07, dd); cam.lookAt((caja.min.x + caja.max.x) / 2, cy, 0);
+        }
         medirContorno(r); r.render(s, cam);
         let url = r.domElement.toDataURL("image/webp", 0.85);
         if (!url.startsWith("data:image/webp")) url = r.domElement.toDataURL("image/png");
