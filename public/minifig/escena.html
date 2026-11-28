@@ -11,6 +11,8 @@ canvas{display:block;width:100%;height:100%;touch-action:none}
 </head>
 <body>
 <canvas id="lienzo" aria-hidden="true"></canvas>
+<!-- Velocidad (28 nov): la geometría LDraw (1.5 MB) empieza a bajar junto con Three, no hasta que termina la biblioteca. -->
+<link rel="preload" as="script" href="biblioteca/geometria/ldraw_piezas.js">
 <!-- Escena 3D de ALV: varias figuras en una sola escena y fotos para las listas chicas. Reutiliza el núcleo y el
      dibujo de Minifig Studio (copiados por tools/copiar-minifig.mjs); escena-base.js crea lo que esos scripts esperan. -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>

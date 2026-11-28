@@ -15,15 +15,19 @@ const escalas = new Map<string, number>(); // foto de figura → cuánto creció
 /** Ranuras que se ven en la foto: la de la pieza y, para la cara, la cabeza que la sostiene. */
 export const ranurasFoto = (pz: Pick<PiezaCons, "parte" | "ranuras">): string[] => (pz.parte === "cara" ? [...pz.ranuras, "head"] : [...pz.ranuras]);
 
-export function useMiniaturas(url: string | null, catalogo: Catalogo) {
+/** `aDemanda`: el estudio (un 3D completo escondido) solo se monta si falta alguna foto; con todas en memoria, la
+ *  pantalla abre sin cargarlo (velocidad, 28 nov). Solo para quien pide sus fotos aunque el estudio no esté listo. */
+export function useMiniaturas(url: string | null, catalogo: Catalogo, opciones?: { aDemanda?: boolean }) {
   const ref = useRef<HTMLIFrameElement>(null);
   const [listo, setListo] = useState(false);
   const [, setVersion] = useState(0);
   const pedidas = useRef(new Set<string>());
+  const [falta, setFalta] = useState(!opciones?.aDemanda);
+  const montar = !!url && falta;
   // Si el estudio no dice «listo» en 10 s, o una foto no llega en 8 s, se usa la foto del donante (Codex, cierre-r1):
   // nada se queda esperando para siempre.
   const [caido, setCaido] = useState(false);
-  useEffect(() => { if (!url || listo) return; const t = setTimeout(() => setCaido(true), 10000); return () => clearTimeout(t); }, [url, listo]);
+  useEffect(() => { if (!montar || listo) return; const t = setTimeout(() => setCaido(true), 10000); return () => clearTimeout(t); }, [montar, listo]);
   useEffect(() => {
     const f = (e: MessageEvent) => {
       if (e.origin !== location.origin || e.source !== ref.current?.contentWindow || e.data?.origen !== "minifig") return;
@@ -50,6 +54,7 @@ export function useMiniaturas(url: string | null, catalogo: Catalogo) {
   };
   /** Foto de la figura completa (los nichos de «Mi colección»): todas las ranuras, del mismo tamaño y en un cuadro de su movimiento especial. */
   const pedirFigura = (clave: string, plano: Plano, pose: "especial" | "reposo" = "especial") => {
+    if (url && !fotos.has(clave) && !falta) setFalta(true);
     if (!url || !listo || fotos.has(clave) || pedidas.current.has(clave)) return;
     pedidas.current.add(clave);
     setTimeout(() => { if (!fotos.has(clave)) { fotos.set(clave, null); setVersion(v => v + 1); } }, 12000);
@@ -58,7 +63,7 @@ export function useMiniaturas(url: string | null, catalogo: Catalogo) {
   const fotoDe = (clave: string): string | null | undefined => (!url || (caido && !listo) ? fotos.get(clave) ?? null : fotos.get(clave));
   /** url lista, null si falló (usar la foto del donante) o undefined si aún no llega. */
   const foto = (pz: PiezaCons): string | null | undefined => (!url || (caido && !listo) ? fotos.get(pz.id) ?? null : fotos.get(pz.id));
-  const marco = url ? (
+  const marco = montar ? (
     <iframe ref={ref} src={url} title="Estudio de miniaturas" aria-hidden="true" tabIndex={-1}
       style={{ position: "absolute", left: 0, top: 0, width: 1, height: 1, opacity: 0, border: 0, pointerEvents: "none" }} />
   ) : null;
