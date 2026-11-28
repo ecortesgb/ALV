@@ -46,6 +46,12 @@ describe("piezas genéricas", () => {
     expect(grupoGenerica("cara-nueva", "cara")).toBe("normales");
     expect(grupoGenerica("x", "cadera")).toBe("todas");
   });
+  it("las piezas básicas LEGO van en su grupo", () => {
+    expect(grupoGenerica("cara-lego-enojada", "cara")).toBe("enojados");
+    expect(grupoGenerica("cara-lego-maquillaje", "cara")).toBe("mujer");
+    expect(grupoGenerica("cabello-lego-cola", "cabello")).toBe("largo");
+    expect(grupoGenerica("torso-lego-traje", "torso")).toBe("elegante");
+  });
   it("se juntan con las originales y tiñen por material con su paleta", () => {
     const todas = todasLasPiezas(ind);
     expect(todas.get("thor--torso")).toMatchObject({ origen: "original", grupo: "avengers" });
