@@ -5,3 +5,7 @@ dist/
 !.env.example
 *.log
 .DS_Store
+dist-fiesta/
+.fiesta-cache/
+fiesta-datos.json
+fiesta-datos.json.tmp

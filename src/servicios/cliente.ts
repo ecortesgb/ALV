@@ -3,8 +3,10 @@
 // Los errores hacia el jugador son genéricos; el detalle va a la consola.
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
-const URL = import.meta.env.VITE_SUPABASE_URL as string | undefined;
-const LLAVE = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string | undefined;
+// Modo Fiesta (laptop sin internet): nunca hay nube, aunque el .env.local tenga los datos de Supabase.
+const FIESTA = import.meta.env.VITE_ALV_FIESTA === "1";
+const URL = FIESTA ? undefined : import.meta.env.VITE_SUPABASE_URL as string | undefined;
+const LLAVE = FIESTA ? undefined : import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string | undefined;
 
 export const cliente: SupabaseClient | null = URL && LLAVE
   ? createClient(URL, LLAVE, { auth: { persistSession: true, autoRefreshToken: true } })

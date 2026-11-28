@@ -6,6 +6,7 @@ import { desdeBase } from "../personajes/integracion";
 import { cliente, hayNube, uidActual } from "./cliente";
 import { anunciarLobby, buscarLobby, escucharSala, vigilarPantalla, type EstadoRed, type PresenciaPantalla } from "./tiempoReal";
 import { vigilarPantallaSinNube } from "./difusion";
+import { almacenFiesta, esFiesta } from "./fiesta";
 import { NOMBRE_ESPEJO, sostenidos, type Espejo } from "./aparato";
 
 export type ModoSala = "tv" | "mesa";
@@ -263,17 +264,25 @@ interface Respaldo extends Enlace {
  * `quien`: la persona que juega en este aparato (en la demostración, la sesión; en Local, el jugador que tiene el
  * teléfono). Las acciones de control siempre salen a nombre del anfitrión, que es quien tiene el control de la partida.
  */
-function crearRespaldo(clave: string, canal: string | null, quien: () => { id: string; nombre: string }, prefijo: string): Respaldo {
-  const leer = (): Record<string, SalaLocal> => { try { return JSON.parse(localStorage.getItem(clave) ?? "{}") as Record<string, SalaLocal>; } catch { return {}; } };
+function crearRespaldo(clave: string, canal: string | null, quien: () => { id: string; nombre: string }, prefijo: string, enLaptop = false): Respaldo {
   const oyentes = new Set<() => void>();
-  const radio = canal && typeof BroadcastChannel !== "undefined" ? new BroadcastChannel(canal) : null;
-  if (radio) radio.onmessage = () => oyentes.forEach(f => f());
-  const guardar = (todo: Record<string, SalaLocal>) => {
-    try { localStorage.setItem(clave, JSON.stringify(todo)); } catch { /* sin espacio */ }
-    radio?.postMessage(1);
-    oyentes.forEach(f => f());
-  };
-  const cambiar = (f: (todo: Record<string, SalaLocal>) => void) => { const todo = leer(); f(todo); guardar(todo); };
+  let leer: () => Record<string, SalaLocal>, cambiar: (f: (todo: Record<string, SalaLocal>) => void) => void;
+  if (enLaptop) {
+    // Modo Fiesta: la copia vive en la laptop y se reparte a todos los aparatos de su red (fiesta.ts).
+    leer = () => almacenFiesta.leer() as Record<string, SalaLocal>;
+    cambiar = f => almacenFiesta.cambiar(t => f(t as Record<string, SalaLocal>));
+    almacenFiesta.oir(() => oyentes.forEach(f => f()));
+  } else {
+    leer = () => { try { return JSON.parse(localStorage.getItem(clave) ?? "{}") as Record<string, SalaLocal>; } catch { return {}; } };
+    const radio = canal && typeof BroadcastChannel !== "undefined" ? new BroadcastChannel(canal) : null;
+    if (radio) radio.onmessage = () => oyentes.forEach(f => f());
+    const guardar = (todo: Record<string, SalaLocal>) => {
+      try { localStorage.setItem(clave, JSON.stringify(todo)); } catch { /* sin espacio */ }
+      radio?.postMessage(1);
+      oyentes.forEach(f => f());
+    };
+    cambiar = f => { const todo = leer(); f(todo); guardar(todo); };
+  }
   const porPartida = (todo: Record<string, SalaLocal>, id: string) => {
     for (const s of Object.values(todo)) { const p = s.partidas.find(x => x.id === id); if (p) return { p, s }; }
     return undefined;
@@ -368,7 +377,16 @@ function crearRespaldo(clave: string, canal: string | null, quien: () => { id: s
   };
 }
 
-const demo = crearRespaldo("alv.demo.v1", "alv-demo", () => yoLocal, "");
+const demo = crearRespaldo("alv.demo.v1", "alv-demo", () => yoLocal, "", esFiesta);
+
+/** Sin nube (demostración y Modo Fiesta): la figura activa de este aparato se copia a sus lugares en las salas abiertas, para
+ *  que los demás aparatos la vean (con nube la figura viaja desde la base). Solo escribe si cambió. */
+export function figuraEnSalasSinNube(jugador: string, figura: FiguraV2 | null) {
+  if (hayNube || !jugador) return;
+  const igual = (m: MiembroLocal) => JSON.stringify(m.figura ?? null) === JSON.stringify(figura ?? null);
+  const falta = Object.values(demo.leer()).some(s => !s.cerrada && s.miembros.some(m => m.id === jugador && !igual(m)));
+  if (falta) demo.cambiar(t => { for (const s of Object.values(t)) if (!s.cerrada) for (const m of s.miembros) if (m.id === jugador && !igual(m)) m.figura = figura; });
+}
 
 // ---------- Modo Local (un solo teléfono) ----------
 // La sala y sus personajes viven en el localStorage de este teléfono (clave «alv.local.v1»): sobreviven a una recarga y

@@ -1,6 +1,6 @@
 # ALV — Amigos Legendarios Verdaderos
 ## Documento Maestro del Producto
-**Versión:** 1.72  
+**Versión:** 1.73  
 **Última actualización:** 27 de noviembre de 2026  
 **Estado:** Documento vivo de producto; decisiones y propuestas identificadas por separado.
 
@@ -1624,7 +1624,7 @@ Decisiones:
 - **Secretos en el cliente (requisito de cliente):** la palabra y el papel no se montan en el DOM hasta que el jugador pida verlos, y se desmontan al soltar. Se corrige primero en la presentación. Es complementario: la protección real es el servidor. No justifica una migración por sí solo.
 - **Latencia:** desde la última respuesta hasta la revelación, mediana de 3.3 s como máximo, máximo observado de 4.7 s y límite visible de 5.8 s. Se conserva la pausa de suspenso de 2 s (21.4, decisión 1). Cada medición documenta método, número de pruebas y condiciones.
 - **Pasar el control:** quien recibe el control (21.4, decisión 7) puede administrar la partida con los permisos que eso requiere, sin ampliar sus privilegios más de lo necesario.
-- **Modo local:** solo para desarrollo y pruebas internas. No es modalidad de producción en esta etapa.
+- **Modo local:** solo para desarrollo y pruebas internas. No es modalidad de producción en esta etapa. **DECISIÓN (v1.73, Elías, 27 de noviembre) — Modo Fiesta:** se puede jugar sin internet con varios celulares y la TV conectados a una laptop que hace de servidor (`npm run fiesta`). Sin cuentas ni XP en esta primera versión; los personajes los sirve la laptop desde su copia privada, solo a su red. Lo demás de este punto sigue igual.
 
 ### Avance de la Fase 6
 
@@ -1852,6 +1852,9 @@ Decisiones del usuario del 12 de noviembre de 2026:
 
 ## v1.6
 - Primeros logros (14.2), con ámbito de sesión o histórico (ver DECISIÓN v1.6 en 14.2).
+
+## v1.73
+- 27 nov 2026. Modo Fiesta: varios aparatos conectados a una laptop sin internet, con la app, Three.js, fuentes y personajes servidos por la laptop. Sin cuentas ni XP por ahora. Decisión de Elías para una fiesta sin señal.
 
 ## v1.72
 - 27 nov 2026. Comodines de la colección en la partida (6A.4): solo salen de sobres o de la colección, ¿Voy a tener suerte? es comodín con sorteo, 8 comodines en Verdad o reto, Dados HOT y juegos por turno, botón en el celular con compra en vivo al precio de reposición (aunque la carta no se haya descubierto), también en un solo aparato, interruptor en el configurador y animación especial en la TV. En Dados HOT pasar ya no es gratis (sustituye 6A.14 5B). Migración 056. Decisiones de Elías.
