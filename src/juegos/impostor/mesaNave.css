@@ -100,3 +100,32 @@
 .D .nm-pizarra.tv { position: absolute; z-index: 3; inset: 33vh 9% 9vh; font-size: 1.55em; }
 .D .nm-pizarra.tv .nm-piz-t { font-size: 1.15em; }
 .D .nm-pizarra.tv .nm-filas { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+/* Celular y PC (Elías, 28 nov): la mesa 3D solo en el hueco entre la cabecera y lo que te toca, para que la cámara encuadre
+   a todos sin que nada los tape; tu palabra con el lector de huella a la derecha; cabecera y caja de abajo centradas. */
+.D .nm-cel > .nm-mesa { position: relative; inset: auto; grid-row: 2; grid-column: 1; min-height: 0; }
+.D .nm-cel > .nv-cel-cab { justify-self: center; width: min(100%, 30em); }
+.D .nm-cel > .nv-accion { justify-self: center; width: min(100%, 36em); }
+.D .nm-huella { --f-titulo: "Lilita One", "Bangers", system-ui, sans-serif; --ns-l: clamp(92px, min(24vw, 26dvh), 190px);
+  position: relative; z-index: 2; grid-row: 2; grid-column: 1; justify-self: end; align-self: center; }
+.D .nm-huella .ns-lector-caja { gap: 6px; }
+.D .nm-huella .ns-l-pide { font-size: clamp(13px, 1.9dvh, 17px); }
+.D .nm-huella .ns-l-secreto { gap: 2cqw; width: 84%; }
+.D .nm-huella .ns-l-det { font-size: 8cqw; }
+.D .nm-huella .ns-l-det.chico { font-size: 7cqw; }
+@media (max-aspect-ratio: 3/4) {
+  /* Celular de pie: el lector abajo a la derecha de la mesa, sin tapar a quien está sentado al frente. */
+  .D .nm-huella { --ns-l: clamp(84px, 24vw, 120px); align-self: end; }
+}
+/* La palabra que escribes: caja grande y clara, y el botón al lado (abajo en celular angosto). */
+.D .nm-cel .nv-ac-turno { gap: .55em; }
+.D .nm-cel .nv-ac-input { height: 56px; padding: 0 1em; border-radius: 16px; font-size: 1.4em; background: rgba(255, 255, 255, .95); color: #10142e;
+  box-shadow: inset 0 0 0 3px color-mix(in srgb, var(--pj, #2ee6d6) 85%, #fff), 0 4px 14px rgba(0, 0, 0, .35); }
+.D .nm-cel .nv-ac-input::placeholder { color: rgba(16, 20, 46, .4); }
+.D .nm-cel .nv-ac-input:focus { box-shadow: inset 0 0 0 3px var(--oro), 0 0 0 4px rgba(255, 194, 26, .35); }
+.D .nm-cel .nv-ac-btn { height: 56px; border-radius: 16px; }
+@media (max-width: 420px) {
+  .D .nm-cel .nv-ac-fila { grid-template-columns: 1fr; }
+  .D .nm-cel .nv-ac-btn { width: 100%; }
+}
+@media (max-width: 420px) { .D .nm-cel .nv-ac-btn { max-width: none; } }
