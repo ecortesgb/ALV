@@ -33,11 +33,29 @@ export const codigoLegible = (c: string) => c.replace(/(.{4})(?=.)/g, "$1-");
 export async function abrirEspejo(): Promise<Espejo | null> {
   if (!cliente) return null;
   try {
-    const { data, error } = await cliente.rpc("crear_evento", { p_nombre: NOMBRE_ESPEJO, p_adulto: true, p_drunk: true });
+    let { data, error } = await cliente.rpc("crear_evento", { p_nombre: NOMBRE_ESPEJO, p_adulto: true, p_drunk: true });
+    // Auditoría 28 nov: el servidor deja máximo 3 salas abiertas por anfitrión. Las espejo de sesiones locales que se
+    // cerraron sin «Terminar sesión» (app cerrada, recarga) se quedaban abiertas y a la tercera ya no se podían agregar
+    // cuentas en el aparato. Se cierran las espejo viejas de esta cuenta y se intenta otra vez.
+    if (error && /demasiados/.test(error.message) && await cerrarEspejosViejos()) {
+      ({ data, error } = await cliente.rpc("crear_evento", { p_nombre: NOMBRE_ESPEJO, p_adulto: true, p_drunk: true }));
+    }
     const f = (data as { id: string; codigo: string }[] | null)?.[0];
     if (error || !f) { log("abrirEspejo", error); return null; }
     return { id: f.id, codigo: f.codigo };
   } catch (e) { log("abrirEspejo", e); return null; }
+}
+
+/** Cierra las salas espejo abiertas de la cuenta del aparato. true si cerró alguna. */
+async function cerrarEspejosViejos(): Promise<boolean> {
+  if (!cliente) return false;
+  const { data: s } = await cliente.auth.getSession();
+  const uid = s.session?.user.id;
+  if (!uid) return false;
+  const { data, error } = await cliente.from("eventos").select("id").eq("anfitrion", uid).eq("cerrado", false).eq("nombre", NOMBRE_ESPEJO);
+  if (error || !data?.length) return false;
+  const r = await Promise.all(data.map(e => cliente!.rpc("cerrar_evento", { p_evento: e.id as string })));
+  return r.some(x => !x.error);
 }
 
 /** Con la sesión aparte: entra a la sala espejo y lee su nombre y su figura activa. Siempre cierra la sesión aparte. */
