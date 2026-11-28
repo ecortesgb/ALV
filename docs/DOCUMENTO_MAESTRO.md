@@ -1,6 +1,6 @@
 # ALV — Amigos Legendarios Verdaderos
 ## Documento Maestro del Producto
-**Versión:** 1.74  
+**Versión:** 1.75  
 **Última actualización:** 28 de noviembre de 2026  
 **Estado:** Documento vivo de producto; decisiones y propuestas identificadas por separado.
 
@@ -1637,7 +1637,7 @@ Decisiones:
 - **Secretos en el cliente (requisito de cliente):** la palabra y el papel no se montan en el DOM hasta que el jugador pida verlos, y se desmontan al soltar. Se corrige primero en la presentación. Es complementario: la protección real es el servidor. No justifica una migración por sí solo.
 - **Latencia:** desde la última respuesta hasta la revelación, mediana de 3.3 s como máximo, máximo observado de 4.7 s y límite visible de 5.8 s. Se conserva la pausa de suspenso de 2 s (21.4, decisión 1). Cada medición documenta método, número de pruebas y condiciones.
 - **Pasar el control:** quien recibe el control (21.4, decisión 7) puede administrar la partida con los permisos que eso requiere, sin ampliar sus privilegios más de lo necesario.
-- **Modo local:** solo para desarrollo y pruebas internas. No es modalidad de producción en esta etapa.
+- **Modo local:** solo para desarrollo y pruebas internas. No es modalidad de producción en esta etapa. **DECISIÓN (v1.75, Elías, 27 y 28 de noviembre) — Modo Fiesta:** se puede jugar sin internet con varios celulares y la TV conectados a una laptop que hace de servidor (`npm run fiesta`). Los personajes, canciones y voces los sirve la laptop desde sus copias privadas, solo a su red. Con la copia local de Supabase (`npm run fiesta:supabase`) hay cuentas, XP y tienda; lo de la fiesta se queda en la laptop. Lo demás de este punto sigue igual.
 
 ### Avance de la Fase 6
 
@@ -1865,6 +1865,9 @@ Decisiones del usuario del 12 de noviembre de 2026:
 
 ## v1.6
 - Primeros logros (14.2), con ámbito de sesión o histórico (ver DECISIÓN v1.6 en 14.2).
+
+## v1.75
+- 28 nov 2026. Modo Fiesta: varios aparatos conectados a una laptop sin internet. La laptop sirve la app, Three.js, fuentes, personajes, canciones y voces, y puede llevar una copia local de Supabase (cuentas, XP y tienda) que no se sincroniza con producción. Decisión de Elías para una fiesta sin señal.
 
 ## v1.74
 - 28 nov 2026. Los 18 comodines en la partida (6A.4): Elías pidió que sirvan todos. Reglas de los 10 nuevos aprobadas por Elías tal cual (castigos de la ruleta y de la nave, mesero hasta que acaba el juego, trampas, candado, rebote, Mano amiga con la marca `admitePareja`, Duelo de dados y Pista extra secreta). Sin migración nueva. (v1.73 la usan otros cambios sin publicar.)

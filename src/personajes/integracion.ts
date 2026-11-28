@@ -25,7 +25,7 @@ export type { FiguraV3 } from "./tipos";
 /** Lo mínimo de una figura v2 que el puente necesita (el tipo completo vive en el sistema viejo). */
 export interface FiguraV2Puente { version: 2; extensiones?: Record<string, unknown>; [k: string]: unknown }
 
-type Entorno = { DEV?: boolean; VITE_PERSONAJES_V3?: string; VITE_PERSONAJES_PRIVADOS_URL?: string; VITE_CORTE_V3?: string };
+type Entorno = { DEV?: boolean; VITE_PERSONAJES_V3?: string; VITE_PERSONAJES_PRIVADOS_URL?: string; VITE_CORTE_V3?: string; VITE_ALV_FIESTA?: string };
 const entorno = (): Entorno => import.meta.env as unknown as Entorno;
 
 /** Día del corte a v3 (Codex, v3-directo-r1): EXACTAMENTE VITE_CORTE_V3=1 al compilar (publicar.yml la pasa desde las
@@ -39,6 +39,7 @@ export function modoCorteV3(env: Entorno = entorno()): boolean {
  *  build publicado DEV es false y nada la enciende (Codex D3, modificada en v3-directo-r1; ?v3=1 nunca activa lo publicado). */
 export function banderaV3(env: Entorno = entorno(), busqueda: string = typeof location !== "undefined" ? location.search : ""): boolean {
   if (modoCorteV3(env)) return true;
+  if (env.VITE_ALV_FIESTA === "1") return true; // Modo Fiesta: los personajes los sirve la laptop
   if (!env.DEV) return false;
   return env.VITE_PERSONAJES_V3 === "1" || new URLSearchParams(busqueda).get("v3") === "1";
 }
@@ -48,6 +49,8 @@ export function banderaV3(env: Entorno = entorno(), busqueda: string = typeof lo
  *  Tener fuente NO enciende la bandera. */
 export async function fuenteDePersonajes(env: Entorno = entorno()): Promise<string | null> {
   if (env.DEV && env.VITE_PERSONAJES_PRIVADOS_URL) return env.VITE_PERSONAJES_PRIVADOS_URL; // desarrollo: ensayo con la local
+  // Modo Fiesta (laptop sin internet): la laptop sirve su copia local en /privados-fiesta/ (tools/fiesta/servidor.mjs), solo en su red.
+  if (env.VITE_ALV_FIESTA === "1" && typeof location !== "undefined") return location.origin + "/privados-fiesta/";
   // Publicado con el corte: SOLO la fuente privada (Codex, v3-directo-r1): sin sesión o sin acceso da null y se ve el
   // respaldo; nunca se regresa a una URL local o pública. Un null no se guarda: «Reintentar» vuelve a preguntar.
   if (modoCorteV3(env)) return fuentePrivada({ cliente });

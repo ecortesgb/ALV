@@ -3,9 +3,9 @@
 // Cada jugador solo elige con cuál de sus 3 figuras juega y da «Listo». El administrador además puede sacar a alguien,
 // dar listo por alguien y «Continuar» a la configuración de la partida. Fondo y botones del HUB «La Azotea».
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
-import { escribirCapsulas, leerCapsulas, apodoDe, useCapsulas, useFoto, N_CAPSULAS } from "../../app/figura3d";
+import { escribirCapsulas, leerCapsulas, apodoDe, useCapsulas, useFoto, N_CAPSULAS, figuraActiva } from "../../app/figura3d";
 import { ir } from "../../app/rutas";
-import { enlace, esLocal, modoLocal, type Miembro, type SalaV } from "../../servicios/enlace";
+import { enlace, esLocal, figuraEnSalasSinNube, modoLocal, type Miembro, type SalaV } from "../../servicios/enlace";
 import { PersonajeLocal, type DatosPersonaje } from "./PersonajeLocal";
 import { DatosAcceso, ElegirComoAgregar, EntrarCuenta } from "./AgregarEnAparato";
 import { abrirEspejo, crearPersonajeRapido, entrarCuentaEnAparato, type Espejo, type PersonajeRapido } from "../../servicios/aparato";
@@ -69,6 +69,10 @@ export function Lobby({ sala, miembros, yo, soyAnfitrion, final, red, refrescar,
   const rueda = useRef<MandoRueda>(null);
   const tocarFigura = (_m: Miembro, x: number, y: number) => rueda.current?.abrir(x, y);
   const hayAdmin = miembros.some(m => m.anfitrion);
+  // Sin nube (demostración, Modo Fiesta en la laptop): tu figura activa se copia a tu lugar en la sala para que los demás la vean.
+  const misCapsulas = useCapsulas(yo);
+  const enMiLugar = !hayNube && !esLocal(sala.id) && miembros.some(m => m.id === yo);
+  useEffect(() => { if (enMiLugar) figuraEnSalasSinNube(yo, figuraActiva(misCapsulas)); }, [enMiLugar, yo, misCapsulas]);
   // Modo Local: un solo teléfono; el anfitrión agrega personajes sin cuenta y les cambia la figura.
   const local = esLocal(sala.id);
   const [editar, setEditar] = useState<{ tipo: "elegir" } | { tipo: "nuevo" } | { tipo: "rapido" } | { tipo: "cuenta" } | { tipo: "figura"; m: Miembro } | null>(null);

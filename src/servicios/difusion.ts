@@ -3,6 +3,7 @@
 // Lo que se manda aquí es solo aviso visual (la configuración en vivo, «deja de proyectar»): nunca decide nada del juego,
 // y quien lo recibe lo valida (forma y largo) antes de mostrarlo.
 import { cliente } from "./cliente";
+import { difusionFiesta, esFiesta } from "./fiesta";
 import { crearDetectorPantalla, LATIDO_PANTALLA_MS, REVISION_PANTALLA_MS, type PresenciaPantalla } from "./tiempoReal";
 
 export interface Difusion { enviar: (evento: string, datos?: Record<string, unknown>) => void; cerrar: () => void }
@@ -10,6 +11,7 @@ export interface Difusion { enviar: (evento: string, datos?: Record<string, unkn
 /** Abre un canal `nombre`. `alMensaje` recibe los avisos de los demás (nunca los propios). */
 export function abrirDifusion(nombre: string, alMensaje?: (evento: string, datos: Record<string, unknown>) => void): Difusion {
   if (!cliente) {
+    if (esFiesta) return difusionFiesta(nombre, alMensaje);
     if (typeof BroadcastChannel === "undefined") return { enviar: () => { /* nada */ }, cerrar: () => { /* nada */ } };
     const bc = new BroadcastChannel(`alv-${nombre}`);
     if (alMensaje) bc.onmessage = e => { const m = e.data as { e?: unknown; d?: unknown }; if (typeof m?.e === "string") alMensaje(m.e, (m.d ?? {}) as Record<string, unknown>); };
@@ -39,7 +41,7 @@ export function abrirDifusion(nombre: string, alMensaje?: (evento: string, datos
  * pero por BroadcastChannel. Con nube se usa `vigilarPantalla` de tiempoReal.
  */
 export function vigilarPantallaSinNube(salaId: string, soyPantalla: boolean, alEstado: (p: PresenciaPantalla) => void): () => void {
-  if (typeof BroadcastChannel === "undefined") return () => { /* nada */ };
+  if (typeof BroadcastChannel === "undefined" && !esFiesta) return () => { /* nada */ };
   const det = crearDetectorPantalla(alEstado);
   const d = abrirDifusion(`pantalla-${salaId}`, e => { if (e === "tv" && !soyPantalla) det.latido(); });
   const reloj = soyPantalla ? setInterval(() => d.enviar("tv"), LATIDO_PANTALLA_MS) : setInterval(() => det.revisar(), REVISION_PANTALLA_MS);
