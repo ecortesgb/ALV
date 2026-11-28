@@ -62,7 +62,10 @@ async function preparar(e: Entorno): Promise<string | null> {
   if (error || typeof sello !== "string" || !SELLO.test(sello)) return null;
 
   await sw.register(new URL("sw-privados.js", base).href, { scope: new URL("./", base).href });
-  await sw.ready;
+  // Auditoría 28 nov: si el navegador nunca deja listo el service worker (modo privado, navegador dentro de otra app),
+  // la escena se quedaba en «Armando figuras…» para siempre. Con tope, se sigue con las figuras de respaldo.
+  const listo = await Promise.race([sw.ready.then(() => true), new Promise<false>(r => setTimeout(() => r(false), e.espera ?? 8000))]);
+  if (!listo) return null;
   if (!sw.controller) {
     // Primera visita: el service worker toma la página con clients.claim(); se espera ese cambio.
     await new Promise<void>(listo => {
