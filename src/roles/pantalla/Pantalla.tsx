@@ -74,7 +74,7 @@ export function PantallaTv({ codigo }: { codigo: string }) {
   useEffect(() => { if (!s.sala) return; return escucharSalirPantalla(s.sala.id, dejar); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [s.sala?.id]);
   // Resultados (Elías, 26 nov): el fondo del tema del ganador y ~8 s de su canción (temas.ts). Con empate, el cuarto.
   // ALV PARTY: el anfitrión empezó un minijuego; esta Pantalla enseña el tutorial y abre la TV del juego.
-  const [avisoParty, quitarParty] = useAvisoParty(s.sala?.id);
+  const [avisoParty] = useAvisoParty(s.sala?.id);
   const podio = final ? marcador(final) : [];
   const ganador = podio.length && podio.filter(j => j.lugar === 1).length === 1 ? podio[0]!.id : null;
   const figuraGanador = ganador ? s.miembros.find(m => m.id === ganador)?.figura ?? null : null;
@@ -97,7 +97,7 @@ export function PantallaTv({ codigo }: { codigo: string }) {
   if (s.error || s.cerrada) return marco(<div className="lb-vacio a-tv-msj"><b>{s.cerrada ? "La sala se cerró" : "No se pudo abrir la pantalla"}</b>{s.error && <p>{s.error}</p>}<button type="button" className="lb-listo" onClick={() => ir("inicio")}>Ir al inicio</button></div>);
   if (!s.sala) return marco(<div className="lb-vacio a-tv-msj"><b>Abriendo la sala…</b></div>);
   const pid = s.partida?.id ?? "";
-  if (avisoParty && !v) return marco(<CargaParty aviso={avisoParty} rol="tv" alCancelar={quitarParty} />);
+  if (avisoParty && !v) return marco(<CargaParty aviso={avisoParty} rol="tv" />);
 
   if (v) {
     const ultima = esFinalDeJuego(v);

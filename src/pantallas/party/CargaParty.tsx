@@ -1,15 +1,16 @@
-// Pantalla de carga de ALV PARTY (Elías, 27 nov 2026): mini tutorial del minijuego antes de empezar.
+// Pantalla de carga de ALV PARTY (Elías, 27 nov 2026): mini tutorial del minijuego antes de empezar, igual que la de
+// los juegos de mesa (Elías, 28 nov: «el tutorial debe ser igual que los de los demás juegos»).
 // Proyectar se decide en el lobby: si la sala tiene Pantalla, el juego se abre ahí y cada celular queda como mando.
 // El anfitrión avisa por la difusión de la sala («party-<sala>»); la Pantalla y los celulares del lobby lo oyen,
 // enseñan el tutorial y abren su parte. Lo que llega se valida (leerAvisoParty); nunca decide nada del juego.
-import { useEffect, useState, type CSSProperties } from "react";
+import { useEffect, useState } from "react";
 import { useSesion } from "../../app/sesion";
-import { miniDe, urlsParty, leerAvisoParty, type AvisoParty } from "../../content/party";
+import { AMBIENTES_PARTY, CATEGORIAS_PARTY, MODALIDADES_PARTY, miniDe, urlsParty, leerAvisoParty, type AvisoParty } from "../../content/party";
+import { PantallaCarga, type TarjetaCarga } from "../../juegos/general/ComoJugar";
 import { abrirDifusion } from "../../servicios/difusion";
 import "./party.css";
 
 const BASE = () => new URL(import.meta.env.BASE_URL, location.href).href;
-const ESPERA_S = 10;
 
 /** El anfitrión avisa a la sala que empieza un minijuego. */
 export function avisarParty(salaId: string, aviso: AvisoParty) {
@@ -29,36 +30,36 @@ export function useAvisoParty(salaId: string | undefined): [AvisoParty | null, (
   return [aviso, () => setAviso(null)];
 }
 
-/** Tutorial a pantalla completa. Al terminar (o al tocar «¡Entendido!») abre la TV o el mando. */
+/** Tarjetas de la carga: de qué se trata, los 3 pasos (con los botones del mando) y el escenario. */
+export function tarjetasParty(aviso: AvisoParty): TarjetaCarga[] {
+  const m = miniDe(aviso.juego)!;
+  const cat = CATEGORIAS_PARTY.find(c => c.id === m.categoria);
+  const amb = AMBIENTES_PARTY.find(a => a.id === aviso.ambiente);
+  const mod = aviso.modalidad ? MODALIDADES_PARTY.find(x => x.id === aviso.modalidad) : undefined;
+  const botones = m.botones.map(b => ({ src: `${import.meta.env.BASE_URL}arte/ui/mando/x-${b}.webp`, nombre: b === "stick" ? "Stick" : b.toUpperCase() }));
+  return [
+    { grupo: "juego", titulo: m.nombre, texto: m.descripcion, imagen: m.portada, consejo: mod ? `${mod.nombre}: ${mod.texto}` : cat?.texto },
+    ...m.tutorial.map((t, i): TarjetaCarga => ({ grupo: "juego", titulo: `Paso ${i + 1}`, texto: t, imagen: m.portada, ...(i === 0 || i === 1 ? { botones } : {}) })),
+    ...(amb ? [{ grupo: "escenario" as const, titulo: amb.nombre, texto: amb.texto, imagen: amb.arte }] : []),
+  ];
+}
+
+/**
+ * La misma pantalla de carga de los juegos de mesa (PantallaCarga). En el celular, «¡Iniciar!» u «Omitir» abren el
+ * mando (o la TV si este aparato muestra el juego); en la Pantalla se abre sola al pasar todas las tarjetas.
+ */
 export function CargaParty({ aviso, rol, nombre, alCancelar }: { aviso: AvisoParty; rol: "tv" | "mando"; nombre?: string; alCancelar?: () => void }) {
   const m = miniDe(aviso.juego)!;
-  const [quedan, setQuedan] = useState(ESPERA_S);
   const destino = urlsParty(aviso, aviso.sala, BASE(), nombre)[rol];
-  useEffect(() => {
-    if (quedan <= 0) { location.assign(destino); return; }
-    const t = setTimeout(() => setQuedan(q => q - 1), 1000);
-    return () => clearTimeout(t);
-  }, [quedan, destino]);
+  const abrir = () => location.assign(destino);
+  // En una TV del lobby nadie toca: se abre sola. Si este aparato muestra el juego y nadie toca, también.
+  const solo = rol === "tv";
+  const cancelar = alCancelar && <button type="button" className="pf-atras" onClick={alCancelar}><span aria-hidden="true">◀</span>Cambiar</button>;
   return (
-    <div className="D pt-carga" role="dialog" aria-modal="true" aria-label={`Cómo se juega ${m.nombre}`} style={{ "--pc": m.color } as CSSProperties}>
-      <div className="pt-carga-caja">
-        <img className="pt-carga-portada" src={`${import.meta.env.BASE_URL}arte/${m.portada}`} alt="" draggable={false} />
-        <h2 className="dsp pt-carga-tit">Cómo se juega</h2>
-        <ol className="pt-carga-pasos">
-          {m.tutorial.map((t, i) => <li key={i} style={{ "--i": i } as CSSProperties}><b className="dsp">{i + 1}</b><span>{t}</span></li>)}
-        </ol>
-        <div className="pt-carga-botones" aria-label="Botones del mando">
-          {m.botones.map(b => <img key={b} src={`${import.meta.env.BASE_URL}arte/ui/mando/x-${b}.webp`} alt={b === "stick" ? "Stick" : b.toUpperCase()} draggable={false} />)}
-        </div>
-        <p className="pt-carga-pie">{rol === "tv" ? "Esta pantalla muestra el juego. Entren con su celular." : "Tu celular será tu mando."} Sala <b className="dsp">{aviso.sala}</b></p>
-        <div className="pt-acciones">
-          {alCancelar && <button type="button" className="pf-atras" onClick={alCancelar}><span aria-hidden="true">◀</span>Cambiar</button>}
-          <button type="button" className="cfg-sig principal" onClick={() => location.assign(destino)}>
-            <span className="cfg-sig-txt"><b>¡Entendido!</b><small>Empieza en {quedan} s</small></span><span className="cfg-sig-flecha" aria-hidden="true">▶</span>
-          </button>
-        </div>
-        <span className="pt-carga-barra" style={{ "--t": `${ESPERA_S}s` } as CSSProperties} aria-hidden="true" />
-      </div>
+    <div className="D pt-carga">
+      <PantallaCarga nombre={m.nombre} color={m.color} tarjetas={tarjetasParty(aviso)} arte={m.portada} modo={rol === "mando" || alCancelar ? "celular" : "tv"}
+        alCerrar={abrir} alVuelta={solo ? abrir : undefined} menu={cancelar}
+        notaTv={`Entren con su celular a la sala ${aviso.sala}. El juego se abre al terminar.`} />
     </div>
   );
 }

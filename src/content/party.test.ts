@@ -51,6 +51,13 @@ describe("ALV PARTY", () => {
   });
 });
 
+describe("Carga de ALV PARTY", () => {
+  it("usa la carga de los juegos de mesa: juego, 3 pasos con botones y escenario", () => {
+    const src = readFileSync(join(__dirname, "../pantallas/party/CargaParty.tsx"), "utf8");
+    expect(src).toContain("PantallaCarga");
+  });
+});
+
 describe("ALVacío", () => {
   it("se juega solos o por equipos y pide elegir", () => {
     expect(motivoParty({ juego: "plataforma", ambiente: "noche" })).toBe("Elige individual o equipos");
