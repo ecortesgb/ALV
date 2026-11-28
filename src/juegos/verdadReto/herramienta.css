@@ -8,7 +8,7 @@
 .D .vr-herr3d .vr-tiros li { animation: none; }
 .D .vr-herr3d .vr-tiros { gap: 8px; }
 .D .vr-herr3d .vr-tiros li { gap: 4px; padding-top: 8px; }
-.D .vr-dado3d { display: grid; place-items: center; width: var(--dado); height: calc(var(--dado) * 1.15); }
+.D .vr-dado3d { display: grid; place-items: center; width: calc(var(--dado) * 1.4); height: calc(var(--dado) * 1.15); }
 .D .vr-naipe3d { display: grid; place-items: center; }
 
 /* Botella al centro de los jugadores */

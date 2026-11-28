@@ -88,7 +88,8 @@
   94%, 100% { opacity: 1; transform: translateX(0) scale(1); }
 }
 .D .fi-dados { --dado: 66px; display: flex; flex-direction: column; align-items: center; gap: 6px; padding-top: calc(var(--dado) * .55); }
-.D .fi-dados-par { display: flex; gap: calc(var(--dado) * .6); padding: 0 0 calc(var(--dado) * .3); }
+/* El cubo ladeado se ve ~1,4 veces más ancho que su caja: el margen a los lados lo deja dentro del panel. */
+.D .fi-dados-par { display: flex; gap: calc(var(--dado) * .75); padding: 0 calc(var(--dado) * .3) calc(var(--dado) * .3); }
 .D .fi-suma { display: flex; flex-direction: column; align-items: center; gap: 2px; font: 400 calc(var(--dado) * .95)/1 var(--fi-t); color: #ffe14a; text-shadow: 0 3px 0 rgba(0, 0, 0, .45);
   font-variant-numeric: tabular-nums; opacity: 0; transform: translateY(10px) scale(.7); transition: opacity .25s ease-out, transform .4s cubic-bezier(.2, 1.5, .4, 1); }
 .D .fi-suma small { font: 800 12.5px/1 var(--fi-x); letter-spacing: .1em; text-transform: uppercase; color: rgba(255, 255, 255, .75); text-shadow: none; }
