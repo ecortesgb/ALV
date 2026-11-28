@@ -126,6 +126,32 @@ export async function guardarFiguraNueva(uid: string, i: number, f: FiguraV3, no
   return (await sincronizar(uid)) ? "sincronizado" : "local";
 }
 
+/** Cuenta nueva (Elías, 28 nov): al terminar su primer personaje va al HUB (antes, «atrás» la podía dejar en el lobby u
+ *  otra pantalla vieja de la pestaña). Si llegó por el QR de una sala (o al configurador o a ALV PARTY), regresa a esa
+ *  sala. Se guarda al mandarla al personalizador y se usa al salir. */
+const TRAS_CREAR = "alv-tras-crear";
+export function recordarDestinoTrasCrear(): void {
+  const h = location.hash;
+  const destino = /^#\/(sala|configurar|party)\/[^/]+$/.test(h) ? h : "#/inicio";
+  try { sessionStorage.setItem(TRAS_CREAR, JSON.stringify({ destino, t: Date.now() })); } catch { /* sin almacenamiento: sale como antes */ }
+}
+/** Salir del personalizador: si es la cuenta nueva y ya tiene figura, a su destino (sin dejar el personalizador atrás). */
+function salirPersonalizador(tieneFigura: boolean): void {
+  let destino: string | null = null;
+  try {
+    // Solo dentro de la media hora en que se creó la cuenta: si salió por otro lado, no se queda pegado.
+    const g = JSON.parse(sessionStorage.getItem(TRAS_CREAR) ?? "null") as { destino?: unknown; t?: unknown } | null;
+    if (g && typeof g.destino === "string" && typeof g.t === "number" && Date.now() - g.t < 30 * 60_000) destino = g.destino;
+    else sessionStorage.removeItem(TRAS_CREAR);
+  } catch { /* nada */ }
+  if (destino && tieneFigura) {
+    try { sessionStorage.removeItem(TRAS_CREAR); } catch { /* nada */ }
+    location.replace(destino);
+    return;
+  }
+  atras();
+}
+
 const MiPersonaje = lazy(() => import("../personajes/MiPersonaje").then(m => ({ default: m.MiPersonaje })));
 
 function MiPersonajeApp() {
@@ -146,7 +172,7 @@ function MiPersonajeApp() {
   return (
     <Suspense fallback={null}>
       <MiPersonaje jugador={uid} catalogo={cat} estadoCatalogo={estado} onReintentar={reintentar} espacios={espacios} activa={caps.activa}
-        onGuardar={(i, f, n) => guardarFiguraNueva(uid, i, f, n)} onActivar={activar} onSalir={atras} puedeUsar={puedeUsar} />
+        onGuardar={(i, f, n) => guardarFiguraNueva(uid, i, f, n)} onActivar={activar} onSalir={() => salirPersonalizador(leerCapsulas(uid).slots.some(Boolean))} puedeUsar={puedeUsar} />
     </Suspense>
   );
 }
