@@ -6,6 +6,8 @@ import type { FiguraV2 } from "../../content/personaje";
 import { PALETA_SALA, varsColor, type ColorJugador } from "../../app/colorJugador";
 import { semillaDe, useFoto } from "../../app/figura3d";
 import { cabinaDe } from "./Ficha";
+import { banderaV3, trajeAlAzar, useEstadoCatalogoV3 } from "../../personajes/integracion";
+import { ElegirTraje, usePuedeUsar } from "./ElegirTraje";
 
 interface Traje { id: string; nombre: string; mini: string; figura: FiguraV2 }
 let cargados: Traje[] | null = null;
@@ -30,10 +32,69 @@ export interface DatosPersonaje { nombre: string; genero: Genero; figura: Figura
 
 /** `soloFigura`: cambiar la figura de alguien que ya está (sin nombre ni género). `color`: el suyo, si ya tiene. */
 /** `rapido` (053): personaje rápido con cuenta; pide confirmar mayoría de edad y avisa que se crea su acceso. */
-export function PersonajeLocal({ titulo, inicial, soloFigura, color, alListo, alCerrar, rapido, ocupado, error }: {
+/** `propio`: la figura es del anfitrión (puede usar sus personajes de la tienda). */
+export function PersonajeLocal(props: {
   titulo: string; inicial?: Partial<DatosPersonaje>; soloFigura?: boolean; color?: ColorJugador | null; alListo: (d: DatosPersonaje) => void; alCerrar: () => void;
-  rapido?: boolean; ocupado?: boolean; error?: string | null;
+  rapido?: boolean; ocupado?: boolean; error?: string | null; propio?: boolean;
 }) {
+  // Con los personajes nuevos, la figura se elige en la sección Trajes del personalizador actual (Elías, 28 nov).
+  if (banderaV3()) return <PersonajeTrajes {...props} />;
+  return <PersonajeViejo {...props} />;
+}
+
+/** Personajes nuevos: «Agregar jugador» abre directo Trajes; al guardar, el nombre y el género. «Cambiar figura», solo Trajes. */
+function PersonajeTrajes({ titulo, inicial, soloFigura, color, alListo, alCerrar, rapido, ocupado, error, propio = false }: Parameters<typeof PersonajeLocal>[0]) {
+  const [mayor, setMayor] = useState(false);
+  const [nombre, setNombre] = useState(inicial?.nombre ?? "");
+  const [genero, setGenero] = useState<Genero>(inicial?.genero ?? "otro");
+  const [figura, setFigura] = useState<FiguraV2 | null>(inicial?.figura ?? null);
+  const [taller, setTaller] = useState(true);
+  const { catalogo: cat } = useEstadoCatalogoV3();
+  const puedeUsar = usePuedeUsar(propio);
+  const limpio = nombre.replace(/\s+/g, " ").trim();
+  const valido = limpio.length >= 2 && limpio.length <= 20 && (!rapido || mayor) && !ocupado;
+  const azar = () => { const f = cat && trajeAlAzar(cat, puedeUsar); if (f) setFigura(f as unknown as FiguraV2); };
+  const c = color ?? colorVista(genero);
+  const foto = useFoto(figura, figura ? undefined : semillaDe(limpio || "nuevo"), "busto");
+  useEffect(() => { if (taller) return; const f = (e: KeyboardEvent) => { if (e.key === "Escape") alCerrar(); }; addEventListener("keydown", f); return () => removeEventListener("keydown", f); }, [alCerrar, taller]);
+  if (taller) return <ElegirTraje inicial={figura} propio={propio}
+    alElegir={f => { if (soloFigura) alListo({ nombre: inicial?.nombre ?? "", genero, figura: f }); else { setFigura(f); setTaller(false); } }}
+    alSalir={() => { if (soloFigura) alCerrar(); else setTaller(false); }} />;
+  return (
+    <div className="pl-velo" role="dialog" aria-modal="true" aria-label={titulo} onClick={alCerrar}>
+      <div className="pl-modal" onClick={e => e.stopPropagation()} style={varsColor(c)}>
+        <header className="pl-top"><h2 className="pl-tit"><span>{titulo}</span></h2><button type="button" className="pl-cerrar" onClick={alCerrar} aria-label="Cerrar">✕</button></header>
+        <div className="pl-cuerpo">
+          <div className="pl-vista">
+            <span className="pl-cabina" style={{ "--fj-cab": cabinaDe(c) } as CSSProperties} aria-hidden="true">
+              {foto ? <img key={foto} src={foto} alt="" draggable={false} /> : <span className="fj-cargando" />}
+            </span>
+            <b className="pl-nombre">{limpio || "Nuevo jugador"}</b>
+            <button type="button" className="pl-azar" onClick={() => setTaller(true)}>Elegir personaje</button>
+            <button type="button" className="pl-azar" onClick={azar} disabled={!cat}>🎲 Al azar</button>
+          </div>
+          <div className="pl-datos">
+            <label className="pl-campo"><span>Nombre</span>
+              <input value={nombre} onChange={e => setNombre(e.target.value.slice(0, 20))} maxLength={20} autoComplete="off" autoFocus placeholder="Cómo le dicen" />
+            </label>
+            <div className="pl-chips" role="group" aria-label="Género (para el color)">
+              {GENEROS.map(g => <button key={g.id} type="button" className={"pl-chip" + (genero === g.id ? " si" : "")} aria-pressed={genero === g.id} onClick={() => setGenero(g.id)}>{g.texto}</button>)}
+            </div>
+            {rapido && <>
+              <p className="pl-nota">Se crea su acceso (Usuario y contraseña) para que después entre a ver lo que ganó.</p>
+              <label className="pl-check"><input type="checkbox" checked={mayor} onChange={e => setMayor(e.target.checked)} /><span>Es mayor de 18 y juega con respeto: nadie está obligado a tomar ni a cumplir un reto.</span></label>
+            </>}
+            {error && <p className="pl-error" role="alert">{error}</p>}
+          </div>
+        </div>
+        <button type="button" className="pl-listo" disabled={!valido} onClick={() => alListo({ nombre: limpio, genero, figura })}>{ocupado ? "Creando…" : rapido ? "Crear personaje" : "Agregar al lobby"}</button>
+      </div>
+    </div>
+  );
+}
+
+/** Sin los personajes nuevos: los trajes de antes (trajes-figura.json). */
+function PersonajeViejo({ titulo, inicial, soloFigura, color, alListo, alCerrar, rapido, ocupado, error }: Parameters<typeof PersonajeLocal>[0]) {
   const [mayor, setMayor] = useState(false);
   const trajes = useTrajes();
   const [nombre, setNombre] = useState(inicial?.nombre ?? "");

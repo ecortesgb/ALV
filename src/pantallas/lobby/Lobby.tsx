@@ -218,7 +218,7 @@ export function Lobby({ sala, miembros, yo, soyAnfitrion, final, red, refrescar,
       {acceso && <DatosAcceso p={acceso} enLinea={!local} alListo={() => setAcceso(null)} />}
       {editar && (editar.tipo === "nuevo" || editar.tipo === "figura") && <PersonajeLocal titulo={editar.tipo === "nuevo" ? "Nuevo jugador" : `Figura de ${editar.m.nombre}`} soloFigura={editar.tipo === "figura"}
         inicial={editar.tipo === "figura" ? { figura: editar.m.figura, nombre: editar.m.nombre } : undefined}
-        color={editar.tipo === "figura" ? colorDe(editar.m.id, miembros.map(x => x.id)) : undefined} alListo={guardarPersonaje} alCerrar={() => setEditar(null)} />}
+        color={editar.tipo === "figura" ? colorDe(editar.m.id, miembros.map(x => x.id)) : undefined} propio={editar.tipo === "figura" && editar.m.id === yo} alListo={guardarPersonaje} alCerrar={() => setEditar(null)} />}
     </Marco>
   );
 }
