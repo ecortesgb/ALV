@@ -34,6 +34,8 @@ function Espera({ texto, children }: { texto: string; children?: ReactNode }) {
 export function ElegirTraje({ inicial, propio, alElegir, alSalir }: { inicial?: FiguraV2 | null; propio: boolean; alElegir: (f: FiguraV2) => void; alSalir: () => void }) {
   const { catalogo: cat, estado, reintentar } = useEstadoCatalogoV3();
   const puedeUsar = usePuedeUsar(propio);
+  const { accesorios } = useTienda();
+  const piezaComprada = (id: string) => propio && accesorios.has(id);
   const primera = useMemo(() => (cat ? figuraParaTrajes(cat, inicial) : null), [cat, inicial]);
   const espera = estado === "sin-acceso"
     ? <Espera texto="No se pudieron cargar los personajes. Revisa tu conexión.">
@@ -46,7 +48,7 @@ export function ElegirTraje({ inicial, propio, alElegir, alSalir }: { inicial?: 
   return createPortal(
     cat && primera ? (
       <Suspense fallback={<RaizDS className="az">{espera}</RaizDS>}>
-        <TallerTrajes catalogo={cat} inicial={primera} puedeUsar={puedeUsar} onGuardar={f => alElegir(proyectar(f) as unknown as FiguraV2)} onSalir={alSalir} />
+        <TallerTrajes catalogo={cat} inicial={primera} puedeUsar={puedeUsar} piezaComprada={piezaComprada} onGuardar={f => alElegir(proyectar(f) as unknown as FiguraV2)} onSalir={alSalir} />
       </Suspense>
     ) : <RaizDS className="az">{espera}</RaizDS>,
     document.body,

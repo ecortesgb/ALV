@@ -47,13 +47,46 @@ export const SOBRES: Sobre[] = [
 ];
 export const sobrePorId = (id: string) => SOBRES.find(s => s.id === id) ?? null;
 
-/** Exhibición de portadas. Estos sobres todavía no forman parte del sorteo de la tienda. */
+/** Portadas del sobre de personajes (v1.73: todas traen personajes de cualquier saga; solo cambia la portada). */
 export const SOBRES_PERSONAJES = [
   { id: "marvel", nombre: "Personajes · Marvel", arte: "sobre-personajes-marvel.webp", color: "#fc694e", frase: "Héroes, villanos y Bigfig de Marvel." },
   { id: "dc", nombre: "Personajes · DC", arte: "sobre-personajes-dc.webp", color: "#7abaff", frase: "Figuras de DC para el álbum de personajes." },
   { id: "star-wars", nombre: "Personajes · Star Wars", arte: "sobre-personajes-star-wars.webp", color: "#42d4e8", frase: "Figuras de Star Wars para el álbum de personajes." },
   { id: "harry-potter", nombre: "Personajes · Harry Potter", arte: "sobre-personajes-harry-potter.webp", color: "#d996e8", frase: "Figuras de Harry Potter para el álbum de personajes." },
 ];
+
+/**
+ * Sobres de la tienda v2 (Maestro v1.73, 28 nov). Igual que privado.sobres_alv en 058_tienda_v2.sql (una prueba compara).
+ * Todos traen personajes de cualquier saga: la portada de saga es solo una variante visual del sobre de personajes.
+ * Cada ranura es una carta: «cualquiera» sale personaje 40 %, accesorio 35 % o comodín 25 %. Nada se repite con lo que ya tienes;
+ * si ya no quedan personajes nuevos sale un accesorio, y si tampoco, un comodín.
+ */
+export type IdSobreAlv = "basico" | "accesorios" | "comodines" | "personajes" | "mixto" | "epico";
+export type RanuraSobre = "personaje" | "accesorio" | "comodin" | "cualquiera";
+export interface SobreAlv {
+  id: IdSobreAlv; nombre: string; precio: number; arte: string; color: string; frase: string;
+  ranuras: RanuraSobre[];
+  /** Pesos por rareza de cada personaje o accesorio. */
+  pesos: Record<RarezaSobre, number>;
+  /** La última carta asegura esta rareza si no salió antes. */
+  minimo?: RarezaSobre;
+}
+export const PROB_CUALQUIERA = { personaje: 0.4, accesorio: 0.35, comodin: 0.25 } as const;
+export const SOBRES_ALV: SobreAlv[] = [
+  { id: "basico", nombre: "Sobre básico", precio: 60, arte: "sobre-basico.webp", color: "#3fb6ff", ranuras: ["cualquiera"],
+    pesos: { rara: 80, epica: 17, legendaria: 3 }, frase: "Una carta al azar: personaje, accesorio o comodín." },
+  { id: "accesorios", nombre: "Sobre de accesorios", precio: 120, arte: "sobre-accesorios-v2.webp", color: "#2ee6c5", ranuras: ["accesorio", "accesorio"],
+    pesos: { rara: 75, epica: 20, legendaria: 5 }, frase: "Dos piezas sueltas de trajes especiales para tu personaje." },
+  { id: "comodines", nombre: "Sobre de comodines", precio: 150, arte: "sobre-comodines-v2.webp", color: "#ff3fb4", ranuras: ["comodin", "comodin", "comodin"],
+    pesos: { rara: 100, epica: 0, legendaria: 0 }, frase: "Tres comodines para salvarte en la partida." },
+  { id: "personajes", nombre: "Sobre de personajes", precio: 180, arte: "sobre-personajes-marvel.webp", color: "#fc694e", ranuras: ["personaje", "personaje"],
+    pesos: { rara: 75, epica: 20, legendaria: 5 }, frase: "Dos personajes de cualquier saga." },
+  { id: "mixto", nombre: "Sobre mixto", precio: 200, arte: "sobre-mixto.webp", color: "#b06bff", ranuras: ["personaje", "accesorio", "comodin"],
+    pesos: { rara: 70, epica: 24, legendaria: 6 }, frase: "Un personaje, un accesorio y un comodín." },
+  { id: "epico", nombre: "Sobre épico", precio: 380, arte: "sobre-epico-v2.webp", color: "#ffb21f", ranuras: ["personaje", "personaje", "personaje"],
+    pesos: { rara: 50, epica: 38, legendaria: 12 }, minimo: "epica", frase: "Tres personajes, mínimo uno épico." },
+];
+export const sobreAlvPorId = (id: string) => SOBRES_ALV.find(s => s.id === id) ?? null;
 
 /** Garantía anti-mala-racha: al sobre número N sin esa rareza, una pieza sale de esa rareza o mejor. */
 export const GARANTIA = { epica: 8, legendaria: 25 } as const;

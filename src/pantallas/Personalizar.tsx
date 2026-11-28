@@ -158,8 +158,9 @@ function MiPersonajeApp() {
   const { uid } = useSesion();
   const caps = useCapsulas(uid);
   const { catalogo: cat, estado, reintentar } = useEstadoCatalogoV3();
-  const { demo, catalogoPersonajes, personajes } = useTienda();
+  const { demo, catalogoPersonajes, personajes, accesorios } = useTienda();
   useEffect(() => { void cargarPersonajesTienda(); }, [uid]);
+  const piezaComprada = (id: string) => accesorios.has(id);
   const puedeUsar = (id: string) => rarezaPersonaje(id) === "comun" || personajes.has(id)
     || (!demo && !catalogoPersonajes?.some(c => c.id === id));
   const espacios = caps.slots.map(c => ({ figura: c ? leerV3(c.figura) : null, nombre: c?.nombre ?? "", antes: !!c }));
@@ -172,7 +173,7 @@ function MiPersonajeApp() {
   return (
     <Suspense fallback={null}>
       <MiPersonaje jugador={uid} catalogo={cat} estadoCatalogo={estado} onReintentar={reintentar} espacios={espacios} activa={caps.activa}
-        onGuardar={(i, f, n) => guardarFiguraNueva(uid, i, f, n)} onActivar={activar} onSalir={() => salirPersonalizador(leerCapsulas(uid).slots.some(Boolean))} puedeUsar={puedeUsar} />
+        onGuardar={(i, f, n) => guardarFiguraNueva(uid, i, f, n)} onActivar={activar} onSalir={() => salirPersonalizador(leerCapsulas(uid).slots.some(Boolean))} puedeUsar={puedeUsar} piezaComprada={piezaComprada} />
     </Suspense>
   );
 }

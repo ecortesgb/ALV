@@ -6,7 +6,8 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { escribirCapsulas, leerCapsulas } from "../app/figura3d";
 import { ponerPieza } from "../app/equiparPieza";
 import { sesionAhora } from "../app/sesion";
-import { COMODINES, MONEDAS_DEMO, sobrePorId } from "../content/tienda";
+import { COMODINES, MONEDAS_DEMO, MONEDAS_SI_TOPE, PROB_CUALQUIERA, TOPE_COMODIN, sobreAlvPorId, sobrePorId } from "../content/tienda";
+import { ACCESORIOS, type AccesorioTienda } from "../content/accesoriosTienda";
 import { CARTAS_POR_SOBRE_PERSONAJES, PESO_PERSONAJE, precioSobrePersonajes, type PersonajeEnVenta } from "../content/personajesTienda";
 import { crearAzar } from "../engine/azar";
 import { ORDEN, RACHA_CERO, abrirSobre, type Apertura, type Carta, type Racha } from "../engine/sobresTienda";
@@ -22,36 +23,42 @@ export interface EstadoTienda {
   preciosReposicion: Record<string, number>;
   catalogoPersonajes: PersonajeEnVenta[] | null;
   personajes: ReadonlySet<string>;
+  /** Cartas de accesorio a la venta (058) y las que ya tiene (desbloquean esa pieza en el personalizador). */
+  catalogoAccesorios: AccesorioTienda[] | null;
+  accesorios: ReadonlySet<string>;
   racha: Racha;
   /** Piezas ganadas que todavía no se ven en la colección (punto azul). */ nuevas: Set<string>;
 }
 let estado: EstadoTienda = { activa: !hayNube, demo: !hayNube, monedas: 0, comodines: {}, preciosReposicion: {}, catalogoPersonajes: null,
-  personajes: new Set(), racha: RACHA_CERO, nuevas: new Set() };
+  personajes: new Set(), catalogoAccesorios: null, accesorios: new Set(), racha: RACHA_CERO, nuevas: new Set() };
 const oyentes = new Set<() => void>();
 const fijar = (e: Partial<EstadoTienda>) => { estado = { ...estado, ...e }; oyentes.forEach(f => f()); };
 export const useTienda = () => useSyncExternalStore(f => { oyentes.add(f); return () => oyentes.delete(f); }, () => estado);
 
 // ---------- Demostración ----------
-type Demo = { monedas: number; comodines: Record<string, number>; racha: Racha; nuevas: string[]; personajes: string[] };
+type Demo = { monedas: number; comodines: Record<string, number>; racha: Racha; nuevas: string[]; personajes: string[]; accesorios: string[] };
 const CLAVE = (uid: string) => "alv-tienda-demo-" + (uid.replace(/[^a-zA-Z0-9_-]/g, "").slice(0, 64) || "local");
 function leerDemo(uid: string): Demo {
   try {
     const d = JSON.parse(localStorage.getItem(CLAVE(uid)) ?? "null") as Demo | null;
     if (d && typeof d.monedas === "number") return { monedas: d.monedas, comodines: d.comodines ?? {}, racha: d.racha ?? RACHA_CERO,
-      nuevas: d.nuevas ?? [], personajes: Array.isArray(d.personajes) ? d.personajes : [] };
+      nuevas: d.nuevas ?? [], personajes: Array.isArray(d.personajes) ? d.personajes : [],
+      accesorios: Array.isArray(d.accesorios) ? d.accesorios : [] };
   } catch { /* nada */ }
-  return { monedas: MONEDAS_DEMO, comodines: {}, racha: RACHA_CERO, nuevas: [], personajes: [] };
+  return { monedas: MONEDAS_DEMO, comodines: {}, racha: RACHA_CERO, nuevas: [], personajes: [], accesorios: [] };
 }
 function escribirDemo(uid: string, d: Demo) { try { localStorage.setItem(CLAVE(uid), JSON.stringify(d)); } catch { /* sin espacio */ } }
-const desdeDemo = (d: Demo): Partial<EstadoTienda> => ({ monedas: d.monedas, comodines: d.comodines, racha: d.racha, nuevas: new Set(d.nuevas), personajes: new Set(d.personajes) });
+const desdeDemo = (d: Demo): Partial<EstadoTienda> => ({ monedas: d.monedas, comodines: d.comodines, racha: d.racha, nuevas: new Set(d.nuevas), personajes: new Set(d.personajes), accesorios: new Set(d.accesorios) });
 
 export async function cargarPersonajesTienda() {
   const uid = sesionAhora().uid;
-  if (!hayNube) { fijar({ personajes: new Set(leerDemo(uid).personajes) }); return; }
+  if (!hayNube) { const d = leerDemo(uid); fijar({ personajes: new Set(d.personajes), catalogoAccesorios: [...ACCESORIOS], accesorios: new Set(d.accesorios) }); return; }
   const { data, error } = await cliente!.rpc("estado_personajes_tienda");
   if (uid !== sesionAhora().uid) return;
-  const resultado = !error && data as { catalogo: PersonajeEnVenta[]; personajes: string[] } | null;
-  fijar({ catalogoPersonajes: resultado ? resultado.catalogo : null, personajes: new Set(resultado ? resultado.personajes : []) });
+  const resultado = !error && data as { catalogo: PersonajeEnVenta[]; personajes: string[]; accesorios?: AccesorioTienda[]; mis_accesorios?: string[] } | null;
+  fijar({ catalogoPersonajes: resultado ? resultado.catalogo : null, personajes: new Set(resultado ? resultado.personajes : []),
+    // Sin la 058 no vienen: la venta de accesorios y los sobres nuevos no se muestran.
+    catalogoAccesorios: resultado && resultado.accesorios ? resultado.accesorios : null, accesorios: new Set(resultado ? resultado.mis_accesorios ?? [] : []) });
 }
 
 /** Lee el saldo y lo ganado. Llamar al abrir la tienda. */
@@ -118,10 +125,9 @@ export async function reponerComodin(id: string): Promise<string | null> {
   if (!precio) return "Esta carta todavía no está disponible.";
   if (estado.demo) {
     const uid = sesionAhora().uid, d = leerDemo(uid);
-    if (d.comodines[id] === undefined) return "Primero consigue la carta en un sobre.";
-    if (d.comodines[id] !== 0) return "Todavía tienes copias de esta carta.";
+    if ((d.comodines[id] ?? 0) >= TOPE_COMODIN) return `Ya tienes ${TOPE_COMODIN} copias, el máximo.`;
     if (d.monedas < precio) return `Te faltan ${precio - d.monedas} monedas.`;
-    const nuevo = { ...d, monedas: d.monedas - precio, comodines: { ...d.comodines, [id]: 1 } };
+    const nuevo = { ...d, monedas: d.monedas - precio, comodines: { ...d.comodines, [id]: (d.comodines[id] ?? 0) + 1 } };
     escribirDemo(uid, nuevo);
     fijar(desdeDemo(nuevo));
     return null;
@@ -133,9 +139,10 @@ export async function reponerComodin(id: string): Promise<string | null> {
   if (r.error) {
     const m = r.error.message;
     if (m.includes("saldo")) return "No te alcanzan las monedas.";
-    if (m.includes("copias")) return "Todavía tienes copias de esta carta.";
-    if (m.includes("sobre")) return "Primero consigue la carta en un sobre.";
-    return "No se pudo reponer la carta. Intenta otra vez.";
+    if (m.includes("tope")) return `Ya tienes ${TOPE_COMODIN} copias, el máximo.`;
+    if (m.includes("copias")) return "Todavía tienes copias de esta carta."; // sin la 058
+    if (m.includes("sobre")) return "Primero consigue la carta en un sobre."; // sin la 058
+    return "No se pudo comprar la carta. Intenta otra vez.";
   }
   const d = r.data as { monedas: number; cantidad: number };
   fijar({ monedas: d.monedas, comodines: { ...estado.comodines, [id]: d.cantidad } });
@@ -242,6 +249,118 @@ export async function abrir(id: string): Promise<Apertura | string> {
   agregarPiezasDemo(piezas);
   fijar(desdeDemo(nuevo));
   return a;
+}
+
+// ---------- Tienda v2 (058): sobres de cualquier saga y cartas de accesorio ----------
+type CartaAlv = Extract<Carta, { tipo: "personaje" | "accesorio" | "comodin" | "monedas" }>;
+const nivelR = (r: string) => ORDEN.indexOf(r as never);
+
+/** Tirada local (solo demostración). Mismas reglas que abrir_sobre_alv en el servidor. */
+function tirarAlv(id: string, d: Demo, personajes: readonly PersonajeEnVenta[]): { cartas: CartaAlv[]; comodines: Record<string, number>; extra: number } {
+  const s = sobreAlvPorId(id)!;
+  const tomados = new Set<string>(), comodines = { ...d.comodines }, cartas: CartaAlv[] = [];
+  let mejor = -1, extra = 0;
+  const elegir = <T extends { id: string; rareza: string }>(lista: T[], rar: string) => {
+    if (!lista.length) return null;
+    const dist = (x: T) => Math.abs(nivelR(x.rareza) - nivelR(rar));
+    const min = Math.min(...lista.map(dist)), mejores = lista.filter(x => dist(x) === min);
+    return mejores[Math.floor(Math.random() * mejores.length)]!;
+  };
+  s.ranuras.forEach((ranura, k) => {
+    let tipo: string = ranura;
+    if (tipo === "cualquiera") { const t = Math.random(); tipo = t < PROB_CUALQUIERA.personaje ? "personaje" : t < PROB_CUALQUIERA.personaje + PROB_CUALQUIERA.accesorio ? "accesorio" : "comodin"; }
+    const total = s.pesos.rara + s.pesos.epica + s.pesos.legendaria;
+    let t = Math.random() * total;
+    let rar = t < s.pesos.rara ? "rara" : (t -= s.pesos.rara) < s.pesos.epica ? "epica" : "legendaria";
+    if (s.minimo && k === s.ranuras.length - 1 && mejor < nivelR(s.minimo) && nivelR(rar) < nivelR(s.minimo)) rar = s.minimo;
+    let hecho = false;
+    if (tipo === "personaje") {
+      const x = elegir(personajes.filter(p => !tomados.has(p.id) && !d.personajes.includes(p.id)), rar);
+      if (x) { cartas.push({ tipo: "personaje", id: x.id, rareza: x.rareza }); tomados.add(x.id); mejor = Math.max(mejor, nivelR(x.rareza)); hecho = true; }
+      else tipo = "accesorio";
+    }
+    if (!hecho && tipo === "accesorio") {
+      const x = elegir(ACCESORIOS.filter(a => !tomados.has(a.id) && !tomados.has(a.donante) && !d.accesorios.includes(a.id) && !d.personajes.includes(a.donante)), rar);
+      if (x) { cartas.push({ tipo: "accesorio", id: x.id, rareza: x.rareza }); tomados.add(x.id); mejor = Math.max(mejor, nivelR(x.rareza)); hecho = true; }
+    }
+    if (!hecho) {
+      const c = COMODINES[Math.floor(Math.random() * COMODINES.length)]!;
+      if ((comodines[c.id] ?? 0) >= TOPE_COMODIN) { cartas.push({ tipo: "monedas", cantidad: MONEDAS_SI_TOPE, comodin: c.id }); extra += MONEDAS_SI_TOPE; }
+      else { comodines[c.id] = (comodines[c.id] ?? 0) + 1; cartas.push({ tipo: "comodin", id: c.id, especial: c.especial }); }
+      mejor = Math.max(mejor, 0);
+    }
+  });
+  return { cartas, comodines, extra };
+}
+
+/** Lo mejor al final y la luz de esa carta. */
+function comoApertura(cartas: CartaAlv[]): Apertura {
+  const nivel = (c: CartaAlv) => "rareza" in c ? nivelR(c.rareza) + 1 : 0;
+  const orden = cartas.slice().sort((a, b) => nivel(a) - nivel(b));
+  const ult = orden.at(-1);
+  return { cartas: orden, racha: estado.racha, mejor: ult && "rareza" in ult ? ult.rareza : "rara" };
+}
+
+/** Abre un sobre de la tienda v2. El servidor cobra, tira y entrega; un reintento con el mismo pedido no cobra dos veces. */
+export async function abrirAlv(id: string, catalogoDemo: readonly PersonajeEnVenta[]): Promise<Apertura | string> {
+  const s = sobreAlvPorId(id);
+  if (!s) return "Ese sobre no existe.";
+  if (!estado.activa) return "La tienda abre pronto.";
+  if (estado.monedas < s.precio) return `Te faltan ${s.precio - estado.monedas} monedas.`;
+  const uid = sesionAhora().uid;
+  if (estado.demo) {
+    const d = leerDemo(uid);
+    const r = tirarAlv(id, d, catalogoDemo);
+    const nuevo: Demo = { ...d, monedas: d.monedas - s.precio + r.extra, comodines: r.comodines,
+      personajes: [...d.personajes, ...r.cartas.flatMap(c => c.tipo === "personaje" ? [c.id] : [])],
+      accesorios: [...d.accesorios, ...r.cartas.flatMap(c => c.tipo === "accesorio" ? [c.id] : [])] };
+    escribirDemo(uid, nuevo);
+    fijar(desdeDemo(nuevo));
+    return comoApertura(r.cartas);
+  }
+  if (!cliente || !estado.catalogoAccesorios) return "Los sobres nuevos todavía no están activos.";
+  const datos = { p_sobre: id, p_precio: s.precio, p_pedido: crypto.randomUUID() };
+  let r = await cliente.rpc("abrir_sobre_alv", datos);
+  if (r.error && /fetch|network|failed/i.test(r.error.message)) r = await cliente.rpc("abrir_sobre_alv", datos);
+  if (uid !== sesionAhora().uid) return "Cambió la sesión.";
+  if (r.error) {
+    console.error("abrir_sobre_alv", r.error.message);
+    const m = r.error.message;
+    if (m.includes("precio")) return "El precio cambió. Vuelve a abrir la tienda.";
+    return m.includes("saldo") ? "No te alcanzan las monedas." : "No se pudo abrir el sobre. Intenta otra vez.";
+  }
+  const res = r.data as { cartas: CartaAlv[]; monedas: number };
+  const comodines = { ...estado.comodines };
+  for (const c of res.cartas) if (c.tipo === "comodin") comodines[c.id] = (comodines[c.id] ?? 0) + 1;
+  fijar({ monedas: res.monedas, comodines,
+    personajes: new Set([...estado.personajes, ...res.cartas.flatMap(c => c.tipo === "personaje" ? [c.id] : [])]),
+    accesorios: new Set([...estado.accesorios, ...res.cartas.flatMap(c => c.tipo === "accesorio" ? [c.id] : [])]) });
+  return comoApertura(res.cartas);
+}
+
+/** Compra directa de una carta de accesorio. Devuelve null si salió bien o el mensaje para el jugador. */
+export async function comprarAccesorio(a: AccesorioTienda): Promise<string | null> {
+  const uid = sesionAhora().uid;
+  if (estado.accesorios.has(a.id) || estado.personajes.has(a.donante)) return "Ya tienes esta pieza.";
+  if (estado.monedas < a.precio) return `Te faltan ${a.precio - estado.monedas} monedas.`;
+  if (estado.demo) {
+    const d = leerDemo(uid), nuevo = { ...d, monedas: d.monedas - a.precio, accesorios: [...d.accesorios, a.id] };
+    escribirDemo(uid, nuevo);
+    fijar(desdeDemo(nuevo));
+    return null;
+  }
+  if (!cliente) return "No se pudo completar la compra.";
+  const datos = { p_pieza: a.id, p_precio: a.precio, p_pedido: crypto.randomUUID() };
+  let r = await cliente.rpc("comprar_accesorio", datos);
+  if (r.error && /fetch|network|failed/i.test(r.error.message)) r = await cliente.rpc("comprar_accesorio", datos);
+  if (uid !== sesionAhora().uid) return "Cambió la sesión.";
+  if (r.error) {
+    const m = r.error.message;
+    if (/precio|disponibles/.test(m)) { await cargarPersonajesTienda(); return "Cambió la disponibilidad. Revisa la colección."; }
+    return m.includes("saldo") ? "No te alcanzan las monedas." : "No se pudo completar la compra.";
+  }
+  fijar({ monedas: (r.data as { monedas: number }).monedas, accesorios: new Set([...estado.accesorios, a.id]) });
+  return null;
 }
 
 /** Quita el punto azul de las piezas ya vistas en la colección. */

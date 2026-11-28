@@ -116,6 +116,8 @@ export interface ConstructorProps {
    *  2026-11-25-constructor-diseno-r5). */
   frente?: number;
   puedeUsar?: (id: string) => boolean;
+  /** Pieza suelta conseguida con una carta de accesorio (tienda v2): se usa aunque su personaje esté bloqueado. */
+  piezaComprada?: (id: string) => boolean;
 }
 
 const sinMovimiento = () => typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -128,7 +130,7 @@ function sinMovimientosSi(si: boolean, f: FiguraV3): FiguraV3 {
 const fotoValida = (u: string | null | undefined) => !!u;
 
 export function Constructor({ catalogo, piezas, inicial, seccion, escenaUrl, onGuardar, onSalir, base = null, paginaAnterior = `${ARTE}azotea-pedestal-noche-1920.webp`,
-  estudioUrl = escenaUrl.replace(/escena\.html.*$/, "estudio.html"), frente = 10, puedeUsar }: ConstructorProps) {
+  estudioUrl = escenaUrl.replace(/escena\.html.*$/, "estudio.html"), frente = 10, puedeUsar, piezaComprada }: ConstructorProps) {
   const mini = useMiniaturas(estudioUrl, catalogo);
   const [figura, setFigura] = useState(inicial);
   const [historia, setHistoria] = useState<FiguraV3[]>([]);
@@ -257,7 +259,7 @@ export function Constructor({ catalogo, piezas, inicial, seccion, escenaUrl, onG
   const porConseguir = (it: Item) => {
     if (!puedeUsar || sub === "transformacion") return false; // Elías (27 nov): cualquiera del catálogo, aunque no lo tenga
     if (it.tipo === "traje") return it.versiones ? it.versiones.every(v => !puedeUsar(v)) : !puedeUsar(it.id);
-    return it.tipo === "pieza" && it.pz.origen === "original" && !!it.pz.donante && !puedeUsar(it.pz.donante);
+    return it.tipo === "pieza" && it.pz.origen === "original" && !!it.pz.donante && !puedeUsar(it.pz.donante) && !piezaComprada?.(it.pz.id);
   };
   const ninguno: Item | null = gesto ? { tipo: "mov", op: null } : todas.find(it => origenDe(it) === "ninguna") ?? null;
   const lista = useMemo<Item[]>(() => {
@@ -267,7 +269,7 @@ export function Constructor({ catalogo, piezas, inicial, seccion, escenaUrl, onG
     const orden = [...l.filter(it => !porConseguir(it)), ...l.filter(porConseguir)];
     return ninguno ? [ninguno, ...orden] : orden;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [todas, fuente, sg, g, ninguno, grupoDe, puedeUsar]);
+  }, [todas, fuente, sg, g, ninguno, grupoDe, puedeUsar, piezaComprada]);
   const caja = sub === "traje" || sub === "transformacion" ? cajas.cartas : cajas.piezas;
   const pags = useMemo(() => paginas(lista, caja.columnas * caja.filas), [lista, caja]);
   const p = Math.min(pagina, pags.length - 1);

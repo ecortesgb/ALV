@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { NUMEROS_PERSONAJES } from "../content/numerosPersonajes";
 import { rarezaPersonaje as rareza, type PersonajeEnVenta } from "../content/personajesTienda";
-import { banderaV3, categorias, deCatalogo, nombreSaga, paginas, resolverFigura, tarjetas, useEstadoCatalogoV3, useMiniaturas, type CatalogoV3, type Tarjeta } from "../personajes/integracion";
+import { banderaV3, categorias, nombreSaga, paginas, tarjetas, useEstadoCatalogoV3, type CatalogoV3, type Tarjeta } from "../personajes/integracion";
 import { comprarPersonajes, useTienda } from "../servicios/tienda";
 import { aviso, confirmar } from "./comun";
 import { CartaPersonaje, etiquetaRareza, LOGOS, logo } from "./CartaPersonaje";
@@ -14,7 +14,7 @@ const GRUPOS_MARVEL = new Map([
   ["villanos-marvel", "Villanos"], ["otros-marvel", "Otros"],
 ]);
 
-function LogoSeccion({ id, nombre }: { id: string; nombre: string }) {
+export function LogoSeccion({ id, nombre }: { id: string; nombre: string }) {
   const archivo = id === "guardianes" ? "guardianes-plata" : id === "villanos-marvel" ? "villanos" : id;
   return LOGOS[id] ? <img src={logo(archivo)} alt={nombre} draggable={false} /> : <>{nombre}</>;
 }
@@ -80,7 +80,7 @@ function Figuras({ catalogo, mercado }: { catalogo: CatalogoV3; mercado: readonl
       <p>{mercado ? `${lista.filter(t => rareza(t.id) === "comun" || personajes.has(t.id)).length} de ${lista.length} conseguidas` : `${lista.length} cartas · Vista previa`}</p>
     </div>
     <FormatosGrupo key={`${saga.id}/${grupo.id}`} lista={lista} alElegir={setElegida} ofertas={ofertas} adquiridos={personajes} />
-    {elegida && <DetallePersonaje key={elegida.id} tarjeta={elegida} catalogo={catalogo}
+    {elegida && <DetallePersonaje key={elegida.id} tarjeta={elegida}
       oferta={personajes.has(elegida.id) ? undefined : ofertas.get(elegida.id)} conseguida={personajes.has(elegida.id)}
       alComprar={comprar} alCerrar={() => setElegida(null)} />}
   </>;
@@ -127,29 +127,17 @@ function GrupoFiguras({ titulo, lista, alElegir, ofertas, adquiridos }: ListaFig
   </section>;
 }
 
-function DetallePersonaje({ tarjeta, catalogo, oferta, conseguida, alComprar, alCerrar }: {
-  tarjeta: Tarjeta; catalogo: CatalogoV3; oferta?: PersonajeEnVenta; conseguida: boolean;
+// Foto fija de la carta (Elías, 28 nov): la vista 3D en vivo salía mal en algunos personajes (Vinícius).
+function DetallePersonaje({ tarjeta, oferta, conseguida, alComprar, alCerrar }: {
+  tarjeta: Tarjeta; oferta?: PersonajeEnVenta; conseguida: boolean;
   alComprar: (t: Tarjeta, o: PersonajeEnVenta) => void; alCerrar: () => void;
 }) {
   const dialogo = useRef<HTMLDialogElement>(null);
-  const mini = useMiniaturas(`${import.meta.env.BASE_URL}personajes/estudio.html`, catalogo.catalogo);
-  const plano = useMemo(() => {
-    const entrada = catalogo.catalogo.get(tarjeta.id);
-    return entrada && resolverFigura("album", deCatalogo(entrada.ficha), catalogo.catalogo, catalogo.piezas, catalogo.base);
-  }, [tarjeta.id, catalogo]);
-  const clave = plano ? "album:" + JSON.stringify(plano) : null;
   useEffect(() => { dialogo.current?.showModal(); }, []);
-  useEffect(() => {
-    if (clave && plano && mini.listo) mini.pedirFigura(clave, plano);
-    // El estudio mantiene la cola y evita pedidos duplicados.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [clave, plano, mini.listo]);
   return <dialog ref={dialogo} className="t-album-detalle" aria-label={tarjeta.nombre}
     onClose={alCerrar} onClick={e => { if (e.target === e.currentTarget) e.currentTarget.close(); }}>
-    {mini.marco}
     <div className="t-album-carta">
-      <CartaPersonaje tarjeta={tarjeta} foto={(clave && mini.fotoDe(clave)) || tarjeta.foto} revelada
-        nivel={oferta?.rareza} precio={oferta?.precio} conseguida={conseguida} />
+      <CartaPersonaje tarjeta={tarjeta} revelada nivel={oferta?.rareza} precio={oferta?.precio} conseguida={conseguida} />
     </div>
     {oferta && <button type="button" className="t-ap-todas" onClick={() => {
       dialogo.current?.close();

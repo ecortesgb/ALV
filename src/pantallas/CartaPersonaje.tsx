@@ -4,6 +4,7 @@ import { NUMEROS_PERSONAJES } from "../content/numerosPersonajes";
 import { rarezaPersonaje as rareza } from "../content/personajesTienda";
 import { Icono } from "../ds";
 import { nombreSaga, type Tarjeta } from "../personajes/integracion";
+import { NOMBRE_PARTE, type ParteAccesorio } from "../content/accesoriosTienda";
 import "./carta-personaje.css";
 
 export const etiquetaRareza = (t: Tarjeta, nivel: Rareza) => t.tamano === "grande" && (nivel === "comun" || nivel === "rara")
@@ -18,6 +19,7 @@ export const LOGOS: Record<string, string> = {
   disney: "Disney", increibles: "Los Increíbles", "looney-tunes": "Looney Tunes", simpsons: "Los Simpson",
   "plaza-sesamo": "Plaza Sésamo", muppets: "Los Muppets", "hora-de-aventura": "Hora de Aventura",
   "chicas-superpoderosas": "Las Chicas Superpoderosas",
+  futbol: "FIFA Heroes", // logo de Elías, 2026-11-28
 };
 export const logo = (id: string) => `${import.meta.env.BASE_URL}arte/tienda/sagas/${id}.webp`;
 const CUATRO_FANTASTICOS = new Set(["mr-fantastico", "mujer-invisible", "antorcha-humana", "la-mole"]);
@@ -41,8 +43,10 @@ export function temaDe(t: Tarjeta) {
   return t.saga === "harry-potter" || t.saga === "star-wars" || LOGOS[t.saga] ? t.saga : "alv";
 }
 
-export function CartaPersonaje({ tarjeta, foto = tarjeta.foto, revelada = false, nivel = rareza(tarjeta.id), conseguida = false, precio }: {
+export function CartaPersonaje({ tarjeta, foto = tarjeta.foto, revelada = false, nivel = rareza(tarjeta.id), conseguida = false, precio, accesorio }: {
   tarjeta: Tarjeta; foto?: string | null; revelada?: boolean; nivel?: Rareza; conseguida?: boolean; precio?: number;
+  /** Carta de accesorio (tienda v2): la pieza suelta de ese traje. La foto se acerca a la pieza y el nombre dice cuál es. */
+  accesorio?: ParteAccesorio;
 }) {
   const tema = temaDe(tarjeta);
   const emblema = tarjeta.saga === "dc" ? EMBLEMAS[tarjeta.id] : undefined;
@@ -50,7 +54,7 @@ export function CartaPersonaje({ tarjeta, foto = tarjeta.foto, revelada = false,
   const numero = NUMEROS_PERSONAJES[tarjeta.id];
   const bigfig = tarjeta.tamano === "grande";
   const efecto = nivel === "legendaria" ? nivel : nivel === "epica" || bigfig ? "epica" : undefined;
-  return <span className="t-carta t-carta-personaje" data-tema={tema} data-rareza={nivel}
+  return <span className="t-carta t-carta-personaje" data-tema={tema} data-rareza={nivel} data-accesorio={accesorio}
     data-bigfig={bigfig || undefined} data-revelado={revelada ? efecto : undefined}>
     <span className="t-personaje-cab">
       {LOGOS[tema] ? <img className="t-personaje-logo" src={logo(archivo)} alt={LOGOS[tema]} draggable={false} />
@@ -58,14 +62,14 @@ export function CartaPersonaje({ tarjeta, foto = tarjeta.foto, revelada = false,
       {(emblema || tarjeta.saga === "marvel") && <img className="t-personaje-emblema" src={logo(emblema ?? "lego")} alt="" draggable={false} />}
     </span>
     <span className="t-personaje-escena">
-      <span className="t-personaje-rareza">{etiquetaRareza(tarjeta, nivel)}</span>
+      <span className="t-personaje-rareza">{accesorio ? "Accesorio · " + NOMBRE_RAREZA[nivel] : etiquetaRareza(tarjeta, nivel)}</span>
       {foto ? <img className="t-personaje-foto" src={foto} alt="" loading={revelada ? "eager" : "lazy"} draggable={false} /> : <Icono id="lock" />}
     </span>
     <span className="t-personaje-pie">
-      <span className="t-personaje-nombre" title={tarjeta.nombre}>{tarjeta.nombre}</span>
+      <span className="t-personaje-nombre" title={tarjeta.nombre}>{accesorio ? NOMBRE_PARTE[accesorio] : tarjeta.nombre}</span>
       <span className="t-personaje-edicion">
-        <span>{precio ? `${precio} monedas` : bigfig ? "Bigfig" : nombreSaga(tarjeta.saga)}</span>
-        {numero && <b className="t-personaje-numero">#{numero}</b>}
+        <span>{precio ? `${precio} monedas` : accesorio ? tarjeta.nombre : bigfig ? "Bigfig" : nombreSaga(tarjeta.saga)}</span>
+        {numero && !accesorio && <b className="t-personaje-numero">#{numero}</b>}
         {nivel !== "comun" && !conseguida && <Icono id="lock" />}
       </span>
     </span>

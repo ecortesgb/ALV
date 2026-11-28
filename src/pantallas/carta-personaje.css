@@ -79,6 +79,12 @@
   --escena: repeating-linear-gradient(125deg, transparent 0 7%, #0d091d4d 7% 8%),
     radial-gradient(ellipse at 50% 64%, #765782, #231930 72%);
 }
+.t-carta-personaje[data-tema="futbol"] {
+  --metal: #8ee3ff; --borde: #1f6f8f; --tinta: #071c2a; --cabecera: #0d3650;
+  --escena: repeating-linear-gradient(90deg, #ffffff0d 0 9%, transparent 9% 18%),
+    radial-gradient(ellipse at 50% 108%, #2f9e57 0 28%, transparent 29%),
+    radial-gradient(ellipse at 50% 60%, #3ec6f2, #0b2c4a 76%);
+}
 .t-carta-personaje[data-tema="cuatro-fantasticos"] {
   --metal: #a3e8fc; --borde: #508ca2; --tinta: #0e2537; --cabecera: #23526b;
   --escena: linear-gradient(0deg, #7bd6ee33 1px, transparent 1px) 0 0 / 10px 10px,
@@ -179,4 +185,13 @@
   --metal: #ffe7a2;
   --foil: linear-gradient(133deg, #945629 2%, #fff4c2 17%, #d89c4b 33%, #ffdc77 55%, #fff1b8 75%, #ae6b34);
   box-shadow: 0 0 17px #ffd46a80, 0 5px 12px #0009;
+}
+
+/* Carta de accesorio (tienda v2): la foto del traje se acerca a la pieza; la carta queda más apagada que la del personaje. */
+.t-carta-personaje[data-accesorio] .t-personaje-escena { overflow: hidden; }
+.t-carta-personaje[data-accesorio="sombrero"] .t-personaje-foto { transform: scale(2.3); transform-origin: 50% 6%; }
+.t-carta-personaje[data-accesorio="accesorio"] .t-personaje-foto { transform: scale(1.35); transform-origin: 50% 55%; }
+.t-carta-personaje[data-accesorio] .t-personaje-escena::before {
+  content: ""; position: absolute; inset: 0; z-index: 1; pointer-events: none;
+  background: repeating-linear-gradient(135deg, #ffffff12 0 2px, transparent 2px 9px);
 }
