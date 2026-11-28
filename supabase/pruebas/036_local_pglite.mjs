@@ -432,6 +432,36 @@ if (process.argv.includes("--tienda2")) {
       await falla(`select * from privado.${t}`, [], "permission denied");
     await falla("select privado.monedas_de($1)", [B], "permission denied");
   });
+  // Lo comprado en la tienda se usa en la partida (056, comodines en partida).
+  await admin();
+  await db.exec(`alter table public.eventos add column nombre text;
+    create table public.acciones (id text primary key, partida uuid references public.partidas (id), jugador uuid, tipo text not null
+      constraint acciones_tipo_check check (tipo in ('contestar','carta','mision','pista','control')), datos jsonb);
+    alter table public.acciones enable row level security;
+    insert into public.partidas values ('00000000-0000-0000-0000-0000000000f3', '${EV}', null);`);
+  await db.exec(readFileSync(join(MIG, "056_comodines_en_partida.sql"), "utf8"));
+  const usar = async (carta, comprar = false) => (await uno("select public.usar_comodin($1,$2,$3,$4) r", ["00000000-0000-0000-0000-0000000000f3", "acc-" + pedido(), carta, comprar])).r;
+
+  await prueba("tienda → partida: el comodín comprado en la tienda se gasta en el juego", async () => {
+    await como(D);
+    igual((await usar("cambio")).cantidad, 8);
+    await admin();
+    igual((await uno("select count(*)::int n from public.acciones where jugador = $1 and tipo = 'comodin'", [D])).n, 1);
+  });
+  await prueba("tienda → partida: sin copias se compra en el juego al mismo precio que en la tienda", async () => {
+    await admin(); await db.query("delete from public.comodines_jugador where jugador = $1 and comodin = 'escudo'", [D]);
+    await como(D);
+    const precio = (await uno("select precio_reposicion p from public.comodines_tienda where id = 'escudo'")).p;
+    const antes = await monedas();
+    await falla("select public.usar_comodin($1,$2,$3,false)", ["00000000-0000-0000-0000-0000000000f3", "acc-" + pedido(), "escudo"], "");
+    const r = await usar("escudo", true);
+    igual(r.monedas, antes - precio);
+  });
+  await prueba("tienda → partida: admin compra en el juego sin quedarse sin monedas", async () => {
+    await admin(); await db.query("delete from public.comodines_jugador where jugador = $1", [A]);
+    await como(A);
+    igual((await usar("turno", true)).monedas, 999999);
+  });
 }
 
 console.log(`\nTotal: ${ok} pasan, ${mal} fallan`);
