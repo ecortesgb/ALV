@@ -5,7 +5,7 @@
 // «Omitir» entra ya. TV: pasan solas y se quita en cuanto la partida arranca.
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { createPortal } from "react-dom";
-import { tarjetasCarga, type GrupoTarjeta } from "../../content/comoJugar";
+import { tarjetasCarga, type GrupoTarjeta, type Tarjeta } from "../../content/comoJugar";
 import { ARTE_JUEGOS } from "../../content/arteJuegos";
 import { colorDe } from "../../pantallas/Catalogo";
 import { SinArte, srcArte } from "../../pantallas/TarjetasConfig";
@@ -24,6 +24,22 @@ const ETIQUETA: Record<GrupoTarjeta, string> = { juego: "Cómo se juega", herram
 /** `menu`: el ☰ de la partida (salir o terminar), para que la pantalla de carga no deje a nadie sin salida. */
 export function ComoJugar({ v, modo, alCerrar, menu }: { v: Publico; modo: "tv" | "celular"; alCerrar?: () => void; menu?: ReactNode }) {
   const tarjetas = tarjetasCarga({ juegoId: v.juegoId, modalidad: v.modalidad, herramienta: v.verdadReto?.herramienta, temporizador: v.temporizador, escenario: v.escenario, nave: v.impostor?.nave });
+  const arte = ARTE_JUEGOS[v.juegoId];
+  return <PantallaCarga nombre={nombreJuego(v.juegoId)} color={colorDe(v.juegoId)} tarjetas={tarjetas} arte={arte} modo={modo} alCerrar={alCerrar} menu={menu} />;
+}
+
+/** Tarjeta de carga con los botones del mando que usa (ALV PARTY). */
+export type TarjetaCarga = Tarjeta & { botones?: { src: string; nombre: string }[] };
+
+/**
+ * La pantalla de carga en sí: la usan los juegos de mesa (ComoJugar) y ALV PARTY (pantallas/party/CargaParty.tsx).
+ * `arte`: ilustración de respaldo (dentro de public/arte/). `notaTv`: el texto de abajo en la TV.
+ * `alVuelta`: se llama cuando ya pasaron todas las tarjetas una vez.
+ */
+export function PantallaCarga({ nombre, color, tarjetas, arte, modo, alCerrar, menu, notaTv, alVuelta }: {
+  nombre: string; color: string; tarjetas: TarjetaCarga[]; arte?: string; modo: "tv" | "celular"; alCerrar?: () => void; menu?: ReactNode;
+  notaTv?: string; alVuelta?: () => void;
+}) {
   const total = tarjetas.length;
   const [i, setI] = useState(0);
   const [vuelta, setVuelta] = useState(0); // reinicia la barra de la tarjeta actual
@@ -37,8 +53,8 @@ export function ComoJugar({ v, modo, alCerrar, menu }: { v: Publico; modo: "tv" 
   const ir = (k: number) => { if (!total) return; setI(((k % total) + total) % total); setVuelta(x => x + 1); };
   // Pasan solas y vuelven a empezar.
   useEffect(() => {
-    if (total < 2) return;
-    const t = setTimeout(() => ir(i + 1), SEG * 1000);
+    if (total < 2 && !alVuelta) return;
+    const t = setTimeout(() => { if (i === total - 1) alVuelta?.(); if (total > 1) ir(i + 1); }, SEG * 1000);
     return () => clearTimeout(t);
   }, [i, vuelta, total]); // eslint-disable-line react-hooks/exhaustive-deps
   // Celular: flechas del teclado, Enter para iniciar y Escape para omitir.
@@ -56,12 +72,11 @@ export function ComoJugar({ v, modo, alCerrar, menu }: { v: Publico; modo: "tv" 
   if (!total) return null;
   if (!raiz) return <span ref={ancla} hidden />;
   const l = tarjetas[Math.min(i, total - 1)]!;
-  const arteJuego = ARTE_JUEGOS[v.juegoId];
-  const src = l.imagen && !sinImagen[i] ? srcArte(l.imagen) : arteJuego ? srcArte(arteJuego) : null;
+  const src = l.imagen && !sinImagen[i] ? srcArte(l.imagen) : arte ? srcArte(arte) : null;
   const tocar = (x: number, ancho: number) => { if (modo === "celular") ir(x > ancho * 0.4 ? i + 1 : i - 1); };
 
   return createPortal(
-    <div className={`cg cg-${modo} cg-${l.grupo}`} role="dialog" aria-modal="true" aria-label={`Cargando ${nombreJuego(v.juegoId)}`} style={{ "--tc": colorDe(v.juegoId), "--seg": `${SEG}s` } as CSSProperties}>
+    <div className={`cg cg-${modo} cg-${l.grupo}`} role="dialog" aria-modal="true" aria-label={`Cargando ${nombre}`} style={{ "--tc": color, "--seg": `${SEG}s` } as CSSProperties}>
       {/* Fondo: la misma imagen desenfocada y oscurecida. */}
       <div className="cg-fondo" key={`f${i}`} aria-hidden="true" style={src ? { backgroundImage: `url("${src}")` } : undefined} />
       <div className="cg-velo" aria-hidden="true" />
@@ -72,7 +87,7 @@ export function ComoJugar({ v, modo, alCerrar, menu }: { v: Publico; modo: "tv" 
 
       <header className="cg-cab">
         {modo === "celular" && menu}
-        <span className="cg-juego"><b>{nombreJuego(v.juegoId)}</b><small>{cargado ? "Partida lista" : "Cargando partida…"}</small></span>
+        <span className="cg-juego"><b>{nombre}</b><small>{cargado ? "Partida lista" : "Cargando partida…"}</small></span>
         {modo === "celular" && <button type="button" className="cg-omitir" onClick={alCerrar}>Omitir <span aria-hidden="true">▶▶</span></button>}
       </header>
 
@@ -93,6 +108,7 @@ export function ComoJugar({ v, modo, alCerrar, menu }: { v: Publico; modo: "tv" 
           <h2 className="cg-titulo">{l.titulo}</h2>
           <p>{l.texto}</p>
           {l.consejo && <p className="cg-consejo"><span aria-hidden="true">★</span>{l.consejo}</p>}
+          {"botones" in l && l.botones?.length ? <span className="cg-botones">{l.botones.map(b => <img key={b.src} src={b.src} alt={b.nombre} draggable={false} />)}</span> : null}
         </div>
       </div>
 
@@ -102,7 +118,7 @@ export function ComoJugar({ v, modo, alCerrar, menu }: { v: Publico; modo: "tv" 
           <button type="button" className={"cg-iniciar" + (cargado ? " listo" : "")} disabled={!cargado} onClick={alCerrar}>
             {cargado ? <><span aria-hidden="true">▶</span> ¡Iniciar!</> : <><i className="cg-giro" aria-hidden="true" /> Cargando…</>}
           </button>
-        </> : <p className="cg-nota">{cargado ? "La partida empieza en cuanto alguien juegue en su celular." : "Cargando partida…"}</p>}
+        </> : <p className="cg-nota">{cargado ? notaTv ?? "La partida empieza en cuanto alguien juegue en su celular." : "Cargando partida…"}</p>}
       </footer>
     </div>,
     raiz,
