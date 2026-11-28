@@ -60,7 +60,7 @@ export function aviso(texto: string) {
   avisoActual = { texto, n: mio }; avisar();
   setTimeout(() => { if (avisoActual?.n === mio) { avisoActual = null; avisar(); } }, 3200);
 }
-export interface Pregunta { titulo: string; texto?: string; si: string; no?: string; peligro?: boolean;
+export interface Pregunta { titulo: string; texto?: string; si: string; /** null: sin botón para cancelar (solo avisa). */ no?: string | null; peligro?: boolean;
   /** Lobby nuevo: caja de bloques del color de este jugador (Elías, 25 nov). */
   lobby?: ColorJugador | null }
 let pregunta: (Pregunta & { responder: (v: boolean) => void }) | null = null;
@@ -84,7 +84,7 @@ export function Avisos() {
             <span className="dsp ol a-t2">{p.titulo}</span>
             {p.texto && <p className="a-suave">{p.texto}</p>}
             <div className="a-fila">
-              <button type="button" className="a-plano" onClick={() => p.responder(false)}>{p.no ?? "Cancelar"}</button>
+              {p.no !== null && <button type="button" className="a-plano" onClick={() => p.responder(false)}>{p.no ?? "Cancelar"}</button>}
               <button type="button" className={"d-btn " + (p.peligro ? "k-red" : "k-yel")} autoFocus onClick={() => p.responder(true)}><span className="dsp">{p.si}</span></button>
             </div>
           </div>

@@ -13,7 +13,9 @@ import { cargarPersonajesTienda, useTienda } from "../servicios/tienda";
 import { rarezaPersonaje } from "../content/personajesTienda";
 import { cargarCapsulasNube, guardarCapsulasNube } from "../servicios/cuenta";
 import { enlace } from "../servicios/enlace";
-import { aviso } from "./comun";
+import { aviso, confirmar } from "./comun";
+import { useComprarEnTaller } from "./comprarEnTaller";
+import { tarjetas, type CatalogoV3 } from "../personajes/integracion";
 import { Personalizador } from "./Personalizador";
 
 // Sincronizar con la nube (fase 5, Codex paso4-r1). guardarCapsulasNube() BORRA los espacios ausentes, así que:
@@ -152,6 +154,30 @@ function salirPersonalizador(tieneFigura: boolean): void {
   atras();
 }
 
+/** Al entrar al personalizador, recuerda lo que se desbloqueó desde la última vez (sobres, compras, premios). Una vez por
+ *  novedad y por aparato (Elías, 28 nov: «si se desbloquea algo al entrar a personalizador salga recordando»). */
+function useAvisoNovedades(uid: string, cat: CatalogoV3 | null, personajes: ReadonlySet<string> | null, accesorios: ReadonlySet<string>) {
+  const hecho = useRef("");
+  useEffect(() => {
+    if (!uid || !cat || !personajes || hecho.current === uid) return;
+    hecho.current = uid;
+    const clave = `alv-taller-visto-${uid}`;
+    let antes: { p: string[]; a: string[] } | null = null;
+    try { antes = JSON.parse(localStorage.getItem(clave) ?? "null"); } catch { antes = null; }
+    const ahora = { p: [...personajes], a: [...accesorios] };
+    try { localStorage.setItem(clave, JSON.stringify(ahora)); } catch { /* sin almacenamiento: se avisa cada vez que haya algo */ }
+    const vistosP = new Set(antes?.p ?? []), vistosA = new Set(antes?.a ?? []);
+    const nombres = new Map(tarjetas(cat.catalogo).map(t => [t.id, t.nombre]));
+    const nuevos = ahora.p.filter(id => !vistosP.has(id) && nombres.has(id)).map(id => nombres.get(id)!);
+    const nuevosA = ahora.a.filter(id => !vistosA.has(id)).length;
+    if (!nuevos.length && !nuevosA) return;
+    const lista = nuevos.length > 4 ? `${nuevos.slice(0, 4).join(", ")} y ${nuevos.length - 4} más` : nuevos.join(", ");
+    const acc = nuevosA ? `${nuevosA === 1 ? "1 accesorio nuevo" : `${nuevosA} accesorios nuevos`}` : "";
+    sonar("exito");
+    void confirmar({ titulo: "¡Ya lo tienes!", texto: `${[lista, acc].filter(Boolean).join(" y ")} ya ${nuevos.length + nuevosA === 1 ? "está desbloqueado" : "están desbloqueados"}. Búscalos en Trajes${nuevosA ? " y Accesorios" : ""}.`, si: "¡A probarlo!", no: null });
+  }, [uid, cat, personajes, accesorios]);
+}
+
 const MiPersonaje = lazy(() => import("../personajes/MiPersonaje").then(m => ({ default: m.MiPersonaje })));
 
 function MiPersonajeApp() {
@@ -163,6 +189,8 @@ function MiPersonajeApp() {
   const piezaComprada = (id: string) => accesorios.has(id);
   const puedeUsar = (id: string) => rarezaPersonaje(id) === "comun" || personajes.has(id)
     || (!demo && !catalogoPersonajes?.some(c => c.id === id));
+  const comprar = useComprarEnTaller();
+  useAvisoNovedades(uid, cat, catalogoPersonajes ? personajes : null, accesorios);
   const espacios = caps.slots.map(c => ({ figura: c ? leerV3(c.figura) : null, nombre: c?.nombre ?? "", antes: !!c }));
   const activar = (i: number) => {
     if (!caps.slots[i] || caps.activa === i) return;
@@ -173,7 +201,7 @@ function MiPersonajeApp() {
   return (
     <Suspense fallback={null}>
       <MiPersonaje jugador={uid} catalogo={cat} estadoCatalogo={estado} onReintentar={reintentar} espacios={espacios} activa={caps.activa}
-        onGuardar={(i, f, n) => guardarFiguraNueva(uid, i, f, n)} onActivar={activar} onSalir={() => salirPersonalizador(leerCapsulas(uid).slots.some(Boolean))} puedeUsar={puedeUsar} piezaComprada={piezaComprada} />
+        onGuardar={(i, f, n) => guardarFiguraNueva(uid, i, f, n)} onActivar={activar} onSalir={() => salirPersonalizador(leerCapsulas(uid).slots.some(Boolean))} puedeUsar={puedeUsar} piezaComprada={piezaComprada} alComprar={comprar} />
     </Suspense>
   );
 }

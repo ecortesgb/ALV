@@ -2,6 +2,7 @@
 // personajes anteriores de trajes-figura.json). Es el mismo taller de «Mi personaje», encima del lobby; al guardar regresa
 // la figura nueva (v3 dentro del puente v2, igual que las cápsulas) y no toca las cápsulas de nadie.
 import { Suspense, lazy, useEffect, useMemo, type ReactNode } from "react";
+import { useComprarEnTaller } from "../comprarEnTaller";
 import { createPortal } from "react-dom";
 import { RaizDS } from "../../ds";
 import { figuraParaTrajes, proyectar, useEstadoCatalogoV3 } from "../../personajes/integracion";
@@ -36,6 +37,7 @@ export function ElegirTraje({ inicial, propio, alElegir, alSalir }: { inicial?: 
   const puedeUsar = usePuedeUsar(propio);
   const { accesorios } = useTienda();
   const piezaComprada = (id: string) => propio && accesorios.has(id);
+  const comprar = useComprarEnTaller();
   const primera = useMemo(() => (cat ? figuraParaTrajes(cat, inicial) : null), [cat, inicial]);
   const espera = estado === "sin-acceso"
     ? <Espera texto="No se pudieron cargar los personajes. Revisa tu conexión.">
@@ -48,7 +50,7 @@ export function ElegirTraje({ inicial, propio, alElegir, alSalir }: { inicial?: 
   return createPortal(
     cat && primera ? (
       <Suspense fallback={<RaizDS className="az">{espera}</RaizDS>}>
-        <TallerTrajes catalogo={cat} inicial={primera} puedeUsar={puedeUsar} piezaComprada={piezaComprada} onGuardar={f => alElegir(proyectar(f) as unknown as FiguraV2)} onSalir={alSalir} />
+        <TallerTrajes catalogo={cat} inicial={primera} puedeUsar={puedeUsar} piezaComprada={piezaComprada} alComprar={propio ? comprar : undefined} onGuardar={f => alElegir(proyectar(f) as unknown as FiguraV2)} onSalir={alSalir} />
       </Suspense>
     ) : <RaizDS className="az">{espera}</RaizDS>,
     document.body,

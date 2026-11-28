@@ -118,6 +118,8 @@ export interface ConstructorProps {
   puedeUsar?: (id: string) => boolean;
   /** Pieza suelta conseguida con una carta de accesorio (tienda v2): se usa aunque su personaje esté bloqueado. */
   piezaComprada?: (id: string) => boolean;
+  /** Comprar ahí mismo un personaje bloqueado (Elías, 28 nov). Sin esto, el candado solo avisa que se consigue en la Tienda. */
+  alComprar?: (personaje: string, nombre: string) => void;
 }
 
 const sinMovimiento = () => typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -130,7 +132,7 @@ function sinMovimientosSi(si: boolean, f: FiguraV3): FiguraV3 {
 const fotoValida = (u: string | null | undefined) => !!u;
 
 export function Constructor({ catalogo, piezas, inicial, seccion, escenaUrl, onGuardar, onSalir, base = null, paginaAnterior = `${ARTE}azotea-pedestal-noche-1920.webp`,
-  estudioUrl = escenaUrl.replace(/escena\.html.*$/, "estudio.html"), frente = 10, puedeUsar, piezaComprada }: ConstructorProps) {
+  estudioUrl = escenaUrl.replace(/escena\.html.*$/, "estudio.html"), frente = 10, puedeUsar, piezaComprada, alComprar }: ConstructorProps) {
   const mini = useMiniaturas(estudioUrl, catalogo);
   const [figura, setFigura] = useState(inicial);
   const [historia, setHistoria] = useState<FiguraV3[]>([]);
@@ -335,7 +337,13 @@ export function Constructor({ catalogo, piezas, inicial, seccion, escenaUrl, onG
   const rehacer = () => { if (!futuro.length) return; setHistoria(h => [...h.slice(-29), figura]); setFigura(futuro[0]!); setFuturo(f => f.slice(1)); setGuardado(false); };
   const restablecer = () => { if (figura !== inicial) cambiar(inicial); };
   const tocarItem = (it: Item) => {
-    if (bloqueado(it)) { setAviso("Consigue este personaje en la tienda para usarlo."); return; }
+    if (bloqueado(it)) {
+      // Traje con varias versiones: se abre la lista para comprar la que guste. Traje o pieza de un personaje: se compra aquí.
+      if (it.tipo === "traje" && it.versiones && it.base) { setAbierto(it.base); setPagina(0); setPasa(null); return; }
+      const quien = it.tipo === "traje" ? { id: it.id, nombre: it.nombre } : it.tipo === "pieza" && it.pz.donante ? { id: it.pz.donante, nombre: catalogo.get(it.pz.donante)?.ficha.nombre ?? "este personaje" } : null;
+      if (alComprar && quien) { alComprar(quien.id, quien.nombre); return; }
+      setAviso("Consigue este personaje en la tienda para usarlo."); return;
+    }
     // Traje completo: el personaje tal cual (sin piezas cambiadas); conserva movimientos y extensiones.
     if (it.tipo === "volver") { setAbierto(null); setPagina(0); setPasa(null); return; }
     // Figura grande con versión minifigura: al cambiar una pieza o la piel pasa a ser esa versión.
