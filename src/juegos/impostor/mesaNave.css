@@ -11,8 +11,8 @@
 .D .nv-cel.nm-cel, .D.wide .nv-cel.nm-cel { position: fixed; inset: 0; z-index: 2; display: grid; grid-template-rows: auto minmax(0, 1fr) auto; gap: .5em; margin: 0; border-radius: 0; box-shadow: none;
   padding: calc(env(safe-area-inset-top) + 58px) max(.6em, calc(50% - 30em)) calc(env(safe-area-inset-bottom) + .6em);
   background: radial-gradient(75% 60% at 50% 50%, transparent 40%, rgba(2, 4, 14, .55)), var(--cuarto, none) center / cover no-repeat, #0b1220; }
-.D:has(.pt-host) .nv-cel.nm-cel { padding-bottom: calc(env(safe-area-inset-bottom) + 96px); }
-.D:has(.pt-host .pt-momento) .nv-cel.nm-cel { padding-bottom: calc(env(safe-area-inset-bottom) + 158px); }
+.D:has(.pt-host) .nv-cel.nm-cel { padding-bottom: calc(env(safe-area-inset-bottom) + 84px); }
+.D:has(.pt-host .pt-momento) .nv-cel.nm-cel { padding-bottom: calc(env(safe-area-inset-bottom) + 84px); }
 .D:has(.nm-cel) .pt-top { position: relative; z-index: 3; }
 .D .nm-cel > .nv-cel-cab, .D .nm-cel > .nv-accion { position: relative; z-index: 1; }
 .D .nm-cel > .nv-cel-cab { grid-row: 1; padding: .45em .5em; border-radius: 16px; background: rgba(6, 10, 30, .72); backdrop-filter: blur(4px); }

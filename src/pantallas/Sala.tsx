@@ -276,10 +276,11 @@ export function Sala({ codigo }: { codigo: string }) {
     const ico = (n: string) => `${import.meta.env.BASE_URL}arte/ui/${n}.webp`;
     return (
       <Marco clase={"az pt" + (!copas && v.escenario ? " pt-esc" : "")} fondo={!copas && v.escenario ? <FondoEscenario escenario={v.escenario} /> : <FondoCuarto oscuro />} fijo={soyAnfitrion && !copas ? (
-        // Barra del anfitrión con el arte nuevo (Elías, 23 nov): sin los iconos del sistema de diseño viejo.
+        // Herramientas del anfitrión (Elías, 28 nov): ya no son una barra fija que tapa el juego; un botón abajo a la
+        // izquierda que solo ve el anfitrión las abre. «Siguiente ronda» sigue a la vista cuando toca.
         <nav className={"pt-host" + (sinPantalla ? " a-sin-pantalla" : "")} aria-label="Controles del anfitrión" {...inerte(sinPantalla)}>
           {v.fase === "revelada" && !sinPantalla && <button type="button" className="pt-momento" onClick={() => void control(pid, "siguiente")}>{ultima ? "Ver resultados" : "Siguiente ronda"}</button>}
-          <div className="pt-host-fila">
+          <HerramientasAnfitrion pausada={!!v.pausada}>
             <button type="button" className="pt-hb" onClick={() => void control(pid, v.pausada ? "reanudar" : "pausar")}><b className="pt-hb-txt">{v.pausada ? "▶" : "❚❚"}</b><small>{v.pausada ? "Seguir" : "Pausar"}</small></button>
             <button type="button" className="pt-hb" onClick={() => void (v.fase === "contestando" ? control(pid, "saltar") : control(pid, "siguiente"))}><img src={ico("configurar/omitir")} alt="" /><small>Saltar</small></button>
             <button type="button" className="pt-hb" onClick={() => void control(pid, "ruleta")}><img src={ico("configurar/herr-ruleta")} alt="" /><small>Ruleta</small></button>
@@ -287,7 +288,7 @@ export function Sala({ codigo }: { codigo: string }) {
             {/* Terminar y salir solo en el celular del anfitrión (Elías, 24 nov): ya no van abajo del juego para todos. */}
             <button type="button" className="pt-hb" onClick={() => void terminarPartida()}><b className="pt-hb-txt">⏹</b><small>Terminar</small></button>
             <button type="button" className="pt-hb peligro" onClick={() => void salir()}><b className="pt-hb-txt">✕</b><small>{local ? "Cerrar" : "Cerrar sala"}</small></button>
-          </div>
+          </HerramientasAnfitrion>
         </nav>
       ) : menu}>
         <div className={"pt-caja" + (soyAnfitrion && !copas ? " con-barra" : "")}>
@@ -378,6 +379,28 @@ function leerVistos(pid: string): string[] {
   try { const x = JSON.parse(sessionStorage.getItem(claveVistos(pid)) ?? "[]"); return Array.isArray(x) ? x.filter((i): i is string => typeof i === "string") : []; } catch { return []; }
 }
 function guardarVistos(pid: string, ids: string[]) { try { sessionStorage.setItem(claveVistos(pid), JSON.stringify(ids)); } catch { /* sin almacenamiento: se recuerda mientras siga abierta */ } }
+
+/** Botón de herramientas del anfitrión: cerrado solo ocupa un botón abajo a la izquierda; abierto muestra las
+ *  herramientas encima. Se cierra al elegir una, con Escape o tocando fuera. */
+function HerramientasAnfitrion({ pausada, children }: { pausada: boolean; children: React.ReactNode }) {
+  const [abierto, setAbierto] = useState(false);
+  const caja = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!abierto) return;
+    const tecla = (e: KeyboardEvent) => { if (e.key === "Escape") setAbierto(false); };
+    const fuera = (e: PointerEvent) => { if (!caja.current?.contains(e.target as Node)) setAbierto(false); };
+    addEventListener("keydown", tecla); addEventListener("pointerdown", fuera);
+    return () => { removeEventListener("keydown", tecla); removeEventListener("pointerdown", fuera); };
+  }, [abierto]);
+  return (
+    <div ref={caja} className={"pt-herr" + (abierto ? " abierto" : "")}>
+      {abierto && <div className="pt-host-fila" onClick={e => { if ((e.target as HTMLElement).closest("button")) setAbierto(false); }}>{children}</div>}
+      <button type="button" className="pt-herr-btn" aria-expanded={abierto} aria-label={abierto ? "Cerrar herramientas del anfitrión" : "Herramientas del anfitrión"} onClick={() => setAbierto(a => !a)}>
+        {abierto ? <b className="pt-hb-txt">✕</b> : <img src={`${import.meta.env.BASE_URL}arte/ui/configurar/sec-herramienta.webp`} alt="" />}<small>{abierto ? "Ocultar" : pausada ? "En pausa" : "Herramientas"}</small>
+      </button>
+    </div>
+  );
+}
 
 /** Menú de la partida (botón ☰ arriba a la izquierda): pausar y terminar (anfitrión) y salir. Cada opción confirma lo suyo. */
 function MenuPartida({ pausada, alPausar, alTerminar, alSalir, salirTxt }: { pausada?: boolean; alPausar?: () => void; alTerminar?: () => void; alSalir: () => void; salirTxt: string }) {

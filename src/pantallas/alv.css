@@ -17,6 +17,10 @@ body { overscroll-behavior: none; -webkit-tap-highlight-color: transparent; }
 .D.alv .d-btn:active { transition-duration: 80ms; }
 .D.alv .d-btn small { display: block; font: var(--cuerpo-chico); opacity: .95; }
 .D.alv .d-btn > span:not(.d-badge) { min-width: 0; }
+/* Con texto chico al lado, el título no se encoge debajo de él (se enciman: «Terminé» en Mímica; Elías, 28 nov). */
+.D.alv .d-btn:has(> small) { flex-wrap: wrap; row-gap: .15em; }
+.D.alv .d-btn:has(> small) > .dsp { flex-shrink: 0; }
+.D.alv .d-btn:has(> small) > small { flex: 1 1 9em; }
 .D.alv .d-btn .dsp { font-size: var(--t3); }
 .D.alv .d-play .dsp { font-size: var(--t1); }
 .D.alv .d-play .ic { font-size: 2.2em; }

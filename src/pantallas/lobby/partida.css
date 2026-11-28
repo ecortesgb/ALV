@@ -20,7 +20,7 @@
 
 /* ---------- Pantalla de partida ---------- */
 .D .pt-caja { position: relative; display: flex; flex-direction: column; gap: 12px; width: min(720px, 100%); margin: 0 auto; padding-bottom: 12px; }
-.D .pt-caja.con-barra { padding-bottom: 150px; }
+.D .pt-caja.con-barra { padding-bottom: 84px; }
 .D .pt-top { display: flex; align-items: flex-start; justify-content: center; gap: 12px; }
 .D .pt-banner { margin-top: calc(var(--az-pad) * -1); }
 .D .pt-mia { align-self: flex-start; padding: 8px 18px 8px 8px; border-radius: 16px; background: rgba(10, 14, 40, .72); border: 1px solid rgba(255, 255, 255, .16);
@@ -38,9 +38,18 @@
 .D .pt-salidas .lb-listo { max-width: 320px; }
 
 /* ---------- Barra del anfitrión ---------- */
-.D .pt-host { position: fixed; left: 50%; bottom: max(10px, env(safe-area-inset-bottom)); translate: -50% 0; z-index: 20; display: flex; flex-direction: column; align-items: center; gap: 8px;
-  width: min(560px, calc(100% - 20px)); padding: 10px; border-radius: 20px; background: rgba(10, 14, 40, .9); border: 1px solid rgba(255, 255, 255, .18);
-  box-shadow: 0 -6px 24px rgba(0, 0, 0, .4); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); }
+/* El nav no tapa nada: solo ubica «Siguiente ronda» (abajo al centro) y el botón de herramientas (abajo a la izquierda). */
+.D .pt-host { position: fixed; inset: auto 0 max(10px, env(safe-area-inset-bottom)); z-index: 20; display: flex; justify-content: center; pointer-events: none; }
+.D .pt-host > * { pointer-events: auto; }
+.D .pt-host > .pt-momento { width: min(420px, calc(100% - 160px)); }
+.D .pt-herr { position: fixed; left: 10px; bottom: max(10px, env(safe-area-inset-bottom)); display: flex; flex-direction: column; align-items: flex-start; gap: 8px; }
+.D .pt-herr.abierto .pt-host-fila { width: min(560px, calc(100vw - 20px)); padding: 10px; border-radius: 20px; background: rgba(10, 14, 40, .94); border: 1px solid rgba(255, 255, 255, .18);
+  box-shadow: 0 -6px 24px rgba(0, 0, 0, .45); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); }
+.D .pt-herr-btn { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; width: 64px; height: 64px; cursor: pointer; border-radius: 18px; color: #fff;
+  border: 1px solid rgba(255, 255, 255, .25); background: rgba(10, 14, 40, .85); box-shadow: 0 4px 14px rgba(0, 0, 0, .4); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
+.D .pt-herr-btn .pt-hb-txt, .D .pt-herr-btn img { width: 30px; height: 30px; font-size: 22px; object-fit: contain; filter: drop-shadow(0 3px 3px rgba(0, 0, 0, .4)); }
+.D .pt-herr-btn small { font: 800 10px/1 var(--f-texto); white-space: nowrap; }
+.D .pt-herr-btn:focus-visible { outline: 3px solid #fff; outline-offset: 2px; }
 .D .pt-host-fila { display: grid; grid-template-columns: repeat(auto-fit, minmax(80px, 1fr)); gap: 8px; width: 100%; }
 .D .pt-hb { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; min-height: 64px; padding: 6px; cursor: pointer; border-radius: 14px;
   border: 1px solid rgba(255, 255, 255, .2); background: linear-gradient(180deg, rgba(255, 255, 255, .12), rgba(255, 255, 255, .04)); color: #fff; transition: transform .14s ease; }
