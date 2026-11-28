@@ -51,7 +51,9 @@ export function EntrarCuenta({ alEntrar, alCerrar }: { alEntrar: (usuario: strin
     e?.preventDefault();
     if (ocupado) return;
     setOcupado(true); setError(null);
-    const fallo = await alEntrar(usuario, clave);
+    // Si algo truena, el formulario no se queda en «Entrando…» sin poder cerrarse (auditoría 28 nov).
+    let fallo: string | null;
+    try { fallo = await alEntrar(usuario, clave); } catch { fallo = "No se pudo. Intenta otra vez."; }
     setOcupado(false);
     if (fallo) setError(fallo);
   };

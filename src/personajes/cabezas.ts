@@ -22,8 +22,12 @@ export const CABEZAS_CON_CARA: ReadonlySet<Id> = new Set([
   "cristiano-ronaldo-united-2008", "cristiano-ronaldo-madrid-2018", "omni-man", "homelander",
 ]);
 
-/** Personajes cuyas piezas no se ofrecen: su cabeza gigante va en el torso y se encima con la cabeza normal. */
-export const DONANTES_FUERA: ReadonlySet<Id> = new Set(["modok"]);
+/** Personajes ocultos en todo (taller, álbum, tienda, sobres). Nova: su modelo no trae la cara (Elías, 28 nov: «ocultarla
+ *  hasta arreglarla»). Quien ya la tiene puesta la sigue viendo. En la base se apagó con 060_ocultar_nova.sql. */
+export const PERSONAJES_OCULTOS: ReadonlySet<Id> = new Set(["nova"]);
+
+/** Personajes cuyas piezas no se ofrecen: MODOK (su cabeza gigante va en el torso y se encima con la normal) y los ocultos. */
+export const DONANTES_FUERA: ReadonlySet<Id> = new Set(["modok", ...PERSONAJES_OCULTOS]);
 
 /** Versión minifigura de una figura grande: al cambiarle una pieza, la figura pasa a ser esa (Hulk → Bruce Banner). */
 export const VERSION_MINIFIG: Readonly<Record<Id, Id>> = { hulk: "bruce-banner" };

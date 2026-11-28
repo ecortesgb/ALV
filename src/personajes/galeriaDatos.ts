@@ -2,6 +2,7 @@
 // (bando y tamaño), favoritos y páginas que se pasan de lado (sin bajar).
 import type { Catalogo } from "./plano";
 import type { Bando, Id } from "./tipos";
+import { PERSONAJES_OCULTOS } from "./cabezas";
 
 export interface Tarjeta {
   id: Id; nombre: string; saga: Id; grupo: Id; bando: Bando; familia: Id;
@@ -37,6 +38,7 @@ export function tarjetas(catalogo: Catalogo, opciones: { conBorradores?: boolean
   const fuera: Tarjeta[] = [];
   for (const { ficha: f, base } of catalogo.values()) {
     if (!VISIBLES.has(f.calidad.estado) && !opciones.conBorradores) continue;
+    if (PERSONAJES_OCULTOS.has(f.id) && !opciones.conBorradores) continue;
     const foto = /\.webp$|\.png$|\.jpg$/i.test(f.fotos.tarjeta) && !/no-hay/.test(f.fotos.tarjeta) ? new URL(f.fotos.tarjeta, base).href : null;
     fuera.push({ id: f.id, nombre: f.nombre, saga: f.saga, grupo: f.grupo, bando: f.bando, familia: f.familia,
       tamano: f.familia === "bigfig" ? "grande" : "normal", foto, prueba: !!opciones.pruebas?.has(f.id) });

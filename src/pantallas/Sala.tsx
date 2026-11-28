@@ -24,7 +24,7 @@ import { esPublico, marcador, nombreJuego, quedan, type Publico } from "../juego
 import { control, entregarCopas, jugada, useMotor } from "../roles/pantalla/motor";
 import { AnuncioDiscusion, PapelNave, useAnuncioDiscusion } from "../juegos/impostor/papelNave";
 import { esFinalDeJuego } from "../juegos/general/Copas";
-import { useSala } from "../roles/sala";
+import { arrancando, quitarArranque, useSala } from "../roles/sala";
 import { Marco, aviso, confirmar } from "./comun";
 import { colorDe, varsColor } from "../app/colorJugador";
 import { MedallonJugador } from "./azotea/Cabecera";
@@ -34,6 +34,7 @@ import { BotonCast } from "./lobby/Cast";
 import { MesaJuego } from "./MesaJuego";
 import { useGestosSala } from "../servicios/gestosSala";
 import { anotarCarta } from "../app/cartasSalieron";
+import { AccionesALaVista } from "./lobby/AccionesALaVista";
 
 /** Mantiene la pantalla encendida mientras `activo` (la Pantalla y el celular que hace de Pantalla). */
 export function useDespierta(activo: boolean) {
@@ -170,12 +171,20 @@ export function Sala({ codigo }: { codigo: string }) {
   // Al empezar una partida, cada quien se quita el «listo» para la siguiente espera.
   const enJuego = !!s.partida && !s.partida.terminada;
   useEffect(() => { if (enJuego && listoYo && s.sala) void enlace.marcarListo(s.sala, false).then(s.refrescar); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [enJuego, s.partida?.id, listoYo]);
+  const hayJuego = !!v;
+  useEffect(() => { if (hayJuego) quitarArranque(codigo); }, [hayJuego, codigo]);
+  // Si la partida no llega en 12 s, se vuelve a pintar (sale el lobby y nadie se queda atorado).
+  const [, setReintento] = useState(0);
+  useEffect(() => { if (hayJuego || !arrancando(codigo)) return; const t = setTimeout(() => setReintento(x => x + 1), 12_100); return () => clearTimeout(t); }, [hayJuego, codigo]);
   const nRuleta = v?.ruleta?.n ?? 0;
   useEffect(() => { if (v?.ruleta && nRuleta > 0) aviso(`Ruleta: ${v.jugadores.find(j => j.id === v.ruleta!.jugador)?.nombre ?? ""} · ${v.ruleta.texto}`); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [nRuleta]);
 
   if (s.error) return <AvisoCuarto titulo="No se pudo entrar" texto={s.error}><button type="button" className="lb-listo" onClick={() => ir("inicio")}>Volver</button></AvisoCuarto>;
   if (s.cerrada) return <AvisoCuarto titulo="La sala se cerró" texto="El anfitrión terminó la sesión."><button type="button" className="lb-listo" onClick={() => ir("inicio")}>Ir al inicio</button></AvisoCuarto>;
   if (!s.sala) return <AvisoCuarto titulo="Entrando al lobby…" />;
+  // Auditoría 28 nov: al iniciar, la sala ya no enseña el lobby unos segundos mientras llega la partida.
+  if (!v && arrancando(codigo)) return <AvisoCuarto titulo="Empezando la partida…" />;
+  if (!v && !s.listo && !s.partida && s.miembros.length === 0) return <AvisoCuarto titulo="Entrando al lobby…" />;
   const sala = s.sala, pid = s.partida?.id ?? "";
 
   const salir = async () => {
@@ -292,6 +301,7 @@ export function Sala({ codigo }: { codigo: string }) {
         </nav>
       ) : menu}>
         <div className={"pt-caja" + (soyAnfitrion && !copas ? " con-barra" : "")}>
+          <AccionesALaVista clave={`${v.ronda}-${v.fase}-${v.carta?.id ?? ""}`} />
           <header className="pt-top">
             <div className="lb-banner pt-banner">
               {!copas && <span className="lb-banner-n">{v.impostor ? `Vuelta ${v.ronda}` : `${v.ronda}/${v.totalRondas}`}</span>}
@@ -346,8 +356,8 @@ export function Sala({ codigo }: { codigo: string }) {
   const copasNoche = async () => {
     if (!(await confirmar({ titulo: "¿Entregar las copas?", texto: "Se suman los puntos de todos los juegos de la noche y se anuncian los ganadores.", si: "Entregar copas" }))) return;
     setCopando(true);
-    const ok = await entregarCopas(sala, s.miembros);
-    setCopando(false);
+    let ok = false;
+    try { ok = await entregarCopas(sala, s.miembros); } catch { ok = false; } finally { setCopando(false); }
     if (!ok) aviso("No se pudieron entregar las copas. Intenta otra vez."); else { sonar("exito"); s.refrescar(); }
   };
   return <>

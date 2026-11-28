@@ -76,8 +76,10 @@ function armarGruposBase(jugadores: Jugador[], op: OpcionesPartida): { jugadores
       const de = (g: string) => jugadores.filter(j => elegidas[j.id] === g);
       if (ids.some(g => de(g).length !== 2)) return null;
       const orden = ids.sort((x, y) => Number(x.slice(1)) - Number(y.slice(1)));
+      // La pareja del motor (¿Cuánto conoces?, Dados HOT, {pareja}) es la que eligió el anfitrión, no la del orden de llegada
+      // (auditoría 28 nov: antes se quedaba `parejaDe` por llegada y la pregunta y los puntos iban a parejas distintas).
       return {
-        jugadores: jugadores.map(j => ({ ...j, equipo: elegidas[j.id]! })),
+        jugadores: jugadores.map(j => ({ ...j, equipo: elegidas[j.id]!, parejaDe: de(elegidas[j.id]!).find(o => o.id !== j.id)!.id })),
         equipos: orden.map(g => ({ id: g, nombre: de(g).map(j => j.nombre).join(" y ") })),
       };
     }
