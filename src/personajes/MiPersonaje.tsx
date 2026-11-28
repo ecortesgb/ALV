@@ -163,3 +163,17 @@ export function MiPersonaje({ catalogo, estadoCatalogo = catalogo ? "listo" : "c
     </RaizDS>
   );
 }
+
+/** Lobby (Elías, 28 nov): el mismo taller abierto en Trajes para elegir la figura de un jugador, a pantalla completa sobre el
+ *  lobby. No toca las cápsulas: entrega la figura y quien la pidió decide dónde va. */
+export function TallerTrajes({ catalogo, inicial, puedeUsar, onGuardar, onSalir }: {
+  catalogo: CatalogoV3; inicial: FiguraV3; puedeUsar?: (id: string) => boolean; onGuardar: (f: FiguraV3) => void; onSalir: () => void;
+}) {
+  const ancho = typeof innerWidth === "number" && innerWidth >= 860;
+  return (
+    <RaizDS ancho={ancho} className="az" style={{ position: "fixed", inset: 0, overflow: "hidden", zIndex: 80 }}>
+      <Constructor catalogo={catalogo.catalogo} piezas={catalogo.piezas} base={catalogo.base ?? null} inicial={inicial} escenaUrl={ESCENA} seccion="trajes"
+        paginaAnterior={null} puedeUsar={puedeUsar} onGuardar={onGuardar} onSalir={onSalir} />
+    </RaizDS>
+  );
+}

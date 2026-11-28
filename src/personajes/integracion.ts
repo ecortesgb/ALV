@@ -9,7 +9,7 @@
 import { useEffect, useState } from "react";
 import { cliente } from "../servicios/cliente";
 import { fuentePrivada } from "../servicios/personajesPrivados";
-import { BASE_CREAR, piezasDeCatalogo, planoConstructor, type PiezaCons, type Piezas } from "./constructorDatos";
+import { BASE_CREAR, figuraInicial, piezasDeCatalogo, planoConstructor, type PiezaCons, type Piezas } from "./constructorDatos";
 import { piezasGenericas } from "./genericas";
 import { baseGenerica, conMovimientos, type BaseGenerica } from "./movimientos";
 import { leerFigura } from "./figura";
@@ -17,6 +17,7 @@ import { caretaEn, conEspecialAlSalir, cuantasFormas, figuraEnForma, type Careta
 import { cargarIndice, type Indice } from "./indice";
 import { movimientosDeFicha, poderesDeFicha, resolver, type Catalogo } from "./plano";
 import { SETS } from "./sets";
+import { DONANTES_FUERA } from "./cabezas";
 import { PERFIL_PERSONAJE, type PerfilPersonaje } from "./caracter";
 import type { FiguraV3, Plano } from "./tipos";
 export type { FiguraV3 } from "./tipos";
@@ -310,3 +311,20 @@ export function movimientosDe(f: unknown, cat: CatalogoV3 | null): SetRueda[] {
 export { deCatalogo } from "./figura";
 export { categorias, nombreSaga, paginas, tarjetas, type Tarjeta } from "./galeriaDatos";
 export { useMiniaturas } from "./useMiniaturas";
+
+// ---------- Lobby: elegir la figura de un jugador en Trajes (Elías, 28 nov) ----------
+
+/** La figura del taller con la que se abre Trajes para un jugador: la suya si ya es nueva; si no, el civil base. */
+export function figuraParaTrajes(cat: CatalogoV3, antes: unknown): FiguraV3 | null {
+  return leerV3(antes) ?? figuraInicial(cat.catalogo, null);
+}
+
+/** Un personaje del catálogo al azar (de los que puede usar), tal cual viene, ya en la forma de la app (puente). */
+export function trajeAlAzar(cat: CatalogoV3, puedeUsar: (id: string) => boolean): FiguraV2Puente | null {
+  const base = figuraInicial(cat.catalogo, null);
+  if (!base) return null;
+  const lista = [...cat.catalogo.values()].filter(e => (e.ficha.familia === "minifig" || e.ficha.familia === "bigfig") && !DONANTES_FUERA.has(e.ficha.id) && puedeUsar(e.ficha.id));
+  const e = lista[Math.floor(Math.random() * lista.length)];
+  if (!e) return null;
+  return proyectar({ ...base, familia: e.ficha.familia, origen: { tipo: "catalogo", personaje: e.ficha.id, version: "base", revision: 1 }, piezas: {} });
+}
