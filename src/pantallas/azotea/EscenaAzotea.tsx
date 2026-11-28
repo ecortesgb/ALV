@@ -67,7 +67,7 @@ export const EscenaAzotea = forwardRef<MandoAzotea, { id: string; figura: Figura
       // Transformaciones (formas.ts): la figura va en su forma de ahora.
       const fz = d.figura ? conForma({ id: d.id, figura: d.figura }, catV3.current) : null;
       const fg = (fz?.figura ?? null) as typeof d.figura;
-      enviar({ tipo: "figuras", lista: [fz && fg ? paraEscena({ id: d.id, figura: d.vida ? soloApariencia(fg) : fg, anim: d.vida ? { ...animacionDe(fg), ...animPerfil(fg, hay) } : animacionDe(fg), ...(fz.transforma ? { transforma: fz.transforma, conEspecial: fz.conEspecial, careta: fz.careta } : {}) }, catV3.current) : { id: d.id, semilla: semillaDe(d.id) }] });
+      enviar({ tipo: "figuras", lista: [fz && fg ? paraEscena({ id: d.id, figura: d.vida ? soloApariencia(fg) : fg, anim: d.vida ? { ...animacionDe(fg), ...animPerfil(fg, hay) } : animacionDe(fg), ...(fz.transforma ? { transforma: fz.transforma, conEspecial: fz.conEspecial, careta: fz.careta, aura: fz.aura } : {}) }, catV3.current) : { id: d.id, semilla: semillaDe(d.id) }] });
     };
     useEffect(() => {
       const f = (e: MessageEvent) => {

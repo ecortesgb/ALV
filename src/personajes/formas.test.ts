@@ -1,12 +1,12 @@
 import { describe, expect, it } from "vitest";
 import type { PiezaCons, Piezas } from "./constructorDatos";
 import { deCatalogo } from "./figura";
-import { caretaEn, conEspecialAlSalir, cuantasFormas, figuraEnForma } from "./formas";
+import { auraEn, caretaEn, conEspecialAlSalir, cuantasFormas, figuraEnForma } from "./formas";
 import type { Catalogo } from "./plano";
 import type { Ficha, FiguraV3 } from "./tipos";
 
 const ficha = (id: string, familia = "minifig") => ({ id, nombre: id, familia, glb: id + ".glb", fotos: { tarjeta: "", busto: "" } }) as unknown as Ficha;
-const IDS = ["bruce-banner", "hulk", "tony-stark", "iron-man", "peter-parker", "spider-man", "batman", "hulkbuster", "mistica", "gwen-stacy", "pepper-potts"];
+const IDS = ["bruce-banner", "hulk", "tony-stark", "iron-man", "peter-parker", "spider-man", "batman", "hulkbuster", "mistica", "gwen-stacy", "pepper-potts", "antorcha-humana", "mujer-invisible", "mr-fantastico"];
 const catalogo: Catalogo = new Map(IDS.map(id => [id, { ficha: ficha(id, id === "hulk" ? "bigfig" : "minifig"), base: "https://x/" + id + "/" }]));
 const pieza = (id: string, parte: string, donante: string | null): PiezaCons =>
   ({ id, nombre: id, parte, glb: donante ? donante + ".glb" : "", ranuras: [parte], foto: null, donante, familia: donante ? "minifig" : null, origen: donante ? "original" : "ninguna", grupo: "" }) as PiezaCons;
@@ -38,6 +38,15 @@ describe("transformaciones", () => {
     const h = figuraEnForma(de("peter-parker"), 1, catalogo, piezas);
     expect(quien(h)).toBe("spider-man");
     expect(h.extensiones.alv?.apodo).toBe("Yo");
+  });
+  it("los 4 Fantásticos se transforman en su poder (misma figura, poder puesto)", () => {
+    for (const [id, aura] of [["antorcha-humana", "llamas"], ["mujer-invisible", "invisible"], ["mr-fantastico", "elastico"]] as const) {
+      const f = de(id);
+      expect(cuantasFormas(f)).toBe(2);
+      expect(figuraEnForma(f, 1, catalogo, piezas)).toBe(f);
+      expect(auraEn(f, 1)).toBe(aura);
+      expect(auraEn(f, 0)).toBeNull();
+    }
   });
   it("Iron Man: careta arriba (misma figura), luego Tony, luego Iron Man otra vez", () => {
     const im = de("iron-man");

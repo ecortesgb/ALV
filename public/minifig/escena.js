@@ -823,6 +823,7 @@
   }
   function quitar(id) {
     const x = figuras.get(id); if (!x) return;
+    if (x.aura) { x.aura.fx.fin(); x.aura = null; }
     if (x.v3) { scene.remove(x.obj); x.v3.quitar(); figuras.delete(id); return; } // libera solo lo suyo (no el dispose viejo)
     if (x.cara) { x.cara.malla.material.map = x.cara.base; [x.cara.parpadeo, x.cara.sonrisa, x.cara.especial].forEach(t => t && t.dispose()); }
     scene.remove(x.obj); dispose(x.obj); figuras.delete(id);
@@ -890,6 +891,8 @@
       e.pielReal = fx.identidad && /^#[0-9a-f]{6}$/i.test(fx.identidad.piel || "") ? fx.identidad.piel : null;
       // Careta levantada (Iron Man, formas.ts de ALV): gira esas mallas sobre su bisagra; la figura no se vuelve a armar.
       e.caretaDef = caretaValida(x.careta); aplicarCareta(e);
+      // Poder puesto (formas.ts de ALV: Johnny en llamas, Sue invisible, Reed estirado): se queda hasta que deje de venir.
+      e.auraDef = Object.prototype.hasOwnProperty.call(AURAS, x.aura) ? x.aura : null; aplicarAura(e);
       e.foco = !!x.foco; orden.push(id);
       if (SALA || NAVE) { e.columna = Number.isInteger(x.columna) && x.columna >= 0 ? x.columna : orden.length - 1; e.color = colorValido(x.color); }
     });
@@ -1446,7 +1449,7 @@
         grupo.scale.setScalar(s1 * Math.max(0.05, k) * b); if (k < 1) setTimeout(crecer, 16); else grupo.scale.setScalar(s1); };
         grupo.scale.setScalar(s1 * 0.05); crecer(); }
       e.prio = 0; e.cual = null; e.hasta = 0; e.accion = null;
-      aplicarCareta(e);
+      aplicarCareta(e); aplicarAura(e);
       // Llegada de la nueva forma (Hulk aplaude, el Hulkbuster se enciende, Iron Man despega): mientras, nadie la interrumpe.
       const tr1 = p3.transformar;
       if (tr1 && tr1.llegar) {
@@ -1564,7 +1567,7 @@
       e.obj = grupo; e.v3 = inst;
       scene.add(grupo);
       inst.tocar("reposo", { mezcla: 0 });
-      aplicarCareta(e);
+      aplicarCareta(e); aplicarAura(e);
       // Nave: hasta dónde llegan los pies sentados a la altura del tablero (todo el bucle); acomodarNave() aleja la silla y la
       // figura lo justo para que no toquen la mesa (decidió Codex, sentado-r2: Big Fig, opción 2).
       // Además, el punto más bajo del cuerpo sobre la huella del asiento (cojín si queda en el aire) y el más alto (encuadre).
@@ -1600,6 +1603,27 @@
       if (!e.prio) { e.mom = esperaDe(e); e.t0 = reloj.getElapsedTime(); }
       scene.add(e.obj); acomodar();
     }).catch(() => {});
+  }
+  // Poderes que se quedan puestos (Elías, 28 nov: los 4 Fantásticos se transforman en su poder). Al ponerse toca el clip
+  // del poder (GLB «poderes» del personaje) y deja el efecto encendido (efectos.js, `fijo`) hasta que se quita.
+  const AURAS = {
+    llamas: { poder: "encender", ef: { tipo: "fuego", modo: "cuerpo", color: "#ff6a1a", color2: "#ffd23a", retraso: 0.5, fijo: true, mudo: true } },
+    invisible: { poder: "invisible", ef: { tipo: "invisible", color: "#9fd6ff", a: 0.22, retraso: 0.3, fijo: true } },
+    elastico: { poder: "forma", ef: { tipo: "estirar", modo: "alto", retraso: 0.2, fijo: true } },
+  };
+  function aplicarAura(e) {
+    const inst = e.v3, def = e.auraDef || null, a = e.aura;
+    if (!inst || (a && a.inst === inst && a.tipo === def) || (!a && !def)) return;
+    const recarga = !!a && a.tipo === def; // misma aura en una figura que se volvió a cargar: sin clip
+    if (a) { a.fx.fin(); e.aura = null; }
+    const fx = window.EfectosALV, d = def && AURAS[def];
+    if (!d || !fx) return;
+    e.aura = { tipo: def, inst, fx: fx.lanzar(scene, { obj: inst.obj, hueso: inst.hueso }, d.ef, { camara: camera, sonar: cual => enviar({ tipo: "sonido", id: e.id, cual }) }) };
+    const pl = inst.obj.userData.plano, pd = !recarga && pl && (pl.poderes || []).find(x => x.id === d.poder);
+    if (!pd || NAVE) return;
+    const t = reloj.getElapsedTime();
+    e.prio = 2; e.cual = "poder"; e.hasta = t + 1; e.accion = null;
+    inst.tocarExt(pd.glb, pd.clip, { hasta: pd.hasta, fijo: !!pd.fijo }).then(dur => { if (e.v3 === inst && dur) e.hasta = reloj.getElapsedTime() + Math.min(4, dur); });
   }
   /** La careta que manda ALV, revisada: nombres de malla, bisagra cerca del hueso y ángulo. null = cerrada. */
   function caretaValida(c) {

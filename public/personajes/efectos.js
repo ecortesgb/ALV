@@ -4,6 +4,7 @@
 // dibujo. Cada efecto corre con su propio reloj (requestAnimationFrame) y se limpia solo al terminar.
 //
 //   EfectosALV.lanzar(scene, fig, efecto, op) → { fin() }   op: { escala?, sonar?(tipo), camara? (tope de vuelo) }
+//   efecto.fijo: dura hasta fin() (poder puesto de una forma: Johnny en llamas, Sue invisible, Reed estirado).
 //     scene  : THREE.Scene donde se dibuja.
 //     fig    : { obj: Object3D del personaje (mira a +Z), hueso(logico) → Object3D|null }. Los efectos que tocan la figura
 //              (invisible, encoger, volar, estirar) dejan obj como estaba al terminar.
@@ -333,9 +334,25 @@
       const col2 = c.col2 || new T.Color(0xffd23a), propio = !!c.ef.color && c.ef.color.toLowerCase() !== "#ff6a1a";
       const llamita = (p, v, tam, vida, extra) => c.P.echar(p, v, propio ? c.col : null, tam, vida, Object.assign({ tex: "llama", rampa: propio ? null : "fuego", normal: true, alfa: 0.95, crece: 0.45, gira: azar(3) }, extra));
       let echar = 0, humea = 0;
+      // Encendido fijo (forma de Johnny, 28 nov): además de las llamas, el cuerpo brilla naranja y parpadea como brasa.
+      // Materiales propios mientras dura (los del GLB se comparten entre clones), como en «invisible».
+      const brasa = [], BRASA = new T.Color(0xff6a10);
+      if (c.ef.modo === "cuerpo" && c.ef.fijo) c.fig.obj.traverse(m => {
+        if (!m.isMesh || !m.material) return;
+        const orig = m.material, nuevo = Array.isArray(orig) ? orig.map(x => x.clone()) : orig.clone();
+        (Array.isArray(nuevo) ? nuevo : [nuevo]).forEach(x => { if (x.emissive) x.emissive.set(0xff5a00); if (x.color) x.userData.c0 = x.color.clone(); });
+        m.material = nuevo; brasa.push([m, orig, nuevo]);
+      });
       return {
         paso(t, dt) {
           const activo = t < c.d;
+          if (brasa.length) {
+            const k = Math.min(1, Math.max(0, t / 0.6)), i = k * (0.55 + 0.12 * Math.sin(t * 9) + 0.06 * Math.sin(t * 23));
+            brasa.forEach(([, , n]) => (Array.isArray(n) ? n : [n]).forEach(x => {
+              if (x.emissive) x.emissiveIntensity = i * 0.6;
+              if (x.userData.c0) x.color.copy(x.userData.c0).lerp(BRASA, 0.85 * k);
+            }));
+          }
           if (c.ef.modo === "cuerpo") {
             if (activo && t >= 0 && (echar -= dt) <= 0) {
               echar = 0.014;
@@ -360,7 +377,7 @@
           }
           return activo || bola.viva || c.P.vivas() > 0;
         },
-        quitar() {},
+        quitar() { brasa.forEach(([m, orig, n]) => { m.material = orig; (Array.isArray(n) ? n : [n]).forEach(x => x.dispose()); }); },
       };
     },
     telarana(c) {
@@ -418,9 +435,9 @@
       const o = V();
       return {
         paso(t, dt) {
-          const k = sobre(t, c.d, 0.5, 0.5), op = 1 - 0.9 * k;
+          const k = sobre(t, c.d, 0.5, 0.5), op = 1 - (1 - num(c.ef.a, 0, 1, 0.1)) * k;
           cambios.forEach(([, , n]) => (Array.isArray(n) ? n : [n]).forEach(x => { x.opacity = x.userData.op0 * op; }));
-          if (k > 0 && k < 1 && Math.random() < 0.3) { origen(c.fig, "torso", o); o.x += (Math.random() - 0.5) * 0.5 * c.u; o.y += (Math.random() - 0.5) * c.u; c.P.echar(o, V().set(0, 0.4 * c.u, 0), c.col, 0.18 * c.u, 0.6); }
+          if (k > 0 && k < 1 && Math.random() < (c.ef.fijo ? 0.06 : 0.3)) { origen(c.fig, "torso", o); o.x += (Math.random() - 0.5) * 0.5 * c.u; o.y += (Math.random() - 0.5) * c.u; c.P.echar(o, V().set(0, 0.4 * c.u, 0), c.col, 0.18 * c.u, 0.6); }
           return t < c.d;
         },
         quitar() { cambios.forEach(([m, orig, n]) => { m.material = orig; (Array.isArray(n) ? n : [n]).forEach(x => x.dispose()); }); },
@@ -536,7 +553,13 @@
       const s0 = c.fig.obj.scale.clone();
       return {
         paso(t, dt) {
-          const k = sobre(t, c.d, 0.3, 0.4), w = Math.sin(t * 7) * 0.12 * k;
+          const k = sobre(t, c.d, 0.3, 0.4);
+          if (c.ef.modo === "alto") { // forma de Reed: alto y delgado, ondulando despacio como liga
+            const w = Math.sin(t * 2.4) * 0.035 * k;
+            c.fig.obj.scale.set(s0.x * (1 - 0.14 * k - w * 0.5), s0.y * (1 + 0.2 * k + w), s0.z * (1 - 0.1 * k));
+            return t < c.d;
+          }
+          const w = Math.sin(t * 7) * 0.12 * k;
           c.fig.obj.scale.set(s0.x * (1 + 0.45 * k + w), s0.y * (1 - 0.18 * k - w * 0.5), s0.z * (1 + 0.2 * k));
           return t < c.d;
         },
@@ -692,7 +715,7 @@
     const c = {
       scene, fig, ef: efecto, u: num(o.escala, 0.01, 1000, 0) || altoDe(fig),
       col: color(efecto.color, "#7fd8ff"), col2: efecto.color2 ? color(efecto.color2, "#ffffff") : null,
-      d: num(efecto.dura, 0.2, 12, 1.2), P: particulas(scene), cam: o.camara && o.camara.isCamera ? o.camara : null,
+      d: efecto.fijo === true ? 1e9 : num(efecto.dura, 0.2, 12, 1.2), P: particulas(scene), cam: o.camara && o.camara.isCamera ? o.camara : null,
     };
     let e;
     try { e = EFECTOS[efecto.tipo](c); } catch (_) { c.P.limpiar(); return nada; }
