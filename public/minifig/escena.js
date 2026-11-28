@@ -854,7 +854,10 @@
       if (!e || e.huella !== h) {
         if (e) quitar(id);
         const t = reloj.getElapsedTime(), habia = !!e;
-        try { const a = armar(fx); e = { id, obj: a.obj, momentos: a.momentos, plano: a.plano, huella: h, mom: a.momentos.espera || "respirar", t0: t - Math.random() * 3,
+        // Velocidad (28 nov): una figura del sistema nuevo ya no arma antes la vieja (LDraw) de respaldo; queda un hueco
+        // vacío hasta que llega la nueva. Si la nueva falla, ahí se arma la vieja (respaldoV3).
+        const sinRespaldo = !!p3 && !EDITOR && !(NAVE && !p3.sentado);
+        try { const a = sinRespaldo ? { obj: new THREE.Group(), momentos: {}, plano: null } : armar(fx); e = { id, obj: a.obj, sinRespaldo, fx, momentos: a.momentos, plano: a.plano, huella: h, mom: a.momentos.espera || "respirar", t0: t - Math.random() * 3,
           pop: EDITOR && habia ? t : -9, parpadeo: t + 2 + Math.random() * 2, sonrisa: t + 7 + Math.random() * 4,
           fase: Math.random() * Math.PI * 2, mira: { y: 0, v: 0, meta: 0, inc: 0, prox: t + 1 + Math.random() * 2 }, lx: 0, lz: 0, saludoK: 0 }; }
         catch (err) { console.error("escena: no se pudo armar", id, err); return; }
@@ -969,6 +972,7 @@
     const t = reloj.getElapsedTime(), p = Number.isFinite(prio) ? prio : PRIO[cual] != null ? PRIO[cual] : 1;
     const sonando = (e.prio || 0) > 0 && t < e.hasta;
     if ((sonando && (p < e.prio || e.cual === cual)) || t - (e.ultG == null ? -9 : e.ultG) < ENFRIAR) { enviar({ tipo: "gesto", id: e.id, cual, ok: false }); return; }
+    if (e.sinRespaldo && !e.v3) { enviar({ tipo: "gesto", id: e.id, cual, ok: false }); return; } // aún sin cuerpo
     if (e.espEst) terminarEspecial(e, t);
     const fin = (dur, m) => { e.prio = p; e.cual = cual; e.ultG = t; e.hasta = t + dur; enviar({ tipo: "gesto", id: e.id, cual, ok: true, mom: m, dur }); };
     // Fase 5: la figura nueva traduce el momento a una de sus seis lógicas (logicas.js; Codex D4). Mismo contrato:
@@ -1535,7 +1539,7 @@
     motorV3().then(M => M.crear(p3)).then(inst => {
       if (figuras.get(e.id) !== e || e.gen3 !== gen || e.v3) { inst.quitar(); return; } // llegó tarde
       // Nave: el clip «sentado» declarado tiene que existir en el GLB ANTES de retirar la v2; si no, se queda el respaldo.
-      if (NAVE && !inst.reposoEn(p3.sentado)) { inst.quitar(); enviar({ tipo: "v3", id: e.id, ok: false }); return; }
+      if (NAVE && !inst.reposoEn(p3.sentado)) { inst.quitar(); respaldoV3(e); enviar({ tipo: "v3", id: e.id, ok: false }); return; }
       const grupo = new THREE.Group();
       grupo.add(inst.obj);
       // Figuras grandes (Big Fig): en escenas con lugares (sala, nave, azotea) se topa su altura para que no invadan el
@@ -1572,9 +1576,23 @@
       enviar({ tipo: "v3", id: e.id, ok: true });
     }).catch(err => {
       console.warn("escena: figura nueva sin cargar, se queda la de respaldo", e.id, err);
+      respaldoV3(e);
       if (AZOTEA && figuras.get(e.id) === e) revelarAzotea(e, reloj.getElapsedTime());
       enviar({ tipo: "v3", id: e.id, ok: false });
     });
+  }
+  /** La figura nueva no llegó y no había respaldo armado (ponerFiguras): se arma la vieja en su lugar, cuando ya
+   *  cargó la geometría LDraw. */
+  function respaldoV3(e) {
+    if (!e.sinRespaldo) return;
+    ldraw.then(() => {
+      if (figuras.get(e.id) !== e || e.v3 || !e.sinRespaldo) return;
+      let a; try { a = armar(e.fx); } catch (err) { console.error("escena: no se pudo armar el respaldo", e.id, err); return; }
+      a.obj.position.copy(e.obj.position); a.obj.rotation.copy(e.obj.rotation); a.obj.scale.copy(e.obj.scale); a.obj.visible = e.obj.visible;
+      scene.remove(e.obj); e.obj = a.obj; e.momentos = a.momentos; e.plano = a.plano; e.sinRespaldo = false;
+      if (!e.prio) { e.mom = esperaDe(e); e.t0 = reloj.getElapsedTime(); }
+      scene.add(e.obj); acomodar();
+    }).catch(() => {});
   }
   /** La careta que manda ALV, revisada: nombres de malla, bisagra cerca del hueso y ángulo. null = cerrada. */
   function caretaValida(c) {
@@ -1848,6 +1866,21 @@
   }
   // Velocidad (28 nov): si las figuras llegan mientras la biblioteca vieja (LDraw) todavía carga, sus GLB del sistema
   // nuevo se bajan y se leen desde ya, con la misma carga que usará crear(); al armar, el motor los toma de su caché.
+  // Geometría LDraw: promesa de carga y mensajes que la esperan (en orden: detrás de uno que espera, esperan todos).
+  let ldraw = new Promise(() => {}), ldListo = false, colaLD = null;
+  /** ¿Este mensaje arma alguna figura vieja (sin plano nuevo usable)? */
+  function pideLD(d) {
+    if (!d || typeof d !== "object") return false;
+    if (d.tipo === "figuras" && Array.isArray(d.lista)) return EDITOR || PRUEBA || d.lista.slice(0, 12).some(x => { const p = x && x.plano3 && typeof x.plano3 === "object" ? planoV3({ ...x.plano3 }) : null; return !p || (NAVE && !p.sentado); });
+    if (d.tipo === "foto") return !(d.plano3 && typeof d.plano3 === "object" && planoV3({ ...d.plano3 }));
+    return d.tipo === "miniatura" || d.tipo === "soltar" || d.tipo === "azar" || d.tipo === "probar" || d.tipo === "gesto";
+  }
+  function atenderLD(d) {
+    if (colaLD) { colaLD.push(d); return; }
+    if (ldListo || !pideLD(d)) { atender(d); return; }
+    colaLD = [d];
+    ldraw.then(() => { const c = colaLD; colaLD = null; c.forEach(atenderLD); }, () => { colaLD = null; });
+  }
   function adelantarV3(d) {
     if (!d || d.tipo !== "figuras" || !Array.isArray(d.lista)) return;
     const planos = d.lista.slice(0, 12).map(x => x && x.plano3 && typeof x.plano3 === "object" && planoV3({ ...x.plano3 })).filter(p => p && !(NAVE && !p.sentado));
@@ -1859,18 +1892,23 @@
   }
   window.addEventListener("message", e => {
     if (e.origin !== location.origin || !e.data || e.data.origen !== "alv") return;
-    if (!listo) { pendientes.push(e.data); adelantarV3(e.data); } else atender(e.data);
+    if (!listo) { pendientes.push(e.data); adelantarV3(e.data); } else atenderLD(e.data);
   });
   window.addEventListener("resize", () => listo && acomodar());
 
   (async function arrancar() {
-    try {
-      await cargarBiblioteca("biblioteca/");
+    try { await cargarBiblioteca("biblioteca/"); }
+    catch (e) { console.error("escena: no cargó la biblioteca", e); enviar({ tipo: "error" }); return; }
+    // Velocidad (28 nov): la geometría LDraw (1.5 MB) y los biseles se cargan aparte. La escena dice «listo» sin
+    // esperarlos; solo esperan (en orden) los mensajes que arman figuras viejas (atenderLD).
+    ldraw = (async () => {
       await new Promise((ok, mal) => { const s = document.createElement("script"); s.src = "biblioteca/geometria/ldraw_piezas.js"; s.onload = ok; s.onerror = () => mal(new Error("geometría")); document.head.appendChild(s); });
       if (window.LDRAW_COLORES) Object.assign(LDCOL, window.LDRAW_COLORES);
       integrarPiezas();
       if (CINE && Q.get("bisel") !== "no") await cargarBiseles();
-    } catch (e) { console.error("escena: no cargó la biblioteca", e); enviar({ tipo: "error" }); return; }
-    listo = true; aplicarCalidad(); acomodar(); pendientes.splice(0).forEach(atender); enviar({ tipo: "listo" }); cuadro();
+      ldListo = true;
+    })();
+    ldraw.catch(e => { console.error("escena: no cargó la geometría", e); enviar({ tipo: "error" }); });
+    listo = true; aplicarCalidad(); acomodar(); pendientes.splice(0).forEach(atenderLD); enviar({ tipo: "listo" }); cuadro();
   })();
 })();
