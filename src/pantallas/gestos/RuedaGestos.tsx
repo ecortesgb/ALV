@@ -250,11 +250,11 @@ export const gajosOpciones = (lista: Opcion[]): GestoRueda[] => lista.slice(0, 8
 });
 const ICONO_CATEGORIA: Record<Categoria, { tipo: TipoIcono; img?: string; c: [string, string] }> = {
   poderes: { tipo: "poder", img: `${ICONOS}gesto-poderes.webp`, c: ["#4fd8ff", "#1479c9"] },
-  especial: { tipo: "poder", c: ["#ff9a3a", "#e8560f"] },
+  especial: { tipo: "poder", img: `${ICONOS}cat-especial.webp`, c: ["#ff9a3a", "#e8560f"] },
   pelea: { tipo: "golpe", img: `${ICONOS}gesto-golpear.webp`, c: ["#ff7a59", "#d0341a"] },
-  habilidad: { tipo: "espada", c: ["#c8d4e8", "#5a6a8a"] },
-  fiesta: { tipo: "baile", c: ["#ff8fd8", "#c2368f"] },
-  gestos: { tipo: "saludar", c: ["#9be04a", "#4fa81f"] },
+  habilidad: { tipo: "espada", img: `${ICONOS}cat-habilidad.webp`, c: ["#c8d4e8", "#5a6a8a"] },
+  fiesta: { tipo: "baile", img: `${ICONOS}cat-fiesta.webp`, c: ["#ff8fd8", "#c2368f"] },
+  gestos: { tipo: "saludar", img: `${ICONOS}cat-gestos.webp`, c: ["#9be04a", "#4fa81f"] },
 };
 export const gajosCategorias = (lista: Categoria[]): GestoRueda[] => lista.map(c => {
   const i = ICONO_CATEGORIA[c];
