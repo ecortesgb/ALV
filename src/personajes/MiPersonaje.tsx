@@ -97,7 +97,7 @@ export function MiPersonaje({ catalogo, estadoCatalogo = catalogo ? "listo" : "c
   const nombreDe = (f: FiguraV3) => (f.origen.tipo === "catalogo" && !Object.keys(f.piezas).length && fotos.get(f.origen.personaje)?.nombre) || "Mi personaje";
   // Foto de cuerpo entero de cada figura para su nicho: la saca el estudio con el motor real (así sale con sus piezas);
   // mientras llega, la foto de tarjeta del personaje del catálogo.
-  const mini = useMiniaturas(vista.cual === "inicio" && catalogo ? ESTUDIO : null, catalogo?.catalogo ?? new Map());
+  const mini = useMiniaturas(vista.cual === "inicio" && catalogo ? ESTUDIO : null, catalogo?.catalogo ?? new Map(), { aDemanda: true });
   const planos = useMemo(() => espacios.map((e, i) => (catalogo && e.figura ? resolverFigura("nicho" + i, e.figura, catalogo.catalogo, catalogo.piezas, catalogo.base ?? null) : null)), [espacios, catalogo]);
   const claves = planos.map(p => (p ? "fig:" + JSON.stringify(p) : null));
   // Figuras LDraw sin cambios: su foto de tarjeta (el estudio todavía no las arma bien: la capa las tapa). Las demás, el

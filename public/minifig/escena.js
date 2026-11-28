@@ -113,6 +113,9 @@
   // baja (además densidad de píxeles 1). Empieza en alta (1024 en pantallas táctiles) y baja sola si no alcanza 45 cuadros.
   const MODO = new URLSearchParams(location.search).get("modo") || "";
   const CINE = !!window.ESTILO_CINE, Q = new URLSearchParams(location.search), BRILLO = CINE && Q.get("acabado") === "brillo";
+  // Velocidad (28 nov): en cine las piezas biseladas (345 KB) empiezan a bajar desde el arranque, en paralelo con la
+  // geometría LDraw; cargarBiseles() después solo las toma de la caché.
+  if (CINE && Q.get("bisel") !== "no") { const l = document.createElement("link"); l.rel = "preload"; l.as = "script"; l.href = "piezas-biseladas.js"; document.head.appendChild(l); }
   const TACTIL = matchMedia("(pointer: coarse)").matches;
   const calidad = { nivel: /^(alta|media|baja)$/.test(Q.get("calidad") || "") ? Q.get("calidad") : "alta", fija: !!Q.get("calidad"), muestras: [], desde: 0 };
   if (CINE) {
@@ -1648,6 +1651,9 @@
   function cuadro() {
     requestAnimationFrame(cuadro);
     if (!listo || document.hidden || AZ.pausa) return;
+    // Escena sin modo y sin figuras (el fotógrafo escondido de las fotos): no hay nada que dibujar en vivo; las fotos
+    // usan su propio dibujante.
+    if (!MODO && !figuras.size) return;
     // Azotea en pantalla táctil y en reposo: un cuadro sí y uno no (30 por segundo) para cuidar la batería.
     if (AZOTEA && TACTIL && AZ.quieto && (AZ.salto = !AZ.salto)) return;
     const t = reloj.getElapsedTime(), bruto = t - antes, dt = Math.min(0.1, bruto); antes = t;
@@ -1840,9 +1846,20 @@
     else if (d.tipo === "gesto") figuras.forEach(e => gesto(e, d.cual, reloj.getElapsedTime()));
     else if (d.tipo === "probar" && Momentos.info(String(d.cual))) figuras.forEach(e => { cambio(e, reloj.getElapsedTime()); e.mom = String(d.cual); e.t0 = reloj.getElapsedTime(); e.velMom = 1; e.intMom = 1; e.durMom = 0; e.prio = 0; e.cual = null; });
   }
+  // Velocidad (28 nov): si las figuras llegan mientras la biblioteca vieja (LDraw) todavía carga, sus GLB del sistema
+  // nuevo se bajan y se leen desde ya, con la misma carga que usará crear(); al armar, el motor los toma de su caché.
+  function adelantarV3(d) {
+    if (!d || d.tipo !== "figuras" || !Array.isArray(d.lista)) return;
+    const planos = d.lista.slice(0, 12).map(x => x && x.plano3 && typeof x.plano3 === "object" && planoV3({ ...x.plano3 })).filter(p => p && !(NAVE && !p.sentado));
+    if (!planos.length) return;
+    motorV3().then(M => planos.forEach(p => {
+      M.bajar(p.glb, p.carga).catch(() => {});
+      (Array.isArray(p.piezas) ? p.piezas : []).forEach(pz => { if (pz && typeof pz.glb === "string" && URL_OK.test(pz.glb)) M.bajar(pz.glb, pz.carga || p.carga).catch(() => {}); });
+    })).catch(() => {});
+  }
   window.addEventListener("message", e => {
     if (e.origin !== location.origin || !e.data || e.data.origen !== "alv") return;
-    if (!listo) pendientes.push(e.data); else atender(e.data);
+    if (!listo) { pendientes.push(e.data); adelantarV3(e.data); } else atender(e.data);
   });
   window.addEventListener("resize", () => listo && acomodar());
 
