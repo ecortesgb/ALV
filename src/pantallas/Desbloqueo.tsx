@@ -1,5 +1,5 @@
 // Piezas con rareza: candado en las cuadrículas y el panel para desbloquear (con XP o ganándola en un reto).
-import { useState, useSyncExternalStore } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
 import { sonar } from "../app/sonido";
 import catalogo from "../content/catalogo-figura.json";
@@ -27,13 +27,17 @@ export function PanelDesbloqueo({ alIrARetos }: { alIrARetos: () => void }) {
   const id = useSyncExternalStore(f => { oyentes.add(f); return () => oyentes.delete(f); }, () => abierta);
   const p = usePiezas();
   const [ocupado, setOcupado] = useState(false);
+  // Al salir del personalizador el panel se cierra: si no, `abierta` se quedaba y reaparecía al volver (auditoría 28 nov).
+  useEffect(() => cerrar, []);
   if (!id) return null;
   const r = rarezaDe(id), precio = PRECIO[r], info = infoPieza(id), retos = RETOS.filter(x => x.premio === id);
   const alcanza = p.xp >= precio;
   const comprar = async () => {
+    if (ocupado) return;
     setOcupado(true);
-    const error = await desbloquear(id);
-    setOcupado(false);
+    let error: string | null;
+    // Si falla la red, el botón no se queda desactivado para siempre.
+    try { error = await desbloquear(id); } catch { error = "No se pudo desbloquear. Revisa tu conexión."; } finally { setOcupado(false); }
     if (error) { aviso(error); sonar("error"); return; }
     sonar("fanfarria"); aviso(`¡Desbloqueaste ${info.nombre}!`); cerrar();
   };

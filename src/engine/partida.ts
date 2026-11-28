@@ -773,18 +773,21 @@ const senalar: Mecanica = {
   },
 };
 
+const capturaCompetencia = (e: EstadoPartida) => (ids(e).includes(anfitrionDe(e)) ? anfitrionDe(e) : e.cfg.jugadores[0]?.id);
+
 /** Reto del lugar: una competencia real; el anfitrión marca quién ganó (+3), un empate (+1 a cada quien empató) o «Nadie». */
 const competencia: Mecanica = {
   preparar(e, c) {
     const carta = sacarCarta(e, c, ["competencia"]);
     return { privado: {}, turnoDe: e.cfg.jugadores[0]?.id, carta: carta && { id: carta.id, texto: carta.texto, tipo: carta.descripcion ?? "" } };
   },
-  // Lo captura el dispositivo del anfitrión (el primer jugador del grupo).
-  quienes: e => (e.cfg.jugadores[0] ? [e.cfg.jugadores[0].id] : []),
+  // Lo captura el dispositivo del anfitrión (quien tiene el control; si no juega, el primer jugador del grupo).
+  // Auditoría 28 nov: antes era siempre el primero de la lista, aunque el anfitrión fuera otro.
+  quienes: e => { const a = capturaCompetencia(e); return a ? [a] : []; },
   valida: (e, _j, v) => v === "nadie" || (typeof v === "string" && ids(e).includes(v))
     || (Array.isArray(v) && v.length >= 2 && new Set(v).size === v.length && v.every(x => typeof x === "string" && ids(e).includes(x))),
   puntuar(e) {
-    const r = e.respuestas[e.cfg.jugadores[0]!.id];
+    const r = e.respuestas[capturaCompetencia(e) ?? ""];
     if (r === "nadie") return { puntos: {}, revelado: { nadie: true } };
     if (Array.isArray(r)) return { puntos: Object.fromEntries((r as string[]).map(j => [j, 1])), revelado: { empate: r } };
     const ganador = r as string;
