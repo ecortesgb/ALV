@@ -18,9 +18,14 @@ export interface Forma {
   careta?: Careta;
   /** Al salir de esta forma la transformación es más larga y verde (Bruce Banner se está volviendo Hulk). */
   conEspecial?: boolean;
+  /** Poder que se queda puesto (Elías, 28 nov: los 4 Fantásticos se transforman en su poder): misma figura; la escena
+   *  toca el clip del poder y deja el efecto encendido hasta volver a transformar. */
+  aura?: Aura;
   /** Forma de paso que no es punto de partida (Mística disfrazada de Gwen o Pepper: quien elige a Gwen no se transforma). */
   disfraz?: boolean;
 }
+
+export type Aura = "llamas" | "invisible" | "elastico";
 
 /** Mallas de la careta (por nombre, dentro del hueso del casco), bisagra en coordenadas de ese hueso y ángulo en grados. */
 export interface Careta { mallas: string[]; bisagra: [number, number, number]; angulo: number }
@@ -43,6 +48,10 @@ export const CICLOS: readonly (readonly Forma[])[] = [
   [{ p: "spider-man-negro" }, { p: "peter-parker" }],
   [{ p: "mistica" }, { p: "gwen-stacy", disfraz: true }, { p: "pepper-potts", disfraz: true }],
   [{ p: "stan-lee", conEspecial: true }, { p: "hulk" }],
+  // Los 4 Fantásticos (28 nov): Johnny en llamas, Sue invisible y Reed estirado, hasta volver a tocar «Transformar».
+  [{ p: "antorcha-humana" }, { p: "antorcha-humana", aura: "llamas" }],
+  [{ p: "mujer-invisible" }, { p: "mujer-invisible", aura: "invisible" }],
+  [{ p: "mr-fantastico" }, { p: "mr-fantastico", aura: "elastico" }],
 ];
 
 /** Transformación que eligió el jugador en el personalizador (Elías, 27 nov: «cualquiera que la elija se pueda
@@ -59,7 +68,7 @@ function lugar(v3: FiguraV3): { ciclo: readonly Forma[]; i: number } | null {
   if (v3.origen.tipo !== "catalogo") return null;
   const id = v3.origen.personaje;
   for (const ciclo of CICLOS) {
-    const i = ciclo.findIndex(f => f.p === id && !f.cabezaDe && !f.careta && !f.disfraz);
+    const i = ciclo.findIndex(f => f.p === id && !f.cabezaDe && !f.careta && !f.aura && !f.disfraz);
     if (i >= 0) return { ciclo, i };
   }
   return null;
@@ -83,6 +92,9 @@ const CABEZA: readonly Parte[] = ["cara", "cabello"];
 
 /** Careta levantada en ese paso (null = cerrada o no tiene). */
 export const caretaEn = (v3: FiguraV3, paso: number): Careta | null => formaEn(v3, paso)?.careta ?? null;
+
+/** Poder puesto en ese paso (null = ninguno). */
+export const auraEn = (v3: FiguraV3, paso: number): Aura | null => formaEn(v3, paso)?.aura ?? null;
 
 /** La figura en el paso `paso` del ciclo. Paso 0, sin ciclo o si falta algo en el catálogo: la misma figura. */
 export function figuraEnForma(v3: FiguraV3, paso: number, catalogo: Catalogo, piezas: Piezas): FiguraV3 {
