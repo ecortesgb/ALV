@@ -34,6 +34,7 @@ export interface MiPersonajeProps {
   onActivar: (espacio: number) => void;
   onSalir: () => void;
   puedeUsar?: (id: string) => boolean;
+  piezaComprada?: (id: string) => boolean;
 }
 
 const BASE = import.meta.env.BASE_URL;
@@ -50,7 +51,7 @@ const TEXTO: Record<ResultadoGuardar, (n: string) => string> = {
   error: () => "No se pudo guardar. Intenta otra vez.",
 };
 
-export function MiPersonaje({ catalogo, estadoCatalogo = catalogo ? "listo" : "cargando", onReintentar, espacios, activa, onGuardar, onActivar, onSalir, puedeUsar }: MiPersonajeProps) {
+export function MiPersonaje({ catalogo, estadoCatalogo = catalogo ? "listo" : "cargando", onReintentar, espacios, activa, onGuardar, onActivar, onSalir, puedeUsar, piezaComprada }: MiPersonajeProps) {
   const [ancho, setAncho] = useState(() => innerWidth >= 860);
   const [vista, setVista] = useState<Vista>({ cual: "inicio" });
   const [aviso, setAviso] = useState<string | null>(null);
@@ -156,7 +157,7 @@ export function MiPersonaje({ catalogo, estadoCatalogo = catalogo ? "listo" : "c
         </div>
       )}
       {catalogo && vista.cual === "crear" && (
-        <Constructor catalogo={catalogo.catalogo} piezas={catalogo.piezas} base={catalogo.base ?? null} inicial={vista.figura} escenaUrl={ESCENA} seccion={vista.trajes ? "trajes" : undefined} puedeUsar={puedeUsar}
+        <Constructor catalogo={catalogo.catalogo} piezas={catalogo.piezas} base={catalogo.base ?? null} inicial={vista.figura} escenaUrl={ESCENA} seccion={vista.trajes ? "trajes" : undefined} puedeUsar={puedeUsar} piezaComprada={piezaComprada}
           onGuardar={f => void guardar(f, nombreDe(f))} onSalir={() => setVista({ cual: "inicio" })} />
       )}
       {aviso && <div role="status" className="mp-aviso">{aviso}</div>}
@@ -166,14 +167,14 @@ export function MiPersonaje({ catalogo, estadoCatalogo = catalogo ? "listo" : "c
 
 /** Lobby (Elías, 28 nov): el mismo taller abierto en Trajes para elegir la figura de un jugador, a pantalla completa sobre el
  *  lobby. No toca las cápsulas: entrega la figura y quien la pidió decide dónde va. */
-export function TallerTrajes({ catalogo, inicial, puedeUsar, onGuardar, onSalir }: {
-  catalogo: CatalogoV3; inicial: FiguraV3; puedeUsar?: (id: string) => boolean; onGuardar: (f: FiguraV3) => void; onSalir: () => void;
+export function TallerTrajes({ catalogo, inicial, puedeUsar, piezaComprada, onGuardar, onSalir }: {
+  catalogo: CatalogoV3; inicial: FiguraV3; puedeUsar?: (id: string) => boolean; piezaComprada?: (id: string) => boolean; onGuardar: (f: FiguraV3) => void; onSalir: () => void;
 }) {
   const ancho = typeof innerWidth === "number" && innerWidth >= 860;
   return (
     <RaizDS ancho={ancho} className="az" style={{ position: "fixed", inset: 0, overflow: "hidden", zIndex: 80 }}>
       <Constructor catalogo={catalogo.catalogo} piezas={catalogo.piezas} base={catalogo.base ?? null} inicial={inicial} escenaUrl={ESCENA} seccion="trajes"
-        paginaAnterior={null} puedeUsar={puedeUsar} onGuardar={onGuardar} onSalir={onSalir} />
+        paginaAnterior={null} puedeUsar={puedeUsar} piezaComprada={piezaComprada} onGuardar={onGuardar} onSalir={onSalir} />
     </RaizDS>
   );
 }

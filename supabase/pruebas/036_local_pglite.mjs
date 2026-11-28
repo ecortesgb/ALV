@@ -334,4 +334,105 @@ if (process.argv.includes("--premios")) {
   });
 }
 
+if (process.argv.includes("--tienda2")) {
+  // Requiere --reposicion --personajes --premios antes (050, 051, 052).
+  await admin();
+  await db.exec(readFileSync(join(MIG, "058_tienda_v2.sql"), "utf8"));
+  const abrirAlv = async (sobre, precio, ped = pedido()) => (await uno("select public.abrir_sobre_alv($1,$2,$3) r", [sobre, precio, ped])).r;
+  const estadoPj = async () => (await uno("select public.estado_personajes_tienda() r")).r;
+
+  await prueba("058: catálogo con accesorios y 23 básicos fuera de venta", async () => {
+    await como(B);
+    const e = await estadoPj();
+    cierto(e.catalogo.length >= 200, "catálogo " + e.catalogo.length);
+    cierto(!e.catalogo.some(c => c.id === "batman" || c.id === "lionel-messi"), "básicos a la venta");
+    igual(e.accesorios.length, 183);
+    cierto(e.accesorios.every(a => [90, 130, 180].includes(a.precio)), "precios de accesorio");
+  });
+
+  await prueba("058: cada sobre da 1 a 3 cartas, sin repetir, y cobra su precio", async () => {
+    await admin();
+    await db.query("insert into public.movimientos_monedas(jugador,cantidad,motivo) values ($1,5000,'prueba-t2')", [B]);
+    await como(B);
+    const precios = { basico: 60, accesorios: 120, comodines: 150, personajes: 180, mixto: 200, epico: 380 };
+    const largo = { basico: 1, accesorios: 2, comodines: 3, personajes: 2, mixto: 3, epico: 3 };
+    for (const [s, p] of Object.entries(precios)) {
+      const antes = await monedas();
+      const r = await abrirAlv(s, p);
+      igual(r.cartas.length, largo[s], s);
+      cierto(r.monedas <= antes - p + 30, s + " no cobró");
+      const ids = r.cartas.filter(c => c.tipo !== "comodin" && c.tipo !== "monedas").map(c => c.id);
+      igual(new Set(ids).size, ids.length, s + " repetidas");
+      if (s === "mixto") igual(r.cartas.map(c => c.tipo), ["personaje", "accesorio", "comodin"]);
+      if (s === "accesorios") cierto(r.cartas.every(c => c.tipo === "accesorio" && c.id.includes("--")), "accesorios");
+      if (s === "epico") cierto(r.cartas.some(c => c.rareza !== "rara"), "épico sin épica");
+    }
+  });
+
+  await prueba("058: los personajes del sobre no se repiten con los que ya tiene", async () => {
+    await admin();
+    await db.query("insert into public.movimientos_monedas(jugador,cantidad,motivo) values ($1,20000,'prueba-t2')", [B]);
+    await como(B);
+    for (let i = 0; i < 30; i++) await abrirAlv("personajes", 180);
+    await admin();
+    const filas = (await db.query("select personaje, count(*)::int n from privado.personajes_comprados where jugador = $1 group by 1 having count(*) > 1", [B])).rows;
+    igual(filas, []);
+    const sagas = (await db.query("select count(distinct c.saga)::int n from privado.personajes_comprados p join privado.catalogo_tienda_personajes c on c.id = p.personaje where p.jugador = $1", [B])).rows[0].n;
+    cierto(sagas >= 4, "solo salieron " + sagas + " sagas");
+  });
+
+  await prueba("058: reintento del mismo pedido no cobra dos veces", async () => {
+    await como(B); const id = pedido();
+    const r1 = await abrirAlv("mixto", 200, id), saldo = await monedas();
+    const r2 = await abrirAlv("mixto", 200, id);
+    igual(r2.cartas, r1.cartas); igual(await monedas(), saldo);
+    await falla("select public.abrir_sobre_alv($1,$2,$3)", ["basico", 60, id], "pedido inválido");
+    await falla("select public.abrir_sobre_alv($1,$2,$3)", ["basico", 50, pedido()], "precio cambió");
+  });
+
+  await prueba("058: comprar accesorio suelto y no dos veces", async () => {
+    await como(B);
+    const e = await estadoPj();
+    const a = e.accesorios.find(x => !e.mis_accesorios.includes(x.id) && !e.personajes.includes(x.donante));
+    const saldo = await monedas();
+    const r = (await uno("select public.comprar_accesorio($1,$2,$3) r", [a.id, a.precio, pedido()])).r;
+    igual(r.monedas, saldo - a.precio);
+    cierto((await estadoPj()).mis_accesorios.includes(a.id), "no quedó");
+    await falla("select public.comprar_accesorio($1,$2,$3)", [a.id, a.precio, pedido()], "disponibles");
+  });
+
+  await prueba("058: comodín se compra directo aunque nunca salió, tope 9", async () => {
+    await admin();
+    await db.query("delete from public.comodines_jugador where jugador = $1 and comodin = 'cambio'", [D]);
+    await db.query("insert into public.movimientos_monedas(jugador,cantidad,motivo) values ($1,2000,'prueba-t2')", [D]);
+    await como(D);
+    const r = (await uno("select public.reponer_comodin('cambio',$1) r", [pedido()])).r;
+    igual(r.cantidad, 1);
+    for (let i = 0; i < 8; i++) await uno("select public.reponer_comodin('cambio',$1) r", [pedido()]);
+    await falla("select public.reponer_comodin('cambio',$1)", [pedido()], "tope");
+  });
+
+  await prueba("058: admin con saldo ilimitado; los demás no", async () => {
+    await como(A);
+    igual(await monedas(), 999999);
+    await abrirAlv("epico", 380);
+    igual(await monedas(), 999999);
+    await como(D);
+    cierto(await monedas() < 999999, "D ilimitado");
+  });
+
+  await prueba("058: sin acceso, anónimo y tablas privadas cerradas", async () => {
+    await como(C);
+    await falla("select public.abrir_sobre_alv($1,$2,$3)", ["basico", 60, pedido()], "sin acceso");
+    await falla("select public.comprar_accesorio($1,$2,$3)", ["thanos--accesorio", 180, pedido()], "sin acceso");
+    await anon();
+    await falla("select public.abrir_sobre_alv($1,$2,$3)", ["basico", 60, pedido()], "permission denied");
+    await como(B);
+    for (const t of ["accesorios_jugador", "accesorios_tienda", "sobres_alv", "pedidos_sobres_alv", "pedidos_accesorios"])
+      await falla(`select * from privado.${t}`, [], "permission denied");
+    await falla("select privado.monedas_de($1)", [B], "permission denied");
+  });
+}
+
+console.log(`\nTotal: ${ok} pasan, ${mal} fallan`);
 process.exit(mal ? 1 : 0);

@@ -412,3 +412,8 @@ button.t-album-carta { cursor: zoom-in; }
   .t-ap .t-carta-3d { width: 100%; min-width: 0; }
   .t-ap .t-carta-banda { font-size: 12px; }
 }
+
+/* Tienda v2: comodín por conseguir, visible pero apagado y con candado. */
+.t-album-carta.t-bloqueada > .t-carta { filter: grayscale(.85) brightness(.62); }
+.t-album-candado { position: absolute; inset: auto 8px 8px auto; padding: 3px 7px; border-radius: 999px; color: #fff4c2;
+  font-weight: 700; font-size: 13px; background: #140d24d9; border: 1px solid #c8ac77; }
