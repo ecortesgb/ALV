@@ -88,6 +88,9 @@ export function HubAzotea({ oculto = false }: { oculto?: boolean } = {}) {
 
   // El chat tapa el escenario: la figura deja de dibujarse mientras está abierto.
   useEffect(() => { mando.current?.pausa(vivo.abierto || oculto); }, [vivo.abierto, oculto]);
+  // Al irse a otra pantalla (el HUB se queda escondido) el chat se cierra: si no, seguía «abierto», los mensajes nuevos se
+  // daban por leídos sin verse y al volver reaparecía encima del HUB (auditoría 28 nov).
+  useEffect(() => { if (oculto) abrirChat(false); }, [oculto]);
 
   // Paralaje de la ciudad con el cursor (solo computadora, solo transform).
   useEffect(() => {

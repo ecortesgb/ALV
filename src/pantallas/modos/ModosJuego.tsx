@@ -52,6 +52,9 @@ function EntrarLobby() {
   const [sala, setSala] = useState<SalaV | null | undefined>(undefined);
   const [espero, setEspero] = useState(true);
   const hecho = useRef(false);
+  // Si la persona se regresa mientras se abre el lobby, ya no se le cambia de pantalla (auditoría 28 nov).
+  const montado = useRef(true);
+  useEffect(() => { montado.current = true; return () => { montado.current = false; }; }, []);
   useEffect(() => { let v = true; void enlace.miSala().then(x => { if (v) setSala(x); }); return () => { v = false; }; }, [s.uid]);
   // El aviso del lobby abierto llega por la red: se le da un momento antes de concluir que no hay ninguno.
   useEffect(() => { const t = setTimeout(() => setEspero(false), 1500); return () => clearTimeout(t); }, []);
@@ -63,8 +66,10 @@ function EntrarLobby() {
     hecho.current = true;
     void (async () => {
       const puede = hayNube ? await soyAdmin() : true;
+      if (!montado.current) return;
       if (!puede) { ir("jugar"); return; }
       const r = await enlace.abrir("mesa");
+      if (!montado.current) return;
       if (typeof r === "string") { aviso(r); ir("inicio"); return; }
       ir("sala", r.codigo);
     })();
@@ -85,6 +90,9 @@ function ElegirModo({ codigo }: { codigo: string }) {
   const [elegido, setElegido] = useState<IdModo | null>(null);
   const [actual, setActual] = useState(() => MODOS.findIndex(m => m.id === modoElegido()));
   const pista = useRef<HTMLDivElement>(null);
+  // La animación de la carta elegida no debe mandar al configurador si ya se tocó «Lobby» (auditoría 28 nov).
+  const espera = useRef<ReturnType<typeof setTimeout>>();
+  useEffect(() => () => clearTimeout(espera.current), []);
 
   // Celular: el carrusel arranca centrado en el modo que ya tenía la sala (o En línea).
   useEffect(() => {
@@ -116,7 +124,7 @@ function ElegirModo({ codigo }: { codigo: string }) {
       // ALV Party tiene su propio configurador de Mini-Juegos en #/party/código.
       ir(m.id === "party" ? "party" : "configurar", codigo);
     };
-    if (MENOS_MOV) seguir(); else setTimeout(seguir, 420);
+    if (MENOS_MOV) seguir(); else espera.current = setTimeout(seguir, 420);
   };
   const irA = (i: number) => (pista.current?.children[i] as HTMLElement | undefined)?.scrollIntoView({ inline: "center", block: "nearest", behavior: MENOS_MOV ? "instant" as ScrollBehavior : "smooth" });
 

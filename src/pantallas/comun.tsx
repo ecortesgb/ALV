@@ -64,11 +64,20 @@ export interface Pregunta { titulo: string; texto?: string; si: string; /** null
   /** Lobby nuevo: caja de bloques del color de este jugador (Elías, 25 nov). */
   lobby?: ColorJugador | null }
 let pregunta: (Pregunta & { responder: (v: boolean) => void }) | null = null;
-export const confirmar = (p: Pregunta) => new Promise<boolean>(r => { pregunta = { ...p, responder: v => { pregunta = null; avisar(); r(v); } }; avisar(); });
+// Una pregunta nueva contesta «no» a la que estaba abierta: antes la tapaba y su promesa nunca terminaba (el botón que la
+// abrió se quedaba en «Un momento…» para siempre). Auditoría 28 nov.
+export const confirmar = (p: Pregunta) => new Promise<boolean>(r => { pregunta?.responder(false); pregunta = { ...p, responder: v => { pregunta = null; avisar(); r(v); } }; avisar(); });
 
 export function Avisos() {
   const a = useSyncExternalStore(f => { oyentes.add(f); return () => oyentes.delete(f); }, () => avisoActual);
   const p = useSyncExternalStore(f => { oyentes.add(f); return () => oyentes.delete(f); }, () => pregunta);
+  // Al cambiar de pantalla (botón Atrás del celular, un enlace…) la pregunta abierta se cancela: si no, seguía encima de la
+  // pantalla nueva y «Comprar» o «Salir» hacía lo de la anterior (auditoría 28 nov).
+  useEffect(() => {
+    const f = () => pregunta?.responder(false);
+    addEventListener("hashchange", f);
+    return () => removeEventListener("hashchange", f);
+  }, []);
   useEffect(() => {
     if (!p) return;
     const f = (e: KeyboardEvent) => { if (e.key === "Escape") p.responder(false); };
