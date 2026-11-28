@@ -6,6 +6,7 @@ import { hayNube } from "../servicios/cliente";
 import { codigoLegible, crearMiCuentaRapida, recuperarCuenta, type MiCuentaRapida } from "../servicios/aparato";
 import { entrarDemo, refrescarSesion, useSesion, type Fase } from "../app/sesion";
 import { ir } from "../app/rutas";
+import { recordarDestinoTrasCrear } from "./Personalizar";
 import { pantallaDeCarga } from "../app/musica";
 import { sonar } from "../app/sonido";
 import { Marco, urlArte } from "./comun";
@@ -144,7 +145,7 @@ export function Inicio({ fase, alTerminar }: { fase: Fase; alTerminar: () => voi
 /** Cuenta nueva: a personalizar, salvo que ya tenga figura guardada en la nube. Si no se pudo leer, va al HUB. */
 async function irAPersonalizarSiNueva(): Promise<void> {
   const nube = await cargarCapsulasNube();
-  if (nube && !nube.slots.some(Boolean)) ir("personalizar");
+  if (nube && !nube.slots.some(Boolean)) { recordarDestinoTrasCrear(); ir("personalizar"); }
 }
 
 
