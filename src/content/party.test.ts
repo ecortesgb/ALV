@@ -36,6 +36,17 @@ describe("ALV PARTY", () => {
     expect(mando.pathname).toBe("/ALV/tools/personajes/minijuegos/control.html");
     expect(mando.searchParams.get("sala")).toBe("ABCD");
     expect(mando.searchParams.get("nombre")).toBe("Elías");
+    expect(mando.searchParams.get("entrar")).toBe("1");
+  });
+  it("el mando entra con el personaje que ya tiene y la TV sabe cuántos esperar", () => {
+    const u = urlsParty({ juego: "bala", ambiente: "dia", jugadores: 3 }, "ABCD", "https://x.test/", "Ana", "iron-man");
+    expect(new URL(u.mando).searchParams.get("personaje")).toBe("iron-man");
+    expect(new URL(u.tv).searchParams.get("jugadores")).toBe("3");
+    const raro = urlsParty({ juego: "bala", ambiente: "dia", jugadores: 40 }, "ABCD", "https://x.test/", "Ana", "<script>");
+    expect(new URL(raro.mando).searchParams.has("personaje")).toBe(false);
+    expect(new URL(raro.tv).searchParams.has("jugadores")).toBe(false);
+    expect(leerAvisoParty({ sala: "ABCD", juego: "bala", ambiente: "noche", jugadores: 2 })?.jugadores).toBe(2);
+    expect(leerAvisoParty({ sala: "ABCD", juego: "bala", ambiente: "noche", jugadores: 99 })?.jugadores).toBeUndefined();
   });
   it("el aviso que llega por la sala se valida antes de usarlo", () => {
     expect(leerAvisoParty({ sala: "ABCD", juego: "bala", ambiente: "noche" })).toEqual({ sala: "ABCD", juego: "bala", ambiente: "noche" });

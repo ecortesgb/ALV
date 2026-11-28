@@ -106,18 +106,22 @@ export function salaParty(azar = Math.random): string {
  * Direcciones del juego: la TV (tv-*.html) y el mando (control.html), en la misma sala.
  * `base` es la raíz de la app (import.meta.env.BASE_URL resuelto contra la página).
  */
-export function urlsParty(c: ConfigParty, sala: string, base: string, nombre?: string): { tv: string; mando: string } {
+export function urlsParty(c: ConfigParty & { jugadores?: number }, sala: string, base: string, nombre?: string, personaje?: string | null): { tv: string; mando: string } {
   const m = miniDe(c.juego)!;
   const dir = new URL("tools/personajes/minijuegos/", base);
   const tv = new URL(m.tv, dir);
-  tv.search = new URLSearchParams({ sala, ambiente: c.ambiente, ...(c.modalidad && m.modalidades?.includes(c.modalidad) ? { modalidad: c.modalidad } : {}), modo: "party" }).toString();
+  tv.search = new URLSearchParams({ sala, ambiente: c.ambiente, ...(c.modalidad && m.modalidades?.includes(c.modalidad) ? { modalidad: c.modalidad } : {}), modo: "party",
+    // Cuántos mandos espera: al entrar todos (y cargar), la TV empieza sola.
+    ...(c.jugadores && c.jugadores >= 1 && c.jugadores <= MAX_JUGADORES_PARTY ? { jugadores: String(c.jugadores) } : {}) }).toString();
   const mando = new URL("control.html", dir);
-  mando.search = new URLSearchParams({ sala, ...(nombre ? { nombre: nombre.slice(0, 16) } : {}) }).toString();
+  // El mando entra solo con el personaje que el jugador ya tiene en ALV (sin elegir otra vez).
+  mando.search = new URLSearchParams({ sala, ...(nombre ? { nombre: nombre.slice(0, 16) } : {}),
+    ...(personaje && /^[a-z0-9-]{1,40}$/.test(personaje) ? { personaje } : {}), entrar: "1" }).toString();
   return { tv: tv.href, mando: mando.href };
 }
 
 /** Aviso que manda el anfitrión al comenzar: lo oyen la Pantalla y los celulares del lobby. */
-export interface AvisoParty extends ConfigParty { sala: string }
+export interface AvisoParty extends ConfigParty { sala: string; /** Mandos que se esperan (la TV empieza sola al juntarlos). */ jugadores?: number }
 
 /** Valida un aviso que llega por la difusión (no se confía en nada de lo que llega). null si no sirve. */
 export function leerAvisoParty(d: unknown): AvisoParty | null {
@@ -130,5 +134,6 @@ export function leerAvisoParty(d: unknown): AvisoParty | null {
     ...(x.modalidad === "solos" || x.modalidad === "equipos" ? { modalidad: x.modalidad } : {}),
   };
   if (motivoParty(c)) return null;
-  return { ...(c as ConfigParty), sala: x.sala };
+  const jugadores = typeof x.jugadores === "number" && Number.isInteger(x.jugadores) && x.jugadores >= 1 && x.jugadores <= MAX_JUGADORES_PARTY ? x.jugadores : undefined;
+  return { ...(c as ConfigParty), sala: x.sala, ...(jugadores ? { jugadores } : {}) };
 }

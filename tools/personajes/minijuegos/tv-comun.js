@@ -228,6 +228,10 @@ export function crearTV({ juego, escena, alUnirse, alMensaje, alSalir, alDescone
       } catch (e) {
         if (mio !== j.carga) return;
         j.estado = "error"; console.error("No cargó", personaje, e);
+        // Sin pedirle al celular que elija (Elías, 28 nov): se intenta con otro personaje, hasta 2 veces.
+        j.fallos = (j.fallos || 0) + 1;
+        const otros = disponibles().filter(x => x !== personaje && !FALLAR.has(x));
+        if (j.fallos <= 2 && otros.length) { setTimeout(() => unir(id, Object.assign({}, d, { personaje: otros[Math.floor(Math.random() * otros.length)] }), bot), 0); return; }
       }
     }
     if (alUnirse) alUnirse(j);
@@ -311,6 +315,17 @@ export function crearTV({ juego, escena, alUnirse, alMensaje, alSalir, alDescone
     }, extra()));
   }
   setInterval(difundir, 2000);
+
+  // ALV PARTY: con ?jugadores=N la TV empieza sola cuando entraron N y todos cargaron (sin que nadie toque «¡Empezar!»).
+  const esperados = Math.min(MAX_JUGADORES, Number(q.get("jugadores")) || 0);
+  let autoHecho = false;
+  if (esperados > 0) setInterval(() => {
+    if (autoHecho || fase !== "lobby") return;
+    const listos = [...jugadores.values()].filter(j => !j.desconectado && j.estado === "listo").length;
+    if (jugadores.size < esperados || listos < jugadores.size) return;
+    const b = document.getElementById("empezar");
+    if (b && !b.disabled && !b.classList.contains("oculto")) { autoHecho = true; setTimeout(() => b.click(), 1500); }
+  }, 500);
 
   // Controles de Xbox y teclado de esta computadora (mandos-locales.js): entran como un celular más.
   const locales = juego === "fisico" ? null : crearMandosLocales({
