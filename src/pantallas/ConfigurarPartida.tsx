@@ -24,7 +24,7 @@ import { useSesion } from "../app/sesion";
 import { sonar } from "../app/sonido";
 import type { FiguraV2 } from "../content/personaje";
 import { entregarCopas, iniciarPartida } from "../roles/pantalla/motor";
-import { useSala } from "../roles/sala";
+import { marcarArranque, useSala } from "../roles/sala";
 import { usePuedeAbrir } from "../app/lobby";
 import { esLocal, modoLocal } from "../servicios/enlace";
 import { guardarPartidaPredeterminada, leerPartidaPredeterminada } from "../servicios/partidaPredeterminada";
@@ -677,7 +677,7 @@ export function PaginaConfigurar({ codigo }: { codigo: string }) {
     else void generosSala(salaId).then(setGeneros);
   }, [salaId, soyAnfitrion, cuantos]); // eslint-disable-line react-hooks/exhaustive-deps
   const enCurso = !!s.partida && !s.partida.terminada;
-  useEffect(() => { if (enCurso && !iniciando) ir("sala", codigo); }, [enCurso, iniciando, codigo]);
+  useEffect(() => { if (enCurso && !iniciando) { marcarArranque(codigo); ir("sala", codigo); } }, [enCurso, iniciando, codigo]);
   // Mientras abre, el mismo fondo de la azotea que la página (nunca la ciudad vieja del marco común).
   const fondoAz = <div className="cfg-fondo"><EscenarioFondo ambiente={az.ambientes[momento]} momento={momento} velo={az.velo} /></div>;
   if (s.error) return <Marco clase={`az pf cfg-pagina a-centro m-${momento}`} fondo={fondoAz}><Vacio titulo="No se pudo abrir" texto={s.error}><Boton color="amarillo" texto="Volver" icono="back" onClick={() => ir("jugar")} /></Vacio></Marco>;
@@ -700,6 +700,7 @@ export function PaginaConfigurar({ codigo }: { codigo: string }) {
     setIniciando(false);
     if (!ok) { aviso("No se pudo iniciar. Intenta otra vez."); return; }
     sonar("exito");
+    marcarArranque(codigo);
     ir("sala", codigo);
   };
   // Fin de la noche: se suman todos los juegos terminados y la ceremonia sale en la Pantalla y en cada celular.
