@@ -7,10 +7,11 @@ import { sonar } from "../../app/sonido";
 import { tocarVoz } from "../../app/musica";
 import { prepararVoz, urlObjeto, vozDe } from "../../app/temas";
 import type { FiguraV2 } from "../../content/personaje";
-import { GAJO_GOLPEAR, GAJO_MOVIMIENTOS, GAJO_PATADA, GAJO_PODERES, GAJO_TRANSFORMAR, RUEDA, RuedaGestos, gajosMovimiento, gajosPoder, gajosSet } from "./RuedaGestos";
+import { BOTON_VOLVER, GAJO_TRANSFORMAR, RuedaGestos, gajosCategorias, gajosOpciones } from "./RuedaGestos";
 import { conForma, seTransforma, transformar, useVersionFormas } from "../../app/formas";
 import { pedirPoder } from "../../app/poderes";
 import { movimientosDe, poderesDe, useCatalogoV3 } from "../../personajes/integracion";
+import { armarRueda, pagina, type Categoria } from "./categorias";
 
 /** Aviso de primera vez: se queda hasta que abras la rueda una vez en este aparato (Elías, 26 nov). */
 const VISTA = "alv-pista-rueda-juego";
@@ -26,15 +27,6 @@ export const RuedaFigura = forwardRef<MandoRueda, { jugador: string; figura?: Fi
   /** Selector de lo que se toca (tu figura): el aviso de primera vez sale sobre su parte de abajo. Sin él, no hay aviso. */
   pistaSobre?: string }>(function RuedaFigura({ jugador, figura, pistaSobre }, mando) {
   const [pos, setPos] = useState<{ x: number; y: number } | null>(null);
-  // Segunda rueda: los poderes del personaje (en su forma de ahora: Spider-Man tiene los suyos, Peter no).
-  // Segunda rueda: poderes o movimientos (sets compartidos: bailes, burlas, espada, hechizos…). Los movimientos van en
-  // dos pasos: primero el set («Pelea», «Espada»…) y luego sus movimientos («set:<id>»).
-  const [sub, setSub] = useState<"poderes" | "movimientos" | `set:${string}` | null>(null);
-  const cat = useCatalogoV3();
-  useVersionFormas();
-  const enForma = figura ? conForma({ id: jugador, figura }, cat).figura : null;
-  const poderes = enForma ? poderesDe(enForma, cat) : [];
-  const movimientos = enForma ? movimientosDe(enForma, cat) : [];
   const [pista, setPista] = useState<{ x: number; y: number } | null>(null);
   useEffect(() => {
     if (!pistaSobre || pistaVista()) return;
@@ -57,7 +49,7 @@ export const RuedaFigura = forwardRef<MandoRueda, { jugador: string; figura?: Fi
   useImperativeHandle(mando, () => ({
     abrir(x, y) {
       if (performance.now() - cerro.current < 350) return;
-      const radio = Math.min(168, Math.max(136, innerWidth * 0.15)) / 2, borde = radio + 16;
+      const radio = Math.min(216, Math.max(184, innerWidth * 0.19)) / 2, borde = radio + 16;
       // Computadora: a un lado de la figura, hacia donde hay más espacio, sin taparla. Celular: no cabe al lado; se pega
       // al borde derecho (o izquierdo si tocaste a la derecha) a la altura del toque y tapa solo media figura.
       const ancho = innerWidth >= 860, haciaDerecha = x < innerWidth / 2;
@@ -69,57 +61,70 @@ export const RuedaFigura = forwardRef<MandoRueda, { jugador: string; figura?: Fi
     },
   }), []);
 
-  const elegir = (cual: string) => {
-    // Transformar (Elías, 27 nov): cambia de forma y se queda así hasta volver a tocar.
-    if (cual === "transformar") { setTimeout(() => sonar(transformar(jugador, figura) ? "poder" : "tic"), 220); return; }
-    // Poderes (Elías, 27 nov): con uno solo se toca directo; con más, sale la segunda rueda en el mismo lugar.
-    if (cual === "poderes") {
-      if (poderes.length === 1) setTimeout(() => sonar(pedirPoder(jugador, poderes[0]!.id) ? "poder" : "tic"), 220);
-      else setTimeout(() => { setSub("poderes"); setPos(p => p ?? ultimaPos.current); }, 240);
-      return;
-    }
-    if (cual === "movimientos") { setTimeout(() => { setSub("movimientos"); setPos(p => p ?? ultimaPos.current); }, 240); return; }
-    // Un set con un solo movimiento se toca directo, como los poderes.
-    if (cual.startsWith("set:")) {
-      const g = movimientos.find(x => x.set === cual.slice(4));
-      if (g?.movs.length === 1) setTimeout(() => sonar(pedirPoder(jugador, g.movs[0]!.id) ? "clic" : "tic"), 220);
-      else if (g) setTimeout(() => { setSub(`set:${g.set}`); setPos(p => p ?? ultimaPos.current); }, 240);
-      return;
-    }
-    if (cual.startsWith("poder:")) { setTimeout(() => sonar(pedirPoder(jugador, cual.slice(6)) ? "poder" : "tic"), 220); return; }
-    // Un movimiento viaja igual que un poder (la escena lo busca en los movimientos de la figura).
-    if (cual.startsWith("mov:")) { setTimeout(() => sonar(pedirPoder(jugador, cual.slice(4)) ? "clic" : "tic"), 220); return; }
-    const g = cual as Gesto;
-    // Igual que los botones: el gesto empieza cuando la rueda ya se cerró (late 100 ms y cierra en 120 ms).
-    const voz = vozDe(figura, g);
-    setTimeout(() => {
-      const ok = pedirGesto(jugador, g, figura);
-      if (ok && voz) { void urlObjeto(voz).then(u => { if (!u || !tocarVoz(u)) sonar("poder"); }); return; }
-      sonar(ok ? (g === "especial" ? "poder" : "clic") : "tic");
-    }, 220);
+  const accion = (a: Accion) => {
+    if (a.tipo === "transformar") { sonar(transformar(jugador, figura) ? "poder" : "tic"); return; }
+    if (a.tipo === "poder") { sonar(pedirPoder(jugador, a.id) ? (a.id.includes("-") ? "clic" : "poder") : "tic"); return; }
+    // Voz del personaje en «Especial» (temas.ts); el gesto empieza cuando la rueda ya se cerró.
+    const voz = vozDe(figura, a.cual);
+    const ok = pedirGesto(jugador, a.cual, figura);
+    if (ok && voz) { void urlObjeto(voz).then(u => { if (!u || !tocarVoz(u)) sonar("poder"); }); return; }
+    sonar(ok ? (a.cual === "especial" ? "poder" : "clic") : "tic");
   };
-  const ultimaPos = useRef<{ x: number; y: number } | null>(null);
-  if (pos) ultimaPos.current = pos;
-  const cerrar = useCallback(() => { cerro.current = performance.now(); setPos(null); setSub(null); }, []);
-
-  // Rueda principal (hasta 8): gestos, Transformar, Poderes, Golpear, Patada y Acción. Si no caben, Patada se queda solo
-  // dentro de Acción → Pelea.
-  const pelea = movimientos.find(x => x.set === "pelea")?.movs ?? [];
-  const atajos = [GAJO_GOLPEAR, GAJO_PATADA].filter(g => pelea.some(m => "mov:" + m.id === g.cual));
-  const fijos = [...RUEDA, ...(figura && seTransforma(figura) ? [GAJO_TRANSFORMAR] : []), ...(poderes.length ? [GAJO_PODERES] : [])];
-  const accion = movimientos.length ? [GAJO_MOVIMIENTOS] : [];
-  const principal = [...fijos, ...atajos.slice(0, Math.max(0, 8 - fijos.length - accion.length)), ...accion];
+  const cerrar = useCallback(() => { cerro.current = performance.now(); setPos(null); }, []);
   if (!pos && !pista) return null;
   return (
     <div className="rg-capa">
-      {pos && (sub === "poderes"
-        ? <RuedaGestos key="poderes" gestos={gajosPoder(poderes)} x={pos.x} y={pos.y} onElegir={elegir} onCerrar={cerrar} />
-        : sub === "movimientos"
-          ? <RuedaGestos key="movimientos" gestos={gajosSet(movimientos)} x={pos.x} y={pos.y} onElegir={elegir} onCerrar={cerrar} />
-          : sub?.startsWith("set:")
-            ? <RuedaGestos key={sub} gestos={gajosMovimiento(movimientos.find(x => x.set === sub.slice(4))?.movs ?? [])} x={pos.x} y={pos.y} onElegir={elegir} onCerrar={cerrar} />
-          : <RuedaGestos key="gestos" gestos={principal} x={pos.x} y={pos.y} onElegir={elegir} onCerrar={cerrar} />)}
+      {pos && <RuedaAnimaciones figura={figura} jugador={jugador} x={pos.x} y={pos.y} onAccion={accion} onCerrar={cerrar} />}
       {!pos && pista && <p className="rg-pista" style={{ left: pista.x, top: pista.y }} aria-hidden="true">Toca a tu personaje para animarlo</p>}
     </div>
   );
 });
+
+/** Lo que pide el círculo: un gesto (saludar, ganar, perder, especial), un poder o movimiento, o transformarse. */
+export type Accion = { tipo: "gesto"; cual: Gesto } | { tipo: "poder"; id: string } | { tipo: "transformar" };
+
+/**
+ * Círculo de animaciones por categorías (Elías, 27 nov; categorias.ts): el principal con Poderes, Especial, Pelea, Habilidad,
+ * Fiesta y Gestos (Transformar al centro), y cada categoría con sus movimientos directo (Volver al centro). Lo usan la
+ * rueda que sale al tocar tu figura (RuedaFigura) y la fija del personalizador (`fija`).
+ */
+export function RuedaAnimaciones({ figura, jugador, x, y, fija, sinTransformar, onAccion, onCerrar }: {
+  figura: unknown; jugador: string; x: number; y: number; fija?: boolean; sinTransformar?: boolean;
+  onAccion: (a: Accion) => void; onCerrar: () => void;
+}) {
+  const cat = useCatalogoV3();
+  useVersionFormas();
+  // En su forma de ahora: Spider-Man tiene sus poderes, Peter no.
+  const enForma = figura ? conForma({ id: jugador, figura: figura as FiguraV2 }, cat).figura : null;
+  const armada = armarRueda(enForma ? poderesDe(enForma, cat) : [], enForma ? movimientosDe(enForma, cat) : []);
+  const [sub, setSub] = useState<{ c: Categoria; pag: number } | null>(null);
+  const [n, setN] = useState(0); // vuelve a montar la rueda (anima al cambiar de nivel)
+  const ir = (s: { c: Categoria; pag: number } | null) => { setSub(s); setN(v => v + 1); };
+  const transforma = !sinTransformar && !!figura && seTransforma(figura);
+  const cerrarYa = useRef(onCerrar); cerrarYa.current = onCerrar;
+  // Suelta: la rueda se cierra al elegir; para cambiar de nivel se vuelve a abrir en el mismo lugar.
+  const reabrir = useRef(false);
+  const cerrar = useCallback((m: "elegir" | "tecla" | "fuera") => {
+    if (m === "elegir" && reabrir.current) { reabrir.current = false; return; }
+    if (!fija) cerrarYa.current();
+    setSub(null);
+  }, [fija]);
+  const elegir = (cual: string) => {
+    const tarde = (f: () => void) => setTimeout(f, fija ? 0 : 220);
+    if (cual === "volver") { reabrir.current = true; tarde(() => ir(null)); return; }
+    if (cual === "transformar") { tarde(() => onAccion({ tipo: "transformar" })); return; }
+    if (cual === "mas" && sub) { reabrir.current = true; tarde(() => ir({ c: sub.c, pag: sub.pag + 1 })); return; }
+    if (cual.startsWith("cat:")) {
+      const c = cual.slice(4) as Categoria, lista = armada.opciones[c];
+      // Especial y las categorías de un solo movimiento se tocan directo.
+      if (c === "especial") { tarde(() => onAccion({ tipo: "gesto", cual: "especial" })); return; }
+      if (lista.length === 1) { const o = lista[0]!; tarde(() => onAccion(o.cual.includes(":") ? { tipo: "poder", id: o.cual.slice(o.cual.indexOf(":") + 1) } : { tipo: "gesto", cual: o.cual as Gesto })); return; }
+      reabrir.current = true; tarde(() => ir({ c, pag: 0 })); return;
+    }
+    if (cual.startsWith("poder:") || cual.startsWith("mov:")) { const id = cual.slice(cual.indexOf(":") + 1); tarde(() => onAccion({ tipo: "poder", id })); return; }
+    tarde(() => onAccion({ tipo: "gesto", cual: cual as Gesto }));
+  };
+  const gestos = sub ? gajosOpciones(pagina(armada.opciones[sub.c], sub.pag)) : gajosCategorias(armada.principal);
+  const boton = sub ? BOTON_VOLVER : transforma ? GAJO_TRANSFORMAR : null;
+  return <RuedaGestos key={(sub ? sub.c + sub.pag : "principal") + n} gestos={gestos} boton={boton} x={x} y={y} fija={fija} grande={!fija} onElegir={elegir} onCerrar={cerrar} />;
+}

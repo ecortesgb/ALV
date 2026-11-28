@@ -155,6 +155,18 @@
       tramo = QUIETO || !ms ? { de: meta, a: meta, t0: 0, dur: 1 } : { de: corre, a: meta, t0: performance.now(), dur: ms };
     }
     // Clips del juego: siempre a velocidad 1 (logicas.js velocidadClip), aunque el mensaje traiga la de un perfil.
+    // {tipo:"poder", id, poder}: un poder o un movimiento de set del plano (círculo fijo del personalizador, Elías 27 nov),
+    // con sus efectos (efectos.js) si cargaron. Los movimientos van en su lugar (fijo).
+    if (d.tipo === "poder" && figuras.has(d.id) && typeof d.poder === "string") {
+      const f = figuras.get(d.id); let pl = null; try { pl = JSON.parse(f.firma); } catch (_) { /* nada */ }
+      const ok = x => x && x.id === d.poder && typeof x.glb === "string" && typeof x.clip === "string";
+      const pd = pl && ((Array.isArray(pl.poderes) && pl.poderes.find(ok)) || (Array.isArray(pl.movs) && pl.movs.find(ok)));
+      const mov = !!(pl && Array.isArray(pl.movs) && pl.movs.includes(pd));
+      if (pd && f.p.tocarExt) f.p.tocarExt(pd.glb, pd.clip, { hasta: Number(pd.hasta) || 0, bucle: Number(pd.bucle) || 0, fijo: mov }).then(dur => {
+        if (dur && window.EfectosALV && Array.isArray(pd.efectos) && figuras.get(d.id) === f)
+          pd.efectos.slice(0, 3).forEach(x => { if (x && typeof x.tipo === "string") window.EfectosALV.lanzar(scene, { obj: f.p.obj, hueso: f.p.hueso }, x, { camara: camera }); });
+      });
+    }
     if (d.tipo === "momento" && figuras.has(d.id)) figuras.get(d.id).p.tocar(d.cual, { vel: window.LogicasALV && window.LogicasALV.velocidadClip ? window.LogicasALV.velocidadClip(d.vel) : 1 });
     if (d.tipo === "todos") figuras.forEach(f => f.p.tocar(d.cual));
     if (d.tipo === "medir") {

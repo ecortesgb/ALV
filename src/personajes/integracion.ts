@@ -270,11 +270,11 @@ export function caretaDe(f: unknown, paso: number): Careta | null { const v3 = p
 // ---------- Poderes (Elías, 27 nov: escudo del Capi, rayo de Cíclope, telaraña, fuego, vuelo…) ----------
 
 /** Los poderes que se le ofrecen a la figura (en orden; el primero es el principal). Vacío si su personaje no tiene. */
-export function poderesDe(f: unknown, cat: CatalogoV3 | null): { id: string; nombre: string }[] {
+export function poderesDe(f: unknown, cat: CatalogoV3 | null): { id: string; nombre: string; tipo?: string }[] {
   const v3 = leerV3(f);
   if (!v3 || !cat || v3.origen.tipo !== "catalogo") return [];
   const en = cat.catalogo.get(v3.origen.personaje);
-  return en ? poderesDeFicha(en.ficha, en.base, cat.catalogo).map(p => ({ id: p.id, nombre: p.nombre })) : [];
+  return en ? poderesDeFicha(en.ficha, en.base, cat.catalogo).map(p => ({ id: p.id, nombre: p.nombre, tipo: p.efectos[0]?.tipo })) : [];
 }
 
 // ---------- Personalidad por defecto (Elías, 27 nov: «personalidad a todos los personajes, a los que sean similares») ----------
