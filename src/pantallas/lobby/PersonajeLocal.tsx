@@ -1,11 +1,10 @@
 // Modo Local: el anfitrión agrega personajes sin cuenta (nombre, género para el color y figura) o les cambia la figura.
 // La figura sale de los personajes ya armados (trajes-figura.json) o al azar. Nada se guarda en la nube.
 // Estilo del lobby (Elías, 24 nov): vidrio oscuro, la cabina del color de fondo y la figura completa (sin el círculo viejo).
-import { useEffect, useState, type CSSProperties } from "react";
+import { useEffect, useState } from "react";
 import type { FiguraV2 } from "../../content/personaje";
 import { PALETA_SALA, varsColor, type ColorJugador } from "../../app/colorJugador";
-import { semillaDe, useFoto } from "../../app/figura3d";
-import { cabinaDe } from "./Ficha";
+import { MedallonJugador } from "../azotea/Cabecera";
 import { banderaV3, trajeAlAzar, useEstadoCatalogoV3 } from "../../personajes/integracion";
 import { ElegirTraje, usePuedeUsar } from "./ElegirTraje";
 
@@ -55,7 +54,6 @@ function PersonajeTrajes({ titulo, inicial, soloFigura, color, alListo, alCerrar
   const valido = limpio.length >= 2 && limpio.length <= 20 && (!rapido || mayor) && !ocupado;
   const azar = () => { const f = cat && trajeAlAzar(cat, puedeUsar); if (f) setFigura(f as unknown as FiguraV2); };
   const c = color ?? colorVista(genero);
-  const foto = useFoto(figura, figura ? undefined : semillaDe(limpio || "nuevo"), "busto");
   useEffect(() => { if (taller) return; const f = (e: KeyboardEvent) => { if (e.key === "Escape") alCerrar(); }; addEventListener("keydown", f); return () => removeEventListener("keydown", f); }, [alCerrar, taller]);
   if (taller) return <ElegirTraje inicial={figura} propio={propio}
     alElegir={f => { if (soloFigura) alListo({ nombre: inicial?.nombre ?? "", genero, figura: f }); else { setFigura(f); setTaller(false); } }}
@@ -66,9 +64,7 @@ function PersonajeTrajes({ titulo, inicial, soloFigura, color, alListo, alCerrar
         <header className="pl-top"><h2 className="pl-tit"><span>{titulo}</span></h2><button type="button" className="pl-cerrar" onClick={alCerrar} aria-label="Cerrar">✕</button></header>
         <div className="pl-cuerpo">
           <div className="pl-vista">
-            <span className="pl-cabina" style={{ "--fj-cab": cabinaDe(c) } as CSSProperties} aria-hidden="true">
-              {foto ? <img key={foto} src={foto} alt="" draggable={false} /> : <span className="fj-cargando" />}
-            </span>
+            <MedallonJugador id={limpio || "nuevo"} figura={figura} tamano="var(--pl-m)" className="pl-medallon" />
             <b className="pl-nombre">{limpio || "Nuevo jugador"}</b>
             <button type="button" className="pl-azar" onClick={() => setTaller(true)}>Elegir personaje</button>
             <button type="button" className="pl-azar" onClick={azar} disabled={!cat}>🎲 Al azar</button>
@@ -105,7 +101,6 @@ function PersonajeViejo({ titulo, inicial, soloFigura, color, alListo, alCerrar,
   const valido = (soloFigura || (limpio.length >= 2 && limpio.length <= 20)) && (!rapido || mayor) && !ocupado;
   const azar = () => { if (!trajes?.length) return; const t = trajes[Math.floor(Math.random() * trajes.length)]!; setFigura(t.figura); setElegido(t.id); };
   const c = color ?? colorVista(genero);
-  const foto = useFoto(figura, figura ? undefined : semillaDe(elegido ?? (limpio || "nuevo")), "busto");
   // Escape cierra.
   useEffect(() => { const f = (e: KeyboardEvent) => { if (e.key === "Escape") alCerrar(); }; addEventListener("keydown", f); return () => removeEventListener("keydown", f); }, [alCerrar]);
   return (
@@ -114,9 +109,7 @@ function PersonajeViejo({ titulo, inicial, soloFigura, color, alListo, alCerrar,
         <header className="pl-top"><h2 className="pl-tit"><span>{titulo}</span></h2><button type="button" className="pl-cerrar" onClick={alCerrar} aria-label="Cerrar">✕</button></header>
         <div className="pl-cuerpo">
           <div className="pl-vista">
-            <span className="pl-cabina" style={{ "--fj-cab": cabinaDe(c) } as CSSProperties} aria-hidden="true">
-              {foto ? <img key={foto} src={foto} alt="" draggable={false} /> : <span className="fj-cargando" />}
-            </span>
+            <MedallonJugador id={elegido ?? (limpio || "nuevo")} figura={figura} tamano="var(--pl-m)" className="pl-medallon" />
             <b className="pl-nombre">{soloFigura ? inicial?.nombre ?? "" : limpio || "Nuevo jugador"}</b>
             <button type="button" className="pl-azar" onClick={azar} disabled={!trajes?.length}>🎲 Al azar</button>
           </div>
