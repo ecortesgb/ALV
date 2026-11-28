@@ -339,7 +339,9 @@ export function Escena3D({ figuras, momentos, className, alto, modo, columnas, s
   }, [listo, JSON.stringify(momentos ?? [])]);
   return (
     <div className={"escena3d" + (className ? " " + className : "")} style={alto ? { height: alto } : undefined}>
-      {montar && <iframe key={clave} ref={ref} src={BASE + "escena.html?modo=" + (modo ?? "") + (modo === "hub" ? paramsCine() : "") + (sinPedestal ? "&pedestal=no" : "") + paramsEscena()} title="Escena con las figuras" tabIndex={-1} />}
+      {montar && <iframe key={clave} ref={ref} src={BASE + "escena.html?modo=" + (modo ?? "") + (modo === "hub" ? paramsCine() : "") + (sinPedestal ? "&pedestal=no" : "") + paramsEscena()} title="Escena con las figuras" tabIndex={-1}
+        // Velocidad (28 nov): las figuras van desde que cargan los scripts (la escena baja los GLB nuevos mientras termina).
+        onLoad={() => { if (!listoRef.current) mandarFiguras(); }} />}
       {!listo && <span className="escena3d-cargando" aria-live="polite">Armando figuras…</span>}
     </div>
   );

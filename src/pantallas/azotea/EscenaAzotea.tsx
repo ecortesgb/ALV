@@ -147,7 +147,10 @@ export const EscenaAzotea = forwardRef<MandoAzotea, { id: string; figura: Figura
 
     return (
       <div ref={caja} className={"az-figura" + (listo ? " listo" : "") + (anclaje ? " anclada" : "") + (className ? " " + className : "")} {...arrastre}>
-        {montar && <iframe key={clave} ref={ref} src={src} title="Tu figura en la azotea" tabIndex={-1} aria-hidden="true" />}
+        {montar && <iframe key={clave} ref={ref} src={src} title="Tu figura en la azotea" tabIndex={-1} aria-hidden="true"
+          // Velocidad (28 nov): la figura se manda en cuanto cargan los scripts; la escena la guarda y baja su GLB mientras
+          // termina la biblioteca vieja. Al «listo» se vuelve a mandar como siempre.
+          onLoad={() => { if (!listoRef.current) mandarTodo(); }} />}
       </div>
     );
   });
