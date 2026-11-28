@@ -110,19 +110,20 @@ export function PapelNave({ v, mio, miembros, yo, vi, alVisto, soyAnfitrion, alD
 }
 
 /** Lector de huella redondo: el secreto (los hijos) se ve dentro del círculo solo mientras se mantiene el dedo, Espacio o Enter. */
-function LectorHuella({ children }: { children: ReactNode }) {
+export function LectorHuella({ children, etiqueta = "Mantén el dedo para ver tu papel", pide = ["Mantén el dedo para ver", "Suelta para ocultar"] }: {
+  children: ReactNode; etiqueta?: string; pide?: [string, string] }) {
   const [on, setOn] = useState(false);
   const tecla = (e: KeyboardEvent, valor: boolean) => { if (e.key === " " || e.key === "Enter") { e.preventDefault(); setOn(valor); } };
   return (
     <div className="ns-lector-caja">
-      <div className={"ns-lector" + (on ? " on" : "")} role="button" tabIndex={0} aria-pressed={on} aria-label="Mantén el dedo para ver tu papel"
+      <div className={"ns-lector" + (on ? " on" : "")} role="button" tabIndex={0} aria-pressed={on} aria-label={etiqueta}
         onPointerDown={() => setOn(true)} onPointerUp={() => setOn(false)} onPointerLeave={() => setOn(false)} onPointerCancel={() => setOn(false)}
         onContextMenu={e => e.preventDefault()} onBlur={() => setOn(false)} onKeyDown={e => tecla(e, true)} onKeyUp={e => tecla(e, false)}>
         <span className="ns-l-anillo" aria-hidden="true" />
         <span className="ns-l-tapa" aria-hidden={on}><Icono id="finger" /><span className="ns-l-raya" /></span>
         <span className="ns-l-secreto" aria-hidden={!on} aria-live="polite">{on ? children : null}</span>
       </div>
-      <span className="ns-l-pide" aria-hidden="true">{on ? "Suelta para ocultar" : "Mantén el dedo para ver"}</span>
+      <span className="ns-l-pide" aria-hidden="true">{on ? pide[1] : pide[0]}</span>
     </div>
   );
 }

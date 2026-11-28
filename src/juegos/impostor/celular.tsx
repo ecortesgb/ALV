@@ -14,7 +14,7 @@ import { desenlaceImpostor, nombreDe, type Publico } from "../general/texto";
 import { RelojTurno } from "../general/RelojTurno";
 import { CastigosNave, ExpulsionNave, FinNave, TableroVotos, VictoriaNave, arteNave, esNave, revNave, usePasoExpulsion } from "./nave";
 import { Posiciones } from "../general/Copas";
-import { AnuncioDiscusion, useAnuncioDiscusion } from "./papelNave";
+import { AnuncioDiscusion, LectorHuella, useAnuncioDiscusion } from "./papelNave";
 import { HistorialPalabras, MesaPalabras, PizarraVotos } from "./mesaNave";
 import "./impostor.css";
 
@@ -106,9 +106,9 @@ export function CelularImpostor({ v, mi, miembros, mandar }: { v: Publico; mi: M
     else if (fuera) accion = <p className="nv-ac-t dsp">Saliste de la nave <small>Ya no hablas ni votas. No digas nada hasta el final.</small></p>;
     else if (im.etapa === "pistas" && meToca) accion = (
       <form className="nv-ac-turno" onSubmit={e => { e.preventDefault(); void decir(); }}>
-        <span className="nv-ac-k">¡Te toca! Dila en voz alta y escríbela</span>
+        <label className="nv-ac-k" htmlFor="nv-mi-palabra">¡Te toca! Dila en voz alta y escríbela</label>
         <span className="nv-ac-fila">
-          <input className="nv-ac-input" value={texto} maxLength={MAX_PISTA} onChange={e => setTexto(e.target.value)} placeholder="Tu palabra" aria-label="Tu palabra" autoComplete="off" enterKeyHint="send" disabled={enviado === clave} />
+          <input id="nv-mi-palabra" className="nv-ac-input" value={texto} maxLength={MAX_PISTA} onChange={e => setTexto(e.target.value)} placeholder="Escribe tu palabra…" autoComplete="off" enterKeyHint="send" disabled={enviado === clave} />
           <button type="submit" className="lb-listo nv-ac-btn" disabled={!texto.trim() || enviado === clave}>{enviado === clave ? "…" : "¡Ya la dije!"}</button>
         </span>
       </form>
@@ -140,9 +140,9 @@ export function CelularImpostor({ v, mi, miembros, mandar }: { v: Publico; mi: M
         <div className="nv-cel-cab">
           <span className="nv-cel-k">{votando ? "¡A votar!" : `Vuelta ${v.ronda}`} · {im.total} {im.total === 1 ? "impostor" : "impostores"}</span>
           <RelojTurno v={v} size="2.4em" />
-          <MiPalabra imp={soyImpostor} palabra={m.palabra} tema={m.tema ?? v.carta?.texto ?? ""} pista={m.pista} comp={(m.companeros ?? []).map(c => nombreDe(v, c))} />
           {hayVueltas && <button type="button" className="nm-ver-vueltas" onClick={() => setVerVueltas(true)}>📜 Vueltas</button>}
         </div>
+        {!votando && <HuellaPalabra imp={soyImpostor} palabra={m.palabra} tema={m.tema ?? v.carta?.texto ?? ""} pista={m.pista} comp={(m.companeros ?? []).map(c => nombreDe(v, c))} />}
         {votando ? <PizarraVotos v={v} miembros={miembros} yo={yo} sel={sel} alElegir={setSel} puedo={enVoto} miVoto={voto}
             alVotar={() => { if (sel) void votar(sel); }} />
           : <div className="nv-accion" style={varsColor(color(meToca ? yo : quien))}>{accion}</div>}
@@ -268,21 +268,26 @@ function PaginasFin({ paginas }: { paginas: { id: string; titulo: string; cuerpo
   );
 }
 
-/** Tu palabra en chico: mantén el dedo para verla (al soltar se tapa). El impostor ve su papel, la pista o la categoría. */
-function MiPalabra({ imp, palabra, tema, pista, comp }: { imp: boolean; palabra?: string; tema: string; pista?: string; comp: string[] }) {
-  const [ver, setVer] = useState(false);
-  const tecla = (e: React.KeyboardEvent, x: boolean) => { if (e.key === " " || e.key === "Enter") { e.preventDefault(); setVer(x); } };
+/** Tu palabra con el lector de huella, a la derecha de la mesa (Elías, 28 nov): mantén el dedo para verla y al soltar se
+ *  tapa. Por fuera se ve igual para todos; el impostor ve su papel, la pista o la categoría. */
+function HuellaPalabra({ imp, palabra, tema, pista, comp }: { imp: boolean; palabra?: string; tema: string; pista?: string; comp: string[] }) {
   return (
-    <button type="button" className={"nv-mia" + (ver ? " on" : "") + (imp ? " imp" : "")} aria-pressed={ver} aria-label="Mantén presionado para ver tu palabra"
-      onPointerDown={() => setVer(true)} onPointerUp={() => setVer(false)} onPointerLeave={() => setVer(false)} onPointerCancel={() => setVer(false)}
-      onContextMenu={e => e.preventDefault()} onBlur={() => setVer(false)} onKeyDown={e => tecla(e, true)} onKeyUp={e => tecla(e, false)}>
-      {ver ? (
-        <span className="nv-mia-txt" aria-live="polite">
-          <b className="dsp">{imp ? "Impostor" : palabra ?? "…"}</b>
-          <small>{imp ? (pista ? `Pista: ${pista}` : `Categoría: ${tema}`) + (comp.length ? ` · Con ${comp.join(", ")}` : "") : `Categoría: ${tema}`}</small>
-        </span>
-      ) : <span className="nv-mia-tapa"><span aria-hidden="true">👆</span> Mantén para ver tu palabra</span>}
-    </button>
+    <div className="nm-huella">
+      <LectorHuella etiqueta="Mantén el dedo para ver tu palabra" pide={["Tu palabra", "Suelta"]}>
+        {imp ? (
+          <>
+            <b className="ns-l-imp">Impostor</b>
+            <span className="ns-l-det">{pista ? <>Pista: <b>{pista}</b></> : <>Categoría: <b>{tema}</b></>}</span>
+            {comp.length > 0 && <span className="ns-l-det chico">Con {comp.join(" y ")}</span>}
+          </>
+        ) : (
+          <>
+            <b className="ns-l-pal" style={{ "--n": Math.max(5, ...(palabra ?? "").split(/\s+/).map(x => x.length)) } as React.CSSProperties}>{palabra ?? "…"}</b>
+            <span className="ns-l-det">Categoría: <b>{tema}</b></span>
+          </>
+        )}
+      </LectorHuella>
+    </div>
   );
 }
 
