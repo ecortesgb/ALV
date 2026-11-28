@@ -95,7 +95,9 @@ function Tarjeta({ pestanas, activa, onCambio, children }: { pestanas: { id: str
 }
 
 // Fondo de la pantalla de carga: la reunión en el patio (Elías, 28 nov). El cartel de antes sigue en la pantalla de acceso.
-const ARTE_INICIO = { "--arte-g": urlArte("fondo-carga-1920.webp"), "--arte-c": urlArte("fondo-carga-1100.webp"), "--arte-d": urlArte("fondo-carga-difuso.webp") } as CSSProperties;
+const ARTE_INICIO = { "--arte-g": urlArte("fondo-carga-1920.webp"), "--arte-c": urlArte("fondo-carga-1100.webp"), "--arte-d": urlArte("fondo-carga-difuso.webp"),
+  // Versión vertical para celular (Elías, 28 nov).
+  "--arte-m": urlArte("fondo-carga-movil.webp"), "--arte-md": urlArte("fondo-carga-movil-difuso.webp") } as CSSProperties;
 /** Tiempo mínimo de la barra antes de «Presiona para iniciar» (la ruleta sigue girando mientras). */
 const CARGA_MS = 3000;
 
