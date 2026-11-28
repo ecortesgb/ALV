@@ -12,7 +12,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "fiesta:armar": "node tools/revisar-config.mjs && tsc --noEmit && node tools/fiesta/armar.mjs",
-    "fiesta": "node tools/fiesta/servidor.mjs"
+    "fiesta": "node tools/fiesta/servidor.mjs",
+    "fiesta:supabase": "node tools/fiesta/supabase-local.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.45.4",

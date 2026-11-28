@@ -8,7 +8,8 @@
 // junto a la carpeta de la app) y arma /privados-fiesta/indice.json como herramientas-locales/servir-personajes.py.
 // Esa carpeta nunca entra al repo ni a dist-fiesta: solo se lee en la laptop y se entrega a los aparatos de su red.
 // La copia se guarda en fiesta-datos.json (junto a dist-fiesta) para que sobreviva si la laptop se reinicia.
-import { createServer } from "node:http";
+import { createServer, request as pedirHttp } from "node:http";
+import { connect } from "node:net";
 import { readFileSync, writeFileSync, existsSync, statSync, renameSync, readdirSync, realpathSync, openSync, readSync, closeSync } from "node:fs";
 import { join, normalize, extname, dirname, relative, isAbsolute } from "node:path";
 import { networkInterfaces } from "node:os";
@@ -97,8 +98,21 @@ function indice() {
   return (indiceGuardado = { version: 1, personajes: fuera });
 }
 
+// Supabase local (tools/fiesta/supabase-local.mjs): los aparatos lo alcanzan por /supabase/ en este mismo puerto, así no
+// hace falta abrir el 54321 en el firewall ni lidiar con CORS. La laptop lo reenvía a 127.0.0.1:54321 (HTTP y Realtime).
+const SUPABASE = { host: "127.0.0.1", port: 54321 };
+const PREFIJO_SB = "/supabase";
+function reenviarSupabase(req, res) {
+  const destino = pedirHttp({ ...SUPABASE, method: req.method, path: (req.url ?? "/").slice(PREFIJO_SB.length) || "/", headers: { ...req.headers, host: `${SUPABASE.host}:${SUPABASE.port}` } }, r => {
+    res.writeHead(r.statusCode ?? 502, r.headers); r.pipe(res);
+  });
+  destino.on("error", () => { if (!res.headersSent) json(res, 502, { ok: false, error: "Supabase local apagado" }); else res.end(); });
+  req.pipe(destino);
+}
+
 const servidor = createServer(async (req, res) => {
   const url = new URL(req.url ?? "/", "http://fiesta");
+  if (url.pathname === PREFIJO_SB || url.pathname.startsWith(PREFIJO_SB + "/")) return reenviarSupabase(req, res);
   try {
     if (url.pathname === "/fiesta/eventos" && req.method === "GET") {
       res.writeHead(200, { "content-type": "text/event-stream", "cache-control": "no-store", connection: "keep-alive" });
@@ -147,11 +161,27 @@ const servidor = createServer(async (req, res) => {
   }
 });
 
+// Realtime de Supabase (WebSocket): se reenvía la conexión tal cual.
+servidor.on("upgrade", (req, socket, cabeza) => {
+  if (!(req.url ?? "").startsWith(PREFIJO_SB + "/")) return socket.destroy();
+  const destino = connect(SUPABASE.port, SUPABASE.host, () => {
+    const lineas = [`${req.method} ${(req.url ?? "/").slice(PREFIJO_SB.length)} HTTP/${req.httpVersion}`];
+    for (let i = 0; i < req.rawHeaders.length; i += 2) lineas.push(`${req.rawHeaders[i]}: ${/^host$/i.test(req.rawHeaders[i]) ? `${SUPABASE.host}:${SUPABASE.port}` : req.rawHeaders[i + 1]}`);
+    destino.write(lineas.join("\r\n") + "\r\n\r\n");
+    if (cabeza?.length) destino.write(cabeza);
+    destino.pipe(socket); socket.pipe(destino);
+  });
+  destino.on("error", () => socket.destroy()); socket.on("error", () => destino.destroy());
+});
+
 servidor.listen(PUERTO, "0.0.0.0", () => {
   const ips = Object.values(networkInterfaces()).flat().filter(i => i && i.family === "IPv4" && !i.internal).map(i => i.address);
   console.log("\n  ALV · Modo Fiesta (sin internet)\n");
   const n = indice().personajes.length;
   console.log(n ? `  Personajes: ${n} (de ${PRIVADOS})` : `  Sin personajes: no encontré ${join(PRIVADOS, "catalogo")}. Usa --personajes "ruta".`);
+  const sb = connect(SUPABASE.port, SUPABASE.host);
+  sb.on("connect", () => { console.log("  Supabase local: encendido (cuentas, XP y tienda)."); sb.destroy(); });
+  sb.on("error", () => console.log("  Supabase local: apagado. Sin él no entran las cuentas (npm run fiesta:supabase)."));
   if (!ips.length) console.log("  No hay red. Conecta la laptop al router o al hotspot y vuelve a correr esto.");
   for (const ip of ips) console.log(`  Abre en la laptop y en los celulares:  http://${ip}:${PUERTO}/`);
   console.log("\n  Deja esta ventana abierta durante la fiesta. Para cerrar: Ctrl+C.\n");

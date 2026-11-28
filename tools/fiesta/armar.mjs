@@ -22,6 +22,16 @@ console.log("1/3 Armando la app (sin nube)…");
 process.env.VITE_ALV_FIESTA = "1";
 process.env.VITE_SUPABASE_URL = "";
 process.env.VITE_SUPABASE_PUBLISHABLE_KEY = "";
+// Con la copia local de Supabase (npm run fiesta:supabase): cuentas, XP y tienda. Formato de figuras v3 como producción.
+const archivoLlave = join(RAIZ, "fiesta-supabase", "llave-publicable.txt");
+if (existsSync(archivoLlave)) {
+  const llave = readFileSync(archivoLlave, "utf8").trim();
+  if (!llave.startsWith("sb_publishable_")) { console.error("La llave local no es publicable (sb_publishable_). Build detenido."); process.exit(1); }
+  process.env.VITE_ALV_FIESTA_NUBE = "1";
+  process.env.VITE_SUPABASE_PUBLISHABLE_KEY = llave;
+  process.env.VITE_CORTE_V3 = "1";
+  console.log("   Con la copia local de Supabase (cuentas, XP y tienda).");
+} else console.log("   Sin Supabase local: sin cuentas ni XP (para tenerlas: npm run fiesta:supabase).");
 rmSync(SALIDA, { recursive: true, force: true });
 const { build } = await import("vite");
 await build({ root: RAIZ, logLevel: "warn", build: { outDir: SALIDA, emptyOutDir: true } });
