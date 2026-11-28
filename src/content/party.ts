@@ -106,13 +106,15 @@ export function salaParty(azar = Math.random): string {
  * Direcciones del juego: la TV (tv-*.html) y el mando (control.html), en la misma sala.
  * `base` es la raíz de la app (import.meta.env.BASE_URL resuelto contra la página).
  */
-export function urlsParty(c: ConfigParty & { jugadores?: number }, sala: string, base: string, nombre?: string, personaje?: string | null): { tv: string; mando: string } {
+export function urlsParty(c: ConfigParty & { jugadores?: number }, sala: string, base: string, nombre?: string, personaje?: string | null,
+  /** Este aparato muestra el juego y también es el mando de quien lo tiene (sin Pantalla en el lobby). */ tactil = false): { tv: string; mando: string } {
   const m = miniDe(c.juego)!;
   const dir = new URL("tools/personajes/minijuegos/", base);
   const tv = new URL(m.tv, dir);
   tv.search = new URLSearchParams({ sala, ambiente: c.ambiente, ...(c.modalidad && m.modalidades?.includes(c.modalidad) ? { modalidad: c.modalidad } : {}), modo: "party",
     // Cuántos mandos espera: al entrar todos (y cargar), la TV empieza sola.
-    ...(c.jugadores && c.jugadores >= 1 && c.jugadores <= MAX_JUGADORES_PARTY ? { jugadores: String(c.jugadores) } : {}) }).toString();
+    ...(c.jugadores && c.jugadores >= 1 && c.jugadores <= MAX_JUGADORES_PARTY ? { jugadores: String(c.jugadores) } : {}),
+    ...(tactil ? { tactil: "1", ...(nombre ? { nombre: nombre.slice(0, 16) } : {}), ...(personaje && /^[a-z0-9-]{1,40}$/.test(personaje) ? { personaje } : {}) } : {}) }).toString();
   const mando = new URL("control.html", dir);
   // El mando entra solo con el personaje que el jugador ya tiene en ALV (sin elegir otra vez).
   mando.search = new URLSearchParams({ sala, ...(nombre ? { nombre: nombre.slice(0, 16) } : {}),

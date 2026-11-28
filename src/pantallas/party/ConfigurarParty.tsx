@@ -241,8 +241,8 @@ export function PaginaParty({ codigo }: { codigo: string }) {
   const [carga, setCarga] = useState<AvisoParty | null>(null);
   const fondo = <div className="cfg-fondo"><EscenarioFondo ambiente={az.ambientes[momento]} momento={momento} velo={az.velo} /></div>;
   const comenzar = (c: ConfigParty) => {
-    // Mandos que se esperan: cada miembro del lobby con su celular; sin Pantalla, este aparato es la TV y no lleva mando.
-    const esperados = Math.min(MAX_JUGADORES_PARTY, Math.max(1, (s.miembros.length || 1) - (conPantalla ? 0 : 1)));
+    // Mandos que se esperan: cada miembro del lobby (sin Pantalla, este aparato muestra el juego y también es mando).
+    const esperados = Math.min(MAX_JUGADORES_PARTY, Math.max(1, s.miembros.length || 1));
     const a: AvisoParty = { ...c, sala: salaParty(), jugadores: esperados };
     sonar("exito");
     if (s.sala) avisarParty(s.sala.id, a);

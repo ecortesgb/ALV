@@ -228,6 +228,9 @@ export function crearTV({ juego, escena, alUnirse, alMensaje, alSalir, alDescone
       } catch (e) {
         if (mio !== j.carga) return;
         j.estado = "error"; console.error("No cargó", personaje, e);
+        // Para saber por qué (Elías, 28 nov): qué personaje y qué pasó, en el panel de la sala de esta pantalla.
+        const como = document.getElementById("como");
+        if (como) como.textContent = `No cargó ${personaje}: ${String((e && e.message) || e).slice(0, 90)}`;
         // Sin pedirle al celular que elija (Elías, 28 nov): se intenta con otro personaje, hasta 2 veces.
         j.fallos = (j.fallos || 0) + 1;
         const otros = disponibles().filter(x => x !== personaje && !FALLAR.has(x));

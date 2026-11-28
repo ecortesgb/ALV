@@ -51,7 +51,8 @@ export function tarjetasParty(aviso: AvisoParty): TarjetaCarga[] {
  */
 export function CargaParty({ aviso, rol, nombre, figura, alCancelar }: { aviso: AvisoParty; rol: "tv" | "mando"; nombre?: string; figura?: unknown; alCancelar?: () => void }) {
   const m = miniDe(aviso.juego)!;
-  const destino = urlsParty(aviso, aviso.sala, BASE(), nombre, personajeDeFigura(figura))[rol];
+  // Sin Pantalla, el aparato del anfitrión muestra el juego y además es su mando (botones encima).
+  const destino = urlsParty(aviso, aviso.sala, BASE(), nombre, personajeDeFigura(figura), rol === "tv" && !!alCancelar)[rol];
   const abrir = () => location.assign(destino);
   // En una TV del lobby nadie toca: se abre sola. Si este aparato muestra el juego y nadie toca, también.
   const solo = rol === "tv";
