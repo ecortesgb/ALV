@@ -13,7 +13,7 @@ import { BASE_CREAR, figuraInicial, piezasDeCatalogo, planoConstructor, type Pie
 import { piezasGenericas } from "./genericas";
 import { baseGenerica, conMovimientos, type BaseGenerica } from "./movimientos";
 import { leerFigura } from "./figura";
-import { caretaEn, conEspecialAlSalir, cuantasFormas, figuraEnForma, type Careta } from "./formas";
+import { caretaEn, conEspecialAlSalir, cuantasFormas, figuraEnForma, transformacionDe, type Careta } from "./formas";
 import { cargarIndice, type Indice } from "./indice";
 import { movimientosDeFicha, poderesDeFicha, resolver, type Catalogo } from "./plano";
 import { SETS } from "./sets";
@@ -263,6 +263,13 @@ export function enForma(f: FiguraV2Puente, paso: number, cat: CatalogoV3 | null)
 }
 
 /** ¿Al dejar la forma de `paso` se hace antes la animación especial (Banner se transforma)? */
+/** De qué personaje es una transformación: personaje y transformación elegida. Si cambia, la forma vuelve a la base
+ *  (Elías, 28 nov: al cambiar de personaje no debe seguir transformado). "" si no es figura v3. */
+export function claveForma(f: unknown): string {
+  const v3 = leerV3(f);
+  if (!v3) return "";
+  return (v3.origen.tipo === "catalogo" ? v3.origen.personaje : "creado") + ">" + (transformacionDe(v3) ?? "");
+}
 export function especialAlSalir(f: unknown, paso: number): boolean { const v3 = leerV3(f); return !!v3 && conEspecialAlSalir(v3, paso); }
 
 /** Careta levantada en ese paso (Iron Man), para la escena. null = cerrada. */

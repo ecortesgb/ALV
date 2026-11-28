@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { aplicarFormaRemota, alFormaPropia, estadoForma, pasoDe, reiniciarFormas, transformar } from "./formas";
+import { aplicarFormaRemota, alFormaPropia, conForma, estadoForma, pasoDe, reiniciarFormas, transformar } from "./formas";
 import { revisarForma } from "../servicios/gestosSala";
 
 // Figura v2 con su v3 en el puente (lo que viaja en la app).
@@ -20,6 +20,17 @@ describe("forma de cada jugador", () => {
     expect(avisos[1]).toMatchObject({ paso: 0, conEspecial: false });
     fuera();
   });
+  it("al cambiar de personaje la forma vuelve a la base y no regresa al volver", async () => {
+    const avisos: { paso: number }[] = [];
+    const fuera = alFormaPropia(e => avisos.push(e));
+    transformar("ana", fig("bruce-banner"), 1_000_000);
+    expect(pasoDe("ana", fig("peter-parker"))).toBe(0);
+    expect(conForma({ id: "ana", figura: fig("peter-parker") }, null)).not.toHaveProperty("transforma");
+    await Promise.resolve();
+    expect(avisos.at(-1)).toMatchObject({ jugador: "ana", paso: 0 });
+    expect(pasoDe("ana", fig("bruce-banner"))).toBe(0);
+    fuera();
+  });
   it("un personaje sin pareja no se transforma", () => {
     expect(transformar("ana", fig("batman"))).toBe(false);
     expect(estadoForma("ana").n).toBe(0);
@@ -32,7 +43,7 @@ describe("forma de cada jugador", () => {
   });
   it("revisa lo que llega por la red", () => {
     const m = new Set(["ana", "beto"]);
-    expect(revisarForma({ j: "beto", k: 1, n: 5, e: true }, m, "ana")).toEqual({ j: "beto", k: 1, n: 5, e: true });
+    expect(revisarForma({ j: "beto", k: 1, n: 5, e: true }, m, "ana")).toEqual({ j: "beto", k: 1, n: 5, e: true, d: "" });
     expect(revisarForma({ j: "ana", k: 1, n: 5 }, m, "ana")).toBeNull();
     expect(revisarForma({ j: "zoe", k: 1, n: 5 }, m, "ana")).toBeNull();
     expect(revisarForma({ j: "beto", k: 12, n: 5 }, m, "ana")).toBeNull();
