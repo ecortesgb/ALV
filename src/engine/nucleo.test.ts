@@ -150,3 +150,15 @@ describe("el núcleo es puro", () => {
     expect(readFileSync(join(aqui, "../content/index.ts"), "utf8")).toMatch(/from\s+"\.\/packs\/base\.json"\s+with\s+\{\s*type:\s*"json"\s*\}/);
   });
 });
+
+describe("rondas parejas (28 nov)", () => {
+  it("redondea al múltiplo de jugadores más cercano, sin pasar de 20", async () => {
+    const { rondasParejas } = await import("./nucleo");
+    expect(rondasParejas(8, 3)).toBe(9);
+    expect(rondasParejas(8, 4)).toBe(8);
+    expect(rondasParejas(8, 5)).toBe(10);
+    expect(rondasParejas(3, 6)).toBe(6);
+    expect(rondasParejas(20, 7)).toBe(14);
+    expect(rondasParejas(8, 1)).toBe(8);
+  });
+});
