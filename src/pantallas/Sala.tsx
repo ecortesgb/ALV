@@ -354,7 +354,7 @@ export function Sala({ codigo }: { codigo: string }) {
     <Lobby sala={sala} miembros={ordenados} yo={ses.uid} soyAnfitrion={soyAnfitrion} final={final} red={s.red} refrescar={s.refrescar}
       alSalir={() => void salir()} alCopas={() => void copasNoche()} copando={copando} pantalla={pantalla} />
     {/* ALV PARTY: si el anfitrión empieza un minijuego, aquí sale el tutorial y este celular se vuelve mando. */}
-    {!local && !soyAnfitrion && <EscuchaParty salaId={sala.id} rol="mando" />}
+    {!local && !soyAnfitrion && <EscuchaParty salaId={sala.id} rol="mando" figura={s.miembros.find(m => m.id === ses.uid)?.figura} />}
   </>;
 }
 

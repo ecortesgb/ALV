@@ -337,3 +337,12 @@ export function trajeAlAzar(cat: CatalogoV3, puedeUsar: (id: string) => boolean)
   if (!e) return null;
   return proyectar({ ...base, familia: e.ficha.familia, origen: { tipo: "catalogo", personaje: e.ficha.id, version: "base", revision: 1 }, piezas: {} });
 }
+
+/**
+ * Personaje del catálogo de la figura del jugador (ALV PARTY, Elías 28 nov: «ya se eligieron antes de entrar al lobby»).
+ * Los minijuegos dibujan personajes del catálogo: una figura «creada» en el constructor no tiene uno y da null.
+ */
+export function personajeDeFigura(f: unknown): string | null {
+  const v3 = (f as { version?: unknown } | null)?.version === 3 ? leerFigura(f) : leerV3(f);
+  return v3 && v3.origen.tipo === "catalogo" && /^[a-z0-9-]{1,40}$/.test(v3.origen.personaje) ? v3.origen.personaje : null;
+}

@@ -241,7 +241,9 @@ export function PaginaParty({ codigo }: { codigo: string }) {
   const [carga, setCarga] = useState<AvisoParty | null>(null);
   const fondo = <div className="cfg-fondo"><EscenarioFondo ambiente={az.ambientes[momento]} momento={momento} velo={az.velo} /></div>;
   const comenzar = (c: ConfigParty) => {
-    const a: AvisoParty = { ...c, sala: salaParty() };
+    // Mandos que se esperan: cada miembro del lobby (sin Pantalla, este aparato muestra el juego y también es mando).
+    const esperados = Math.min(MAX_JUGADORES_PARTY, Math.max(1, s.miembros.length || 1));
+    const a: AvisoParty = { ...c, sala: salaParty(), jugadores: esperados };
     sonar("exito");
     if (s.sala) avisarParty(s.sala.id, a);
     setCarga(a);
@@ -249,11 +251,11 @@ export function PaginaParty({ codigo }: { codigo: string }) {
   let cuerpo: ReactNode;
   if (s.error) cuerpo = <div className="pt-proy"><h2 className="pf-tit"><span>No se pudo abrir</span></h2><p className="pt-nota">{s.error}</p><button type="button" className="pf-atras" onClick={() => ir("jugar")}><span aria-hidden="true">◀</span>Volver</button></div>;
   else if (!s.sala) cuerpo = <p className="a-suave a-pulso cfg-abriendo" role="status">Preparando ALV PARTY…</p>;
-  else if (!soyAnfitrion) cuerpo = <><Unirse nombre={ses.nombre} /><EscuchaParty salaId={s.sala.id} rol="mando" /></>;
+  else if (!soyAnfitrion) cuerpo = <><Unirse nombre={ses.nombre} /><EscuchaParty salaId={s.sala.id} rol="mando" figura={s.miembros.find(m => m.id === ses.uid)?.figura} /></>;
   else cuerpo = <>
     <ConfigurarParty alComenzar={comenzar} alCancelar={() => ir("sala", codigo)}
       aviso={conPantalla ? "Se juega en la pantalla del lobby; tu celular será tu mando." : "Se juega en este aparato; los demás entran con su celular."} />
-    {carga && <CargaParty aviso={carga} rol={conPantalla ? "mando" : "tv"} nombre={ses.nombre} alCancelar={() => setCarga(null)} />}
+    {carga && <CargaParty aviso={carga} rol={conPantalla ? "mando" : "tv"} nombre={ses.nombre} figura={s.miembros.find(m => m.id === ses.uid)?.figura} alCancelar={() => setCarga(null)} />}
   </>;
   return <Marco clase={`az pf cfg-pagina m-${momento}`} fondo={fondo}>{cuerpo}</Marco>;
 }

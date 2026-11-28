@@ -159,6 +159,7 @@ addEventListener("resize", () => { if (!dentro) { irAElegido(); pintarGrid(); } 
 pintarGrid();
 function entrar() {
   if (!sala) return;
+  if (!elegido && !personajes.length) { setTimeout(entrar, 300); return; } // todavía no llega la lista de la TV
   if (!elegido) elegido = personajes[Math.floor(Math.random() * personajes.length)];
   if (!PESTANAS && !yo) { setTimeout(entrar, 300); return; } // todavía no llega la bienvenida del servidor
   if (!cuentaLista) { setTimeout(entrar, 200); return; } // primero saber mi cuenta de ALV (XP desde la sala)

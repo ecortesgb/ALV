@@ -7,6 +7,7 @@ import { useEffect, useState } from "react";
 import { useSesion } from "../../app/sesion";
 import { AMBIENTES_PARTY, CATEGORIAS_PARTY, MODALIDADES_PARTY, miniDe, urlsParty, leerAvisoParty, type AvisoParty } from "../../content/party";
 import { PantallaCarga, type TarjetaCarga } from "../../juegos/general/ComoJugar";
+import { personajeDeFigura } from "../../personajes/integracion";
 import { abrirDifusion } from "../../servicios/difusion";
 import "./party.css";
 
@@ -48,9 +49,10 @@ export function tarjetasParty(aviso: AvisoParty): TarjetaCarga[] {
  * La misma pantalla de carga de los juegos de mesa (PantallaCarga). En el celular, «¡Iniciar!» u «Omitir» abren el
  * mando (o la TV si este aparato muestra el juego); en la Pantalla se abre sola al pasar todas las tarjetas.
  */
-export function CargaParty({ aviso, rol, nombre, alCancelar }: { aviso: AvisoParty; rol: "tv" | "mando"; nombre?: string; alCancelar?: () => void }) {
+export function CargaParty({ aviso, rol, nombre, figura, alCancelar }: { aviso: AvisoParty; rol: "tv" | "mando"; nombre?: string; figura?: unknown; alCancelar?: () => void }) {
   const m = miniDe(aviso.juego)!;
-  const destino = urlsParty(aviso, aviso.sala, BASE(), nombre)[rol];
+  // Sin Pantalla, el aparato del anfitrión muestra el juego y además es su mando (botones encima).
+  const destino = urlsParty(aviso, aviso.sala, BASE(), nombre, personajeDeFigura(figura), rol === "tv" && !!alCancelar)[rol];
   const abrir = () => location.assign(destino);
   // En una TV del lobby nadie toca: se abre sola. Si este aparato muestra el juego y nadie toca, también.
   const solo = rol === "tv";
@@ -65,8 +67,8 @@ export function CargaParty({ aviso, rol, nombre, alCancelar }: { aviso: AvisoPar
 }
 
 /** Para el lobby (celulares) y la Pantalla: si el anfitrión empieza un minijuego, enseña el tutorial y abre su parte. */
-export function EscuchaParty({ salaId, rol }: { salaId: string | undefined; rol: "tv" | "mando" }) {
+export function EscuchaParty({ salaId, rol, figura }: { salaId: string | undefined; rol: "tv" | "mando"; figura?: unknown }) {
   const ses = useSesion();
   const [aviso, quitar] = useAvisoParty(salaId);
-  return aviso ? <CargaParty aviso={aviso} rol={rol} nombre={ses.nombre} alCancelar={quitar} /> : null;
+  return aviso ? <CargaParty aviso={aviso} rol={rol} nombre={ses.nombre} figura={figura} alCancelar={quitar} /> : null;
 }

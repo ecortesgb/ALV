@@ -31,9 +31,9 @@ export function crearMandosLocales(o) {
   const vivos = new Map(); // id → { antes: Set, palanca: "x,z", corre: pid|null }
   const de = id => { if (!vivos.has(id)) vivos.set(id, { antes: new Set(), palanca: "0,0", corre: null, ultimaPalanca: 0 }); return vivos.get(id); };
 
-  function entrar(id, nombre) {
+  function entrar(id, nombre, personaje = "") {
     if (dentro(id)) return;
-    mandar(id, "hola", { nombre, personaje: "" });
+    mandar(id, "hola", { nombre, personaje });
   }
 
   /** Un botón se acaba de apretar. */
@@ -119,6 +119,54 @@ export function crearMandosLocales(o) {
     requestAnimationFrame(cuadro);
   }
   requestAnimationFrame(cuadro);
+
+  // ---------- Botones en la pantalla (ALV PARTY sin Pantalla: este aparato muestra el juego y también es mando) ----------
+  // ?tactil=1 (lo pone el anfitrión): entra solo con su nombre y personaje, y lleva sus botones encima del juego.
+  const q = new URLSearchParams(location.search);
+  if (q.get("tactil") === "1") {
+    const id = "pc-tactil", nombre = (q.get("nombre") || "Yo").replace(/[^\p{L}\p{N} _-]/gu, "").slice(0, 16) || "Yo";
+    const personaje = /^[a-z0-9-]{1,40}$/.test(q.get("personaje") || "") ? q.get("personaje") : "";
+    const pide = setInterval(() => { if (dentro(id)) clearInterval(pide); else entrar(id, nombre, personaje); }, 1500);
+    entrar(id, nombre, personaje);
+    const ap = new Set(); let px = 0, pz = 0;
+    const capa = document.createElement("div");
+    capa.className = "tactil";
+    const palanca = o.juego === "cuarto";
+    capa.innerHTML = (palanca ? '<div class="t-zona"><div class="t-palanca"><i></i></div></div>' : "")
+      + '<div class="t-botones">' + (palanca ? '<button type="button" data-b="b">B</button>' : "") + '<button type="button" data-b="a" class="t-a">A</button></div>';
+    document.body.appendChild(capa);
+    const est = document.createElement("style");
+    est.textContent = `.tactil{position:fixed;inset:auto 0 0 0;height:42vh;z-index:30;pointer-events:none;display:flex;justify-content:space-between;align-items:flex-end;padding:0 18px 22px}
+.tactil button{pointer-events:auto;touch-action:none;width:84px;height:84px;border-radius:50%;border:4px solid #000;background:#3cb043;color:#fff;font:400 34px "Lilita One",sans-serif;box-shadow:0 5px 0 #000;margin-left:14px;opacity:.9}
+.tactil button[data-b=b]{background:#e8412c;width:70px;height:70px;font-size:28px}
+.tactil .t-a{width:104px;height:104px;font-size:42px}
+.tactil button.on{transform:translateY(4px);box-shadow:0 1px 0 #000}
+.tactil .t-zona{pointer-events:auto;touch-action:none;width:44vw;height:100%;position:relative}
+.tactil .t-palanca{position:absolute;left:50%;top:60%;width:120px;height:120px;margin:-60px 0 0 -60px;border-radius:50%;background:rgba(255,255,255,.12);border:3px solid rgba(255,255,255,.35)}
+.tactil .t-palanca i{position:absolute;left:50%;top:50%;width:56px;height:56px;margin:-28px 0 0 -28px;border-radius:50%;background:#fff;opacity:.85}
+.tactil .t-botones{margin-left:auto;display:flex;align-items:flex-end}`;
+    document.head.appendChild(est);
+    capa.querySelectorAll("button").forEach(b => {
+      b.addEventListener("pointerdown", e => { e.preventDefault(); b.setPointerCapture(e.pointerId); ap.add(b.dataset.b); b.classList.add("on"); toque(id, nombre, b.dataset.b); });
+      const suelta = () => { ap.delete(b.dataset.b); b.classList.remove("on"); };
+      b.addEventListener("pointerup", suelta); b.addEventListener("pointercancel", suelta); b.addEventListener("lostpointercapture", suelta);
+    });
+    if (palanca) {
+      const zona = capa.querySelector(".t-zona"), base = capa.querySelector(".t-palanca"), bola = base.querySelector("i");
+      let dedo = null;
+      const mover = e => {
+        const r = base.getBoundingClientRect(), R = 60;
+        let dx = e.clientX - (r.left + r.width / 2), dy = e.clientY - (r.top + r.height / 2);
+        const l = Math.hypot(dx, dy); if (l > R) { dx *= R / l; dy *= R / l; }
+        bola.style.transform = `translate(${dx}px,${dy}px)`; px = dx / R; pz = dy / R;
+      };
+      zona.addEventListener("pointerdown", e => { dedo = e.pointerId; zona.setPointerCapture(dedo); mover(e); });
+      zona.addEventListener("pointermove", e => { if (e.pointerId === dedo) mover(e); });
+      const soltar = e => { if (e.pointerId !== dedo) return; dedo = null; px = 0; pz = 0; bola.style.transform = ""; };
+      zona.addEventListener("pointerup", soltar); zona.addEventListener("pointercancel", soltar);
+    }
+    (function tactil() { sostener(id, ap, px, pz); requestAnimationFrame(tactil); })();
+  }
 
   /** Texto de ayuda para el panel de la sala. */
   return {
