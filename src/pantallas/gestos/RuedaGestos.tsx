@@ -98,7 +98,9 @@ export function RuedaGestos({ gestos, x, y, centro, boton, fija, grande, onElegi
               style={{ "--c1": boton.c1, "--c2": boton.c2, "--i": 0, "--dx": "0px", "--dy": "0px" } as CSSProperties}>
               <circle r={R0 - 3} className="rg-centro" />
               {nombre ? <NombreCentro txt={nombre} />
-                : <svg x={-17} y={-17} width="34" height="34" viewBox="0 0 24 24" className="rg-ico" aria-hidden="true">{boton.dibujo}</svg>}
+                : boton.img && !sinImg.has(boton.img)
+                  ? <image href={boton.img} x={-27} y={-27} width={54} height={54} className="rg-img" onError={() => { sinImg.add(boton.img!); forzar(n => n + 1); }} />
+                  : <svg x={-17} y={-17} width="34" height="34" viewBox="0 0 24 24" className="rg-ico" aria-hidden="true">{boton.dibujo}</svg>}
             </g>
           : <circle r={R0 - 3} className="rg-centro" />}
         {!boton && (nombre ? <NombreCentro txt={nombre} />
@@ -200,7 +202,7 @@ export const gajosMovimiento = (lista: { id: string; nombre: string }[]): GestoR
   const [c1, c2] = COLORES_MOV[i % COLORES_MOV.length]!;
   return { cual: "mov:" + m.id, txt: m.nombre, c1, c2, dibujo: <TrazosGesto cual="mov:" /> };
 });
-export const GAJO_TRANSFORMAR: GestoRueda = { cual: "transformar", txt: "Transformar", c1: "#c77dff", c2: "#7b2cbf", dibujo: <TrazosGesto cual="transformar" /> };
+export const GAJO_TRANSFORMAR: GestoRueda = { cual: "transformar", txt: "Transformar", c1: "#c77dff", c2: "#7b2cbf", dibujo: <TrazosGesto cual="transformar" />, img: `${ICONOS}cat-transformar.webp` };
 
 // ---------- Círculo por categorías (Elías, 27 nov: «muy amontonadas y desorganizadas»; categorias.ts) ----------
 // Mientras llegan los íconos ilustrados de Elías, cada tipo tiene un dibujo de trazo blanco y su color.
@@ -243,6 +245,10 @@ const COLOR_TIPO: Partial<Record<TipoIcono, [string, string]>> = {
 const IMG_TIPO: Partial<Record<TipoIcono, string>> = {
   vuelo: `${ICONOS}gesto-volar.webp`, golpe: `${ICONOS}gesto-golpear.webp`, patada: `${ICONOS}gesto-patada.webp`,
   saludar: `${ICONOS}gesto-saludar.webp`, victoria: `${ICONOS}gesto-victoria.webp`, derrota: `${ICONOS}gesto-derrota.webp`,
+  mas: `${ICONOS}cat-mas.webp`,
+  // Íconos de tipo de Elías (27 nov, 11 PM).
+  ...Object.fromEntries((["rayo", "fuego", "escudo", "disparo", "espada", "magia", "baile", "burla", "reaccion", "tecno", "mente", "fuerza",
+    "acrobacia", "garras", "festejo"] as const).map(t => [t, `${ICONOS}tipo-${t}.webp`])),
 };
 export const gajosOpciones = (lista: Opcion[]): GestoRueda[] => lista.slice(0, 8).map(o => {
   const [c1, c2] = COLOR_TIPO[o.tipo] ?? ["#4fd8ff", "#1479c9"];
@@ -260,5 +266,5 @@ export const gajosCategorias = (lista: Categoria[]): GestoRueda[] => lista.map(c
   const i = ICONO_CATEGORIA[c];
   return { cual: "cat:" + c, txt: NOMBRE_CATEGORIA[c], c1: i.c[0], c2: i.c[1], dibujo: c === "especial" ? <TrazosGesto cual="especial" /> : <IconoTipo tipo={i.tipo} />, ...(i.img ? { img: i.img } : {}) };
 });
-export const BOTON_VOLVER: GestoRueda = { cual: "volver", txt: "Volver", c1: "#e8ecf5", c2: "#8a93ad",
+export const BOTON_VOLVER: GestoRueda = { cual: "volver", txt: "Volver", c1: "#e8ecf5", c2: "#8a93ad", img: `${ICONOS}cat-volver.webp`,
   dibujo: <path fill="none" stroke="#fff" strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round" d="M14.5 5 7.5 12l7 7" /> };
