@@ -153,7 +153,19 @@ export function armarArranque(miembros: { id: string; nombre: string }[], juego:
     // Se juega hasta atrapar a los impostores: una vuelta por jugador alcanza (cada vuelta sale uno, salvo empate).
     return { semilla, juego, rondas: Math.max(3, miembros.length), cfg };
   }
-  return { semilla, juego, rondas: Math.max(3, Math.min(20, rondas)), cfg };
+  const base = Math.max(3, Math.min(20, rondas));
+  // Turnos parejos (Elías, 28 nov): en los juegos donde el turno va en orden, las rondas se redondean a un múltiplo del
+  // número de jugadores para que a todos les toque lo mismo. Con ruleta o botella el turno es al azar y no se toca.
+  const enOrden = (def.motor === "conteo" || def.motor === "turnos-cartas") && cfg.turno !== "ruleta"
+    && (!cfg.verdadReto || cfg.verdadReto.herramienta === "orden");
+  return { semilla, juego, rondas: enOrden ? rondasParejas(base, grupos.jugadores.length) : base, cfg };
+}
+
+/** Múltiplo de `n` más cercano a `rondas` (al menos una vuelta), sin pasar de 20 rondas. */
+export function rondasParejas(rondas: number, n: number): number {
+  if (n < 2) return rondas;
+  const tope = Math.floor(20 / n) * n;
+  return Math.min(tope, Math.max(n, Math.round(rondas / n) * n));
 }
 
 /** Traduce una fila guardada a una acción del motor. Lo de control solo vale si lo mandó quien tiene el control. */

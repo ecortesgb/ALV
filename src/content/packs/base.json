@@ -3217,6 +3217,2646 @@
    ]
   },
   {
+   "id": "palabra-053",
+   "mazo": "palabra",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Microondas",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "prohibidas": [
+    "cocina",
+    "calentar",
+    "comida"
+   ],
+   "soloEjes": true
+  },
+  {
+   "id": "palabra-054",
+   "mazo": "palabra",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Paraguas",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "prohibidas": [
+    "lluvia",
+    "mojarse",
+    "abrir"
+   ],
+   "soloEjes": true
+  },
+  {
+   "id": "palabra-055",
+   "mazo": "palabra",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Cepillo de dientes",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "prohibidas": [
+    "boca",
+    "pasta",
+    "lavar"
+   ],
+   "soloEjes": true
+  },
+  {
+   "id": "palabra-056",
+   "mazo": "palabra",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Elevador",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "prohibidas": [
+    "piso",
+    "subir",
+    "botón"
+   ],
+   "soloEjes": true
+  },
+  {
+   "id": "palabra-057",
+   "mazo": "palabra",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Semáforo",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "prohibidas": [
+    "rojo",
+    "verde",
+    "calle"
+   ],
+   "soloEjes": true
+  },
+  {
+   "id": "palabra-058",
+   "mazo": "palabra",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Tamal",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "prohibidas": [
+    "maíz",
+    "hoja",
+    "atole"
+   ],
+   "soloEjes": true
+  },
+  {
+   "id": "palabra-059",
+   "mazo": "palabra",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Pozole",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "prohibidas": [
+    "caldo",
+    "maíz",
+    "septiembre"
+   ],
+   "soloEjes": true
+  },
+  {
+   "id": "palabra-060",
+   "mazo": "palabra",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Taco al pastor",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "prohibidas": [
+    "piña",
+    "trompo",
+    "carne"
+   ],
+   "soloEjes": true
+  },
+  {
+   "id": "palabra-061",
+   "mazo": "palabra",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Torta ahogada",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "prohibidas": [
+    "Guadalajara",
+    "salsa",
+    "pan"
+   ],
+   "soloEjes": true
+  },
+  {
+   "id": "palabra-062",
+   "mazo": "palabra",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Chilaquiles",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "prohibidas": [
+    "totopos",
+    "salsa",
+    "desayuno"
+   ],
+   "soloEjes": true
+  },
+  {
+   "id": "palabra-063",
+   "mazo": "palabra",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Churros",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "prohibidas": [
+    "azúcar",
+    "chocolate",
+    "frito"
+   ],
+   "soloEjes": true
+  },
+  {
+   "id": "palabra-064",
+   "mazo": "palabra",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Nieve de limón",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "prohibidas": [
+    "frío",
+    "helado",
+    "verde"
+   ],
+   "soloEjes": true
+  },
+  {
+   "id": "palabra-065",
+   "mazo": "palabra",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Palomitas",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "prohibidas": [
+    "cine",
+    "maíz",
+    "mantequilla"
+   ],
+   "soloEjes": true
+  },
+  {
+   "id": "palabra-066",
+   "mazo": "palabra",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Pastel",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "prohibidas": [
+    "cumpleaños",
+    "velas",
+    "rebanada"
+   ],
+   "soloEjes": true
+  },
+  {
+   "id": "palabra-067",
+   "mazo": "palabra",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Mole",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "prohibidas": [
+    "chocolate",
+    "pollo",
+    "salsa"
+   ],
+   "soloEjes": true
+  },
+  {
+   "id": "palabra-068",
+   "mazo": "palabra",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Quesadilla",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "prohibidas": [
+    "queso",
+    "tortilla",
+    "comal"
+   ],
+   "soloEjes": true
+  },
+  {
+   "id": "palabra-069",
+   "mazo": "palabra",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Agua de horchata",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "prohibidas": [
+    "arroz",
+    "canela",
+    "blanca"
+   ],
+   "soloEjes": true
+  },
+  {
+   "id": "palabra-070",
+   "mazo": "palabra",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Concha",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "prohibidas": [
+    "pan",
+    "dulce",
+    "café"
+   ],
+   "soloEjes": true
+  },
+  {
+   "id": "palabra-071",
+   "mazo": "palabra",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Gelatina",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "prohibidas": [
+    "postre",
+    "mover",
+    "colores"
+   ],
+   "soloEjes": true
+  },
+  {
+   "id": "palabra-072",
+   "mazo": "palabra",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Pizza",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "prohibidas": [
+    "queso",
+    "rebanada",
+    "italiana"
+   ],
+   "soloEjes": true
+  },
+  {
+   "id": "palabra-073",
+   "mazo": "palabra",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Sushi",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "prohibidas": [
+    "pescado",
+    "arroz",
+    "japonés"
+   ],
+   "soloEjes": true
+  },
+  {
+   "id": "palabra-074",
+   "mazo": "palabra",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Hamburguesa",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "prohibidas": [
+    "carne",
+    "pan",
+    "papas"
+   ],
+   "soloEjes": true
+  },
+  {
+   "id": "palabra-075",
+   "mazo": "palabra",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Cine",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "prohibidas": [
+    "película",
+    "palomitas",
+    "pantalla"
+   ],
+   "soloEjes": true
+  },
+  {
+   "id": "palabra-076",
+   "mazo": "palabra",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Gimnasio",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "prohibidas": [
+    "pesas",
+    "ejercicio",
+    "músculo"
+   ],
+   "soloEjes": true
+  },
+  {
+   "id": "palabra-077",
+   "mazo": "palabra",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Supermercado",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "prohibidas": [
+    "carrito",
+    "comprar",
+    "caja"
+   ],
+   "soloEjes": true
+  },
+  {
+   "id": "palabra-078",
+   "mazo": "palabra",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Aeropuerto",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "prohibidas": [
+    "avión",
+    "maleta",
+    "vuelo"
+   ],
+   "soloEjes": true
+  },
+  {
+   "id": "palabra-079",
+   "mazo": "palabra",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Hospital",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "prohibidas": [
+    "doctor",
+    "enfermo",
+    "cama"
+   ],
+   "soloEjes": true
+  },
+  {
+   "id": "palabra-080",
+   "mazo": "palabra",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Escuela",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "prohibidas": [
+    "maestro",
+    "clase",
+    "alumno"
+   ],
+   "soloEjes": true
+  },
+  {
+   "id": "palabra-081",
+   "mazo": "palabra",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Biblioteca",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "prohibidas": [
+    "libros",
+    "silencio",
+    "leer"
+   ],
+   "soloEjes": true
+  },
+  {
+   "id": "palabra-082",
+   "mazo": "palabra",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Panteón",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "prohibidas": [
+    "muertos",
+    "tumba",
+    "flores"
+   ],
+   "soloEjes": true
+  },
+  {
+   "id": "palabra-083",
+   "mazo": "palabra",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Mercado",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "prohibidas": [
+    "puestos",
+    "fruta",
+    "marchante"
+   ],
+   "soloEjes": true
+  },
+  {
+   "id": "palabra-084",
+   "mazo": "palabra",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Estadio",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "prohibidas": [
+    "futbol",
+    "gol",
+    "afición"
+   ],
+   "soloEjes": true
+  },
+  {
+   "id": "palabra-085",
+   "mazo": "palabra",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Playa",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "prohibidas": [
+    "arena",
+    "mar",
+    "sol"
+   ],
+   "soloEjes": true
+  },
+  {
+   "id": "palabra-086",
+   "mazo": "palabra",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Zoológico",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "prohibidas": [
+    "animales",
+    "jaula",
+    "león"
+   ],
+   "soloEjes": true
+  },
+  {
+   "id": "palabra-087",
+   "mazo": "palabra",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Iglesia",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "prohibidas": [
+    "misa",
+    "padre",
+    "rezar"
+   ],
+   "soloEjes": true
+  },
+  {
+   "id": "palabra-088",
+   "mazo": "palabra",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Farmacia",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "prohibidas": [
+    "medicina",
+    "pastilla",
+    "receta"
+   ],
+   "soloEjes": true
+  },
+  {
+   "id": "palabra-089",
+   "mazo": "palabra",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Taquería",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "prohibidas": [
+    "tacos",
+    "salsa",
+    "trompo"
+   ],
+   "soloEjes": true
+  },
+  {
+   "id": "palabra-090",
+   "mazo": "palabra",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Peluquería",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "prohibidas": [
+    "cabello",
+    "cortar",
+    "tijeras"
+   ],
+   "soloEjes": true
+  },
+  {
+   "id": "palabra-091",
+   "mazo": "palabra",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Dentista",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "prohibidas": [
+    "dientes",
+    "muela",
+    "boca"
+   ],
+   "soloEjes": true
+  },
+  {
+   "id": "palabra-092",
+   "mazo": "palabra",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Bombero",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "prohibidas": [
+    "fuego",
+    "manguera",
+    "camión"
+   ],
+   "soloEjes": true
+  },
+  {
+   "id": "palabra-093",
+   "mazo": "palabra",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Policía",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "prohibidas": [
+    "ley",
+    "patrulla",
+    "ladrón"
+   ],
+   "soloEjes": true
+  },
+  {
+   "id": "palabra-094",
+   "mazo": "palabra",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Payaso",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "prohibidas": [
+    "nariz",
+    "circo",
+    "risa"
+   ],
+   "soloEjes": true
+  },
+  {
+   "id": "palabra-095",
+   "mazo": "palabra",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Mesero",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "prohibidas": [
+    "restaurante",
+    "propina",
+    "orden"
+   ],
+   "soloEjes": true
+  },
+  {
+   "id": "palabra-096",
+   "mazo": "palabra",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Astronauta",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "prohibidas": [
+    "espacio",
+    "luna",
+    "cohete"
+   ],
+   "soloEjes": true
+  },
+  {
+   "id": "palabra-097",
+   "mazo": "palabra",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Mago",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "prohibidas": [
+    "truco",
+    "conejo",
+    "sombrero"
+   ],
+   "soloEjes": true
+  },
+  {
+   "id": "palabra-098",
+   "mazo": "palabra",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Pirata",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "prohibidas": [
+    "barco",
+    "tesoro",
+    "parche"
+   ],
+   "soloEjes": true
+  },
+  {
+   "id": "palabra-099",
+   "mazo": "palabra",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Vampiro",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "prohibidas": [
+    "sangre",
+    "colmillos",
+    "noche"
+   ],
+   "soloEjes": true
+  },
+  {
+   "id": "palabra-100",
+   "mazo": "palabra",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Zombi",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "prohibidas": [
+    "muerto",
+    "cerebro",
+    "caminar"
+   ],
+   "soloEjes": true
+  },
+  {
+   "id": "palabra-101",
+   "mazo": "palabra",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Sirena",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "prohibidas": [
+    "mar",
+    "cola",
+    "pez"
+   ],
+   "soloEjes": true
+  },
+  {
+   "id": "palabra-102",
+   "mazo": "palabra",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Superhéroe",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "prohibidas": [
+    "capa",
+    "poder",
+    "salvar"
+   ],
+   "soloEjes": true
+  },
+  {
+   "id": "palabra-103",
+   "mazo": "palabra",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Abuelita",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "prohibidas": [
+    "nieto",
+    "mamá",
+    "vieja"
+   ],
+   "soloEjes": true
+  },
+  {
+   "id": "palabra-104",
+   "mazo": "palabra",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Vecino",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "prohibidas": [
+    "casa",
+    "junto",
+    "puerta"
+   ],
+   "soloEjes": true
+  },
+  {
+   "id": "palabra-105",
+   "mazo": "palabra",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Novio",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "prohibidas": [
+    "pareja",
+    "amor",
+    "beso"
+   ],
+   "soloEjes": true
+  },
+  {
+   "id": "palabra-106",
+   "mazo": "palabra",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Jefe",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "prohibidas": [
+    "trabajo",
+    "oficina",
+    "mandar"
+   ],
+   "soloEjes": true
+  },
+  {
+   "id": "palabra-107",
+   "mazo": "palabra",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Bebé",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "prohibidas": [
+    "pañal",
+    "llorar",
+    "niño"
+   ],
+   "soloEjes": true
+  },
+  {
+   "id": "palabra-108",
+   "mazo": "palabra",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Perro",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "prohibidas": [
+    "ladrar",
+    "mascota",
+    "hueso"
+   ],
+   "soloEjes": true
+  },
+  {
+   "id": "palabra-109",
+   "mazo": "palabra",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Gato",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "prohibidas": [
+    "maullar",
+    "bigotes",
+    "mascota"
+   ],
+   "soloEjes": true
+  },
+  {
+   "id": "palabra-110",
+   "mazo": "palabra",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Gallina",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "prohibidas": [
+    "huevo",
+    "pollo",
+    "granja"
+   ],
+   "soloEjes": true
+  },
+  {
+   "id": "palabra-111",
+   "mazo": "palabra",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Burro",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "prohibidas": [
+    "orejas",
+    "cargar",
+    "tonto"
+   ],
+   "soloEjes": true
+  },
+  {
+   "id": "palabra-112",
+   "mazo": "palabra",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Tiburón",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "prohibidas": [
+    "mar",
+    "dientes",
+    "pez"
+   ],
+   "soloEjes": true
+  },
+  {
+   "id": "palabra-113",
+   "mazo": "palabra",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Elefante",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "prohibidas": [
+    "trompa",
+    "grande",
+    "gris"
+   ],
+   "soloEjes": true
+  },
+  {
+   "id": "palabra-114",
+   "mazo": "palabra",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Jirafa",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "prohibidas": [
+    "cuello",
+    "alto",
+    "manchas"
+   ],
+   "soloEjes": true
+  },
+  {
+   "id": "palabra-115",
+   "mazo": "palabra",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Mono",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "prohibidas": [
+    "plátano",
+    "árbol",
+    "selva"
+   ],
+   "soloEjes": true
+  },
+  {
+   "id": "palabra-116",
+   "mazo": "palabra",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Pingüino",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "prohibidas": [
+    "hielo",
+    "frío",
+    "negro"
+   ],
+   "soloEjes": true
+  },
+  {
+   "id": "palabra-117",
+   "mazo": "palabra",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Cucaracha",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "prohibidas": [
+    "bicho",
+    "asco",
+    "correr"
+   ],
+   "soloEjes": true
+  },
+  {
+   "id": "palabra-118",
+   "mazo": "palabra",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Mariposa",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "prohibidas": [
+    "alas",
+    "colores",
+    "volar"
+   ],
+   "soloEjes": true
+  },
+  {
+   "id": "palabra-119",
+   "mazo": "palabra",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Celular",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "prohibidas": [
+    "llamar",
+    "pantalla",
+    "teléfono"
+   ],
+   "soloEjes": true
+  },
+  {
+   "id": "palabra-120",
+   "mazo": "palabra",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Control remoto",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "prohibidas": [
+    "tele",
+    "canal",
+    "botones"
+   ],
+   "soloEjes": true
+  },
+  {
+   "id": "palabra-121",
+   "mazo": "palabra",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Audífonos",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "prohibidas": [
+    "música",
+    "orejas",
+    "escuchar"
+   ],
+   "soloEjes": true
+  },
+  {
+   "id": "palabra-122",
+   "mazo": "palabra",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Lavadora",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "prohibidas": [
+    "ropa",
+    "lavar",
+    "jabón"
+   ],
+   "soloEjes": true
+  },
+  {
+   "id": "palabra-123",
+   "mazo": "palabra",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Licuadora",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "prohibidas": [
+    "licuado",
+    "cocina",
+    "moler"
+   ],
+   "soloEjes": true
+  },
+  {
+   "id": "palabra-124",
+   "mazo": "palabra",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Refrigerador",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "prohibidas": [
+    "frío",
+    "comida",
+    "cocina"
+   ],
+   "soloEjes": true
+  },
+  {
+   "id": "palabra-125",
+   "mazo": "palabra",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Escoba",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "prohibidas": [
+    "barrer",
+    "piso",
+    "bruja"
+   ],
+   "soloEjes": true
+  },
+  {
+   "id": "palabra-126",
+   "mazo": "palabra",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Espejo",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "prohibidas": [
+    "reflejo",
+    "verse",
+    "vidrio"
+   ],
+   "soloEjes": true
+  },
+  {
+   "id": "palabra-127",
+   "mazo": "palabra",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Almohada",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "prohibidas": [
+    "dormir",
+    "cama",
+    "cabeza"
+   ],
+   "soloEjes": true
+  },
+  {
+   "id": "palabra-128",
+   "mazo": "palabra",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Reloj",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "prohibidas": [
+    "hora",
+    "tiempo",
+    "manecillas"
+   ],
+   "soloEjes": true
+  },
+  {
+   "id": "palabra-129",
+   "mazo": "palabra",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Llaves",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "prohibidas": [
+    "puerta",
+    "abrir",
+    "cerrar"
+   ],
+   "soloEjes": true
+  },
+  {
+   "id": "palabra-130",
+   "mazo": "palabra",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Mochila",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "prohibidas": [
+    "escuela",
+    "cargar",
+    "espalda"
+   ],
+   "soloEjes": true
+  },
+  {
+   "id": "palabra-131",
+   "mazo": "palabra",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Bicicleta",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "prohibidas": [
+    "pedales",
+    "ruedas",
+    "andar"
+   ],
+   "soloEjes": true
+  },
+  {
+   "id": "palabra-132",
+   "mazo": "palabra",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Patineta",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "prohibidas": [
+    "ruedas",
+    "tabla",
+    "trucos"
+   ],
+   "soloEjes": true
+  },
+  {
+   "id": "palabra-133",
+   "mazo": "palabra",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Globo",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "prohibidas": [
+    "aire",
+    "fiesta",
+    "reventar"
+   ],
+   "soloEjes": true
+  },
+  {
+   "id": "palabra-134",
+   "mazo": "palabra",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Vela",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "prohibidas": [
+    "fuego",
+    "cera",
+    "soplar"
+   ],
+   "soloEjes": true
+  },
+  {
+   "id": "palabra-135",
+   "mazo": "palabra",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Martillo",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "prohibidas": [
+    "clavo",
+    "golpe",
+    "herramienta"
+   ],
+   "soloEjes": true
+  },
+  {
+   "id": "palabra-136",
+   "mazo": "palabra",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Tijeras",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "prohibidas": [
+    "cortar",
+    "papel",
+    "filo"
+   ],
+   "soloEjes": true
+  },
+  {
+   "id": "palabra-137",
+   "mazo": "palabra",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Paleta de hielo",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "prohibidas": [
+    "helado",
+    "palito",
+    "frío"
+   ],
+   "soloEjes": true
+  },
+  {
+   "id": "palabra-138",
+   "mazo": "palabra",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Calcetín",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "prohibidas": [
+    "pie",
+    "ropa",
+    "par"
+   ],
+   "soloEjes": true
+  },
+  {
+   "id": "palabra-139",
+   "mazo": "palabra",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Corbata",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "prohibidas": [
+    "cuello",
+    "traje",
+    "nudo"
+   ],
+   "soloEjes": true
+  },
+  {
+   "id": "palabra-140",
+   "mazo": "palabra",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Sombrero",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "prohibidas": [
+    "cabeza",
+    "sol",
+    "charro"
+   ],
+   "soloEjes": true
+  },
+  {
+   "id": "palabra-141",
+   "mazo": "palabra",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Lentes",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "prohibidas": [
+    "ojos",
+    "mirar",
+    "armazón"
+   ],
+   "soloEjes": true
+  },
+  {
+   "id": "palabra-142",
+   "mazo": "palabra",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Maquillaje",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "prohibidas": [
+    "cara",
+    "labial",
+    "pintar"
+   ],
+   "soloEjes": true
+  },
+  {
+   "id": "palabra-143",
+   "mazo": "palabra",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Tatuaje",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "prohibidas": [
+    "tinta",
+    "piel",
+    "aguja"
+   ],
+   "soloEjes": true
+  },
+  {
+   "id": "palabra-144",
+   "mazo": "palabra",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Barba",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "prohibidas": [
+    "pelo",
+    "cara",
+    "rasurar"
+   ],
+   "soloEjes": true
+  },
+  {
+   "id": "palabra-145",
+   "mazo": "palabra",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Bostezo",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "prohibidas": [
+    "sueño",
+    "boca",
+    "cansado"
+   ],
+   "soloEjes": true
+  },
+  {
+   "id": "palabra-146",
+   "mazo": "palabra",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Estornudo",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "prohibidas": [
+    "nariz",
+    "salud",
+    "gripa"
+   ],
+   "soloEjes": true
+  },
+  {
+   "id": "palabra-147",
+   "mazo": "palabra",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Hipo",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "prohibidas": [
+    "aire",
+    "susto",
+    "agua"
+   ],
+   "soloEjes": true
+  },
+  {
+   "id": "palabra-148",
+   "mazo": "palabra",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Cosquillas",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "prohibidas": [
+    "risa",
+    "tocar",
+    "pies"
+   ],
+   "soloEjes": true
+  },
+  {
+   "id": "palabra-149",
+   "mazo": "palabra",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Pesadilla",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "prohibidas": [
+    "sueño",
+    "miedo",
+    "noche"
+   ],
+   "soloEjes": true
+  },
+  {
+   "id": "palabra-150",
+   "mazo": "palabra",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Trompo",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "prohibidas": [
+    "girar",
+    "juguete",
+    "cuerda"
+   ],
+   "soloEjes": true
+  },
+  {
+   "id": "palabra-151",
+   "mazo": "palabra",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Futbol",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "prohibidas": [
+    "balón",
+    "gol",
+    "cancha"
+   ],
+   "soloEjes": true
+  },
+  {
+   "id": "palabra-152",
+   "mazo": "palabra",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Boxeo",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "prohibidas": [
+    "guantes",
+    "golpe",
+    "ring"
+   ],
+   "soloEjes": true
+  },
+  {
+   "id": "palabra-153",
+   "mazo": "palabra",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Natación",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "prohibidas": [
+    "agua",
+    "alberca",
+    "nadar"
+   ],
+   "soloEjes": true
+  },
+  {
+   "id": "palabra-154",
+   "mazo": "palabra",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Ajedrez",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "prohibidas": [
+    "rey",
+    "tablero",
+    "peón"
+   ],
+   "soloEjes": true
+  },
+  {
+   "id": "palabra-155",
+   "mazo": "palabra",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Dominó",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "prohibidas": [
+    "fichas",
+    "mula",
+    "mesa"
+   ],
+   "soloEjes": true
+  },
+  {
+   "id": "palabra-156",
+   "mazo": "palabra",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Escondidas",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "prohibidas": [
+    "buscar",
+    "contar",
+    "esconderse"
+   ],
+   "soloEjes": true
+  },
+  {
+   "id": "palabra-157",
+   "mazo": "palabra",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Videojuego",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "prohibidas": [
+    "control",
+    "consola",
+    "jugar"
+   ],
+   "soloEjes": true
+  },
+  {
+   "id": "palabra-158",
+   "mazo": "palabra",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Meme",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "prohibidas": [
+    "chiste",
+    "internet",
+    "imagen"
+   ],
+   "soloEjes": true
+  },
+  {
+   "id": "palabra-159",
+   "mazo": "palabra",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Tiktok",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "prohibidas": [
+    "video",
+    "bailar",
+    "app"
+   ],
+   "soloEjes": true
+  },
+  {
+   "id": "palabra-160",
+   "mazo": "palabra",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Contraseña",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "prohibidas": [
+    "clave",
+    "secreto",
+    "entrar"
+   ],
+   "soloEjes": true
+  },
+  {
+   "id": "palabra-161",
+   "mazo": "palabra",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Wifi",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "prohibidas": [
+    "internet",
+    "señal",
+    "conexión"
+   ],
+   "soloEjes": true
+  },
+  {
+   "id": "palabra-162",
+   "mazo": "palabra",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Batería",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "prohibidas": [
+    "carga",
+    "celular",
+    "pila"
+   ],
+   "soloEjes": true
+  },
+  {
+   "id": "palabra-163",
+   "mazo": "palabra",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Navidad",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "prohibidas": [
+    "diciembre",
+    "regalos",
+    "árbol"
+   ],
+   "soloEjes": true
+  },
+  {
+   "id": "palabra-164",
+   "mazo": "palabra",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Día de muertos",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "prohibidas": [
+    "ofrenda",
+    "calavera",
+    "noviembre"
+   ],
+   "soloEjes": true
+  },
+  {
+   "id": "palabra-165",
+   "mazo": "palabra",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Halloween",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "prohibidas": [
+    "disfraz",
+    "dulces",
+    "calabaza"
+   ],
+   "soloEjes": true
+  },
+  {
+   "id": "palabra-166",
+   "mazo": "palabra",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "San Valentín",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "prohibidas": [
+    "amor",
+    "febrero",
+    "corazón"
+   ],
+   "soloEjes": true
+  },
+  {
+   "id": "palabra-167",
+   "mazo": "palabra",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Año nuevo",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "prohibidas": [
+    "uvas",
+    "brindis",
+    "doce"
+   ],
+   "soloEjes": true
+  },
+  {
+   "id": "palabra-168",
+   "mazo": "palabra",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Posada",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "prohibidas": [
+    "piñata",
+    "diciembre",
+    "villancico"
+   ],
+   "soloEjes": true
+  },
+  {
+   "id": "palabra-169",
+   "mazo": "palabra",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Grito de independencia",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "prohibidas": [
+    "septiembre",
+    "Hidalgo",
+    "viva"
+   ],
+   "soloEjes": true
+  },
+  {
+   "id": "palabra-170",
+   "mazo": "palabra",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Reyes Magos",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "prohibidas": [
+    "rosca",
+    "enero",
+    "regalos"
+   ],
+   "soloEjes": true
+  },
+  {
+   "id": "palabra-171",
+   "mazo": "palabra",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Lunes",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "prohibidas": [
+    "semana",
+    "trabajo",
+    "domingo"
+   ],
+   "soloEjes": true
+  },
+  {
+   "id": "palabra-172",
+   "mazo": "palabra",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Vacaciones",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "prohibidas": [
+    "descanso",
+    "viaje",
+    "playa"
+   ],
+   "soloEjes": true
+  },
+  {
+   "id": "palabra-173",
+   "mazo": "palabra",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Quincena",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "prohibidas": [
+    "pago",
+    "sueldo",
+    "dinero"
+   ],
+   "soloEjes": true
+  },
+  {
+   "id": "palabra-174",
+   "mazo": "palabra",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Lotería mexicana",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "prohibidas": [
+    "cartas",
+    "frijoles",
+    "buena"
+   ],
+   "soloEjes": true
+  },
+  {
+   "id": "palabra-175",
+   "mazo": "palabra",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Dieta",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "prohibidas": [
+    "comer",
+    "bajar",
+    "peso"
+   ],
+   "soloEjes": true
+  },
+  {
+   "id": "palabra-176",
+   "mazo": "palabra",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Despertador",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "prohibidas": [
+    "alarma",
+    "sonar",
+    "mañana"
+   ],
+   "soloEjes": true
+  },
+  {
+   "id": "palabra-177",
+   "mazo": "palabra",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Mudanza",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "prohibidas": [
+    "cajas",
+    "casa",
+    "camión"
+   ],
+   "soloEjes": true
+  },
+  {
+   "id": "palabra-178",
+   "mazo": "palabra",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Fila del banco",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "prohibidas": [
+    "esperar",
+    "turno",
+    "dinero"
+   ],
+   "soloEjes": true
+  },
+  {
+   "id": "palabra-179",
+   "mazo": "palabra",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Embotellamiento",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "prohibidas": [
+    "tráfico",
+    "coches",
+    "claxon"
+   ],
+   "soloEjes": true
+  },
+  {
+   "id": "palabra-180",
+   "mazo": "palabra",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Lluvia",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "prohibidas": [
+    "agua",
+    "nube",
+    "mojar"
+   ],
+   "soloEjes": true
+  },
+  {
+   "id": "palabra-181",
+   "mazo": "palabra",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Temblor",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "prohibidas": [
+    "tierra",
+    "sismo",
+    "alerta"
+   ],
+   "soloEjes": true
+  },
+  {
+   "id": "palabra-182",
+   "mazo": "palabra",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Arcoíris",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "prohibidas": [
+    "colores",
+    "lluvia",
+    "cielo"
+   ],
+   "soloEjes": true
+  },
+  {
+   "id": "palabra-183",
+   "mazo": "palabra",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Volcán",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "prohibidas": [
+    "lava",
+    "montaña",
+    "erupción"
+   ],
+   "soloEjes": true
+  },
+  {
+   "id": "palabra-184",
+   "mazo": "palabra",
+   "escenario": null,
+   "intensidad": 1,
+   "dificultad": 1,
+   "texto": "Luna",
+   "adulto": false,
+   "drunk": false,
+   "esfuerzo": "ninguno",
+   "pidePareja": false,
+   "minJugadores": 2,
+   "nivel": 1,
+   "prohibidas": [
+    "noche",
+    "cielo",
+    "llena"
+   ],
+   "soloEjes": true
+  },
+  {
    "id": "castigo-001",
    "mazo": "castigo",
    "escenario": null,

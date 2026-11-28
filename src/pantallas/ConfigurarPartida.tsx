@@ -318,6 +318,8 @@ export function ConfigurarPartida({ miembros, alIniciar, alCancelar, iniciando, 
     ejes,
   };
   const config: PartidaConfigurada = { juego, rondas, ejes, opciones };
+  // Las rondas que de verdad se juegan: en juegos por turnos en orden se redondean al número de jugadores.
+  const rondasReales = armarArranque(miembros, juego, rondas, 1, 1, opciones)?.rondas ?? rondas;
   const cuenta = useMemo(() => cuentaCartas(miembros, juego, rondas, opciones), [miembros, juego, rondas, JSON.stringify(opciones)]); // eslint-disable-line react-hooks/exhaustive-deps
   const mazosJuego = (j?.mazo ?? "").split("+").filter(Boolean);
   const nuevas = useMemo(() => cuentaNuevas(miembros, juego, rondas, opciones, salieronDe(mazosJuego)), [miembros, juego, rondas, JSON.stringify(opciones), deCero]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -528,7 +530,7 @@ export function ConfigurarPartida({ miembros, alIniciar, alCancelar, iniciando, 
           : <ArteCfg nombre={usa[0] === "voltaje" ? `voltimetro-${ejes.voltaje}` : `termometro-${ejes.temperatura}`} alterno={arteHub("xp")} />}
         alTocar={() => editar("intensidad")} />,
       <Casilla key="opc" titulo={esImpostor(j) ? "Opciones" : "Herramienta"} valor={esImpostor(j) ? `${Math.min(impostores, maxImp)} ${Math.min(impostores, maxImp) === 1 ? "impostor" : "impostores"}` : inst?.nombre ?? "—"}
-        detalle={esImpostor(j) ? `${nombreCategoria(tema)} · votos ${votosNave === "visibles" ? "a la vista" : "secretos"}${revelarNave ? "" : " · sin revelar"}${pistaNave ? " · con pista" : ""}${castigoNave ? " · con castigo" : ""}` : `${rondas} rondas${temporizador && conTemporizador ? ` · ⏱ ${temporizador} s` : ""}${votoSecreto && j?.motor === "senalar" ? " · votos secretos" : ""}${minoriaBebe && j?.motor === "votacion" ? " · la minoría bebe" : ""}${conComodines && !comodines ? " · sin comodines" : ""}${conMazo && soloNuevas ? " · cartas nuevas" : ""}`}
+        detalle={esImpostor(j) ? `${nombreCategoria(tema)} · votos ${votosNave === "visibles" ? "a la vista" : "secretos"}${revelarNave ? "" : " · sin revelar"}${pistaNave ? " · con pista" : ""}${castigoNave ? " · con castigo" : ""}` : `${rondasReales} rondas${temporizador && conTemporizador ? ` · ⏱ ${temporizador} s` : ""}${votoSecreto && j?.motor === "senalar" ? " · votos secretos" : ""}${minoriaBebe && j?.motor === "votacion" ? " · la minoría bebe" : ""}${conComodines && !comodines ? " · sin comodines" : ""}${conMazo && soloNuevas ? " · cartas nuevas" : ""}`}
         ico={<ArteCfg nombre={esImpostor(j) ? "sec-herramienta" : `herr-${inst?.id ?? "cartas"}`} alterno={arteHub("ajustes")} />} alTocar={() => editar(esImpostor(j) ? "tipo" : "opciones")} />,
       // Herramientas de El impostor (Elías, 25 nov): se ve aunque no se use el temporizador.
       ...(esImpostor(j) && conTemporizador ? [
