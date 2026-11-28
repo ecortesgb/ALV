@@ -1,7 +1,8 @@
 // Comodines en la partida (Elías, 27 nov, Maestro v1.72): un botón abre tu colección con los comodines que sirven en
 // este juego y en este momento. Si tienes copias, «Usar»; si ya gastaste todas pero la descubriste, «Comprar y usar» al
 // precio de reposición; si nunca te salió en un sobre, no se puede. El servidor descuenta o cobra y la jugada llega a la TV.
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { comodinPorId } from "../../content/tienda";
 import { CON_OBJETIVO, EFECTO_EN_PARTIDA, TEXTO_SUERTE, esComodinPartida } from "../../content/comodinesPartida";
 import { cargarTienda, inventarioDe, usarComodin, useTienda, type Inventario } from "../../servicios/tienda";
@@ -46,6 +47,7 @@ export function SelectorComodines({ v, mi, mandar }: { v: Publico; mi: MiVista; 
   const [aviso, setAviso] = useState<string | null>(null);
   // Comodín dirigido (Maestro v1.74): primero se elige a quién va y luego se paga.
   const [eligiendo, setEligiendo] = useState<{ id: string; comprar: boolean } | null>(null);
+  const [explicando, setExplicando] = useState<string | null>(null);
   const usables = (mi.misComodines ?? []).filter(esComodinPartida);
   // Al cambiar de momento (otra etapa, otra ronda, otra persona con el teléfono) se cierra y se limpia el aviso.
   const clave = `${v.ronda}-${mi.yo}-${usables.join(",")}`;
@@ -61,15 +63,18 @@ export function SelectorComodines({ v, mi, mandar }: { v: Publico; mi: MiVista; 
     if (a && !(await mandar!("carta", { que: "apunta", a }))) { setEnviando(null); setAviso("No se pudo usar. Intenta otra vez."); return; }
     const r = await usarComodin({ partida: mi.partida!, cliente: mi.cliente, espejo: mi.espejo }, id, comprar);
     setEnviando(null); setEligiendo(null);
-    if (typeof r === "string") setAviso(r); else { fijar(id, r.monedas, r.cantidad); setAbierto(false); }
+    if (typeof r === "string") setAviso(r); else { fijar(id, r.monedas, r.cantidad); setAbierto(false); setExplicando(null); }
   };
 
-  if (abierto && eligiendo) {
-    const c = comodinPorId(eligiendo.id);
-    return (
-      <div className="cm-caja">
-        <div className="cm-lista" role="group" aria-label={`${c?.nombre ?? "Comodín"}: elige a quién`}>
-          <span className="cm-texto"><b>{c?.nombre} · ¿a quién?</b><small>{EFECTO_EN_PARTIDA[eligiendo.id as keyof typeof EFECTO_EN_PARTIDA]}</small></span>
+  // Elías (28 nov): un botón abajo a la izquierda (junto a Herramientas si eres anfitrión) abre un panel con scroll;
+  // cada carta muestra imagen, nombre y botón, y la explicación solo al tocar «?».
+  return createPortal(
+    <PanelFlotante abierto={abierto} setAbierto={setAbierto} cuantos={lista.length}>
+      {eligiendo ? (() => {
+        const c = comodinPorId(eligiendo.id);
+        return <div className="cm-elige" role="group" aria-label={`${c?.nombre ?? "Comodín"}: elige a quién`}>
+          <b className="cm-panel-titulo">{c?.nombre} · ¿a quién?</b>
+          <small className="cm-efecto">{EFECTO_EN_PARTIDA[eligiendo.id as keyof typeof EFECTO_EN_PARTIDA]}</small>
           <div className="cm-gente">
             {(mi.misObjetivos?.[eligiendo.id] ?? []).map(j => (
               <button key={j} type="button" className="cm-persona" disabled={!!enviando} onClick={() => void usar(eligiendo.id, eligiendo.comprar, j)}>{enviando ? "…" : nombreDe(v, j)}</button>
@@ -77,40 +82,55 @@ export function SelectorComodines({ v, mi, mandar }: { v: Publico; mi: MiVista; 
           </div>
           {aviso && <p className="cm-aviso" role="alert">{aviso}</p>}
           <button type="button" className="cm-volver" disabled={!!enviando} onClick={() => setEligiendo(null)}>Volver</button>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="cm-caja">
-      <button type="button" className="cm-boton dsp" aria-expanded={abierto} onClick={() => setAbierto(!abierto)}>⚡ Comodines</button>
-      {abierto && (
-        <div className="cm-lista" role="list" aria-label="Comodines de tu colección que sirven ahora">
+        </div>;
+      })() : <>
+        <b className="cm-panel-titulo">Tus comodines <small>Uno por ronda · {inv.monedas} monedas</small></b>
+        <ul className="cm-rejilla" aria-label="Comodines de tu colección que sirven ahora">
           {lista.map(id => {
             const c = comodinPorId(id), quedan = inv.comodines[id] ?? 0, precio = inv.precios[id] ?? c?.reposicion ?? 0;
             const falta = Math.max(0, precio - inv.monedas);
+            const info = explicando === id;
             return (
-              <div key={id} className="cm-item" role="listitem">
-                {c?.arte ? <img className="cm-arte" src={arte(c.arte)} alt="" loading="lazy" /> : <span className="cm-arte cm-ico" aria-hidden="true">{c?.icono}</span>}
-                <span className="cm-texto">
-                  <b>{c?.nombre ?? id}</b>
-                  <small>{EFECTO_EN_PARTIDA[id]}</small>
-                  <small className="cm-cuantas">{quedan > 0 ? `Tienes ${quedan}` : "No tienes"}</small>
+              <li key={id} className="cm-carta">
+                <span className="cm-carta-img">
+                  {c?.arte ? <img src={arte(c.arte)} alt="" loading="lazy" /> : <span className="cm-ico" aria-hidden="true">{c?.icono}</span>}
+                  <button type="button" className="cm-info" aria-expanded={info} aria-label={`Qué hace ${c?.nombre ?? id}`}
+                    onClick={() => setExplicando(info ? null : id)}>?</button>
+                  <span className="cm-copias">{quedan > 0 ? `×${quedan}` : "0"}</span>
                 </span>
+                <b className="cm-nombre">{c?.nombre ?? id}</b>
+                {info && <small className="cm-efecto">{EFECTO_EN_PARTIDA[id]}</small>}
                 {quedan > 0 ? <button type="button" className="cm-usar" disabled={!!enviando} onClick={() => void usar(id, false)}>{enviando === id ? "…" : "Usar"}</button>
                   : <button type="button" className="cm-usar cm-comprar" disabled={!!enviando || falta > 0} onClick={() => void usar(id, true)}>
                       {enviando === id ? "…" : <>Comprar y usar<small>{falta > 0 ? `Te faltan ${falta}` : `${precio} monedas`}</small></>}
                     </button>}
-              </div>
+              </li>
             );
           })}
-          {aviso && <p className="cm-aviso" role="alert">{aviso}</p>}
-          <p className="cm-pie">Uno por ronda. Tienes {inv.monedas} monedas.</p>
-        </div>
-      )}
-    </div>
+        </ul>
+        {aviso && <p className="cm-aviso" role="alert">{aviso}</p>}
+      </>}
+    </PanelFlotante>,
+    document.body,
   );
+}
+
+/** Botón fijo abajo a la izquierda y, al abrir, el panel encima con scroll. Se cierra con Escape o tocando fuera. */
+function PanelFlotante({ abierto, setAbierto, cuantos, children }: { abierto: boolean; setAbierto: (a: boolean) => void; cuantos: number; children: ReactNode }) {
+  const caja = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!abierto) return;
+    const tecla = (e: KeyboardEvent) => { if (e.key === "Escape") setAbierto(false); };
+    const fuera = (e: PointerEvent) => { if (!caja.current?.contains(e.target as Node)) setAbierto(false); };
+    addEventListener("keydown", tecla); addEventListener("pointerdown", fuera);
+    return () => { removeEventListener("keydown", tecla); removeEventListener("pointerdown", fuera); };
+  }, [abierto, setAbierto]);
+  return <div ref={caja} className={"cm-flotante" + (abierto ? " abierto" : "")}>
+    {abierto && <div className="cm-panel">{children}</div>}
+    <button type="button" className="cm-flotante-btn" aria-expanded={abierto} aria-label={abierto ? "Cerrar comodines" : `Comodines (${cuantos})`} onClick={() => setAbierto(!abierto)}>
+      <b>{abierto ? "✕" : "⚡"}</b><small>{abierto ? "Ocultar" : "Comodines"}</small>
+    </button>
+  </div>;
 }
 
 /** Lo que dejaron los comodines en esta ronda: chips para todos y, a quien usó Dos caminos, las dos cartas para elegir. */
