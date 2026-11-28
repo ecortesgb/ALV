@@ -48,7 +48,8 @@
 .D .ide-b-circ { position: relative; display: block; width: 100%; aspect-ratio: 1; border-radius: 50%; overflow: hidden;
   background: radial-gradient(circle at 50% 32%, color-mix(in srgb, var(--cc) 55%, #24357a), color-mix(in srgb, var(--c) 55%, #0a1030) 78%);
   box-shadow: 0 0 0 3px var(--tinta), 0 0 0 6px var(--c), 0 0 0 8px var(--tinta), 0 .25em .6em rgba(0, 0, 0, .5); transition: box-shadow .2s; }
-.D .ide-b-img img { position: absolute; left: 50%; top: -42%; width: 185%; max-width: none; height: auto; translate: -50% 0; }
+/* La foto de busto ya viene encuadrada por la cabeza (escena.js, encuadreBusto): entra completa, sin acercar. */
+.D .ide-b-img img { position: absolute; left: 50%; top: 0; width: 100%; max-width: none; height: auto; translate: -50% 0; }
 .D .ide-b-img .ide-cargando { left: 28%; right: 28%; bottom: 8%; height: 70%; border-radius: 45%; }
 .D .ide-burbuja.sel { z-index: 2; transform: scale(1.2); }
 /* Fuera del anillo, la seleccionada aparta lo que tiene alrededor para no taparlo al crecer. */
