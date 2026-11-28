@@ -13,7 +13,7 @@ import { BASE_CREAR, figuraInicial, piezasDeCatalogo, planoConstructor, type Pie
 import { piezasGenericas } from "./genericas";
 import { baseGenerica, conMovimientos, type BaseGenerica } from "./movimientos";
 import { leerFigura } from "./figura";
-import { caretaEn, conEspecialAlSalir, cuantasFormas, figuraEnForma, transformacionDe, type Careta } from "./formas";
+import { auraEn, caretaEn, conEspecialAlSalir, cuantasFormas, figuraEnForma, transformacionDe, type Careta } from "./formas";
 import { cargarIndice, type Indice } from "./indice";
 import { movimientosDeFicha, poderesDeFicha, resolver, type Catalogo } from "./plano";
 import { SETS } from "./sets";
@@ -273,6 +273,8 @@ export function claveForma(f: unknown): string {
 export function especialAlSalir(f: unknown, paso: number): boolean { const v3 = leerV3(f); return !!v3 && conEspecialAlSalir(v3, paso); }
 
 /** Careta levantada en ese paso (Iron Man), para la escena. null = cerrada. */
+/** Poder puesto en ese paso de la forma (Johnny en llamas, Sue invisible, Reed estirado). */
+export function auraDe(f: unknown, paso: number): string | null { const v3 = paso ? leerV3(f) : null; return v3 ? auraEn(v3, paso) : null; }
 export function caretaDe(f: unknown, paso: number): Careta | null { const v3 = paso ? leerV3(f) : null; return v3 ? caretaEn(v3, paso) : null; }
 
 // ---------- Poderes (Elías, 27 nov: escudo del Capi, rayo de Cíclope, telaraña, fuego, vuelo…) ----------

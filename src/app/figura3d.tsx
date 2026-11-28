@@ -225,11 +225,11 @@ export function useFoto(figura: FiguraV2 | null | undefined, semilla?: number, e
 
 /** Figura en imagen, para tarjetas, ranking y listas. Ocupa la caja del Avatar (alto = 1.5 × ancho).
  *  `redondo`: retrato circular de cabeza y hombros (ver alv.css, «Retrato circular»). */
-export function FotoFigura({ figura, semilla, size, nombre, redondo = false }: { figura?: FiguraV2 | null; semilla?: number; size: number; nombre?: string; redondo?: boolean }) {
-  const url = useFoto(figura, semilla);
+export function FotoFigura({ figura, semilla, size, nombre, redondo = false, encuadre = "cuerpo" }: { figura?: FiguraV2 | null; semilla?: number; size: number; nombre?: string; redondo?: boolean; encuadre?: Encuadre }) {
+  const url = useFoto(figura, semilla, encuadre);
   const caja = redondo ? { width: size, height: size } : { width: size, height: Math.round(size * 1.5) };
   return (
-    <span className={"av av-3d" + (redondo ? " av-redondo" : "")} style={caja} role="img" aria-label={`Figura de ${nombre ?? "jugador"}`}>
+    <span className={"av av-3d" + (redondo ? " av-redondo" : "") + (encuadre === "busto" ? " av-busto" : "")} style={caja} role="img" aria-label={`Figura de ${nombre ?? "jugador"}`}>
       {url ? <img src={url} alt="" draggable={false} /> : <span className="av-3d-cargando" aria-hidden="true" />}
     </span>
   );

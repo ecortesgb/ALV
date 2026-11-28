@@ -52,17 +52,25 @@ export function abrirChat(abierto: boolean) { fijar({ abierto, sinLeer: abierto 
 // Con nube solo se pueden leer las de quien ha compartido sala contigo (RLS de figuras_jugador); los demás salen con su inicial.
 
 const figuras = new Map<string, FiguraV2 | null>();
+// Cuándo se leyó cada una: pasado este tiempo se vuelve a leer al montar, para que un cambio de figura se vea en el chat.
+const leidas = new Map<string, number>();
+const VIGENCIA_MS = 60_000;
 export function useFigurasDe(ids: string[]): Map<string, FiguraV2 | null> {
   const clave = [...ids].sort().join(",");
   const [, setN] = useState(0);
   useEffect(() => {
-    const faltan = ids.filter(id => !figuras.has(id));
+    const ahora = Date.now();
+    const faltan = ids.filter(id => !figuras.has(id) || ahora - (leidas.get(id) ?? 0) > VIGENCIA_MS);
     if (!faltan.length) return;
+    for (const id of faltan) leidas.set(id, ahora);
     if (!hayNube) { for (const id of faltan) figuras.set(id, figuraActiva(leerCapsulas(id))); setN(n => n + 1); return; }
-    for (const id of faltan) figuras.set(id, null);
+    // Mientras llega la nueva lectura se queda la anterior (o la inicial si no había).
+    for (const id of faltan) if (!figuras.has(id)) figuras.set(id, null);
     let vivo = true;
-    void cliente!.from("figuras_jugador").select("jugador, figura").eq("activa", true).in("jugador", faltan).then(({ data }) => {
-      for (const f of (data ?? []) as { jugador: string; figura: unknown }[]) figuras.set(f.jugador, desdeBase(f.figura) as FiguraV2 | null); // frontera v3
+    void cliente!.from("figuras_jugador").select("jugador, figura").eq("activa", true).in("jugador", faltan).then(({ data, error }) => {
+      if (error) { for (const id of faltan) leidas.delete(id); return; }
+      const llegaron = new Map(((data ?? []) as { jugador: string; figura: unknown }[]).map(f => [f.jugador, desdeBase(f.figura) as FiguraV2 | null])); // frontera v3
+      for (const id of faltan) figuras.set(id, llegaron.get(id) ?? null);
       if (vivo) setN(n => n + 1);
     });
     return () => { vivo = false; };

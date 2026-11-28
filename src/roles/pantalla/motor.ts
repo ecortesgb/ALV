@@ -5,7 +5,7 @@
 // La lógica pura (reconstruir, aAccion, paraPublicar, reloj lógico) vive en engine/nucleo.ts, sin React ni navegador,
 // para poder correrla también en el servidor. Aquí quedan los timers, la hora del aparato y el enlace con la base.
 import { useEffect, useRef } from "react";
-import { juegoParaGuardar, resultados } from "../../engine/partida";
+import { juegoParaGuardar, resultados, segundosTurno } from "../../engine/partida";
 import { datosDeRepeticion, datosPorJugador } from "../../engine/estadisticas";
 import { armarArranque, ESPERA_MS, idAutoRevelar, idTiempo, paraPublicar, reconstruir, relojLogico, SUSPENSO_MS } from "../../engine/nucleo";
 import { enlace, type Miembro, type PartidaPub, type SalaV } from "../../servicios/enlace";
@@ -62,7 +62,7 @@ export function useMotor(sala: SalaV | null, partida: PartidaPub | null, activo:
         }
         // Temporizador por turno: cuando cambia el turno se rearma; al vencer se manda «tiempo» (el mismo id en cada aparato).
         if (!claveTurno) { if (!e.pausada) yo.turno = null; }
-        else if (yo.turno?.clave !== claveTurno) { yo.turno = { clave: claveTurno, fin: Date.now() + (e.cfg.temporizador ?? 0) * 1000, extra: e.efectos?.extra ?? 0, total: e.cfg.temporizador ?? 0 }; yo.publicada = 0; }
+        else if (yo.turno?.clave !== claveTurno) { yo.turno = { clave: claveTurno, fin: Date.now() + segundosTurno(e) * 1000, extra: e.efectos?.extra ?? 0, total: segundosTurno(e) }; yo.publicada = 0; }
         // Prórroga (comodín): el turno que corre suma los segundos nuevos.
         else if ((e.efectos?.extra ?? 0) > (yo.turno.extra ?? 0)) { const d = (e.efectos?.extra ?? 0) - (yo.turno.extra ?? 0); yo.turno.fin += d * 1000; yo.turno.total = (yo.turno.total ?? 0) + d; yo.turno.extra = e.efectos?.extra ?? 0; yo.publicada = 0; }
         clearTimeout(yo.tiempo);
