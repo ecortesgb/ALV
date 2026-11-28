@@ -392,12 +392,17 @@ button.a-logo:focus-visible { outline: 3px solid #ffd23f; outline-offset: 4px; b
     radial-gradient(ellipse 70% 45% at 50% 62%, rgba(40,150,210,.35), transparent 70%),
     linear-gradient(180deg, #050b24 0%, #071a3e 40%, #04365f 75%, #032845 100%); }
 /* El cartel (personajes fijos, imagen): abajo y centrado; lo que sobra arriba es cielo para el logo. */
-.D.a-inicio .a-fondo-inicio::before { content: ""; position: absolute; left: 50%; bottom: -9%; translate: -50% 0;
-  width: max(100%, calc(74vh * 2.482)); aspect-ratio: 2.482; background: var(--arte-g) center / 100% 100% no-repeat;
-  -webkit-mask-image: linear-gradient(transparent, #000 16%); mask-image: linear-gradient(transparent, #000 16%);
-  animation: aAcerca 24s ease-in-out infinite alternate; transform-origin: 50% 90%; }
-.D.a-inicio:not(.wide) .a-fondo-inicio::before { background-image: var(--arte-c); width: 190%; bottom: 150px;
-  -webkit-mask-image: linear-gradient(transparent, #000 14%, #000 86%, transparent); mask-image: linear-gradient(transparent, #000 14%, #000 86%, transparent); }
+/* La foto del patio (Elías, 28 nov): una copia difusa llena la pantalla y la foto nítida va abajo del logo, para que
+   el logo no tape caras.  En celular va la versión vertical. */
+.D.a-inicio .a-fondo-inicio { background: #6f7a72 var(--arte-d) center / cover no-repeat; }
+.D.a-inicio .a-fondo-inicio::before { content: ""; position: absolute; inset: 15% 0 0; background: var(--arte-g) center 60% / cover no-repeat;
+  -webkit-mask-image: linear-gradient(transparent, #000 14%); mask-image: linear-gradient(transparent, #000 14%);
+  animation: aAcerca 24s ease-in-out infinite alternate; transform-origin: 50% 70%; }
+/* Celular: la foto vertical, pegada arriba y un poco abajo del borde para que las caras queden bajo el logo. */
+.D.a-inicio:not(.wide) .a-fondo-inicio { background-image: var(--arte-md); }
+.D.a-inicio:not(.wide) .a-fondo-inicio::before { background-image: var(--arte-m); inset: 12% 0 0; background-position: 50% 0; }
+/* De día no llueve. */
+.D.a-inicio .a-inicio-lluvia { display: none; }
 /* Viñeta para leer el logo y el pie, y lluvia que cae. */
 .D.a-inicio .a-fondo-inicio::after { background-size: auto; inset: -20% 0 0;
   background-image: radial-gradient(ellipse 75% 60% at 50% 55%, transparent 40%, rgba(6,8,36,.55) 100%),
