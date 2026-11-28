@@ -112,6 +112,9 @@ body { overscroll-behavior: none; -webkit-tap-highlight-color: transparent; }
 .D .av.av-redondo { border-radius: 50%; overflow: hidden; background: radial-gradient(circle at 50% 38%, color-mix(in srgb, var(--amarillo) 34%, transparent), color-mix(in srgb, var(--tinta) 85%, transparent) 72%); box-shadow: inset 0 0 0 3px var(--tinta), 0 0 0 2px var(--amarillo); }
 .D .av.av-redondo img { inset: auto; left: -50%; top: -50%; width: 200%; height: auto; max-width: none; object-fit: fill; }
 .D .d-ret .av.av-redondo { width: 100% !important; height: 100% !important; }
+/* Retrato con la foto de busto del medallón del HUB (320×320): mismo encuadre que el círculo interior del medallón
+   (azotea.css, .azc-dentro .azc-foto), pasado a medidas del círculo. */
+.D .av.av-redondo.av-busto img { left: -31.8%; top: -43.9%; width: 163.6%; height: 163.6%; object-fit: contain; object-position: 50% 0; }
 .D .d-ret { border-radius: 50%; }
 .D .av-3d-cargando { position: absolute; left: 28%; right: 28%; bottom: 4%; height: 62%; border-radius: 40% 40% 12% 12%; background: color-mix(in srgb, var(--borde-luz) 30%, transparent); animation: aPulso 1.2s ease-in-out infinite; }
 .D .escena3d { position: relative; width: 100%; height: 100%; min-height: 200px; }
@@ -389,12 +392,17 @@ button.a-logo:focus-visible { outline: 3px solid #ffd23f; outline-offset: 4px; b
     radial-gradient(ellipse 70% 45% at 50% 62%, rgba(40,150,210,.35), transparent 70%),
     linear-gradient(180deg, #050b24 0%, #071a3e 40%, #04365f 75%, #032845 100%); }
 /* El cartel (personajes fijos, imagen): abajo y centrado; lo que sobra arriba es cielo para el logo. */
-.D.a-inicio .a-fondo-inicio::before { content: ""; position: absolute; left: 50%; bottom: -9%; translate: -50% 0;
-  width: max(100%, calc(74vh * 2.482)); aspect-ratio: 2.482; background: var(--arte-g) center / 100% 100% no-repeat;
-  -webkit-mask-image: linear-gradient(transparent, #000 16%); mask-image: linear-gradient(transparent, #000 16%);
-  animation: aAcerca 24s ease-in-out infinite alternate; transform-origin: 50% 90%; }
-.D.a-inicio:not(.wide) .a-fondo-inicio::before { background-image: var(--arte-c); width: 190%; bottom: 150px;
-  -webkit-mask-image: linear-gradient(transparent, #000 14%, #000 86%, transparent); mask-image: linear-gradient(transparent, #000 14%, #000 86%, transparent); }
+/* La foto del patio (Elías, 28 nov): una copia difusa llena la pantalla y la foto nítida va abajo del logo, para que
+   el logo no tape caras.  En celular va la versión vertical. */
+.D.a-inicio .a-fondo-inicio { background: #6f7a72 var(--arte-d) center / cover no-repeat; }
+.D.a-inicio .a-fondo-inicio::before { content: ""; position: absolute; inset: 15% 0 0; background: var(--arte-g) center 60% / cover no-repeat;
+  -webkit-mask-image: linear-gradient(transparent, #000 14%); mask-image: linear-gradient(transparent, #000 14%);
+  animation: aAcerca 24s ease-in-out infinite alternate; transform-origin: 50% 70%; }
+/* Celular: la foto vertical, pegada arriba y un poco abajo del borde para que las caras queden bajo el logo. */
+.D.a-inicio:not(.wide) .a-fondo-inicio { background-image: var(--arte-md); }
+.D.a-inicio:not(.wide) .a-fondo-inicio::before { background-image: var(--arte-m); inset: 12% 0 0; background-position: 50% 0; }
+/* De día no llueve. */
+.D.a-inicio .a-inicio-lluvia { display: none; }
 /* Viñeta para leer el logo y el pie, y lluvia que cae. */
 .D.a-inicio .a-fondo-inicio::after { background-size: auto; inset: -20% 0 0;
   background-image: radial-gradient(ellipse 75% 60% at 50% 55%, transparent 40%, rgba(6,8,36,.55) 100%),
