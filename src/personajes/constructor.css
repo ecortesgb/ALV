@@ -66,7 +66,9 @@
 @keyframes pzEntraSec { from { opacity: 0; transform: translateX(-8px); } to { opacity: 1; transform: none; } }
 .D .pz-sec:hover { transform: translateX(2px); }
 .D .pz-sec .az-ico, .D .pz-sec .pz-ico-vacio { width: 34px; height: 34px; flex: none; filter: grayscale(.85) opacity(.75); transition: filter .2s; }
-.D .pz-sec-txt { font: 400 18px/1 var(--f-titulo); text-transform: uppercase; letter-spacing: .02em; white-space: nowrap; }
+/* El título se achica lo justo para caber en el botón (Elías, 2026-11-27: «Transformación» se salía). --n = letras. */
+.D .pz-sec { container-type: inline-size; }
+.D .pz-sec-txt { font: 400 min(18px, calc((100cqi - 46px) / (var(--n, 8) * .7)))/1 var(--f-titulo); text-transform: uppercase; letter-spacing: .02em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
 .D .pz-sec.on { background: linear-gradient(var(--c1), var(--c2)); border-color: var(--lab); color: #fff; box-shadow: 0 4px 0 var(--lab); }
 .D .pz-sec.on .pz-sec-txt { text-shadow: 0 2px 0 rgba(0, 0, 0, .25); }
 .D .pz-sec.on .az-ico { filter: none; }
@@ -79,7 +81,7 @@
   .D .pz-nav { gap: 5px; }
   .D .pz-sec { flex-direction: column; justify-content: center; gap: 2px; padding: 3px 2px; border-radius: 12px; max-height: none; }
   .D .pz-sec .az-ico, .D .pz-sec .pz-ico-vacio { width: 24px; height: 24px; }
-  .D .pz-sec-txt { font-size: 8.5px; letter-spacing: 0; }
+  .D .pz-sec-txt { font-size: min(8.5px, calc((100cqi - 6px) / (var(--n, 8) * .66))); letter-spacing: 0; max-width: 100%; }
   .D .pz-palomita { width: 16px; height: 16px; font-size: 9px; right: -4px; top: -5px; border-width: 2px; }
 }
 
@@ -118,7 +120,8 @@
   cursor: pointer; font: 400 15px/1 var(--f-titulo); text-transform: uppercase; box-shadow: 0 3px 0 var(--tinta); }
 .D .pz-gestos:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--tinta); }
 @media (max-width: 859px) {
-  .D .pz-controles { position: absolute; right: 6px; top: 32px; bottom: 6px; flex-direction: column; justify-content: flex-end; gap: 6px; padding: 0; }
+  /* Celular: los controles abajo a la izquierda; el círculo de animaciones va arriba a la derecha y no se enciman. */
+  .D .pz-controles { position: absolute; left: 6px; top: 32px; bottom: 6px; flex-direction: column; justify-content: flex-end; gap: 6px; padding: 0; }
   .D .pz-grupo-ctl { flex-direction: column; }
   .D .pz-grupo-ctl button { width: 40px; height: 36px; font-size: 17px; }
   .D .pz-grupo-ctl button + button { border-left: 0; border-top: 2px solid var(--borde); }
@@ -280,3 +283,7 @@
 .D .pz-chip.pz-chip-logo img { display: block; width: auto; height: 22px; max-width: 86px; object-fit: contain; pointer-events: none; }
 .D .pz-chip.pz-chip-logo.on { background: #35294b; border-color: #ffd23f; box-shadow: 0 0 0 2px #ffd23f66; }
 .D .pz-chip.pz-chip-logo:not(.on) img { opacity: .82; }
+
+/* Círculo de animaciones del vestidor: más chico, en la esquina de arriba a la derecha (Elías, 2026-11-27: «que no se
+   amontonen»). Si cambia, cambiar también el radio en Constructor.tsx (medir). */
+.D .pz-escena .rg.rg-fija { --tam: clamp(92px, 13vw, 140px); }

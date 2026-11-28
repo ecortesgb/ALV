@@ -408,15 +408,15 @@ export function Constructor({ catalogo, piezas, inicial, seccion, escenaUrl, onG
       const e = escena.current, v = e?.querySelector<HTMLElement>(".pz-vista");
       if (!e || !v) return;
       const re = e.getBoundingClientRect(), rv = v.getBoundingClientRect();
-      const radio = Math.min(168, Math.max(136, innerWidth * 0.15)) / 2, borde = radio + 10;
-      // Esquina de arriba a la derecha de la viñeta, debajo de su rótulo; la cámara corre la figura un poco a la izquierda
-      // para que el círculo no le tape la cara.
+      // Mismo tamaño que .pz-escena .rg-fija en constructor.css.
+      const radio = Math.min(140, Math.max(92, innerWidth * 0.13)) / 2, borde = radio + 10;
+      // Esquina de arriba a la derecha de la viñeta (el rótulo va a la izquierda). La figura se queda al centro (Elías,
+      // 2026-11-27: «que el personaje quede en medio, no se mueva hacia la izquierda»).
       const x = Math.min(re.width, rv.right - re.left) - borde;
-      const y = Math.max(rv.top - re.top, 0) + borde + 30;
+      const y = Math.max(rv.top - re.top, 0) + borde;
       setFijo({ x: Math.max(borde, x), y: Math.min(re.height - borde, y) });
     };
     medir(); const t = setTimeout(medir, 600);
-    setCorrer({ x: 0.16, ms: 0 });
     addEventListener("resize", medir);
     return () => { clearTimeout(t); removeEventListener("resize", medir); };
   }, []);
@@ -466,7 +466,7 @@ export function Constructor({ catalogo, piezas, inicial, seccion, escenaUrl, onG
           <button key={l.id} type="button" className={"pz-sec" + (pestana === l.id ? " on" : "") + (marca?.t === l.id ? " marca" : "")} aria-pressed={pestana === l.id}
             style={{ "--c1": l.c1, "--c2": l.c2, "--lab": l.lab } as CSSProperties} onClick={() => elegirLosa(l.id)}>
             <IconoLosa id={l.ico} />
-            <span className="pz-sec-txt">{l.titulo}</span>
+            <span className="pz-sec-txt" style={{ "--n": l.titulo.length } as CSSProperties}>{l.titulo}</span>
             {hecha(l.id) && <i className="pz-palomita" aria-label="con cambios">✓</i>}
           </button>
         ))}
